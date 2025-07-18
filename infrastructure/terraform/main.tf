@@ -1,10 +1,14 @@
 # Main Terraform configuration for PolicyCortex infrastructure
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.5"
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.0"
+      version = "~> 3.80"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.4"
     }
   }
   
@@ -46,6 +50,19 @@ resource "azurerm_resource_group" "main" {
   name     = "rg-policycortex-${var.environment}"
   location = var.location
   tags     = local.common_tags
+}
+
+# Random strings for unique naming
+resource "random_string" "storage_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
+resource "random_string" "kv_suffix" {
+  length  = 6
+  special = false
+  upper   = false
 }
 
 # Storage account for application data (with security compliance)
@@ -94,32 +111,6 @@ resource "azurerm_storage_account" "app_storage" {
   tags = local.common_tags
 }
 
-# Random string for storage account suffix
-resource "random_string" "storage_suffix" {
-  length  = 6
-  special = false
-  upper   = false
-}
-
-# Customer managed key for storage encryption
-resource "azurerm_key_vault_key" "storage_key" {
-  name         = "storage-encryption-key"
-  key_vault_id = azurerm_key_vault.main.id
-  key_type     = "RSA"
-  key_size     = 2048
-  
-  key_opts = [
-    "decrypt",
-    "encrypt",
-    "sign",
-    "unwrapKey",
-    "verify",
-    "wrapKey",
-  ]
-  
-  depends_on = [azurerm_key_vault_access_policy.terraform]
-}
-
 # Key Vault for secrets management
 resource "azurerm_key_vault" "main" {
   name                = "kv-policycortex-${var.environment}-${random_string.kv_suffix.result}"
@@ -133,13 +124,6 @@ resource "azurerm_key_vault" "main" {
   soft_delete_retention_days = 30
   
   tags = local.common_tags
-}
-
-# Random string for Key Vault suffix
-resource "random_string" "kv_suffix" {
-  length  = 6
-  special = false
-  upper   = false
 }
 
 # Key Vault access policy for Terraform
