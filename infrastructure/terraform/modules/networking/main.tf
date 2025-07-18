@@ -26,6 +26,15 @@ resource "azurerm_virtual_network" "main" {
   # DNS servers for custom DNS resolution
   dns_servers = var.custom_dns_servers
 
+  # DDoS protection configuration
+  dynamic "ddos_protection_plan" {
+    for_each = var.enable_ddos_protection ? [1] : []
+    content {
+      id     = azurerm_network_ddos_protection_plan.main[0].id
+      enable = true
+    }
+  }
+
   tags = local.common_tags
 }
 
@@ -155,7 +164,7 @@ resource "azurerm_route_table" "main" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  disable_bgp_route_propagation = false
+  bgp_route_propagation_enabled = true
 
   tags = local.common_tags
 }
@@ -202,14 +211,7 @@ resource "azurerm_network_ddos_protection_plan" "main" {
   tags = local.common_tags
 }
 
-# Update VNet with DDoS protection if enabled
-resource "azurerm_virtual_network_ddos_protection_plan" "main" {
-  count = var.enable_ddos_protection ? 1 : 0
-
-  virtual_network_id         = azurerm_virtual_network.main.id
-  ddos_protection_plan_id    = azurerm_network_ddos_protection_plan.main[0].id
-  enable                     = true
-}
+# DDoS protection is now configured directly in the virtual network resource above
 
 # Private DNS Zone for internal name resolution
 resource "azurerm_private_dns_zone" "internal" {
