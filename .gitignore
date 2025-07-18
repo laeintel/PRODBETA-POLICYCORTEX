@@ -128,5 +128,6 @@ docs/_templates/
 *.crt
 *.pfx
 secrets/ 
+create-github-secrets.ps1
 
 nul
