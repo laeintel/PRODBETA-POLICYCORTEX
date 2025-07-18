@@ -51,80 +51,42 @@ resource "azurerm_network_security_group" "subnet_nsgs" {
   })
 }
 
-# Default security rules for AKS subnet
-resource "azurerm_network_security_rule" "aks_inbound_allow" {
-  for_each = toset(["aks", "aks_system"])
+# Basic security rules for Container Apps
+resource "azurerm_network_security_rule" "container_apps_inbound_allow" {
+  count = contains(keys(var.subnet_configurations), "container_apps") ? 1 : 0
 
-  name                        = "AllowAKSInbound"
+  name                        = "AllowContainerAppsInbound"
   priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_ranges     = ["443", "80", "22", "10250"]
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "*"
-  resource_group_name         = var.resource_group_name
-  network_security_group_name = azurerm_network_security_group.subnet_nsgs[each.key].name
-}
-
-# Security rules for data subnet
-resource "azurerm_network_security_rule" "data_inbound_deny_internet" {
-  name                        = "DenyInternetInbound"
-  priority                    = 4096
-  direction                   = "Inbound"
-  access                      = "Deny"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "*"
+  destination_port_ranges     = ["443", "80"]
   source_address_prefix       = "Internet"
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
-  network_security_group_name = azurerm_network_security_group.subnet_nsgs["data"].name
+  network_security_group_name = azurerm_network_security_group.subnet_nsgs["container_apps"].name
 }
 
-# Security rules for AI subnet
-resource "azurerm_network_security_rule" "ai_inbound_restricted" {
-  name                        = "AllowAIServicesInbound"
-  priority                    = 200
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_ranges     = ["443", "8080", "8443"]
-  source_address_prefix       = "VirtualNetwork"
-  destination_address_prefix  = "*"
-  resource_group_name         = var.resource_group_name
-  network_security_group_name = azurerm_network_security_group.subnet_nsgs["ai"].name
-}
+# Removed hardcoded data subnet rules - not needed for Container Apps
 
-# Security rules for Application Gateway subnet
-resource "azurerm_network_security_rule" "gateway_inbound_allow" {
-  name                        = "AllowGatewayManager"
+# Removed hardcoded AI subnet rules - not needed for Container Apps
+
+# Basic security rules for Application Gateway
+resource "azurerm_network_security_rule" "app_gateway_inbound_allow" {
+  count = contains(keys(var.subnet_configurations), "app_gateway") ? 1 : 0
+
+  name                        = "AllowAppGatewayInbound"
   priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "65200-65535"
-  source_address_prefix       = "GatewayManager"
-  destination_address_prefix  = "*"
-  resource_group_name         = var.resource_group_name
-  network_security_group_name = azurerm_network_security_group.subnet_nsgs["gateway"].name
-}
-
-resource "azurerm_network_security_rule" "gateway_http_https_allow" {
-  name                        = "AllowHTTPHTTPS"
-  priority                    = 200
-  direction                   = "Inbound"
-  access                      = "Allow"
-  protocol                    = "Tcp"
-  source_port_range           = "*"
-  destination_port_ranges     = ["80", "443"]
+  destination_port_ranges     = ["80", "443", "65200-65535"]
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
-  network_security_group_name = azurerm_network_security_group.subnet_nsgs["gateway"].name
+  network_security_group_name = azurerm_network_security_group.subnet_nsgs["app_gateway"].name
 }
 
 # Subnets
@@ -182,10 +144,11 @@ resource "azurerm_route" "internet_via_firewall" {
 }
 
 # Associate route table with data and AI subnets for enhanced security
-resource "azurerm_subnet_route_table_association" "secure_subnets" {
-  for_each = toset(["data", "ai", "private_endpoints"])
+# Route table association for container apps subnet only
+resource "azurerm_subnet_route_table_association" "container_apps" {
+  count = contains(keys(var.subnet_configurations), "container_apps") ? 1 : 0
 
-  subnet_id      = azurerm_subnet.subnets[each.key].id
+  subnet_id      = azurerm_subnet.subnets["container_apps"].id
   route_table_id = azurerm_route_table.main.id
 }
 

@@ -151,6 +151,10 @@ module "networking" {
   # DDoS protection disabled to avoid high costs
   enable_ddos_protection = false
   
+  # Log Analytics integration
+  log_analytics_workspace_id          = azurerm_log_analytics_workspace.main.workspace_id
+  log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.main.id
+  
   subnet_configurations = {
     container_apps = {
       address_prefixes = ["10.0.1.0/23"]
