@@ -167,9 +167,9 @@ jobs:
             -out=dev.tfplan \
             -detailed-exitcode
         working-directory: infrastructure/terraform
-        continue-on-error: true
 
       - name: Save Plan
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: dev-terraform-plan

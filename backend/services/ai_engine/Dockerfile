@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
-    unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
