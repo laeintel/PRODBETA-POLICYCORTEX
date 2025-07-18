@@ -43,6 +43,15 @@ locals {
 # Data source for current client configuration
 data "azurerm_client_config" "current" {}
 
+# Resource provider registrations for Container Apps
+resource "azurerm_resource_provider_registration" "container_apps" {
+  name = "Microsoft.App"
+}
+
+resource "azurerm_resource_provider_registration" "operational_insights" {
+  name = "Microsoft.OperationalInsights"
+}
+
 # Resource group for the environment
 resource "azurerm_resource_group" "main" {
   name     = "rg-policycortex-${var.environment}"
@@ -210,6 +219,11 @@ resource "azurerm_container_app_environment" "main" {
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   infrastructure_subnet_id   = module.networking.subnet_ids["container_apps"]
+  
+  depends_on = [
+    azurerm_resource_provider_registration.container_apps,
+    azurerm_resource_provider_registration.operational_insights
+  ]
   
   tags = local.common_tags
 }
