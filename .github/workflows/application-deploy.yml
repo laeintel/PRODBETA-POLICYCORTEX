@@ -1,0 +1,471 @@
+name: Application Deployment
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.github/workflows/application-deploy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.github/workflows/application-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      services:
+        description: 'Services to deploy (comma-separated or "all")'
+        required: true
+        default: 'all'
+        type: string
+
+env:
+  REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  test-backend:
+    name: Test Backend Services
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api_gateway, azure_integration, ai_engine, data_processing, conversation, notification]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/services/${{ matrix.service }}/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/services/${{ matrix.service }}/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run tests
+        run: |
+          cd backend/services/${{ matrix.service }}
+          pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/services/${{ matrix.service }}/coverage.xml
+          flags: ${{ matrix.service }}
+          name: codecov-${{ matrix.service }}
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run tests
+        run: |
+          cd frontend
+          npm test -- --coverage --watchAll=false
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: codecov-frontend
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Bandit security linter
+        run: |
+          pip install bandit
+          bandit -r backend/ -f json -o bandit-results.json
+        continue-on-error: true
+
+      - name: Upload Bandit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-results
+          path: bandit-results.json
+
+  build-backend:
+    name: Build Backend Services
+    runs-on: ubuntu-latest
+    needs: [test-backend, security-scan]
+    strategy:
+      matrix:
+        service: [api_gateway, azure_integration, ai_engine, data_processing, conversation, notification]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ env.REGISTRY }}
+          username: ${{ secrets.AZURE_CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/policycortex-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/services/${{ matrix.service }}
+          file: backend/services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: [test-frontend, security-scan]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build application
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ env.REGISTRY }}
+          username: ${{ secrets.AZURE_CONTAINER_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_CONTAINER_REGISTRY_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/policycortex-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --name ${{ secrets.AKS_CLUSTER_NAME_DEV }}
+
+      - name: Deploy to AKS
+        run: |
+          # Replace image tags in deployment files
+          sed -i 's|{{IMAGE_TAG}}|${{ github.sha }}|g' k8s/dev/*.yaml
+          sed -i 's|{{REGISTRY}}|${{ env.REGISTRY }}|g' k8s/dev/*.yaml
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/dev/ --recursive
+          
+          # Wait for deployment to complete
+          kubectl rollout status deployment/api-gateway -n policycortex-dev --timeout=300s
+          kubectl rollout status deployment/azure-integration -n policycortex-dev --timeout=300s
+          kubectl rollout status deployment/ai-engine -n policycortex-dev --timeout=300s
+          kubectl rollout status deployment/data-processing -n policycortex-dev --timeout=300s
+          kubectl rollout status deployment/conversation -n policycortex-dev --timeout=300s
+          kubectl rollout status deployment/notification -n policycortex-dev --timeout=300s
+          kubectl rollout status deployment/frontend -n policycortex-dev --timeout=300s
+
+      - name: Run health checks
+        run: |
+          # Wait for services to be ready
+          sleep 30
+          
+          # Get service endpoints
+          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-dev -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          
+          # Health check endpoints
+          curl -f http://${API_GATEWAY_URL}/health || exit 1
+          curl -f http://${API_GATEWAY_URL}/ready || exit 1
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'workflow_dispatch' && contains(fromJson('["staging", "prod"]'), github.event.inputs.environment)
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} --name ${{ secrets.AKS_CLUSTER_NAME_STAGING }}
+
+      - name: Deploy to AKS
+        run: |
+          # Replace image tags in deployment files
+          sed -i 's|{{IMAGE_TAG}}|${{ github.sha }}|g' k8s/staging/*.yaml
+          sed -i 's|{{REGISTRY}}|${{ env.REGISTRY }}|g' k8s/staging/*.yaml
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/staging/ --recursive
+          
+          # Wait for deployment to complete
+          kubectl rollout status deployment/api-gateway -n policycortex-staging --timeout=300s
+          kubectl rollout status deployment/azure-integration -n policycortex-staging --timeout=300s
+          kubectl rollout status deployment/ai-engine -n policycortex-staging --timeout=300s
+          kubectl rollout status deployment/data-processing -n policycortex-staging --timeout=300s
+          kubectl rollout status deployment/conversation -n policycortex-staging --timeout=300s
+          kubectl rollout status deployment/notification -n policycortex-staging --timeout=300s
+          kubectl rollout status deployment/frontend -n policycortex-staging --timeout=300s
+
+      - name: Run health checks
+        run: |
+          # Wait for services to be ready
+          sleep 30
+          
+          # Get service endpoints
+          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          
+          # Health check endpoints
+          curl -f http://${API_GATEWAY_URL}/health || exit 1
+          curl -f http://${API_GATEWAY_URL}/ready || exit 1
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    environment: prod
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} --name ${{ secrets.AKS_CLUSTER_NAME_PROD }}
+
+      - name: Deploy to AKS
+        run: |
+          # Replace image tags in deployment files
+          sed -i 's|{{IMAGE_TAG}}|${{ github.sha }}|g' k8s/prod/*.yaml
+          sed -i 's|{{REGISTRY}}|${{ env.REGISTRY }}|g' k8s/prod/*.yaml
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/prod/ --recursive
+          
+          # Wait for deployment to complete
+          kubectl rollout status deployment/api-gateway -n policycortex-prod --timeout=300s
+          kubectl rollout status deployment/azure-integration -n policycortex-prod --timeout=300s
+          kubectl rollout status deployment/ai-engine -n policycortex-prod --timeout=300s
+          kubectl rollout status deployment/data-processing -n policycortex-prod --timeout=300s
+          kubectl rollout status deployment/conversation -n policycortex-prod --timeout=300s
+          kubectl rollout status deployment/notification -n policycortex-prod --timeout=300s
+          kubectl rollout status deployment/frontend -n policycortex-prod --timeout=300s
+
+      - name: Run health checks
+        run: |
+          # Wait for services to be ready
+          sleep 30
+          
+          # Get service endpoints
+          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-prod -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          
+          # Health check endpoints
+          curl -f http://${API_GATEWAY_URL}/health || exit 1
+          curl -f http://${API_GATEWAY_URL}/ready || exit 1
+
+      - name: Run smoke tests
+        run: |
+          # Run comprehensive smoke tests for production
+          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-prod -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          
+          # Test key endpoints
+          curl -f http://${API_GATEWAY_URL}/api/v1/health || exit 1
+          curl -f http://${API_GATEWAY_URL}/api/v1/policies || exit 1
+          curl -f http://${API_GATEWAY_URL}/api/v1/conversations || exit 1
+
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure() && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Get AKS credentials
+        run: |
+          RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP_DEV }}"
+          CLUSTER_NAME="${{ secrets.AKS_CLUSTER_NAME_DEV }}"
+          
+          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP_STAGING }}"
+            CLUSTER_NAME="${{ secrets.AKS_CLUSTER_NAME_STAGING }}"
+          elif [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+            RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP_PROD }}"
+            CLUSTER_NAME="${{ secrets.AKS_CLUSTER_NAME_PROD }}"
+          fi
+          
+          az aks get-credentials --resource-group $RESOURCE_GROUP --name $CLUSTER_NAME
+
+      - name: Rollback deployments
+        run: |
+          NAMESPACE="policycortex-${{ github.event.inputs.environment || 'dev' }}"
+          
+          # Rollback all deployments
+          kubectl rollout undo deployment/api-gateway -n $NAMESPACE
+          kubectl rollout undo deployment/azure-integration -n $NAMESPACE
+          kubectl rollout undo deployment/ai-engine -n $NAMESPACE
+          kubectl rollout undo deployment/data-processing -n $NAMESPACE
+          kubectl rollout undo deployment/conversation -n $NAMESPACE
+          kubectl rollout undo deployment/notification -n $NAMESPACE
+          kubectl rollout undo deployment/frontend -n $NAMESPACE
+          
+          # Wait for rollback to complete
+          kubectl rollout status deployment/api-gateway -n $NAMESPACE --timeout=300s
+          kubectl rollout status deployment/azure-integration -n $NAMESPACE --timeout=300s
+          kubectl rollout status deployment/ai-engine -n $NAMESPACE --timeout=300s
+          kubectl rollout status deployment/data-processing -n $NAMESPACE --timeout=300s
+          kubectl rollout status deployment/conversation -n $NAMESPACE --timeout=300s
+          kubectl rollout status deployment/notification -n $NAMESPACE --timeout=300s
+          kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=300s

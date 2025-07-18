@@ -31,7 +31,8 @@
       "Bash(chmod:*)",
       "Bash(chown:*)",
       "Bash(chgrp:*)",
-      "*"
+      "*",
+      "Bash(git add:*)"
     ],
     "deny": []
   }
