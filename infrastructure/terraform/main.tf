@@ -16,6 +16,9 @@ terraform {
 
 # Configure the Microsoft Azure Provider
 provider "azurerm" {
+  # Disable automatic resource provider registration to avoid conflicts
+  resource_provider_registrations = "none"
+  
   features {
     key_vault {
       purge_soft_delete_on_destroy    = true
@@ -44,13 +47,10 @@ locals {
 data "azurerm_client_config" "current" {}
 
 # Resource provider registrations for Container Apps
-resource "azurerm_resource_provider_registration" "container_apps" {
-  name = "Microsoft.App"
-}
-
-resource "azurerm_resource_provider_registration" "operational_insights" {
-  name = "Microsoft.OperationalInsights"
-}
+# Note: These providers are typically pre-registered in Azure subscriptions
+# If you get import errors, manually register them in Azure portal or CLI:
+# az provider register --namespace Microsoft.App
+# az provider register --namespace Microsoft.OperationalInsights
 
 # Resource group for the environment
 resource "azurerm_resource_group" "main" {
@@ -220,10 +220,11 @@ resource "azurerm_container_app_environment" "main" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   infrastructure_subnet_id   = module.networking.subnet_ids["container_apps"]
   
-  depends_on = [
-    azurerm_resource_provider_registration.container_apps,
-    azurerm_resource_provider_registration.operational_insights
-  ]
+  # Resource providers should be manually registered if needed
+  # depends_on = [
+  #   azurerm_resource_provider_registration.container_apps,
+  #   azurerm_resource_provider_registration.operational_insights
+  # ]
   
   tags = local.common_tags
 }
