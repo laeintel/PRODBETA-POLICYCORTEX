@@ -157,7 +157,7 @@ module "networking" {
   
   subnet_configurations = {
     container_apps = {
-      address_prefixes = ["10.0.1.0/23"]
+      address_prefixes = ["10.0.0.0/23"]
       service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
       delegation = {
         name = "Microsoft.App/environments"
@@ -170,7 +170,7 @@ module "networking" {
       }
     }
     app_gateway = {
-      address_prefixes = ["10.0.3.0/24"]
+      address_prefixes = ["10.0.2.0/24"]
       service_endpoints = ["Microsoft.Storage"]
     }
   }
