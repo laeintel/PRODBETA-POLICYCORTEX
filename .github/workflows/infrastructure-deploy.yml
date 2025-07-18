@@ -1,5 +1,12 @@
 name: Infrastructure Deployment
 
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  issues: write
+  pull-requests: write
+
 on:
   push:
     branches: [ main ]
