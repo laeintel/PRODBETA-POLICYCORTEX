@@ -318,42 +318,71 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Get AKS credentials
+      - name: Get Container App Environment
+        id: container_env
         run: |
-          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --name ${{ secrets.AKS_CLUSTER_NAME_DEV }}
+          CONTAINER_ENV_NAME=$(az containerapp env list --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --query "[0].name" -o tsv)
+          echo "container_env_name=$CONTAINER_ENV_NAME" >> $GITHUB_OUTPUT
 
-      - name: Deploy to AKS
+      - name: Deploy to Container Apps
         run: |
-          # Replace image tags in deployment files
-          sed -i 's|{{IMAGE_TAG}}|${{ github.sha }}|g' k8s/dev/*.yaml
-          sed -i 's|{{REGISTRY}}|${{ env.REGISTRY }}|g' k8s/dev/*.yaml
+          # Deploy each microservice
+          az containerapp update \
+            --name ca-api-gateway-dev \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+            --image ${{ env.REGISTRY }}/policycortex-api_gateway:${{ github.sha }}
           
-          # Apply Kubernetes manifests
-          kubectl apply -f k8s/dev/ --recursive
+          az containerapp update \
+            --name ca-azure-integration-dev \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+            --image ${{ env.REGISTRY }}/policycortex-azure_integration:${{ github.sha }}
           
-          # Wait for deployment to complete
-          kubectl rollout status deployment/api-gateway -n policycortex-dev --timeout=300s
-          kubectl rollout status deployment/azure-integration -n policycortex-dev --timeout=300s
-          kubectl rollout status deployment/ai-engine -n policycortex-dev --timeout=300s
-          kubectl rollout status deployment/data-processing -n policycortex-dev --timeout=300s
-          kubectl rollout status deployment/conversation -n policycortex-dev --timeout=300s
-          kubectl rollout status deployment/notification -n policycortex-dev --timeout=300s
-          kubectl rollout status deployment/frontend -n policycortex-dev --timeout=300s
+          az containerapp update \
+            --name ca-ai-engine-dev \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+            --image ${{ env.REGISTRY }}/policycortex-ai_engine:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-data-processing-dev \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+            --image ${{ env.REGISTRY }}/policycortex-data_processing:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-conversation-dev \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+            --image ${{ env.REGISTRY }}/policycortex-conversation:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-notification-dev \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+            --image ${{ env.REGISTRY }}/policycortex-notification:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-frontend-dev \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} \
+            --image ${{ env.REGISTRY }}/policycortex-frontend:${{ github.sha }}
+
+      - name: Wait for deployments
+        run: |
+          echo "Waiting for Container Apps to be ready..."
+          sleep 60
+          
+          # Check deployment status
+          az containerapp show --name ca-api-gateway-dev --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --query "properties.provisioningState" -o tsv
+          az containerapp show --name ca-frontend-dev --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --query "properties.provisioningState" -o tsv
 
       - name: Run health checks
         run: |
-          # Wait for services to be ready
-          sleep 30
-          
-          # Get service endpoints
-          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-dev -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          # Get Container App URLs
+          API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-dev --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show --name ca-frontend-dev --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
           # Health check endpoints
-          curl -f http://${API_GATEWAY_URL}/health || exit 1
-          curl -f http://${API_GATEWAY_URL}/ready || exit 1
+          curl -f https://${API_GATEWAY_URL}/health || exit 1
+          curl -f https://${FRONTEND_URL}/ || exit 1
+          
+          echo "API Gateway URL: https://${API_GATEWAY_URL}"
+          echo "Frontend URL: https://${FRONTEND_URL}"
 
   deploy-staging:
     name: Deploy to Staging
@@ -371,42 +400,56 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Get AKS credentials
+      - name: Deploy to Container Apps
         run: |
-          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} --name ${{ secrets.AKS_CLUSTER_NAME_STAGING }}
-
-      - name: Deploy to AKS
-        run: |
-          # Replace image tags in deployment files
-          sed -i 's|{{IMAGE_TAG}}|${{ github.sha }}|g' k8s/staging/*.yaml
-          sed -i 's|{{REGISTRY}}|${{ env.REGISTRY }}|g' k8s/staging/*.yaml
+          # Deploy each microservice
+          az containerapp update \
+            --name ca-api-gateway-staging \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
+            --image ${{ env.REGISTRY }}/policycortex-api_gateway:${{ github.sha }}
           
-          # Apply Kubernetes manifests
-          kubectl apply -f k8s/staging/ --recursive
+          az containerapp update \
+            --name ca-azure-integration-staging \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
+            --image ${{ env.REGISTRY }}/policycortex-azure_integration:${{ github.sha }}
           
-          # Wait for deployment to complete
-          kubectl rollout status deployment/api-gateway -n policycortex-staging --timeout=300s
-          kubectl rollout status deployment/azure-integration -n policycortex-staging --timeout=300s
-          kubectl rollout status deployment/ai-engine -n policycortex-staging --timeout=300s
-          kubectl rollout status deployment/data-processing -n policycortex-staging --timeout=300s
-          kubectl rollout status deployment/conversation -n policycortex-staging --timeout=300s
-          kubectl rollout status deployment/notification -n policycortex-staging --timeout=300s
-          kubectl rollout status deployment/frontend -n policycortex-staging --timeout=300s
+          az containerapp update \
+            --name ca-ai-engine-staging \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
+            --image ${{ env.REGISTRY }}/policycortex-ai_engine:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-data-processing-staging \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
+            --image ${{ env.REGISTRY }}/policycortex-data_processing:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-conversation-staging \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
+            --image ${{ env.REGISTRY }}/policycortex-conversation:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-notification-staging \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
+            --image ${{ env.REGISTRY }}/policycortex-notification:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-frontend-staging \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
+            --image ${{ env.REGISTRY }}/policycortex-frontend:${{ github.sha }}
 
       - name: Run health checks
         run: |
-          # Wait for services to be ready
-          sleep 30
+          # Wait for deployments
+          sleep 60
           
-          # Get service endpoints
-          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          # Get Container App URLs
+          API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-staging --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show --name ca-frontend-staging --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
           # Health check endpoints
-          curl -f http://${API_GATEWAY_URL}/health || exit 1
-          curl -f http://${API_GATEWAY_URL}/ready || exit 1
+          curl -f https://${API_GATEWAY_URL}/health || exit 1
+          curl -f https://${FRONTEND_URL}/ || exit 1
 
   deploy-prod:
     name: Deploy to Production
@@ -424,52 +467,66 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Get AKS credentials
+      - name: Deploy to Container Apps
         run: |
-          az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} --name ${{ secrets.AKS_CLUSTER_NAME_PROD }}
-
-      - name: Deploy to AKS
-        run: |
-          # Replace image tags in deployment files
-          sed -i 's|{{IMAGE_TAG}}|${{ github.sha }}|g' k8s/prod/*.yaml
-          sed -i 's|{{REGISTRY}}|${{ env.REGISTRY }}|g' k8s/prod/*.yaml
+          # Deploy each microservice
+          az containerapp update \
+            --name ca-api-gateway-prod \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+            --image ${{ env.REGISTRY }}/policycortex-api_gateway:${{ github.sha }}
           
-          # Apply Kubernetes manifests
-          kubectl apply -f k8s/prod/ --recursive
+          az containerapp update \
+            --name ca-azure-integration-prod \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+            --image ${{ env.REGISTRY }}/policycortex-azure_integration:${{ github.sha }}
           
-          # Wait for deployment to complete
-          kubectl rollout status deployment/api-gateway -n policycortex-prod --timeout=300s
-          kubectl rollout status deployment/azure-integration -n policycortex-prod --timeout=300s
-          kubectl rollout status deployment/ai-engine -n policycortex-prod --timeout=300s
-          kubectl rollout status deployment/data-processing -n policycortex-prod --timeout=300s
-          kubectl rollout status deployment/conversation -n policycortex-prod --timeout=300s
-          kubectl rollout status deployment/notification -n policycortex-prod --timeout=300s
-          kubectl rollout status deployment/frontend -n policycortex-prod --timeout=300s
+          az containerapp update \
+            --name ca-ai-engine-prod \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+            --image ${{ env.REGISTRY }}/policycortex-ai_engine:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-data-processing-prod \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+            --image ${{ env.REGISTRY }}/policycortex-data_processing:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-conversation-prod \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+            --image ${{ env.REGISTRY }}/policycortex-conversation:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-notification-prod \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+            --image ${{ env.REGISTRY }}/policycortex-notification:${{ github.sha }}
+          
+          az containerapp update \
+            --name ca-frontend-prod \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
+            --image ${{ env.REGISTRY }}/policycortex-frontend:${{ github.sha }}
 
       - name: Run health checks
         run: |
-          # Wait for services to be ready
-          sleep 30
+          # Wait for deployments
+          sleep 60
           
-          # Get service endpoints
-          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-prod -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          # Get Container App URLs
+          API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-prod --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show --name ca-frontend-prod --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
           # Health check endpoints
-          curl -f http://${API_GATEWAY_URL}/health || exit 1
-          curl -f http://${API_GATEWAY_URL}/ready || exit 1
+          curl -f https://${API_GATEWAY_URL}/health || exit 1
+          curl -f https://${FRONTEND_URL}/ || exit 1
 
       - name: Run smoke tests
         run: |
           # Run comprehensive smoke tests for production
-          API_GATEWAY_URL=$(kubectl get service api-gateway -n policycortex-prod -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-prod --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
           # Test key endpoints
-          curl -f http://${API_GATEWAY_URL}/api/v1/health || exit 1
-          curl -f http://${API_GATEWAY_URL}/api/v1/policies || exit 1
-          curl -f http://${API_GATEWAY_URL}/api/v1/conversations || exit 1
+          curl -f https://${API_GATEWAY_URL}/api/v1/health || exit 1
+          curl -f https://${API_GATEWAY_URL}/api/v1/policies || exit 1
+          curl -f https://${API_GATEWAY_URL}/api/v1/conversations || exit 1
 
   rollback:
     name: Rollback Deployment
@@ -483,42 +540,39 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Get AKS credentials
+      - name: Determine resource group
+        id: get_rg
         run: |
           RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP_DEV }}"
-          CLUSTER_NAME="${{ secrets.AKS_CLUSTER_NAME_DEV }}"
           
           if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
             RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP_STAGING }}"
-            CLUSTER_NAME="${{ secrets.AKS_CLUSTER_NAME_STAGING }}"
           elif [ "${{ github.event.inputs.environment }}" == "prod" ]; then
             RESOURCE_GROUP="${{ secrets.AZURE_RESOURCE_GROUP_PROD }}"
-            CLUSTER_NAME="${{ secrets.AKS_CLUSTER_NAME_PROD }}"
           fi
           
-          az aks get-credentials --resource-group $RESOURCE_GROUP --name $CLUSTER_NAME
+          echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
 
-      - name: Rollback deployments
+      - name: Rollback Container Apps
         run: |
-          NAMESPACE="policycortex-${{ github.event.inputs.environment || 'dev' }}"
+          ENV="${{ github.event.inputs.environment || 'dev' }}"
+          RESOURCE_GROUP="${{ steps.get_rg.outputs.resource_group }}"
           
-          # Rollback all deployments
-          kubectl rollout undo deployment/api-gateway -n $NAMESPACE
-          kubectl rollout undo deployment/azure-integration -n $NAMESPACE
-          kubectl rollout undo deployment/ai-engine -n $NAMESPACE
-          kubectl rollout undo deployment/data-processing -n $NAMESPACE
-          kubectl rollout undo deployment/conversation -n $NAMESPACE
-          kubectl rollout undo deployment/notification -n $NAMESPACE
-          kubectl rollout undo deployment/frontend -n $NAMESPACE
+          echo "Rolling back Container Apps in $RESOURCE_GROUP for environment $ENV"
           
-          # Wait for rollback to complete
-          kubectl rollout status deployment/api-gateway -n $NAMESPACE --timeout=300s
-          kubectl rollout status deployment/azure-integration -n $NAMESPACE --timeout=300s
-          kubectl rollout status deployment/ai-engine -n $NAMESPACE --timeout=300s
-          kubectl rollout status deployment/data-processing -n $NAMESPACE --timeout=300s
-          kubectl rollout status deployment/conversation -n $NAMESPACE --timeout=300s
-          kubectl rollout status deployment/notification -n $NAMESPACE --timeout=300s
-          kubectl rollout status deployment/frontend -n $NAMESPACE --timeout=300s
+          # Get previous revision for each Container App and rollback
+          az containerapp revision list --name ca-api-gateway-$ENV --resource-group $RESOURCE_GROUP --query "[1].name" -o tsv | xargs -I {} az containerapp update --name ca-api-gateway-$ENV --resource-group $RESOURCE_GROUP --revision {}
+          
+          az containerapp revision list --name ca-azure-integration-$ENV --resource-group $RESOURCE_GROUP --query "[1].name" -o tsv | xargs -I {} az containerapp update --name ca-azure-integration-$ENV --resource-group $RESOURCE_GROUP --revision {}
+          
+          az containerapp revision list --name ca-ai-engine-$ENV --resource-group $RESOURCE_GROUP --query "[1].name" -o tsv | xargs -I {} az containerapp update --name ca-ai-engine-$ENV --resource-group $RESOURCE_GROUP --revision {}
+          
+          az containerapp revision list --name ca-data-processing-$ENV --resource-group $RESOURCE_GROUP --query "[1].name" -o tsv | xargs -I {} az containerapp update --name ca-data-processing-$ENV --resource-group $RESOURCE_GROUP --revision {}
+          
+          az containerapp revision list --name ca-conversation-$ENV --resource-group $RESOURCE_GROUP --query "[1].name" -o tsv | xargs -I {} az containerapp update --name ca-conversation-$ENV --resource-group $RESOURCE_GROUP --revision {}
+          
+          az containerapp revision list --name ca-notification-$ENV --resource-group $RESOURCE_GROUP --query "[1].name" -o tsv | xargs -I {} az containerapp update --name ca-notification-$ENV --resource-group $RESOURCE_GROUP --revision {}
+          
+          az containerapp revision list --name ca-frontend-$ENV --resource-group $RESOURCE_GROUP --query "[1].name" -o tsv | xargs -I {} az containerapp update --name ca-frontend-$ENV --resource-group $RESOURCE_GROUP --revision {}
+          
+          echo "Rollback completed for all Container Apps"

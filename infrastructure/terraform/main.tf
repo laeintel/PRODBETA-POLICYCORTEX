@@ -148,12 +148,21 @@ module "networking" {
   
   vnet_address_space = ["10.0.0.0/16"]
   subnet_configurations = {
-    aks = {
-      address_prefixes = ["10.0.1.0/24"]
+    container_apps = {
+      address_prefixes = ["10.0.1.0/23"]
       service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
+      delegation = {
+        name = "Microsoft.App/environments"
+        service_delegation = {
+          name = "Microsoft.App/environments"
+          actions = [
+            "Microsoft.Network/virtualNetworks/subnets/join/action"
+          ]
+        }
+      }
     }
     app_gateway = {
-      address_prefixes = ["10.0.2.0/24"]
+      address_prefixes = ["10.0.3.0/24"]
       service_endpoints = ["Microsoft.Storage"]
     }
   }
@@ -183,42 +192,403 @@ resource "azurerm_application_insights" "main" {
   tags = local.common_tags
 }
 
-# AKS Cluster for container orchestration
-resource "azurerm_kubernetes_cluster" "main" {
-  name                = "aks-policycortex-${var.environment}"
+# Container Apps Environment
+resource "azurerm_container_app_environment" "main" {
+  name                       = "cae-policycortex-${var.environment}"
+  location                   = azurerm_resource_group.main.location
+  resource_group_name        = azurerm_resource_group.main.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  infrastructure_subnet_id   = module.networking.subnet_ids["container_apps"]
+  
+  tags = local.common_tags
+}
+
+# User-assigned managed identity for Container Apps
+resource "azurerm_user_assigned_identity" "container_apps" {
+  name                = "id-policycortex-${var.environment}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  dns_prefix          = "policycortex-${var.environment}"
   
-  default_node_pool {
-    name       = "default"
-    node_count = 2
-    vm_size    = "Standard_B2s"
-    vnet_subnet_id = module.networking.subnet_ids["aks"]
-  }
+  tags = local.common_tags
+}
+
+# Role assignment for Container Apps to pull from ACR
+resource "azurerm_role_assignment" "container_apps_acr_pull" {
+  scope                = azurerm_container_registry.main.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+}
+
+# Role assignment for Container Apps to access Key Vault
+resource "azurerm_role_assignment" "container_apps_keyvault" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+}
+
+# Role assignment for Container Apps to access Storage
+resource "azurerm_role_assignment" "container_apps_storage" {
+  scope                = azurerm_storage_account.app_storage.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+}
+
+# Container Apps
+# API Gateway
+resource "azurerm_container_app" "api_gateway" {
+  name                         = "ca-api-gateway-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
   
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
   }
   
-  network_profile {
-    network_plugin = "azure"
-    network_policy = "azure"
+  template {
+    min_replicas = 1
+    max_replicas = 10
+    
+    container {
+      name   = "api-gateway"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-api_gateway:latest"
+      cpu    = 0.5
+      memory = "1Gi"
+      
+      env {
+        name  = "PORT"
+        value = "8000"
+      }
+      
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.container_apps.client_id
+      }
+    }
   }
   
-  # Enable monitoring
-  oms_agent {
-    log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  ingress {
+    external_enabled = true
+    target_port      = 8000
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+  
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_apps.id
   }
   
   tags = local.common_tags
 }
 
-# Role assignment for AKS to pull from ACR
-resource "azurerm_role_assignment" "aks_acr_pull" {
-  scope                = azurerm_container_registry.main.id
-  role_definition_name = "AcrPull"
-  principal_id         = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+# Azure Integration Service
+resource "azurerm_container_app" "azure_integration" {
+  name                         = "ca-azure-integration-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+  
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
+  
+  template {
+    min_replicas = 1
+    max_replicas = 5
+    
+    container {
+      name   = "azure-integration"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-azure_integration:latest"
+      cpu    = 0.5
+      memory = "1Gi"
+      
+      env {
+        name  = "PORT"
+        value = "8001"
+      }
+      
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.container_apps.client_id
+      }
+    }
+  }
+  
+  ingress {
+    external_enabled = false
+    target_port      = 8001
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+  
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_apps.id
+  }
+  
+  tags = local.common_tags
+}
+
+# AI Engine Service
+resource "azurerm_container_app" "ai_engine" {
+  name                         = "ca-ai-engine-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+  
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
+  
+  template {
+    min_replicas = 1
+    max_replicas = 8
+    
+    container {
+      name   = "ai-engine"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-ai_engine:latest"
+      cpu    = 1.0
+      memory = "2Gi"
+      
+      env {
+        name  = "PORT"
+        value = "8002"
+      }
+      
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.container_apps.client_id
+      }
+    }
+  }
+  
+  ingress {
+    external_enabled = false
+    target_port      = 8002
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+  
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_apps.id
+  }
+  
+  tags = local.common_tags
+}
+
+# Data Processing Service
+resource "azurerm_container_app" "data_processing" {
+  name                         = "ca-data-processing-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+  
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
+  
+  template {
+    min_replicas = 1
+    max_replicas = 5
+    
+    container {
+      name   = "data-processing"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-data_processing:latest"
+      cpu    = 0.75
+      memory = "1.5Gi"
+      
+      env {
+        name  = "PORT"
+        value = "8003"
+      }
+      
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.container_apps.client_id
+      }
+    }
+  }
+  
+  ingress {
+    external_enabled = false
+    target_port      = 8003
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+  
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_apps.id
+  }
+  
+  tags = local.common_tags
+}
+
+# Conversation Service
+resource "azurerm_container_app" "conversation" {
+  name                         = "ca-conversation-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+  
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
+  
+  template {
+    min_replicas = 1
+    max_replicas = 6
+    
+    container {
+      name   = "conversation"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-conversation:latest"
+      cpu    = 0.5
+      memory = "1Gi"
+      
+      env {
+        name  = "PORT"
+        value = "8004"
+      }
+      
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.container_apps.client_id
+      }
+    }
+  }
+  
+  ingress {
+    external_enabled = false
+    target_port      = 8004
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+  
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_apps.id
+  }
+  
+  tags = local.common_tags
+}
+
+# Notification Service
+resource "azurerm_container_app" "notification" {
+  name                         = "ca-notification-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+  
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
+  
+  template {
+    min_replicas = 1
+    max_replicas = 4
+    
+    container {
+      name   = "notification"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-notification:latest"
+      cpu    = 0.25
+      memory = "0.5Gi"
+      
+      env {
+        name  = "PORT"
+        value = "8005"
+      }
+      
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.container_apps.client_id
+      }
+    }
+  }
+  
+  ingress {
+    external_enabled = false
+    target_port      = 8005
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+  
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_apps.id
+  }
+  
+  tags = local.common_tags
+}
+
+# Frontend Container App
+resource "azurerm_container_app" "frontend" {
+  name                         = "ca-frontend-${var.environment}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+  
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
+  
+  template {
+    min_replicas = 1
+    max_replicas = 10
+    
+    container {
+      name   = "frontend"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-frontend:latest"
+      cpu    = 0.25
+      memory = "0.5Gi"
+      
+      env {
+        name  = "PORT"
+        value = "80"
+      }
+      
+      env {
+        name  = "VITE_API_BASE_URL"
+        value = "https://${azurerm_container_app.api_gateway.latest_revision_fqdn}"
+      }
+    }
+  }
+  
+  ingress {
+    external_enabled = true
+    target_port      = 80
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+  
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.container_apps.id
+  }
+  
+  tags = local.common_tags
 }
 
 # Output values
@@ -242,12 +612,16 @@ output "container_registry_login_server" {
   value = azurerm_container_registry.main.login_server
 }
 
-output "aks_cluster_name" {
-  value = azurerm_kubernetes_cluster.main.name
+output "container_app_environment_name" {
+  value = azurerm_container_app_environment.main.name
 }
 
-output "aks_cluster_fqdn" {
-  value = azurerm_kubernetes_cluster.main.fqdn
+output "container_app_environment_fqdn" {
+  value = azurerm_container_app_environment.main.default_domain
+}
+
+output "container_apps_identity_id" {
+  value = azurerm_user_assigned_identity.container_apps.id
 }
 
 output "log_analytics_workspace_id" {
@@ -257,4 +631,25 @@ output "log_analytics_workspace_id" {
 output "application_insights_instrumentation_key" {
   value = azurerm_application_insights.main.instrumentation_key
   sensitive = true
+}
+
+# Container Apps URLs
+output "api_gateway_url" {
+  value = "https://${azurerm_container_app.api_gateway.latest_revision_fqdn}"
+}
+
+output "frontend_url" {
+  value = "https://${azurerm_container_app.frontend.latest_revision_fqdn}"
+}
+
+output "container_apps_fqdns" {
+  value = {
+    api_gateway      = azurerm_container_app.api_gateway.latest_revision_fqdn
+    azure_integration = azurerm_container_app.azure_integration.latest_revision_fqdn
+    ai_engine        = azurerm_container_app.ai_engine.latest_revision_fqdn
+    data_processing  = azurerm_container_app.data_processing.latest_revision_fqdn
+    conversation     = azurerm_container_app.conversation.latest_revision_fqdn
+    notification     = azurerm_container_app.notification.latest_revision_fqdn
+    frontend         = azurerm_container_app.frontend.latest_revision_fqdn
+  }
 }
