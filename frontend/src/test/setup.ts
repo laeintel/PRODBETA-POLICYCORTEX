@@ -6,6 +6,57 @@ import { TextEncoder, TextDecoder } from 'util'
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
 
+// Mock crypto API for MSAL
+Object.defineProperty(global, 'crypto', {
+  value: {
+    getRandomValues: (arr: any) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256)
+      }
+      return arr
+    },
+    randomUUID: () => '12345678-1234-1234-1234-123456789012',
+    subtle: {
+      digest: vi.fn(),
+      generateKey: vi.fn(),
+      sign: vi.fn(),
+      verify: vi.fn(),
+      encrypt: vi.fn(),
+      decrypt: vi.fn(),
+    },
+  },
+})
+
+// Mock MSAL library
+vi.mock('@azure/msal-browser', () => ({
+  PublicClientApplication: vi.fn().mockImplementation(() => ({
+    initialize: vi.fn().mockResolvedValue(undefined),
+    handleRedirectPromise: vi.fn().mockResolvedValue(null),
+    acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'mock-token' }),
+    acquireTokenPopup: vi.fn().mockResolvedValue({ accessToken: 'mock-token' }),
+    loginPopup: vi.fn().mockResolvedValue({}),
+    logout: vi.fn().mockResolvedValue(undefined),
+    getAllAccounts: vi.fn().mockReturnValue([]),
+    getAccountByUsername: vi.fn().mockReturnValue(null),
+    addEventCallback: vi.fn().mockReturnValue('mock-callback-id'),
+    removeEventCallback: vi.fn(),
+  })),
+  InteractionRequiredAuthError: class InteractionRequiredAuthError extends Error {},
+  EventType: {
+    LOGIN_SUCCESS: 'LOGIN_SUCCESS',
+    LOGIN_FAILURE: 'LOGIN_FAILURE',
+    LOGOUT_SUCCESS: 'LOGOUT_SUCCESS',
+    ACQUIRE_TOKEN_SUCCESS: 'ACQUIRE_TOKEN_SUCCESS',
+    ACQUIRE_TOKEN_FAILURE: 'ACQUIRE_TOKEN_FAILURE',
+  },
+  InteractionType: {
+    Popup: 'popup',
+    Redirect: 'redirect',
+    Silent: 'silent',
+  },
+  BrowserAuthError: class BrowserAuthError extends Error {},
+}))
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -69,11 +120,6 @@ Object.defineProperty(navigator, 'clipboard', {
   },
 })
 
-// Mock crypto.randomUUID
-Object.defineProperty(crypto, 'randomUUID', {
-  writable: true,
-  value: vi.fn().mockReturnValue('12345678-1234-1234-1234-123456789012'),
-})
 
 // Mock localStorage
 const localStorageMock = {
