@@ -72,7 +72,7 @@ jobs:
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate
+        run: terraform validate -no-color
         working-directory: infrastructure/terraform
 
       - name: Comment PR
