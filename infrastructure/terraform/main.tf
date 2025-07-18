@@ -1,4 +1,5 @@
 # Main Terraform configuration for PolicyCortex infrastructure
+# Service principal now has Owner permissions on subscription
 terraform {
   required_version = ">= 1.5"
   required_providers {
