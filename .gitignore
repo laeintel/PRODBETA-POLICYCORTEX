@@ -59,7 +59,7 @@ build/
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
-*.tfvars
+# *.tfvars  # Commented out to allow environment-specific tfvars
 *.tfvars.json
 override.tf
 override.tf.json
