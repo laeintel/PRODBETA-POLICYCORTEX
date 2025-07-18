@@ -7,10 +7,6 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.80"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.4"
-    }
   }
   
   backend "azurerm" {
@@ -47,19 +43,6 @@ locals {
 # Data source for current client configuration
 data "azurerm_client_config" "current" {}
 
-# Random strings for unique naming
-resource "random_string" "storage_suffix" {
-  length  = 6
-  special = false
-  upper   = false
-}
-
-resource "random_string" "kv_suffix" {
-  length  = 6
-  special = false
-  upper   = false
-}
-
 # Resource group for the environment
 resource "azurerm_resource_group" "main" {
   name     = "rg-policycortex-${var.environment}"
@@ -69,7 +52,7 @@ resource "azurerm_resource_group" "main" {
 
 # Storage account for application data (with security compliance)
 resource "azurerm_storage_account" "app_storage" {
-  name                     = "stpolicycortex${var.environment}${random_string.storage_suffix.result}"
+  name                     = "stpolicycortex${var.environment}stg"
   resource_group_name      = azurerm_resource_group.main.name
   location                = azurerm_resource_group.main.location
   account_tier             = "Standard"
@@ -115,7 +98,7 @@ resource "azurerm_storage_account" "app_storage" {
 
 # Key Vault for secrets management
 resource "azurerm_key_vault" "main" {
-  name                = "kv-policycortex-${var.environment}-${random_string.kv_suffix.result}"
+  name                = "kvpolicycortex${var.environment}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
