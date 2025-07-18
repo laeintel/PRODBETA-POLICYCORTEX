@@ -38,7 +38,7 @@ interface HeaderProps {
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const theme = useTheme()
-  const { theme: appTheme, toggleTheme } = useAppTheme()
+  const { theme: appTheme, toggleTheme } = useAppTheme() || { theme: 'light', toggleTheme: () => {} }
   const { user, logout } = useAuth()
   const { unreadCount } = useNotifications()
   

@@ -21,7 +21,7 @@ import { env } from '@/config/environment'
 
 const LoginPage = () => {
   const theme = useTheme()
-  const { theme: appTheme, toggleTheme } = useAppTheme()
+  const { theme: appTheme, toggleTheme } = useAppTheme() || { theme: 'light', toggleTheme: () => {} }
   const { login, loginPopup, isLoading, error } = useAuth()
   const [loginMethod, setLoginMethod] = useState<'redirect' | 'popup'>('redirect')
 

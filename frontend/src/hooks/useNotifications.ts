@@ -99,7 +99,7 @@ export const useNotifications = () => {
   }
 
   const getNotificationsByType = (type: string) => {
-    return notifications?.filter(n => n.type === type) || []
+    return notifications?.filter(n => (n.type as any) === type) || []
   }
 
   const getUnreadNotifications = () => {
