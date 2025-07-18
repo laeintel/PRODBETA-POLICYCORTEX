@@ -20,12 +20,12 @@ terraform {
 # Configure the Microsoft Azure Provider
 provider "azurerm" {
   features {
-    resource_group {
-      prevent_deletion_if_contains_resources = false
-    }
     key_vault {
       purge_soft_delete_on_destroy    = true
       recover_soft_deleted_key_vaults = true
+    }
+    resource_group {
+      prevent_deletion_if_contains_resources = false
     }
     cognitive_account {
       purge_soft_delete_on_destroy = true
@@ -46,13 +46,6 @@ locals {
 # Data source for current client configuration
 data "azurerm_client_config" "current" {}
 
-# Resource group for the environment
-resource "azurerm_resource_group" "main" {
-  name     = "rg-policycortex-${var.environment}"
-  location = var.location
-  tags     = local.common_tags
-}
-
 # Random strings for unique naming
 resource "random_string" "storage_suffix" {
   length  = 6
@@ -66,20 +59,27 @@ resource "random_string" "kv_suffix" {
   upper   = false
 }
 
+# Resource group for the environment
+resource "azurerm_resource_group" "main" {
+  name     = "rg-policycortex-${var.environment}"
+  location = var.location
+  tags     = local.common_tags
+}
+
 # Storage account for application data (with security compliance)
 resource "azurerm_storage_account" "app_storage" {
   name                     = "stpolicycortex${var.environment}${random_string.storage_suffix.result}"
   resource_group_name      = azurerm_resource_group.main.name
   location                = azurerm_resource_group.main.location
   account_tier             = "Standard"
-  account_replication_type = "GRS"  # Geographic redundancy for critical data
+  account_replication_type = "GRS"
   
   # Security configurations
   min_tls_version                 = "TLS1_2"
   enable_https_traffic_only       = true
-  public_network_access_enabled   = false  # Disable public access
-  allow_nested_items_to_be_public = false  # Prevent blob anonymous access
-  shared_access_key_enabled       = false  # Disable shared key auth
+  public_network_access_enabled   = false
+  allow_nested_items_to_be_public = false
+  shared_access_key_enabled       = false
   
   # Network rules
   network_rules {
