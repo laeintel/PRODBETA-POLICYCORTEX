@@ -199,7 +199,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "internal" {
 resource "azurerm_storage_account" "flow_logs" {
   count = var.enable_flow_logs ? 1 : 0
 
-  name                     = "${replace(local.naming_prefix, "-", "")}flowlogs${local.naming_suffix}"
+  name                     = "pcx${var.environment}fl${local.naming_suffix}"
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"

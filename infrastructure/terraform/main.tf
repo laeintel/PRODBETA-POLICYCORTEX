@@ -151,6 +151,9 @@ module "networking" {
   # DDoS protection disabled to avoid high costs
   enable_ddos_protection = false
   
+  # Flow logs disabled to avoid storage costs
+  enable_flow_logs = false
+  
   # Log Analytics integration
   log_analytics_workspace_id          = azurerm_log_analytics_workspace.main.workspace_id
   log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.main.id
