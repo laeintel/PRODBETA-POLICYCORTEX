@@ -78,13 +78,13 @@ resource "azurerm_storage_account" "app_storage" {
   # Security configurations
   min_tls_version                 = "TLS1_2"
   enable_https_traffic_only       = true
-  public_network_access_enabled   = false
+  public_network_access_enabled   = true
   allow_nested_items_to_be_public = false
-  shared_access_key_enabled       = false
+  shared_access_key_enabled       = true
   
-  # Network rules
+  # Network rules (Allow during initial setup)
   network_rules {
-    default_action = "Deny"
+    default_action = "Allow"
     bypass         = ["AzureServices"]
   }
   
