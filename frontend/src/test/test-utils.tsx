@@ -5,8 +5,6 @@ import { ThemeProvider } from '@mui/material/styles'
 import { createTheme } from '@mui/material/styles'
 import { HelmetProvider } from 'react-helmet-async'
 import { MsalProvider } from '@azure/msal-react'
-import { ThemeProvider as CustomThemeProvider } from '@/providers/ThemeProvider'
-import { NotificationProvider } from '@/providers/NotificationProvider'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Mock MSAL instance (since MSAL is fully mocked in setup.ts)
@@ -31,11 +29,7 @@ const AllTheProviders = ({ children }: AllTheProvidersProps) => {
         <BrowserRouter>
           <QueryClientProvider client={queryClient}>
             <ThemeProvider theme={theme}>
-              <CustomThemeProvider>
-                <NotificationProvider>
-                  {children}
-                </NotificationProvider>
-              </CustomThemeProvider>
+              {children}
             </ThemeProvider>
           </QueryClientProvider>
         </BrowserRouter>

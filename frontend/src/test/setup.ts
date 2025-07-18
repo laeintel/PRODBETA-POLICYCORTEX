@@ -339,6 +339,40 @@ vi.mock('@/config/environment', () => ({
   },
 }))
 
+// Mock WebSocketProvider
+vi.mock('@/providers/WebSocketProvider', () => ({
+  WebSocketProvider: ({ children }: any) => children,
+  useWebSocket: () => ({
+    connected: false,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    send: vi.fn(),
+    subscribe: vi.fn(),
+    unsubscribe: vi.fn(),
+  }),
+}))
+
+// Mock NotificationProvider
+vi.mock('@/providers/NotificationProvider', () => ({
+  NotificationProvider: ({ children }: any) => children,
+  useNotifications: () => ({
+    notifications: [],
+    addNotification: vi.fn(),
+    removeNotification: vi.fn(),
+    clearNotifications: vi.fn(),
+  }),
+}))
+
+// Mock ThemeProvider
+vi.mock('@/providers/ThemeProvider', () => ({
+  ThemeProvider: ({ children }: any) => children,
+  useTheme: () => ({
+    theme: 'light',
+    toggleTheme: vi.fn(),
+    setTheme: vi.fn(),
+  }),
+}))
+
 // Clean up after each test
 afterEach(() => {
   vi.clearAllMocks()
