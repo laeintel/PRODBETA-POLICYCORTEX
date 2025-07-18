@@ -34,3 +34,9 @@ variable "allowed_ips" {
   type        = list(string)
   default     = []
 }
+
+variable "create_terraform_access_policy" {
+  description = "Whether to create Terraform access policy for Key Vault (set to false if already exists)"
+  type        = bool
+  default     = true
+}

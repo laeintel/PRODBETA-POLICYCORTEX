@@ -117,8 +117,10 @@ resource "azurerm_key_vault" "main" {
   tags = local.common_tags
 }
 
-# Key Vault access policy for Terraform
+# Key Vault access policy for Terraform (conditional creation)
 resource "azurerm_key_vault_access_policy" "terraform" {
+  count = var.create_terraform_access_policy ? 1 : 0
+  
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
   object_id    = data.azurerm_client_config.current.object_id
@@ -168,15 +170,7 @@ module "networking" {
     container_apps = {
       address_prefixes = ["10.0.0.0/23"]
       service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
-      delegation = {
-        name = "Microsoft.App/environments"
-        service_delegation = {
-          name = "Microsoft.App/environments"
-          actions = [
-            "Microsoft.Network/virtualNetworks/subnets/join/action"
-          ]
-        }
-      }
+      delegation = null
     }
     app_gateway = {
       address_prefixes = ["10.0.2.0/24"]
