@@ -77,7 +77,7 @@ resource "azurerm_storage_account" "app_storage" {
   
   # Security configurations
   min_tls_version                 = "TLS1_2"
-  enable_https_traffic_only       = true
+  https_traffic_only_enabled      = true
   public_network_access_enabled   = true
   allow_nested_items_to_be_public = false
   shared_access_key_enabled       = true
