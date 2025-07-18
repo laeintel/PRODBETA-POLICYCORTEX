@@ -17,12 +17,6 @@ vi.mock('@/hooks/useAuthStatus', () => ({
   }),
 }));
 
-vi.mock('@azure/msal-react', () => ({
-  ...vi.importActual('@azure/msal-react'),
-  useIsAuthenticated: () => true,
-  AuthenticatedTemplate: ({ children }: any) => children,
-  UnauthenticatedTemplate: () => null,
-}));
 
 describe('App', () => {
   it('renders without crashing', () => {

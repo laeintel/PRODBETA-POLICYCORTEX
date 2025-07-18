@@ -9,16 +9,8 @@ import { ThemeProvider as CustomThemeProvider } from '@/providers/ThemeProvider'
 import { NotificationProvider } from '@/providers/NotificationProvider'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-// Mock MSAL instance
-const msalInstance = {
-  initialize: () => Promise.resolve(),
-  handleRedirectPromise: () => Promise.resolve(null),
-  acquireTokenSilent: () => Promise.resolve({ accessToken: 'mock-token' }),
-  getAllAccounts: () => [],
-  getAccountByUsername: () => null,
-  addEventCallback: () => 'mock-callback-id',
-  removeEventCallback: () => {},
-} as any
+// Mock MSAL instance (since MSAL is fully mocked in setup.ts)
+const msalInstance = {} as any
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
