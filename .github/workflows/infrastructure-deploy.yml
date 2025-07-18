@@ -261,7 +261,96 @@ jobs:
         working-directory: infrastructure/terraform
 
       - name: Output Infrastructure Details
-        run: terraform output -json
+        id: tf_output
+        run: |
+          terraform output -json > terraform_outputs.json
+          cat terraform_outputs.json
+        working-directory: infrastructure/terraform
+
+      - name: Get Container Registry Details
+        id: acr_details
+        run: |
+          ACR_LOGIN_SERVER=$(terraform output -raw container_registry_login_server)
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+        working-directory: infrastructure/terraform
+
+      - name: Build and Push Placeholder Images
+        run: |
+          # Login to ACR
+          az acr login --name $(terraform output -raw container_registry_name)
+          
+          # Build and push placeholder images for each service
+          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Building placeholder for $service..."
+            
+            # Create a simple placeholder Dockerfile
+            mkdir -p /tmp/$service
+            cat > /tmp/$service/Dockerfile << EOF
+          FROM nginx:alpine
+          RUN echo "<h1>PolicyCortex $service - Coming Soon</h1><p>Infrastructure deployed successfully. Waiting for application deployment.</p>" > /usr/share/nginx/html/index.html
+          EXPOSE 80
+          EOF
+            
+            # Build and push
+            docker build -t ${{ steps.acr_details.outputs.acr_login_server }}/policycortex-$service:latest /tmp/$service
+            docker push ${{ steps.acr_details.outputs.acr_login_server }}/policycortex-$service:latest
+          done
+        working-directory: infrastructure/terraform
+
+      - name: Verify Container Apps Deployment
+        run: |
+          echo "Verifying Container Apps are running..."
+          
+          RESOURCE_GROUP=$(terraform output -raw resource_group_name)
+          
+          # Wait for Container Apps to be ready
+          sleep 60
+          
+          # Check each Container App status
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Checking ca-$service-dev..."
+            status=$(az containerapp show --name ca-$service-dev --resource-group $RESOURCE_GROUP --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+            echo "  Status: $status"
+            
+            if [ "$status" = "Succeeded" ]; then
+              fqdn=$(az containerapp show --name ca-$service-dev --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv 2>/dev/null || echo "No ingress")
+              if [ "$fqdn" != "No ingress" ]; then
+                echo "  URL: https://$fqdn"
+              fi
+            fi
+          done
+        working-directory: infrastructure/terraform
+
+      - name: Display Deployment Summary
+        run: |
+          echo "=================================="
+          echo "🎉 Infrastructure Deployment Complete!"
+          echo "=================================="
+          echo "Environment: dev"
+          echo ""
+          echo "📋 Resources Created:"
+          echo "✅ Resource Group: $(terraform output -raw resource_group_name)"
+          echo "✅ Container Registry: $(terraform output -raw container_registry_name)"
+          echo "✅ Storage Account: $(terraform output -raw storage_account_name)"
+          echo "✅ Key Vault: $(terraform output -raw key_vault_name)"
+          echo "✅ Container Apps Environment: $(terraform output -raw container_app_environment_name)"
+          echo "✅ Log Analytics Workspace: $(terraform output -raw log_analytics_workspace_id | cut -d'/' -f9)"
+          echo ""
+          echo "🌐 Application URLs:"
+          API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "Not yet available")
+          FRONTEND_URL=$(terraform output -raw frontend_url 2>/dev/null || echo "Not yet available")
+          echo "🔌 API Gateway: $API_URL"
+          echo "🌍 Frontend: $FRONTEND_URL"
+          echo ""
+          echo "📝 Next Steps:"
+          echo "1. Run application deployment to deploy your actual services"
+          echo "2. Access the frontend URL above to verify deployment"
+          echo "3. Check Azure Portal for detailed resource information"
+          echo "=================================="
         working-directory: infrastructure/terraform
 
   plan-staging:
@@ -345,6 +434,99 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve staging.tfplan
+        working-directory: infrastructure/terraform
+
+      - name: Output Infrastructure Details
+        id: tf_output
+        run: |
+          terraform output -json > terraform_outputs.json
+          cat terraform_outputs.json
+        working-directory: infrastructure/terraform
+
+      - name: Get Container Registry Details
+        id: acr_details
+        run: |
+          ACR_LOGIN_SERVER=$(terraform output -raw container_registry_login_server)
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+        working-directory: infrastructure/terraform
+
+      - name: Build and Push Placeholder Images
+        run: |
+          # Login to ACR
+          az acr login --name $(terraform output -raw container_registry_name)
+          
+          # Build and push placeholder images for each service
+          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Building placeholder for $service..."
+            
+            # Create a simple placeholder Dockerfile
+            mkdir -p /tmp/$service
+            cat > /tmp/$service/Dockerfile << EOF
+          FROM nginx:alpine
+          RUN echo "<h1>PolicyCortex $service - Coming Soon</h1><p>Infrastructure deployed successfully. Waiting for application deployment.</p>" > /usr/share/nginx/html/index.html
+          EXPOSE 80
+          EOF
+            
+            # Build and push
+            docker build -t ${{ steps.acr_details.outputs.acr_login_server }}/policycortex-$service:latest /tmp/$service
+            docker push ${{ steps.acr_details.outputs.acr_login_server }}/policycortex-$service:latest
+          done
+        working-directory: infrastructure/terraform
+
+      - name: Verify Container Apps Deployment
+        run: |
+          echo "Verifying Container Apps are running..."
+          
+          RESOURCE_GROUP=$(terraform output -raw resource_group_name)
+          
+          # Wait for Container Apps to be ready
+          sleep 60
+          
+          # Check each Container App status
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Checking ca-$service-staging..."
+            status=$(az containerapp show --name ca-$service-staging --resource-group $RESOURCE_GROUP --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+            echo "  Status: $status"
+            
+            if [ "$status" = "Succeeded" ]; then
+              fqdn=$(az containerapp show --name ca-$service-staging --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv 2>/dev/null || echo "No ingress")
+              if [ "$fqdn" != "No ingress" ]; then
+                echo "  URL: https://$fqdn"
+              fi
+            fi
+          done
+        working-directory: infrastructure/terraform
+
+      - name: Display Deployment Summary
+        run: |
+          echo "=================================="
+          echo "🎉 Infrastructure Deployment Complete!"
+          echo "=================================="
+          echo "Environment: staging"
+          echo ""
+          echo "📋 Resources Created:"
+          echo "✅ Resource Group: $(terraform output -raw resource_group_name)"
+          echo "✅ Container Registry: $(terraform output -raw container_registry_name)"
+          echo "✅ Storage Account: $(terraform output -raw storage_account_name)"
+          echo "✅ Key Vault: $(terraform output -raw key_vault_name)"
+          echo "✅ Container Apps Environment: $(terraform output -raw container_app_environment_name)"
+          echo "✅ Log Analytics Workspace: $(terraform output -raw log_analytics_workspace_id | cut -d'/' -f9)"
+          echo ""
+          echo "🌐 Application URLs:"
+          API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "Not yet available")
+          FRONTEND_URL=$(terraform output -raw frontend_url 2>/dev/null || echo "Not yet available")
+          echo "🔌 API Gateway: $API_URL"
+          echo "🌍 Frontend: $FRONTEND_URL"
+          echo ""
+          echo "📝 Next Steps:"
+          echo "1. Run application deployment to deploy your actual services"
+          echo "2. Access the frontend URL above to verify deployment"
+          echo "3. Check Azure Portal for detailed resource information"
+          echo "=================================="
         working-directory: infrastructure/terraform
 
   plan-prod:
@@ -431,7 +613,96 @@ jobs:
         working-directory: infrastructure/terraform
 
       - name: Output Infrastructure Details
-        run: terraform output -json
+        id: tf_output
+        run: |
+          terraform output -json > terraform_outputs.json
+          cat terraform_outputs.json
+        working-directory: infrastructure/terraform
+
+      - name: Get Container Registry Details
+        id: acr_details
+        run: |
+          ACR_LOGIN_SERVER=$(terraform output -raw container_registry_login_server)
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+        working-directory: infrastructure/terraform
+
+      - name: Build and Push Placeholder Images
+        run: |
+          # Login to ACR
+          az acr login --name $(terraform output -raw container_registry_name)
+          
+          # Build and push placeholder images for each service
+          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Building placeholder for $service..."
+            
+            # Create a simple placeholder Dockerfile
+            mkdir -p /tmp/$service
+            cat > /tmp/$service/Dockerfile << EOF
+          FROM nginx:alpine
+          RUN echo "<h1>PolicyCortex $service - Coming Soon</h1><p>Infrastructure deployed successfully. Waiting for application deployment.</p>" > /usr/share/nginx/html/index.html
+          EXPOSE 80
+          EOF
+            
+            # Build and push
+            docker build -t ${{ steps.acr_details.outputs.acr_login_server }}/policycortex-$service:latest /tmp/$service
+            docker push ${{ steps.acr_details.outputs.acr_login_server }}/policycortex-$service:latest
+          done
+        working-directory: infrastructure/terraform
+
+      - name: Verify Container Apps Deployment
+        run: |
+          echo "Verifying Container Apps are running..."
+          
+          RESOURCE_GROUP=$(terraform output -raw resource_group_name)
+          
+          # Wait for Container Apps to be ready
+          sleep 60
+          
+          # Check each Container App status
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Checking ca-$service-prod..."
+            status=$(az containerapp show --name ca-$service-prod --resource-group $RESOURCE_GROUP --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+            echo "  Status: $status"
+            
+            if [ "$status" = "Succeeded" ]; then
+              fqdn=$(az containerapp show --name ca-$service-prod --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv 2>/dev/null || echo "No ingress")
+              if [ "$fqdn" != "No ingress" ]; then
+                echo "  URL: https://$fqdn"
+              fi
+            fi
+          done
+        working-directory: infrastructure/terraform
+
+      - name: Display Deployment Summary
+        run: |
+          echo "=================================="
+          echo "🎉 Infrastructure Deployment Complete!"
+          echo "=================================="
+          echo "Environment: production"
+          echo ""
+          echo "📋 Resources Created:"
+          echo "✅ Resource Group: $(terraform output -raw resource_group_name)"
+          echo "✅ Container Registry: $(terraform output -raw container_registry_name)"
+          echo "✅ Storage Account: $(terraform output -raw storage_account_name)"
+          echo "✅ Key Vault: $(terraform output -raw key_vault_name)"
+          echo "✅ Container Apps Environment: $(terraform output -raw container_app_environment_name)"
+          echo "✅ Log Analytics Workspace: $(terraform output -raw log_analytics_workspace_id | cut -d'/' -f9)"
+          echo ""
+          echo "🌐 Application URLs:"
+          API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "Not yet available")
+          FRONTEND_URL=$(terraform output -raw frontend_url 2>/dev/null || echo "Not yet available")
+          echo "🔌 API Gateway: $API_URL"
+          echo "🌍 Frontend: $FRONTEND_URL"
+          echo ""
+          echo "📝 Next Steps:"
+          echo "1. Run application deployment to deploy your actual services"
+          echo "2. Access the frontend URL above to verify deployment"
+          echo "3. Check Azure Portal for detailed resource information"
+          echo "=================================="
         working-directory: infrastructure/terraform
 
   destroy:
