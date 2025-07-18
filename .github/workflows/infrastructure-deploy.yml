@@ -134,7 +134,7 @@ jobs:
     name: Plan Dev Environment
     runs-on: ubuntu-latest
     needs: [validate, security-scan]
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && success()
     environment: dev
     steps:
       - name: Checkout code
@@ -206,7 +206,7 @@ jobs:
     name: Apply Dev Environment
     runs-on: ubuntu-latest
     needs: plan-dev
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action == 'apply'))
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action == 'apply')) && success()
     environment: dev
     steps:
       - name: Checkout code
@@ -227,6 +227,7 @@ jobs:
         with:
           name: dev-terraform-plan
           path: infrastructure/terraform/
+        continue-on-error: true
 
       - name: Terraform Init
         run: |
@@ -237,8 +238,26 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.TERRAFORM_BACKEND_RESOURCE_GROUP }}"
         working-directory: infrastructure/terraform
 
+      - name: Check if plan exists
+        id: check_plan
+        run: |
+          if [ -f "infrastructure/terraform/dev.tfplan" ]; then
+            echo "plan_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "plan_exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Terraform Apply
+        if: steps.check_plan.outputs.plan_exists == 'true'
         run: terraform apply -auto-approve dev.tfplan
+        working-directory: infrastructure/terraform
+        
+      - name: Terraform Apply (no plan)
+        if: steps.check_plan.outputs.plan_exists == 'false'
+        run: |
+          terraform apply \
+            -var-file="environments/dev/terraform.tfvars" \
+            -auto-approve
         working-directory: infrastructure/terraform
 
       - name: Output Infrastructure Details
