@@ -57,6 +57,33 @@ vi.mock('@azure/msal-browser', () => ({
   BrowserAuthError: class BrowserAuthError extends Error {},
 }))
 
+// Mock @azure/msal-react
+vi.mock('@azure/msal-react', () => ({
+  MsalProvider: ({ children }: any) => children,
+  useMsal: () => ({
+    instance: {
+      acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'mock-token' }),
+      getAllAccounts: vi.fn().mockReturnValue([]),
+    },
+    accounts: [],
+    inProgress: 'none',
+  }),
+  useIsAuthenticated: () => false,
+  useMsalAuthentication: () => ({
+    login: vi.fn(),
+    result: null,
+    error: null,
+  }),
+  AuthenticatedTemplate: ({ children }: any) => children,
+  UnauthenticatedTemplate: ({ children }: any) => children,
+  useAccount: () => null,
+  useMsalProvider: () => ({
+    instance: {
+      acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'mock-token' }),
+    },
+  }),
+}))
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
