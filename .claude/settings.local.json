@@ -73,7 +73,9 @@
       "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" secret set AKS_CLUSTER_NAME_STAGING --body \"aks-policycortex-staging\")",
       "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" secret set AKS_CLUSTER_NAME_PROD --body \"aks-policycortex-prod\")",
       "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" secret list)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }
