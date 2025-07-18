@@ -9,7 +9,7 @@ interface ThemeContextType {
   setTheme: (theme: AppTheme) => void
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export const useTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext)

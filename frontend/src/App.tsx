@@ -3,7 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { CssBaseline, Box } from '@mui/material'
 import { useIsAuthenticated } from '@azure/msal-react'
 import { Helmet } from 'react-helmet-async'
-import { useTheme } from '@/hooks/useTheme'
+import { useTheme as useAppTheme } from '@/hooks/useTheme'
+import { useTheme } from '@mui/material/styles'
 import { useAuth } from '@/hooks/useAuth'
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react'
 import { Layout } from '@/components/Layout/Layout'
@@ -17,7 +18,8 @@ import { useAuthStatus } from '@/hooks/useAuthStatus'
 
 function App() {
   const isAuthenticated = useIsAuthenticated()
-  const { theme } = useTheme()
+  const theme = useTheme()
+  const { theme: appTheme } = useAppTheme() || { theme: 'light' }
   const { initialize, isLoading } = useAuth()
   const { isReady } = useAuthStatus()
 

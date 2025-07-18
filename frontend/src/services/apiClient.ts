@@ -168,11 +168,13 @@ const handleGenericError = (status: number, data: any) => {
 // Create standardized API error
 const createApiError = (error: AxiosError): ApiError => {
   const { response } = error
+  const errorData = response?.data as any
+  const errorInfo = error as any
   
   return {
-    message: response?.data?.message || error.message || 'An unexpected error occurred',
-    code: response?.data?.code || error.code || 'UNKNOWN_ERROR',
-    details: response?.data?.details || {},
+    message: errorData?.message || errorInfo?.message || 'An unexpected error occurred',
+    code: errorData?.code || errorInfo?.code || 'UNKNOWN_ERROR',
+    details: errorData?.details || errorInfo?.details || {},
     timestamp: new Date().toISOString(),
   }
 }

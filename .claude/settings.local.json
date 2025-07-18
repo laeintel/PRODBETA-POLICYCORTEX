@@ -83,7 +83,9 @@
       "Bash(npm run build:*)",
       "Bash(terraform:*)",
       "Bash(az ad sp show:*)",
-      "Bash(az role assignment list:*)"
+      "Bash(az role assignment list:*)",
+      "Bash(az storage account update:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
