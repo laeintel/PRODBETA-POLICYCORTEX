@@ -126,6 +126,101 @@ resource "azurerm_key_vault_access_policy" "terraform" {
   ]
 }
 
+# Container Registry for Docker images
+resource "azurerm_container_registry" "main" {
+  name                = "crpolicycortex${var.environment}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  sku                 = "Basic"
+  admin_enabled       = true
+  
+  tags = local.common_tags
+}
+
+# Virtual Network using networking module
+module "networking" {
+  source = "./modules/networking"
+  
+  project_name        = "policycortex"
+  environment         = var.environment
+  location            = var.location
+  resource_group_name = azurerm_resource_group.main.name
+  
+  vnet_address_space = ["10.0.0.0/16"]
+  subnet_configurations = {
+    aks = {
+      address_prefixes = ["10.0.1.0/24"]
+      service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
+    }
+    app_gateway = {
+      address_prefixes = ["10.0.2.0/24"]
+      service_endpoints = ["Microsoft.Storage"]
+    }
+  }
+  
+  common_tags = local.common_tags
+}
+
+# Log Analytics Workspace for monitoring
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "law-policycortex-${var.environment}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+  
+  tags = local.common_tags
+}
+
+# Application Insights for monitoring
+resource "azurerm_application_insights" "main" {
+  name                = "ai-policycortex-${var.environment}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+  application_type    = "web"
+  
+  tags = local.common_tags
+}
+
+# AKS Cluster for container orchestration
+resource "azurerm_kubernetes_cluster" "main" {
+  name                = "aks-policycortex-${var.environment}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  dns_prefix          = "policycortex-${var.environment}"
+  
+  default_node_pool {
+    name       = "default"
+    node_count = 2
+    vm_size    = "Standard_B2s"
+    vnet_subnet_id = module.networking.subnet_ids["aks"]
+  }
+  
+  identity {
+    type = "SystemAssigned"
+  }
+  
+  network_profile {
+    network_plugin = "azure"
+    network_policy = "azure"
+  }
+  
+  # Enable monitoring
+  oms_agent {
+    log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  }
+  
+  tags = local.common_tags
+}
+
+# Role assignment for AKS to pull from ACR
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  scope                = azurerm_container_registry.main.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+}
+
 # Output values
 output "resource_group_name" {
   value = azurerm_resource_group.main.name
@@ -137,4 +232,29 @@ output "storage_account_name" {
 
 output "key_vault_name" {
   value = azurerm_key_vault.main.name
+}
+
+output "container_registry_name" {
+  value = azurerm_container_registry.main.name
+}
+
+output "container_registry_login_server" {
+  value = azurerm_container_registry.main.login_server
+}
+
+output "aks_cluster_name" {
+  value = azurerm_kubernetes_cluster.main.name
+}
+
+output "aks_cluster_fqdn" {
+  value = azurerm_kubernetes_cluster.main.fqdn
+}
+
+output "log_analytics_workspace_id" {
+  value = azurerm_log_analytics_workspace.main.id
+}
+
+output "application_insights_instrumentation_key" {
+  value = azurerm_application_insights.main.instrumentation_key
+  sensitive = true
 }
