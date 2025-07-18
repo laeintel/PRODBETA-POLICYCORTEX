@@ -12,16 +12,23 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     SERVICE_PORT=8003
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     curl \
     wget \
-    openjdk-11-jre-headless \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Set JAVA_HOME environment variable
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+# Install Java separately (if needed for Spark)
+# RUN apt-get update && \
+#     apt-get install -y --no-install-recommends \
+#     openjdk-11-jre-headless \
+#     && rm -rf /var/lib/apt/lists/*
+
+# Set JAVA_HOME environment variable (if Java is installed)
+# ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
