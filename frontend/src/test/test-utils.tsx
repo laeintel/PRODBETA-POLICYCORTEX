@@ -5,21 +5,20 @@ import { ThemeProvider } from '@mui/material/styles'
 import { createTheme } from '@mui/material/styles'
 import { HelmetProvider } from 'react-helmet-async'
 import { MsalProvider } from '@azure/msal-react'
-import { PublicClientApplication } from '@azure/msal-browser'
 import { ThemeProvider as CustomThemeProvider } from '@/providers/ThemeProvider'
 import { NotificationProvider } from '@/providers/NotificationProvider'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-// Mock MSAL configuration
-const msalConfig = {
-  auth: {
-    clientId: 'test-client-id',
-    authority: 'https://login.microsoftonline.com/test-tenant',
-    redirectUri: 'http://localhost:3000'
-  }
-}
-
-const msalInstance = new PublicClientApplication(msalConfig)
+// Mock MSAL instance
+const msalInstance = {
+  initialize: () => Promise.resolve(),
+  handleRedirectPromise: () => Promise.resolve(null),
+  acquireTokenSilent: () => Promise.resolve({ accessToken: 'mock-token' }),
+  getAllAccounts: () => [],
+  getAccountByUsername: () => null,
+  addEventCallback: () => 'mock-callback-id',
+  removeEventCallback: () => {},
+} as any
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
