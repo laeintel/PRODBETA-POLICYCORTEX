@@ -16,9 +16,6 @@ terraform {
 
 # Configure the Microsoft Azure Provider
 provider "azurerm" {
-  # Disable automatic resource provider registration to avoid conflicts
-  resource_provider_registrations = "none"
-  
   features {
     key_vault {
       purge_soft_delete_on_destroy    = true
