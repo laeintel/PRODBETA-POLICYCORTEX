@@ -31,8 +31,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Download spaCy model
-RUN python -m spacy download en_core_web_sm
+# Download spaCy model (skip if not available)
+RUN python -m spacy download en_core_web_sm || echo "SpaCy model download failed, continuing..."
 
 # Copy application code
 COPY . .
