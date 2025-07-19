@@ -197,7 +197,7 @@ module "data_services" {
   environment                   = var.environment
   resource_group_name           = azurerm_resource_group.main.name
   vnet_name                     = module.networking.vnet_name
-  data_services_subnet_name     = "data-services-subnet"
+  data_services_subnet_name     = "policycortex-${var.environment}-subnet-data_services"
   key_vault_name                = azurerm_key_vault.main.name
   
   # SQL Server configuration
@@ -233,7 +233,7 @@ module "ai_services" {
   location                         = var.location
   resource_group_name              = azurerm_resource_group.main.name
   vnet_name                        = module.networking.vnet_name
-  ai_services_subnet_name          = "ai-services-subnet"
+  ai_services_subnet_name          = "policycortex-${var.environment}-subnet-ai_services"
   key_vault_name                   = azurerm_key_vault.main.name
   storage_account_name             = azurerm_storage_account.app_storage.name
   application_insights_name        = azurerm_application_insights.main.name
