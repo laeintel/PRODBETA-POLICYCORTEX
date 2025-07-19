@@ -48,6 +48,7 @@ resource "azurerm_key_vault_secret" "sql_admin_password" {
 
 # Azure SQL Server
 resource "azurerm_mssql_server" "main" {
+  count                        = var.deploy_sql_server ? 1 : 0
   name                         = "${var.project_name}-sql-${var.environment}"
   resource_group_name          = data.azurerm_resource_group.main.name
   location                     = data.azurerm_resource_group.main.location
@@ -77,14 +78,16 @@ resource "azurerm_mssql_server" "main" {
 
 # SQL Server firewall rule for Azure services
 resource "azurerm_mssql_firewall_rule" "azure_services" {
+  count            = var.deploy_sql_server ? 1 : 0
   name             = "AllowAzureServices"
-  server_id        = azurerm_mssql_server.main.id
+  server_id        = azurerm_mssql_server.main[0].id
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
 }
 
 # Private endpoint for SQL Server
 resource "azurerm_private_endpoint" "sql" {
+  count               = var.deploy_sql_server ? 1 : 0
   name                = "${var.project_name}-sql-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -92,7 +95,7 @@ resource "azurerm_private_endpoint" "sql" {
 
   private_service_connection {
     name                           = "${var.project_name}-sql-psc-${var.environment}"
-    private_connection_resource_id = azurerm_mssql_server.main.id
+    private_connection_resource_id = azurerm_mssql_server.main[0].id
     subresource_names             = ["sqlServer"]
     is_manual_connection          = false
   }
@@ -124,8 +127,9 @@ resource "azurerm_private_dns_zone_virtual_network_link" "sql" {
 
 # Azure SQL Database for PolicyCortex
 resource "azurerm_mssql_database" "policycortex" {
+  count     = var.deploy_sql_server ? 1 : 0
   name      = "${var.project_name}-db-${var.environment}"
-  server_id = azurerm_mssql_server.main.id
+  server_id = azurerm_mssql_server.main[0].id
   
   # Performance and sizing
   sku_name                    = var.sql_database_sku
@@ -266,10 +270,6 @@ resource "azurerm_cosmosdb_sql_container" "policies" {
   partition_key_paths   = ["/tenantId"]
   partition_key_version = 1
 
-  autoscale_settings {
-    max_throughput = var.cosmos_container_max_throughput
-  }
-
   indexing_policy {
     indexing_mode = "consistent"
 
@@ -291,10 +291,6 @@ resource "azurerm_cosmosdb_sql_container" "conversations" {
   partition_key_paths   = ["/userId"]
   partition_key_version = 1
 
-  autoscale_settings {
-    max_throughput = var.cosmos_container_max_throughput
-  }
-
   # TTL for conversation history
   default_ttl = 2592000  # 30 days
 }
@@ -306,10 +302,6 @@ resource "azurerm_cosmosdb_sql_container" "audit_logs" {
   database_name         = azurerm_cosmosdb_sql_database.governance.name
   partition_key_paths   = ["/tenantId"]
   partition_key_version = 1
-
-  autoscale_settings {
-    max_throughput = var.cosmos_container_max_throughput
-  }
 
   # TTL for audit logs (7 years for compliance)
   default_ttl = 220898400  # 7 years
@@ -406,8 +398,9 @@ resource "azurerm_key_vault_secret" "cosmos_connection_string" {
 }
 
 resource "azurerm_key_vault_secret" "sql_connection_string" {
+  count = var.deploy_sql_server ? 1 : 0
   name  = "sql-connection-string"
-  value = "Server=tcp:${azurerm_mssql_server.main.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.policycortex.name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${random_password.sql_admin_password.result};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  value = "Server=tcp:${azurerm_mssql_server.main[0].fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.policycortex[0].name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${random_password.sql_admin_password.result};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   key_vault_id = data.azurerm_key_vault.main.id
 
   tags = var.tags

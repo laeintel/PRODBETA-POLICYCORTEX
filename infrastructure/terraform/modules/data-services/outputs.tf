@@ -3,23 +3,24 @@
 # SQL Server outputs
 output "sql_server_id" {
   description = "ID of the SQL Server"
-  value       = azurerm_mssql_server.main.id
+  value       = var.deploy_sql_server ? azurerm_mssql_server.main[0].id : null
 }
 
 output "sql_server_fqdn" {
   description = "Fully qualified domain name of the SQL Server"
-  value       = azurerm_mssql_server.main.fully_qualified_domain_name
+  value       = var.deploy_sql_server ? azurerm_mssql_server.main[0].fully_qualified_domain_name : null
 }
 
 output "sql_database_id" {
   description = "ID of the SQL Database"
-  value       = azurerm_mssql_database.policycortex.id
+  value       = var.deploy_sql_server ? azurerm_mssql_database.policycortex[0].id : null
 }
 
 output "sql_database_name" {
   description = "Name of the SQL Database"
-  value       = azurerm_mssql_database.policycortex.name
+  value       = var.deploy_sql_server ? azurerm_mssql_database.policycortex[0].name : null
 }
+
 
 output "sql_admin_username" {
   description = "SQL Server administrator username"
@@ -96,7 +97,7 @@ output "private_dns_zones" {
 output "private_endpoints" {
   description = "Private endpoints created for data services"
   value = {
-    sql    = azurerm_private_endpoint.sql.id
+    sql    = var.deploy_sql_server ? azurerm_private_endpoint.sql[0].id : null
     cosmos = azurerm_private_endpoint.cosmos.id
     redis  = azurerm_private_endpoint.redis.id
   }
@@ -106,7 +107,7 @@ output "private_endpoints" {
 output "connection_string_secrets" {
   description = "Names of Key Vault secrets containing connection strings"
   value = {
-    sql    = azurerm_key_vault_secret.sql_connection_string.name
+    sql    = var.deploy_sql_server ? azurerm_key_vault_secret.sql_connection_string[0].name : null
     cosmos = azurerm_key_vault_secret.cosmos_connection_string.name
     redis  = azurerm_key_vault_secret.redis_connection_string.name
   }

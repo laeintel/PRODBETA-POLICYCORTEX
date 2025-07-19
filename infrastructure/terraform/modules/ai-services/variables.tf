@@ -104,6 +104,12 @@ variable "encryption_key_vault_key_id" {
 }
 
 # Compute Instance variables
+variable "deploy_ml_compute" {
+  description = "Whether to deploy ML compute resources"
+  type        = bool
+  default     = false
+}
+
 variable "compute_instance_vm_size" {
   description = "VM size for the compute instance"
   type        = string

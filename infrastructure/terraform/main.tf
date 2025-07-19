@@ -201,6 +201,7 @@ module "data_services" {
   key_vault_name                = azurerm_key_vault.main.name
   
   # SQL Server configuration
+  deploy_sql_server             = var.deploy_sql_server
   sql_admin_username            = var.sql_admin_username
   sql_azuread_admin_login       = var.sql_azuread_admin_login
   sql_azuread_admin_object_id   = var.sql_azuread_admin_object_id
