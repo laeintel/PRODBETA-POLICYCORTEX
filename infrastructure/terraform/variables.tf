@@ -150,3 +150,28 @@ variable "openai_sku" {
   type        = string
   default     = "S0"
 }
+
+# Monitoring Variables
+variable "critical_alert_emails" {
+  description = "Email addresses for critical alerts"
+  type        = list(string)
+  default     = []
+}
+
+variable "warning_alert_emails" {
+  description = "Email addresses for warning alerts"
+  type        = list(string)
+  default     = []
+}
+
+variable "budget_alert_emails" {
+  description = "Email addresses for budget alerts"
+  type        = list(string)
+  default     = []
+}
+
+variable "monthly_budget_amount" {
+  description = "Monthly budget amount in USD"
+  type        = number
+  default     = 1000
+}
