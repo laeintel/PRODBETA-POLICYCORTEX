@@ -28,7 +28,7 @@ create_ml_container_registry = false  # Use main ACR
 training_cluster_vm_size = "Standard_DS2_v2"  # Smaller for dev
 training_cluster_max_nodes = 2             # Fewer nodes for dev
 compute_instance_vm_size = "Standard_DS2_v2" # Smaller for dev
-cognitive_services_sku = "F0"              # Free tier for dev
+cognitive_services_sku = "S0"              # Standard tier (F0 not supported for CognitiveServices)
 deploy_openai = false                      # Skip OpenAI for dev
 openai_sku = "S0"
 
