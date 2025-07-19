@@ -176,9 +176,89 @@ module "networking" {
       address_prefixes = ["10.0.2.0/24"]
       service_endpoints = ["Microsoft.Storage"]
     }
+    data_services = {
+      address_prefixes = ["10.0.4.0/24"]
+      service_endpoints = ["Microsoft.Sql", "Microsoft.AzureCosmosDB", "Microsoft.Storage", "Microsoft.KeyVault"]
+    }
+    ai_services = {
+      address_prefixes = ["10.0.5.0/24"]
+      service_endpoints = ["Microsoft.MachineLearningServices", "Microsoft.CognitiveServices", "Microsoft.Storage", "Microsoft.KeyVault"]
+    }
   }
   
   common_tags = local.common_tags
+}
+
+# Data Services Module
+module "data_services" {
+  source = "./modules/data-services"
+  
+  project_name                  = "policycortex"
+  environment                   = var.environment
+  resource_group_name           = azurerm_resource_group.main.name
+  vnet_name                     = module.networking.vnet_name
+  data_services_subnet_name     = "data-services-subnet"
+  key_vault_name                = azurerm_key_vault.main.name
+  
+  # SQL Server configuration
+  sql_admin_username            = var.sql_admin_username
+  sql_azuread_admin_login       = var.sql_azuread_admin_login
+  sql_azuread_admin_object_id   = var.sql_azuread_admin_object_id
+  sql_database_sku              = var.sql_database_sku
+  sql_database_max_size_gb      = var.sql_database_max_size_gb
+  
+  # Cosmos DB configuration
+  cosmos_consistency_level      = var.cosmos_consistency_level
+  cosmos_failover_location      = var.cosmos_failover_location
+  cosmos_max_throughput         = var.cosmos_max_throughput
+  
+  # Redis configuration
+  redis_capacity                = var.redis_capacity
+  redis_sku_name                = var.redis_sku_name
+  
+  tags = local.common_tags
+  
+  depends_on = [
+    module.networking,
+    azurerm_key_vault.main
+  ]
+}
+
+# AI Services Module
+module "ai_services" {
+  source = "./modules/ai-services"
+  
+  project_name                     = "policycortex"
+  environment                      = var.environment
+  resource_group_name              = azurerm_resource_group.main.name
+  vnet_name                        = module.networking.vnet_name
+  ai_services_subnet_name          = "ai-services-subnet"
+  key_vault_name                   = azurerm_key_vault.main.name
+  storage_account_name             = azurerm_storage_account.app_storage.name
+  application_insights_name        = azurerm_application_insights.main.name
+  
+  # Container Registry configuration
+  create_container_registry        = var.create_ml_container_registry
+  existing_container_registry_id   = var.create_ml_container_registry ? null : azurerm_container_registry.main.id
+  
+  # Compute configuration
+  training_cluster_vm_size         = var.training_cluster_vm_size
+  training_cluster_max_nodes       = var.training_cluster_max_nodes
+  compute_instance_vm_size         = var.compute_instance_vm_size
+  
+  # Cognitive Services configuration
+  cognitive_services_sku           = var.cognitive_services_sku
+  deploy_openai                    = var.deploy_openai
+  openai_sku                       = var.openai_sku
+  
+  tags = local.common_tags
+  
+  depends_on = [
+    module.networking,
+    azurerm_key_vault.main,
+    azurerm_storage_account.app_storage,
+    azurerm_application_insights.main
+  ]
 }
 
 # Log Analytics Workspace for monitoring
@@ -293,6 +373,32 @@ output "log_analytics_workspace_id" {
 output "application_insights_instrumentation_key" {
   value = azurerm_application_insights.main.instrumentation_key
   sensitive = true
+}
+
+# Data Services Outputs
+output "sql_server_fqdn" {
+  value = module.data_services.sql_server_fqdn
+}
+
+output "cosmos_account_endpoint" {
+  value = module.data_services.cosmos_account_endpoint
+}
+
+output "redis_cache_hostname" {
+  value = module.data_services.redis_cache_hostname
+}
+
+# AI Services Outputs
+output "ml_workspace_name" {
+  value = module.ai_services.ml_workspace_name
+}
+
+output "cognitive_services_endpoint" {
+  value = module.ai_services.cognitive_services_endpoint
+}
+
+output "openai_endpoint" {
+  value = module.ai_services.openai_endpoint
 }
 
 # Container Apps URLs moved to container-apps.tf
