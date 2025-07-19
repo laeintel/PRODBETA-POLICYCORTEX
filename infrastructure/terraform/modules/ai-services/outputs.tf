@@ -46,12 +46,12 @@ output "compute_instance_name" {
 # Compute Cluster outputs
 output "training_cluster_id" {
   description = "ID of the training cluster"
-  value       = azurerm_machine_learning_compute_cluster.training.id
+  value       = var.deploy_ml_compute ? azurerm_machine_learning_compute_cluster.training[0].id : null
 }
 
 output "training_cluster_name" {
   description = "Name of the training cluster"
-  value       = azurerm_machine_learning_compute_cluster.training.name
+  value       = var.deploy_ml_compute ? azurerm_machine_learning_compute_cluster.training[0].name : null
 }
 
 # Cognitive Services outputs

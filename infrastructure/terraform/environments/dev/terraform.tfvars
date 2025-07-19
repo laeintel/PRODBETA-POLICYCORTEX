@@ -12,6 +12,7 @@ create_terraform_access_policy = false
 deploy_container_apps = true
 
 # Data Services Configuration
+deploy_sql_server = false  # SQL Server provisioning restricted in East US
 sql_admin_username = "sqladmin"
 sql_azuread_admin_login = "admin@yourdomain.com"
 sql_azuread_admin_object_id = "00000000-0000-0000-0000-000000000000"

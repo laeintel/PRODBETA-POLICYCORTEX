@@ -152,7 +152,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "ml" {
 
 # ML Compute Instance for development
 resource "azurerm_machine_learning_compute_instance" "dev" {
-  count                         = var.environment == "dev" ? 1 : 0
+  count                         = var.deploy_ml_compute && var.environment == "dev" ? 1 : 0
   name                          = "${var.project_name}-ci-${var.environment}"
   machine_learning_workspace_id = azurerm_machine_learning_workspace.main.id
   virtual_machine_size          = var.compute_instance_vm_size
@@ -171,6 +171,7 @@ resource "azurerm_machine_learning_compute_instance" "dev" {
 
 # ML Compute Cluster for training
 resource "azurerm_machine_learning_compute_cluster" "training" {
+  count                         = var.deploy_ml_compute ? 1 : 0
   name                          = "${var.project_name}-cluster-${var.environment}"
   machine_learning_workspace_id = azurerm_machine_learning_workspace.main.id
   location                      = data.azurerm_resource_group.main.location

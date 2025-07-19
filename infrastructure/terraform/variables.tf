@@ -48,6 +48,12 @@ variable "deploy_container_apps" {
 }
 
 # Data Services Variables
+variable "deploy_sql_server" {
+  description = "Whether to deploy SQL Server"
+  type        = bool
+  default     = true
+}
+
 variable "sql_admin_username" {
   description = "SQL Server administrator username"
   type        = string
