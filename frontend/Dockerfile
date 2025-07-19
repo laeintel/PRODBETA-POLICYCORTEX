@@ -39,7 +39,7 @@ ENV VITE_APP_VERSION=$VITE_APP_VERSION
 RUN echo "=== Listing source files ===" && ls -la src/ && echo "=== End of source files ===" || true
 
 # Build the application with fallback for type check failures
-RUN npm run build:no-tsc || (echo "Build failed. Showing error details:" && cat /tmp/build.log 2>/dev/null && exit 1)
+RUN npx vite build || (echo "Build failed. Showing error details:" && cat /tmp/build.log 2>/dev/null && exit 1)
 
 # Production stage
 FROM nginx:alpine AS production
