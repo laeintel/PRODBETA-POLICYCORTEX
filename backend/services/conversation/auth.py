@@ -13,7 +13,7 @@ from jose import JWTError, jwt as jose_jwt
 from azure.identity.aio import DefaultAzureCredential
 from azure.keyvault.secrets.aio import SecretClient
 
-from ...shared.config import get_settings
+from shared.config import get_settings
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)

@@ -21,8 +21,8 @@ from starlette.responses import PlainTextResponse
 from starlette.websockets import WebSocketState
 import asyncio
 
-from ...shared.config import get_settings
-from ...shared.database import get_async_db, DatabaseUtils
+from shared.config import get_settings
+from shared.database import get_async_db, DatabaseUtils
 from .auth import AuthManager
 from .models import (
     HealthResponse,

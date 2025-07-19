@@ -10,7 +10,7 @@ from typing import Tuple, Optional, Dict, Any
 import aioredis
 import structlog
 
-from ...shared.config import get_settings
+from shared.config import get_settings
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
