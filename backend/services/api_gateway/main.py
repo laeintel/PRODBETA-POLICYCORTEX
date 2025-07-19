@@ -19,8 +19,8 @@ from prometheus_client import Counter, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
-from ...shared.config import get_settings
-from ...shared.database import get_async_db, DatabaseUtils
+from shared.config import get_settings
+from shared.database import get_async_db, DatabaseUtils
 from .auth import AuthManager
 from .rate_limiter import RateLimiter
 from .circuit_breaker import CircuitBreaker

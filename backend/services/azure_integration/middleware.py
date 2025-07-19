@@ -8,7 +8,7 @@ from fastapi import Request, Response, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
 import structlog
 
-from ...shared.config import get_settings
+from shared.config import get_settings
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
