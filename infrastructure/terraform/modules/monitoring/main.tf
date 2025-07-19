@@ -253,6 +253,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "auth_failures" {
 
 # Cosmos DB Alert for High RU Consumption
 resource "azurerm_monitor_metric_alert" "cosmos_ru_consumption" {
+  count               = var.cosmos_db_account_id != null ? 1 : 0
   name                = "${var.project_name}-cosmos-ru-${var.environment}"
   resource_group_name = data.azurerm_resource_group.main.name
   scopes              = [var.cosmos_db_account_id]
@@ -278,6 +279,7 @@ resource "azurerm_monitor_metric_alert" "cosmos_ru_consumption" {
 
 # SQL Database Alert for High DTU
 resource "azurerm_monitor_metric_alert" "sql_dtu_consumption" {
+  count               = var.sql_database_id != null ? 1 : 0
   name                = "${var.project_name}-sql-dtu-${var.environment}"
   resource_group_name = data.azurerm_resource_group.main.name
   scopes              = [var.sql_database_id]
