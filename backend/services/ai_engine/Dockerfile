@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV SERVICE_NAME=ai_engine
 ENV SERVICE_PORT=8002
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Set work directory
 WORKDIR /app
@@ -17,12 +18,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the entire backend directory structure
+COPY . /app/
 
-# Copy service code
-COPY . .
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /app/services/ai_engine/requirements.txt
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs
@@ -32,11 +32,14 @@ RUN useradd --create-home --shell /bin/bash aiengine
 RUN chown -R aiengine:aiengine /app
 USER aiengine
 
+# Set working directory to the service
+WORKDIR /app/services/ai_engine
+
 # Expose port
 EXPOSE $SERVICE_PORT
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
     CMD curl -f http://localhost:${SERVICE_PORT}/health || exit 1
 
 # Run the application
