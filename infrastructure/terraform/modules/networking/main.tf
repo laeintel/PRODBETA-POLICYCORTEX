@@ -1,14 +1,8 @@
-# Generate random suffix for unique naming
-resource "random_string" "network_suffix" {
-  length  = 8
-  special = false
-  upper   = false
-}
-
 # Local values for consistent naming
 locals {
   naming_prefix = "${var.project_name}-${var.environment}"
-  naming_suffix = var.naming_suffix != "" ? var.naming_suffix : random_string.network_suffix.result
+  # Remove random suffix - use deterministic naming
+  naming_suffix = ""
   
   common_tags = merge(var.common_tags, {
     Module      = "networking"
@@ -18,7 +12,7 @@ locals {
 
 # Virtual Network
 resource "azurerm_virtual_network" "main" {
-  name                = "${local.naming_prefix}-vnet-${local.naming_suffix}"
+  name                = "${local.naming_prefix}-vnet"
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = var.vnet_address_space
@@ -42,7 +36,7 @@ resource "azurerm_virtual_network" "main" {
 resource "azurerm_network_security_group" "subnet_nsgs" {
   for_each = var.subnet_configurations
 
-  name                = "${local.naming_prefix}-nsg-${each.key}-${local.naming_suffix}"
+  name                = "${local.naming_prefix}-nsg-${each.key}"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -93,7 +87,7 @@ resource "azurerm_network_security_rule" "app_gateway_inbound_allow" {
 resource "azurerm_subnet" "subnets" {
   for_each = var.subnet_configurations
 
-  name                 = "${local.naming_prefix}-subnet-${each.key}-${local.naming_suffix}"
+  name                 = "${local.naming_prefix}-subnet-${each.key}"
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = each.value.address_prefixes
@@ -122,7 +116,7 @@ resource "azurerm_subnet_network_security_group_association" "subnet_nsg_associa
 
 # Route Table for custom routing
 resource "azurerm_route_table" "main" {
-  name                = "${local.naming_prefix}-rt-${local.naming_suffix}"
+  name                = "${local.naming_prefix}-rt"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -156,7 +150,7 @@ resource "azurerm_subnet_route_table_association" "container_apps" {
 resource "azurerm_network_watcher" "main" {
   count = var.enable_network_watcher ? 1 : 0
 
-  name                = "${local.naming_prefix}-nw-${local.naming_suffix}"
+  name                = "${local.naming_prefix}-nw"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -167,7 +161,7 @@ resource "azurerm_network_watcher" "main" {
 resource "azurerm_network_ddos_protection_plan" "main" {
   count = var.enable_ddos_protection ? 1 : 0
 
-  name                = "${local.naming_prefix}-ddos-${local.naming_suffix}"
+  name                = "${local.naming_prefix}-ddos"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -186,7 +180,7 @@ resource "azurerm_private_dns_zone" "internal" {
 
 # Link Private DNS Zone to VNet
 resource "azurerm_private_dns_zone_virtual_network_link" "internal" {
-  name                  = "${local.naming_prefix}-dns-link-${local.naming_suffix}"
+  name                  = "${local.naming_prefix}-dns-link"
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.internal.name
   virtual_network_id    = azurerm_virtual_network.main.id
@@ -199,7 +193,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "internal" {
 resource "azurerm_storage_account" "flow_logs" {
   count = var.enable_flow_logs ? 1 : 0
 
-  name                     = "pcx${var.environment}fl${local.naming_suffix}"
+  name                     = "pcx${var.environment}flowlogs"
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
@@ -222,7 +216,7 @@ resource "azurerm_network_watcher_flow_log" "nsg_flow_logs" {
 
   network_watcher_name = azurerm_network_watcher.main[0].name
   resource_group_name  = var.resource_group_name
-  name                 = "${local.naming_prefix}-flowlog-${each.key}-${local.naming_suffix}"
+  name                 = "${local.naming_prefix}-flowlog-${each.key}"
 
   network_security_group_id = azurerm_network_security_group.subnet_nsgs[each.key].id
   storage_account_id        = azurerm_storage_account.flow_logs[0].id
