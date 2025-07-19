@@ -35,8 +35,11 @@ ENV VITE_AZURE_TENANT_ID=$VITE_AZURE_TENANT_ID
 ENV VITE_AZURE_REDIRECT_URI=$VITE_AZURE_REDIRECT_URI
 ENV VITE_APP_VERSION=$VITE_APP_VERSION
 
+# Debug: List source files to verify everything is copied
+RUN echo "=== Listing source files ===" && ls -la src/ && echo "=== End of source files ===" || true
+
 # Build the application with fallback for type check failures
-RUN npm run build:no-tsc
+RUN npm run build:no-tsc || (echo "Build failed. Showing error details:" && cat /tmp/build.log 2>/dev/null && exit 1)
 
 # Production stage
 FROM nginx:alpine AS production
