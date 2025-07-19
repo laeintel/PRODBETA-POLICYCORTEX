@@ -31,3 +31,9 @@ compute_instance_vm_size = "Standard_DS4_v2" # Larger for prod
 cognitive_services_sku = "S0"              # Standard for prod
 deploy_openai = true                       # Enable OpenAI for prod
 openai_sku = "S0"
+
+# Monitoring Configuration
+critical_alert_emails = ["admin@company.com", "security@company.com"]
+warning_alert_emails = ["devops@company.com", "monitoring@company.com"]
+budget_alert_emails = ["finance@company.com", "management@company.com"]
+monthly_budget_amount = 5000  # Higher budget for prod

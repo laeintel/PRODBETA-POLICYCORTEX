@@ -87,7 +87,8 @@
       "Bash(az storage account update:*)",
       "Bash(grep:*)",
       "Bash(docker build:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(claude doctor)"
     ],
     "deny": []
   }

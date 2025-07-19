@@ -31,3 +31,9 @@ compute_instance_vm_size = "Standard_DS2_v2" # Smaller for dev
 cognitive_services_sku = "F0"              # Free tier for dev
 deploy_openai = false                      # Skip OpenAI for dev
 openai_sku = "S0"
+
+# Monitoring Configuration
+critical_alert_emails = ["admin@company.com"]
+warning_alert_emails = ["devops@company.com"]
+budget_alert_emails = ["finance@company.com"]
+monthly_budget_amount = 500  # Lower budget for dev
