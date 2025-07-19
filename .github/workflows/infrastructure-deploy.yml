@@ -238,6 +238,20 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.TERRAFORM_BACKEND_RESOURCE_GROUP }}"
         working-directory: infrastructure/terraform
 
+      - name: Import Existing Resources
+        run: |
+          # Get current subscription ID
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          echo "Subscription ID: $SUBSCRIPTION_ID"
+          
+          # Import existing resource group (ignore errors if already in state or doesn't exist)
+          terraform import azurerm_resource_group.main "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-dev" || echo "Resource already in state or doesn't exist"
+          
+          # Show current state
+          terraform state list
+        working-directory: infrastructure/terraform
+        continue-on-error: true
+
       - name: Check if plan exists
         id: check_plan
         run: |

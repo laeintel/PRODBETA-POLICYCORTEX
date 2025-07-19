@@ -34,18 +34,56 @@ export default defineConfig({
     })
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@/components': path.resolve(__dirname, './src/components'),
-      '@/pages': path.resolve(__dirname, './src/pages'),
-      '@/hooks': path.resolve(__dirname, './src/hooks'),
-      '@/utils': path.resolve(__dirname, './src/utils'),
-      '@/services': path.resolve(__dirname, './src/services'),
-      '@/types': path.resolve(__dirname, './src/types'),
-      '@/store': path.resolve(__dirname, './src/store'),
-      '@/config': path.resolve(__dirname, './src/config'),
-      '@/assets': path.resolve(__dirname, './src/assets')
-    }
+    alias: [
+      {
+        find: '@/config',
+        replacement: path.resolve(__dirname, './src/config')
+      },
+      {
+        find: '@/components',
+        replacement: path.resolve(__dirname, './src/components')
+      },
+      {
+        find: '@/pages',
+        replacement: path.resolve(__dirname, './src/pages')
+      },
+      {
+        find: '@/hooks',
+        replacement: path.resolve(__dirname, './src/hooks')
+      },
+      {
+        find: '@/utils',
+        replacement: path.resolve(__dirname, './src/utils')
+      },
+      {
+        find: '@/services',
+        replacement: path.resolve(__dirname, './src/services')
+      },
+      {
+        find: '@/types',
+        replacement: path.resolve(__dirname, './src/types')
+      },
+      {
+        find: '@/store',
+        replacement: path.resolve(__dirname, './src/store')
+      },
+      {
+        find: '@/assets',
+        replacement: path.resolve(__dirname, './src/assets')
+      },
+      {
+        find: '@/providers',
+        replacement: path.resolve(__dirname, './src/providers')
+      },
+      {
+        find: '@/routes',
+        replacement: path.resolve(__dirname, './src/routes')
+      },
+      {
+        find: '@',
+        replacement: path.resolve(__dirname, './src')
+      }
+    ]
   },
   server: {
     port: 3000,
