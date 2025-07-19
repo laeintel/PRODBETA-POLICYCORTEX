@@ -200,6 +200,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "application_errors" {
     time_aggregation_method = "Maximum"
     threshold               = 0
     operator                = "GreaterThan"
+    metric_measure_column   = "ErrorCount"
 
     failing_periods {
       minimum_failing_periods_to_trigger_alert = 1
@@ -237,6 +238,7 @@ resource "azurerm_monitor_scheduled_query_rules_alert_v2" "auth_failures" {
     time_aggregation_method = "Maximum"
     threshold               = 0
     operator                = "GreaterThan"
+    metric_measure_column   = "FailureCount"
 
     failing_periods {
       minimum_failing_periods_to_trigger_alert = 1
