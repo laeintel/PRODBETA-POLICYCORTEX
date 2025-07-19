@@ -240,35 +240,11 @@ jobs:
 
       - name: Import Existing Resources
         run: |
-          # Get current subscription ID
-          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-          echo "Subscription ID: $SUBSCRIPTION_ID"
+          # Make import script executable
+          chmod +x scripts/import-existing-resources.sh
           
-          # Check if resources exist and import them if needed
-          RESOURCE_GROUP="rg-policycortex-dev"
-          
-          # Check if resource group exists in Azure
-          if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
-            echo "Resource group exists in Azure. Checking Terraform state..."
-            
-            # Check if already in state
-            if ! terraform state show azurerm_resource_group.main &>/dev/null; then
-              echo "Importing resource group..."
-              terraform import azurerm_resource_group.main "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP" || true
-            fi
-            
-            # Check for Container Apps Environment
-            if az containerapp env show --name "cae-policycortex-dev" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
-              if ! terraform state show azurerm_container_app_environment.main &>/dev/null; then
-                echo "Importing Container Apps Environment..."
-                terraform import azurerm_container_app_environment.main "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/managedEnvironments/cae-policycortex-dev" || true
-              fi
-            fi
-          fi
-          
-          # Show current state
-          echo "Current Terraform state:"
-          terraform state list || echo "No resources in state"
+          # Run import script
+          ./scripts/import-existing-resources.sh dev
         working-directory: infrastructure/terraform
         continue-on-error: true
 
@@ -473,6 +449,16 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.TERRAFORM_BACKEND_RESOURCE_GROUP }}"
         working-directory: infrastructure/terraform
 
+      - name: Import Existing Resources
+        run: |
+          # Make import script executable
+          chmod +x scripts/import-existing-resources.sh
+          
+          # Run import script
+          ./scripts/import-existing-resources.sh staging
+        working-directory: infrastructure/terraform
+        continue-on-error: true
+
       - name: Terraform Apply
         run: |
           # Try to apply the saved plan, but fall back to regular apply if it's stale
@@ -655,6 +641,16 @@ jobs:
             -backend-config="key=prod/terraform.tfstate" \
             -backend-config="resource_group_name=${{ secrets.TERRAFORM_BACKEND_RESOURCE_GROUP }}"
         working-directory: infrastructure/terraform
+
+      - name: Import Existing Resources
+        run: |
+          # Make import script executable
+          chmod +x scripts/import-existing-resources.sh
+          
+          # Run import script
+          ./scripts/import-existing-resources.sh prod
+        working-directory: infrastructure/terraform
+        continue-on-error: true
 
       - name: Terraform Apply
         run: |
