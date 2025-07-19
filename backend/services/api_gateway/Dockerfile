@@ -5,7 +5,8 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app:$PYTHONPATH
 
 # Set work directory
 WORKDIR /app
@@ -17,19 +18,19 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements.txt .
+# Copy the entire backend directory structure
+COPY . /app/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
+RUN pip install --no-cache-dir -r /app/services/api_gateway/requirements.txt
 
 # Create non-root user
 RUN groupadd -r apigateway && useradd -r -g apigateway apigateway
 RUN chown -R apigateway:apigateway /app
 USER apigateway
+
+# Set working directory to the service
+WORKDIR /app/services/api_gateway
 
 # Expose port
 EXPOSE 8000

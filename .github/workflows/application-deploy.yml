@@ -251,7 +251,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: backend/services/${{ matrix.service }}
+          context: backend
           file: backend/services/${{ matrix.service }}/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -411,12 +411,35 @@ jobs:
           API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
           FRONTEND_URL=$(az containerapp show --name ca-frontend-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
-          # Health check endpoints
-          curl -f https://${API_GATEWAY_URL}/health || exit 1
-          curl -f https://${FRONTEND_URL}/ || exit 1
-          
           echo "API Gateway URL: https://${API_GATEWAY_URL}"
           echo "Frontend URL: https://${FRONTEND_URL}"
+          
+          # Health check function with retries
+          check_health() {
+            local url=$1
+            local max_attempts=10
+            local wait_time=30
+            
+            for i in $(seq 1 $max_attempts); do
+              echo "Attempt $i/$max_attempts for $url"
+              if curl -f -m 30 "$url" > /dev/null 2>&1; then
+                echo "✓ Health check passed for $url"
+                return 0
+              fi
+              
+              if [ $i -lt $max_attempts ]; then
+                echo "Health check failed, waiting ${wait_time}s before retry..."
+                sleep $wait_time
+              fi
+            done
+            
+            echo "✗ Health check failed after $max_attempts attempts for $url"
+            return 1
+          }
+          
+          # Run health checks with retries
+          check_health "https://${API_GATEWAY_URL}/health" || exit 1
+          check_health "https://${FRONTEND_URL}/" || exit 1
 
   deploy-staging:
     name: Deploy to Staging
