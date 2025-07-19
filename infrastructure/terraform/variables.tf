@@ -40,3 +40,9 @@ variable "create_terraform_access_policy" {
   type        = bool
   default     = true
 }
+
+variable "deploy_container_apps" {
+  description = "Whether to deploy Container Apps (set to false for initial infrastructure deployment)"
+  type        = bool
+  default     = false
+}
