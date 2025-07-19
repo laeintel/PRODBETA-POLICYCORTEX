@@ -264,7 +264,7 @@ resource "azurerm_cosmosdb_sql_container" "policies" {
   resource_group_name   = data.azurerm_resource_group.main.name
   account_name          = azurerm_cosmosdb_account.main.name
   database_name         = azurerm_cosmosdb_sql_database.governance.name
-  partition_key_path    = "/tenantId"
+  partition_key_paths   = ["/tenantId"]
   partition_key_version = 1
 
   autoscale_settings {
@@ -289,7 +289,7 @@ resource "azurerm_cosmosdb_sql_container" "conversations" {
   resource_group_name   = data.azurerm_resource_group.main.name
   account_name          = azurerm_cosmosdb_account.main.name
   database_name         = azurerm_cosmosdb_sql_database.governance.name
-  partition_key_path    = "/userId"
+  partition_key_paths   = ["/userId"]
   partition_key_version = 1
 
   autoscale_settings {
@@ -305,7 +305,7 @@ resource "azurerm_cosmosdb_sql_container" "audit_logs" {
   resource_group_name   = data.azurerm_resource_group.main.name
   account_name          = azurerm_cosmosdb_account.main.name
   database_name         = azurerm_cosmosdb_sql_database.governance.name
-  partition_key_path    = "/tenantId"
+  partition_key_paths   = ["/tenantId"]
   partition_key_version = 1
 
   autoscale_settings {
