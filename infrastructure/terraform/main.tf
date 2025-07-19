@@ -182,7 +182,7 @@ module "networking" {
     }
     ai_services = {
       address_prefixes = ["10.0.5.0/24"]
-      service_endpoints = ["Microsoft.MachineLearningServices", "Microsoft.CognitiveServices", "Microsoft.Storage", "Microsoft.KeyVault"]
+      service_endpoints = ["Microsoft.CognitiveServices", "Microsoft.Storage", "Microsoft.KeyVault"]
     }
   }
   
