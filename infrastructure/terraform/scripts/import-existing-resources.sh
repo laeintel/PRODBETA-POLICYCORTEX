@@ -165,13 +165,21 @@ import_if_exists "module.networking.azurerm_private_dns_zone.internal" \
     "private_dns_zone" \
     "policycortex.internal"
 
-# Container Apps
+# Container Apps (with count index)
 for service in "api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend"; do
     terraform_name=$(echo $service | tr '_' '-')
-    import_if_exists "azurerm_container_app.$service" \
-        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/ca-$terraform_name-$ENVIRONMENT" \
-        "container_app" \
-        "ca-$terraform_name-$ENVIRONMENT"
+    # Check if Container App exists
+    if az containerapp show --name "ca-$terraform_name-$ENVIRONMENT" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+        echo "Container App ca-$terraform_name-$ENVIRONMENT exists"
+        # Import with [0] index since we're using count
+        if ! terraform state show "azurerm_container_app.${service}[0]" &>/dev/null; then
+            echo "Importing azurerm_container_app.${service}[0]..."
+            terraform import "azurerm_container_app.${service}[0]" \
+                "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/ca-$terraform_name-$ENVIRONMENT" || echo "Import failed for Container App $service"
+        else
+            echo "azurerm_container_app.${service}[0] already in state"
+        fi
+    fi
 done
 
 echo "Import process completed"
