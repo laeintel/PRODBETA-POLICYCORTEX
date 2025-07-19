@@ -320,6 +320,10 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
+          # Run import script again to handle Container Apps
+          chmod +x scripts/import-existing-resources.sh
+          ./scripts/import-existing-resources.sh dev || true
+          
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
             -var-file="environments/dev/terraform.tfvars" \
@@ -524,6 +528,10 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
+          # Run import script again to handle Container Apps
+          chmod +x scripts/import-existing-resources.sh
+          ./scripts/import-existing-resources.sh dev || true
+          
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
             -var-file="environments/dev/terraform.tfvars" \
@@ -727,6 +735,10 @@ jobs:
       - name: Deploy Container Apps
         run: |
           echo "Deploying Container Apps with images available..."
+          
+          # Run import script again to handle Container Apps
+          chmod +x scripts/import-existing-resources.sh
+          ./scripts/import-existing-resources.sh dev || true
           
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
