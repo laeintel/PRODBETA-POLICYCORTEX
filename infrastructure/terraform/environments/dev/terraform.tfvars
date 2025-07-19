@@ -25,6 +25,7 @@ redis_capacity = 1                 # Smaller for dev
 redis_sku_name = "Basic"           # Basic for dev
 
 # AI Services Configuration
+deploy_ml_workspace = false  # ML workspace has soft-delete conflict
 create_ml_container_registry = false  # Use main ACR
 training_cluster_vm_size = "Standard_DS2_v2"  # Smaller for dev
 training_cluster_max_nodes = 2             # Fewer nodes for dev

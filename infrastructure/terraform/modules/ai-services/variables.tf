@@ -81,6 +81,12 @@ variable "acr_sku" {
 }
 
 # Machine Learning Workspace variables
+variable "deploy_ml_workspace" {
+  description = "Whether to deploy ML workspace"
+  type        = bool
+  default     = true
+}
+
 variable "image_build_compute_name" {
   description = "Name of the compute instance for image builds"
   type        = string
