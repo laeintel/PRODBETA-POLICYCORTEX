@@ -328,7 +328,7 @@ resource "azurerm_private_dns_zone" "openai" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
-  count                 = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? 1 : 0
+  count                 = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                  = "openai-dns-vnet-link"
   resource_group_name   = data.azurerm_resource_group.main.name
   private_dns_zone_name = azurerm_private_dns_zone.openai[0].name
@@ -355,7 +355,7 @@ resource "azurerm_key_vault_secret" "cognitive_services_endpoint" {
 }
 
 resource "azurerm_key_vault_secret" "openai_key" {
-  count        = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? 1 : 0
+  count        = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name         = "openai-key"
   value        = azurerm_cognitive_account.openai[0].primary_access_key
   key_vault_id = data.azurerm_key_vault.main.id
@@ -364,7 +364,7 @@ resource "azurerm_key_vault_secret" "openai_key" {
 }
 
 resource "azurerm_key_vault_secret" "openai_endpoint" {
-  count        = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? 1 : 0
+  count        = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name         = "openai-endpoint"
   value        = azurerm_cognitive_account.openai[0].endpoint
   key_vault_id = data.azurerm_key_vault.main.id
