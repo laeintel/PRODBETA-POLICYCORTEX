@@ -35,12 +35,12 @@ output "ml_container_registry_login_server" {
 # Compute Instance outputs
 output "compute_instance_id" {
   description = "ID of the compute instance"
-  value       = var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].id : null
+  value       = var.deploy_ml_compute && var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].id : null
 }
 
 output "compute_instance_name" {
   description = "Name of the compute instance"
-  value       = var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].name : null
+  value       = var.deploy_ml_compute && var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].name : null
 }
 
 # Compute Cluster outputs
