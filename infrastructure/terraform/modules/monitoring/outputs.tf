@@ -58,12 +58,12 @@ output "storage_transactions_alert_id" {
 # Dashboard and Analytics
 output "dashboard_id" {
   description = "ID of the Azure Dashboard"
-  value       = azurerm_dashboard.main.id
+  value       = azurerm_portal_dashboard.main.id
 }
 
 output "dashboard_url" {
   description = "URL of the Azure Dashboard"
-  value       = "https://portal.azure.com/#@/dashboard/arm${azurerm_dashboard.main.id}"
+  value       = "https://portal.azure.com/#@/dashboard/arm${azurerm_portal_dashboard.main.id}"
 }
 
 output "workbook_id" {

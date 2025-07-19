@@ -99,10 +99,13 @@ resource "azurerm_machine_learning_workspace" "main" {
     type = "SystemAssigned"
   }
 
-  # Encryption
-  encryption {
-    status = var.encryption_status
-    key_vault_key_id = var.encryption_key_vault_key_id
+  # Encryption (optional)
+  dynamic "encryption" {
+    for_each = var.encryption_key_vault_key_id != null ? [1] : []
+    content {
+      key_id        = var.encryption_key_vault_key_id
+      key_vault_id  = data.azurerm_key_vault.main.id
+    }
   }
 
   tags = var.tags

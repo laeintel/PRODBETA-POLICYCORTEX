@@ -330,7 +330,7 @@ resource "azurerm_monitor_metric_alert" "storage_transactions" {
 }
 
 # Azure Dashboard for PolicyCortex Monitoring
-resource "azurerm_dashboard" "main" {
+resource "azurerm_portal_dashboard" "main" {
   name                = "${var.project_name}-dashboard-${var.environment}"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
@@ -393,8 +393,6 @@ resource "azurerm_consumption_budget_resource_group" "main" {
 
     contact_emails = var.budget_alert_emails
   }
-
-  tags = var.tags
 }
 
 # Workbook for detailed analytics
