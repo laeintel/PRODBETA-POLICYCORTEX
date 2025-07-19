@@ -320,9 +320,19 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # Run import script again to handle Container Apps
-          chmod +x scripts/import-existing-resources.sh
-          ./scripts/import-existing-resources.sh dev || true
+          # Import Container Apps directly
+          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          for service in "${services[@]}"; do
+            terraform_name=$(echo $service | tr '_' '-')
+            echo "Checking Container App: ca-$terraform_name-dev"
+            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" &>/dev/null; then
+              echo "Importing $service..."
+              terraform import "azurerm_container_app.${service}[0]" \
+                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-policycortex-dev/providers/Microsoft.App/containerApps/ca-$terraform_name-dev" || echo "Import failed or already exists for $service"
+            else
+              echo "Container App ca-$terraform_name-dev does not exist yet"
+            fi
+          done
           
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
@@ -528,9 +538,19 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # Run import script again to handle Container Apps
-          chmod +x scripts/import-existing-resources.sh
-          ./scripts/import-existing-resources.sh dev || true
+          # Import Container Apps directly
+          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          for service in "${services[@]}"; do
+            terraform_name=$(echo $service | tr '_' '-')
+            echo "Checking Container App: ca-$terraform_name-dev"
+            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" &>/dev/null; then
+              echo "Importing $service..."
+              terraform import "azurerm_container_app.${service}[0]" \
+                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-policycortex-dev/providers/Microsoft.App/containerApps/ca-$terraform_name-dev" || echo "Import failed or already exists for $service"
+            else
+              echo "Container App ca-$terraform_name-dev does not exist yet"
+            fi
+          done
           
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
@@ -736,9 +756,19 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # Run import script again to handle Container Apps
-          chmod +x scripts/import-existing-resources.sh
-          ./scripts/import-existing-resources.sh dev || true
+          # Import Container Apps directly
+          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          for service in "${services[@]}"; do
+            terraform_name=$(echo $service | tr '_' '-')
+            echo "Checking Container App: ca-$terraform_name-dev"
+            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" &>/dev/null; then
+              echo "Importing $service..."
+              terraform import "azurerm_container_app.${service}[0]" \
+                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-policycortex-dev/providers/Microsoft.App/containerApps/ca-$terraform_name-dev" || echo "Import failed or already exists for $service"
+            else
+              echo "Container App ca-$terraform_name-dev does not exist yet"
+            fi
+          done
           
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
