@@ -88,7 +88,11 @@
       "Bash(grep:*)",
       "Bash(docker build:*)",
       "Bash(git config:*)",
-      "Bash(claude doctor)"
+      "Bash(claude doctor)",
+      "Bash(venvScripts:*)",
+      "Bash(.venvScriptsactivate)",
+      "Bash(uvicorn:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
