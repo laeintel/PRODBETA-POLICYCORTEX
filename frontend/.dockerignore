@@ -41,13 +41,13 @@ README.md
 *.md
 docs/
 
-# Configuration files
+# Configuration files (keep build configs)
 .eslintrc*
 .prettierrc*
 .prettierignore
-tsconfig.json
-tsconfig.node.json
-vite.config.ts
+# tsconfig.json - NEEDED FOR BUILD
+# tsconfig.node.json - NEEDED FOR BUILD  
+# vite.config.ts - NEEDED FOR BUILD
 
 # Testing
 coverage/
