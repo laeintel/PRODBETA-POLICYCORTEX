@@ -266,7 +266,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cognitive" {
 
 # Azure OpenAI Service (if available in region)
 resource "azurerm_cognitive_account" "openai" {
-  count               = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? 1 : 0
+  count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                = "${var.project_name}-openai-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -297,7 +297,7 @@ resource "azurerm_cognitive_account" "openai" {
 
 # Private endpoint for OpenAI
 resource "azurerm_private_endpoint" "openai" {
-  count               = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? 1 : 0
+  count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                = "${var.project_name}-openai-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -320,7 +320,7 @@ resource "azurerm_private_endpoint" "openai" {
 
 # Private DNS zone for OpenAI
 resource "azurerm_private_dns_zone" "openai" {
-  count               = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? 1 : 0
+  count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                = "privatelink.openai.azure.com"
   resource_group_name = data.azurerm_resource_group.main.name
 
