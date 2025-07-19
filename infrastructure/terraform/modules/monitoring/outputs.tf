@@ -41,12 +41,12 @@ output "auth_failures_alert_id" {
 # Database Alerts
 output "cosmos_ru_alert_id" {
   description = "ID of the Cosmos DB RU consumption alert"
-  value       = azurerm_monitor_metric_alert.cosmos_ru_consumption.id
+  value       = var.cosmos_db_account_id != null ? azurerm_monitor_metric_alert.cosmos_ru_consumption[0].id : null
 }
 
 output "sql_dtu_alert_id" {
   description = "ID of the SQL Database DTU alert"
-  value       = azurerm_monitor_metric_alert.sql_dtu_consumption.id
+  value       = var.sql_database_id != null ? azurerm_monitor_metric_alert.sql_dtu_consumption[0].id : null
 }
 
 # Storage Alerts
