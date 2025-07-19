@@ -320,7 +320,15 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # Import Container Apps directly
+          # First, prepare Terraform configuration with Container Apps enabled
+          echo "Preparing Terraform configuration..."
+          terraform plan \
+            -var-file="environments/dev/terraform.tfvars" \
+            -var="deploy_container_apps=true" \
+            -out=container_apps.tfplan || true
+          
+          # Import existing Container Apps with configuration loaded
+          echo "Importing existing Container Apps..."
           services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
           for service in "${services[@]}"; do
             terraform_name=$(echo $service | tr '_' '-')
@@ -538,7 +546,15 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # Import Container Apps directly
+          # First, prepare Terraform configuration with Container Apps enabled
+          echo "Preparing Terraform configuration..."
+          terraform plan \
+            -var-file="environments/dev/terraform.tfvars" \
+            -var="deploy_container_apps=true" \
+            -out=container_apps.tfplan || true
+          
+          # Import existing Container Apps with configuration loaded
+          echo "Importing existing Container Apps..."
           services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
           for service in "${services[@]}"; do
             terraform_name=$(echo $service | tr '_' '-')
@@ -756,7 +772,15 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # Import Container Apps directly
+          # First, prepare Terraform configuration with Container Apps enabled
+          echo "Preparing Terraform configuration..."
+          terraform plan \
+            -var-file="environments/dev/terraform.tfvars" \
+            -var="deploy_container_apps=true" \
+            -out=container_apps.tfplan || true
+          
+          # Import existing Container Apps with configuration loaded
+          echo "Importing existing Container Apps..."
           services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
           for service in "${services[@]}"; do
             terraform_name=$(echo $service | tr '_' '-')
