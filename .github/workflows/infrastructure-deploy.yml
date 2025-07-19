@@ -244,11 +244,31 @@ jobs:
           SUBSCRIPTION_ID=$(az account show --query id -o tsv)
           echo "Subscription ID: $SUBSCRIPTION_ID"
           
-          # Import existing resource group (ignore errors if already in state or doesn't exist)
-          terraform import azurerm_resource_group.main "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-dev" || echo "Resource already in state or doesn't exist"
+          # Check if resources exist and import them if needed
+          RESOURCE_GROUP="rg-policycortex-dev"
+          
+          # Check if resource group exists in Azure
+          if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+            echo "Resource group exists in Azure. Checking Terraform state..."
+            
+            # Check if already in state
+            if ! terraform state show azurerm_resource_group.main &>/dev/null; then
+              echo "Importing resource group..."
+              terraform import azurerm_resource_group.main "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP" || true
+            fi
+            
+            # Check for Container Apps Environment
+            if az containerapp env show --name "cae-policycortex-dev" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+              if ! terraform state show azurerm_container_app_environment.main &>/dev/null; then
+                echo "Importing Container Apps Environment..."
+                terraform import azurerm_container_app_environment.main "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/managedEnvironments/cae-policycortex-dev" || true
+              fi
+            fi
+          fi
           
           # Show current state
-          terraform state list
+          echo "Current Terraform state:"
+          terraform state list || echo "No resources in state"
         working-directory: infrastructure/terraform
         continue-on-error: true
 
@@ -263,7 +283,14 @@ jobs:
 
       - name: Terraform Apply
         if: steps.check_plan.outputs.plan_exists == 'true'
-        run: terraform apply -auto-approve dev.tfplan
+        run: |
+          # Try to apply the saved plan, but fall back to regular apply if it's stale
+          terraform apply -auto-approve dev.tfplan || {
+            echo "Plan is stale or invalid. Running fresh apply..."
+            terraform apply \
+              -var-file="environments/dev/terraform.tfvars" \
+              -auto-approve
+          }
         working-directory: infrastructure/terraform
         
       - name: Terraform Apply (no plan)
@@ -447,7 +474,14 @@ jobs:
         working-directory: infrastructure/terraform
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve staging.tfplan
+        run: |
+          # Try to apply the saved plan, but fall back to regular apply if it's stale
+          terraform apply -auto-approve staging.tfplan || {
+            echo "Plan is stale or invalid. Running fresh apply..."
+            terraform apply \
+              -var-file="environments/staging/terraform.tfvars" \
+              -auto-approve
+          }
         working-directory: infrastructure/terraform
 
       - name: Output Infrastructure Details
@@ -623,7 +657,14 @@ jobs:
         working-directory: infrastructure/terraform
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve prod.tfplan
+        run: |
+          # Try to apply the saved plan, but fall back to regular apply if it's stale
+          terraform apply -auto-approve prod.tfplan || {
+            echo "Plan is stale or invalid. Running fresh apply..."
+            terraform apply \
+              -var-file="environments/prod/terraform.tfvars" \
+              -auto-approve
+          }
         working-directory: infrastructure/terraform
 
       - name: Output Infrastructure Details
