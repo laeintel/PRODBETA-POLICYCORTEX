@@ -331,7 +331,7 @@ resource "azurerm_redis_cache" "main" {
   
   # Redis configuration
   redis_configuration {
-    enable_authentication = true
+    authentication_enabled = true
     maxmemory_reserved     = var.redis_maxmemory_reserved
     maxmemory_delta        = var.redis_maxmemory_delta
     maxmemory_policy       = "allkeys-lru"
