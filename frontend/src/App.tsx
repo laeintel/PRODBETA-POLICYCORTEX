@@ -36,6 +36,7 @@ function App() {
       <Helmet>
         <title>PolicyCortex - Azure Governance Intelligence</title>
         <meta name="description" content="AI-Powered Azure Governance Intelligence Platform" />
+        <meta name="version" content="1.0.0" />
       </Helmet>
       
       <CssBaseline />
