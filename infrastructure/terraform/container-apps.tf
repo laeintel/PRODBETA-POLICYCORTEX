@@ -350,7 +350,7 @@ resource "azurerm_container_app" "frontend" {
       
       env {
         name  = "VITE_API_BASE_URL"
-        value = "https://${azurerm_container_app.api_gateway[0].latest_revision_fqdn}"
+        value = "https://ca-api-gateway-${var.environment}.${azurerm_container_app_environment.main.default_domain}"
       }
     }
   }
@@ -370,6 +370,10 @@ resource "azurerm_container_app" "frontend" {
   }
   
   tags = local.common_tags
+  
+  depends_on = [
+    azurerm_container_app.api_gateway
+  ]
 }
 
 # Container Apps URLs (conditional outputs)
