@@ -3,17 +3,17 @@
 # Machine Learning Workspace outputs
 output "ml_workspace_id" {
   description = "ID of the Machine Learning workspace"
-  value       = azurerm_machine_learning_workspace.main.id
+  value       = var.deploy_ml_workspace ? azurerm_machine_learning_workspace.main[0].id : null
 }
 
 output "ml_workspace_name" {
   description = "Name of the Machine Learning workspace"
-  value       = azurerm_machine_learning_workspace.main.name
+  value       = var.deploy_ml_workspace ? azurerm_machine_learning_workspace.main[0].name : null
 }
 
 output "ml_workspace_discovery_url" {
   description = "Discovery URL of the Machine Learning workspace"
-  value       = azurerm_machine_learning_workspace.main.discovery_url
+  value       = var.deploy_ml_workspace ? azurerm_machine_learning_workspace.main[0].discovery_url : null
 }
 
 # Container Registry outputs
@@ -35,23 +35,23 @@ output "ml_container_registry_login_server" {
 # Compute Instance outputs
 output "compute_instance_id" {
   description = "ID of the compute instance"
-  value       = var.deploy_ml_compute && var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].id : null
+  value       = var.deploy_ml_workspace && var.deploy_ml_compute && var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].id : null
 }
 
 output "compute_instance_name" {
   description = "Name of the compute instance"
-  value       = var.deploy_ml_compute && var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].name : null
+  value       = var.deploy_ml_workspace && var.deploy_ml_compute && var.environment == "dev" ? azurerm_machine_learning_compute_instance.dev[0].name : null
 }
 
 # Compute Cluster outputs
 output "training_cluster_id" {
   description = "ID of the training cluster"
-  value       = var.deploy_ml_compute ? azurerm_machine_learning_compute_cluster.training[0].id : null
+  value       = var.deploy_ml_workspace && var.deploy_ml_compute ? azurerm_machine_learning_compute_cluster.training[0].id : null
 }
 
 output "training_cluster_name" {
   description = "Name of the training cluster"
-  value       = var.deploy_ml_compute ? azurerm_machine_learning_compute_cluster.training[0].name : null
+  value       = var.deploy_ml_workspace && var.deploy_ml_compute ? azurerm_machine_learning_compute_cluster.training[0].name : null
 }
 
 # Cognitive Services outputs
@@ -116,9 +116,9 @@ output "private_dns_zones" {
 output "private_endpoints" {
   description = "Private endpoints created for AI services"
   value = {
-    ml_workspace = azurerm_private_endpoint.ml_workspace.id
+    ml_workspace = var.deploy_ml_workspace ? azurerm_private_endpoint.ml_workspace[0].id : null
     cognitive    = azurerm_private_endpoint.cognitive.id
-    openai       = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? azurerm_private_endpoint.openai[0].id : null
+    openai       = var.deploy_openai && contains(var.openai_available_regions, var.location) ? azurerm_private_endpoint.openai[0].id : null
     eventgrid    = azurerm_private_endpoint.eventgrid.id
   }
 }

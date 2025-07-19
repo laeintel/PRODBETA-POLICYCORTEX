@@ -82,6 +82,7 @@ resource "azurerm_private_endpoint" "acr" {
 
 # Azure Machine Learning Workspace
 resource "azurerm_machine_learning_workspace" "main" {
+  count                         = var.deploy_ml_workspace ? 1 : 0
   name                          = "${var.project_name}-ml-${var.environment}-v2"
   location                      = data.azurerm_resource_group.main.location
   resource_group_name           = data.azurerm_resource_group.main.name
@@ -113,6 +114,7 @@ resource "azurerm_machine_learning_workspace" "main" {
 
 # Private endpoint for ML Workspace
 resource "azurerm_private_endpoint" "ml_workspace" {
+  count               = var.deploy_ml_workspace ? 1 : 0
   name                = "${var.project_name}-ml-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
@@ -120,7 +122,7 @@ resource "azurerm_private_endpoint" "ml_workspace" {
 
   private_service_connection {
     name                           = "${var.project_name}-ml-psc-${var.environment}"
-    private_connection_resource_id = azurerm_machine_learning_workspace.main.id
+    private_connection_resource_id = azurerm_machine_learning_workspace.main[0].id
     subresource_names             = ["amlworkspace"]
     is_manual_connection          = false
   }
@@ -152,9 +154,9 @@ resource "azurerm_private_dns_zone_virtual_network_link" "ml" {
 
 # ML Compute Instance for development
 resource "azurerm_machine_learning_compute_instance" "dev" {
-  count                         = var.deploy_ml_compute && var.environment == "dev" ? 1 : 0
+  count                         = var.deploy_ml_workspace && var.deploy_ml_compute && var.environment == "dev" ? 1 : 0
   name                          = "${var.project_name}-ci-${var.environment}"
-  machine_learning_workspace_id = azurerm_machine_learning_workspace.main.id
+  machine_learning_workspace_id = azurerm_machine_learning_workspace.main[0].id
   virtual_machine_size          = var.compute_instance_vm_size
   
   # Security
@@ -171,9 +173,9 @@ resource "azurerm_machine_learning_compute_instance" "dev" {
 
 # ML Compute Cluster for training
 resource "azurerm_machine_learning_compute_cluster" "training" {
-  count                         = var.deploy_ml_compute ? 1 : 0
+  count                         = var.deploy_ml_workspace && var.deploy_ml_compute ? 1 : 0
   name                          = "${var.project_name}-cluster-${var.environment}"
-  machine_learning_workspace_id = azurerm_machine_learning_workspace.main.id
+  machine_learning_workspace_id = azurerm_machine_learning_workspace.main[0].id
   location                      = data.azurerm_resource_group.main.location
   vm_priority                   = var.training_cluster_vm_priority
   vm_size                       = var.training_cluster_vm_size

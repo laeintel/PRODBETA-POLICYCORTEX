@@ -239,6 +239,9 @@ module "ai_services" {
   storage_account_name             = azurerm_storage_account.app_storage.name
   application_insights_name        = azurerm_application_insights.main.name
   
+  # ML Workspace configuration
+  deploy_ml_workspace              = var.deploy_ml_workspace
+  
   # Container Registry configuration
   create_container_registry        = var.create_ml_container_registry
   existing_container_registry_id   = var.create_ml_container_registry ? null : azurerm_container_registry.main.id

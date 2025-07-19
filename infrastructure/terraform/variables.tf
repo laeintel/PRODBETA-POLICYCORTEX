@@ -115,6 +115,12 @@ variable "redis_sku_name" {
 }
 
 # AI Services Variables
+variable "deploy_ml_workspace" {
+  description = "Whether to deploy ML workspace"
+  type        = bool
+  default     = true
+}
+
 variable "create_ml_container_registry" {
   description = "Whether to create a separate Container Registry for ML"
   type        = bool
