@@ -59,9 +59,12 @@ resource "azurerm_mssql_server" "main" {
   minimum_tls_version = "1.2"
   
   # Azure AD authentication
-  azuread_administrator {
-    login_username = var.sql_azuread_admin_login
-    object_id      = var.sql_azuread_admin_object_id
+  dynamic "azuread_administrator" {
+    for_each = var.sql_azuread_admin_object_id != "" && var.sql_azuread_admin_object_id != "00000000-0000-0000-0000-000000000000" ? [1] : []
+    content {
+      login_username = var.sql_azuread_admin_login
+      object_id      = var.sql_azuread_admin_object_id
+    }
   }
 
   # Identity for accessing Key Vault
@@ -253,10 +256,6 @@ resource "azurerm_cosmosdb_sql_database" "governance" {
   name                = "governance"
   resource_group_name = data.azurerm_resource_group.main.name
   account_name        = azurerm_cosmosdb_account.main.name
-  
-  autoscale_settings {
-    max_throughput = var.cosmos_max_throughput
-  }
 }
 
 resource "azurerm_cosmosdb_sql_container" "policies" {
