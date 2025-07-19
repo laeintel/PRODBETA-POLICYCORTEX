@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Set work directory
 WORKDIR /app
@@ -22,24 +22,26 @@ RUN apt-get update \
         netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+# Copy the entire backend directory structure
+COPY . /app/
 
-# Copy application code
-COPY . .
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /app/services/notification/requirements.txt
 
 # Create non-root user
 RUN groupadd -r notification && useradd -r -g notification notification
 RUN chown -R notification:notification /app
 USER notification
 
+# Set working directory to the service
+WORKDIR /app/services/notification
+
 # Expose port
 EXPOSE 8005
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
     CMD curl -f http://localhost:8005/health || exit 1
 
 # Run the application
