@@ -230,6 +230,7 @@ module "ai_services" {
   
   project_name                     = "policycortex"
   environment                      = var.environment
+  location                         = var.location
   resource_group_name              = azurerm_resource_group.main.name
   vnet_name                        = module.networking.vnet_name
   ai_services_subnet_name          = "ai-services-subnet"
@@ -258,6 +259,42 @@ module "ai_services" {
     azurerm_key_vault.main,
     azurerm_storage_account.app_storage,
     azurerm_application_insights.main
+  ]
+}
+
+# Monitoring Module
+module "monitoring" {
+  source = "./modules/monitoring"
+  
+  project_name                     = "policycortex"
+  environment                      = var.environment
+  resource_group_name              = azurerm_resource_group.main.name
+  log_analytics_workspace_name     = azurerm_log_analytics_workspace.main.name
+  application_insights_name        = azurerm_application_insights.main.name
+  subscription_id                  = data.azurerm_client_config.current.subscription_id
+  
+  # Alert configuration
+  critical_alert_emails            = var.critical_alert_emails
+  warning_alert_emails             = var.warning_alert_emails
+  budget_alert_emails              = var.budget_alert_emails
+  
+  # Container Apps monitoring
+  container_app_environment_id     = azurerm_container_app_environment.main.id
+  
+  # Database monitoring
+  cosmos_db_account_id             = module.data_services.cosmos_account_id
+  sql_database_id                  = module.data_services.sql_database_id
+  storage_account_id               = azurerm_storage_account.app_storage.id
+  
+  # Budget configuration
+  monthly_budget_amount            = var.monthly_budget_amount
+  
+  tags = local.common_tags
+  
+  depends_on = [
+    module.data_services,
+    module.ai_services,
+    azurerm_container_app_environment.main
   ]
 }
 
