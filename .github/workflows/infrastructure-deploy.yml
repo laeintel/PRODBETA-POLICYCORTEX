@@ -320,38 +320,35 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # First, prepare Terraform configuration with Container Apps enabled
-          echo "Preparing Terraform configuration..."
-          terraform plan \
-            -var-file="environments/dev/terraform.tfvars" \
-            -var="deploy_container_apps=true" \
-            -out=container_apps.tfplan || true
-          
-          # Force import existing Container Apps - use more aggressive approach
-          echo "Force importing existing Container Apps..."
+          # Clean approach: Delete existing Container Apps from Azure first
+          echo "Cleaning up existing Container Apps to ensure fresh deployment..."
           services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
           
-          # First, remove any existing state for these resources to avoid conflicts
+          for service in "${services[@]}"; do
+            terraform_name=$(echo $service | tr '_' '-')
+            echo "Checking and deleting Container App: ca-$terraform_name-dev"
+            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" &>/dev/null; then
+              echo "Deleting existing Container App: ca-$terraform_name-dev"
+              az containerapp delete --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" --yes || echo "Failed to delete ca-$terraform_name-dev"
+            else
+              echo "Container App ca-$terraform_name-dev does not exist"
+            fi
+          done
+          
+          # Wait for deletions to complete
+          echo "Waiting for deletions to complete..."
+          sleep 30
+          
+          # Clean any existing state to avoid conflicts
+          echo "Cleaning Terraform state..."
           for service in "${services[@]}"; do
             echo "Removing $service from state to avoid conflicts..."
             terraform state rm "azurerm_container_app.${service}[0]" 2>/dev/null || true
             terraform state rm "azurerm_container_app.${service}" 2>/dev/null || true
           done
           
-          # Now import the existing resources
-          for service in "${services[@]}"; do
-            terraform_name=$(echo $service | tr '_' '-')
-            echo "Checking Container App: ca-$terraform_name-dev"
-            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" &>/dev/null; then
-              echo "Importing $service into state..."
-              terraform import "azurerm_container_app.${service}[0]" \
-                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/rg-policycortex-dev/providers/Microsoft.App/containerApps/ca-$terraform_name-dev" || echo "Import failed for $service - will be created"
-            else
-              echo "Container App ca-$terraform_name-dev does not exist - will be created"
-            fi
-          done
-          
-          # Run Terraform apply again with Container Apps enabled
+          # Now deploy Container Apps fresh with Terraform
+          echo "Deploying Container Apps with Terraform..."
           terraform apply \
             -var-file="environments/dev/terraform.tfvars" \
             -var="deploy_container_apps=true" \
