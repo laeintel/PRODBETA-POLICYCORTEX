@@ -131,13 +131,45 @@ resource "azurerm_key_vault" "main" {
   purge_protection_enabled   = true
   soft_delete_retention_days = 30
   
-  # Enable RBAC authorization
-  enable_rbac_authorization = true
+  # Enable RBAC authorization (temporarily disabled for migration)
+  enable_rbac_authorization = false
   
   tags = local.common_tags
 }
 
-# RBAC role assignments for Key Vault (replacing access policies)
+# Key Vault access policy for current client (service principal or user)
+resource "azurerm_key_vault_access_policy" "current_client" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+  
+  key_permissions = [
+    "Get", "List", "Create", "Delete", "Update", "Recover", "Purge", "GetRotationPolicy", "SetRotationPolicy"
+  ]
+  
+  secret_permissions = [
+    "Get", "List", "Set", "Delete", "Recover", "Purge"
+  ]
+  
+  certificate_permissions = [
+    "Get", "List", "Create", "Delete", "Update"
+  ]
+}
+
+# Key Vault access policy for Container Apps managed identity
+resource "azurerm_key_vault_access_policy" "container_apps" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_user_assigned_identity.container_apps.principal_id
+  
+  secret_permissions = [
+    "Get", "List"
+  ]
+  
+  depends_on = [azurerm_user_assigned_identity.container_apps]
+}
+
+# RBAC role assignments for Key Vault (for future migration to RBAC)
 # Key Vault Administrator role for current client
 resource "azurerm_role_assignment" "key_vault_admin_current_client" {
   scope                = azurerm_key_vault.main.id
@@ -516,7 +548,7 @@ resource "azurerm_key_vault_secret" "jwt_secret_key" {
   value        = var.jwt_secret_key
   key_vault_id = azurerm_key_vault.main.id
   
-  depends_on = [azurerm_role_assignment.key_vault_admin_current_client]
+  depends_on = [azurerm_key_vault_access_policy.current_client]
 }
 
 resource "azurerm_key_vault_secret" "managed_identity_client_id" {
@@ -524,7 +556,7 @@ resource "azurerm_key_vault_secret" "managed_identity_client_id" {
   value        = azurerm_user_assigned_identity.container_apps.client_id
   key_vault_id = azurerm_key_vault.main.id
   
-  depends_on = [azurerm_role_assignment.key_vault_admin_current_client]
+  depends_on = [azurerm_key_vault_access_policy.current_client]
 }
 
 resource "azurerm_key_vault_secret" "storage_account_name" {
@@ -532,7 +564,7 @@ resource "azurerm_key_vault_secret" "storage_account_name" {
   value        = azurerm_storage_account.app_storage.name
   key_vault_id = azurerm_key_vault.main.id
   
-  depends_on = [azurerm_role_assignment.key_vault_admin_current_client]
+  depends_on = [azurerm_key_vault_access_policy.current_client]
 }
 
 resource "azurerm_key_vault_secret" "application_insights_connection_string" {
@@ -540,7 +572,7 @@ resource "azurerm_key_vault_secret" "application_insights_connection_string" {
   value        = azurerm_application_insights.main.connection_string
   key_vault_id = azurerm_key_vault.main.id
   
-  depends_on = [azurerm_role_assignment.key_vault_admin_current_client]
+  depends_on = [azurerm_key_vault_access_policy.current_client]
 }
 
 # Container Apps resources moved to container-apps.tf
