@@ -99,6 +99,12 @@ resource "azurerm_storage_account" "app_storage" {
     }
   }
   
+  # User-assigned managed identity
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
+  
   tags = local.common_tags
 }
 
@@ -113,6 +119,12 @@ resource "azurerm_key_vault" "main" {
   # Security settings
   purge_protection_enabled   = true
   soft_delete_retention_days = 30
+  
+  # User-assigned managed identity
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
   
   tags = local.common_tags
 }
@@ -141,6 +153,12 @@ resource "azurerm_container_registry" "main" {
   location            = azurerm_resource_group.main.location
   sku                 = "Basic"
   admin_enabled       = true
+  
+  # User-assigned managed identity
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+  }
   
   tags = local.common_tags
 }
@@ -176,6 +194,10 @@ module "networking" {
       address_prefixes = ["10.0.2.0/24"]
       service_endpoints = ["Microsoft.Storage"]
     }
+    private_endpoints = {
+      address_prefixes = ["10.0.3.0/24"]
+      service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault", "Microsoft.Sql", "Microsoft.AzureCosmosDB", "Microsoft.CognitiveServices"]
+    }
     data_services = {
       address_prefixes = ["10.0.4.0/24"]
       service_endpoints = ["Microsoft.Sql", "Microsoft.AzureCosmosDB", "Microsoft.Storage", "Microsoft.KeyVault"]
@@ -198,7 +220,9 @@ module "data_services" {
   resource_group_name           = azurerm_resource_group.main.name
   vnet_name                     = module.networking.vnet_name
   data_services_subnet_name     = "policycortex-${var.environment}-subnet-data_services"
+  private_endpoints_subnet_name = "policycortex-${var.environment}-subnet-private_endpoints"
   key_vault_name                = azurerm_key_vault.main.name
+  managed_identity_id           = azurerm_user_assigned_identity.container_apps.id
   
   # SQL Server configuration
   deploy_sql_server             = var.deploy_sql_server
@@ -235,9 +259,11 @@ module "ai_services" {
   resource_group_name              = azurerm_resource_group.main.name
   vnet_name                        = module.networking.vnet_name
   ai_services_subnet_name          = "policycortex-${var.environment}-subnet-ai_services"
+  private_endpoints_subnet_name    = "policycortex-${var.environment}-subnet-private_endpoints"
   key_vault_name                   = azurerm_key_vault.main.name
   storage_account_name             = azurerm_storage_account.app_storage.name
   application_insights_name        = azurerm_application_insights.main.name
+  managed_identity_id              = azurerm_user_assigned_identity.container_apps.id
   
   # ML Workspace configuration
   deploy_ml_workspace              = var.deploy_ml_workspace
