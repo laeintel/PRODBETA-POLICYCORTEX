@@ -132,6 +132,12 @@ variable "cosmos_db_account_id" {
   default     = null
 }
 
+variable "deploy_cosmos_monitoring" {
+  description = "Whether to deploy Cosmos DB monitoring alerts"
+  type        = bool
+  default     = true
+}
+
 variable "cosmos_ru_threshold" {
   description = "Cosmos DB RU consumption threshold"
   type        = number
@@ -142,6 +148,12 @@ variable "sql_database_id" {
   description = "Resource ID of the SQL Database"
   type        = string
   default     = null
+}
+
+variable "deploy_sql_monitoring" {
+  description = "Whether to deploy SQL Database monitoring alerts"
+  type        = bool
+  default     = true
 }
 
 variable "sql_dtu_threshold_percentage" {
@@ -155,6 +167,12 @@ variable "storage_account_id" {
   description = "Resource ID of the Storage Account"
   type        = string
   default     = null
+}
+
+variable "deploy_storage_monitoring" {
+  description = "Whether to deploy Storage Account monitoring alerts"
+  type        = bool
+  default     = true
 }
 
 variable "storage_transaction_threshold" {

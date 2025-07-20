@@ -310,6 +310,11 @@ module "monitoring" {
   sql_database_id                  = module.data_services.sql_database_id
   storage_account_id               = azurerm_storage_account.app_storage.id
   
+  # Monitoring deployment flags
+  deploy_cosmos_monitoring         = true
+  deploy_sql_monitoring            = var.deploy_sql_server
+  deploy_storage_monitoring        = true
+  
   # Budget configuration
   monthly_budget_amount            = var.monthly_budget_amount
   
