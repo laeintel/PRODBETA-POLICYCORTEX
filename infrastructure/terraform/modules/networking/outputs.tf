@@ -73,6 +73,19 @@ output "private_dns_zone_name" {
   value       = azurerm_private_dns_zone.internal.name
 }
 
+# Azure Service Private DNS Zone Outputs
+output "azure_service_dns_zones" {
+  description = "Map of Azure service DNS zone names to their IDs"
+  value = {
+    sql       = azurerm_private_dns_zone.sql.id
+    cosmos    = azurerm_private_dns_zone.cosmos.id
+    redis     = azurerm_private_dns_zone.redis.id
+    cognitive = azurerm_private_dns_zone.cognitive.id
+    ml        = azurerm_private_dns_zone.ml.id
+    openai    = azurerm_private_dns_zone.openai.id
+  }
+}
+
 # Network Watcher Outputs
 output "network_watcher_id" {
   description = "ID of the Network Watcher"

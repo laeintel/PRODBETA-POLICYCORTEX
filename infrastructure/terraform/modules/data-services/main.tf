@@ -111,30 +111,17 @@ resource "azurerm_private_endpoint" "sql" {
     is_manual_connection          = false
   }
 
-  private_dns_zone_group {
-    name                 = "sql-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.sql.id]
-  }
+  # DNS zone group will be added after centralized DNS zones are created
+  # private_dns_zone_group {
+  #   name                 = "sql-dns-zone-group"
+  #   private_dns_zone_ids = [var.sql_dns_zone_id]
+  # }
 
   tags = var.tags
 }
 
 # Private DNS zone for SQL Server
-resource "azurerm_private_dns_zone" "sql" {
-  name                = "privatelink.database.windows.net"
-  resource_group_name = var.network_resource_group_name
-
-  tags = var.tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "sql" {
-  name                  = "sql-dns-vnet-link"
-  resource_group_name   = var.network_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.sql.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
-
-  tags = var.tags
-}
+# Private DNS zone for SQL is managed by networking module
 
 # Azure SQL Database for PolicyCortex
 resource "azurerm_mssql_database" "policycortex" {
@@ -247,30 +234,17 @@ resource "azurerm_private_endpoint" "cosmos" {
     is_manual_connection          = false
   }
 
-  private_dns_zone_group {
-    name                 = "cosmos-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.cosmos.id]
-  }
+  # DNS zone group will be added after centralized DNS zones are created
+  # private_dns_zone_group {
+  #   name                 = "cosmos-dns-zone-group"
+  #   private_dns_zone_ids = [var.cosmos_dns_zone_id]
+  # }
 
   tags = var.tags
 }
 
 # Private DNS zone for Cosmos DB
-resource "azurerm_private_dns_zone" "cosmos" {
-  name                = "privatelink.documents.azure.com"
-  resource_group_name = var.network_resource_group_name
-
-  tags = var.tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "cosmos" {
-  name                  = "cosmos-dns-vnet-link"
-  resource_group_name   = var.network_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.cosmos.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
-
-  tags = var.tags
-}
+# Private DNS zone for Cosmos is managed by networking module
 
 # Cosmos DB databases and containers
 resource "azurerm_cosmosdb_sql_database" "governance" {
@@ -378,30 +352,17 @@ resource "azurerm_private_endpoint" "redis" {
     is_manual_connection          = false
   }
 
-  private_dns_zone_group {
-    name                 = "redis-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.redis.id]
-  }
+  # DNS zone group will be added after centralized DNS zones are created
+  # private_dns_zone_group {
+  #   name                 = "redis-dns-zone-group"
+  #   private_dns_zone_ids = [var.redis_dns_zone_id]
+  # }
 
   tags = var.tags
 }
 
 # Private DNS zone for Redis
-resource "azurerm_private_dns_zone" "redis" {
-  name                = "privatelink.redis.cache.windows.net"
-  resource_group_name = var.network_resource_group_name
-
-  tags = var.tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
-  name                  = "redis-dns-vnet-link"
-  resource_group_name   = var.network_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.redis.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
-
-  tags = var.tags
-}
+# Private DNS zone for Redis is managed by networking module
 
 # Store Redis connection details in Key Vault
 resource "azurerm_key_vault_secret" "redis_connection_string" {
