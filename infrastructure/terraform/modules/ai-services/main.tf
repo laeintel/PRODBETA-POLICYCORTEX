@@ -197,9 +197,10 @@ resource "azurerm_machine_learning_compute_cluster" "training" {
   # Network
   subnet_resource_id = data.azurerm_subnet.ai_services.id
 
-  # Identity
+  # User-assigned managed identity
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
   }
 
   tags = var.tags
@@ -408,9 +409,10 @@ resource "azurerm_eventgrid_topic" "ml_operations" {
   public_network_access_enabled = false
   local_auth_enabled            = false
 
-  # Identity
+  # User-assigned managed identity
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
   }
 
   tags = var.tags
@@ -420,7 +422,7 @@ resource "azurerm_eventgrid_topic" "ml_operations" {
 resource "azurerm_private_endpoint" "eventgrid" {
   name                = "${var.project_name}-eventgrid-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
