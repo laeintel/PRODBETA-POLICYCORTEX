@@ -92,7 +92,26 @@
       "Bash(venvScripts:*)",
       "Bash(.venvScriptsactivate)",
       "Bash(uvicorn:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(--name ca-api-gateway-dev )",
+      "Bash(--resource-group rg-policycortex-dev )",
+      "Bash(--set-env-vars )",
+      "Bash(\"ENVIRONMENT=development\" )",
+      "Bash(\"DATABASE_URL=postgresql://sqladmin:$SQL_PASSWORD@policycortex-sql-dev.database.windows.net:5432/policycortex_dev?sslmode=require\" )",
+      "Bash(\"COSMOS_CONNECTION_STRING=$COSMOS_CONN\" )",
+      "Bash(\"REDIS_URL=$REDIS_CONN\" )",
+      "Bash(\"AZURE_KEY_VAULT_URL=https://kvpolicycortexdev.vault.azure.net/\" )",
+      "Bash(\"LOG_LEVEL=info\")",
+      "Bash(./fix_container_apps.sh:*)",
+      "Bash(--name ca-api-gateway-dev )",
+      "Bash(--resource-group rg-policycortex-dev )",
+      "Bash(--set-env-vars )",
+      "Bash(\"AZURE_CLIENT_SECRET=placeholder-secret-managed-identity-used\" )",
+      "Bash(\"AZURE_ML_WORKSPACE_NAME=policycortex-ml-dev\")",
+      "Bash(--name ca-api-gateway-dev )",
+      "Bash(--resource-group rg-policycortex-dev )",
+      "Bash(--set-env-vars )",
+      "Bash(\"AZURE_CLIENT_SECRET=placeholder-secret-managed-identity-used\" )"
     ],
     "deny": []
   }
