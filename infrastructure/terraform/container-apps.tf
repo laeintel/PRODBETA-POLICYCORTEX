@@ -29,7 +29,7 @@ locals {
     },
     {
       name  = "AZURE_RESOURCE_GROUP"
-      value = azurerm_resource_group.main.name
+      value = azurerm_resource_group.app.name
     },
     {
       name  = "AZURE_LOCATION"
@@ -113,7 +113,7 @@ resource "azurerm_container_app" "api_gateway" {
   
   name                         = "ca-api-gateway-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
   
   depends_on = [
@@ -218,7 +218,7 @@ resource "azurerm_container_app" "azure_integration" {
   
   name                         = "ca-azure-integration-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
   
   identity {
@@ -284,7 +284,7 @@ resource "azurerm_container_app" "ai_engine" {
   
   name                         = "ca-ai-engine-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
   
   identity {
@@ -350,7 +350,7 @@ resource "azurerm_container_app" "data_processing" {
   
   name                         = "ca-data-processing-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
   
   identity {
@@ -416,7 +416,7 @@ resource "azurerm_container_app" "conversation" {
   
   name                         = "ca-conversation-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
   
   identity {
@@ -481,7 +481,7 @@ resource "azurerm_container_app" "notification" {
   
   name                         = "ca-notification-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
   
   identity {
@@ -546,7 +546,7 @@ resource "azurerm_container_app" "frontend" {
   
   name                         = "ca-frontend-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
+  resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
   
   identity {

@@ -49,18 +49,29 @@ data "azurerm_client_config" "current" {}
 # az provider register --namespace Microsoft.App
 # az provider register --namespace Microsoft.OperationalInsights
 
-# Resource group for the environment
-resource "azurerm_resource_group" "main" {
-  name     = "rg-policycortex-${var.environment}"
+# Network Resource Group for networking infrastructure
+resource "azurerm_resource_group" "network" {
+  name     = "rg-policycortex-network-${var.environment}"
   location = var.location
-  tags     = local.common_tags
+  tags     = merge(local.common_tags, {
+    ResourceType = "Networking"
+  })
+}
+
+# Application Resource Group for application resources
+resource "azurerm_resource_group" "app" {
+  name     = "rg-policycortex-app-${var.environment}"
+  location = var.location
+  tags     = merge(local.common_tags, {
+    ResourceType = "Application"
+  })
 }
 
 # Storage account for application data (with security compliance)
 resource "azurerm_storage_account" "app_storage" {
   name                     = "stpolicycortex${var.environment}stg"
-  resource_group_name      = azurerm_resource_group.main.name
-  location                = azurerm_resource_group.main.location
+  resource_group_name      = azurerm_resource_group.app.name
+  location                = azurerm_resource_group.app.location
   account_tier             = "Standard"
   account_replication_type = "GRS"
   
@@ -111,8 +122,8 @@ resource "azurerm_storage_account" "app_storage" {
 # Key Vault for secrets management
 resource "azurerm_key_vault" "main" {
   name                = "kvpolicycortex${var.environment}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.app.location
+  resource_group_name = azurerm_resource_group.app.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
   
@@ -143,8 +154,8 @@ resource "azurerm_key_vault_access_policy" "terraform" {
 # Container Registry for Docker images
 resource "azurerm_container_registry" "main" {
   name                = "crpolicycortex${var.environment}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.app.name
+  location            = azurerm_resource_group.app.location
   sku                 = "Basic"
   admin_enabled       = true
   
@@ -164,7 +175,7 @@ module "networking" {
   project_name        = "policycortex"
   environment         = var.environment
   location            = var.location
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.network.name
   
   vnet_address_space = ["10.0.0.0/16"]
   
@@ -182,7 +193,13 @@ module "networking" {
     container_apps = {
       address_prefixes = ["10.0.0.0/23"]
       service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
-      delegation = null
+      delegation = {
+        name = "Microsoft.App.environments"
+        service_delegation = {
+          name = "Microsoft.App/environments"
+          actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+        }
+      }
     }
     app_gateway = {
       address_prefixes = ["10.0.2.0/24"]
@@ -211,7 +228,8 @@ module "data_services" {
   
   project_name                  = "policycortex"
   environment                   = var.environment
-  resource_group_name           = azurerm_resource_group.main.name
+  resource_group_name           = azurerm_resource_group.app.name
+  network_resource_group_name   = azurerm_resource_group.network.name
   vnet_name                     = module.networking.vnet_name
   data_services_subnet_name     = "policycortex-${var.environment}-subnet-data_services"
   private_endpoints_subnet_name = "policycortex-${var.environment}-subnet-private_endpoints"
@@ -250,7 +268,8 @@ module "ai_services" {
   project_name                     = "policycortex"
   environment                      = var.environment
   location                         = var.location
-  resource_group_name              = azurerm_resource_group.main.name
+  resource_group_name              = azurerm_resource_group.app.name
+  network_resource_group_name      = azurerm_resource_group.network.name
   vnet_name                        = module.networking.vnet_name
   ai_services_subnet_name          = "policycortex-${var.environment}-subnet-ai_services"
   private_endpoints_subnet_name    = "policycortex-${var.environment}-subnet-private_endpoints"
@@ -292,7 +311,7 @@ module "monitoring" {
   
   project_name                     = "policycortex"
   environment                      = var.environment
-  resource_group_name              = azurerm_resource_group.main.name
+  resource_group_name              = azurerm_resource_group.app.name
   log_analytics_workspace_name     = azurerm_log_analytics_workspace.main.name
   application_insights_name        = azurerm_application_insights.main.name
   subscription_id                  = data.azurerm_client_config.current.subscription_id
@@ -330,8 +349,8 @@ module "monitoring" {
 # Log Analytics Workspace for monitoring
 resource "azurerm_log_analytics_workspace" "main" {
   name                = "law-policycortex-${var.environment}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.app.location
+  resource_group_name = azurerm_resource_group.app.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
   
@@ -341,8 +360,8 @@ resource "azurerm_log_analytics_workspace" "main" {
 # Application Insights for monitoring
 resource "azurerm_application_insights" "main" {
   name                = "ai-policycortex-${var.environment}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.app.location
+  resource_group_name = azurerm_resource_group.app.name
   workspace_id        = azurerm_log_analytics_workspace.main.id
   application_type    = "web"
   
@@ -352,8 +371,8 @@ resource "azurerm_application_insights" "main" {
 # Container Apps Environment with Dedicated Workload Profiles
 resource "azurerm_container_app_environment" "main" {
   name                       = "cae-policycortex-${var.environment}"
-  location                   = azurerm_resource_group.main.location
-  resource_group_name        = azurerm_resource_group.main.name
+  location                   = azurerm_resource_group.app.location
+  resource_group_name        = azurerm_resource_group.app.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   infrastructure_subnet_id   = module.networking.subnet_ids["container_apps"]
   
@@ -389,8 +408,8 @@ resource "azurerm_container_app_environment" "main" {
 # User-assigned managed identity for Container Apps
 resource "azurerm_user_assigned_identity" "container_apps" {
   name                = "id-policycortex-${var.environment}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.app.location
+  resource_group_name = azurerm_resource_group.app.name
   
   tags = local.common_tags
 }
@@ -476,7 +495,7 @@ resource "azurerm_role_assignment" "container_apps_appinsights" {
 
 # Role assignment for Container Apps to read Resource Group
 resource "azurerm_role_assignment" "container_apps_rg_reader" {
-  scope                = azurerm_resource_group.main.id
+  scope                = azurerm_resource_group.app.id
   role_definition_name = "Reader"
   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
 }
@@ -521,7 +540,11 @@ resource "azurerm_key_vault_secret" "application_insights_connection_string" {
 
 # Output values
 output "resource_group_name" {
-  value = azurerm_resource_group.main.name
+  value = azurerm_resource_group.app.name
+}
+
+output "network_resource_group_name" {
+  value = azurerm_resource_group.network.name
 }
 
 output "storage_account_name" {

@@ -16,7 +16,12 @@ variable "environment" {
 }
 
 variable "resource_group_name" {
-  description = "Name of the resource group"
+  description = "Name of the application resource group"
+  type        = string
+}
+
+variable "network_resource_group_name" {
+  description = "Name of the network resource group"
   type        = string
 }
 
