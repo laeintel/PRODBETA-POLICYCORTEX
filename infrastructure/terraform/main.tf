@@ -120,12 +120,6 @@ resource "azurerm_key_vault" "main" {
   purge_protection_enabled   = true
   soft_delete_retention_days = 30
   
-  # User-assigned managed identity
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
-  }
-  
   tags = local.common_tags
 }
 
