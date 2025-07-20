@@ -73,7 +73,7 @@ resource "azurerm_private_endpoint" "acr" {
   count               = var.create_container_registry ? 1 : 0
   name                = "${var.project_name}-ml-acr-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
@@ -124,7 +124,7 @@ resource "azurerm_private_endpoint" "ml_workspace" {
   count               = var.deploy_ml_workspace ? 1 : 0
   name                = "${var.project_name}-ml-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
@@ -245,7 +245,7 @@ resource "azurerm_cognitive_account" "main" {
 resource "azurerm_private_endpoint" "cognitive" {
   name                = "${var.project_name}-cognitive-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
@@ -317,7 +317,7 @@ resource "azurerm_private_endpoint" "openai" {
   count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                = "${var.project_name}-openai-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
