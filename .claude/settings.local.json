@@ -111,7 +111,12 @@
       "Bash(--name ca-api-gateway-dev )",
       "Bash(--resource-group rg-policycortex-dev )",
       "Bash(--set-env-vars )",
-      "Bash(\"AZURE_CLIENT_SECRET=placeholder-secret-managed-identity-used\" )"
+      "Bash(\"AZURE_CLIENT_SECRET=placeholder-secret-managed-identity-used\" )",
+      "Bash(# Assign Key Vault Secrets User role\naz role assignment create \\\n  --assignee 5389fdab-721b-4aa9-b9c1-5e33aa9dde3d \\\n  --role \"\"Key Vault Secrets User\"\" \\\n  --scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev/providers/Microsoft.KeyVault/vaults/kvpolicycortexdev\n\n# Assign Cosmos DB Built-in Data Contributor role  \naz role assignment create \\\n  --assignee 5389fdab-721b-4aa9-b9c1-5e33aa9dde3d \\\n  --role \"\"Cosmos DB Built-in Data Contributor\"\" \\\n  --scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev/providers/Microsoft.DocumentDB/databaseAccounts/policycortex-cosmos-dev\n\n# Assign Redis Cache Contributor role\naz role assignment create \\\n  --assignee 5389fdab-721b-4aa9-b9c1-5e33aa9dde3d \\\n  --role \"\"Redis Cache Contributor\"\" \\\n  --scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev/providers/Microsoft.Cache/Redis/policycortex-redis-dev)",
+      "Bash(--assignee-object-id 5389fdab-721b-4aa9-b9c1-5e33aa9dde3d )",
+      "Bash(--assignee-principal-type ServicePrincipal )",
+      "Bash(--role \"Contributor\" )",
+      "Bash(--scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev)"
     ],
     "deny": []
   }
