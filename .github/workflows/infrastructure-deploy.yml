@@ -320,27 +320,51 @@ jobs:
         run: |
           echo "Deploying Container Apps with images available..."
           
-          # Clean approach: Delete existing Container Apps from Azure first
-          echo "Cleaning up existing Container Apps to ensure fresh deployment..."
-          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          # Wait for all Azure resources to be fully provisioned
+          echo "Waiting for Azure resources to be fully online..."
+          sleep 60
           
-          for service in "${services[@]}"; do
-            terraform_name=$(echo $service | tr '_' '-')
-            echo "Checking and deleting Container App: ca-$terraform_name-dev"
-            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" &>/dev/null; then
-              echo "Deleting existing Container App: ca-$terraform_name-dev"
-              az containerapp delete --name "ca-$terraform_name-dev" --resource-group "rg-policycortex-dev" --yes || echo "Failed to delete ca-$terraform_name-dev"
-            else
-              echo "Container App ca-$terraform_name-dev does not exist"
-            fi
+          # Verify critical resources are ready before deploying container apps
+          echo "Verifying resource readiness..."
+          
+          # Check Cosmos DB is fully online
+          echo "Checking Cosmos DB account status..."
+          COSMOS_STATUS=$(az cosmosdb show --name policycortex-cosmos-dev --resource-group rg-policycortex-dev --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          while [ "$COSMOS_STATUS" != "Succeeded" ]; do
+            echo "Cosmos DB status: $COSMOS_STATUS - waiting..."
+            sleep 30
+            COSMOS_STATUS=$(az cosmosdb show --name policycortex-cosmos-dev --resource-group rg-policycortex-dev --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
           done
+          echo "Cosmos DB is ready: $COSMOS_STATUS"
           
-          # Wait for deletions to complete
-          echo "Waiting for deletions to complete..."
-          sleep 30
+          # Check Redis Cache is ready
+          echo "Checking Redis Cache status..."
+          REDIS_STATUS=$(az redis show --name policycortex-redis-dev --resource-group rg-policycortex-dev --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          while [ "$REDIS_STATUS" != "Succeeded" ]; do
+            echo "Redis status: $REDIS_STATUS - waiting..."
+            sleep 30
+            REDIS_STATUS=$(az redis show --name policycortex-redis-dev --resource-group rg-policycortex-dev --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          done
+          echo "Redis Cache is ready: $REDIS_STATUS"
+          
+          # Check Cognitive Services is ready
+          echo "Checking Cognitive Services status..."
+          COGNITIVE_STATUS=$(az cognitiveservices account show --name policycortex-cognitive-dev --resource-group rg-policycortex-dev --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          while [ "$COGNITIVE_STATUS" != "Succeeded" ]; do
+            echo "Cognitive Services status: $COGNITIVE_STATUS - waiting..."
+            sleep 30
+            COGNITIVE_STATUS=$(az cognitiveservices account show --name policycortex-cognitive-dev --resource-group rg-policycortex-dev --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          done
+          echo "Cognitive Services is ready: $COGNITIVE_STATUS"
+          
+          # Additional wait to ensure all backend operations are complete
+          echo "Final wait for backend operations to complete..."
+          sleep 60
           
           # Clean any existing state to avoid conflicts
-          echo "Cleaning Terraform state..."
+          echo "Cleaning Terraform state for container apps..."
+          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
+          
           for service in "${services[@]}"; do
             echo "Removing $service from state to avoid conflicts..."
             terraform state rm "azurerm_container_app.${service}[0]" 2>/dev/null || true

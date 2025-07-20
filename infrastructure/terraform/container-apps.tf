@@ -116,6 +116,20 @@ resource "azurerm_container_app" "api_gateway" {
   resource_group_name          = azurerm_resource_group.main.name
   revision_mode                = "Single"
   
+  depends_on = [
+    azurerm_container_app_environment.main,
+    azurerm_user_assigned_identity.container_apps,
+    module.data_services,
+    module.ai_services,
+    azurerm_role_assignment.container_apps_keyvault,
+    azurerm_role_assignment.container_apps_storage,
+    azurerm_role_assignment.container_apps_cosmos,
+    azurerm_role_assignment.container_apps_redis,
+    azurerm_role_assignment.container_apps_cognitive,
+    azurerm_role_assignment.container_apps_appinsights,
+    azurerm_role_assignment.container_apps_rg_reader
+  ]
+  
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.container_apps.id]

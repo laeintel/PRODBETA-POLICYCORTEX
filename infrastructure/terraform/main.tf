@@ -397,7 +397,15 @@ resource "azurerm_role_assignment" "container_apps_cosmos" {
   role_definition_name = "Cosmos DB Built-in Data Contributor"
   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
   
-  depends_on = [module.data_services]
+  depends_on = [
+    module.data_services,
+    azurerm_user_assigned_identity.container_apps
+  ]
+  
+  # Add delay to ensure Cosmos DB is fully provisioned
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
 }
 
 # Role assignment for Container Apps to access Redis
@@ -406,7 +414,15 @@ resource "azurerm_role_assignment" "container_apps_redis" {
   role_definition_name = "Redis Cache Contributor"
   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
   
-  depends_on = [module.data_services]
+  depends_on = [
+    module.data_services,
+    azurerm_user_assigned_identity.container_apps
+  ]
+  
+  # Add delay to ensure Redis is fully provisioned
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
 }
 
 # Role assignment for Container Apps to access Cognitive Services
@@ -415,7 +431,15 @@ resource "azurerm_role_assignment" "container_apps_cognitive" {
   role_definition_name = "Cognitive Services User"
   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
   
-  depends_on = [module.ai_services]
+  depends_on = [
+    module.ai_services,
+    azurerm_user_assigned_identity.container_apps
+  ]
+  
+  # Add delay to ensure Cognitive Services is fully provisioned
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
 }
 
 # Role assignment for Container Apps to access Application Insights
@@ -466,7 +490,9 @@ resource "azurerm_key_vault_secret" "application_insights_connection_string" {
 }
 
 # Container Apps resources moved to container-apps.tf
-# Set deploy_container_apps = true to deploy them
+# NOTE: For initial deployment, set deploy_container_apps = false to deploy infrastructure first
+# Then set deploy_container_apps = true and run terraform apply again to deploy container apps
+# This ensures all Azure resources are fully provisioned before container apps are created
 
 # Output values
 output "resource_group_name" {
