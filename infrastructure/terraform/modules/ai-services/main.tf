@@ -17,19 +17,19 @@ data "azurerm_resource_group" "main" {
 
 data "azurerm_virtual_network" "main" {
   name                = var.vnet_name
-  resource_group_name = var.resource_group_name
+  resource_group_name = var.network_resource_group_name
 }
 
 data "azurerm_subnet" "ai_services" {
   name                 = var.ai_services_subnet_name
   virtual_network_name = var.vnet_name
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = var.network_resource_group_name
 }
 
 data "azurerm_subnet" "private_endpoints" {
   name                 = var.private_endpoints_subnet_name
   virtual_network_name = var.vnet_name
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = var.network_resource_group_name
 }
 
 data "azurerm_key_vault" "main" {
@@ -145,14 +145,14 @@ resource "azurerm_private_endpoint" "ml_workspace" {
 # Private DNS zone for ML Workspace
 resource "azurerm_private_dns_zone" "ml" {
   name                = "privatelink.api.azureml.ms"
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
 
   tags = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "ml" {
   name                  = "ml-dns-vnet-link"
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = var.network_resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.ml.name
   virtual_network_id    = data.azurerm_virtual_network.main.id
 
@@ -217,6 +217,10 @@ resource "azurerm_cognitive_account" "main" {
   public_network_access_enabled = false
   custom_subdomain_name         = "${var.project_name}-cognitive-${var.environment}"
 
+  lifecycle {
+    ignore_changes = [name]
+  }
+
   # Network rules
   network_acls {
     default_action = "Deny"
@@ -261,14 +265,14 @@ resource "azurerm_private_endpoint" "cognitive" {
 # Private DNS zone for Cognitive Services
 resource "azurerm_private_dns_zone" "cognitive" {
   name                = "privatelink.cognitiveservices.azure.com"
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
 
   tags = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cognitive" {
   name                  = "cognitive-dns-vnet-link"
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = var.network_resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.cognitive.name
   virtual_network_id    = data.azurerm_virtual_network.main.id
 
@@ -334,7 +338,7 @@ resource "azurerm_private_endpoint" "openai" {
 resource "azurerm_private_dns_zone" "openai" {
   count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                = "privatelink.openai.azure.com"
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
 
   tags = var.tags
 }
@@ -342,7 +346,7 @@ resource "azurerm_private_dns_zone" "openai" {
 resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
   count                 = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                  = "openai-dns-vnet-link"
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = var.network_resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.openai[0].name
   virtual_network_id    = data.azurerm_virtual_network.main.id
 

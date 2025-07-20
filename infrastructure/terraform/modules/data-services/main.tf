@@ -17,19 +17,19 @@ data "azurerm_resource_group" "main" {
 
 data "azurerm_virtual_network" "main" {
   name                = var.vnet_name
-  resource_group_name = var.resource_group_name
+  resource_group_name = var.network_resource_group_name
 }
 
 data "azurerm_subnet" "data_services" {
   name                 = var.data_services_subnet_name
   virtual_network_name = var.vnet_name
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = var.network_resource_group_name
 }
 
 data "azurerm_subnet" "private_endpoints" {
   name                 = var.private_endpoints_subnet_name
   virtual_network_name = var.vnet_name
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = var.network_resource_group_name
 }
 
 data "azurerm_key_vault" "main" {
@@ -48,6 +48,10 @@ resource "azurerm_key_vault_secret" "sql_admin_password" {
   name         = "sql-admin-password"
   value        = random_password.sql_admin_password.result
   key_vault_id = data.azurerm_key_vault.main.id
+
+  lifecycle {
+    ignore_changes = [value]
+  }
 
   tags = var.tags
 }
@@ -118,14 +122,14 @@ resource "azurerm_private_endpoint" "sql" {
 # Private DNS zone for SQL Server
 resource "azurerm_private_dns_zone" "sql" {
   name                = "privatelink.database.windows.net"
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
 
   tags = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "sql" {
   name                  = "sql-dns-vnet-link"
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = var.network_resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.sql.name
   virtual_network_id    = data.azurerm_virtual_network.main.id
 
@@ -254,14 +258,14 @@ resource "azurerm_private_endpoint" "cosmos" {
 # Private DNS zone for Cosmos DB
 resource "azurerm_private_dns_zone" "cosmos" {
   name                = "privatelink.documents.azure.com"
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
 
   tags = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cosmos" {
   name                  = "cosmos-dns-vnet-link"
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = var.network_resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.cosmos.name
   virtual_network_id    = data.azurerm_virtual_network.main.id
 
@@ -385,14 +389,14 @@ resource "azurerm_private_endpoint" "redis" {
 # Private DNS zone for Redis
 resource "azurerm_private_dns_zone" "redis" {
   name                = "privatelink.redis.cache.windows.net"
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
 
   tags = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
   name                  = "redis-dns-vnet-link"
-  resource_group_name   = data.azurerm_resource_group.main.name
+  resource_group_name   = var.network_resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.redis.name
   virtual_network_id    = data.azurerm_virtual_network.main.id
 
@@ -404,6 +408,10 @@ resource "azurerm_key_vault_secret" "redis_connection_string" {
   name         = "redis-connection-string"
   value        = azurerm_redis_cache.main.primary_connection_string
   key_vault_id = data.azurerm_key_vault.main.id
+
+  lifecycle {
+    ignore_changes = [value]
+  }
 
   depends_on = [
     azurerm_redis_cache.main,
@@ -417,6 +425,10 @@ resource "azurerm_key_vault_secret" "cosmos_connection_string" {
   name         = "cosmos-connection-string"
   value        = azurerm_cosmosdb_account.main.primary_sql_connection_string
   key_vault_id = data.azurerm_key_vault.main.id
+
+  lifecycle {
+    ignore_changes = [value]
+  }
 
   depends_on = [
     azurerm_cosmosdb_account.main,
@@ -434,6 +446,10 @@ resource "azurerm_key_vault_secret" "sql_connection_string" {
   name  = "sql-connection-string"
   value = "Server=tcp:${azurerm_mssql_server.main[0].fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.policycortex[0].name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${random_password.sql_admin_password.result};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   key_vault_id = data.azurerm_key_vault.main.id
+
+  lifecycle {
+    ignore_changes = [value]
+  }
 
   tags = var.tags
 }
