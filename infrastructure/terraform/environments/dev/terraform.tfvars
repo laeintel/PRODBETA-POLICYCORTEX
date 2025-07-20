@@ -8,8 +8,8 @@ allowed_ips   = []  # Add your IP addresses here if needed
 # Set to false if Key Vault access policy already exists
 create_terraform_access_policy = false
 
-# Container Apps deployment
-deploy_container_apps = true
+# Container Apps deployment (enable after infrastructure is deployed)
+deploy_container_apps = false
 
 # Data Services Configuration
 deploy_sql_server = false  # SQL Server provisioning restricted in East US

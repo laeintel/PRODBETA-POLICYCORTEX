@@ -386,6 +386,11 @@ resource "azurerm_key_vault_secret" "redis_connection_string" {
   value        = azurerm_redis_cache.main.primary_connection_string
   key_vault_id = data.azurerm_key_vault.main.id
 
+  depends_on = [
+    azurerm_redis_cache.main,
+    azurerm_private_endpoint.redis
+  ]
+
   tags = var.tags
 }
 
@@ -393,6 +398,14 @@ resource "azurerm_key_vault_secret" "cosmos_connection_string" {
   name         = "cosmos-connection-string"
   value        = azurerm_cosmosdb_account.main.primary_sql_connection_string
   key_vault_id = data.azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_cosmosdb_account.main,
+    azurerm_cosmosdb_sql_database.governance,
+    azurerm_cosmosdb_sql_container.policies,
+    azurerm_cosmosdb_sql_container.conversations,
+    azurerm_cosmosdb_sql_container.audit_logs
+  ]
 
   tags = var.tags
 }

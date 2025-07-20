@@ -346,6 +346,11 @@ resource "azurerm_key_vault_secret" "cognitive_services_key" {
   value        = azurerm_cognitive_account.main.primary_access_key
   key_vault_id = data.azurerm_key_vault.main.id
 
+  depends_on = [
+    azurerm_cognitive_account.main,
+    azurerm_private_endpoint.cognitive
+  ]
+
   tags = var.tags
 }
 
@@ -353,6 +358,11 @@ resource "azurerm_key_vault_secret" "cognitive_services_endpoint" {
   name         = "cognitive-services-endpoint"
   value        = azurerm_cognitive_account.main.endpoint
   key_vault_id = data.azurerm_key_vault.main.id
+
+  depends_on = [
+    azurerm_cognitive_account.main,
+    azurerm_private_endpoint.cognitive
+  ]
 
   tags = var.tags
 }
