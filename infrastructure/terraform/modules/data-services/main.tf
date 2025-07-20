@@ -237,7 +237,7 @@ resource "azurerm_cosmosdb_account" "main" {
 resource "azurerm_private_endpoint" "cosmos" {
   name                = "${var.project_name}-cosmos-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
@@ -368,7 +368,7 @@ resource "azurerm_redis_cache" "main" {
 resource "azurerm_private_endpoint" "redis" {
   name                = "${var.project_name}-redis-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
-  resource_group_name = data.azurerm_resource_group.main.name
+  resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
