@@ -31,6 +31,16 @@ variable "data_services_subnet_name" {
   default     = "data-services-subnet"
 }
 
+variable "private_endpoints_subnet_name" {
+  description = "Name of the private endpoints subnet"
+  type        = string
+}
+
+variable "managed_identity_id" {
+  description = "ID of the user-assigned managed identity"
+  type        = string
+}
+
 variable "key_vault_name" {
   description = "Name of the Key Vault"
   type        = string

@@ -26,6 +26,12 @@ data "azurerm_subnet" "data_services" {
   resource_group_name  = var.resource_group_name
 }
 
+data "azurerm_subnet" "private_endpoints" {
+  name                 = var.private_endpoints_subnet_name
+  virtual_network_name = var.vnet_name
+  resource_group_name  = var.resource_group_name
+}
+
 data "azurerm_key_vault" "main" {
   name                = var.key_vault_name
   resource_group_name = var.resource_group_name
@@ -68,9 +74,10 @@ resource "azurerm_mssql_server" "main" {
     }
   }
 
-  # Identity for accessing Key Vault
+  # User-assigned managed identity
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
   }
 
   tags = var.tags
@@ -91,7 +98,7 @@ resource "azurerm_private_endpoint" "sql" {
   name                = "${var.project_name}-sql-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.data_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-sql-psc-${var.environment}"
@@ -213,6 +220,12 @@ resource "azurerm_cosmosdb_account" "main" {
     name = "EnableAggregationPipeline"
   }
 
+  # User-assigned managed identity
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
+  }
+
   tags = var.tags
 }
 
@@ -221,7 +234,7 @@ resource "azurerm_private_endpoint" "cosmos" {
   name                = "${var.project_name}-cosmos-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.data_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-cosmos-psc-${var.environment}"
@@ -338,6 +351,12 @@ resource "azurerm_redis_cache" "main" {
     }
   }
 
+  # User-assigned managed identity
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
+  }
+
   tags = var.tags
 }
 
@@ -346,7 +365,7 @@ resource "azurerm_private_endpoint" "redis" {
   name                = "${var.project_name}-redis-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.data_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-redis-psc-${var.environment}"

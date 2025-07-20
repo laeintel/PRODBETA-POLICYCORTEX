@@ -26,6 +26,12 @@ data "azurerm_subnet" "ai_services" {
   resource_group_name  = var.resource_group_name
 }
 
+data "azurerm_subnet" "private_endpoints" {
+  name                 = var.private_endpoints_subnet_name
+  virtual_network_name = var.vnet_name
+  resource_group_name  = var.resource_group_name
+}
+
 data "azurerm_key_vault" "main" {
   name                = var.key_vault_name
   resource_group_name = var.resource_group_name
@@ -68,7 +74,7 @@ resource "azurerm_private_endpoint" "acr" {
   name                = "${var.project_name}-ml-acr-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.ai_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-ml-acr-psc-${var.environment}"
@@ -95,9 +101,10 @@ resource "azurerm_machine_learning_workspace" "main" {
   public_network_access_enabled = false
   image_build_compute_name      = var.image_build_compute_name
 
-  # Identity
+  # User-assigned managed identity
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
   }
 
   # Encryption (optional)
@@ -118,7 +125,7 @@ resource "azurerm_private_endpoint" "ml_workspace" {
   name                = "${var.project_name}-ml-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.ai_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-ml-psc-${var.environment}"
@@ -215,14 +222,15 @@ resource "azurerm_cognitive_account" "main" {
     default_action = "Deny"
     
     virtual_network_rules {
-      subnet_id                            = data.azurerm_subnet.ai_services.id
+      subnet_id                            = data.azurerm_subnet.private_endpoints.id
       ignore_missing_vnet_service_endpoint = false
     }
   }
 
-  # Identity
+  # User-assigned managed identity
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
   }
 
   tags = var.tags
@@ -233,7 +241,7 @@ resource "azurerm_private_endpoint" "cognitive" {
   name                = "${var.project_name}-cognitive-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.ai_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-cognitive-psc-${var.environment}"
@@ -285,14 +293,15 @@ resource "azurerm_cognitive_account" "openai" {
     default_action = "Deny"
     
     virtual_network_rules {
-      subnet_id                            = data.azurerm_subnet.ai_services.id
+      subnet_id                            = data.azurerm_subnet.private_endpoints.id
       ignore_missing_vnet_service_endpoint = false
     }
   }
 
-  # Identity
+  # User-assigned managed identity
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
   }
 
   tags = var.tags
@@ -304,7 +313,7 @@ resource "azurerm_private_endpoint" "openai" {
   name                = "${var.project_name}-openai-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.ai_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-openai-psc-${var.environment}"
@@ -408,7 +417,7 @@ resource "azurerm_private_endpoint" "eventgrid" {
   name                = "${var.project_name}-eventgrid-pe-${var.environment}"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
-  subnet_id           = data.azurerm_subnet.ai_services.id
+  subnet_id           = data.azurerm_subnet.private_endpoints.id
 
   private_service_connection {
     name                           = "${var.project_name}-eventgrid-psc-${var.environment}"

@@ -36,6 +36,16 @@ variable "ai_services_subnet_name" {
   default     = "ai-services-subnet"
 }
 
+variable "private_endpoints_subnet_name" {
+  description = "Name of the private endpoints subnet"
+  type        = string
+}
+
+variable "managed_identity_id" {
+  description = "ID of the user-assigned managed identity"
+  type        = string
+}
+
 variable "key_vault_name" {
   description = "Name of the Key Vault"
   type        = string
