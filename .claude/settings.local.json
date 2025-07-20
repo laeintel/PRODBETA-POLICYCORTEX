@@ -116,7 +116,8 @@
       "Bash(--assignee-object-id 5389fdab-721b-4aa9-b9c1-5e33aa9dde3d )",
       "Bash(--assignee-principal-type ServicePrincipal )",
       "Bash(--role \"Contributor\" )",
-      "Bash(--scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev)"
+      "Bash(--scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev)",
+      "WebFetch(domain:registry.terraform.io)"
     ],
     "deny": []
   }

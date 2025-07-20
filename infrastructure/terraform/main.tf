@@ -324,13 +324,33 @@ resource "azurerm_application_insights" "main" {
   tags = local.common_tags
 }
 
-# Container Apps Environment
+# Container Apps Environment with Dedicated Workload Profiles
 resource "azurerm_container_app_environment" "main" {
   name                       = "cae-policycortex-${var.environment}"
   location                   = azurerm_resource_group.main.location
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   infrastructure_subnet_id   = module.networking.subnet_ids["container_apps"]
+  
+  # Dedicated workload profiles for improved performance and isolation
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+  }
+  
+  workload_profile {
+    name                  = "Dedicated-D4"
+    workload_profile_type = "D4"
+    minimum_count         = 1
+    maximum_count         = 3
+  }
+  
+  workload_profile {
+    name                  = "Dedicated-D8"
+    workload_profile_type = "D8"
+    minimum_count         = 0
+    maximum_count         = 2
+  }
   
   # Resource providers should be manually registered if needed
   # depends_on = [
@@ -369,6 +389,80 @@ resource "azurerm_role_assignment" "container_apps_storage" {
   scope                = azurerm_storage_account.app_storage.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+}
+
+# Role assignment for Container Apps to access Cosmos DB
+resource "azurerm_role_assignment" "container_apps_cosmos" {
+  scope                = module.data_services.cosmos_account_id
+  role_definition_name = "Cosmos DB Built-in Data Contributor"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+  
+  depends_on = [module.data_services]
+}
+
+# Role assignment for Container Apps to access Redis
+resource "azurerm_role_assignment" "container_apps_redis" {
+  scope                = module.data_services.redis_cache_id
+  role_definition_name = "Redis Cache Contributor"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+  
+  depends_on = [module.data_services]
+}
+
+# Role assignment for Container Apps to access Cognitive Services
+resource "azurerm_role_assignment" "container_apps_cognitive" {
+  scope                = module.ai_services.cognitive_services_id
+  role_definition_name = "Cognitive Services User"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+  
+  depends_on = [module.ai_services]
+}
+
+# Role assignment for Container Apps to access Application Insights
+resource "azurerm_role_assignment" "container_apps_appinsights" {
+  scope                = azurerm_application_insights.main.id
+  role_definition_name = "Monitoring Contributor"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+}
+
+# Role assignment for Container Apps to read Resource Group
+resource "azurerm_role_assignment" "container_apps_rg_reader" {
+  scope                = azurerm_resource_group.main.id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+}
+
+# Additional Key Vault secrets for container apps
+resource "azurerm_key_vault_secret" "jwt_secret_key" {
+  name         = "jwt-secret-key"
+  value        = var.jwt_secret_key
+  key_vault_id = azurerm_key_vault.main.id
+  
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "managed_identity_client_id" {
+  name         = "managed-identity-client-id"
+  value        = azurerm_user_assigned_identity.container_apps.client_id
+  key_vault_id = azurerm_key_vault.main.id
+  
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "storage_account_name" {
+  name         = "storage-account-name"
+  value        = azurerm_storage_account.app_storage.name
+  key_vault_id = azurerm_key_vault.main.id
+  
+  depends_on = [azurerm_key_vault_access_policy.terraform]
+}
+
+resource "azurerm_key_vault_secret" "application_insights_connection_string" {
+  name         = "application-insights-connection-string"
+  value        = azurerm_application_insights.main.connection_string
+  key_vault_id = azurerm_key_vault.main.id
+  
+  depends_on = [azurerm_key_vault_access_policy.terraform]
 }
 
 # Container Apps resources moved to container-apps.tf
