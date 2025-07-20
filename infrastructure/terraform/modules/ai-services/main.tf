@@ -215,7 +215,7 @@ resource "azurerm_cognitive_account" "main" {
 
   # Security
   public_network_access_enabled = false
-  custom_subdomain_name         = "${var.project_name}-cognitive-${var.environment}"
+  custom_subdomain_name         = "${var.project_name}-cognitive-${var.environment}-v2"
 
   lifecycle {
     ignore_changes = [name]
@@ -290,7 +290,7 @@ resource "azurerm_cognitive_account" "openai" {
 
   # Security
   public_network_access_enabled = false
-  custom_subdomain_name         = "${var.project_name}-openai-${var.environment}"
+  custom_subdomain_name         = "${var.project_name}-openai-${var.environment}-v2"
 
   # Network rules
   network_acls {
