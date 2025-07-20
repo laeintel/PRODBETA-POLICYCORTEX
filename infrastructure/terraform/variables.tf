@@ -47,6 +47,13 @@ variable "deploy_container_apps" {
   default     = false
 }
 
+variable "jwt_secret_key" {
+  description = "Secret key for JWT token signing"
+  type        = string
+  default     = "development-secret-key-change-in-production"
+  sensitive   = true
+}
+
 # Data Services Variables
 variable "deploy_sql_server" {
   description = "Whether to deploy SQL Server"
