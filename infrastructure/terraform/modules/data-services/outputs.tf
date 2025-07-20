@@ -83,15 +83,7 @@ output "redis_cache_ssl_port" {
   value       = azurerm_redis_cache.main.ssl_port
 }
 
-# Private DNS zones
-output "private_dns_zones" {
-  description = "Private DNS zones created for data services"
-  value = {
-    sql    = azurerm_private_dns_zone.sql.name
-    cosmos = azurerm_private_dns_zone.cosmos.name
-    redis  = azurerm_private_dns_zone.redis.name
-  }
-}
+# Private DNS zones are now managed by networking module
 
 # Private endpoints
 output "private_endpoints" {

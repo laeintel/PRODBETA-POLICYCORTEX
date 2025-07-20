@@ -189,6 +189,111 @@ resource "azurerm_private_dns_zone_virtual_network_link" "internal" {
   tags = local.common_tags
 }
 
+# Private DNS Zones for Azure Services
+# All private DNS zones are centralized here to avoid conflicts
+
+# SQL Database Private DNS Zone
+resource "azurerm_private_dns_zone" "sql" {
+  name                = "privatelink.database.windows.net"
+  resource_group_name = var.resource_group_name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "sql" {
+  name                  = "sql-dns-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.sql.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+
+  tags = local.common_tags
+}
+
+# Cosmos DB Private DNS Zone
+resource "azurerm_private_dns_zone" "cosmos" {
+  name                = "privatelink.documents.azure.com"
+  resource_group_name = var.resource_group_name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "cosmos" {
+  name                  = "cosmos-dns-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.cosmos.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+
+  tags = local.common_tags
+}
+
+# Redis Cache Private DNS Zone
+resource "azurerm_private_dns_zone" "redis" {
+  name                = "privatelink.redis.cache.windows.net"
+  resource_group_name = var.resource_group_name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
+  name                  = "redis-dns-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.redis.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+
+  tags = local.common_tags
+}
+
+# Cognitive Services Private DNS Zone
+resource "azurerm_private_dns_zone" "cognitive" {
+  name                = "privatelink.cognitiveservices.azure.com"
+  resource_group_name = var.resource_group_name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "cognitive" {
+  name                  = "cognitive-dns-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.cognitive.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+
+  tags = local.common_tags
+}
+
+# Machine Learning Private DNS Zone
+resource "azurerm_private_dns_zone" "ml" {
+  name                = "privatelink.api.azureml.ms"
+  resource_group_name = var.resource_group_name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "ml" {
+  name                  = "ml-dns-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.ml.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+
+  tags = local.common_tags
+}
+
+# OpenAI Private DNS Zone
+resource "azurerm_private_dns_zone" "openai" {
+  name                = "privatelink.openai.azure.com"
+  resource_group_name = var.resource_group_name
+
+  tags = local.common_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
+  name                  = "openai-dns-vnet-link"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.openai.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+
+  tags = local.common_tags
+}
+
 # Flow Logs for Network Security Groups (for monitoring and security analysis)
 resource "azurerm_storage_account" "flow_logs" {
   count = var.enable_flow_logs ? 1 : 0

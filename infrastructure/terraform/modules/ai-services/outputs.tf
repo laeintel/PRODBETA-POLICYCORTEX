@@ -102,15 +102,7 @@ output "eventgrid_topic_endpoint" {
   value       = azurerm_eventgrid_topic.ml_operations.endpoint
 }
 
-# Private DNS zones
-output "private_dns_zones" {
-  description = "Private DNS zones created for AI services"
-  value = {
-    ml        = azurerm_private_dns_zone.ml.name
-    cognitive = azurerm_private_dns_zone.cognitive.name
-    openai    = var.deploy_openai && contains(var.openai_available_regions, data.azurerm_resource_group.main.location) ? azurerm_private_dns_zone.openai[0].name : null
-  }
-}
+# Private DNS zones are now managed by networking module
 
 # Private endpoints
 output "private_endpoints" {

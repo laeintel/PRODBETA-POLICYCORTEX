@@ -134,30 +134,16 @@ resource "azurerm_private_endpoint" "ml_workspace" {
     is_manual_connection          = false
   }
 
-  private_dns_zone_group {
-    name                 = "ml-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.ml.id]
-  }
+  # DNS zone group will be added after centralized DNS zones are created
+  # private_dns_zone_group {
+  #   name                 = "ml-dns-zone-group"
+  #   private_dns_zone_ids = [var.ml_dns_zone_id]
+  # }
 
   tags = var.tags
 }
 
-# Private DNS zone for ML Workspace
-resource "azurerm_private_dns_zone" "ml" {
-  name                = "privatelink.api.azureml.ms"
-  resource_group_name = var.network_resource_group_name
-
-  tags = var.tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "ml" {
-  name                  = "ml-dns-vnet-link"
-  resource_group_name   = var.network_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.ml.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
-
-  tags = var.tags
-}
+# Private DNS zone for ML Workspace is managed by networking module
 
 # ML Compute Instance for development
 resource "azurerm_machine_learning_compute_instance" "dev" {
@@ -255,30 +241,16 @@ resource "azurerm_private_endpoint" "cognitive" {
     is_manual_connection          = false
   }
 
-  private_dns_zone_group {
-    name                 = "cognitive-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.cognitive.id]
-  }
+  # DNS zone group will be added after centralized DNS zones are created
+  # private_dns_zone_group {
+  #   name                 = "cognitive-dns-zone-group"
+  #   private_dns_zone_ids = [var.cognitive_dns_zone_id]
+  # }
 
   tags = var.tags
 }
 
-# Private DNS zone for Cognitive Services
-resource "azurerm_private_dns_zone" "cognitive" {
-  name                = "privatelink.cognitiveservices.azure.com"
-  resource_group_name = var.network_resource_group_name
-
-  tags = var.tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "cognitive" {
-  name                  = "cognitive-dns-vnet-link"
-  resource_group_name   = var.network_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.cognitive.name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
-
-  tags = var.tags
-}
+# Private DNS zone for Cognitive Services is managed by networking module
 
 # Azure OpenAI Service (if available in region)
 resource "azurerm_cognitive_account" "openai" {
@@ -327,32 +299,16 @@ resource "azurerm_private_endpoint" "openai" {
     is_manual_connection          = false
   }
 
-  private_dns_zone_group {
-    name                 = "openai-dns-zone-group"
-    private_dns_zone_ids = [azurerm_private_dns_zone.openai[0].id]
-  }
+  # DNS zone group will be added after centralized DNS zones are created
+  # private_dns_zone_group {
+  #   name                 = "openai-dns-zone-group"
+  #   private_dns_zone_ids = [var.openai_dns_zone_id]
+  # }
 
   tags = var.tags
 }
 
-# Private DNS zone for OpenAI
-resource "azurerm_private_dns_zone" "openai" {
-  count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
-  name                = "privatelink.openai.azure.com"
-  resource_group_name = var.network_resource_group_name
-
-  tags = var.tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "openai" {
-  count                 = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
-  name                  = "openai-dns-vnet-link"
-  resource_group_name   = var.network_resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.openai[0].name
-  virtual_network_id    = data.azurerm_virtual_network.main.id
-
-  tags = var.tags
-}
+# Private DNS zone for OpenAI is managed by networking module
 
 # Store AI service keys in Key Vault
 resource "azurerm_key_vault_secret" "cognitive_services_key" {
