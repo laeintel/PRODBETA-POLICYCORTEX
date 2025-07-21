@@ -330,54 +330,70 @@ jobs:
           # Check Cosmos DB is fully online
           echo "Checking Cosmos DB account status..."
           RESOURCE_GROUP=$(terraform output -raw resource_group_name)
-          COSMOS_STATUS=$(az cosmosdb show --name policycortex-cosmos-dev --resource-group "$RESOURCE_GROUP" --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
-          while [ "$COSMOS_STATUS" != "Succeeded" ]; do
-            echo "Cosmos DB status: $COSMOS_STATUS - waiting..."
-            sleep 30
-            COSMOS_STATUS=$(az cosmosdb show --name policycortex-cosmos-dev --resource-group "$RESOURCE_GROUP" --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
-          done
-          echo "Cosmos DB is ready: $COSMOS_STATUS"
+          COSMOS_STATUS=$(az cosmosdb show --name policycortex-cosmos-dev --resource-group "$RESOURCE_GROUP" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          
+          if [ "$COSMOS_STATUS" != "NotFound" ]; then
+            while [ "$COSMOS_STATUS" != "Succeeded" ]; do
+              echo "Cosmos DB status: $COSMOS_STATUS - waiting..."
+              sleep 30
+              COSMOS_STATUS=$(az cosmosdb show --name policycortex-cosmos-dev --resource-group "$RESOURCE_GROUP" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+            done
+            echo "Cosmos DB is ready: $COSMOS_STATUS"
+          else
+            echo "Cosmos DB not found - will be created by Terraform"
+          fi
           
           # Check Redis Cache is ready
           echo "Checking Redis Cache status..."
-          REDIS_STATUS=$(az redis show --name policycortex-redis-dev --resource-group "$RESOURCE_GROUP" --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
-          while [ "$REDIS_STATUS" != "Succeeded" ]; do
-            echo "Redis status: $REDIS_STATUS - waiting..."
-            sleep 30
-            REDIS_STATUS=$(az redis show --name policycortex-redis-dev --resource-group "$RESOURCE_GROUP" --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
-          done
-          echo "Redis Cache is ready: $REDIS_STATUS"
+          REDIS_STATUS=$(az redis show --name policycortex-redis-dev --resource-group "$RESOURCE_GROUP" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          
+          if [ "$REDIS_STATUS" != "NotFound" ]; then
+            while [ "$REDIS_STATUS" != "Succeeded" ]; do
+              echo "Redis status: $REDIS_STATUS - waiting..."
+              sleep 30
+              REDIS_STATUS=$(az redis show --name policycortex-redis-dev --resource-group "$RESOURCE_GROUP" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+            done
+            echo "Redis Cache is ready: $REDIS_STATUS"
+          else
+            echo "Redis Cache not found - will be created by Terraform"
+          fi
           
           # Check Cognitive Services is ready
           echo "Checking Cognitive Services status..."
-          COGNITIVE_STATUS=$(az cognitiveservices account show --name policycortex-cognitive-dev --resource-group "$RESOURCE_GROUP" --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
-          while [ "$COGNITIVE_STATUS" != "Succeeded" ]; do
-            echo "Cognitive Services status: $COGNITIVE_STATUS - waiting..."
-            sleep 30
-            COGNITIVE_STATUS=$(az cognitiveservices account show --name policycortex-cognitive-dev --resource-group "$RESOURCE_GROUP" --query "provisioningState" -o tsv 2>/dev/null || echo "NotFound")
-          done
-          echo "Cognitive Services is ready: $COGNITIVE_STATUS"
+          COGNITIVE_STATUS=$(az cognitiveservices account show --name policycortex-cognitive-dev --resource-group "$RESOURCE_GROUP" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+          
+          if [ "$COGNITIVE_STATUS" != "NotFound" ]; then
+            while [ "$COGNITIVE_STATUS" != "Succeeded" ]; do
+              echo "Cognitive Services status: $COGNITIVE_STATUS - waiting..."
+              sleep 30
+              COGNITIVE_STATUS=$(az cognitiveservices account show --name policycortex-cognitive-dev --resource-group "$RESOURCE_GROUP" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "NotFound")
+            done
+            echo "Cognitive Services is ready: $COGNITIVE_STATUS"
+          else
+            echo "Cognitive Services not found - will be created by Terraform"
+          fi
           
           # Additional wait to ensure all backend operations are complete
           echo "Final wait for backend operations to complete..."
           sleep 60
           
-          # Clean any existing state to avoid conflicts
-          echo "Cleaning Terraform state for container apps..."
-          services=("api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend")
-          
-          for service in "${services[@]}"; do
-            echo "Removing $service from state to avoid conflicts..."
-            terraform state rm "azurerm_container_app.${service}[0]" 2>/dev/null || true
-            terraform state rm "azurerm_container_app.${service}" 2>/dev/null || true
-          done
-          
-          # Now deploy Container Apps fresh with Terraform
+          # Now deploy Container Apps with Terraform
           echo "Deploying Container Apps with Terraform..."
+          
+          # Create a targeted tfvars file with container apps enabled
+          cat > environments/dev/terraform-with-apps.tfvars << EOF
+          # Include base configuration
+          $(cat environments/dev/terraform.tfvars)
+          
+          # Override to enable container apps
+          deploy_container_apps = true
+          EOF
+          
+          # Run terraform apply with container apps enabled
           terraform apply \
-            -var-file="environments/dev/terraform.tfvars" \
-            -var="deploy_container_apps=true" \
-            -auto-approve
+            -var-file="environments/dev/terraform-with-apps.tfvars" \
+            -auto-approve \
+            -parallelism=5
         working-directory: infrastructure/terraform
 
       - name: Verify Container Apps Deployment
@@ -581,7 +597,7 @@ jobs:
           # First, prepare Terraform configuration with Container Apps enabled
           echo "Preparing Terraform configuration..."
           terraform plan \
-            -var-file="environments/dev/terraform.tfvars" \
+            -var-file="environments/staging/terraform.tfvars" \
             -var="deploy_container_apps=true" \
             -out=container_apps.tfplan || true
           
@@ -600,19 +616,19 @@ jobs:
           RESOURCE_GROUP=$(terraform output -raw resource_group_name)
           for service in "${services[@]}"; do
             terraform_name=$(echo $service | tr '_' '-')
-            echo "Checking Container App: ca-$terraform_name-dev"
-            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "Checking Container App: ca-$terraform_name-staging"
+            if az containerapp show --name "ca-$terraform_name-staging" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
               echo "Importing $service into state..."
               terraform import "azurerm_container_app.${service}[0]" \
-                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/ca-$terraform_name-dev" || echo "Import failed for $service - will be created"
+                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/ca-$terraform_name-staging" || echo "Import failed for $service - will be created"
             else
-              echo "Container App ca-$terraform_name-dev does not exist - will be created"
+              echo "Container App ca-$terraform_name-staging does not exist - will be created"
             fi
           done
           
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
-            -var-file="environments/dev/terraform.tfvars" \
+            -var-file="environments/staging/terraform.tfvars" \
             -var="deploy_container_apps=true" \
             -auto-approve
         working-directory: infrastructure/terraform
@@ -818,7 +834,7 @@ jobs:
           # First, prepare Terraform configuration with Container Apps enabled
           echo "Preparing Terraform configuration..."
           terraform plan \
-            -var-file="environments/dev/terraform.tfvars" \
+            -var-file="environments/prod/terraform.tfvars" \
             -var="deploy_container_apps=true" \
             -out=container_apps.tfplan || true
           
@@ -837,19 +853,19 @@ jobs:
           RESOURCE_GROUP=$(terraform output -raw resource_group_name)
           for service in "${services[@]}"; do
             terraform_name=$(echo $service | tr '_' '-')
-            echo "Checking Container App: ca-$terraform_name-dev"
-            if az containerapp show --name "ca-$terraform_name-dev" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "Checking Container App: ca-$terraform_name-prod"
+            if az containerapp show --name "ca-$terraform_name-prod" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
               echo "Importing $service into state..."
               terraform import "azurerm_container_app.${service}[0]" \
-                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/ca-$terraform_name-dev" || echo "Import failed for $service - will be created"
+                "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/ca-$terraform_name-prod" || echo "Import failed for $service - will be created"
             else
-              echo "Container App ca-$terraform_name-dev does not exist - will be created"
+              echo "Container App ca-$terraform_name-prod does not exist - will be created"
             fi
           done
           
           # Run Terraform apply again with Container Apps enabled
           terraform apply \
-            -var-file="environments/dev/terraform.tfvars" \
+            -var-file="environments/prod/terraform.tfvars" \
             -var="deploy_container_apps=true" \
             -auto-approve
         working-directory: infrastructure/terraform
