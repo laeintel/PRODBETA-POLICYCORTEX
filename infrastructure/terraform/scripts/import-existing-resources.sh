@@ -90,92 +90,99 @@ import_if_exists() {
 # Main imports
 echo "Starting resource imports..."
 
-# Resource Group
-import_if_exists "azurerm_resource_group.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP" \
+# Network Resource Group
+import_if_exists "azurerm_resource_group.network" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT" \
     "resource_group" \
-    "$RESOURCE_GROUP"
+    "rg-policycortex-network-$ENVIRONMENT"
+
+# Application Resource Group
+import_if_exists "azurerm_resource_group.app" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT" \
+    "resource_group" \
+    "rg-policycortex-app-$ENVIRONMENT"
 
 # Storage Account
 import_if_exists "azurerm_storage_account.app_storage" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/stpolicycortex${ENVIRONMENT}stg" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.Storage/storageAccounts/stpolicycortex${ENVIRONMENT}stg" \
     "storage_account" \
     "stpolicycortex${ENVIRONMENT}stg"
 
 # Key Vault
 import_if_exists "azurerm_key_vault.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/kvpolicycortex$ENVIRONMENT" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.KeyVault/vaults/kvpolicycortex${ENVIRONMENT}v2" \
     "key_vault" \
-    "kvpolicycortex$ENVIRONMENT"
+    "kvpolicycortex${ENVIRONMENT}v2"
 
 # Container Registry
 import_if_exists "azurerm_container_registry.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/crpolicycortex$ENVIRONMENT" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.ContainerRegistry/registries/crpolicycortex$ENVIRONMENT" \
     "container_registry" \
     "crpolicycortex$ENVIRONMENT"
 
 # Log Analytics Workspace
 import_if_exists "azurerm_log_analytics_workspace.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.OperationalInsights/workspaces/law-policycortex-$ENVIRONMENT" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.OperationalInsights/workspaces/law-policycortex-$ENVIRONMENT" \
     "log_analytics_workspace" \
     "law-policycortex-$ENVIRONMENT"
 
 # Application Insights
 import_if_exists "azurerm_application_insights.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Insights/components/ai-policycortex-$ENVIRONMENT" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/microsoft.insights/components/ai-policycortex-$ENVIRONMENT" \
     "application_insights" \
     "ai-policycortex-$ENVIRONMENT"
 
 # Container Apps Environment
 import_if_exists "azurerm_container_app_environment.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/managedEnvironments/cae-policycortex-$ENVIRONMENT" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.App/managedEnvironments/cae-policycortex-$ENVIRONMENT" \
     "container_app_environment" \
     "cae-policycortex-$ENVIRONMENT"
 
-# Managed Identity
+# User-assigned managed identity
 import_if_exists "azurerm_user_assigned_identity.container_apps" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-policycortex-$ENVIRONMENT" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-policycortex-$ENVIRONMENT" \
     "managed_identity" \
     "id-policycortex-$ENVIRONMENT"
 
-# Networking resources
-# Virtual Network
+# Networking resources - Virtual Network
 import_if_exists "module.networking.azurerm_virtual_network.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/virtualNetworks/policycortex-$ENVIRONMENT-vnet" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/virtualNetworks/policycortex-$ENVIRONMENT-vnet" \
     "virtual_network" \
     "policycortex-$ENVIRONMENT-vnet"
 
 # Network Security Groups
-for nsg_type in "container_apps" "app_gateway"; do
-    import_if_exists "module.networking.azurerm_network_security_group.subnet_nsgs[\"$nsg_type\"]" \
-        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/networkSecurityGroups/policycortex-$ENVIRONMENT-nsg-$nsg_type" \
+for nsg in "container_apps" "app_gateway" "private_endpoints" "data_services" "ai_services"; do
+    import_if_exists "module.networking.azurerm_network_security_group.subnet_nsgs[\"$nsg\"]" \
+        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/networkSecurityGroups/policycortex-$ENVIRONMENT-nsg-$nsg" \
         "network_security_group" \
-        "policycortex-$ENVIRONMENT-nsg-$nsg_type"
+        "policycortex-$ENVIRONMENT-nsg-$nsg"
 done
 
-# Route Table
-import_if_exists "module.networking.azurerm_route_table.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/routeTables/policycortex-$ENVIRONMENT-rt" \
-    "route_table" \
-    "policycortex-$ENVIRONMENT-rt"
+# Route Tables
+for rt in "container_apps" "data_services" "ai_services"; do
+    import_if_exists "module.networking.azurerm_route_table.route_tables[\"$rt\"]" \
+        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/routeTables/policycortex-$ENVIRONMENT-rt-$rt" \
+        "route_table" \
+        "policycortex-$ENVIRONMENT-rt-$rt"
+done
 
 # Private DNS Zone
-import_if_exists "module.networking.azurerm_private_dns_zone.internal" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/privateDnsZones/policycortex.internal" \
+import_if_exists "module.networking.azurerm_private_dns_zone.main" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/privateDnsZones/policycortex.internal" \
     "private_dns_zone" \
     "policycortex.internal"
 
-# Container Apps (with count index)
+# Container Apps
 for service in "api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend"; do
     terraform_name=$(echo $service | tr '_' '-')
     # Check if Container App exists
-    if az containerapp show --name "ca-$terraform_name-$ENVIRONMENT" --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+    if az containerapp show --name "ca-$terraform_name-$ENVIRONMENT" --resource-group "rg-policycortex-app-$ENVIRONMENT" &>/dev/null; then
         echo "Container App ca-$terraform_name-$ENVIRONMENT exists"
         # Import with [0] index since we're using count
         if ! terraform state show "azurerm_container_app.${service}[0]" &>/dev/null; then
             echo "Importing azurerm_container_app.${service}[0]..."
             terraform import "azurerm_container_app.${service}[0]" \
-                "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/containerApps/ca-$terraform_name-$ENVIRONMENT" || echo "Import failed for Container App $service"
+                "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.App/containerApps/ca-$terraform_name-$ENVIRONMENT" || echo "Import failed for Container App $service"
         else
             echo "azurerm_container_app.${service}[0] already in state"
         fi

@@ -40,6 +40,11 @@ The deployment was failing and resources were being destroyed due to several iss
 ### 4. **Created Setup Script**
 - Added `setup-github-environments.ps1` to help create required GitHub environments
 
+### 5. **Automatic Resource Group Import**
+- Added automatic import of existing resource groups before Terraform operations
+- This prevents the "resource already exists" error
+- Checks if resources exist in Azure and imports them if not in state
+
 ## How to Deploy Successfully
 
 ### Step 1: Create GitHub Environments
