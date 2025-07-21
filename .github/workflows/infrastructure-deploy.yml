@@ -159,6 +159,42 @@ jobs:
             -backend-config="resource_group_name=${{ secrets.TERRAFORM_BACKEND_RESOURCE_GROUP }}"
         working-directory: infrastructure/terraform
 
+      - name: Import Existing Resource Groups
+        run: |
+          echo "Checking and importing existing resource groups..."
+          
+          # Get subscription ID
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          
+          # Check and import Network Resource Group
+          NETWORK_RG="rg-policycortex-network-dev"
+          if az group show --name "$NETWORK_RG" &>/dev/null; then
+            echo "Resource group $NETWORK_RG exists in Azure"
+            if ! terraform state show azurerm_resource_group.network &>/dev/null; then
+              echo "Importing $NETWORK_RG into Terraform state..."
+              terraform import azurerm_resource_group.network "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG" || {
+                echo "Failed to import $NETWORK_RG - it may already be in state or not exist"
+              }
+            else
+              echo "$NETWORK_RG already in Terraform state"
+            fi
+          fi
+          
+          # Check and import Application Resource Group
+          APP_RG="rg-policycortex-app-dev"
+          if az group show --name "$APP_RG" &>/dev/null; then
+            echo "Resource group $APP_RG exists in Azure"
+            if ! terraform state show azurerm_resource_group.app &>/dev/null; then
+              echo "Importing $APP_RG into Terraform state..."
+              terraform import azurerm_resource_group.app "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG" || {
+                echo "Failed to import $APP_RG - it may already be in state or not exist"
+              }
+            else
+              echo "$APP_RG already in Terraform state"
+            fi
+          fi
+        working-directory: infrastructure/terraform
+
       - name: Terraform Plan
         id: plan
         run: |
@@ -236,6 +272,42 @@ jobs:
             -backend-config="container_name=${{ secrets.TERRAFORM_BACKEND_CONTAINER }}" \
             -backend-config="key=dev/terraform.tfstate" \
             -backend-config="resource_group_name=${{ secrets.TERRAFORM_BACKEND_RESOURCE_GROUP }}"
+        working-directory: infrastructure/terraform
+
+      - name: Import Existing Resource Groups
+        run: |
+          echo "Checking and importing existing resource groups..."
+          
+          # Get subscription ID
+          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+          
+          # Check and import Network Resource Group
+          NETWORK_RG="rg-policycortex-network-dev"
+          if az group show --name "$NETWORK_RG" &>/dev/null; then
+            echo "Resource group $NETWORK_RG exists in Azure"
+            if ! terraform state show azurerm_resource_group.network &>/dev/null; then
+              echo "Importing $NETWORK_RG into Terraform state..."
+              terraform import azurerm_resource_group.network "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG" || {
+                echo "Failed to import $NETWORK_RG - it may already be in state or not exist"
+              }
+            else
+              echo "$NETWORK_RG already in Terraform state"
+            fi
+          fi
+          
+          # Check and import Application Resource Group
+          APP_RG="rg-policycortex-app-dev"
+          if az group show --name "$APP_RG" &>/dev/null; then
+            echo "Resource group $APP_RG exists in Azure"
+            if ! terraform state show azurerm_resource_group.app &>/dev/null; then
+              echo "Importing $APP_RG into Terraform state..."
+              terraform import azurerm_resource_group.app "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG" || {
+                echo "Failed to import $APP_RG - it may already be in state or not exist"
+              }
+            else
+              echo "$APP_RG already in Terraform state"
+            fi
+          fi
         working-directory: infrastructure/terraform
 
       - name: Import Existing Resources
