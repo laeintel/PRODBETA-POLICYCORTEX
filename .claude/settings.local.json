@@ -119,7 +119,14 @@
       "Bash(--scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev)",
       "WebFetch(domain:registry.terraform.io)",
       "Bash(yamllint:*)",
-      "Bash(pip check)"
+      "Bash(pip check)",
+      "Bash(claude doctor:*)",
+      "Bash(claude --version)",
+      "Bash(where claude)",
+      "Bash(claude config get:*)",
+      "Bash(claude config list:*)",
+      "Bash($env:ARM_USE_CLI=\"true\")",
+      "Bash(export ARM_USE_CLI=true)"
     ],
     "deny": []
   }

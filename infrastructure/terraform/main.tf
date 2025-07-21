@@ -264,6 +264,7 @@ module "data_services" {
   
   project_name                  = "policycortex"
   environment                   = var.environment
+  location                      = var.location
   resource_group_name           = azurerm_resource_group.app.name
   network_resource_group_name   = azurerm_resource_group.network.name
   vnet_name                     = module.networking.vnet_name
