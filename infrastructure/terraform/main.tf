@@ -9,10 +9,9 @@ terraform {
     }
   }
   
-  # Temporarily using local backend due to Azure CLI issues
-  # backend "azurerm" {
-  #   # Backend configuration will be provided via init command
-  # }
+  backend "azurerm" {
+    # Backend configuration will be provided via init command or tfvars
+  }
 }
 
 # Configure the Microsoft Azure Provider
