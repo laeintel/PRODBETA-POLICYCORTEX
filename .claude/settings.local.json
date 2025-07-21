@@ -118,7 +118,8 @@
       "Bash(--role \"Contributor\" )",
       "Bash(--scope /subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595/resourceGroups/rg-policycortex-dev)",
       "WebFetch(domain:registry.terraform.io)",
-      "Bash(yamllint:*)"
+      "Bash(yamllint:*)",
+      "Bash(pip check)"
     ],
     "deny": []
   }
