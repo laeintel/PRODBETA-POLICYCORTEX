@@ -61,7 +61,7 @@ resource "azurerm_mssql_server" "main" {
   count                        = var.deploy_sql_server ? 1 : 0
   name                         = "${var.project_name}-sql-${var.environment}"
   resource_group_name          = data.azurerm_resource_group.main.name
-  location                     = data.azurerm_resource_group.main.location
+  location                     = var.location
   version                      = "12.0"
   administrator_login          = var.sql_admin_username
   administrator_login_password = random_password.sql_admin_password.result
@@ -100,7 +100,7 @@ resource "azurerm_mssql_firewall_rule" "azure_services" {
 resource "azurerm_private_endpoint" "sql" {
   count               = var.deploy_sql_server ? 1 : 0
   name                = "${var.project_name}-sql-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
@@ -157,7 +157,7 @@ resource "azurerm_mssql_database" "policycortex" {
 # Cosmos DB Account
 resource "azurerm_cosmosdb_account" "main" {
   name                = "${var.project_name}-cosmos-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
   offer_type          = "Standard"
   kind                = "GlobalDocumentDB"
@@ -223,7 +223,7 @@ resource "azurerm_cosmosdb_account" "main" {
 # Private endpoint for Cosmos DB
 resource "azurerm_private_endpoint" "cosmos" {
   name                = "${var.project_name}-cosmos-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
@@ -301,7 +301,7 @@ resource "azurerm_cosmosdb_sql_container" "audit_logs" {
 # Redis Cache
 resource "azurerm_redis_cache" "main" {
   name                = "${var.project_name}-redis-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
   capacity            = var.redis_capacity
   family              = var.redis_family
@@ -341,7 +341,7 @@ resource "azurerm_redis_cache" "main" {
 # Private endpoint for Redis
 resource "azurerm_private_endpoint" "redis" {
   name                = "${var.project_name}-redis-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 

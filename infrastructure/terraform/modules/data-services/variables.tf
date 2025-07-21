@@ -25,6 +25,11 @@ variable "network_resource_group_name" {
   type        = string
 }
 
+variable "location" {
+  description = "Azure region location"
+  type        = string
+}
+
 variable "vnet_name" {
   description = "Name of the virtual network"
   type        = string

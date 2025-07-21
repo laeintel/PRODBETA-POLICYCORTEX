@@ -52,7 +52,7 @@ resource "azurerm_container_registry" "ml" {
   count               = var.create_container_registry ? 1 : 0
   name                = "${var.project_name}mlacr${var.environment}"
   resource_group_name = data.azurerm_resource_group.main.name
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   sku                 = var.acr_sku
   admin_enabled       = false
   
@@ -72,7 +72,7 @@ resource "azurerm_container_registry" "ml" {
 resource "azurerm_private_endpoint" "acr" {
   count               = var.create_container_registry ? 1 : 0
   name                = "${var.project_name}-ml-acr-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
@@ -123,7 +123,7 @@ resource "azurerm_machine_learning_workspace" "main" {
 resource "azurerm_private_endpoint" "ml_workspace" {
   count               = var.deploy_ml_workspace ? 1 : 0
   name                = "${var.project_name}-ml-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
@@ -195,7 +195,7 @@ resource "azurerm_machine_learning_compute_cluster" "training" {
 # Cognitive Services Multi-Service Account
 resource "azurerm_cognitive_account" "main" {
   name                = "${var.project_name}-cognitive-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
   kind                = "CognitiveServices"
   sku_name            = var.cognitive_services_sku
@@ -230,7 +230,7 @@ resource "azurerm_cognitive_account" "main" {
 # Private endpoint for Cognitive Services
 resource "azurerm_private_endpoint" "cognitive" {
   name                = "${var.project_name}-cognitive-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
@@ -256,7 +256,7 @@ resource "azurerm_private_endpoint" "cognitive" {
 resource "azurerm_cognitive_account" "openai" {
   count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                = "${var.project_name}-openai-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
   kind                = "OpenAI"
   sku_name            = var.openai_sku
@@ -288,7 +288,7 @@ resource "azurerm_cognitive_account" "openai" {
 resource "azurerm_private_endpoint" "openai" {
   count               = var.deploy_openai && contains(var.openai_available_regions, var.location) ? 1 : 0
   name                = "${var.project_name}-openai-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
@@ -358,7 +358,7 @@ resource "azurerm_key_vault_secret" "openai_endpoint" {
 # Event Grid Topic for ML operations
 resource "azurerm_eventgrid_topic" "ml_operations" {
   name                = "${var.project_name}-ml-events-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = data.azurerm_resource_group.main.name
 
   # Security
@@ -377,7 +377,7 @@ resource "azurerm_eventgrid_topic" "ml_operations" {
 # Private endpoint for Event Grid
 resource "azurerm_private_endpoint" "eventgrid" {
   name                = "${var.project_name}-eventgrid-pe-${var.environment}"
-  location            = data.azurerm_resource_group.main.location
+  location            = var.location
   resource_group_name = var.network_resource_group_name
   subnet_id           = data.azurerm_subnet.private_endpoints.id
 
