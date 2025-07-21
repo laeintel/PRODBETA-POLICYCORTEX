@@ -1,194 +1,127 @@
 #!/bin/bash
-# Script to import existing Azure resources into Terraform state
+# Import existing Azure resources into Terraform state
+# This script is designed to run in GitHub Actions workflow
 
-set -euo pipefail
+set -e
 
-# Get environment from argument
-ENVIRONMENT=${1:-dev}
-echo "Importing resources for environment: $ENVIRONMENT"
+echo "======================================================"
+echo "Importing existing Azure resources into Terraform state"
+echo "======================================================"
 
-# Get subscription ID
-SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-echo "Subscription ID: $SUBSCRIPTION_ID"
+# Set environment variables for Service Principal authentication
+export ARM_USE_CLI=true
+SUBSCRIPTION_ID="9f16cc88-89ce-49ba-a96d-308ed3169595"
+APP_RG="rg-policycortex-app-dev"
+NETWORK_RG="rg-policycortex-network-dev"
 
-# Resource group name
-RESOURCE_GROUP="rg-policycortex-$ENVIRONMENT"
-
-# Function to check if resource exists in state
-resource_in_state() {
-    terraform state show "$1" &>/dev/null
-}
-
-# Function to check if resource exists in Azure
-resource_exists_in_azure() {
+# Function to safely import resources
+import_resource() {
     local resource_type=$1
-    local resource_name=$2
+    local resource_id=$2
+    local azure_id=$3
     
-    case $resource_type in
-        "resource_group")
-            az group show --name "$resource_name" &>/dev/null
-            ;;
-        "storage_account")
-            az storage account show --name "$resource_name" &>/dev/null
-            ;;
-        "key_vault")
-            az keyvault show --name "$resource_name" &>/dev/null
-            ;;
-        "container_registry")
-            az acr show --name "$resource_name" &>/dev/null
-            ;;
-        "log_analytics_workspace")
-            az monitor log-analytics workspace show --resource-group "$RESOURCE_GROUP" --workspace-name "$resource_name" &>/dev/null
-            ;;
-        "application_insights")
-            az monitor app-insights component show --resource-group "$RESOURCE_GROUP" --app "$resource_name" &>/dev/null
-            ;;
-        "container_app_environment")
-            az containerapp env show --name "$resource_name" --resource-group "$RESOURCE_GROUP" &>/dev/null
-            ;;
-        "managed_identity")
-            az identity show --name "$resource_name" --resource-group "$RESOURCE_GROUP" &>/dev/null
-            ;;
-        "virtual_network")
-            az network vnet show --name "$resource_name" --resource-group "$RESOURCE_GROUP" &>/dev/null
-            ;;
-        "network_security_group")
-            az network nsg show --name "$resource_name" --resource-group "$RESOURCE_GROUP" &>/dev/null
-            ;;
-        "route_table")
-            az network route-table show --name "$resource_name" --resource-group "$RESOURCE_GROUP" &>/dev/null
-            ;;
-        "private_dns_zone")
-            az network private-dns zone show --name "$resource_name" --resource-group "$RESOURCE_GROUP" &>/dev/null
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
-# Import resource if it exists in Azure but not in state
-import_if_exists() {
-    local terraform_resource=$1
-    local azure_resource_id=$2
-    local resource_type=$3
-    local resource_name=$4
-    
-    if resource_exists_in_azure "$resource_type" "$resource_name"; then
-        echo "Resource $resource_name exists in Azure"
-        if ! resource_in_state "$terraform_resource"; then
-            echo "Importing $terraform_resource..."
-            terraform import "$terraform_resource" "$azure_resource_id" || echo "Import failed for $terraform_resource"
-        else
-            echo "$terraform_resource already in state"
-        fi
+    echo "Importing $resource_type..."
+    if terraform import "$resource_id" "$azure_id" 2>/dev/null; then
+        echo "✓ Successfully imported $resource_type"
     else
-        echo "Resource $resource_name does not exist in Azure"
+        echo "⚠ $resource_type already exists in state or import failed"
     fi
 }
 
-# Main imports
-echo "Starting resource imports..."
+# Import Key Vault Access Policy
+import_resource "Key Vault Access Policy" \
+    "azurerm_key_vault_access_policy.current_client" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortexdevv2/objectId/178e2973-bb20-49da-ab80-0d1ddc7b0649"
 
-# Network Resource Group
-import_if_exists "azurerm_resource_group.network" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT" \
-    "resource_group" \
-    "rg-policycortex-network-$ENVIRONMENT"
+# Import Log Analytics Workspace
+import_resource "Log Analytics Workspace" \
+    "azurerm_log_analytics_workspace.main" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.OperationalInsights/workspaces/law-policycortex-dev"
 
-# Application Resource Group
-import_if_exists "azurerm_resource_group.app" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT" \
-    "resource_group" \
-    "rg-policycortex-app-$ENVIRONMENT"
+# Import User Assigned Identity
+import_resource "User Assigned Identity" \
+    "azurerm_user_assigned_identity.container_apps" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-policycortex-dev"
 
-# Storage Account
-import_if_exists "azurerm_storage_account.app_storage" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.Storage/storageAccounts/stpolicycortex${ENVIRONMENT}stg" \
-    "storage_account" \
-    "stpolicycortex${ENVIRONMENT}stg"
+# Import Virtual Network
+import_resource "Virtual Network" \
+    "module.networking.azurerm_virtual_network.main" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/virtualNetworks/policycortex-dev-vnet"
 
-# Key Vault
-import_if_exists "azurerm_key_vault.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.KeyVault/vaults/kvpolicycortex${ENVIRONMENT}v2" \
-    "key_vault" \
-    "kvpolicycortex${ENVIRONMENT}v2"
-
-# Container Registry
-import_if_exists "azurerm_container_registry.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.ContainerRegistry/registries/crpolicycortex$ENVIRONMENT" \
-    "container_registry" \
-    "crpolicycortex$ENVIRONMENT"
-
-# Log Analytics Workspace
-import_if_exists "azurerm_log_analytics_workspace.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.OperationalInsights/workspaces/law-policycortex-$ENVIRONMENT" \
-    "log_analytics_workspace" \
-    "law-policycortex-$ENVIRONMENT"
-
-# Application Insights
-import_if_exists "azurerm_application_insights.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/microsoft.insights/components/ai-policycortex-$ENVIRONMENT" \
-    "application_insights" \
-    "ai-policycortex-$ENVIRONMENT"
-
-# Container Apps Environment
-import_if_exists "azurerm_container_app_environment.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.App/managedEnvironments/cae-policycortex-$ENVIRONMENT" \
-    "container_app_environment" \
-    "cae-policycortex-$ENVIRONMENT"
-
-# User-assigned managed identity
-import_if_exists "azurerm_user_assigned_identity.container_apps" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-policycortex-$ENVIRONMENT" \
-    "managed_identity" \
-    "id-policycortex-$ENVIRONMENT"
-
-# Networking resources - Virtual Network
-import_if_exists "module.networking.azurerm_virtual_network.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/virtualNetworks/policycortex-$ENVIRONMENT-vnet" \
-    "virtual_network" \
-    "policycortex-$ENVIRONMENT-vnet"
-
-# Network Security Groups
-for nsg in "container_apps" "app_gateway" "private_endpoints" "data_services" "ai_services"; do
-    import_if_exists "module.networking.azurerm_network_security_group.subnet_nsgs[\"$nsg\"]" \
-        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/networkSecurityGroups/policycortex-$ENVIRONMENT-nsg-$nsg" \
-        "network_security_group" \
-        "policycortex-$ENVIRONMENT-nsg-$nsg"
+# Import Network Security Groups
+for nsg in "private_endpoints" "container_apps" "data_services" "ai_services" "app_gateway"; do
+    import_resource "NSG $nsg" \
+        "module.networking.azurerm_network_security_group.subnet_nsgs[\"$nsg\"]" \
+        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/networkSecurityGroups/policycortex-dev-nsg-$nsg"
 done
 
-# Route Tables
-for rt in "container_apps" "data_services" "ai_services"; do
-    import_if_exists "module.networking.azurerm_route_table.route_tables[\"$rt\"]" \
-        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/routeTables/policycortex-$ENVIRONMENT-rt-$rt" \
-        "route_table" \
-        "policycortex-$ENVIRONMENT-rt-$rt"
-done
+# Import Route Table
+import_resource "Route Table" \
+    "module.networking.azurerm_route_table.main" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/routeTables/policycortex-dev-rt"
 
-# Private DNS Zone
-import_if_exists "module.networking.azurerm_private_dns_zone.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-network-$ENVIRONMENT/providers/Microsoft.Network/privateDnsZones/policycortex.internal" \
-    "private_dns_zone" \
-    "policycortex.internal"
+# Import Network Watcher
+import_resource "Network Watcher" \
+    "module.networking.azurerm_network_watcher.main[0]" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/networkWatchers/policycortex-dev-nw"
 
-# Container Apps
-for service in "api_gateway" "azure_integration" "ai_engine" "data_processing" "conversation" "notification" "frontend"; do
-    terraform_name=$(echo $service | tr '_' '-')
-    # Check if Container App exists
-    if az containerapp show --name "ca-$terraform_name-$ENVIRONMENT" --resource-group "rg-policycortex-app-$ENVIRONMENT" &>/dev/null; then
-        echo "Container App ca-$terraform_name-$ENVIRONMENT exists"
-        # Import with [0] index since we're using count
-        if ! terraform state show "azurerm_container_app.${service}[0]" &>/dev/null; then
-            echo "Importing azurerm_container_app.${service}[0]..."
-            terraform import "azurerm_container_app.${service}[0]" \
-                "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-policycortex-app-$ENVIRONMENT/providers/Microsoft.App/containerApps/ca-$terraform_name-$ENVIRONMENT" || echo "Import failed for Container App $service"
-        else
-            echo "azurerm_container_app.${service}[0] already in state"
+# Import Private DNS Zones
+import_resource "Internal DNS Zone" \
+    "module.networking.azurerm_private_dns_zone.internal" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/policycortex.internal"
+
+import_resource "SQL DNS Zone" \
+    "module.networking.azurerm_private_dns_zone.sql" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/privatelink.database.windows.net"
+
+import_resource "Cosmos DNS Zone" \
+    "module.networking.azurerm_private_dns_zone.cosmos" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/privatelink.documents.azure.com"
+
+import_resource "Redis DNS Zone" \
+    "module.networking.azurerm_private_dns_zone.redis" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/privatelink.redis.cache.windows.net"
+
+import_resource "Cognitive Services DNS Zone" \
+    "module.networking.azurerm_private_dns_zone.cognitive" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/privatelink.cognitiveservices.azure.com"
+
+import_resource "ML DNS Zone" \
+    "module.networking.azurerm_private_dns_zone.ml" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/privatelink.api.azureml.ms"
+
+import_resource "OpenAI DNS Zone" \
+    "module.networking.azurerm_private_dns_zone.openai" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/privatelink.openai.azure.com"
+
+# Import role assignments (attempt to get actual IDs dynamically)
+echo ""
+echo "Attempting to import role assignments..."
+echo "Note: Role assignments may need specific IDs from Azure"
+
+# Try to get role assignment IDs for Key Vault
+ROLE_ASSIGNMENTS=$(az role assignment list \
+    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortexdevv2" \
+    --query "[].id" -o tsv 2>/dev/null || echo "")
+
+if [ -n "$ROLE_ASSIGNMENTS" ]; then
+    for assignment_id in $ROLE_ASSIGNMENTS; do
+        # Extract the assignment GUID from the full ID
+        assignment_guid=$(echo "$assignment_id" | grep -oE '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
+        if [ -n "$assignment_guid" ]; then
+            import_resource "Role Assignment $assignment_guid" \
+                "azurerm_role_assignment.key_vault_admin_current_client" \
+                "$assignment_id"
+            break  # Only import the first one as key_vault_admin_current_client
         fi
-    fi
-done
+    done
+else
+    echo "⚠ Could not retrieve role assignments - may need manual import"
+fi
 
+echo ""
+echo "======================================================"
 echo "Import process completed"
-echo "Current state:"
-terraform state list || echo "No resources in state"
+echo "======================================================"
+echo ""
+echo "Run 'terraform plan' to verify the imported state"
