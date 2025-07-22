@@ -5,8 +5,9 @@ param criticalAlertEmails array = []
 param warningAlertEmails array = []
 param budgetAlertEmails array = []
 param monthlyBudgetAmount int = 1000
-param subscriptionId string = subscription().subscriptionId
 param resourceGroupName string
+@description('Budget start date in format yyyy-MM-dd')
+param budgetStartDate string = '${utcNow('yyyy-MM')}-01'
 
 // Action Groups - Only create if emails are provided
 resource criticalActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (length(criticalAlertEmails) > 0) {
@@ -44,7 +45,7 @@ resource budget 'Microsoft.Consumption/budgets@2021-10-01' = if (length(budgetAl
   name: 'budget-policycortex-${environment}'
   properties: {
     timePeriod: {
-      startDate: '${utcNow('yyyy-MM')}-01'
+      startDate: budgetStartDate
     }
     timeGrain: 'Monthly'
     amount: monthlyBudgetAmount
