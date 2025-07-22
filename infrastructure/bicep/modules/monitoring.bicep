@@ -1,8 +1,6 @@
 // Monitoring module - Minimal for initial deployment
 param environment string
-param location string
 param tags object = {}
-param workspaceId string
 param criticalAlertEmails array = []
 param warningAlertEmails array = []
 
