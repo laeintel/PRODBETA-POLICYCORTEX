@@ -1,0 +1,355 @@
+name: Bicep Infrastructure Deployment
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/bicep/**'
+      - '.github/workflows/bicep-deploy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/bicep/**'
+      - '.github/workflows/bicep-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      action:
+        description: 'Deployment action'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - validate
+          - deploy
+          - destroy
+
+env:
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  validate:
+    name: Validate Bicep Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Azure CLI
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Validate Bicep Templates
+        run: |
+          echo "Validating Bicep templates..."
+          
+          # Install Bicep CLI
+          az bicep install
+          
+          # Validate main template
+          az bicep build --file infrastructure/bicep/main.bicep
+          
+          # Validate all modules
+          for module in infrastructure/bicep/modules/*.bicep; do
+            echo "Validating $module..."
+            az bicep build --file "$module"
+          done
+          
+          echo "✅ All Bicep templates are valid"
+        working-directory: .
+
+      - name: Lint Bicep Templates
+        run: |
+          echo "Linting Bicep templates..."
+          
+          # Run bicep linter on main template
+          az bicep lint --file infrastructure/bicep/main.bicep
+          
+          # Lint all modules
+          for module in infrastructure/bicep/modules/*.bicep; do
+            echo "Linting $module..."
+            az bicep lint --file "$module"
+          done
+          
+          echo "✅ Bicep linting completed"
+        working-directory: .
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Bicep Validation ✅ Success
+            #### Bicep Linting ✅ Success
+            
+            All Bicep templates have been validated and linted successfully.
+            
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  deploy-dev:
+    name: Deploy Dev Environment
+    runs-on: ubuntu-latest
+    needs: validate
+    if: (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && success()
+    environment: dev
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Azure CLI
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Deploy Infrastructure
+        id: deploy
+        run: |
+          echo "Deploying PolicyCortex infrastructure to dev environment..."
+          
+          # Deploy using Bicep
+          az deployment sub create \
+            --location "East US" \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/environments/dev.bicepparam \
+            --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV }}" \
+            --name "policycortex-dev-$(date +%Y%m%d-%H%M%S)" \
+            --verbose
+          
+          echo "✅ Infrastructure deployment completed"
+        working-directory: .
+
+      - name: Get Deployment Outputs
+        id: outputs
+        run: |
+          echo "Getting deployment outputs..."
+          
+          # Get the latest deployment
+          DEPLOYMENT_NAME=$(az deployment sub list --query "[0].name" -o tsv)
+          
+          # Get outputs
+          RESOURCE_GROUP=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.resourceGroupName.value" -o tsv)
+          CONTAINER_REGISTRY=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.containerRegistryName.value" -o tsv)
+          KEY_VAULT=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.keyVaultName.value" -o tsv)
+          
+          echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+          echo "container_registry=$CONTAINER_REGISTRY" >> $GITHUB_OUTPUT
+          echo "key_vault=$KEY_VAULT" >> $GITHUB_OUTPUT
+        working-directory: .
+
+      - name: Build and Push Placeholder Images
+        run: |
+          echo "Building and pushing placeholder images..."
+          
+          # Login to ACR
+          az acr login --name ${{ steps.outputs.outputs.container_registry }}
+          
+          # Build and push placeholder images for each service
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Building placeholder for $service..."
+            
+            # Create a simple placeholder Dockerfile
+            mkdir -p /tmp/$service
+            cat > /tmp/$service/Dockerfile << EOF
+          FROM nginx:alpine
+          RUN echo "<h1>PolicyCortex $service - Coming Soon</h1><p>Infrastructure deployed successfully. Waiting for application deployment.</p>" > /usr/share/nginx/html/index.html
+          EXPOSE 80
+          EOF
+            
+            # Build and push
+            docker build -t ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policycortex-$service:latest /tmp/$service
+            docker push ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policycortex-$service:latest
+          done
+          
+          echo "✅ Placeholder images built and pushed"
+
+      - name: Deploy Container Apps (if enabled)
+        run: |
+          echo "Checking if Container Apps should be deployed..."
+          
+          # Check if deployContainerApps is true in parameters
+          DEPLOY_APPS=$(grep -o 'deployContainerApps = true' infrastructure/bicep/environments/dev.bicepparam || echo "false")
+          
+          if [[ "$DEPLOY_APPS" == *"true"* ]]; then
+            echo "Deploying Container Apps..."
+            
+            # Update parameters to enable container apps
+            sed -i 's/deployContainerApps = false/deployContainerApps = true/' infrastructure/bicep/environments/dev.bicepparam
+            
+            # Re-deploy with Container Apps enabled
+            az deployment sub create \
+              --location "East US" \
+              --template-file infrastructure/bicep/main.bicep \
+              --parameters infrastructure/bicep/environments/dev.bicepparam \
+              --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV }}" \
+              --name "policycortex-dev-apps-$(date +%Y%m%d-%H%M%S)" \
+              --verbose
+            
+            echo "✅ Container Apps deployed"
+          else
+            echo "ℹ️ Container Apps deployment is disabled"
+          fi
+        working-directory: .
+
+      - name: Display Deployment Summary
+        run: |
+          echo "=================================="
+          echo "🎉 Bicep Infrastructure Deployment Complete!"
+          echo "=================================="
+          echo "Environment: dev"
+          echo "Resource Group: ${{ steps.outputs.outputs.resource_group }}"
+          echo "Container Registry: ${{ steps.outputs.outputs.container_registry }}"
+          echo "Key Vault: ${{ steps.outputs.outputs.key_vault }}"
+          echo ""
+          echo "📝 Next Steps:"
+          echo "1. Run application deployment to deploy your actual services"
+          echo "2. Check Azure Portal for detailed resource information"
+          echo "=================================="
+
+  deploy-staging:
+    name: Deploy Staging Environment
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Azure CLI
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Deploy Infrastructure
+        run: |
+          echo "Deploying PolicyCortex infrastructure to staging environment..."
+          
+          az deployment sub create \
+            --location "East US" \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/environments/staging.bicepparam \
+            --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_STAGING }}" \
+            --name "policycortex-staging-$(date +%Y%m%d-%H%M%S)" \
+            --verbose
+        working-directory: .
+
+  deploy-prod:
+    name: Deploy Production Environment
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    environment: prod
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Azure CLI
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Deploy Infrastructure
+        run: |
+          echo "Deploying PolicyCortex infrastructure to production environment..."
+          
+          az deployment sub create \
+            --location "East US" \
+            --template-file infrastructure/bicep/main.bicep \
+            --parameters infrastructure/bicep/environments/prod.bicepparam \
+            --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_PROD }}" \
+            --name "policycortex-prod-$(date +%Y%m%d-%H%M%S)" \
+            --verbose
+        working-directory: .
+
+  destroy:
+    name: Destroy Environment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Azure CLI
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Destroy Infrastructure
+        run: |
+          echo "Destroying PolicyCortex infrastructure in ${{ github.event.inputs.environment }} environment..."
+          
+          # Delete resource groups
+          NETWORK_RG="rg-policycortex-network-${{ github.event.inputs.environment }}"
+          APP_RG="rg-policycortex-app-${{ github.event.inputs.environment }}"
+          
+          echo "Deleting network resource group: $NETWORK_RG"
+          az group delete --name "$NETWORK_RG" --yes --no-wait || echo "Network RG not found"
+          
+          echo "Deleting application resource group: $APP_RG"
+          az group delete --name "$APP_RG" --yes --no-wait || echo "App RG not found"
+          
+          echo "✅ Destruction initiated (resources are being deleted in background)"
