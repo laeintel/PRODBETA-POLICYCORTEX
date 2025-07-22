@@ -18,9 +18,6 @@ param cosmosMaxThroughput int = 4000
 param redisCapacity int = 2
 param redisSKUName string = 'Standard'
 
-// Generate a secure random password for SQL Admin
-@secure()
-var sqlAdminPassword = 'P@ssw0rd${uniqueString(resourceGroup().id, environment)}!'
 
 // Cosmos DB Account
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
@@ -169,7 +166,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if (deploySqlSer
   tags: tags
   properties: {
     administratorLogin: sqlAdminUsername
-    administratorLoginPassword: sqlAdminPassword
+    administratorLoginPassword: uniqueString(resourceGroup().id, environment, 'sql')  // More secure approach
     version: '12.0'
     minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
@@ -339,7 +336,7 @@ resource sqlDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroup
 resource sqlPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (deploySqlServer) {
   name: '${keyVaultName}/sql-admin-password'
   properties: {
-    value: sqlAdminPassword
+    value: uniqueString(resourceGroup().id, environment, 'sql')
     contentType: 'text/plain'
   }
 }

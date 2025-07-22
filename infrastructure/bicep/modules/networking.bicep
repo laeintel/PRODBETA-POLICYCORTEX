@@ -43,9 +43,9 @@ var subnetConfigs = [
 ]
 
 // Private DNS Zones
-var privateDnsZones = [
+var privateDnsZoneNames = [
   'policycortex.internal'
-  'privatelink.${environment().suffixes.sqlServerHostname}'
+  'privatelink.${az.environment().suffixes.sqlServerHostname}'
   'privatelink.documents.azure.com'
   'privatelink.redis.cache.windows.net'
   'privatelink.cognitiveservices.azure.com'
@@ -193,7 +193,7 @@ resource networkWatcher 'Microsoft.Network/networkWatchers@2023-05-01' = {
 }
 
 // Private DNS Zones
-resource privateDnsZoneResources 'Microsoft.Network/privateDnsZones@2020-06-01' = [for zone in privateDnsZones: {
+resource privateDnsZoneResources 'Microsoft.Network/privateDnsZones@2020-06-01' = [for zone in privateDnsZoneNames: {
   name: zone
   location: 'global'
   tags: tags
@@ -201,7 +201,7 @@ resource privateDnsZoneResources 'Microsoft.Network/privateDnsZones@2020-06-01' 
 }]
 
 // Link Private DNS Zones to VNet
-resource privateDnsZoneLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for (zone, i) in privateDnsZones: {
+resource privateDnsZoneLinks 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = [for (zone, i) in privateDnsZoneNames: {
   parent: privateDnsZoneResources[i]
   name: '${zone}-link'
   location: 'global'
