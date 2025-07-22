@@ -36,6 +36,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     }
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
+    restore: true
   }
 }
 

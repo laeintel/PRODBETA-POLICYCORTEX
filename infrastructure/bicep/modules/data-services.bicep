@@ -142,18 +142,18 @@ resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
     enableNonSslPort: false
     minimumTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
-    redisConfiguration: {
+    redisConfiguration: redisSKUName == 'Premium' ? {
       'aof-backup-enabled': 'false'
-      'aof-storage-connection-string-0': ''
-      'aof-storage-connection-string-1': ''
       'maxfragmentationmemory-reserved': '30'
       'maxmemory-delta': '30'
       'maxmemory-reserved': '30'
       'notify-keyspace-events': ''
       'rdb-backup-enabled': 'false'
-      'rdb-backup-frequency': '60'
-      'rdb-backup-max-snapshot-count': '1'
-      'rdb-storage-connection-string': ''
+    } : {
+      'maxfragmentationmemory-reserved': '30'
+      'maxmemory-delta': '30'
+      'maxmemory-reserved': '30'
+      'notify-keyspace-events': ''
     }
     redisVersion: '6'
   }
