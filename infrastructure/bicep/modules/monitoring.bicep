@@ -5,8 +5,6 @@ param tags object = {}
 param workspaceId string
 param criticalAlertEmails array = []
 param warningAlertEmails array = []
-param budgetAlertEmails array = []
-param monthlyBudgetAmount int = 1000
 
 // Action Groups - Only create if emails are provided
 resource criticalActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (length(criticalAlertEmails) > 0) {
