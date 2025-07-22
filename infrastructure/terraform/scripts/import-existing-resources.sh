@@ -4,15 +4,19 @@
 
 set -e
 
+# Get environment from command line argument
+ENVIRONMENT=${1:-dev}
+
 echo "======================================================"
 echo "Importing existing Azure resources into Terraform state"
+echo "Environment: $ENVIRONMENT"
 echo "======================================================"
 
 # Set environment variables for Service Principal authentication
 export ARM_USE_CLI=true
 SUBSCRIPTION_ID="9f16cc88-89ce-49ba-a96d-308ed3169595"
-APP_RG="rg-policycortex-app-dev"
-NETWORK_RG="rg-policycortex-network-dev"
+APP_RG="rg-policycortex-app-$ENVIRONMENT"
+NETWORK_RG="rg-policycortex-network-$ENVIRONMENT"
 
 # Function to safely import resources
 import_resource() {
@@ -31,39 +35,39 @@ import_resource() {
 # Import Key Vault Access Policy
 import_resource "Key Vault Access Policy" \
     "azurerm_key_vault_access_policy.current_client" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortexdevv2/objectId/178e2973-bb20-49da-ab80-0d1ddc7b0649"
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortex${ENVIRONMENT}v2/objectId/178e2973-bb20-49da-ab80-0d1ddc7b0649"
 
 # Import Log Analytics Workspace
 import_resource "Log Analytics Workspace" \
     "azurerm_log_analytics_workspace.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.OperationalInsights/workspaces/law-policycortex-dev"
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.OperationalInsights/workspaces/law-policycortex-$ENVIRONMENT"
 
 # Import User Assigned Identity
 import_resource "User Assigned Identity" \
     "azurerm_user_assigned_identity.container_apps" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-policycortex-dev"
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-policycortex-$ENVIRONMENT"
 
 # Import Virtual Network
 import_resource "Virtual Network" \
     "module.networking.azurerm_virtual_network.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/virtualNetworks/policycortex-dev-vnet"
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/virtualNetworks/policycortex-$ENVIRONMENT-vnet"
 
 # Import Network Security Groups
 for nsg in "private_endpoints" "container_apps" "data_services" "ai_services" "app_gateway"; do
     import_resource "NSG $nsg" \
         "module.networking.azurerm_network_security_group.subnet_nsgs[\"$nsg\"]" \
-        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/networkSecurityGroups/policycortex-dev-nsg-$nsg"
+        "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/networkSecurityGroups/policycortex-$ENVIRONMENT-nsg-$nsg"
 done
 
 # Import Route Table
 import_resource "Route Table" \
     "module.networking.azurerm_route_table.main" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/routeTables/policycortex-dev-rt"
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/routeTables/policycortex-$ENVIRONMENT-rt"
 
 # Import Network Watcher
 import_resource "Network Watcher" \
     "module.networking.azurerm_network_watcher.main[0]" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/networkWatchers/policycortex-dev-nw"
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/networkWatchers/policycortex-$ENVIRONMENT-nw"
 
 # Import Private DNS Zones
 import_resource "Internal DNS Zone" \
@@ -100,11 +104,11 @@ echo "Importing Key Vault Secrets..."
 
 import_resource "SQL Admin Password Secret" \
     "module.data_services.azurerm_key_vault_secret.sql_admin_password" \
-    "https://kvpolicycortexdevv2.vault.azure.net/secrets/sql-admin-password/58a1f2872a3d480f8ec6b4d8c3ae2283"
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/sql-admin-password"
 
 import_resource "Redis Connection String Secret" \
     "module.data_services.azurerm_key_vault_secret.redis_connection_string" \
-    "https://kvpolicycortexdevv2.vault.azure.net/secrets/redis-connection-string/34e4960841034398ab6b95b0e2b7ab0b"
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/redis-connection-string"
 
 # Import EventGrid Topic
 echo ""
@@ -112,7 +116,7 @@ echo "Importing EventGrid Topic..."
 
 import_resource "ML Operations EventGrid Topic" \
     "module.ai_services.azurerm_eventgrid_topic.ml_operations" \
-    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.EventGrid/topics/policycortex-ml-events-dev"
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.EventGrid/topics/policycortex-ml-events-$ENVIRONMENT"
 
 # Import role assignments (attempt to get actual IDs dynamically)
 echo ""
@@ -121,7 +125,7 @@ echo "Note: Role assignments may need specific IDs from Azure"
 
 # Try to get role assignment IDs for Key Vault
 ROLE_ASSIGNMENTS=$(az role assignment list \
-    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortexdevv2" \
+    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortex${ENVIRONMENT}v2" \
     --query "[].id" -o tsv 2>/dev/null || echo "")
 
 if [ -n "$ROLE_ASSIGNMENTS" ]; then
@@ -145,8 +149,8 @@ echo "Importing container apps KeyVault role assignment..."
 
 # Get the container apps role assignment for KeyVault
 CONTAINER_ROLE_ASSIGNMENTS=$(az role assignment list \
-    --assignee "$(az identity show --name id-policycortex-dev --resource-group $APP_RG --query principalId -o tsv 2>/dev/null)" \
-    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortexdevv2" \
+    --assignee "$(az identity show --name id-policycortex-$ENVIRONMENT --resource-group $APP_RG --query principalId -o tsv 2>/dev/null)" \
+    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortex${ENVIRONMENT}v2" \
     --query "[].id" -o tsv 2>/dev/null || echo "")
 
 if [ -n "$CONTAINER_ROLE_ASSIGNMENTS" ]; then
@@ -167,7 +171,7 @@ echo "Checking for soft-deleted Cognitive Services account..."
 # First try to purge the soft-deleted account
 echo "Attempting to purge soft-deleted cognitive services account..."
 az cognitiveservices account purge \
-    --name "policycortex-cognitive-dev" \
+    --name "policycortex-cognitive-$ENVIRONMENT" \
     --resource-group "$APP_RG" \
     --location "East US" 2>/dev/null || echo "Account may not be soft-deleted or already purged"
 
