@@ -22,7 +22,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 30
     enableRbacAuthorization: false
-    enablePurgeProtection: environment == 'prod' ? true : false  // Disable for dev/staging to allow recovery
+    enablePurgeProtection: true  // Cannot be disabled once enabled
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'

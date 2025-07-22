@@ -157,7 +157,7 @@ module keyVault 'modules/key-vault.bicep' = {
   scope: appResourceGroup
   name: 'keyVault'
   params: {
-    keyVaultName: 'kvpolicycortex${environment}v2'
+    keyVaultName: 'kvpolicycortex${environment}v3'
     location: location
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
