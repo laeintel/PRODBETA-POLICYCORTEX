@@ -314,6 +314,9 @@ module monitoring 'modules/monitoring.bicep' = {
     tags: commonTags
     criticalAlertEmails: criticalAlertEmails
     warningAlertEmails: warningAlertEmails
+    budgetAlertEmails: budgetAlertEmails
+    monthlyBudgetAmount: monthlyBudgetAmount
+    resourceGroupName: appResourceGroupName
   }
 }
 
