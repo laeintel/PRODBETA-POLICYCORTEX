@@ -1,5 +1,6 @@
 // Key Vault Secrets module
 param keyVaultName string
+@secure()
 param jwtSecretKey string
 param managedIdentityClientId string
 param storageAccountName string

@@ -27,13 +27,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' =
       exportPolicy: {
         status: 'enabled'
       }
-      azureADAuthenticationAsArmPolicy: {
-        status: 'enabled'
-      }
-      softDeletePolicy: {
-        retentionDays: 7
-        status: 'disabled'
-      }
     }
     encryption: {
       status: 'disabled'
@@ -42,7 +35,6 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' =
     publicNetworkAccess: 'Enabled'
     networkRuleBypassOptions: 'AzureServices'
     zoneRedundancy: 'Disabled'
-    anonymousPullEnabled: false
   }
 }
 

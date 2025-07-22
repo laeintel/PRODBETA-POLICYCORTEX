@@ -45,7 +45,7 @@ var subnetConfigs = [
 // Private DNS Zones
 var privateDnsZones = [
   'policycortex.internal'
-  'privatelink.database.windows.net'
+  'privatelink.${environment().suffixes.sqlServerHostname}'
   'privatelink.documents.azure.com'
   'privatelink.redis.cache.windows.net'
   'privatelink.cognitiveservices.azure.com'

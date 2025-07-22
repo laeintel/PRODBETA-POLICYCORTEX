@@ -3,7 +3,6 @@ param environment string
 param location string
 param tags object = {}
 param keyVaultName string
-param subnetId string
 param privateEndpointsSubnetId string
 param privateDnsZones object
 param storageAccountId string
@@ -308,7 +307,7 @@ resource cognitiveServicesEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023
 resource openAIKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (deployOpenAI) {
   name: '${keyVaultName}/openai-key'
   properties: {
-    value: openAIService.listKeys().key1
+    value: deployOpenAI ? openAIService.listKeys().key1 : ''
     contentType: 'text/plain'
   }
 }
@@ -316,7 +315,7 @@ resource openAIKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (de
 resource openAIEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (deployOpenAI) {
   name: '${keyVaultName}/openai-endpoint'
   properties: {
-    value: openAIService.properties.endpoint
+    value: deployOpenAI ? openAIService.properties.endpoint : ''
     contentType: 'text/plain'
   }
 }

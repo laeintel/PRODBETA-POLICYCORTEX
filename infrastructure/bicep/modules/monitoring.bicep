@@ -58,6 +58,7 @@ resource highCpuAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (length(
       allOf: [
         {
           name: 'High CPU'
+          criterionType: 'StaticThresholdCriterion'
           metricName: 'CpuPercentage'
           operator: 'GreaterThan'
           threshold: 80
@@ -92,6 +93,7 @@ resource highMemoryAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (leng
       allOf: [
         {
           name: 'High Memory'
+          criterionType: 'StaticThresholdCriterion'
           metricName: 'MemoryPercentage'
           operator: 'GreaterThan'
           threshold: 85
@@ -135,7 +137,7 @@ resource authenticationFailuresAlert 'Microsoft.Insights/scheduledQueryRules@202
           timeAggregation: 'Maximum'
           failingPeriods: {
             numberOfEvaluationPeriods: 3
-            minFailingPeriodsToTriggerAlert: 1
+            minFailingPeriodsToAlert: 1
           }
         }
       ]
@@ -151,7 +153,7 @@ resource authenticationFailuresAlert 'Microsoft.Insights/scheduledQueryRules@202
 // Budget (if emails provided)
 resource budget 'Microsoft.Consumption/budgets@2023-05-01' = if (length(budgetAlertEmails) > 0) {
   name: 'budget-policycortex-${environment}'
-  scope: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}'
+  scope: resourceGroup()
   properties: {
     timePeriod: {
       startDate: '2024-01-01T00:00:00Z'
@@ -212,7 +214,7 @@ resource portalDashboard 'Microsoft.Portal/dashboards@2020-09-01-preview' = {
                   value: 'AppTraces | summarize count() by bin(TimeGenerated, 1h) | render timechart'
                 }
               ]
-              type: 'Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart'
+              type: 'Extension/HubsExtension/PartType/MarkdownPart'
             }
           }
         ]

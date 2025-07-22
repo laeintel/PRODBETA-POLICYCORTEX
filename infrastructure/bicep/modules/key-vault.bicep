@@ -4,7 +4,6 @@ param location string
 param tags object = {}
 param createTerraformAccessPolicy bool = true
 
-var currentUser = tenant()
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName

@@ -18,7 +18,8 @@ param cosmosMaxThroughput int = 4000
 param redisCapacity int = 2
 param redisSKUName string = 'Standard'
 
-// Generate a random password for SQL Admin
+// Generate a secure random password for SQL Admin
+@secure()
 var sqlAdminPassword = 'P@ssw0rd${uniqueString(resourceGroup().id, environment)}!'
 
 // Cosmos DB Account
