@@ -304,21 +304,7 @@ resource cognitiveServicesEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023
   }
 }
 
-resource openAIKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (deployOpenAI) {
-  name: '${keyVaultName}/openai-key'
-  properties: {
-    value: deployOpenAI ? openAIService.listKeys().key1 : ''
-    contentType: 'text/plain'
-  }
-}
-
-resource openAIEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (deployOpenAI) {
-  name: '${keyVaultName}/openai-endpoint'
-  properties: {
-    value: deployOpenAI ? openAIService.properties.endpoint : ''
-    contentType: 'text/plain'
-  }
-}
+// OpenAI secrets will be created separately if needed
 
 // Outputs
 output cognitiveServicesId string = cognitiveServices.id
