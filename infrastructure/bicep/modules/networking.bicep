@@ -42,15 +42,12 @@ var subnetConfigs = [
   }
 ]
 
-// Private DNS Zones
+// Private DNS Zones - Minimal set for initial deployment
 var privateDnsZoneNames = [
-  'policycortex.internal'
-  'privatelink.${az.environment().suffixes.sqlServerHostname}'
+  'policycortex-${environment}.internal'
   'privatelink.documents.azure.com'
   'privatelink.redis.cache.windows.net'
   'privatelink.cognitiveservices.azure.com'
-  'privatelink.api.azureml.ms'
-  'privatelink.openai.azure.com'
 ]
 
 // Virtual Network
@@ -184,13 +181,14 @@ resource routeTable 'Microsoft.Network/routeTables@2023-05-01' = {
   }
 }
 
-// Network Watcher
-resource networkWatcher 'Microsoft.Network/networkWatchers@2023-05-01' = {
-  name: 'policycortex-${environment}-nw'
-  location: location
-  tags: tags
-  properties: {}
-}
+// Network Watcher - Commented out as it's a singleton resource per region
+// Azure automatically creates this when first networking resource is deployed
+// resource networkWatcher 'Microsoft.Network/networkWatchers@2023-05-01' = {
+//   name: 'policycortex-${environment}-nw'
+//   location: location
+//   tags: tags
+//   properties: {}
+// }
 
 // Private DNS Zones
 resource privateDnsZoneResources 'Microsoft.Network/privateDnsZones@2020-06-01' = [for zone in privateDnsZoneNames: {
@@ -223,10 +221,10 @@ output dataServicesSubnetId string = '${virtualNetwork.id}/subnets/data_services
 output aiServicesSubnetId string = '${virtualNetwork.id}/subnets/ai_services'
 output privateDnsZones object = {
   internal: privateDnsZoneResources[0].id
-  sql: privateDnsZoneResources[1].id
-  cosmos: privateDnsZoneResources[2].id
-  redis: privateDnsZoneResources[3].id
-  cognitive: privateDnsZoneResources[4].id
-  ml: privateDnsZoneResources[5].id
-  openai: privateDnsZoneResources[6].id
+  cosmos: privateDnsZoneResources[1].id
+  redis: privateDnsZoneResources[2].id
+  cognitive: privateDnsZoneResources[3].id
+  sql: ''  // Not deployed in minimal setup
+  ml: ''   // Not deployed in minimal setup
+  openai: ''  // Not deployed in minimal setup
 }
