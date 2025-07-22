@@ -9,8 +9,6 @@ param environment string = 'dev'
 @description('Azure region for resources')
 param location string = 'East US'
 
-@description('Name of the project')
-param projectName string = 'policycortex'
 
 @description('Owner of the resources')
 param owner string = 'AeoliTech'
@@ -26,7 +24,7 @@ param deployContainerApps bool = false
 
 @description('Secret key for JWT token signing')
 @secure()
-param jwtSecretKey string = 'development-secret-key-change-in-production'
+param jwtSecretKey string
 
 // Data Services Parameters
 @description('Whether to deploy SQL Server')
@@ -246,7 +244,6 @@ module aiServices 'modules/ai-services.bicep' = {
     location: location
     tags: commonTags
     keyVaultName: keyVault.outputs.keyVaultName
-    subnetId: networking.outputs.aiServicesSubnetId
     privateEndpointsSubnetId: networking.outputs.privateEndpointsSubnetId
     privateDnsZones: networking.outputs.privateDnsZones
     storageAccountId: storageAccount.outputs.storageAccountId
