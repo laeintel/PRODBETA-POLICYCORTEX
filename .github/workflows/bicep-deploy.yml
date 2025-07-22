@@ -53,11 +53,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Azure CLI
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
-
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -127,11 +122,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Azure CLI
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
 
       - name: Azure Login
         uses: azure/login@v2
@@ -257,11 +247,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Azure CLI
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
-
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -293,11 +278,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Azure CLI
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
-
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -327,11 +307,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Azure CLI
-        uses: azure/CLI@v1
-        with:
-          azcliversion: latest
 
       - name: Azure Login
         uses: azure/login@v2
