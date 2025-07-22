@@ -137,6 +137,31 @@ import_resource "Cognitive Services Endpoint Secret" \
     "module.ai_services.azurerm_key_vault_secret.cognitive_services_endpoint" \
     "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/cognitive-services-endpoint"
 
+# Import Private Endpoints
+echo ""
+echo "Importing Private Endpoints..."
+
+import_resource "Cosmos Private Endpoint" \
+    "module.data_services.azurerm_private_endpoint.cosmos" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateEndpoints/policycortex-cosmos-pe-$ENVIRONMENT"
+
+import_resource "Redis Private Endpoint" \
+    "module.data_services.azurerm_private_endpoint.redis" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateEndpoints/policycortex-redis-pe-$ENVIRONMENT"
+
+import_resource "Cognitive Services Private Endpoint" \
+    "module.ai_services.azurerm_private_endpoint.cognitive" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateEndpoints/policycortex-cognitive-pe-$ENVIRONMENT"
+
+import_resource "EventGrid Private Endpoint" \
+    "module.ai_services.azurerm_private_endpoint.eventgrid" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateEndpoints/policycortex-eventgrid-pe-$ENVIRONMENT"
+
+# Import Additional Key Vault Secrets that may exist
+import_resource "Cosmos Connection String Secret" \
+    "module.data_services.azurerm_key_vault_secret.cosmos_connection_string" \
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/cosmos-connection-string"
+
 # Import EventGrid Topic
 echo ""
 echo "Importing EventGrid Topic..."
