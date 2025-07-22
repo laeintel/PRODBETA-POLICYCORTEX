@@ -102,6 +102,24 @@ import_resource "OpenAI DNS Zone" \
 echo ""
 echo "Importing Key Vault Secrets..."
 
+# Main.tf secrets
+import_resource "JWT Secret Key" \
+    "azurerm_key_vault_secret.jwt_secret_key" \
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/jwt-secret-key"
+
+import_resource "Managed Identity Client ID Secret" \
+    "azurerm_key_vault_secret.managed_identity_client_id" \
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/managed-identity-client-id"
+
+import_resource "Storage Account Name Secret" \
+    "azurerm_key_vault_secret.storage_account_name" \
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/storage-account-name"
+
+import_resource "Application Insights Connection String Secret" \
+    "azurerm_key_vault_secret.application_insights_connection_string" \
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/application-insights-connection-string"
+
+# Data services module secrets  
 import_resource "SQL Admin Password Secret" \
     "module.data_services.azurerm_key_vault_secret.sql_admin_password" \
     "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/sql-admin-password"
@@ -109,6 +127,15 @@ import_resource "SQL Admin Password Secret" \
 import_resource "Redis Connection String Secret" \
     "module.data_services.azurerm_key_vault_secret.redis_connection_string" \
     "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/redis-connection-string"
+
+# AI services module secrets
+import_resource "Cognitive Services Key Secret" \
+    "module.ai_services.azurerm_key_vault_secret.cognitive_services_key" \
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/cognitive-services-key"
+
+import_resource "Cognitive Services Endpoint Secret" \
+    "module.ai_services.azurerm_key_vault_secret.cognitive_services_endpoint" \
+    "https://kvpolicycortex${ENVIRONMENT}v2.vault.azure.net/secrets/cognitive-services-endpoint"
 
 # Import EventGrid Topic
 echo ""
