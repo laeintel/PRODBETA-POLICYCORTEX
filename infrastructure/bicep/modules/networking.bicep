@@ -12,35 +12,57 @@ var subnetConfigs = [
     name: 'container_apps'
     addressPrefix: '10.0.0.0/23'  // Container Apps requires /23 or larger
     delegations: []  // Container Apps Environment doesn't use delegation
+    serviceEndpoints: []
   }
   {
     name: 'app_gateway'
     addressPrefix: '10.0.2.0/24'
     delegations: []
+    serviceEndpoints: []
   }
   {
     name: 'private_endpoints'
     addressPrefix: '10.0.3.0/24'
     delegations: []
+    serviceEndpoints: []
   }
   {
     name: 'data_services'
     addressPrefix: '10.0.4.0/24'
     delegations: []
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.AzureCosmosDB'
+      }
+      {
+        service: 'Microsoft.Storage'
+      }
+      {
+        service: 'Microsoft.Sql'
+      }
+    ]
   }
   {
     name: 'ai_services'
     addressPrefix: '10.0.5.0/24'
     delegations: []
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.CognitiveServices'
+      }
+    ]
   }
 ]
 
 // Private DNS Zones - Minimal set for initial deployment
 var privateDnsZoneNames = [
   'policycortex-${environment}.internal'
+  'policycortex.internal'
   'privatelink.documents.azure.com'
   'privatelink.redis.cache.windows.net'
   'privatelink.cognitiveservices.azure.com'
+  'privatelink.openai.azure.com'
+  'privatelink.api.azureml.ms'
 ]
 
 // Virtual Network
@@ -57,6 +79,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
       properties: {
         addressPrefix: config.addressPrefix
         delegations: config.delegations
+        serviceEndpoints: config.serviceEndpoints
         privateEndpointNetworkPolicies: 'Disabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
       }
@@ -214,10 +237,11 @@ output dataServicesSubnetId string = '${virtualNetwork.id}/subnets/data_services
 output aiServicesSubnetId string = '${virtualNetwork.id}/subnets/ai_services'
 output privateDnsZones object = {
   internal: privateDnsZoneResources[0].id
-  cosmos: privateDnsZoneResources[1].id
-  redis: privateDnsZoneResources[2].id
-  cognitive: privateDnsZoneResources[3].id
+  internalBase: privateDnsZoneResources[1].id
+  cosmos: privateDnsZoneResources[2].id
+  redis: privateDnsZoneResources[3].id
+  cognitive: privateDnsZoneResources[4].id
+  openai: privateDnsZoneResources[5].id
+  ml: privateDnsZoneResources[6].id
   sql: ''  // Not deployed in minimal setup
-  ml: ''   // Not deployed in minimal setup
-  openai: ''  // Not deployed in minimal setup
 }
