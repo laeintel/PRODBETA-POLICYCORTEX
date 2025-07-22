@@ -28,7 +28,6 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   kind: 'CognitiveServices'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'policycortex-cognitive-${environment}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -50,7 +49,6 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
   kind: 'OpenAI'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'policycortex-openai-${environment}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
