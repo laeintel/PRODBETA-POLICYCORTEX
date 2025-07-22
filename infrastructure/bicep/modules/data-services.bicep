@@ -166,7 +166,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if (deploySqlSer
   tags: tags
   properties: {
     administratorLogin: sqlAdminUsername
-    administratorLoginPassword: uniqueString(resourceGroup().id, environment, 'sql')  // More secure approach
+    administratorLoginPassword: '${uniqueString(resourceGroup().id, environment, 'sql')}!${toUpper(uniqueString(subscription().id, environment))}'
     version: '12.0'
     minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'

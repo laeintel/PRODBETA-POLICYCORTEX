@@ -311,13 +311,9 @@ module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
   params: {
     environment: environment
-    location: location
     tags: commonTags
-    workspaceId: logAnalytics.outputs.workspaceId
     criticalAlertEmails: criticalAlertEmails
     warningAlertEmails: warningAlertEmails
-    budgetAlertEmails: budgetAlertEmails
-    monthlyBudgetAmount: monthlyBudgetAmount
   }
 }
 
