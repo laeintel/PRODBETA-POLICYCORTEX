@@ -23,7 +23,7 @@ var shortUniqueSuffix = substring(uniqueSuffix, 0, 6)
 
 // Cognitive Services Account
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: 'policycortex-cog-${shortUniqueSuffix}-${environment}'
+  name: 'policycortex-cog-inc-${environment}'
   location: location
   tags: tags
   sku: {
@@ -44,7 +44,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 
 // Azure OpenAI Service (conditional)
 resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployOpenAI) {
-  name: 'policycortex-oai-${shortUniqueSuffix}-${environment}'
+  name: 'policycortex-oai-inc-${environment}'
   location: location
   tags: tags
   sku: {
@@ -65,7 +65,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
 
 // ML Workspace (conditional)
 resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' = if (deployMLWorkspace) {
-  name: 'policycortex-ml-${shortUniqueSuffix}-${environment}'
+  name: 'policycortex-ml-inc-${environment}'
   location: location
   tags: tags
   identity: {
@@ -87,7 +87,7 @@ resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' =
 
 // ML Container Registry (conditional)
 resource mlContainerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = if (createMLContainerRegistry) {
-  name: 'crpcml${shortUniqueSuffix}${environment}'
+  name: 'crpcmlinc${environment}'
   location: location
   tags: tags
   sku: {
@@ -136,7 +136,7 @@ resource mlComputeInstance 'Microsoft.MachineLearningServices/workspaces/compute
 
 // EventGrid Topic for ML Operations
 resource eventGridTopic 'Microsoft.EventGrid/topics@2023-12-15-preview' = {
-  name: 'pc-ml-events-${shortUniqueSuffix}-${environment}'
+  name: 'pc-ml-events-inc-${environment}'
   location: location
   tags: tags
   properties: {
@@ -148,7 +148,7 @@ resource eventGridTopic 'Microsoft.EventGrid/topics@2023-12-15-preview' = {
 
 // Private Endpoints
 resource cognitivePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'pc-cog-pe-${shortUniqueSuffix}-${environment}'
+  name: 'pc-cog-pe-inc-${environment}'
   location: location
   tags: tags
   properties: {
@@ -172,7 +172,7 @@ resource cognitivePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01
 }
 
 resource openAIPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployOpenAI) {
-  name: 'pc-oai-pe-${shortUniqueSuffix}-${environment}'
+  name: 'pc-oai-pe-inc-${environment}'
   location: location
   tags: tags
   properties: {
@@ -196,7 +196,7 @@ resource openAIPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' =
 }
 
 resource eventGridPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'pc-eg-pe-${shortUniqueSuffix}-${environment}'
+  name: 'pc-eg-pe-inc-${environment}'
   location: location
   tags: tags
   properties: {
@@ -220,7 +220,7 @@ resource eventGridPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01
 }
 
 resource mlPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployMLWorkspace) {
-  name: 'pc-ml-pe-${shortUniqueSuffix}-${environment}'
+  name: 'pc-ml-pe-inc-${environment}'
   location: location
   tags: tags
   properties: {
