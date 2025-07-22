@@ -126,7 +126,9 @@
       "Bash(claude config get:*)",
       "Bash(claude config list:*)",
       "Bash($env:ARM_USE_CLI=\"true\")",
-      "Bash(export ARM_USE_CLI=true)"
+      "Bash(export ARM_USE_CLI=true)",
+      "Bash(set FORCE_COLOR=0)",
+      "Bash(./cleanup-failed-resources.sh:*)"
     ],
     "deny": []
   }
