@@ -3,6 +3,7 @@ param keyVaultName string
 param location string
 param tags object = {}
 param createTerraformAccessPolicy bool = true
+param environment string = 'dev'
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -21,7 +22,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 30
     enableRbacAuthorization: false
-    enablePurgeProtection: true
+    enablePurgeProtection: environment == 'prod' ? true : false  // Disable for dev/staging to allow recovery
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'

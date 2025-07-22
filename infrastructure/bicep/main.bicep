@@ -161,6 +161,7 @@ module keyVault 'modules/key-vault.bicep' = {
     location: location
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
+    environment: environment
   }
 }
 
