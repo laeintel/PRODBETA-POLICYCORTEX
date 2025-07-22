@@ -82,7 +82,7 @@ param computeInstanceVMSize string = 'Standard_DS3_v2'
 param cognitiveServicesSku string = 'S0'
 
 @description('Whether to deploy Azure OpenAI service')
-param deployOpenAI bool = true
+param deployOpenAI bool = false
 
 @description('SKU for Azure OpenAI')
 param openAISku string = 'S0'
