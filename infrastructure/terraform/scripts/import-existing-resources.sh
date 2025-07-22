@@ -94,6 +94,26 @@ import_resource "OpenAI DNS Zone" \
     "module.networking.azurerm_private_dns_zone.openai" \
     "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$NETWORK_RG/providers/Microsoft.Network/privateDnsZones/privatelink.openai.azure.com"
 
+# Import Key Vault Secrets
+echo ""
+echo "Importing Key Vault Secrets..."
+
+import_resource "SQL Admin Password Secret" \
+    "module.data_services.azurerm_key_vault_secret.sql_admin_password" \
+    "https://kvpolicycortexdevv2.vault.azure.net/secrets/sql-admin-password/58a1f2872a3d480f8ec6b4d8c3ae2283"
+
+import_resource "Redis Connection String Secret" \
+    "module.data_services.azurerm_key_vault_secret.redis_connection_string" \
+    "https://kvpolicycortexdevv2.vault.azure.net/secrets/redis-connection-string/34e4960841034398ab6b95b0e2b7ab0b"
+
+# Import EventGrid Topic
+echo ""
+echo "Importing EventGrid Topic..."
+
+import_resource "ML Operations EventGrid Topic" \
+    "module.ai_services.azurerm_eventgrid_topic.ml_operations" \
+    "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.EventGrid/topics/policycortex-ml-events-dev"
+
 # Import role assignments (attempt to get actual IDs dynamically)
 echo ""
 echo "Attempting to import role assignments..."
@@ -118,6 +138,41 @@ if [ -n "$ROLE_ASSIGNMENTS" ]; then
 else
     echo "⚠ Could not retrieve role assignments - may need manual import"
 fi
+
+# Import container apps KeyVault role assignment
+echo ""
+echo "Importing container apps KeyVault role assignment..."
+
+# Get the container apps role assignment for KeyVault
+CONTAINER_ROLE_ASSIGNMENTS=$(az role assignment list \
+    --assignee "$(az identity show --name id-policycortex-dev --resource-group $APP_RG --query principalId -o tsv 2>/dev/null)" \
+    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$APP_RG/providers/Microsoft.KeyVault/vaults/kvpolicycortexdevv2" \
+    --query "[].id" -o tsv 2>/dev/null || echo "")
+
+if [ -n "$CONTAINER_ROLE_ASSIGNMENTS" ]; then
+    for assignment_id in $CONTAINER_ROLE_ASSIGNMENTS; do
+        import_resource "Container Apps KeyVault Role Assignment" \
+            "azurerm_role_assignment.container_apps_keyvault" \
+            "$assignment_id"
+        break  # Only import the first one
+    done
+else
+    echo "⚠ Could not retrieve container apps role assignments"
+fi
+
+# Handle soft-deleted Cognitive Services account
+echo ""
+echo "Checking for soft-deleted Cognitive Services account..."
+
+# First try to purge the soft-deleted account
+echo "Attempting to purge soft-deleted cognitive services account..."
+az cognitiveservices account purge \
+    --name "policycortex-cognitive-dev" \
+    --resource-group "$APP_RG" \
+    --location "East US" 2>/dev/null || echo "Account may not be soft-deleted or already purged"
+
+echo "Waiting 30 seconds for purge to complete..."
+sleep 30
 
 echo ""
 echo "======================================================"
