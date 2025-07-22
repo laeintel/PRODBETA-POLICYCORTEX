@@ -4,7 +4,6 @@ using '../main.bicep'
 // Basic Configuration
 param environment = 'prod'
 param location = 'East US'
-param projectName = 'policycortex'
 param owner = 'AeoliTech'
 param allowedIps = []
 
