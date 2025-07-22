@@ -3,6 +3,10 @@ param environment string
 param tags object = {}
 param criticalAlertEmails array = []
 param warningAlertEmails array = []
+param budgetAlertEmails array = []
+param monthlyBudgetAmount int = 1000
+param subscriptionId string = subscription().subscriptionId
+param resourceGroupName string
 
 // Action Groups - Only create if emails are provided
 resource criticalActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (length(criticalAlertEmails) > 0) {
@@ -35,7 +39,45 @@ resource warningActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (l
   }
 }
 
+// Budget Alert - Only create if budget emails are provided
+resource budget 'Microsoft.Consumption/budgets@2021-10-01' = if (length(budgetAlertEmails) > 0) {
+  name: 'budget-policycortex-${environment}'
+  properties: {
+    timePeriod: {
+      startDate: '${utcNow('yyyy-MM')}-01'
+    }
+    timeGrain: 'Monthly'
+    amount: monthlyBudgetAmount
+    category: 'Cost'
+    notifications: {
+      NotificationForExceededBudget: {
+        enabled: true
+        operator: 'GreaterThan'
+        threshold: 90
+        contactEmails: budgetAlertEmails
+        thresholdType: 'Percentage'
+      }
+      NotificationForForecastedBudget: {
+        enabled: true
+        operator: 'GreaterThan'
+        threshold: 100
+        contactEmails: budgetAlertEmails
+        thresholdType: 'Forecasted'
+      }
+    }
+    filter: {
+      dimensions: {
+        name: 'ResourceGroupName'
+        values: [
+          resourceGroupName
+        ]
+      }
+    }
+  }
+}
+
 // Outputs
 output criticalActionGroupId string = length(criticalAlertEmails) > 0 ? criticalActionGroup.id : ''
 output warningActionGroupId string = length(warningAlertEmails) > 0 ? warningActionGroup.id : ''
 output dashboardId string = ''  // Dashboard removed for initial deployment
+output budgetId string = length(budgetAlertEmails) > 0 ? budget.id : ''
