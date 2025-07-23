@@ -103,6 +103,16 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
         {/* Logo/Title */}
         <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+          <Box
+            component="img"
+            src="/policycortex-logo.svg"
+            alt="PolicyCortex Logo"
+            sx={{
+              height: 32,
+              width: 32,
+              mr: 1.5,
+            }}
+          />
           <Typography
             variant="h6"
             component="div"
