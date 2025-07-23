@@ -9,7 +9,7 @@ SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 RESOURCE_GROUP="rg-policycortex-app-dev"
 DEPLOYMENT_NAME="policycortex-${ENVIRONMENT}-fix-$(date +%Y%m%d-%H%M%S)"
 
-echo "Starting deployment fix for PolicyCortex ${ENVIRONMENT} environment..."
+echo "Starting deployment fix for Policortex ${ENVIRONMENT} environment..."
 echo "Subscription: ${SUBSCRIPTION_ID}"
 echo "Resource Group: ${RESOURCE_GROUP}"
 echo "Deployment Name: ${DEPLOYMENT_NAME}"

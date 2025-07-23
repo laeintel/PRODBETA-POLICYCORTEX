@@ -1,6 +1,6 @@
-# PolicyCortex Bicep Infrastructure
+# Policortex Bicep Infrastructure
 
-This directory contains the complete Bicep infrastructure for PolicyCortex, providing an alternative to the Terraform implementation with identical resource configurations.
+This directory contains the complete Bicep infrastructure for Policortex, providing an alternative to the Terraform implementation with identical resource configurations.
 
 ## Overview
 

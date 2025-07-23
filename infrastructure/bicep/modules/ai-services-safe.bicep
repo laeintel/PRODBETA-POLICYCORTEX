@@ -23,7 +23,7 @@ param existingOpenAIName string = ''
 
 // Try to reference existing Cognitive Services Account or create new
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (!useExistingCognitiveServices) {
-  name: 'policycortex-cognitive-${environment}'
+  name: 'policortex-cognitive-${environment}'
   location: location
   tags: tags
   sku: {
@@ -45,12 +45,12 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = i
 
 // Reference existing Cognitive Services if specified
 resource existingCognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (useExistingCognitiveServices) {
-  name: existingCognitiveServicesName != '' ? existingCognitiveServicesName : 'policycortex-cognitive-${environment}'
+  name: existingCognitiveServicesName != '' ? existingCognitiveServicesName : 'policortex-cognitive-${environment}'
 }
 
 // Azure OpenAI Service (conditional)
 resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployOpenAI && !useExistingOpenAI) {
-  name: 'policycortex-openai-${environment}'
+  name: 'policortex-openai-${environment}'
   location: location
   tags: tags
   sku: {
@@ -72,20 +72,20 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
 
 // Reference existing OpenAI if specified
 resource existingOpenAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (useExistingOpenAI) {
-  name: existingOpenAIName != '' ? existingOpenAIName : 'policycortex-openai-${environment}'
+  name: existingOpenAIName != '' ? existingOpenAIName : 'policortex-openai-${environment}'
 }
 
 // ML Workspace (conditional)
 resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' = if (deployMLWorkspace) {
-  name: 'policycortex-ml-${environment}'
+  name: 'policortex-ml-${environment}'
   location: location
   tags: tags
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    friendlyName: 'PolicyCortex ML Workspace'
-    description: 'Machine Learning workspace for PolicyCortex AI models'
+    friendlyName: 'policortex ML Workspace'
+    description: 'Machine Learning workspace for policortex AI models'
     storageAccount: storageAccountId
     containerRegistry: createMLContainerRegistry ? mlContainerRegistry.id : containerRegistryId
     applicationInsights: applicationInsightsId
@@ -99,7 +99,7 @@ resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' =
 
 // ML Container Registry (conditional)
 resource mlContainerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = if (createMLContainerRegistry) {
-  name: 'crpolicycortexml${environment}'
+  name: 'crpolicortexml${environment}'
   location: location
   tags: tags
   sku: {
@@ -148,7 +148,7 @@ resource mlComputeInstance 'Microsoft.MachineLearningServices/workspaces/compute
 
 // EventGrid Topic for ML Operations
 resource eventGridTopic 'Microsoft.EventGrid/topics@2023-12-15-preview' = {
-  name: 'policycortex-ml-events-${environment}'
+  name: 'policortex-ml-events-${environment}'
   location: location
   tags: tags
   properties: {
@@ -164,7 +164,7 @@ var openAIServiceResource = useExistingOpenAI ? existingOpenAIService : openAISe
 
 // Private Endpoints - only create if not using existing resources
 resource cognitivePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (!useExistingCognitiveServices) {
-  name: 'policycortex-cognitive-pe-${environment}'
+  name: 'policortex-cognitive-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -188,7 +188,7 @@ resource cognitivePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01
 }
 
 resource openAIPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployOpenAI && !useExistingOpenAI) {
-  name: 'policycortex-openai-pe-${environment}'
+  name: 'policortex-openai-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -212,7 +212,7 @@ resource openAIPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' =
 }
 
 resource eventGridPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policycortex-eventgrid-pe-${environment}'
+  name: 'policortex-eventgrid-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -236,7 +236,7 @@ resource eventGridPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01
 }
 
 resource mlPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployMLWorkspace) {
-  name: 'policycortex-ml-pe-${environment}'
+  name: 'policortex-ml-pe-${environment}'
   location: location
   tags: tags
   properties: {

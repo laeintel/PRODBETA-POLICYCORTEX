@@ -23,7 +23,7 @@ var shortUniqueSuffix = substring(uniqueSuffix, 0, 6)
 
 // Cognitive Services Account
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: 'policycortex-cog-inc-${environment}'
+  name: 'policortex-cog-inc-${environment}'
   location: location
   tags: tags
   sku: {
@@ -32,7 +32,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   kind: 'CognitiveServices'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'policycortex-cog-inc-${environment}'
+    customSubDomainName: 'policortex-cog-inc-${environment}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -46,7 +46,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 
 // Azure OpenAI Service (conditional)
 resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployOpenAI) {
-  name: 'policycortex-oai-inc-${environment}'
+  name: 'policortex-oai-inc-${environment}'
   location: location
   tags: tags
   sku: {
@@ -55,7 +55,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
   kind: 'OpenAI'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'policycortex-oai-inc-${environment}'
+    customSubDomainName: 'policortex-oai-inc-${environment}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -68,15 +68,15 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
 
 // ML Workspace (conditional)
 resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' = if (deployMLWorkspace) {
-  name: 'policycortex-ml-inc-${environment}'
+  name: 'policortex-ml-inc-${environment}'
   location: location
   tags: tags
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    friendlyName: 'PolicyCortex ML Workspace'
-    description: 'Machine Learning workspace for PolicyCortex AI models'
+    friendlyName: 'policortex ML Workspace'
+    description: 'Machine Learning workspace for policortex AI models'
     storageAccount: storageAccountId
     containerRegistry: createMLContainerRegistry ? mlContainerRegistry.id : containerRegistryId
     applicationInsights: applicationInsightsId

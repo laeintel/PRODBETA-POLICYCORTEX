@@ -160,7 +160,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
     template: {
       containers: [
         {
-          image: '${containerRegistryLoginServer}/policycortex-${service.name}:latest'
+          image: '${containerRegistryLoginServer}/policortex-${service.name}:latest'
           name: service.name
           resources: {
             cpu: json(service.cpu)

@@ -21,7 +21,7 @@ param redisSKUName string = 'Standard'
 
 // Cosmos DB Account
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: 'policycortex-cosmos-${environment}'
+  name: 'policortex-cosmos-${environment}'
   location: location
   tags: tags
   kind: 'GlobalDocumentDB'
@@ -76,10 +76,10 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
 // Cosmos DB Database
 resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
   parent: cosmosAccount
-  name: 'PolicyCortexDB'
+  name: 'policortexDB'
   properties: {
     resource: {
-      id: 'PolicyCortexDB'
+      id: 'policortexDB'
     }
     options: {
       autoscaleSettings: {
@@ -130,7 +130,7 @@ resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/co
 
 // Redis Cache
 resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
-  name: 'policycortex-redis-${environment}'
+  name: 'policortex-redis-${environment}'
   location: location
   tags: tags
   properties: {
@@ -161,7 +161,7 @@ resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
 
 // SQL Server (conditional)
 resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if (deploySqlServer) {
-  name: 'policycortex-sql-${environment}'
+  name: 'policortex-sql-${environment}'
   location: location
   tags: tags
   properties: {
@@ -184,7 +184,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if (deploySqlSer
 // SQL Database (conditional)
 resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-05-01-preview' = if (deploySqlServer) {
   parent: sqlServer
-  name: 'PolicyCortexDB'
+  name: 'policortexDB'
   location: location
   tags: tags
   sku: {
@@ -215,7 +215,7 @@ resource sqlFirewallAzure 'Microsoft.Sql/servers/firewallRules@2023-05-01-previe
 
 // Private Endpoints
 resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policycortex-cosmos-pe-${environment}'
+  name: 'policortex-cosmos-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -239,7 +239,7 @@ resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' =
 }
 
 resource redisPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policycortex-redis-pe-${environment}'
+  name: 'policortex-redis-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -263,7 +263,7 @@ resource redisPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = 
 }
 
 resource sqlPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deploySqlServer) {
-  name: 'policycortex-sql-pe-${environment}'
+  name: 'policortex-sql-pe-${environment}'
   location: location
   tags: tags
   properties: {
