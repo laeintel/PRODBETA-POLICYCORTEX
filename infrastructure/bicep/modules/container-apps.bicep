@@ -11,7 +11,7 @@ param keyVaultName string
 var services = [
   {
     name: 'api-gateway'
-    port: 8000
+    port: 80
     cpu: '0.5'
     memory: '1Gi'
     minReplicas: 1
@@ -71,7 +71,7 @@ var services = [
   }
   {
     name: 'frontend'
-    port: 3000
+    port: 80
     cpu: '0.25'
     memory: '0.5Gi'
     minReplicas: 1
@@ -214,6 +214,10 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
             {
               name: 'VITE_AZURE_TENANT_ID'
               value: tenant().tenantId
+            }
+            {
+              name: 'VITE_API_BASE_URL'
+              value: service.name == 'frontend' ? 'https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io' : ''
             }
           ]
           // Health probes temporarily disabled for troubleshooting
