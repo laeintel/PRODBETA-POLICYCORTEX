@@ -344,8 +344,15 @@ jobs:
       - name: Get Azure Resources
         id: get_resources
         run: |
-          # Get resource group for dev environment
-          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-dev')].name" -o tsv)
+          # Get resource group for dev environment - specifically the app resource group
+          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+          
+          # Fallback to any dev resource group if not found
+          if [ -z "$RESOURCE_GROUP" ]; then
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex') && contains(name, 'dev') && contains(name, 'app')].name" -o tsv | head -n 1)
+          fi
+          
+          echo "Using resource group: $RESOURCE_GROUP"
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           
           # Get ACR details
@@ -354,9 +361,14 @@ jobs:
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
           
-          # Get Container App Environment
-          CONTAINER_ENV_NAME=$(az containerapp env list --resource-group $RESOURCE_GROUP --query "[0].name" -o tsv)
-          echo "container_env_name=$CONTAINER_ENV_NAME" >> $GITHUB_OUTPUT
+          # Get Container App Environment - add error checking
+          if [ -n "$RESOURCE_GROUP" ]; then
+            CONTAINER_ENV_NAME=$(az containerapp env list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
+            echo "container_env_name=$CONTAINER_ENV_NAME" >> $GITHUB_OUTPUT
+          else
+            echo "ERROR: Could not find resource group"
+            exit 1
+          fi
 
       - name: Deploy to Container Apps
         run: |
@@ -475,13 +487,20 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS_DEV }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Get resource group
         id: get_resources
         run: |
-          # Get resource group from infrastructure outputs
-          RESOURCE_GROUP=$(az group list --query "[?tags.environment=='dev' && tags.project=='policortex'].name" -o tsv | head -n 1)
+          # Get resource group for dev environment - use specific name pattern
+          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+          
+          # Fallback to any rg-policortex with dev
+          if [ -z "$RESOURCE_GROUP" ]; then
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex') && contains(name, 'dev')].name" -o tsv | head -n 1)
+          fi
+          
+          echo "Using resource group: $RESOURCE_GROUP"
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
 
       - name: Check Container Apps Status
