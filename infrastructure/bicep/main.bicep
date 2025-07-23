@@ -149,7 +149,11 @@ module containerRegistry 'modules/container-registry.bicep' = {
     registryName: 'crpolicortex001${environment}'
     location: location
     tags: commonTags
+    managedIdentityPrincipalId: userIdentity.outputs.principalId
   }
+  dependsOn: [
+    userIdentity
+  ]
 }
 
 // Key Vault
@@ -162,7 +166,11 @@ module keyVault 'modules/key-vault.bicep' = {
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
     environment: environment
+    managedIdentityPrincipalId: userIdentity.outputs.principalId
   }
+  dependsOn: [
+    userIdentity
+  ]
 }
 
 // Log Analytics Workspace

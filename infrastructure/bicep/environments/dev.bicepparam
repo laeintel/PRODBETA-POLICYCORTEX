@@ -11,7 +11,7 @@ param allowedIps = []
 param createTerraformAccessPolicy = false
 
 // Container Apps deployment (enable after infrastructure is deployed)
-param deployContainerApps = false
+param deployContainerApps = true
 
 // Data Services Configuration
 param deploySqlServer = false  // SQL Server provisioning restricted in East US
