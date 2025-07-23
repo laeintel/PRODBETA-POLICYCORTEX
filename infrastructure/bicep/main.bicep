@@ -1,4 +1,4 @@
-// Main Bicep template for PolicyCortex infrastructure
+// Main Bicep template for policortex infrastructure
 targetScope = 'subscription'
 
 // Parameters
@@ -103,13 +103,13 @@ param monthlyBudgetAmount int = 1000
 // Variables
 var commonTags = {
   Environment: environment
-  Project: 'PolicyCortex'
+  Project: 'policortex'
   Owner: owner
   ManagedBy: 'Bicep'
 }
 
-var networkResourceGroupName = 'rg-policycortex-network-${environment}'
-var appResourceGroupName = 'rg-policycortex-app-${environment}'
+var networkResourceGroupName = 'rg-policortex-network-${environment}'
+var appResourceGroupName = 'rg-policortex-app-${environment}'
 
 // Network Resource Group for networking infrastructure
 resource networkResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
@@ -134,7 +134,7 @@ module storageAccount 'modules/storage.bicep' = {
   scope: appResourceGroup
   name: 'storageAccount'
   params: {
-    storageAccountName: 'stpolicycortex${environment}stg'
+    storageAccountName: 'stpolicortex${environment}stg'
     location: location
     tags: commonTags
     allowedIps: allowedIps
@@ -146,7 +146,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
   scope: appResourceGroup
   name: 'containerRegistry'
   params: {
-    registryName: 'crpolicycortex${environment}'
+    registryName: 'crpolicortex${environment}'
     location: location
     tags: commonTags
   }
@@ -157,7 +157,7 @@ module keyVault 'modules/key-vault.bicep' = {
   scope: appResourceGroup
   name: 'keyVault'
   params: {
-    keyVaultName: 'kvpolicycortex${environment}v3'
+    keyVaultName: 'kvpolicortex${environment}v3'
     location: location
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
@@ -170,7 +170,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
   scope: appResourceGroup
   name: 'logAnalytics'
   params: {
-    workspaceName: 'law-policycortex-${environment}'
+    workspaceName: 'law-policortex-${environment}'
     location: location
     tags: commonTags
   }
@@ -181,7 +181,7 @@ module applicationInsights 'modules/application-insights.bicep' = {
   scope: appResourceGroup
   name: 'applicationInsights'
   params: {
-    appInsightsName: 'ai-policycortex-${environment}'
+    appInsightsName: 'ai-policortex-${environment}'
     location: location
     tags: commonTags
     workspaceResourceId: logAnalytics.outputs.workspaceId
@@ -193,7 +193,7 @@ module userIdentity 'modules/user-identity.bicep' = {
   scope: appResourceGroup
   name: 'userIdentity'
   params: {
-    identityName: 'id-policycortex-${environment}'
+    identityName: 'id-policortex-${environment}'
     location: location
     tags: commonTags
   }
@@ -266,7 +266,7 @@ module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   scope: appResourceGroup
   name: 'containerAppsEnvironment'
   params: {
-    environmentName: 'cae-policycortex-${environment}'
+    environmentName: 'cae-policortex-${environment}'
     location: location
     tags: commonTags
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
