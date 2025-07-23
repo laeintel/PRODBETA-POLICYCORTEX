@@ -223,7 +223,7 @@ jobs:
       - name: Get ACR Details
         id: get_acr
         run: |
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicycortexdev')].name" -o tsv)
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
           ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
@@ -274,7 +274,7 @@ jobs:
       - name: Get ACR Details
         id: get_acr
         run: |
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicycortexdev')].name" -o tsv)
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
           ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
@@ -309,7 +309,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.get_acr.outputs.acr_login_server }}/policycortex-frontend
+          images: ${{ steps.get_acr.outputs.acr_login_server }}/policortex001-frontend
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -345,11 +345,11 @@ jobs:
         id: get_resources
         run: |
           # Get resource group for dev environment
-          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policycortex-dev')].name" -o tsv)
+          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-dev')].name" -o tsv)
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           
           # Get ACR details
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicycortexdev')].name" -o tsv)
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
           ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
@@ -364,37 +364,37 @@ jobs:
           az containerapp update \
             --name ca-api-gateway-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policycortex-api_gateway:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-api_gateway:latest
           
           az containerapp update \
             --name ca-azure-integration-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policycortex-azure_integration:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-azure_integration:latest
           
           az containerapp update \
             --name ca-ai-engine-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policycortex-ai_engine:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-ai_engine:latest
           
           az containerapp update \
             --name ca-data-processing-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policycortex-data_processing:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-data_processing:latest
           
           az containerapp update \
             --name ca-conversation-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policycortex-conversation:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-conversation:latest
           
           az containerapp update \
             --name ca-notification-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policycortex-notification:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-notification:latest
           
           az containerapp update \
             --name ca-frontend-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policycortex-frontend:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-frontend:latest
 
       - name: Wait for deployments
         run: |
@@ -481,7 +481,7 @@ jobs:
         id: get_resources
         run: |
           # Get resource group from infrastructure outputs
-          RESOURCE_GROUP=$(az group list --query "[?tags.environment=='dev' && tags.project=='policycortex'].name" -o tsv | head -n 1)
+          RESOURCE_GROUP=$(az group list --query "[?tags.environment=='dev' && tags.project=='policortex'].name" -o tsv | head -n 1)
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
 
       - name: Check Container Apps Status
@@ -534,37 +534,37 @@ jobs:
           az containerapp update \
             --name ca-api-gateway-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policycortex-api_gateway:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-api_gateway:${{ github.sha }}
           
           az containerapp update \
             --name ca-azure-integration-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policycortex-azure_integration:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-azure_integration:${{ github.sha }}
           
           az containerapp update \
             --name ca-ai-engine-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policycortex-ai_engine:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-ai_engine:${{ github.sha }}
           
           az containerapp update \
             --name ca-data-processing-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policycortex-data_processing:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-data_processing:${{ github.sha }}
           
           az containerapp update \
             --name ca-conversation-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policycortex-conversation:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-conversation:${{ github.sha }}
           
           az containerapp update \
             --name ca-notification-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policycortex-notification:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-notification:${{ github.sha }}
           
           az containerapp update \
             --name ca-frontend-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policycortex-frontend:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-frontend:${{ github.sha }}
 
       - name: Run health checks
         run: |
@@ -601,37 +601,37 @@ jobs:
           az containerapp update \
             --name ca-api-gateway-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policycortex-api_gateway:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-api_gateway:${{ github.sha }}
           
           az containerapp update \
             --name ca-azure-integration-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policycortex-azure_integration:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-azure_integration:${{ github.sha }}
           
           az containerapp update \
             --name ca-ai-engine-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policycortex-ai_engine:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-ai_engine:${{ github.sha }}
           
           az containerapp update \
             --name ca-data-processing-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policycortex-data_processing:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-data_processing:${{ github.sha }}
           
           az containerapp update \
             --name ca-conversation-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policycortex-conversation:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-conversation:${{ github.sha }}
           
           az containerapp update \
             --name ca-notification-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policycortex-notification:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-notification:${{ github.sha }}
           
           az containerapp update \
             --name ca-frontend-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policycortex-frontend:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-frontend:${{ github.sha }}
 
       - name: Run health checks
         run: |

@@ -134,7 +134,7 @@ jobs:
       - name: Deploy Infrastructure
         id: deploy
         run: |
-          echo "Deploying PolicyCortex infrastructure to dev environment..."
+          echo "Deploying Policortex infrastructure to dev environment..."
           
           # Deploy using Bicep
           az deployment sub create \
@@ -142,7 +142,7 @@ jobs:
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/dev.bicepparam \
             --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV }}" \
-            --name "policycortex-dev-$(date +%Y%m%d-%H%M%S)" \
+            --name "policortex001-dev-$(date +%Y%m%d-%H%M%S)" \
             --verbose
           
           echo "✅ Infrastructure deployment completed"
@@ -183,13 +183,13 @@ jobs:
             mkdir -p /tmp/$service
             cat > /tmp/$service/Dockerfile << EOF
           FROM nginx:alpine
-          RUN echo "<h1>PolicyCortex $service - Coming Soon</h1><p>Infrastructure deployed successfully. Waiting for application deployment.</p>" > /usr/share/nginx/html/index.html
+          RUN echo "<h1>Policortex $service - Coming Soon</h1><p>Infrastructure deployed successfully. Waiting for application deployment.</p>" > /usr/share/nginx/html/index.html
           EXPOSE 80
           EOF
             
             # Build and push
-            docker build -t ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policycortex-$service:latest /tmp/$service
-            docker push ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policycortex-$service:latest
+            docker build -t ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policortex001-$service:latest /tmp/$service
+            docker push ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policortex001-$service:latest
           done
           
           echo "✅ Placeholder images built and pushed"
@@ -213,7 +213,7 @@ jobs:
               --template-file infrastructure/bicep/main.bicep \
               --parameters infrastructure/bicep/environments/dev.bicepparam \
               --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV }}" \
-              --name "policycortex-dev-apps-$(date +%Y%m%d-%H%M%S)" \
+              --name "policortex001-dev-apps-$(date +%Y%m%d-%H%M%S)" \
               --verbose
             
             echo "✅ Container Apps deployed"
@@ -257,14 +257,14 @@ jobs:
 
       - name: Deploy Infrastructure
         run: |
-          echo "Deploying PolicyCortex infrastructure to staging environment..."
+          echo "Deploying Policortex infrastructure to staging environment..."
           
           az deployment sub create \
             --location "East US" \
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/staging.bicepparam \
             --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_STAGING }}" \
-            --name "policycortex-staging-$(date +%Y%m%d-%H%M%S)" \
+            --name "policortex001-staging-$(date +%Y%m%d-%H%M%S)" \
             --verbose
         working-directory: .
 
@@ -288,14 +288,14 @@ jobs:
 
       - name: Deploy Infrastructure
         run: |
-          echo "Deploying PolicyCortex infrastructure to production environment..."
+          echo "Deploying Policortex infrastructure to production environment..."
           
           az deployment sub create \
             --location "East US" \
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/prod.bicepparam \
             --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_PROD }}" \
-            --name "policycortex-prod-$(date +%Y%m%d-%H%M%S)" \
+            --name "policortex001-prod-$(date +%Y%m%d-%H%M%S)" \
             --verbose
         working-directory: .
 
@@ -315,11 +315,11 @@ jobs:
 
       - name: Destroy Infrastructure
         run: |
-          echo "Destroying PolicyCortex infrastructure in ${{ github.event.inputs.environment }} environment..."
+          echo "Destroying Policortex infrastructure in ${{ github.event.inputs.environment }} environment..."
           
           # Delete resource groups
-          NETWORK_RG="rg-policycortex-network-${{ github.event.inputs.environment }}"
-          APP_RG="rg-policycortex-app-${{ github.event.inputs.environment }}"
+          NETWORK_RG="rg-policortex001-network-${{ github.event.inputs.environment }}"
+          APP_RG="rg-policortex001-app-${{ github.event.inputs.environment }}"
           
           echo "Deleting network resource group: $NETWORK_RG"
           az group delete --name "$NETWORK_RG" --yes --no-wait || echo "Network RG not found"
