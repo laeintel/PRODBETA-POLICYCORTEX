@@ -207,33 +207,17 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
               name: 'PORT'
               value: string(service.port)
             }
+            {
+              name: 'VITE_AZURE_CLIENT_ID'
+              secretRef: 'managed-identity-client-id'
+            }
+            {
+              name: 'VITE_AZURE_TENANT_ID'
+              value: tenant().tenantId
+            }
           ]
-          probes: service.name != 'frontend' ? [
-            {
-              type: 'Liveness'
-              httpGet: {
-                path: '/health'
-                port: service.port
-                scheme: 'HTTP'
-              }
-              initialDelaySeconds: 30
-              periodSeconds: 30
-              timeoutSeconds: 5
-              failureThreshold: 3
-            }
-            {
-              type: 'Readiness'
-              httpGet: {
-                path: '/health'
-                port: service.port
-                scheme: 'HTTP'
-              }
-              initialDelaySeconds: 10
-              periodSeconds: 10
-              timeoutSeconds: 3
-              failureThreshold: 3
-            }
-          ] : []
+          // Health probes temporarily disabled for troubleshooting
+          probes: []
         }
       ]
       scale: {
