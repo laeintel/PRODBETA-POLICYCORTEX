@@ -294,6 +294,7 @@ module containerApps 'modules/container-apps.bicep' = if (deployContainerApps) {
     containerRegistryLoginServer: containerRegistry.outputs.loginServer
     userAssignedIdentityId: userIdentity.outputs.identityId
     keyVaultName: keyVault.outputs.keyVaultName
+    containerAppsEnvironmentDefaultDomain: containerAppsEnvironment.outputs.defaultDomain
   }
 }
 

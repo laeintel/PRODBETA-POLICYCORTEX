@@ -250,10 +250,8 @@ jobs:
         with:
           images: ${{ steps.get_acr.outputs.acr_login_server }}/policortex001-${{ steps.service_name.outputs.hyphen_name }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
+            type=raw,value=v1-{{date 'DDMMYYYYHHMM'}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -318,10 +316,8 @@ jobs:
         with:
           images: ${{ steps.get_acr.outputs.acr_login_server }}/policortex001-frontend
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
+            type=raw,value=v1-{{date 'DDMMYYYYHHMM'}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

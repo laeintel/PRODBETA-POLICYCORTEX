@@ -6,6 +6,7 @@ param containerAppsEnvironmentId string
 param containerRegistryLoginServer string
 param userAssignedIdentityId string
 param keyVaultName string
+param containerAppsEnvironmentDefaultDomain string
 
 // Service configurations
 var services = [
@@ -234,7 +235,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
           env: [
             {
               name: 'ENVIRONMENT'
-              value: environment
+              value: environment == 'dev' ? 'development' : environment == 'prod' ? 'production' : environment
             }
             {
               name: 'JWT_SECRET_KEY'
@@ -321,6 +322,10 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
               secretRef: 'subscription-id'
             }
             {
+              name: 'SERVICE_NAME'
+              value: service.name
+            }
+            {
               name: 'PORT'
               value: string(service.port)
             }
@@ -334,7 +339,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
             }
             {
               name: 'VITE_API_BASE_URL'
-              value: service.name == 'frontend' ? 'https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io' : ''
+              value: service.name == 'frontend' ? 'https://ca-api-gateway-${environment}.${containerAppsEnvironmentDefaultDomain}' : ''
             }
           ]
           // Health probes temporarily disabled for troubleshooting
