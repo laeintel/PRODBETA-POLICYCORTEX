@@ -155,6 +155,66 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
           keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-connection-string'
           identity: userAssignedIdentityId
         }
+        {
+          name: 'cosmos-endpoint'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-endpoint'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cosmos-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-key'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'sql-server'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/sql-server'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'sql-username'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/sql-username'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'sql-password'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/sql-password'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'key-vault-name'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/key-vault-name'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'ml-workspace-name'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/ml-workspace-name'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'tenant-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/tenant-id'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'client-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/client-id'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'client-secret'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/client-secret'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'resource-group'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/resource-group'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'service-bus-namespace'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/service-bus-namespace'
+          identity: userAssignedIdentityId
+        }
       ]
     }
     template: {
@@ -202,6 +262,54 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
             {
               name: 'COSMOS_CONNECTION_STRING'
               secretRef: 'cosmos-connection-string'
+            }
+            {
+              name: 'COSMOS_ENDPOINT'
+              secretRef: 'cosmos-endpoint'
+            }
+            {
+              name: 'COSMOS_KEY'
+              secretRef: 'cosmos-key'
+            }
+            {
+              name: 'SQL_SERVER'
+              secretRef: 'sql-server'
+            }
+            {
+              name: 'SQL_USERNAME'
+              secretRef: 'sql-username'
+            }
+            {
+              name: 'SQL_PASSWORD'
+              secretRef: 'sql-password'
+            }
+            {
+              name: 'KEY_VAULT_NAME'
+              secretRef: 'key-vault-name'
+            }
+            {
+              name: 'ML_WORKSPACE_NAME'
+              secretRef: 'ml-workspace-name'
+            }
+            {
+              name: 'TENANT_ID'
+              secretRef: 'tenant-id'
+            }
+            {
+              name: 'CLIENT_ID'
+              secretRef: 'client-id'
+            }
+            {
+              name: 'CLIENT_SECRET'
+              secretRef: 'client-secret'
+            }
+            {
+              name: 'RESOURCE_GROUP'
+              secretRef: 'resource-group'
+            }
+            {
+              name: 'SERVICE_BUS_NAMESPACE'
+              secretRef: 'service-bus-namespace'
             }
             {
               name: 'PORT'
