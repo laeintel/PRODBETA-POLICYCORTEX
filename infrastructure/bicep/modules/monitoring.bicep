@@ -11,7 +11,7 @@ param budgetStartDate string = '${utcNow('yyyy-MM')}-01'
 
 // Action Groups - Only create if emails are provided
 resource criticalActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (length(criticalAlertEmails) > 0) {
-  name: 'ag-policortex-critical-${environment}'
+  name: 'ag-policortex001-critical-${environment}'
   location: 'Global'
   tags: tags
   properties: {
@@ -26,7 +26,7 @@ resource criticalActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (
 }
 
 resource warningActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (length(warningAlertEmails) > 0) {
-  name: 'ag-policortex-warning-${environment}'
+  name: 'ag-policortex001-warning-${environment}'
   location: 'Global'
   tags: tags
   properties: {
@@ -44,7 +44,7 @@ resource warningActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = if (l
 // Budgets require Cost Management Contributor role at subscription level
 // To enable budgets, ensure the service principal has the necessary permissions
 // resource budget 'Microsoft.Consumption/budgets@2021-10-01' = if (length(budgetAlertEmails) > 0) {
-//   name: 'budget-policortex-${environment}'
+//   name: 'budget-policortex001-${environment}'
 //   properties: {
 //     ...
 //   }

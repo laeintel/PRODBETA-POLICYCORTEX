@@ -23,7 +23,7 @@ param existingOpenAIName string = ''
 
 // Try to reference existing Cognitive Services Account or create new
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (!useExistingCognitiveServices) {
-  name: 'policortex-cognitive-${environment}'
+  name: 'policortex001-cognitive-${environment}'
   location: location
   tags: tags
   sku: {
@@ -45,12 +45,12 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = i
 
 // Reference existing Cognitive Services if specified
 resource existingCognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (useExistingCognitiveServices) {
-  name: existingCognitiveServicesName != '' ? existingCognitiveServicesName : 'policortex-cognitive-${environment}'
+  name: existingCognitiveServicesName != '' ? existingCognitiveServicesName : 'policortex001-cognitive-${environment}'
 }
 
 // Azure OpenAI Service (conditional)
 resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployOpenAI && !useExistingOpenAI) {
-  name: 'policortex-openai-${environment}'
+  name: 'policortex001-openai-${environment}'
   location: location
   tags: tags
   sku: {
@@ -72,12 +72,12 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
 
 // Reference existing OpenAI if specified
 resource existingOpenAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' existing = if (useExistingOpenAI) {
-  name: existingOpenAIName != '' ? existingOpenAIName : 'policortex-openai-${environment}'
+  name: existingOpenAIName != '' ? existingOpenAIName : 'policortex001-openai-${environment}'
 }
 
 // ML Workspace (conditional)
 resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' = if (deployMLWorkspace) {
-  name: 'policortex-ml-${environment}'
+  name: 'policortex001-ml-${environment}'
   location: location
   tags: tags
   identity: {
@@ -99,7 +99,7 @@ resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' =
 
 // ML Container Registry (conditional)
 resource mlContainerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = if (createMLContainerRegistry) {
-  name: 'crpolicortexml${environment}'
+  name: 'crpc001ml${environment}'
   location: location
   tags: tags
   sku: {
@@ -148,7 +148,7 @@ resource mlComputeInstance 'Microsoft.MachineLearningServices/workspaces/compute
 
 // EventGrid Topic for ML Operations
 resource eventGridTopic 'Microsoft.EventGrid/topics@2023-12-15-preview' = {
-  name: 'policortex-ml-events-${environment}'
+  name: 'policortex001-ml-events-${environment}'
   location: location
   tags: tags
   properties: {
@@ -164,7 +164,7 @@ var openAIServiceResource = useExistingOpenAI ? existingOpenAIService : openAISe
 
 // Private Endpoints - only create if not using existing resources
 resource cognitivePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (!useExistingCognitiveServices) {
-  name: 'policortex-cognitive-pe-${environment}'
+  name: 'policortex001-cognitive-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -188,7 +188,7 @@ resource cognitivePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01
 }
 
 resource openAIPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployOpenAI && !useExistingOpenAI) {
-  name: 'policortex-openai-pe-${environment}'
+  name: 'policortex001-openai-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -212,7 +212,7 @@ resource openAIPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' =
 }
 
 resource eventGridPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policortex-eventgrid-pe-${environment}'
+  name: 'policortex001-eventgrid-pe-${environment}'
   location: location
   tags: tags
   properties: {
@@ -236,7 +236,7 @@ resource eventGridPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01
 }
 
 resource mlPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployMLWorkspace) {
-  name: 'policortex-ml-pe-${environment}'
+  name: 'policortex001-ml-pe-${environment}'
   location: location
   tags: tags
   properties: {

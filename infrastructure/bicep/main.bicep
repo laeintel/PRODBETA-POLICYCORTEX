@@ -108,8 +108,8 @@ var commonTags = {
   ManagedBy: 'Bicep'
 }
 
-var networkResourceGroupName = 'rg-policortex-network-${environment}'
-var appResourceGroupName = 'rg-policortex-app-${environment}'
+var networkResourceGroupName = 'rg-policortex001-network-${environment}'
+var appResourceGroupName = 'rg-policortex001-app-${environment}'
 
 // Network Resource Group for networking infrastructure
 resource networkResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
@@ -134,7 +134,7 @@ module storageAccount 'modules/storage.bicep' = {
   scope: appResourceGroup
   name: 'storageAccount'
   params: {
-    storageAccountName: 'stpolicortex${environment}stg'
+    storageAccountName: 'stpolicortex001${environment}'
     location: location
     tags: commonTags
     allowedIps: allowedIps
@@ -146,7 +146,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
   scope: appResourceGroup
   name: 'containerRegistry'
   params: {
-    registryName: 'crpolicortex${environment}'
+    registryName: 'crpolicortex001${environment}'
     location: location
     tags: commonTags
   }
@@ -157,7 +157,7 @@ module keyVault 'modules/key-vault.bicep' = {
   scope: appResourceGroup
   name: 'keyVault'
   params: {
-    keyVaultName: 'kvpolicortex${environment}v3'
+    keyVaultName: 'kvpolicortex001${environment}'
     location: location
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
@@ -170,7 +170,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
   scope: appResourceGroup
   name: 'logAnalytics'
   params: {
-    workspaceName: 'law-policortex-${environment}'
+    workspaceName: 'law-policortex001-${environment}'
     location: location
     tags: commonTags
   }
@@ -181,7 +181,7 @@ module applicationInsights 'modules/application-insights.bicep' = {
   scope: appResourceGroup
   name: 'applicationInsights'
   params: {
-    appInsightsName: 'ai-policortex-${environment}'
+    appInsightsName: 'ai-policortex001-${environment}'
     location: location
     tags: commonTags
     workspaceResourceId: logAnalytics.outputs.workspaceId
@@ -193,7 +193,7 @@ module userIdentity 'modules/user-identity.bicep' = {
   scope: appResourceGroup
   name: 'userIdentity'
   params: {
-    identityName: 'id-policortex-${environment}'
+    identityName: 'id-policortex001-${environment}'
     location: location
     tags: commonTags
   }
@@ -266,7 +266,7 @@ module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   scope: appResourceGroup
   name: 'containerAppsEnvironment'
   params: {
-    environmentName: 'cae-policortex-${environment}'
+    environmentName: 'cae-policortex001-${environment}'
     location: location
     tags: commonTags
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
