@@ -375,6 +375,17 @@ jobs:
 
       - name: Deploy to Container Apps
         run: |
+          # Remove the manually added service-name secret that's causing conflicts
+          # This is needed because we changed service-name from a secret to a plain env var
+          for service in api-gateway azure-integration ai-engine data-processing conversation notification frontend; do
+            echo "Cleaning up service-name secret from ca-${service}-dev..."
+            az containerapp secret delete \
+              --name ca-${service}-dev \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --secret-names service-name \
+              --yes 2>/dev/null || true
+          done
+          
           # Deploy each microservice using latest tags for consistency with Terraform
           az containerapp update \
             --name ca-api-gateway-dev \
