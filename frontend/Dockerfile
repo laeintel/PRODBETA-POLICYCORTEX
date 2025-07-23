@@ -1,5 +1,8 @@
-# Build stage
-FROM node:18-alpine AS builder
+# Node.js runtime for React application
+FROM node:18-alpine
+
+# Install security updates and required packages
+RUN apk update && apk upgrade && apk add --no-cache curl
 
 # Set working directory
 WORKDIR /app
@@ -7,17 +10,13 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (including dev dependencies for build)
-# Use npm install to ensure package-lock.json compatibility
+# Install all dependencies (including dev for build)
 RUN npm install
 
 # Copy source code
 COPY . .
 
-# Skip tests in Docker build for now to unblock infrastructure deployment
-# RUN npm run test:coverage
-
-# Build arguments
+# Build arguments for environment variables
 ARG NODE_ENV=production
 ARG VITE_API_BASE_URL
 ARG VITE_WS_URL
@@ -34,54 +33,30 @@ ENV VITE_AZURE_CLIENT_ID=$VITE_AZURE_CLIENT_ID
 ENV VITE_AZURE_TENANT_ID=$VITE_AZURE_TENANT_ID
 ENV VITE_AZURE_REDIRECT_URI=$VITE_AZURE_REDIRECT_URI
 ENV VITE_APP_VERSION=$VITE_APP_VERSION
+ENV PORT=80
 
-# Debug: List source files to verify everything is copied
-RUN echo "=== Listing source files ===" && ls -la src/ && echo "=== End of source files ===" || true
+# Build the application
+RUN npm run build
 
-# Build the application with fallback for type check failures
-RUN npx vite build || (echo "Build failed. Showing error details:" && cat /tmp/build.log 2>/dev/null && exit 1)
-
-# Production stage
-FROM nginx:alpine AS production
-
-# Install security updates
-RUN apk update && apk upgrade && apk add --no-cache curl
-
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Copy built application
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy environment template
-COPY --from=builder /app/env.template.js /usr/share/nginx/html/env.template.js
-
-# Add startup script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Install serve globally for production serving
+RUN npm install -g serve
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
-# Set ownership
-RUN chown -R nextjs:nodejs /usr/share/nginx/html
-RUN chown -R nextjs:nodejs /var/cache/nginx
-RUN chown -R nextjs:nodejs /var/log/nginx
-RUN chown -R nextjs:nodejs /etc/nginx/conf.d
-RUN touch /var/run/nginx.pid
-RUN chown -R nextjs:nodejs /var/run/nginx.pid
+# Change ownership
+RUN chown -R nodejs:nodejs /app
 
 # Switch to non-root user
-USER nextjs
+USER nodejs
 
 # Expose port
 EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:80/health || exit 1
+  CMD curl -f http://localhost/health || exit 1
 
-# Start nginx
-ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+# Serve the built application with Node.js
+CMD ["serve", "-s", "dist", "-l", "80", "--no-clipboard"]

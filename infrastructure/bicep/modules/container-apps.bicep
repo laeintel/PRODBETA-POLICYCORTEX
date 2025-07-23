@@ -73,8 +73,8 @@ var services = [
   {
     name: 'frontend'
     port: 80
-    cpu: '0.25'
-    memory: '0.5Gi'
+    cpu: '1'
+    memory: '2Gi'
     minReplicas: 1
     maxReplicas: 5
     ingress: true
