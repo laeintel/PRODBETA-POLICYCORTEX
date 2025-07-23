@@ -3,7 +3,7 @@ param environment string
 param location string
 param tags object = {}
 
-var vnetName = 'policortex-${environment}-vnet'
+var vnetName = 'policortex001-${environment}-vnet'
 var vnetAddressSpace = '10.0.0.0/16'
 
 // Subnets configuration
@@ -56,8 +56,8 @@ var subnetConfigs = [
 
 // Private DNS Zones - Minimal set for initial deployment
 var privateDnsZoneNames = [
-  'policortex-${environment}.internal'
-  'policortex.internal'
+  'policortex001-${environment}.internal'
+  'policortex001.internal'
   'privatelink.documents.azure.com'
   'privatelink.redis.cache.windows.net'
   'privatelink.cognitiveservices.azure.com'
@@ -90,7 +90,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
 
 // Network Security Groups
 resource networkSecurityGroups 'Microsoft.Network/networkSecurityGroups@2023-05-01' = [for config in subnetConfigs: {
-  name: 'policortex-${environment}-nsg-${config.name}'
+  name: 'policortex001-${environment}-nsg-${config.name}'
   location: location
   tags: tags
   properties: {
@@ -180,7 +180,7 @@ resource networkSecurityGroups 'Microsoft.Network/networkSecurityGroups@2023-05-
 
 // Route Table
 resource routeTable 'Microsoft.Network/routeTables@2023-05-01' = {
-  name: 'policortex-${environment}-rt'
+  name: 'policortex001-${environment}-rt'
   location: location
   tags: tags
   properties: {
@@ -200,7 +200,7 @@ resource routeTable 'Microsoft.Network/routeTables@2023-05-01' = {
 // Network Watcher - Commented out as it's a singleton resource per region
 // Azure automatically creates this when first networking resource is deployed
 // resource networkWatcher 'Microsoft.Network/networkWatchers@2023-05-01' = {
-//   name: 'policortex-${environment}-nw'
+//   name: 'policortex001-${environment}-nw'
 //   location: location
 //   tags: tags
 //   properties: {}
