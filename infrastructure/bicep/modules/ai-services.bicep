@@ -291,29 +291,11 @@ resource mlDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups
   }
 }
 
-// Key Vault Secrets for AI services
-resource cognitiveServicesKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/cognitive-services-key'
-  properties: {
-    value: cognitiveServices.listKeys().key1
-    contentType: 'text/plain'
-  }
-}
-
-resource cognitiveServicesEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/cognitive-services-endpoint'
-  properties: {
-    value: cognitiveServices.properties.endpoint
-    contentType: 'text/plain'
-  }
-}
-
-// OpenAI secrets will be created separately if needed
-
 // Outputs
 output cognitiveServicesId string = cognitiveServices.id
 output cognitiveServicesName string = cognitiveServices.name
 output cognitiveServicesEndpoint string = cognitiveServices.properties.endpoint
+output cognitiveServicesKey string = cognitiveServices.listKeys().key1
 output openAIServiceId string = deployOpenAI ? openAIService.id : ''
 output openAIServiceName string = deployOpenAI ? openAIService.name : ''
 output openAIEndpoint string = ''  // Will be set manually if OpenAI is deployed

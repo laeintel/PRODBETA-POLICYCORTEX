@@ -332,38 +332,16 @@ resource sqlDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroup
   }
 }
 
-// Key Vault Secrets for data services
-resource sqlPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (deploySqlServer) {
-  name: '${keyVaultName}/sql-admin-password'
-  properties: {
-    value: uniqueString(resourceGroup().id, environment, 'sql')
-    contentType: 'text/plain'
-  }
-}
-
-resource redisConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/redis-connection-string'
-  properties: {
-    value: '${redisCache.properties.hostName}:${redisCache.properties.sslPort},password=${redisCache.listKeys().primaryKey},ssl=True,abortConnect=False'
-    contentType: 'text/plain'
-  }
-}
-
-resource cosmosConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVaultName}/cosmos-connection-string'
-  properties: {
-    value: cosmosAccount.listConnectionStrings().connectionStrings[0].connectionString
-    contentType: 'text/plain'
-  }
-}
-
 // Outputs
 output cosmosAccountId string = cosmosAccount.id
 output cosmosAccountName string = cosmosAccount.name
 output cosmosEndpoint string = cosmosAccount.properties.documentEndpoint
+output cosmosKey string = cosmosAccount.listKeys().primaryMasterKey
+output cosmosConnectionString string = cosmosAccount.listConnectionStrings().connectionStrings[0].connectionString
 output redisCacheId string = redisCache.id
 output redisCacheName string = redisCache.name
 output redisHostName string = redisCache.properties.hostName
+output redisConnectionString string = '${redisCache.properties.hostName}:${redisCache.properties.sslPort},password=${redisCache.listKeys().primaryKey},ssl=True,abortConnect=False'
 output sqlServerId string = deploySqlServer ? sqlServer.id : ''
 output sqlServerName string = deploySqlServer ? sqlServer.name : ''
 output sqlDatabaseId string = deploySqlServer ? sqlDatabase.id : ''
