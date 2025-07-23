@@ -11,7 +11,14 @@ var subnetConfigs = [
   {
     name: 'container_apps'
     addressPrefix: '10.0.0.0/23'  // Container Apps requires /23 or larger
-    delegations: []  // Container Apps Environment doesn't use delegation
+    delegations: [
+      {
+        name: 'delegation'
+        properties: {
+          serviceName: 'Microsoft.App/environments'
+        }
+      }
+    ]
     serviceEndpoints: []
   }
   {

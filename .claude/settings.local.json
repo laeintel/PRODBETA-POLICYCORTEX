@@ -128,7 +128,9 @@
       "Bash($env:ARM_USE_CLI=\"true\")",
       "Bash(export ARM_USE_CLI=true)",
       "Bash(set FORCE_COLOR=0)",
-      "Bash(./cleanup-failed-resources.sh:*)"
+      "Bash(./cleanup-failed-resources.sh:*)",
+      "Bash(./rename-resources.sh:*)",
+      "Bash(./update-yaml-resources.sh:*)"
     ],
     "deny": []
   }
