@@ -237,11 +237,18 @@ jobs:
         run: |
           az acr login --name ${{ steps.get_acr.outputs.acr_name }}
 
+      - name: Convert service name
+        id: service_name
+        run: |
+          SERVICE_NAME="${{ matrix.service }}"
+          SERVICE_NAME_HYPHEN=$(echo "$SERVICE_NAME" | sed 's/_/-/g')
+          echo "hyphen_name=$SERVICE_NAME_HYPHEN" >> $GITHUB_OUTPUT
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.get_acr.outputs.acr_login_server }}/policycortex-${{ matrix.service }}
+          images: ${{ steps.get_acr.outputs.acr_login_server }}/policortex001-${{ steps.service_name.outputs.hyphen_name }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -376,22 +383,22 @@ jobs:
           az containerapp update \
             --name ca-api-gateway-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-api_gateway:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-api-gateway:latest
           
           az containerapp update \
             --name ca-azure-integration-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-azure_integration:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-azure-integration:latest
           
           az containerapp update \
             --name ca-ai-engine-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-ai_engine:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-ai-engine:latest
           
           az containerapp update \
             --name ca-data-processing-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-data_processing:latest
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-data-processing:latest
           
           az containerapp update \
             --name ca-conversation-dev \
@@ -553,22 +560,22 @@ jobs:
           az containerapp update \
             --name ca-api-gateway-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policortex001-api_gateway:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-api-gateway:${{ github.sha }}
           
           az containerapp update \
             --name ca-azure-integration-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policortex001-azure_integration:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-azure-integration:${{ github.sha }}
           
           az containerapp update \
             --name ca-ai-engine-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policortex001-ai_engine:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-ai-engine:${{ github.sha }}
           
           az containerapp update \
             --name ca-data-processing-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policortex001-data_processing:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-data-processing:${{ github.sha }}
           
           az containerapp update \
             --name ca-conversation-staging \
@@ -620,22 +627,22 @@ jobs:
           az containerapp update \
             --name ca-api-gateway-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policortex001-api_gateway:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-api-gateway:${{ github.sha }}
           
           az containerapp update \
             --name ca-azure-integration-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policortex001-azure_integration:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-azure-integration:${{ github.sha }}
           
           az containerapp update \
             --name ca-ai-engine-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policortex001-ai_engine:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-ai-engine:${{ github.sha }}
           
           az containerapp update \
             --name ca-data-processing-prod \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} \
-            --image ${{ env.REGISTRY }}/policortex001-data_processing:${{ github.sha }}
+            --image ${{ env.REGISTRY }}/policortex001-data-processing:${{ github.sha }}
           
           az containerapp update \
             --name ca-conversation-prod \
