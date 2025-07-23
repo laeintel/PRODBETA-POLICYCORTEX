@@ -1,30 +1,30 @@
 import { createTheme, Theme, ThemeOptions } from '@mui/material/styles'
 
-// Define custom colors
+// Define custom colors - Azure/PolicyCortex brand colors
 const colors = {
   primary: {
     50: '#e3f2fd',
     100: '#bbdefb',
     200: '#90caf9',
-    300: '#64b5f6',
-    400: '#42a5f5',
-    500: '#2196f3',
-    600: '#1e88e5',
-    700: '#1976d2',
-    800: '#1565c0',
-    900: '#0d47a1',
+    300: '#5E9FD5',
+    400: '#3D8FCC',
+    500: '#0078D4',  // Azure Blue
+    600: '#0068BA',
+    700: '#005A9E',  // Azure Dark Blue
+    800: '#004C87',
+    900: '#003D6E',
   },
   secondary: {
-    50: '#f3e5f5',
-    100: '#e1bee7',
-    200: '#ce93d8',
-    300: '#ba68c8',
-    400: '#ab47bc',
-    500: '#9c27b0',
-    600: '#8e24aa',
-    700: '#7b1fa2',
-    800: '#6a1b9a',
-    900: '#4a148c',
+    50: '#E0F7FA',
+    100: '#B2EBF2',
+    200: '#80DEEA',
+    300: '#4DD0E1',
+    400: '#26C6DA',
+    500: '#40E0D0',  // Turquoise (AI accent)
+    600: '#00ACC1',
+    700: '#0097A7',
+    800: '#00838F',
+    900: '#006064',
   },
   success: {
     50: '#e8f5e8',
@@ -244,9 +244,9 @@ export const lightTheme: Theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: colors.primary[700],
-      light: colors.primary[400],
-      dark: colors.primary[800],
+      main: colors.primary[500],  // Azure Blue
+      light: colors.primary[300],
+      dark: colors.primary[700],  // Azure Dark Blue
       contrastText: '#ffffff',
     },
     secondary: {
