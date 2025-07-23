@@ -215,6 +215,11 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
           keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/service-bus-namespace'
           identity: userAssignedIdentityId
         }
+        {
+          name: 'subscription-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/subscription-id'
+          identity: userAssignedIdentityId
+        }
       ]
     }
     template: {
@@ -310,6 +315,10 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
             {
               name: 'SERVICE_BUS_NAMESPACE'
               secretRef: 'service-bus-namespace'
+            }
+            {
+              name: 'SUBSCRIPTION_ID'
+              secretRef: 'subscription-id'
             }
             {
               name: 'PORT'

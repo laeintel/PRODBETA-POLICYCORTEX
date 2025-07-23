@@ -176,6 +176,15 @@ resource clientSecretSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   }
 }
 
+// Azure Subscription ID
+resource subscriptionIdSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/subscription-id'
+  properties: {
+    value: subscription().subscriptionId
+    contentType: 'text/plain'
+  }
+}
+
 // Resource Group Name
 resource resourceGroupSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/resource-group'
@@ -214,6 +223,7 @@ output secretNames array = [
   tenantIdSecret.name
   clientIdSecret.name
   clientSecretSecret.name
+  subscriptionIdSecret.name
   resourceGroupSecret.name
   serviceBusNamespaceSecret.name
 ]

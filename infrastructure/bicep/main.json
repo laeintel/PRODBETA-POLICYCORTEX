@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.36.1.42791",
-      "templateHash": "213451093534328522"
+      "templateHash": "4208209244635164664"
     }
   },
   "parameters": {
@@ -239,29 +240,29 @@
   "variables": {
     "commonTags": {
       "Environment": "[parameters('environment')]",
-      "Project": "PolicyCortex",
+      "Project": "policortex",
       "Owner": "[parameters('owner')]",
       "ManagedBy": "Bicep"
     },
-    "networkResourceGroupName": "[format('rg-policycortex-network-{0}', parameters('environment'))]",
-    "appResourceGroupName": "[format('rg-policycortex-app-{0}', parameters('environment'))]"
+    "networkResourceGroupName": "[format('rg-policortex001-network-{0}', parameters('environment'))]",
+    "appResourceGroupName": "[format('rg-policortex001-app-{0}', parameters('environment'))]"
   },
-  "resources": [
-    {
+  "resources": {
+    "networkResourceGroup": {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2023-07-01",
       "name": "[variables('networkResourceGroupName')]",
       "location": "[parameters('location')]",
       "tags": "[union(variables('commonTags'), createObject('ResourceType', 'Networking'))]"
     },
-    {
+    "appResourceGroup": {
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2023-07-01",
       "name": "[variables('appResourceGroupName')]",
       "location": "[parameters('location')]",
       "tags": "[union(variables('commonTags'), createObject('ResourceType', 'Application'))]"
     },
-    {
+    "storageAccount": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "storageAccount",
@@ -273,7 +274,7 @@
         "mode": "Incremental",
         "parameters": {
           "storageAccountName": {
-            "value": "[format('stpolicycortex{0}stg', parameters('environment'))]"
+            "value": "[format('stpolicortex001{0}', parameters('environment'))]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -437,10 +438,10 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]"
+        "appResourceGroup"
       ]
     },
-    {
+    "containerRegistry": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "containerRegistry",
@@ -452,13 +453,16 @@
         "mode": "Incremental",
         "parameters": {
           "registryName": {
-            "value": "[format('crpolicycortex{0}', parameters('environment'))]"
+            "value": "[format('crpolicortex001{0}', parameters('environment'))]"
           },
           "location": {
             "value": "[parameters('location')]"
           },
           "tags": {
             "value": "[variables('commonTags')]"
+          },
+          "managedIdentityPrincipalId": {
+            "value": "[reference('userIdentity').outputs.principalId.value]"
           }
         },
         "template": {
@@ -468,7 +472,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "6950581447314205753"
+              "templateHash": "12747195944684466378"
             }
           },
           "parameters": {
@@ -481,6 +485,10 @@
             "tags": {
               "type": "object",
               "defaultValue": {}
+            },
+            "managedIdentityPrincipalId": {
+              "type": "string",
+              "defaultValue": ""
             }
           },
           "resources": [
@@ -519,6 +527,21 @@
                 "networkRuleBypassOptions": "AzureServices",
                 "zoneRedundancy": "Disabled"
               }
+            },
+            {
+              "condition": "[not(equals(parameters('managedIdentityPrincipalId'), ''))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', parameters('registryName'))]",
+              "name": "[guid(resourceId('Microsoft.ContainerRegistry/registries', parameters('registryName')), parameters('managedIdentityPrincipalId'), 'AcrPull')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+                "principalId": "[parameters('managedIdentityPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('registryName'))]"
+              ]
             }
           ],
           "outputs": {
@@ -538,10 +561,11 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]"
+        "appResourceGroup",
+        "userIdentity"
       ]
     },
-    {
+    "keyVault": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "keyVault",
@@ -553,7 +577,7 @@
         "mode": "Incremental",
         "parameters": {
           "keyVaultName": {
-            "value": "[format('kvpolicycortex{0}v3', parameters('environment'))]"
+            "value": "[format('kvpolicortex001{0}', parameters('environment'))]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -566,6 +590,9 @@
           },
           "environment": {
             "value": "[parameters('environment')]"
+          },
+          "managedIdentityPrincipalId": {
+            "value": "[reference('userIdentity').outputs.principalId.value]"
           }
         },
         "template": {
@@ -575,7 +602,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "2782183406760509489"
+              "templateHash": "14070625802052412738"
             }
           },
           "parameters": {
@@ -596,6 +623,10 @@
             "environment": {
               "type": "string",
               "defaultValue": "dev"
+            },
+            "managedIdentityPrincipalId": {
+              "type": "string",
+              "defaultValue": ""
             }
           },
           "resources": [
@@ -622,7 +653,7 @@
                   "defaultAction": "Allow",
                   "bypass": "AzureServices"
                 },
-                "accessPolicies": "[if(parameters('createTerraformAccessPolicy'), createArray(createObject('tenantId', tenant().tenantId, 'objectId', '178e2973-bb20-49da-ab80-0d1ddc7b0649', 'permissions', createObject('keys', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'GetRotationPolicy', 'SetRotationPolicy', 'Rotate'), 'secrets', createArray('Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore'), 'certificates', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'ManageContacts', 'ManageIssuers', 'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers')))), createArray())]"
+                "accessPolicies": "[concat(if(parameters('createTerraformAccessPolicy'), createArray(createObject('tenantId', tenant().tenantId, 'objectId', '178e2973-bb20-49da-ab80-0d1ddc7b0649', 'permissions', createObject('keys', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'GetRotationPolicy', 'SetRotationPolicy', 'Rotate'), 'secrets', createArray('Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore'), 'certificates', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'ManageContacts', 'ManageIssuers', 'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers')))), createArray()), if(not(equals(parameters('managedIdentityPrincipalId'), '')), createArray(createObject('tenantId', tenant().tenantId, 'objectId', parameters('managedIdentityPrincipalId'), 'permissions', createObject('secrets', createArray('Get')))), createArray()))]"
               }
             }
           ],
@@ -643,10 +674,11 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]"
+        "appResourceGroup",
+        "userIdentity"
       ]
     },
-    {
+    "logAnalytics": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "logAnalytics",
@@ -658,7 +690,7 @@
         "mode": "Incremental",
         "parameters": {
           "workspaceName": {
-            "value": "[format('law-policycortex-{0}', parameters('environment'))]"
+            "value": "[format('law-policortex001-{0}', parameters('environment'))]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -729,10 +761,10 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]"
+        "appResourceGroup"
       ]
     },
-    {
+    "applicationInsights": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "applicationInsights",
@@ -744,7 +776,7 @@
         "mode": "Incremental",
         "parameters": {
           "appInsightsName": {
-            "value": "[format('ai-policycortex-{0}', parameters('environment'))]"
+            "value": "[format('ai-policortex001-{0}', parameters('environment'))]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -753,7 +785,7 @@
             "value": "[variables('commonTags')]"
           },
           "workspaceResourceId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalytics'), '2022-09-01').outputs.workspaceId.value]"
+            "value": "[reference('logAnalytics').outputs.workspaceId.value]"
           }
         },
         "template": {
@@ -821,11 +853,11 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalytics')]"
+        "appResourceGroup",
+        "logAnalytics"
       ]
     },
-    {
+    "userIdentity": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "userIdentity",
@@ -837,7 +869,7 @@
         "mode": "Incremental",
         "parameters": {
           "identityName": {
-            "value": "[format('id-policycortex-{0}', parameters('environment'))]"
+            "value": "[format('id-policortex001-{0}', parameters('environment'))]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -898,10 +930,10 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]"
+        "appResourceGroup"
       ]
     },
-    {
+    "networking": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "networking",
@@ -929,7 +961,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "18264062166647363848"
+              "templateHash": "10606299542795762711"
             }
           },
           "parameters": {
@@ -945,13 +977,20 @@
             }
           },
           "variables": {
-            "vnetName": "[format('policycortex-{0}-vnet', parameters('environment'))]",
+            "vnetName": "[format('policortex001-{0}-vnet', parameters('environment'))]",
             "vnetAddressSpace": "10.0.0.0/16",
             "subnetConfigs": [
               {
                 "name": "container_apps",
                 "addressPrefix": "10.0.0.0/23",
-                "delegations": [],
+                "delegations": [
+                  {
+                    "name": "delegation",
+                    "properties": {
+                      "serviceName": "Microsoft.App/environments"
+                    }
+                  }
+                ],
                 "serviceEndpoints": []
               },
               {
@@ -994,8 +1033,8 @@
               }
             ],
             "privateDnsZoneNames": [
-              "[format('policycortex-{0}.internal', parameters('environment'))]",
-              "policycortex.internal",
+              "[format('policortex001-{0}.internal', parameters('environment'))]",
+              "policortex001.internal",
               "privatelink.documents.azure.com",
               "privatelink.redis.cache.windows.net",
               "privatelink.cognitiveservices.azure.com",
@@ -1042,7 +1081,7 @@
               },
               "type": "Microsoft.Network/networkSecurityGroups",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-{0}-nsg-{1}', parameters('environment'), variables('subnetConfigs')[copyIndex()].name)]",
+              "name": "[format('policortex001-{0}-nsg-{1}', parameters('environment'), variables('subnetConfigs')[copyIndex()].name)]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -1052,7 +1091,7 @@
             {
               "type": "Microsoft.Network/routeTables",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-{0}-rt', parameters('environment'))]",
+              "name": "[format('policortex001-{0}-rt', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -1147,10 +1186,10 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('networkResourceGroupName'))]"
+        "networkResourceGroup"
       ]
     },
-    {
+    "dataServices": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "dataServices",
@@ -1171,16 +1210,16 @@
             "value": "[variables('commonTags')]"
           },
           "keyVaultName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault'), '2022-09-01').outputs.keyVaultName.value]"
+            "value": "[reference('keyVault').outputs.keyVaultName.value]"
           },
           "subnetId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking'), '2022-09-01').outputs.dataServicesSubnetId.value]"
+            "value": "[reference('networking').outputs.dataServicesSubnetId.value]"
           },
           "privateEndpointsSubnetId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking'), '2022-09-01').outputs.privateEndpointsSubnetId.value]"
+            "value": "[reference('networking').outputs.privateEndpointsSubnetId.value]"
           },
           "privateDnsZones": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking'), '2022-09-01').outputs.privateDnsZones.value]"
+            "value": "[reference('networking').outputs.privateDnsZones.value]"
           },
           "deploySqlServer": {
             "value": "[parameters('deploySqlServer')]"
@@ -1218,12 +1257,13 @@
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "15809884595968273995"
+              "templateHash": "2076972929801802028"
             }
           },
           "parameters": {
@@ -1318,11 +1358,11 @@
               }
             ]
           },
-          "resources": [
-            {
+          "resources": {
+            "cosmosAccount": {
               "type": "Microsoft.DocumentDB/databaseAccounts",
               "apiVersion": "2023-04-15",
-              "name": "[format('policycortex-cosmos-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-cosmos-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "kind": "GlobalDocumentDB",
@@ -1373,13 +1413,13 @@
                 "publicNetworkAccess": "Enabled"
               }
             },
-            {
+            "cosmosDatabase": {
               "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
               "apiVersion": "2023-04-15",
-              "name": "[format('{0}/{1}', format('policycortex-cosmos-{0}', parameters('environment')), 'PolicyCortexDB')]",
+              "name": "[format('{0}/{1}', format('policortex001-cosmos-{0}', parameters('environment')), 'policortexDB')]",
               "properties": {
                 "resource": {
-                  "id": "PolicyCortexDB"
+                  "id": "policortexDB"
                 },
                 "options": {
                   "autoscaleSettings": {
@@ -1388,17 +1428,17 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('policycortex-cosmos-{0}', parameters('environment')))]"
+                "cosmosAccount"
               ]
             },
-            {
+            "cosmosContainers": {
               "copy": {
                 "name": "cosmosContainers",
                 "count": "[length(variables('containerConfigs'))]"
               },
               "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
               "apiVersion": "2023-04-15",
-              "name": "[format('{0}/{1}/{2}', format('policycortex-cosmos-{0}', parameters('environment')), 'PolicyCortexDB', variables('containerConfigs')[copyIndex()].name)]",
+              "name": "[format('{0}/{1}/{2}', format('policortex001-cosmos-{0}', parameters('environment')), 'policortexDB', variables('containerConfigs')[copyIndex()].name)]",
               "properties": {
                 "resource": {
                   "id": "[variables('containerConfigs')[copyIndex()].name]",
@@ -1427,13 +1467,13 @@
                 "options": {}
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', format('policycortex-cosmos-{0}', parameters('environment')), 'PolicyCortexDB')]"
+                "cosmosDatabase"
               ]
             },
-            {
+            "redisCache": {
               "type": "Microsoft.Cache/redis",
               "apiVersion": "2023-08-01",
-              "name": "[format('policycortex-redis-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-redis-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -1449,11 +1489,11 @@
                 "redisVersion": "6"
               }
             },
-            {
+            "sqlServer": {
               "condition": "[parameters('deploySqlServer')]",
               "type": "Microsoft.Sql/servers",
               "apiVersion": "2023-05-01-preview",
-              "name": "[format('policycortex-sql-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-sql-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -1472,11 +1512,11 @@
                 }
               }
             },
-            {
+            "sqlDatabase": {
               "condition": "[parameters('deploySqlServer')]",
               "type": "Microsoft.Sql/servers/databases",
               "apiVersion": "2023-05-01-preview",
-              "name": "[format('{0}/{1}', format('policycortex-sql-{0}', parameters('environment')), 'PolicyCortexDB')]",
+              "name": "[format('{0}/{1}', format('policortex001-sql-{0}', parameters('environment')), 'policortexDB')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "sku": {
@@ -1494,26 +1534,26 @@
                 "minCapacity": "[if(startsWith(parameters('sqlDatabaseSku'), 'GP_S'), json('0.5'), json('1'))]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('policycortex-sql-{0}', parameters('environment')))]"
+                "sqlServer"
               ]
             },
-            {
+            "sqlFirewallAzure": {
               "condition": "[parameters('deploySqlServer')]",
               "type": "Microsoft.Sql/servers/firewallRules",
               "apiVersion": "2023-05-01-preview",
-              "name": "[format('{0}/{1}', format('policycortex-sql-{0}', parameters('environment')), 'AllowAzureServices')]",
+              "name": "[format('{0}/{1}', format('policortex001-sql-{0}', parameters('environment')), 'AllowAzureServices')]",
               "properties": {
                 "startIpAddress": "0.0.0.0",
                 "endIpAddress": "0.0.0.0"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('policycortex-sql-{0}', parameters('environment')))]"
+                "sqlServer"
               ]
             },
-            {
+            "cosmosPrivateEndpoint": {
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-cosmos-pe-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-cosmos-pe-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -1524,7 +1564,7 @@
                   {
                     "name": "cosmos-connection",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('policycortex-cosmos-{0}', parameters('environment')))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('policortex001-cosmos-{0}', parameters('environment')))]",
                       "groupIds": [
                         "Sql"
                       ],
@@ -1537,13 +1577,13 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('policycortex-cosmos-{0}', parameters('environment')))]"
+                "cosmosAccount"
               ]
             },
-            {
+            "redisPrivateEndpoint": {
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-redis-pe-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-redis-pe-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -1554,7 +1594,7 @@
                   {
                     "name": "redis-connection",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment')))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.Cache/redis', format('policortex001-redis-{0}', parameters('environment')))]",
                       "groupIds": [
                         "redisCache"
                       ],
@@ -1567,14 +1607,14 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment')))]"
+                "redisCache"
               ]
             },
-            {
+            "sqlPrivateEndpoint": {
               "condition": "[parameters('deploySqlServer')]",
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-sql-pe-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-sql-pe-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -1585,7 +1625,7 @@
                   {
                     "name": "sql-connection",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', format('policycortex-sql-{0}', parameters('environment')))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.Sql/servers', format('policortex001-sql-{0}', parameters('environment')))]",
                       "groupIds": [
                         "sqlServer"
                       ],
@@ -1598,13 +1638,13 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('policycortex-sql-{0}', parameters('environment')))]"
+                "sqlServer"
               ]
             },
-            {
+            "cosmosDnsZoneGroup": {
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', format('policycortex-cosmos-pe-{0}', parameters('environment')), 'cosmos-dns-zone-group')]",
+              "name": "[format('{0}/{1}', format('policortex001-cosmos-pe-{0}', parameters('environment')), 'cosmos-dns-zone-group')]",
               "properties": {
                 "privateDnsZoneConfigs": [
                   {
@@ -1616,13 +1656,13 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', format('policycortex-cosmos-pe-{0}', parameters('environment')))]"
+                "cosmosPrivateEndpoint"
               ]
             },
-            {
+            "redisDnsZoneGroup": {
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', format('policycortex-redis-pe-{0}', parameters('environment')), 'redis-dns-zone-group')]",
+              "name": "[format('{0}/{1}', format('policortex001-redis-pe-{0}', parameters('environment')), 'redis-dns-zone-group')]",
               "properties": {
                 "privateDnsZoneConfigs": [
                   {
@@ -1634,14 +1674,14 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', format('policycortex-redis-pe-{0}', parameters('environment')))]"
+                "redisPrivateEndpoint"
               ]
             },
-            {
+            "sqlDnsZoneGroup": {
               "condition": "[parameters('deploySqlServer')]",
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', format('policycortex-sql-pe-{0}', parameters('environment')), 'sql-dns-zone-group')]",
+              "name": "[format('{0}/{1}', format('policortex001-sql-pe-{0}', parameters('environment')), 'sql-dns-zone-group')]",
               "properties": {
                 "privateDnsZoneConfigs": [
                   {
@@ -1653,91 +1693,69 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', format('policycortex-sql-pe-{0}', parameters('environment')))]"
-              ]
-            },
-            {
-              "condition": "[parameters('deploySqlServer')]",
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2023-07-01",
-              "name": "[format('{0}/sql-admin-password', parameters('keyVaultName'))]",
-              "properties": {
-                "value": "[uniqueString(resourceGroup().id, parameters('environment'), 'sql')]",
-                "contentType": "text/plain"
-              }
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2023-07-01",
-              "name": "[format('{0}/redis-connection-string', parameters('keyVaultName'))]",
-              "properties": {
-                "value": "[format('{0}:{1},password={2},ssl=True,abortConnect=False', reference(resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment'))), '2023-08-01').hostName, reference(resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment'))), '2023-08-01').sslPort, listKeys(resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment'))), '2023-08-01').primaryKey)]",
-                "contentType": "text/plain"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2023-07-01",
-              "name": "[format('{0}/cosmos-connection-string', parameters('keyVaultName'))]",
-              "properties": {
-                "value": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', format('policycortex-cosmos-{0}', parameters('environment'))), '2023-04-15').connectionStrings[0].connectionString]",
-                "contentType": "text/plain"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('policycortex-cosmos-{0}', parameters('environment')))]"
+                "sqlPrivateEndpoint"
               ]
             }
-          ],
+          },
           "outputs": {
             "cosmosAccountId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('policycortex-cosmos-{0}', parameters('environment')))]"
+              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('policortex001-cosmos-{0}', parameters('environment')))]"
             },
             "cosmosAccountName": {
               "type": "string",
-              "value": "[format('policycortex-cosmos-{0}', parameters('environment'))]"
+              "value": "[format('policortex001-cosmos-{0}', parameters('environment'))]"
             },
             "cosmosEndpoint": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', format('policycortex-cosmos-{0}', parameters('environment'))), '2023-04-15').documentEndpoint]"
+              "value": "[reference('cosmosAccount').documentEndpoint]"
+            },
+            "cosmosKey": {
+              "type": "string",
+              "value": "[listKeys('cosmosAccount', '2023-04-15').primaryMasterKey]"
+            },
+            "cosmosConnectionString": {
+              "type": "string",
+              "value": "[listConnectionStrings('cosmosAccount', '2023-04-15').connectionStrings[0].connectionString]"
             },
             "redisCacheId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment')))]"
+              "value": "[resourceId('Microsoft.Cache/redis', format('policortex001-redis-{0}', parameters('environment')))]"
             },
             "redisCacheName": {
               "type": "string",
-              "value": "[format('policycortex-redis-{0}', parameters('environment'))]"
+              "value": "[format('policortex001-redis-{0}', parameters('environment'))]"
             },
             "redisHostName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Cache/redis', format('policycortex-redis-{0}', parameters('environment'))), '2023-08-01').hostName]"
+              "value": "[reference('redisCache').hostName]"
+            },
+            "redisConnectionString": {
+              "type": "string",
+              "value": "[format('{0}:{1},password={2},ssl=True,abortConnect=False', reference('redisCache').hostName, reference('redisCache').sslPort, listKeys('redisCache', '2023-08-01').primaryKey)]"
             },
             "sqlServerId": {
               "type": "string",
-              "value": "[if(parameters('deploySqlServer'), resourceId('Microsoft.Sql/servers', format('policycortex-sql-{0}', parameters('environment'))), '')]"
+              "value": "[if(parameters('deploySqlServer'), resourceId('Microsoft.Sql/servers', format('policortex001-sql-{0}', parameters('environment'))), '')]"
             },
             "sqlServerName": {
               "type": "string",
-              "value": "[if(parameters('deploySqlServer'), format('policycortex-sql-{0}', parameters('environment')), '')]"
+              "value": "[if(parameters('deploySqlServer'), format('policortex001-sql-{0}', parameters('environment')), '')]"
             },
             "sqlDatabaseId": {
               "type": "string",
-              "value": "[if(parameters('deploySqlServer'), resourceId('Microsoft.Sql/servers/databases', format('policycortex-sql-{0}', parameters('environment')), 'PolicyCortexDB'), '')]"
+              "value": "[if(parameters('deploySqlServer'), resourceId('Microsoft.Sql/servers/databases', format('policortex001-sql-{0}', parameters('environment')), 'policortexDB'), '')]"
             }
           }
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking')]"
+        "appResourceGroup",
+        "keyVault",
+        "networking"
       ]
     },
-    {
+    "aiServices": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "aiServices",
@@ -1758,22 +1776,22 @@
             "value": "[variables('commonTags')]"
           },
           "keyVaultName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault'), '2022-09-01').outputs.keyVaultName.value]"
+            "value": "[reference('keyVault').outputs.keyVaultName.value]"
           },
           "privateEndpointsSubnetId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking'), '2022-09-01').outputs.privateEndpointsSubnetId.value]"
+            "value": "[reference('networking').outputs.privateEndpointsSubnetId.value]"
           },
           "privateDnsZones": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking'), '2022-09-01').outputs.privateDnsZones.value]"
+            "value": "[reference('networking').outputs.privateDnsZones.value]"
           },
           "storageAccountId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'storageAccount'), '2022-09-01').outputs.storageAccountId.value]"
+            "value": "[reference('storageAccount').outputs.storageAccountId.value]"
           },
           "containerRegistryId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerRegistry'), '2022-09-01').outputs.registryId.value]"
+            "value": "[reference('containerRegistry').outputs.registryId.value]"
           },
           "applicationInsightsId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'applicationInsights'), '2022-09-01').outputs.appInsightsId.value]"
+            "value": "[reference('applicationInsights').outputs.appInsightsId.value]"
           },
           "deployMLWorkspace": {
             "value": "[parameters('deployMLWorkspace')]"
@@ -1802,12 +1820,13 @@
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "17823530060886055516"
+              "templateHash": "13472355124539744654"
             }
           },
           "parameters": {
@@ -1872,11 +1891,15 @@
               "defaultValue": "S0"
             }
           },
-          "resources": [
-            {
+          "variables": {
+            "uniqueSuffix": "[uniqueString(resourceGroup().id, 'v2')]",
+            "shortUniqueSuffix": "[substring(variables('uniqueSuffix'), 0, 6)]"
+          },
+          "resources": {
+            "cognitiveServices": {
               "type": "Microsoft.CognitiveServices/accounts",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-cognitive-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-cog-inc-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "sku": {
@@ -1885,31 +1908,7 @@
               "kind": "CognitiveServices",
               "properties": {
                 "apiProperties": {},
-                "customSubDomainName": "[format('policycortex-cognitive-{0}', parameters('environment'))]",
-                "networkAcls": {
-                  "defaultAction": "Allow",
-                  "virtualNetworkRules": [],
-                  "ipRules": []
-                },
-                "publicNetworkAccess": "Enabled",
-                "disableLocalAuth": false,
-                "restore": true
-              }
-            },
-            {
-              "condition": "[parameters('deployOpenAI')]",
-              "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-openai-{0}', parameters('environment'))]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "sku": {
-                "name": "[parameters('openAISku')]"
-              },
-              "kind": "OpenAI",
-              "properties": {
-                "apiProperties": {},
-                "customSubDomainName": "[format('policycortex-openai-{0}', parameters('environment'))]",
+                "customSubDomainName": "[format('policortex001-cog-inc-{0}', parameters('environment'))]",
                 "networkAcls": {
                   "defaultAction": "Allow",
                   "virtualNetworkRules": [],
@@ -1919,21 +1918,44 @@
                 "disableLocalAuth": false
               }
             },
-            {
+            "openAIService": {
+              "condition": "[parameters('deployOpenAI')]",
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2023-05-01",
+              "name": "[format('policortex001-oai-inc-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "[parameters('openAISku')]"
+              },
+              "kind": "OpenAI",
+              "properties": {
+                "apiProperties": {},
+                "customSubDomainName": "[format('policortex001-oai-inc-{0}', parameters('environment'))]",
+                "networkAcls": {
+                  "defaultAction": "Allow",
+                  "virtualNetworkRules": [],
+                  "ipRules": []
+                },
+                "publicNetworkAccess": "Enabled",
+                "disableLocalAuth": false
+              }
+            },
+            "mlWorkspace": {
               "condition": "[parameters('deployMLWorkspace')]",
               "type": "Microsoft.MachineLearningServices/workspaces",
               "apiVersion": "2023-04-01",
-              "name": "[format('policycortex-ml-{0}', parameters('environment'))]",
+              "name": "[format('policortex001-ml-inc-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "identity": {
                 "type": "SystemAssigned"
               },
               "properties": {
-                "friendlyName": "PolicyCortex ML Workspace",
-                "description": "Machine Learning workspace for PolicyCortex AI models",
+                "friendlyName": "policortex ML Workspace",
+                "description": "Machine Learning workspace for policortex AI models",
                 "storageAccount": "[parameters('storageAccountId')]",
-                "containerRegistry": "[if(parameters('createMLContainerRegistry'), resourceId('Microsoft.ContainerRegistry/registries', format('crpolicycortexml{0}', parameters('environment'))), parameters('containerRegistryId'))]",
+                "containerRegistry": "[if(parameters('createMLContainerRegistry'), resourceId('Microsoft.ContainerRegistry/registries', format('crpc001mlinc{0}', parameters('environment'))), parameters('containerRegistryId'))]",
                 "applicationInsights": "[parameters('applicationInsightsId')]",
                 "keyVault": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
                 "hbiWorkspace": false,
@@ -1942,14 +1964,14 @@
                 "publicNetworkAccess": "Enabled"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.ContainerRegistry/registries', format('crpolicycortexml{0}', parameters('environment')))]"
+                "mlContainerRegistry"
               ]
             },
-            {
+            "mlContainerRegistry": {
               "condition": "[parameters('createMLContainerRegistry')]",
               "type": "Microsoft.ContainerRegistry/registries",
               "apiVersion": "2023-07-01",
-              "name": "[format('crpolicycortexml{0}', parameters('environment'))]",
+              "name": "[format('crpc001mlinc{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "sku": {
@@ -1960,11 +1982,11 @@
                 "publicNetworkAccess": "Enabled"
               }
             },
-            {
+            "mlComputeCluster": {
               "condition": "[parameters('deployMLWorkspace')]",
               "type": "Microsoft.MachineLearningServices/workspaces/computes",
               "apiVersion": "2023-04-01",
-              "name": "[format('{0}/{1}', format('policycortex-ml-{0}', parameters('environment')), 'training-cluster')]",
+              "name": "[format('{0}/{1}', format('policortex001-ml-inc-{0}', parameters('environment')), 'training-cluster')]",
               "location": "[parameters('location')]",
               "properties": {
                 "computeType": "AmlCompute",
@@ -1981,14 +2003,14 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', format('policycortex-ml-{0}', parameters('environment')))]"
+                "mlWorkspace"
               ]
             },
-            {
+            "mlComputeInstance": {
               "condition": "[parameters('deployMLWorkspace')]",
               "type": "Microsoft.MachineLearningServices/workspaces/computes",
               "apiVersion": "2023-04-01",
-              "name": "[format('{0}/{1}', format('policycortex-ml-{0}', parameters('environment')), 'compute-instance')]",
+              "name": "[format('{0}/{1}', format('policortex001-ml-inc-{0}', parameters('environment')), 'compute-instance')]",
               "location": "[parameters('location')]",
               "properties": {
                 "computeType": "ComputeInstance",
@@ -1998,13 +2020,13 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', format('policycortex-ml-{0}', parameters('environment')))]"
+                "mlWorkspace"
               ]
             },
-            {
+            "eventGridTopic": {
               "type": "Microsoft.EventGrid/topics",
               "apiVersion": "2023-12-15-preview",
-              "name": "[format('policycortex-ml-events-{0}', parameters('environment'))]",
+              "name": "[format('pc001-ml-events-inc-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -2013,10 +2035,10 @@
                 "disableLocalAuth": false
               }
             },
-            {
+            "cognitivePrivateEndpoint": {
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-cognitive-pe-{0}', parameters('environment'))]",
+              "name": "[format('pc001-cog-pe-inc-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -2027,7 +2049,7 @@
                   {
                     "name": "cognitive-connection",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment')))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', format('policortex001-cog-inc-{0}', parameters('environment')))]",
                       "groupIds": [
                         "account"
                       ],
@@ -2040,14 +2062,14 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment')))]"
+                "cognitiveServices"
               ]
             },
-            {
+            "openAIPrivateEndpoint": {
               "condition": "[parameters('deployOpenAI')]",
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-openai-pe-{0}', parameters('environment'))]",
+              "name": "[format('pc001-oai-pe-inc-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -2058,7 +2080,7 @@
                   {
                     "name": "openai-connection",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-openai-{0}', parameters('environment')))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.CognitiveServices/accounts', format('policortex001-oai-inc-{0}', parameters('environment')))]",
                       "groupIds": [
                         "account"
                       ],
@@ -2071,13 +2093,13 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-openai-{0}', parameters('environment')))]"
+                "openAIService"
               ]
             },
-            {
+            "eventGridPrivateEndpoint": {
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-eventgrid-pe-{0}', parameters('environment'))]",
+              "name": "[format('pc001-eg-pe-inc-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -2088,7 +2110,7 @@
                   {
                     "name": "eventgrid-connection",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.EventGrid/topics', format('policycortex-ml-events-{0}', parameters('environment')))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.EventGrid/topics', format('pc001-ml-events-inc-{0}', parameters('environment')))]",
                       "groupIds": [
                         "topic"
                       ],
@@ -2101,14 +2123,14 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.EventGrid/topics', format('policycortex-ml-events-{0}', parameters('environment')))]"
+                "eventGridTopic"
               ]
             },
-            {
+            "mlPrivateEndpoint": {
               "condition": "[parameters('deployMLWorkspace')]",
               "type": "Microsoft.Network/privateEndpoints",
               "apiVersion": "2023-05-01",
-              "name": "[format('policycortex-ml-pe-{0}', parameters('environment'))]",
+              "name": "[format('pc001-ml-pe-inc-{0}', parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -2119,7 +2141,7 @@
                   {
                     "name": "ml-connection",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', format('policycortex-ml-{0}', parameters('environment')))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', format('policortex001-ml-inc-{0}', parameters('environment')))]",
                       "groupIds": [
                         "amlworkspace"
                       ],
@@ -2132,13 +2154,13 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', format('policycortex-ml-{0}', parameters('environment')))]"
+                "mlWorkspace"
               ]
             },
-            {
+            "cognitiveDnsZoneGroup": {
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', format('policycortex-cognitive-pe-{0}', parameters('environment')), 'cognitive-dns-zone-group')]",
+              "name": "[format('{0}/{1}', format('pc001-cog-pe-inc-{0}', parameters('environment')), 'cognitive-dns-zone-group')]",
               "properties": {
                 "privateDnsZoneConfigs": [
                   {
@@ -2150,14 +2172,14 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', format('policycortex-cognitive-pe-{0}', parameters('environment')))]"
+                "cognitivePrivateEndpoint"
               ]
             },
-            {
+            "openAIDnsZoneGroup": {
               "condition": "[parameters('deployOpenAI')]",
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', format('policycortex-openai-pe-{0}', parameters('environment')), 'openai-dns-zone-group')]",
+              "name": "[format('{0}/{1}', format('pc001-oai-pe-inc-{0}', parameters('environment')), 'openai-dns-zone-group')]",
               "properties": {
                 "privateDnsZoneConfigs": [
                   {
@@ -2169,14 +2191,14 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', format('policycortex-openai-pe-{0}', parameters('environment')))]"
+                "openAIPrivateEndpoint"
               ]
             },
-            {
+            "mlDnsZoneGroup": {
               "condition": "[parameters('deployMLWorkspace')]",
               "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', format('policycortex-ml-pe-{0}', parameters('environment')), 'ml-dns-zone-group')]",
+              "name": "[format('{0}/{1}', format('pc001-ml-pe-inc-{0}', parameters('environment')), 'ml-dns-zone-group')]",
               "properties": {
                 "privateDnsZoneConfigs": [
                   {
@@ -2188,54 +2210,34 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', format('policycortex-ml-pe-{0}', parameters('environment')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2023-07-01",
-              "name": "[format('{0}/cognitive-services-key', parameters('keyVaultName'))]",
-              "properties": {
-                "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment'))), '2023-05-01').key1]",
-                "contentType": "text/plain"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment')))]"
-              ]
-            },
-            {
-              "type": "Microsoft.KeyVault/vaults/secrets",
-              "apiVersion": "2023-07-01",
-              "name": "[format('{0}/cognitive-services-endpoint', parameters('keyVaultName'))]",
-              "properties": {
-                "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment'))), '2023-05-01').endpoint]",
-                "contentType": "text/plain"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment')))]"
+                "mlPrivateEndpoint"
               ]
             }
-          ],
+          },
           "outputs": {
             "cognitiveServicesId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment')))]"
+              "value": "[resourceId('Microsoft.CognitiveServices/accounts', format('policortex001-cog-inc-{0}', parameters('environment')))]"
             },
             "cognitiveServicesName": {
               "type": "string",
-              "value": "[format('policycortex-cognitive-{0}', parameters('environment'))]"
+              "value": "[format('policortex001-cog-inc-{0}', parameters('environment'))]"
             },
             "cognitiveServicesEndpoint": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-cognitive-{0}', parameters('environment'))), '2023-05-01').endpoint]"
+              "value": "[reference('cognitiveServices').endpoint]"
+            },
+            "cognitiveServicesKey": {
+              "type": "string",
+              "value": "[listKeys('cognitiveServices', '2023-05-01').key1]"
             },
             "openAIServiceId": {
               "type": "string",
-              "value": "[if(parameters('deployOpenAI'), resourceId('Microsoft.CognitiveServices/accounts', format('policycortex-openai-{0}', parameters('environment'))), '')]"
+              "value": "[if(parameters('deployOpenAI'), resourceId('Microsoft.CognitiveServices/accounts', format('policortex001-oai-inc-{0}', parameters('environment'))), '')]"
             },
             "openAIServiceName": {
               "type": "string",
-              "value": "[if(parameters('deployOpenAI'), format('policycortex-openai-{0}', parameters('environment')), '')]"
+              "value": "[if(parameters('deployOpenAI'), format('policortex001-oai-inc-{0}', parameters('environment')), '')]"
             },
             "openAIEndpoint": {
               "type": "string",
@@ -2243,33 +2245,33 @@
             },
             "mlWorkspaceId": {
               "type": "string",
-              "value": "[if(parameters('deployMLWorkspace'), resourceId('Microsoft.MachineLearningServices/workspaces', format('policycortex-ml-{0}', parameters('environment'))), '')]"
+              "value": "[if(parameters('deployMLWorkspace'), resourceId('Microsoft.MachineLearningServices/workspaces', format('policortex001-ml-inc-{0}', parameters('environment'))), '')]"
             },
             "mlWorkspaceName": {
               "type": "string",
-              "value": "[if(parameters('deployMLWorkspace'), format('policycortex-ml-{0}', parameters('environment')), '')]"
+              "value": "[if(parameters('deployMLWorkspace'), format('policortex001-ml-inc-{0}', parameters('environment')), '')]"
             },
             "eventGridTopicId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.EventGrid/topics', format('policycortex-ml-events-{0}', parameters('environment')))]"
+              "value": "[resourceId('Microsoft.EventGrid/topics', format('pc001-ml-events-inc-{0}', parameters('environment')))]"
             },
             "eventGridTopicName": {
               "type": "string",
-              "value": "[format('policycortex-ml-events-{0}', parameters('environment'))]"
+              "value": "[format('pc001-ml-events-inc-{0}', parameters('environment'))]"
             }
           }
         }
       },
       "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'applicationInsights')]",
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerRegistry')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'storageAccount')]"
+        "applicationInsights",
+        "appResourceGroup",
+        "containerRegistry",
+        "keyVault",
+        "networking",
+        "storageAccount"
       ]
     },
-    {
+    "containerAppsEnvironment": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "containerAppsEnvironment",
@@ -2281,7 +2283,7 @@
         "mode": "Incremental",
         "parameters": {
           "environmentName": {
-            "value": "[format('cae-policycortex-{0}', parameters('environment'))]"
+            "value": "[format('cae-policortex001-{0}', parameters('environment'))]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -2290,10 +2292,10 @@
             "value": "[variables('commonTags')]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalytics'), '2022-09-01').outputs.workspaceId.value]"
+            "value": "[reference('logAnalytics').outputs.workspaceId.value]"
           },
           "subnetId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking'), '2022-09-01').outputs.containerAppsSubnetId.value]"
+            "value": "[reference('networking').outputs.containerAppsSubnetId.value]"
           }
         },
         "template": {
@@ -2303,7 +2305,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "2287648322929520299"
+              "templateHash": "5606591899239847676"
             }
           },
           "parameters": {
@@ -2344,7 +2346,18 @@
                   "internal": false
                 },
                 "zoneRedundant": false,
-                "workloadProfiles": []
+                "workloadProfiles": [
+                  {
+                    "name": "Consumption",
+                    "workloadProfileType": "Consumption"
+                  },
+                  {
+                    "name": "GeneralPurpose",
+                    "workloadProfileType": "D4",
+                    "minimumCount": 0,
+                    "maximumCount": 10
+                  }
+                ]
               }
             }
           ],
@@ -2365,12 +2378,12 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalytics')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking')]"
+        "appResourceGroup",
+        "logAnalytics",
+        "networking"
       ]
     },
-    {
+    "containerApps": {
       "condition": "[parameters('deployContainerApps')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
@@ -2392,16 +2405,16 @@
             "value": "[variables('commonTags')]"
           },
           "containerAppsEnvironmentId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerAppsEnvironment'), '2022-09-01').outputs.environmentId.value]"
+            "value": "[reference('containerAppsEnvironment').outputs.environmentId.value]"
           },
           "containerRegistryLoginServer": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerRegistry'), '2022-09-01').outputs.loginServer.value]"
+            "value": "[reference('containerRegistry').outputs.loginServer.value]"
           },
           "userAssignedIdentityId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'userIdentity'), '2022-09-01').outputs.identityId.value]"
+            "value": "[reference('userIdentity').outputs.identityId.value]"
           },
           "keyVaultName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault'), '2022-09-01').outputs.keyVaultName.value]"
+            "value": "[reference('keyVault').outputs.keyVaultName.value]"
           }
         },
         "template": {
@@ -2411,7 +2424,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "15064839172351403602"
+              "templateHash": "16256032502022178719"
             }
           },
           "parameters": {
@@ -2442,7 +2455,7 @@
             "services": [
               {
                 "name": "api-gateway",
-                "port": 8000,
+                "port": 80,
                 "cpu": "0.5",
                 "memory": "1Gi",
                 "minReplicas": 1,
@@ -2502,7 +2515,7 @@
               },
               {
                 "name": "frontend",
-                "port": 3000,
+                "port": 80,
                 "cpu": "0.25",
                 "memory": "0.5Gi",
                 "minReplicas": 1,
@@ -2543,42 +2556,107 @@
                   "secrets": [
                     {
                       "name": "jwt-secret-key",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/jwt-secret-key', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/jwt-secret-key', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     },
                     {
                       "name": "managed-identity-client-id",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/managed-identity-client-id', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/managed-identity-client-id', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     },
                     {
                       "name": "storage-account-name",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/storage-account-name', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/storage-account-name', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     },
                     {
                       "name": "application-insights-connection-string",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/application-insights-connection-string', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/application-insights-connection-string', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     },
                     {
                       "name": "cognitive-services-key",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/cognitive-services-key', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cognitive-services-key', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     },
                     {
                       "name": "cognitive-services-endpoint",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/cognitive-services-endpoint', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cognitive-services-endpoint', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     },
                     {
                       "name": "redis-connection-string",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/redis-connection-string', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/redis-connection-string', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     },
                     {
                       "name": "cosmos-connection-string",
-                      "keyVaultUrl": "[format('https://{0}.{1}/secrets/cosmos-connection-string', parameters('keyVaultName'), environment().suffixes.keyvaultDns)]",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cosmos-connection-string', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "cosmos-endpoint",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cosmos-endpoint', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "cosmos-key",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cosmos-key', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "sql-server",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/sql-server', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "sql-username",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/sql-username', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "sql-password",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/sql-password', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "key-vault-name",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/key-vault-name', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "ml-workspace-name",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/ml-workspace-name', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "tenant-id",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/tenant-id', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "client-id",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/client-id', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "client-secret",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/client-secret', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "resource-group",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/resource-group', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "service-bus-namespace",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/service-bus-namespace', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "subscription-id",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/subscription-id', parameters('keyVaultName'))]",
                       "identity": "[parameters('userAssignedIdentityId')]"
                     }
                   ]
@@ -2586,7 +2664,7 @@
                 "template": {
                   "containers": [
                     {
-                      "image": "[format('{0}/policycortex-{1}:latest', parameters('containerRegistryLoginServer'), variables('services')[copyIndex()].name)]",
+                      "image": "[format('{0}/policortex001-{1}:latest', parameters('containerRegistryLoginServer'), variables('services')[copyIndex()].name)]",
                       "name": "[variables('services')[copyIndex()].name]",
                       "resources": {
                         "cpu": "[json(variables('services')[copyIndex()].cpu)]",
@@ -2630,11 +2708,75 @@
                           "secretRef": "cosmos-connection-string"
                         },
                         {
+                          "name": "COSMOS_ENDPOINT",
+                          "secretRef": "cosmos-endpoint"
+                        },
+                        {
+                          "name": "COSMOS_KEY",
+                          "secretRef": "cosmos-key"
+                        },
+                        {
+                          "name": "SQL_SERVER",
+                          "secretRef": "sql-server"
+                        },
+                        {
+                          "name": "SQL_USERNAME",
+                          "secretRef": "sql-username"
+                        },
+                        {
+                          "name": "SQL_PASSWORD",
+                          "secretRef": "sql-password"
+                        },
+                        {
+                          "name": "KEY_VAULT_NAME",
+                          "secretRef": "key-vault-name"
+                        },
+                        {
+                          "name": "ML_WORKSPACE_NAME",
+                          "secretRef": "ml-workspace-name"
+                        },
+                        {
+                          "name": "TENANT_ID",
+                          "secretRef": "tenant-id"
+                        },
+                        {
+                          "name": "CLIENT_ID",
+                          "secretRef": "client-id"
+                        },
+                        {
+                          "name": "CLIENT_SECRET",
+                          "secretRef": "client-secret"
+                        },
+                        {
+                          "name": "RESOURCE_GROUP",
+                          "secretRef": "resource-group"
+                        },
+                        {
+                          "name": "SERVICE_BUS_NAMESPACE",
+                          "secretRef": "service-bus-namespace"
+                        },
+                        {
+                          "name": "SUBSCRIPTION_ID",
+                          "secretRef": "subscription-id"
+                        },
+                        {
                           "name": "PORT",
                           "value": "[string(variables('services')[copyIndex()].port)]"
+                        },
+                        {
+                          "name": "VITE_AZURE_CLIENT_ID",
+                          "secretRef": "managed-identity-client-id"
+                        },
+                        {
+                          "name": "VITE_AZURE_TENANT_ID",
+                          "value": "[tenant().tenantId]"
+                        },
+                        {
+                          "name": "VITE_API_BASE_URL",
+                          "value": "[if(equals(variables('services')[copyIndex()].name, 'frontend'), 'https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io', '')]"
                         }
                       ],
-                      "probes": "[if(not(equals(variables('services')[copyIndex()].name, 'frontend')), createArray(createObject('type', 'Liveness', 'httpGet', createObject('path', '/health', 'port', variables('services')[copyIndex()].port, 'scheme', 'HTTP'), 'initialDelaySeconds', 30, 'periodSeconds', 30, 'timeoutSeconds', 5, 'failureThreshold', 3), createObject('type', 'Readiness', 'httpGet', createObject('path', '/health', 'port', variables('services')[copyIndex()].port, 'scheme', 'HTTP'), 'initialDelaySeconds', 10, 'periodSeconds', 10, 'timeoutSeconds', 3, 'failureThreshold', 3)), createArray())]"
+                      "probes": []
                     }
                   ],
                   "scale": {
@@ -2675,14 +2817,14 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerAppsEnvironment')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerRegistry')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'userIdentity')]"
+        "appResourceGroup",
+        "containerAppsEnvironment",
+        "containerRegistry",
+        "keyVault",
+        "userIdentity"
       ]
     },
-    {
+    "keyVaultSecrets": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "keyVaultSecrets",
@@ -2694,19 +2836,40 @@
         "mode": "Incremental",
         "parameters": {
           "keyVaultName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault'), '2022-09-01').outputs.keyVaultName.value]"
+            "value": "[reference('keyVault').outputs.keyVaultName.value]"
           },
           "jwtSecretKey": {
             "value": "[parameters('jwtSecretKey')]"
           },
           "managedIdentityClientId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'userIdentity'), '2022-09-01').outputs.clientId.value]"
+            "value": "[reference('userIdentity').outputs.clientId.value]"
           },
           "storageAccountName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'storageAccount'), '2022-09-01').outputs.storageAccountName.value]"
+            "value": "[reference('storageAccount').outputs.storageAccountName.value]"
           },
           "applicationInsightsConnectionString": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'applicationInsights'), '2022-09-01').outputs.connectionString.value]"
+            "value": "[reference('applicationInsights').outputs.connectionString.value]"
+          },
+          "cognitiveServicesKey": {
+            "value": "[reference('aiServices').outputs.cognitiveServicesKey.value]"
+          },
+          "cognitiveServicesEndpoint": {
+            "value": "[reference('aiServices').outputs.cognitiveServicesEndpoint.value]"
+          },
+          "redisConnectionString": {
+            "value": "[reference('dataServices').outputs.redisConnectionString.value]"
+          },
+          "cosmosConnectionString": {
+            "value": "[reference('dataServices').outputs.cosmosConnectionString.value]"
+          },
+          "cosmosEndpoint": {
+            "value": "[reference('dataServices').outputs.cosmosEndpoint.value]"
+          },
+          "cosmosKey": {
+            "value": "[reference('dataServices').outputs.cosmosKey.value]"
+          },
+          "resourceGroupName": {
+            "value": "[variables('appResourceGroupName')]"
           }
         },
         "template": {
@@ -2716,7 +2879,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "2801537094715799918"
+              "templateHash": "16664450465037501851"
             }
           },
           "parameters": {
@@ -2733,6 +2896,31 @@
               "type": "string"
             },
             "applicationInsightsConnectionString": {
+              "type": "string"
+            },
+            "cognitiveServicesKey": {
+              "type": "string"
+            },
+            "cognitiveServicesEndpoint": {
+              "type": "string"
+            },
+            "redisConnectionString": {
+              "type": "string"
+            },
+            "cosmosConnectionString": {
+              "type": "string"
+            },
+            "cosmosEndpoint": {
+              "type": "string"
+            },
+            "cosmosKey": {
+              "type": "string"
+            },
+            "tenantId": {
+              "type": "string",
+              "defaultValue": "[tenant().tenantId]"
+            },
+            "resourceGroupName": {
               "type": "string"
             }
           },
@@ -2772,6 +2960,159 @@
                 "value": "[parameters('applicationInsightsConnectionString')]",
                 "contentType": "text/plain"
               }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/cognitive-services-key', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('cognitiveServicesKey')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/cognitive-services-endpoint', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('cognitiveServicesEndpoint')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/redis-connection-string', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('redisConnectionString')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/cosmos-connection-string', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('cosmosConnectionString')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/cosmos-endpoint', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('cosmosEndpoint')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/cosmos-key', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('cosmosKey')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/sql-server', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "not-configured",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/sql-username', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "not-configured",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/sql-password', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "not-configured",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/key-vault-name', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('keyVaultName')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/ml-workspace-name', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "not-configured",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/tenant-id', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('tenantId')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/client-id', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('managedIdentityClientId')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/client-secret', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "not-configured-using-managed-identity",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/subscription-id', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[subscription().subscriptionId]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/resource-group', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('resourceGroupName')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/service-bus-namespace', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "not-configured",
+                "contentType": "text/plain"
+              }
             }
           ],
           "outputs": {
@@ -2781,23 +3122,40 @@
                 "[format('{0}/jwt-secret-key', parameters('keyVaultName'))]",
                 "[format('{0}/managed-identity-client-id', parameters('keyVaultName'))]",
                 "[format('{0}/storage-account-name', parameters('keyVaultName'))]",
-                "[format('{0}/application-insights-connection-string', parameters('keyVaultName'))]"
+                "[format('{0}/application-insights-connection-string', parameters('keyVaultName'))]",
+                "[format('{0}/cognitive-services-key', parameters('keyVaultName'))]",
+                "[format('{0}/cognitive-services-endpoint', parameters('keyVaultName'))]",
+                "[format('{0}/redis-connection-string', parameters('keyVaultName'))]",
+                "[format('{0}/cosmos-connection-string', parameters('keyVaultName'))]",
+                "[format('{0}/cosmos-endpoint', parameters('keyVaultName'))]",
+                "[format('{0}/cosmos-key', parameters('keyVaultName'))]",
+                "[format('{0}/sql-server', parameters('keyVaultName'))]",
+                "[format('{0}/sql-username', parameters('keyVaultName'))]",
+                "[format('{0}/sql-password', parameters('keyVaultName'))]",
+                "[format('{0}/key-vault-name', parameters('keyVaultName'))]",
+                "[format('{0}/ml-workspace-name', parameters('keyVaultName'))]",
+                "[format('{0}/tenant-id', parameters('keyVaultName'))]",
+                "[format('{0}/client-id', parameters('keyVaultName'))]",
+                "[format('{0}/client-secret', parameters('keyVaultName'))]",
+                "[format('{0}/subscription-id', parameters('keyVaultName'))]",
+                "[format('{0}/resource-group', parameters('keyVaultName'))]",
+                "[format('{0}/service-bus-namespace', parameters('keyVaultName'))]"
               ]
             }
           }
         }
       },
       "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'aiServices')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'applicationInsights')]",
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'dataServices')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'storageAccount')]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'userIdentity')]"
+        "aiServices",
+        "applicationInsights",
+        "appResourceGroup",
+        "dataServices",
+        "keyVault",
+        "storageAccount",
+        "userIdentity"
       ]
     },
-    {
+    "monitoring": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "monitoring",
@@ -2837,7 +3195,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "17144156924629526865"
+              "templateHash": "10978154431216969124"
             }
           },
           "parameters": {
@@ -2880,7 +3238,7 @@
               "condition": "[greater(length(parameters('criticalAlertEmails')), 0)]",
               "type": "Microsoft.Insights/actionGroups",
               "apiVersion": "2023-01-01",
-              "name": "[format('ag-policycortex-critical-{0}', parameters('environment'))]",
+              "name": "[format('ag-policortex001-critical-{0}', parameters('environment'))]",
               "location": "Global",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -2903,7 +3261,7 @@
               "condition": "[greater(length(parameters('warningAlertEmails')), 0)]",
               "type": "Microsoft.Insights/actionGroups",
               "apiVersion": "2023-01-01",
-              "name": "[format('ag-policycortex-warning-{0}', parameters('environment'))]",
+              "name": "[format('ag-policortex001-warning-{0}', parameters('environment'))]",
               "location": "Global",
               "tags": "[parameters('tags')]",
               "properties": {
@@ -2926,11 +3284,11 @@
           "outputs": {
             "criticalActionGroupId": {
               "type": "string",
-              "value": "[if(greater(length(parameters('criticalAlertEmails')), 0), resourceId('Microsoft.Insights/actionGroups', format('ag-policycortex-critical-{0}', parameters('environment'))), '')]"
+              "value": "[if(greater(length(parameters('criticalAlertEmails')), 0), resourceId('Microsoft.Insights/actionGroups', format('ag-policortex001-critical-{0}', parameters('environment'))), '')]"
             },
             "warningActionGroupId": {
               "type": "string",
-              "value": "[if(greater(length(parameters('warningAlertEmails')), 0), resourceId('Microsoft.Insights/actionGroups', format('ag-policycortex-warning-{0}', parameters('environment'))), '')]"
+              "value": "[if(greater(length(parameters('warningAlertEmails')), 0), resourceId('Microsoft.Insights/actionGroups', format('ag-policortex001-warning-{0}', parameters('environment'))), '')]"
             },
             "dashboardId": {
               "type": "string",
@@ -2944,10 +3302,10 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('appResourceGroupName'))]"
+        "appResourceGroup"
       ]
     }
-  ],
+  },
   "outputs": {
     "resourceGroupName": {
       "type": "string",
@@ -2959,35 +3317,35 @@
     },
     "storageAccountName": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'storageAccount'), '2022-09-01').outputs.storageAccountName.value]"
+      "value": "[reference('storageAccount').outputs.storageAccountName.value]"
     },
     "containerRegistryName": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerRegistry'), '2022-09-01').outputs.registryName.value]"
+      "value": "[reference('containerRegistry').outputs.registryName.value]"
     },
     "containerRegistryLoginServer": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerRegistry'), '2022-09-01').outputs.loginServer.value]"
+      "value": "[reference('containerRegistry').outputs.loginServer.value]"
     },
     "keyVaultName": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'keyVault'), '2022-09-01').outputs.keyVaultName.value]"
+      "value": "[reference('keyVault').outputs.keyVaultName.value]"
     },
     "logAnalyticsWorkspaceId": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'logAnalytics'), '2022-09-01').outputs.workspaceId.value]"
+      "value": "[reference('logAnalytics').outputs.workspaceId.value]"
     },
     "containerAppEnvironmentName": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'containerAppsEnvironment'), '2022-09-01').outputs.environmentName.value]"
+      "value": "[reference('containerAppsEnvironment').outputs.environmentName.value]"
     },
     "userAssignedIdentityId": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('appResourceGroupName')), 'Microsoft.Resources/deployments', 'userIdentity'), '2022-09-01').outputs.identityId.value]"
+      "value": "[reference('userIdentity').outputs.identityId.value]"
     },
     "vnetId": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('networkResourceGroupName')), 'Microsoft.Resources/deployments', 'networking'), '2022-09-01').outputs.vnetId.value]"
+      "value": "[reference('networking').outputs.vnetId.value]"
     }
   }
 }
