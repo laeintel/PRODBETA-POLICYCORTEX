@@ -117,42 +117,42 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
       secrets: [
         {
           name: 'jwt-secret-key'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/jwt-secret-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/jwt-secret-key'
           identity: userAssignedIdentityId
         }
         {
           name: 'managed-identity-client-id'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/managed-identity-client-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/managed-identity-client-id'
           identity: userAssignedIdentityId
         }
         {
           name: 'storage-account-name'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/storage-account-name'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/storage-account-name'
           identity: userAssignedIdentityId
         }
         {
           name: 'application-insights-connection-string'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/application-insights-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/application-insights-connection-string'
           identity: userAssignedIdentityId
         }
         {
           name: 'cognitive-services-key'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/cognitive-services-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-key'
           identity: userAssignedIdentityId
         }
         {
           name: 'cognitive-services-endpoint'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/cognitive-services-endpoint'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-endpoint'
           identity: userAssignedIdentityId
         }
         {
           name: 'redis-connection-string'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/redis-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/redis-connection-string'
           identity: userAssignedIdentityId
         }
         {
           name: 'cosmos-connection-string'
-          keyVaultUrl: 'https://${keyVaultName}.${az.environment().suffixes.keyvaultDns}/secrets/cosmos-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-connection-string'
           identity: userAssignedIdentityId
         }
       ]
