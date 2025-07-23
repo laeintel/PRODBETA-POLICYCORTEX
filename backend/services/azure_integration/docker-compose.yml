@@ -28,7 +28,7 @@ services:
       
       # Database Configuration
       - AZURE_SQL_SERVER=${AZURE_SQL_SERVER}
-      - AZURE_SQL_DATABASE=${AZURE_SQL_DATABASE:-policycortex}
+      - AZURE_SQL_DATABASE=${AZURE_SQL_DATABASE:-policortex001}
       - AZURE_SQL_USERNAME=${AZURE_SQL_USERNAME}
       - AZURE_SQL_PASSWORD=${AZURE_SQL_PASSWORD}
       
@@ -56,7 +56,7 @@ services:
     depends_on:
       - redis
     networks:
-      - policycortex-network
+      - policortex001-network
     restart: unless-stopped
 
   redis:
@@ -68,7 +68,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - policycortex-network
+      - policortex001-network
     restart: unless-stopped
 
   # Optional: Redis Commander for Redis management
@@ -82,12 +82,12 @@ services:
     depends_on:
       - redis
     networks:
-      - policycortex-network
+      - policortex001-network
     restart: unless-stopped
 
 volumes:
   redis_data:
 
 networks:
-  policycortex-network:
+  policortex001-network:
     driver: bridge
