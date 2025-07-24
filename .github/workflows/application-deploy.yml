@@ -10,20 +10,18 @@ permissions:
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'Dockerfile'
-      - 'docker-compose.yml'
-      - '.github/workflows/application-deploy.yml'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'infrastructure/bicep/**'
+      - '.github/workflows/bicep-deploy.yml'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'Dockerfile'
-      - 'docker-compose.yml'
-      - '.github/workflows/application-deploy.yml'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'infrastructure/bicep/**'
+      - '.github/workflows/bicep-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:
