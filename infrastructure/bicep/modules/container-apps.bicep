@@ -8,7 +8,7 @@ param userAssignedIdentityId string
 param keyVaultName string
 param containerAppsEnvironmentDefaultDomain string
 
-// Service configurations
+// Service configurations with workload profile assignments
 var services = [
   {
     name: 'api-gateway'
@@ -19,6 +19,7 @@ var services = [
     maxReplicas: 5
     ingress: true
     external: true
+    workloadProfile: 'GeneralPurpose'  // Dedicated-D4 equivalent
   }
   {
     name: 'azure-integration'
@@ -29,6 +30,7 @@ var services = [
     maxReplicas: 3
     ingress: false
     external: false
+    workloadProfile: 'GeneralPurpose'  // Dedicated-D4 equivalent
   }
   {
     name: 'ai-engine'
@@ -39,6 +41,7 @@ var services = [
     maxReplicas: 10
     ingress: false
     external: false
+    workloadProfile: 'HighPerformance'  // Dedicated-D8 equivalent for high performance
   }
   {
     name: 'data-processing'
@@ -49,6 +52,7 @@ var services = [
     maxReplicas: 5
     ingress: false
     external: false
+    workloadProfile: 'GeneralPurpose'  // Dedicated-D4 equivalent
   }
   {
     name: 'conversation'
@@ -59,6 +63,7 @@ var services = [
     maxReplicas: 3
     ingress: false
     external: false
+    workloadProfile: 'GeneralPurpose'  // Dedicated-D4 equivalent
   }
   {
     name: 'notification'
@@ -69,6 +74,7 @@ var services = [
     maxReplicas: 3
     ingress: false
     external: false
+    workloadProfile: 'GeneralPurpose'  // Dedicated-D4 equivalent
   }
   {
     name: 'frontend'
@@ -79,6 +85,7 @@ var services = [
     maxReplicas: 5
     ingress: true
     external: true
+    workloadProfile: 'GeneralPurpose'  // Dedicated-D4 equivalent
   }
 ]
 
@@ -224,6 +231,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
       ]
     }
     template: {
+      workloadProfileName: service.workloadProfile
       containers: [
         {
           image: '${containerRegistryLoginServer}/policortex001-${service.name}:latest'

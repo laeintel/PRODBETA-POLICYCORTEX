@@ -115,6 +115,7 @@ resource "azurerm_container_app" "api_gateway" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
+  workload_profile_name        = "Dedicated-D4"
   
   depends_on = [
     azurerm_container_app_environment.main,
@@ -220,6 +221,7 @@ resource "azurerm_container_app" "azure_integration" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
+  workload_profile_name        = "Dedicated-D4"
   
   identity {
     type         = "UserAssigned"
@@ -286,6 +288,7 @@ resource "azurerm_container_app" "ai_engine" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
+  workload_profile_name        = "Dedicated-D8"
   
   identity {
     type         = "UserAssigned"
@@ -352,6 +355,7 @@ resource "azurerm_container_app" "data_processing" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
+  workload_profile_name        = "Dedicated-D4"
   
   identity {
     type         = "UserAssigned"
@@ -418,6 +422,7 @@ resource "azurerm_container_app" "conversation" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
+  workload_profile_name        = "Dedicated-D4"
   
   identity {
     type         = "UserAssigned"
@@ -483,6 +488,7 @@ resource "azurerm_container_app" "notification" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
+  workload_profile_name        = "Dedicated-D4"
   
   identity {
     type         = "UserAssigned"
@@ -548,6 +554,7 @@ resource "azurerm_container_app" "frontend" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = azurerm_resource_group.app.name
   revision_mode                = "Single"
+  workload_profile_name        = "Dedicated-D4"
   
   identity {
     type         = "UserAssigned"

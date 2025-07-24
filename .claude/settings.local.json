@@ -132,7 +132,8 @@
       "Bash(./rename-resources.sh:*)",
       "Bash(./update-yaml-resources.sh:*)",
       "Bash(docker push:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(./cleanup.sh:*)"
     ],
     "deny": []
   }
