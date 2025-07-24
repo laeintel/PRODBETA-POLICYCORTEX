@@ -39,6 +39,12 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01'
         minimumCount: 0
         maximumCount: 10
       }
+      {
+        name: 'HighPerformance'
+        workloadProfileType: 'D8'
+        minimumCount: 0
+        maximumCount: 5
+      }
     ]
   }
 }

@@ -122,6 +122,11 @@ docs/_templates/
 *.swo
 *~
 
+# Development test files
+main_simple.py
+main_local.py
+test_simple.py
+
 # Certificates and secrets
 *.pem
 *.key
