@@ -19,6 +19,8 @@ RUN apt-get update && \
     curl \
     wget \
     ca-certificates \
+    unixodbc \
+    unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Java separately (if needed for Spark)
