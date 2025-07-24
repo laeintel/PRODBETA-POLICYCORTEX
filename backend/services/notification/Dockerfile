@@ -20,6 +20,8 @@ RUN apt-get update \
         libffi-dev \
         pkg-config \
         netcat-traditional \
+        unixodbc \
+        unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the entire backend directory structure
