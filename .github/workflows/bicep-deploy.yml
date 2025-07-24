@@ -11,19 +11,13 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'infrastructure/**'
+      - 'infrastructure/bicep/**'
       - '.github/workflows/bicep-deploy.yml'
-      - '**.bicep'
-      - '**.bicepparam'
-      - '**.json'
   pull_request:
     branches: [ main ]
     paths:
-      - 'infrastructure/**'
+      - 'infrastructure/bicep/**'
       - '.github/workflows/bicep-deploy.yml'
-      - '**.bicep'
-      - '**.bicepparam'
-      - '**.json'
   workflow_dispatch:
     inputs:
       environment:
