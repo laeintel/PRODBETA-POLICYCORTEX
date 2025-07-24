@@ -8,17 +8,18 @@ permissions:
   pull-requests: write
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/bicep/**'
-      - '.github/workflows/bicep-deploy.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/bicep/**'
-      - '.github/workflows/bicep-deploy.yml'
-  workflow_dispatch:
+  # Temporarily disabled automatic triggers due to billing issues
+  # push:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'infrastructure/bicep/**'
+  #     - '.github/workflows/bicep-deploy.yml'
+  # pull_request:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'infrastructure/bicep/**'
+  #     - '.github/workflows/bicep-deploy.yml'
+  workflow_dispatch:  # Manual trigger only
     inputs:
       environment:
         description: 'Target environment'

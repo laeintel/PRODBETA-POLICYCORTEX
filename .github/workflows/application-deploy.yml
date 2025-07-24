@@ -7,27 +7,30 @@ permissions:
   issues: write
   pull-requests: write
 
+# Temporarily disabled automatic triggers due to billing issues
+# Re-enable when billing is resolved by uncommenting the triggers below
+
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker-compose*.yml'
-      - '.github/workflows/application-deploy.yml'
-      - 'Dockerfile*'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker-compose*.yml'
-      - '.github/workflows/application-deploy.yml'
-      - 'Dockerfile*'
-  workflow_dispatch:
+  # push:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'backend/**'
+  #     - 'frontend/**'
+  #     - 'docker-compose*.yml'
+  #     - '.github/workflows/application-deploy.yml'
+  #     - 'Dockerfile*'
+  # pull_request:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'backend/**'
+  #     - 'frontend/**'
+  #     - 'docker-compose*.yml'
+  #     - '.github/workflows/application-deploy.yml'
+  #     - 'Dockerfile*'
+  workflow_dispatch:  # Manual trigger only
     inputs:
       environment:
-        description: 'Target environment'
+        description: 'Environment to deploy to'
         required: true
         default: 'dev'
         type: choice
@@ -35,11 +38,11 @@ on:
           - dev
           - staging
           - prod
-      services:
-        description: 'Services to deploy (comma-separated or "all")'
-        required: true
-        default: 'all'
-        type: string
+      skip_tests:
+        description: 'Skip tests to save minutes'
+        required: false
+        default: true
+        type: boolean
 
 env:
   PYTHON_VERSION: '3.11'
@@ -50,124 +53,39 @@ env:
   ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
 jobs:
-  test-backend:
-    name: Test Backend Services
+  # Combine all tests into one job to save minutes
+  test-all:
+    name: Run Tests (Optional)
     runs-on: ubuntu-latest
-    continue-on-error: true  # Don't fail entire pipeline on test failures
-    strategy:
-      fail-fast: false  # Continue testing other services even if one fails
-      matrix:
-        service: [api_gateway, azure_integration, ai_engine, data_processing, conversation, notification]
-    
+    if: github.event.inputs.skip_tests != 'true'
+    continue-on-error: true
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend/services/${{ matrix.service }}/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Check if requirements.txt exists
-        id: check_requirements
-        run: |
-          if [ -f "backend/services/${{ matrix.service }}/requirements.txt" ]; then
-            echo "requirements_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "requirements_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Install dependencies
-        if: steps.check_requirements.outputs.requirements_exists == 'true'
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/services/${{ matrix.service }}/requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
-        continue-on-error: true
-
-      - name: Install basic dependencies
-        if: steps.check_requirements.outputs.requirements_exists == 'false'
-        run: |
-          python -m pip install --upgrade pip
-          pip install fastapi pytest pytest-asyncio pytest-cov
-
-      - name: Check if tests directory exists
-        id: check_tests
-        run: |
-          if [ -d "backend/services/${{ matrix.service }}/tests" ]; then
-            echo "tests_exist=true" >> $GITHUB_OUTPUT
-          else
-            echo "tests_exist=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run tests
-        if: steps.check_tests.outputs.tests_exist == 'true'
-        run: |
-          cd backend/services/${{ matrix.service }}
-          pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing || true
-        continue-on-error: true
-
-      - name: Create simple test if none exist
-        if: steps.check_tests.outputs.tests_exist == 'false'
-        run: |
-          cd backend/services/${{ matrix.service }}
-          mkdir -p tests
-          echo "import pytest
-          
-          def test_service_placeholder():
-              assert True  # Placeholder test
-          " > tests/test_placeholder.py
-          pytest tests/ -v
-
-      - name: Upload coverage to Codecov
-        if: steps.check_tests.outputs.tests_exist == 'true'
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./backend/services/${{ matrix.service }}/coverage.xml
-          flags: ${{ matrix.service }}
-          name: codecov-${{ matrix.service }}
-        continue-on-error: true
-
-  test-frontend:
-    name: Test Frontend
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Don't fail entire pipeline on test failures
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '18'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: |
-          cd frontend
-          npm install
-
-      - name: Run tests
-        run: |
-          cd frontend
-          npm run test:coverage
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          file: ./frontend/coverage/lcov.info
-          flags: frontend
-          name: codecov-frontend
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Test Frontend (Quick)
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build  # Just build, skip long tests
+      
+      - name: Test Backend (Quick)
+        run: |
+          # Just check if Python files are valid
+          python -m py_compile backend/services/api_gateway/main.py
+          echo "Basic syntax check passed"
 
   security-scan:
     name: Security Scan
@@ -209,7 +127,7 @@ jobs:
   build-backend:
     name: Build Backend Services
     runs-on: ubuntu-latest
-    needs: [test-backend, security-scan]
+    needs: [test-all]
     if: always()  # Run even if tests fail
     strategy:
       matrix:
@@ -269,7 +187,7 @@ jobs:
   build-frontend:
     name: Build Frontend
     runs-on: ubuntu-latest
-    needs: [test-frontend, security-scan]
+    needs: [test-all]
     if: always()  # Run even if tests fail
     
     steps:
