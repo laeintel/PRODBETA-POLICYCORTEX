@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Just the essentials for quick testing
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: services/api_gateway/Dockerfile
+    container_name: policycortex-api-simple
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=api_gateway
+      - PORT=8000
+      - JWT_SECRET_KEY=local-dev-secret-key-simple
+      # Minimal required configs
+      - SQL_SERVER=localhost
+      - SQL_USERNAME=sa  
+      - SQL_PASSWORD=YourStrong@Passw0rd
+      - AZURE_CLIENT_ID=dummy
+      - TENANT_ID=dummy
+      - CLIENT_ID=dummy
+      - CLIENT_SECRET=dummy
+      - SUBSCRIPTION_ID=dummy
+      - RESOURCE_GROUP=dummy
+      - KEY_VAULT_NAME=dummy
+      - STORAGE_ACCOUNT_NAME=dummy
+      - COGNITIVE_SERVICES_KEY=dummy
+      - COGNITIVE_SERVICES_ENDPOINT=https://dummy.com
+      - SERVICE_BUS_NAMESPACE=dummy
+      - ML_WORKSPACE_NAME=dummy
+      - COSMOS_ENDPOINT=https://localhost:8081/
+      - COSMOS_KEY=dummy-key
+      - REDIS_CONNECTION_STRING=localhost:6379
+      - LOG_LEVEL=DEBUG
+      - USE_LOCAL_STORAGE=true
+    networks:
+      - simple-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000
+        - VITE_WS_URL=ws://localhost:8000
+        - VITE_AZURE_CLIENT_ID=dummy
+        - VITE_AZURE_TENANT_ID=dummy
+        - VITE_AZURE_REDIRECT_URI=http://localhost:5173
+    container_name: policycortex-frontend-simple
+    ports:
+      - "5174:80"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - api-gateway
+    networks:
+      - simple-network
+
+networks:
+  simple-network:
+    driver: bridge 

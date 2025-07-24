@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Frontend for rapid development
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Point to Azure backend - even if it shows "Coming Soon", it might handle API calls
+        - VITE_API_BASE_URL=https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io
+        - VITE_WS_URL=wss://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io
+        # Real Azure AD config for local development
+        - VITE_AZURE_CLIENT_ID=948d821a-0dcc-419e-9834-e5d9eda7b6b6
+        - VITE_AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+        - VITE_AZURE_REDIRECT_URI=http://localhost:3000
+    container_name: policycortex-frontend-dev
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge 

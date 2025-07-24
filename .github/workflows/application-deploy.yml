@@ -11,23 +11,23 @@ permissions:
 # Re-enable when billing is resolved by uncommenting the triggers below
 
 on:
-  # push:
-  #   branches: [ main ]
-  #   paths:
-  #     - 'backend/**'
-  #     - 'frontend/**'
-  #     - 'docker-compose*.yml'
-  #     - '.github/workflows/application-deploy.yml'
-  #     - 'Dockerfile*'
-  # pull_request:
-  #   branches: [ main ]
-  #   paths:
-  #     - 'backend/**'
-  #     - 'frontend/**'
-  #     - 'docker-compose*.yml'
-  #     - '.github/workflows/application-deploy.yml'
-  #     - 'Dockerfile*'
-  workflow_dispatch:  # Manual trigger only
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose*.yml'
+      - '.github/workflows/application-deploy.yml'
+      - 'Dockerfile*'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose*.yml'
+      - '.github/workflows/application-deploy.yml'
+      - 'Dockerfile*'
+  workflow_dispatch:  # Manual trigger
     inputs:
       environment:
         description: 'Environment to deploy to'
