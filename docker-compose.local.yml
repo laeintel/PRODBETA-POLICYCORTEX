@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: policycortex-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - policycortex-network
+
+  cosmosdb:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+    container_name: policycortex-cosmosdb
+    ports:
+      - "8081:8081"
+      - "10251:10251"
+      - "10252:10252"
+      - "10253:10253"
+      - "10254:10254"
+    environment:
+      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=10
+      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=true
+    volumes:
+      - cosmosdb-data:/data
+    networks:
+      - policycortex-network
+
+  # Backend Services
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: services/api_gateway/Dockerfile
+    container_name: policycortex-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=api_gateway
+      - PORT=8000
+      - JWT_SECRET_KEY=local-dev-secret-key
+      - REDIS_CONNECTION_STRING=redis:6379,password=,ssl=False,abortConnect=False
+      - COSMOS_ENDPOINT=https://cosmosdb:8081/
+      - COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+      - ENABLE_REDIS_CACHE=true
+      - ENABLE_COSMOS_DB=true
+      - USE_LOCAL_STORAGE=true
+      - LOG_LEVEL=DEBUG
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+    depends_on:
+      - redis
+      - cosmosdb
+    networks:
+      - policycortex-network
+
+  azure-integration:
+    build:
+      context: ./backend
+      dockerfile: services/azure_integration/Dockerfile
+    container_name: policycortex-azure-integration
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=azure_integration
+      - PORT=8001
+      - JWT_SECRET_KEY=local-dev-secret-key
+      - REDIS_CONNECTION_STRING=redis:6379,password=,ssl=False,abortConnect=False
+      - COSMOS_ENDPOINT=https://cosmosdb:8081/
+      - COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+    depends_on:
+      - redis
+      - cosmosdb
+    networks:
+      - policycortex-network
+
+  ai-engine:
+    build:
+      context: ./backend
+      dockerfile: services/ai_engine/Dockerfile
+    container_name: policycortex-ai-engine
+    ports:
+      - "8002:8002"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=ai_engine
+      - PORT=8002
+      - JWT_SECRET_KEY=local-dev-secret-key
+      - REDIS_CONNECTION_STRING=redis:6379,password=,ssl=False,abortConnect=False
+      - COSMOS_ENDPOINT=https://cosmosdb:8081/
+      - COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+    depends_on:
+      - redis
+      - cosmosdb
+    networks:
+      - policycortex-network
+
+  data-processing:
+    build:
+      context: ./backend
+      dockerfile: services/data_processing/Dockerfile
+    container_name: policycortex-data-processing
+    ports:
+      - "8003:8003"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=data_processing
+      - PORT=8003
+      - JWT_SECRET_KEY=local-dev-secret-key
+      - REDIS_CONNECTION_STRING=redis:6379,password=,ssl=False,abortConnect=False
+      - COSMOS_ENDPOINT=https://cosmosdb:8081/
+      - COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+    depends_on:
+      - redis
+      - cosmosdb
+    networks:
+      - policycortex-network
+
+  conversation:
+    build:
+      context: ./backend
+      dockerfile: services/conversation/Dockerfile
+    container_name: policycortex-conversation
+    ports:
+      - "8004:8004"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=conversation
+      - PORT=8004
+      - JWT_SECRET_KEY=local-dev-secret-key
+      - REDIS_CONNECTION_STRING=redis:6379,password=,ssl=False,abortConnect=False
+      - COSMOS_ENDPOINT=https://cosmosdb:8081/
+      - COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+    depends_on:
+      - redis
+      - cosmosdb
+    networks:
+      - policycortex-network
+
+  notification:
+    build:
+      context: ./backend
+      dockerfile: services/notification/Dockerfile
+    container_name: policycortex-notification
+    ports:
+      - "8005:8005"
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=notification
+      - PORT=8005
+      - JWT_SECRET_KEY=local-dev-secret-key
+      - REDIS_CONNECTION_STRING=redis:6379,password=,ssl=False,abortConnect=False
+      - COSMOS_ENDPOINT=https://cosmosdb:8081/
+      - COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
+    depends_on:
+      - redis
+      - cosmosdb
+    networks:
+      - policycortex-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=http://localhost:8000
+        - VITE_WS_URL=ws://localhost:8000
+        - VITE_AZURE_CLIENT_ID=your-client-id
+        - VITE_AZURE_TENANT_ID=your-tenant-id
+        - VITE_AZURE_REDIRECT_URI=http://localhost:5173
+    container_name: policycortex-frontend
+    ports:
+      - "5173:80"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - api-gateway
+    networks:
+      - policycortex-network
+
+volumes:
+  redis-data:
+  cosmosdb-data:
+
+networks:
+  policycortex-network:
+    driver: bridge 
