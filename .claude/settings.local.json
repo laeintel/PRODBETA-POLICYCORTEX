@@ -130,7 +130,9 @@
       "Bash(set FORCE_COLOR=0)",
       "Bash(./cleanup-failed-resources.sh:*)",
       "Bash(./rename-resources.sh:*)",
-      "Bash(./update-yaml-resources.sh:*)"
+      "Bash(./update-yaml-resources.sh:*)",
+      "Bash(docker push:*)",
+      "Bash(test:*)"
     ],
     "deny": []
   }
