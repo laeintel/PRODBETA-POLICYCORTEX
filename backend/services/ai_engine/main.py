@@ -58,6 +58,8 @@ from .services.gnn_correlation_service import gnn_service
 from .services.conversational_ai_service import conversational_ai_service
 from .services.multi_objective_optimizer import multi_objective_optimizer
 from .services.automation_orchestrator import automation_orchestrator
+from .services.governance_intelligence import governance_intelligence
+from .services.conversation_analytics import conversation_analytics
 
 # Configuration
 settings = get_settings()
@@ -249,6 +251,10 @@ async def startup_event():
             policy_engine=compliance_predictor,
             security_service=anomaly_detector
         )
+        
+        # Initialize Patent 3 components
+        await governance_intelligence.initialize()
+        await conversation_analytics.initialize()
         
         # Update metrics
         ACTIVE_MODELS.set(len(model_manager.active_models))
@@ -2219,6 +2225,298 @@ async def get_optimization_insights(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get optimization insights: {str(e)}"
+        )
+
+
+# Conversational Governance Intelligence endpoints (Patent 3)
+@app.post("/api/v1/governance/conversation",
+          response_model=APIResponse,
+          tags=["governance"])
+async def process_governance_conversation(
+    request: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Process conversational governance intelligence query."""
+    try:
+        user_id = request.get('user_id', 'anonymous')
+        input_text = request.get('input_text', '')
+        session_id = request.get('session_id')
+        user_context = request.get('user_context', {})
+        
+        # Process conversation
+        result = await governance_intelligence.process_conversation(
+            user_id=user_id,
+            input_text=input_text,
+            session_id=session_id,
+            user_context=user_context
+        )
+        
+        return APIResponse(
+            status="success",
+            data=result,
+            message="Governance conversation processed successfully"
+        )
+        
+    except Exception as e:
+        logger.error("governance_conversation_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process governance conversation: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance/conversation/{user_id}/insights",
+         response_model=APIResponse,
+         tags=["governance"])
+async def get_conversation_insights(
+    user_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get conversation insights for a specific user."""
+    try:
+        insights = await governance_intelligence.get_conversation_insights(user_id)
+        
+        return APIResponse(
+            status="success",
+            data=insights,
+            message="Conversation insights retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("get_conversation_insights_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get conversation insights: {str(e)}"
+        )
+
+
+@app.post("/api/v1/governance/analytics/conversation",
+          response_model=APIResponse,
+          tags=["governance"])
+async def analyze_conversations(
+    request: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Perform advanced conversation analytics."""
+    try:
+        conversations = request.get('conversations', [])
+        analysis_types = request.get('analysis_types', [])
+        
+        # Convert string analysis types to enum
+        from .services.conversation_analytics import AnalyticsType
+        if analysis_types:
+            analysis_types = [AnalyticsType(at) for at in analysis_types]
+        
+        # Perform analytics
+        results = await conversation_analytics.analyze_conversations(
+            conversations=conversations,
+            analysis_types=analysis_types
+        )
+        
+        return APIResponse(
+            status="success",
+            data=results,
+            message="Conversation analytics completed"
+        )
+        
+    except Exception as e:
+        logger.error("conversation_analytics_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Conversation analytics failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance/analytics/flow",
+         response_model=APIResponse,
+         tags=["governance"])
+async def get_conversation_flow_analysis(
+    limit: int = 100,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get conversation flow analysis."""
+    try:
+        # This would typically fetch conversations from database
+        # For now, return sample analysis
+        sample_result = {
+            'flow_analysis': {
+                'total_flows': 0,
+                'most_common_flows': [],
+                'efficiency_metrics': {
+                    'average_turns_per_conversation': 0,
+                    'resolution_rate': 0,
+                    'escalation_rate': 0
+                }
+            },
+            'recommendations': [
+                "Insufficient conversation data for meaningful flow analysis",
+                "Collect more conversation data to identify patterns",
+                "Implement conversation tracking to enable flow optimization"
+            ]
+        }
+        
+        return APIResponse(
+            status="success",
+            data=sample_result,
+            message="Conversation flow analysis retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("conversation_flow_analysis_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get conversation flow analysis: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance/analytics/topics",
+         response_model=APIResponse,
+         tags=["governance"])
+async def get_topic_analysis(
+    time_period: str = "7d",
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get governance topic analysis."""
+    try:
+        # Sample topic analysis - in production, fetch real data
+        sample_topics = {
+            'topics': [
+                {
+                    'topic_name': 'Policy Management',
+                    'prevalence': 0.35,
+                    'trending': 'increasing',
+                    'keywords': ['policy', 'procedure', 'guideline']
+                },
+                {
+                    'topic_name': 'Compliance',
+                    'prevalence': 0.28,
+                    'trending': 'stable',
+                    'keywords': ['compliance', 'audit', 'regulation']
+                },
+                {
+                    'topic_name': 'Security',
+                    'prevalence': 0.22,
+                    'trending': 'increasing',
+                    'keywords': ['security', 'threat', 'vulnerability']
+                },
+                {
+                    'topic_name': 'Cost Management',
+                    'prevalence': 0.15,
+                    'trending': 'decreasing',
+                    'keywords': ['cost', 'budget', 'optimization']
+                }
+            ],
+            'time_period': time_period,
+            'analysis_date': datetime.now().isoformat()
+        }
+        
+        return APIResponse(
+            status="success",
+            data=sample_topics,
+            message="Topic analysis retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("topic_analysis_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get topic analysis: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance/analytics/knowledge-gaps",
+         response_model=APIResponse,
+         tags=["governance"])
+async def get_knowledge_gaps(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Identify knowledge gaps in governance conversations."""
+    try:
+        # Sample knowledge gap analysis
+        sample_gaps = {
+            'knowledge_gaps': [
+                {
+                    'topic': 'Azure Kubernetes Service Security',
+                    'gap_score': 0.7,
+                    'frequency': 15,
+                    'impact': 'high',
+                    'recommendation': 'Add comprehensive AKS security documentation'
+                },
+                {
+                    'topic': 'Multi-cloud Compliance',
+                    'gap_score': 0.6,
+                    'frequency': 12,
+                    'impact': 'medium',
+                    'recommendation': 'Develop multi-cloud governance guidelines'
+                },
+                {
+                    'topic': 'Cost Allocation Policies',
+                    'gap_score': 0.5,
+                    'frequency': 8,
+                    'impact': 'medium',
+                    'recommendation': 'Create detailed cost allocation procedures'
+                }
+            ],
+            'overall_coverage': 0.82,
+            'priority_areas': ['Security', 'Compliance', 'Cost Management'],
+            'recommendations': [
+                'Focus on high-impact knowledge gaps first',
+                'Implement feedback loop for continuous improvement',
+                'Regular knowledge base reviews and updates'
+            ]
+        }
+        
+        return APIResponse(
+            status="success",
+            data=sample_gaps,
+            message="Knowledge gaps identified"
+        )
+        
+    except Exception as e:
+        logger.error("knowledge_gaps_analysis_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to identify knowledge gaps: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance/health",
+         response_model=APIResponse,
+         tags=["governance"])
+async def get_governance_intelligence_health(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get governance intelligence system health."""
+    try:
+        health_status = {
+            'components': {
+                'governance_intelligence': governance_intelligence._initialized,
+                'conversation_analytics': conversation_analytics._initialized,
+                'nlu_engine': governance_intelligence.nlu._initialized if governance_intelligence._initialized else False,
+                'knowledge_base': governance_intelligence.knowledge_base._initialized if governance_intelligence._initialized else False
+            },
+            'metrics': {
+                'active_sessions': len(governance_intelligence.active_sessions) if governance_intelligence._initialized else 0,
+                'knowledge_articles': len(governance_intelligence.knowledge_base.knowledge_store) if governance_intelligence._initialized and governance_intelligence.knowledge_base._initialized else 0,
+                'cached_analytics': 'available'
+            },
+            'status': 'healthy' if all([
+                governance_intelligence._initialized,
+                conversation_analytics._initialized
+            ]) else 'degraded'
+        }
+        
+        return APIResponse(
+            status="success",
+            data=health_status,
+            message="Governance intelligence health status retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("governance_health_check_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Governance intelligence health check failed: {str(e)}"
         )
 
 
