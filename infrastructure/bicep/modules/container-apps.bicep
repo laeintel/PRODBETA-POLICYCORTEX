@@ -71,13 +71,13 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
           }
         ]
       } : null
-      registries: [
+      registries: service.name == 'data-processing' || service.name == 'frontend' ? [
         {
           server: containerRegistryLoginServer
           username: 'crpolicortex001dev'
           passwordSecretRef: 'acr-password'
         }
-      ]
+      ] : []
       secrets: [
         {
           name: 'jwt-secret'
@@ -110,7 +110,9 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
       containers: [
         {
           name: service.name
-          image: '${containerRegistryLoginServer}/policortex001-${service.name}:latest'
+          image: service.name == 'data-processing' ? '${containerRegistryLoginServer}/policortex001-data_processing:latest' : 
+                 service.name == 'frontend' ? '${containerRegistryLoginServer}/policortex001-frontend:latest' :
+                 'nginx:alpine'
           resources: {
             cpu: json(service.cpu)
             memory: service.memory
