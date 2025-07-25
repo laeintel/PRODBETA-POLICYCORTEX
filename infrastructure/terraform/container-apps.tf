@@ -1,6 +1,96 @@
 # Container Apps - Deployed after infrastructure and images are ready
 
-# Common environment variables for all container apps
+# Key Vault secrets configuration
+locals {
+  keyvault_secrets = [
+    {
+      name      = "client-id"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/client-id"
+    },
+    {
+      name      = "client-secret"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/client-secret"
+    },
+    {
+      name      = "tenant-id"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/tenant-id"
+    },
+    {
+      name      = "subscription-id"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/subscription-id"
+    },
+    {
+      name      = "resource-group"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/resource-group"
+    },
+    {
+      name      = "key-vault-name"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/key-vault-name"
+    },
+    {
+      name      = "managed-identity-client-id"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/managed-identity-client-id"
+    },
+    {
+      name      = "sql-server"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/sql-server"
+    },
+    {
+      name      = "sql-username"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/sql-username"
+    },
+    {
+      name      = "sql-password"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/sql-password"
+    },
+    {
+      name      = "cosmos-endpoint"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/cosmos-endpoint"
+    },
+    {
+      name      = "cosmos-connection-string"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/cosmos-connection-string"
+    },
+    {
+      name      = "cosmos-key"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/cosmos-key"
+    },
+    {
+      name      = "redis-connection-string"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/redis-connection-string"
+    },
+    {
+      name      = "storage-account-name"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/storage-account-name"
+    },
+    {
+      name      = "application-insights-connection-string"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/application-insights-connection-string"
+    },
+    {
+      name      = "cognitive-services-endpoint"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/cognitive-services-endpoint"
+    },
+    {
+      name      = "cognitive-services-key"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/cognitive-services-key"
+    },
+    {
+      name      = "ml-workspace-name"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/ml-workspace-name"
+    },
+    {
+      name      = "jwt-secret-key"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/jwt-secret-key"
+    },
+    {
+      name      = "service-bus-namespace"
+      key_vault_secret_id = "${azurerm_key_vault.main.vault_uri}secrets/service-bus-namespace"
+    }
+  ]
+}
+
+# Common environment variables for all container apps using Key Vault secrets
 locals {
   common_env_vars = [
     {
@@ -16,92 +106,96 @@ locals {
       value = var.environment == "dev" ? "debug" : "info"
     },
     {
-      name  = "AZURE_CLIENT_ID"
-      value = azurerm_user_assigned_identity.container_apps.client_id
+      name  = "PORT"
+      value = "80"
+    }
+  ]
+
+  # Secret-based environment variables
+  common_secret_env_vars = [
+    {
+      name      = "AZURE_CLIENT_ID"
+      secret_name = "client-id"
     },
     {
-      name  = "AZURE_TENANT_ID"
-      value = data.azurerm_client_config.current.tenant_id
+      name      = "CLIENT_ID"
+      secret_name = "client-id"
     },
     {
-      name  = "AZURE_SUBSCRIPTION_ID"
-      value = data.azurerm_client_config.current.subscription_id
+      name      = "CLIENT_SECRET"
+      secret_name = "client-secret"
     },
     {
-      name  = "AZURE_RESOURCE_GROUP"
-      value = azurerm_resource_group.app.name
+      name      = "TENANT_ID"
+      secret_name = "tenant-id"
     },
     {
-      name  = "AZURE_LOCATION"
-      value = var.location
+      name      = "SUBSCRIPTION_ID"
+      secret_name = "subscription-id"
     },
     {
-      name  = "AZURE_KEY_VAULT_URL"
-      value = azurerm_key_vault.main.vault_uri
+      name      = "RESOURCE_GROUP"
+      secret_name = "resource-group"
     },
     {
-      name  = "AZURE_KEY_VAULT_NAME"
-      value = azurerm_key_vault.main.name
+      name      = "KEY_VAULT_NAME"
+      secret_name = "key-vault-name"
     },
     {
-      name  = "SQL_SERVER"
-      value = var.deploy_sql_server ? module.data_services.sql_server_fqdn : ""
+      name      = "SQL_SERVER"
+      secret_name = "sql-server"
     },
     {
-      name  = "SQL_DATABASE"
-      value = var.deploy_sql_server ? module.data_services.sql_database_name : ""
+      name      = "SQL_USERNAME"
+      secret_name = "sql-username"
     },
     {
-      name  = "SQL_USERNAME"
-      value = var.sql_admin_username
+      name      = "SQL_PASSWORD"
+      secret_name = "sql-password"
     },
     {
-      name  = "AZURE_COSMOS_ENDPOINT"
-      value = module.data_services.cosmos_account_endpoint
+      name      = "COSMOS_ENDPOINT"
+      secret_name = "cosmos-endpoint"
     },
     {
-      name  = "AZURE_COSMOS_DATABASE"
-      value = module.data_services.cosmos_database_name
+      name      = "COSMOS_CONNECTION_STRING"
+      secret_name = "cosmos-connection-string"
     },
     {
-      name  = "REDIS_URL"
-      value = "rediss://${module.data_services.redis_cache_hostname}:${module.data_services.redis_cache_ssl_port}"
+      name      = "COSMOS_KEY"
+      secret_name = "cosmos-key"
     },
     {
-      name  = "AZURE_STORAGE_ACCOUNT_NAME"
-      value = azurerm_storage_account.app_storage.name
+      name      = "REDIS_CONNECTION_STRING"
+      secret_name = "redis-connection-string"
     },
     {
-      name  = "APPLICATION_INSIGHTS_CONNECTION_STRING"
-      value = azurerm_application_insights.main.connection_string
+      name      = "STORAGE_ACCOUNT_NAME"
+      secret_name = "storage-account-name"
     },
     {
-      name  = "AZURE_COGNITIVE_SERVICES_ENDPOINT"
-      value = module.ai_services.cognitive_services_endpoint
+      name      = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+      secret_name = "application-insights-connection-string"
     },
     {
-      name  = "AZURE_ML_WORKSPACE_NAME"
-      value = module.ai_services.ml_workspace_name != null ? module.ai_services.ml_workspace_name : ""
+      name      = "COGNITIVE_SERVICES_ENDPOINT"
+      secret_name = "cognitive-services-endpoint"
     },
     {
-      name  = "ENABLE_COST_OPTIMIZATION"
-      value = "true"
+      name      = "COGNITIVE_SERVICES_KEY"
+      secret_name = "cognitive-services-key"
     },
     {
-      name  = "ENABLE_POLICY_AUTOMATION"
-      value = "true"
+      name      = "ML_WORKSPACE_NAME"
+      secret_name = "ml-workspace-name"
     },
     {
-      name  = "ENABLE_RBAC_ANALYSIS"
-      value = "true"
+      name      = "JWT_SECRET_KEY"
+      secret_name = "jwt-secret-key"
     },
     {
-      name  = "ENABLE_NETWORK_SECURITY"
-      value = "true"
-    },
-    {
-      name  = "ENABLE_PREDICTIVE_ANALYTICS"
-      value = "true"
+      name      = "SERVICE_BUS_NAMESPACE"
+      secret_name = "service-bus-namespace"
     }
   ]
 }
@@ -136,11 +230,18 @@ resource "azurerm_container_app" "api_gateway" {
     identity_ids = [azurerm_user_assigned_identity.container_apps.id]
   }
   
+  dynamic "secret" {
+    for_each = local.keyvault_secrets
+    content {
+      name                = secret.value.name
+      key_vault_secret_id = secret.value.key_vault_secret_id
+      identity            = azurerm_user_assigned_identity.container_apps.id
+    }
+  }
+
   template {
     min_replicas = 1
     max_replicas = 10
-    
-    # Use Consumption profile for API Gateway (public-facing, variable load)
     
     container {
       name   = "api-gateway"
@@ -193,6 +294,15 @@ resource "azurerm_container_app" "api_gateway" {
           value = env.value.value
         }
       }
+
+      # Secret-based environment variables
+      dynamic "env" {
+        for_each = local.common_secret_env_vars
+        content {
+          name        = env.value.name
+          secret_name = env.value.secret_name
+        }
+      }
     }
   }
   
@@ -228,12 +338,18 @@ resource "azurerm_container_app" "azure_integration" {
     identity_ids = [azurerm_user_assigned_identity.container_apps.id]
   }
   
+  dynamic "secret" {
+    for_each = local.keyvault_secrets
+    content {
+      name                = secret.value.name
+      key_vault_secret_id = secret.value.key_vault_secret_id
+      identity            = azurerm_user_assigned_identity.container_apps.id
+    }
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
-    
-    # Note: workload_profile_name not yet supported in azurerm provider v3.80
-    # Will use environment-level workload profiles for now
     
     container {
       name   = "azure-integration"
@@ -258,6 +374,15 @@ resource "azurerm_container_app" "azure_integration" {
         content {
           name  = env.value.name
           value = env.value.value
+        }
+      }
+
+      # Secret-based environment variables
+      dynamic "env" {
+        for_each = local.common_secret_env_vars
+        content {
+          name        = env.value.name
+          secret_name = env.value.secret_name
         }
       }
     }
@@ -561,6 +686,15 @@ resource "azurerm_container_app" "frontend" {
     identity_ids = [azurerm_user_assigned_identity.container_apps.id]
   }
   
+  dynamic "secret" {
+    for_each = local.keyvault_secrets
+    content {
+      name                = secret.value.name
+      key_vault_secret_id = secret.value.key_vault_secret_id
+      identity            = azurerm_user_assigned_identity.container_apps.id
+    }
+  }
+
   template {
     min_replicas = 1
     max_replicas = 10
@@ -590,13 +724,31 @@ resource "azurerm_container_app" "frontend" {
       }
       
       env {
-        name  = "VITE_AZURE_CLIENT_ID"
-        value = azurerm_user_assigned_identity.container_apps.client_id
+        name        = "VITE_AZURE_CLIENT_ID"
+        secret_name = "client-id"
       }
       
       env {
         name  = "VITE_AZURE_TENANT_ID"
         value = data.azurerm_client_config.current.tenant_id
+      }
+
+      # Common environment variables
+      dynamic "env" {
+        for_each = local.common_env_vars
+        content {
+          name  = env.value.name
+          value = env.value.value
+        }
+      }
+
+      # Secret-based environment variables
+      dynamic "env" {
+        for_each = local.common_secret_env_vars
+        content {
+          name        = env.value.name
+          secret_name = env.value.secret_name
+        }
       }
     }
   }
