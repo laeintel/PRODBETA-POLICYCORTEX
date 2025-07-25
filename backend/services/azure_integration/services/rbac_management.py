@@ -9,7 +9,7 @@ import structlog
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import RBACResponse, RoleAssignmentResponse
 from .azure_auth import AzureAuthService
 

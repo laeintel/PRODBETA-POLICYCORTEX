@@ -33,7 +33,7 @@ ENV VITE_AZURE_CLIENT_ID=$VITE_AZURE_CLIENT_ID
 ENV VITE_AZURE_TENANT_ID=$VITE_AZURE_TENANT_ID
 ENV VITE_AZURE_REDIRECT_URI=$VITE_AZURE_REDIRECT_URI
 ENV VITE_APP_VERSION=$VITE_APP_VERSION
-ENV PORT=80
+ENV PORT=8080
 
 # Build the application
 RUN npm run build
@@ -52,11 +52,11 @@ RUN chown -R nodejs:nodejs /app
 USER nodejs
 
 # Expose port
-EXPOSE 80
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
+  CMD curl -f http://localhost:8080/health || exit 1
 
 # Serve the built application with Node.js
-CMD ["serve", "-s", "dist", "-l", "80", "--no-clipboard"]
+CMD ["serve", "-s", "dist", "-l", "8080", "--no-clipboard"]

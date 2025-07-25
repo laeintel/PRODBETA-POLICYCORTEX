@@ -50,6 +50,7 @@ from .services.data_validator import DataValidatorService
 from .services.data_aggregator import DataAggregatorService
 from .services.lineage_tracker import LineageTrackerService
 from .services.data_exporter import DataExporterService
+from .services.data_pipeline import DataPipeline, DataSourceType
 
 # Configuration
 settings = get_settings()
@@ -97,6 +98,7 @@ data_validator = DataValidatorService()
 data_aggregator = DataAggregatorService()
 lineage_tracker = LineageTrackerService()
 data_exporter = DataExporterService()
+data_pipeline = DataPipeline(settings)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -169,6 +171,28 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 # Add middleware
 app.add_middleware(RequestLoggingMiddleware)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup."""
+    try:
+        await data_pipeline.initialize()
+        await data_pipeline.start_processing()
+        logger.info("data_processing_service_startup_completed")
+    except Exception as e:
+        logger.error("data_processing_service_startup_failed", error=str(e))
+        raise
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup services on shutdown."""
+    try:
+        await data_pipeline.cleanup()
+        logger.info("data_processing_service_shutdown_completed")
+    except Exception as e:
+        logger.error("data_processing_service_shutdown_failed", error=str(e))
 
 
 async def verify_authentication(
@@ -661,6 +685,93 @@ async def get_export_status(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Export job not found: {str(e)}"
+        )
+
+
+# Data Pipeline endpoints
+@app.post("/api/v1/pipeline/process")
+async def process_pipeline_data(
+    data: List[Dict[str, Any]],
+    source_type: str,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Process data through the main data pipeline."""
+    try:
+        # Convert string to enum
+        data_source = DataSourceType(source_type)
+        
+        # Process data through pipeline
+        result = await data_pipeline.process_data(data, data_source)
+        
+        return {
+            "processing_result": {
+                "source_type": result.source_type.value,
+                "records_processed": result.records_processed,
+                "records_transformed": result.records_transformed,
+                "records_stored": result.records_stored,
+                "processing_time_ms": result.processing_time_ms,
+                "quality_metrics": {
+                    "total_records": result.quality_metrics.total_records,
+                    "valid_records": result.quality_metrics.valid_records,
+                    "invalid_records": result.quality_metrics.invalid_records,
+                    "duplicate_records": result.quality_metrics.duplicate_records,
+                    "completeness_score": result.quality_metrics.completeness_score,
+                    "accuracy_score": result.quality_metrics.accuracy_score,
+                    "consistency_score": result.quality_metrics.consistency_score
+                },
+                "errors": result.errors
+            }
+        }
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid source type: {source_type}. Valid types: {[t.value for t in DataSourceType]}"
+        )
+    except Exception as e:
+        logger.error("pipeline_data_processing_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process pipeline data: {str(e)}"
+        )
+
+
+@app.get("/api/v1/pipeline/statistics")
+async def get_pipeline_statistics(
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get data pipeline processing statistics."""
+    try:
+        stats = await data_pipeline.get_processing_statistics()
+        return {"pipeline_statistics": stats}
+        
+    except Exception as e:
+        logger.error("pipeline_statistics_retrieval_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve pipeline statistics: {str(e)}"
+        )
+
+
+@app.get("/api/v1/pipeline/status")
+async def get_pipeline_status(
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get data pipeline status."""
+    try:
+        return {
+            "pipeline_status": {
+                "is_running": data_pipeline.is_running,
+                "active_tasks": len([t for t in data_pipeline.processing_tasks.values() if not t.done()]),
+                "total_tasks": len(data_pipeline.processing_tasks)
+            }
+        }
+        
+    except Exception as e:
+        logger.error("pipeline_status_retrieval_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve pipeline status: {str(e)}"
         )
 
 

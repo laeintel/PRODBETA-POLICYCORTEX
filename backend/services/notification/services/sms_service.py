@@ -6,13 +6,13 @@ import asyncio
 import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-import aioredis
+import redis.asyncio as redis
 import httpx
 import structlog
 import uuid
 from urllib.parse import quote_plus
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import (
     SMSRequest,
     NotificationResponse,
@@ -37,7 +37,7 @@ class SMSService:
         """Initialize the SMS service."""
         try:
             # Initialize Redis client
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

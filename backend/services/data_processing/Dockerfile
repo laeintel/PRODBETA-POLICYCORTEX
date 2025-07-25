@@ -49,9 +49,6 @@ RUN mkdir -p /app/logs /app/data /app/tmp \
 # Switch to non-root user
 USER appuser
 
-# Set working directory to the service
-WORKDIR /app/services/data_processing
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=40s --retries=5 \
     CMD curl -f http://localhost:${SERVICE_PORT}/health || exit 1
@@ -59,5 +56,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=40s --retries=5 \
 # Expose port
 EXPOSE ${SERVICE_PORT}
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--workers", "4"]
+# Run the application from root directory
+CMD ["python", "-m", "uvicorn", "services.data_processing.main:app", "--host", "0.0.0.0", "--port", "8003", "--workers", "4"]

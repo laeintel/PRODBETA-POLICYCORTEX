@@ -9,7 +9,7 @@ from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.consumption import ConsumptionManagementClient
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import CostResponse, BudgetResponse
 from .azure_auth import AzureAuthService
 

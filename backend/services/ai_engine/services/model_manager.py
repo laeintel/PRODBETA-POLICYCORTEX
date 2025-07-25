@@ -166,6 +166,36 @@ class ModelManager:
                             "language": "en",
                             "emotions": ["positive", "negative", "neutral"]
                         }
+                    },
+                    "compliance_predictor": {
+                        "name": "compliance_predictor",
+                        "version": "2.0.0",
+                        "type": "compliance_prediction",
+                        "status": "active",
+                        "description": "Predictive compliance engine with drift detection and temporal analysis",
+                        "created_at": datetime.utcnow().isoformat(),
+                        "updated_at": datetime.utcnow().isoformat(),
+                        "parameters": {
+                            "ensemble_models": ["xgboost", "random_forest", "isolation_forest"],
+                            "drift_detection": "vae",
+                            "temporal_analysis": "stl_decomposition",
+                            "prediction_horizon": 24
+                        }
+                    },
+                    "correlation_engine": {
+                        "name": "correlation_engine",
+                        "version": "2.0.0",
+                        "type": "cross_domain_correlation",
+                        "status": "active",
+                        "description": "Cross-domain correlation analysis with graph neural networks",
+                        "created_at": datetime.utcnow().isoformat(),
+                        "updated_at": datetime.utcnow().isoformat(),
+                        "parameters": {
+                            "graph_layers": 3,
+                            "correlation_methods": ["pearson", "spearman", "mutual_info", "granger"],
+                            "impact_models": ["gradient_boost", "random_forest"],
+                            "domains": ["policy", "rbac", "network", "cost"]
+                        }
                     }
                 }
                 

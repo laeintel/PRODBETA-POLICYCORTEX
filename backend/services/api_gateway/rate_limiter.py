@@ -7,7 +7,7 @@ import time
 import json
 from datetime import datetime, timedelta
 from typing import Tuple, Optional, Dict, Any
-import aioredis
+import redis.asyncio as redis
 import structlog
 
 from shared.config import get_settings
@@ -23,10 +23,10 @@ class RateLimiter:
         self.redis_client = None
         self.settings = settings
     
-    async def _get_redis_client(self) -> aioredis.Redis:
+    async def _get_redis_client(self) -> redis.Redis:
         """Get Redis client for rate limiting."""
         if self.redis_client is None:
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

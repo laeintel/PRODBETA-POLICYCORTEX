@@ -5,10 +5,10 @@ Notification analytics service for tracking delivery metrics and performance.
 import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
-import aioredis
+import redis.asyncio as redis
 import structlog
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import (
     NotificationStats,
     DeliveryStatus,
@@ -31,7 +31,7 @@ class NotificationAnalytics:
         """Initialize the notification analytics service."""
         try:
             # Initialize Redis client
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

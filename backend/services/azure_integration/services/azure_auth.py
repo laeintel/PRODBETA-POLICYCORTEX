@@ -12,7 +12,7 @@ from azure.core.exceptions import AzureError
 import jwt
 from jose import JWTError, jwt as jose_jwt
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import AzureAuthResponse
 
 settings = get_settings()

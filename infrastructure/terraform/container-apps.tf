@@ -581,7 +581,7 @@ resource "azurerm_container_app" "frontend" {
       
       env {
         name  = "SERVICE_PORT"
-        value = "80"
+        value = "8080"
       }
       
       env {
@@ -603,7 +603,7 @@ resource "azurerm_container_app" "frontend" {
   
   ingress {
     external_enabled = true
-    target_port      = 80
+    target_port      = 8080
     traffic_weight {
       latest_revision = true
       percentage      = 100

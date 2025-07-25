@@ -5,11 +5,11 @@ Subscription manager for handling user notification preferences and subscription
 import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-import aioredis
+import redis.asyncio as redis
 import structlog
 import uuid
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import (
     SubscriptionRequest,
     Subscription,
@@ -33,7 +33,7 @@ class SubscriptionManager:
         """Initialize the subscription manager."""
         try:
             # Initialize Redis client
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

@@ -6,12 +6,12 @@ import asyncio
 import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
-import aioredis
+import redis.asyncio as redis
 import structlog
 import uuid
 from croniter import croniter
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import (
     ScheduledNotificationRequest,
     NotificationRequest,
@@ -35,7 +35,7 @@ class NotificationScheduler:
         """Initialize the notification scheduler."""
         try:
             # Initialize Redis client
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

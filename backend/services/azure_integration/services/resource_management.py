@@ -9,7 +9,7 @@ from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.monitor import MonitorManagementClient
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import ResourceResponse, ResourceGroupResponse, ResourceMetrics
 from .azure_auth import AzureAuthService
 

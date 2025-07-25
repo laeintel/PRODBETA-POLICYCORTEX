@@ -8,7 +8,7 @@ import structlog
 from azure.mgmt.network import NetworkManagementClient
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import NetworkResponse, NetworkSecurityGroupResponse, NetworkSecurityAnalysis
 from .azure_auth import AzureAuthService
 

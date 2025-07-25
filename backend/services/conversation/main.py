@@ -23,8 +23,8 @@ import asyncio
 
 from shared.config import get_settings
 from shared.database import get_async_db, DatabaseUtils
-from .auth import AuthManager
-from .models import (
+from services.conversation.auth import AuthManager
+from services.conversation.models import (
     HealthResponse,
     ConversationRequest,
     ConversationResponse,
@@ -36,12 +36,13 @@ from .models import (
     ConversationAnalytics,
     ErrorResponse
 )
-from .services.conversation_manager import ConversationManager
-from .services.intent_classifier import IntentClassifier
-from .services.context_manager import ContextManager
-from .services.response_generator import ResponseGenerator
-from .services.query_router import QueryRouter
-from .services.analytics_service import AnalyticsService
+from services.conversation.services.conversation_manager import ConversationManager
+from services.conversation.services.intent_classifier import IntentClassifier
+from services.conversation.services.context_manager import ContextManager
+from services.conversation.services.response_generator import ResponseGenerator
+from services.conversation.services.query_router import QueryRouter
+from services.conversation.services.analytics_service import AnalyticsService
+from services.conversation.services.governance_chat import GovernanceChatService
 
 # Configuration
 settings = get_settings()
@@ -88,6 +89,7 @@ context_manager = ContextManager()
 response_generator = ResponseGenerator()
 query_router = QueryRouter()
 analytics_service = AnalyticsService()
+governance_chat_service = GovernanceChatService()
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -142,6 +144,27 @@ class ConnectionManager:
             await self.send_personal_message(message, session_id)
 
 connection_manager = ConnectionManager()
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup."""
+    try:
+        await governance_chat_service.initialize()
+        logger.info("conversation_service_startup_completed")
+    except Exception as e:
+        logger.error("conversation_service_startup_failed", error=str(e))
+        raise
+
+
+@app.on_event("shutdown") 
+async def shutdown_event():
+    """Cleanup services on shutdown."""
+    try:
+        await governance_chat_service.cleanup()
+        logger.info("conversation_service_shutdown_completed")
+    except Exception as e:
+        logger.error("conversation_service_shutdown_failed", error=str(e))
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -586,6 +609,142 @@ async def get_conversation_analytics(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve analytics: {str(e)}"
+        )
+
+
+# Governance Chat endpoints
+@app.post("/api/v1/governance/chat")
+async def governance_chat(
+    request: ConversationRequest,
+    user: Dict[str, Any] = Depends(verify_authentication)
+):
+    """Process governance-specific chat queries."""
+    try:
+        # Process query through governance chat service
+        response = await governance_chat_service.process_query(
+            query=request.message,
+            user_id=user["id"],
+            session_id=request.session_id or str(uuid.uuid4()),
+            user_profile={
+                "id": user["id"],
+                "email": user.get("email"),
+                "roles": user.get("roles", []),
+                "permissions": user.get("permissions", [])
+            }
+        )
+        
+        # Convert governance response to conversation response format
+        conversation_response = ConversationResponse(
+            session_id=request.session_id or str(uuid.uuid4()),
+            message=response.message,
+            intent=response.intent,
+            entities=response.entities,
+            confidence=response.confidence,
+            suggestions=response.suggestions,
+            follow_up_questions=[],
+            timestamp=datetime.utcnow()
+        )
+        
+        return conversation_response
+        
+    except Exception as e:
+        logger.error(
+            "governance_chat_failed",
+            error=str(e),
+            user_id=user["id"],
+            message=request.message
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Governance chat processing failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance/chat/{session_id}/history")
+async def get_governance_chat_history(
+    session_id: str,
+    user: Dict[str, Any] = Depends(verify_authentication)
+):
+    """Get governance chat history for a session."""
+    try:
+        history = await governance_chat_service.get_conversation_history(
+            user_id=user["id"],
+            session_id=session_id
+        )
+        
+        return {
+            "session_id": session_id,
+            "history": history,
+            "total_count": len(history)
+        }
+        
+    except Exception as e:
+        logger.error(
+            "get_governance_chat_history_failed",
+            error=str(e),
+            session_id=session_id,
+            user_id=user["id"]
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve governance chat history: {str(e)}"
+        )
+
+
+@app.delete("/api/v1/governance/chat/{session_id}")
+async def clear_governance_conversation(
+    session_id: str,
+    user: Dict[str, Any] = Depends(verify_authentication)
+):
+    """Clear governance conversation context."""
+    try:
+        await governance_chat_service.clear_conversation(
+            user_id=user["id"],
+            session_id=session_id
+        )
+        
+        return {"message": "Governance conversation cleared successfully"}
+        
+    except Exception as e:
+        logger.error(
+            "clear_governance_conversation_failed",
+            error=str(e),
+            session_id=session_id,
+            user_id=user["id"]
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear governance conversation: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance/status")
+async def get_governance_service_status(
+    user: Dict[str, Any] = Depends(verify_authentication)
+):
+    """Get governance service status."""
+    try:
+        is_ready = governance_chat_service.is_ready()
+        
+        return {
+            "status": "ready" if is_ready else "not_ready",
+            "service": "governance_chat",
+            "timestamp": datetime.utcnow()
+        }
+        
+    except Exception as e:
+        logger.error(
+            "get_governance_status_failed",
+            error=str(e),
+            user_id=user["id"]
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get governance service status: {str(e)}"
         )
 
 

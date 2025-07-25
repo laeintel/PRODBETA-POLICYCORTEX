@@ -9,9 +9,9 @@ from azure.mgmt.resource import PolicyClient
 from azure.mgmt.policyinsights import PolicyInsightsClient
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 
-from ....shared.config import get_settings
-from ..models import PolicyResponse, PolicyComplianceResponse, PolicyComplianceState
-from .azure_auth import AzureAuthService
+from shared.config import get_settings
+from services.azure_integration.models import PolicyResponse, PolicyComplianceResponse, PolicyComplianceState
+from services.azure_integration.services.azure_auth import AzureAuthService
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
