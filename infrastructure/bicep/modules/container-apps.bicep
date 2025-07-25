@@ -71,6 +71,13 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
           }
         ]
       } : null
+      registries: [
+        {
+          server: containerRegistryLoginServer
+          username: 'crpolicortex001dev'
+          passwordSecretRef: 'acr-password'
+        }
+      ]
       secrets: [
         {
           name: 'jwt-secret'
@@ -90,6 +97,11 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
         {
           name: 'azure-tenant-id'
           keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-tenant-id'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'acr-password'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/acr-password'
           identity: userAssignedIdentityId
         }
       ]

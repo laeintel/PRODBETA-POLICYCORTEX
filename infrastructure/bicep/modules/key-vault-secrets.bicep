@@ -41,6 +41,15 @@ resource encryptionKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   }
 }
 
+// ACR Password (for Container Apps)
+resource acrPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/acr-password'
+  properties: {
+    value: 'yWQJt9eyDkpalgd7hak4laZvgjtfCBxbUhH1nDaEWp+ACRACHn/V'
+    contentType: 'text/plain'
+  }
+}
+
 // Managed Identity Client ID
 resource managedIdentitySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/managed-identity-client-id'
