@@ -32,6 +32,17 @@ var services = [
     external: false
     workloadProfile: 'HighPerformance'
   }
+  {
+    name: 'frontend'
+    port: 8080
+    cpu: '0.5'
+    memory: '1Gi'
+    minReplicas: 2
+    maxReplicas: 10
+    ingress: true
+    external: true
+    workloadProfile: 'GeneralPurpose'
+  }
 ]
 
 // Create Container Apps
@@ -39,6 +50,12 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
   name: 'ca-${service.name}-${environment}'
   location: location
   tags: tags
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${userAssignedIdentityId}': {}
+    }
+  }
   properties: {
     managedEnvironmentId: containerAppsEnvironmentId
     workloadProfileName: service.workloadProfile
@@ -58,10 +75,22 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
         {
           name: 'jwt-secret'
           keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/jwt-secret'
+          identity: userAssignedIdentityId
         }
         {
           name: 'encryption-key'
           keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/encryption-key'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'azure-client-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-client-id'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'azure-tenant-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-tenant-id'
+          identity: userAssignedIdentityId
         }
       ]
     }
@@ -74,7 +103,48 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             cpu: json(service.cpu)
             memory: service.memory
           }
-          env: [
+          env: service.name == 'frontend' ? [
+            {
+              name: 'ENVIRONMENT'
+              value: environment
+            }
+            {
+              name: 'SERVICE_NAME'
+              value: service.name
+            }
+            {
+              name: 'PORT'
+              value: string(service.port)
+            }
+            {
+              name: 'LOG_LEVEL'
+              value: 'INFO'
+            }
+            {
+              name: 'VITE_API_BASE_URL'
+              value: 'https://ca-api-gateway-${environment}.${containerAppsEnvironmentDefaultDomain}/api'
+            }
+            {
+              name: 'VITE_WS_URL'
+              value: 'wss://ca-api-gateway-${environment}.${containerAppsEnvironmentDefaultDomain}/ws'
+            }
+            {
+              name: 'VITE_AZURE_CLIENT_ID'
+              secretRef: 'azure-client-id'
+            }
+            {
+              name: 'VITE_AZURE_TENANT_ID'
+              secretRef: 'azure-tenant-id'
+            }
+            {
+              name: 'VITE_AZURE_REDIRECT_URI'
+              value: 'https://ca-frontend-${environment}.${containerAppsEnvironmentDefaultDomain}'
+            }
+            {
+              name: 'VITE_APP_VERSION'
+              value: '1.0.0'
+            }
+          ] : [
             {
               name: 'ENVIRONMENT'
               value: environment

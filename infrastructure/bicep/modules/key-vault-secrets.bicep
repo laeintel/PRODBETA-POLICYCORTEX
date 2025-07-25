@@ -167,6 +167,24 @@ resource clientIdSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   }
 }
 
+// Azure Client ID for frontend (specific name expected by Container Apps)
+resource azureClientIdSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/azure-client-id'
+  properties: {
+    value: managedIdentityClientId
+    contentType: 'text/plain'
+  }
+}
+
+// Azure Tenant ID for frontend (specific name expected by Container Apps)
+resource azureTenantIdSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/azure-tenant-id'
+  properties: {
+    value: tenantId
+    contentType: 'text/plain'
+  }
+}
+
 // Azure Client Secret (placeholder since using managed identity)
 resource clientSecretSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/client-secret'
@@ -222,6 +240,8 @@ output secretNames array = [
   mlWorkspaceNameSecret.name
   tenantIdSecret.name
   clientIdSecret.name
+  azureClientIdSecret.name
+  azureTenantIdSecret.name
   clientSecretSecret.name
   subscriptionIdSecret.name
   resourceGroupSecret.name
