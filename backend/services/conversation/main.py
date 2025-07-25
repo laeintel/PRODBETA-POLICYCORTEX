@@ -21,10 +21,10 @@ from starlette.responses import PlainTextResponse
 from starlette.websockets import WebSocketState
 import asyncio
 
-from shared.config import get_settings
-from shared.database import get_async_db, DatabaseUtils
-from services.conversation.auth import AuthManager
-from services.conversation.models import (
+from backend.shared.config import get_settings
+from backend.shared.database import get_async_db, DatabaseUtils
+from backend.services.conversation.auth import AuthManager
+from backend.services.conversation.models import (
     HealthResponse,
     ConversationRequest,
     ConversationResponse,
@@ -36,13 +36,13 @@ from services.conversation.models import (
     ConversationAnalytics,
     ErrorResponse
 )
-from services.conversation.services.conversation_manager import ConversationManager
-from services.conversation.services.intent_classifier import IntentClassifier
-from services.conversation.services.context_manager import ContextManager
-from services.conversation.services.response_generator import ResponseGenerator
-from services.conversation.services.query_router import QueryRouter
-from services.conversation.services.analytics_service import AnalyticsService
-from services.conversation.services.governance_chat import GovernanceChatService
+from backend.services.conversation.services.conversation_manager import ConversationManager
+from backend.services.conversation.services.intent_classifier import IntentClassifier
+from backend.services.conversation.services.context_manager import ContextManager
+from backend.services.conversation.services.response_generator import ResponseGenerator
+from backend.services.conversation.services.query_router import QueryRouter
+from backend.services.conversation.services.analytics_service import AnalyticsService
+from backend.services.conversation.services.governance_chat import GovernanceChatService
 
 # Configuration
 settings = get_settings()

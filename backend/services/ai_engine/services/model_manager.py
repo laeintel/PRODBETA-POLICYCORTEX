@@ -14,10 +14,10 @@ from pathlib import Path
 import aiofiles
 import structlog
 from azure.storage.blob.aio import BlobServiceClient
-from azure.ml.aio import MLClient
+# from azure.ml.aio import MLClient  # Not available yet, using direct blob storage
 from azure.identity.aio import DefaultAzureCredential
 
-from ....shared.config import get_settings
+from backend.shared.config import get_settings
 from ..models import ModelInfo, ModelStatus, ModelType
 
 settings = get_settings()

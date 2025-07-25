@@ -6,14 +6,15 @@ $RESOURCE_GROUP = "rg-policortex001-app-dev"
 $REGISTRY_NAME = "crpolicortex001dev"
 $ENVIRONMENT_NAME = "cae-policortex001-app-dev"
 
-# Services to fix
-$SERVICES = @("ai-engine", "azure-integration", "conversation")
+# Services to fix (use underscore for directory names)
+$SERVICES = @("ai_engine", "azure_integration", "conversation")
 
 foreach ($SERVICE in $SERVICES) {
     Write-Host "Processing $SERVICE..." -ForegroundColor Yellow
     
     # Build and push Docker image
-    $IMAGE_NAME = "policortex001-$SERVICE"
+    $SERVICE_DASH = $SERVICE.Replace("_", "-")
+    $IMAGE_NAME = "policortex001-$SERVICE_DASH"
     $IMAGE_TAG = "$(Get-Date -Format 'yyyyMMdd-HHmmss')"
     $FULL_IMAGE_NAME = "$REGISTRY_NAME.azurecr.io/$IMAGE_NAME`:$IMAGE_TAG"
     $LATEST_IMAGE_NAME = "$REGISTRY_NAME.azurecr.io/$IMAGE_NAME`:latest"
@@ -36,7 +37,7 @@ foreach ($SERVICE in $SERVICES) {
             Write-Host "Successfully pushed $FULL_IMAGE_NAME" -ForegroundColor Green
             
             # Update container app
-            $APP_NAME = "ca-$SERVICE-dev"
+            $APP_NAME = "ca-$SERVICE_DASH-dev"
             Write-Host "Updating container app: $APP_NAME"
             
             az containerapp update `

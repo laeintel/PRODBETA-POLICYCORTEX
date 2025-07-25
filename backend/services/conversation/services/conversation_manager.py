@@ -12,8 +12,8 @@ import structlog
 from sqlalchemy import select, insert, update, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ....shared.config import get_settings
-from ....shared.database import get_async_db
+from backend.shared.config import get_settings
+from backend.shared.database import get_async_db
 from ..models import (
     ConversationSession,
     ConversationMessage,
