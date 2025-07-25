@@ -23,6 +23,24 @@ resource jwtSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   }
 }
 
+// JWT Secret (for Container Apps)
+resource jwtSecretForApps 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/jwt-secret'
+  properties: {
+    value: jwtSecretKey
+    contentType: 'text/plain'
+  }
+}
+
+// Encryption Key (for Container Apps)
+resource encryptionKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  name: '${keyVaultName}/encryption-key'
+  properties: {
+    value: 'your-encryption-key-here-change-in-production'
+    contentType: 'text/plain'
+  }
+}
+
 // Managed Identity Client ID
 resource managedIdentitySecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/managed-identity-client-id'
@@ -224,6 +242,8 @@ resource serviceBusNamespaceSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01
 // Outputs
 output secretNames array = [
   jwtSecret.name
+  jwtSecretForApps.name
+  encryptionKeySecret.name
   managedIdentitySecret.name
   storageAccountSecret.name
   appInsightsSecret.name

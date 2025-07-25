@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.36.1.42791",
-      "templateHash": "2912216092863942092"
+      "templateHash": "9926255868202130968"
     }
   },
   "parameters": {
@@ -2645,7 +2645,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "1594596573907517140"
+              "templateHash": "9719459571236674166"
             }
           },
           "parameters": {
@@ -2697,6 +2697,24 @@
               "name": "[format('{0}/jwt-secret-key', parameters('keyVaultName'))]",
               "properties": {
                 "value": "[parameters('jwtSecretKey')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/jwt-secret', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "[parameters('jwtSecretKey')]",
+                "contentType": "text/plain"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/encryption-key', parameters('keyVaultName'))]",
+              "properties": {
+                "value": "your-encryption-key-here-change-in-production",
                 "contentType": "text/plain"
               }
             },
@@ -2904,6 +2922,8 @@
               "type": "array",
               "value": [
                 "[format('{0}/jwt-secret-key', parameters('keyVaultName'))]",
+                "[format('{0}/jwt-secret', parameters('keyVaultName'))]",
+                "[format('{0}/encryption-key', parameters('keyVaultName'))]",
                 "[format('{0}/managed-identity-client-id', parameters('keyVaultName'))]",
                 "[format('{0}/storage-account-name', parameters('keyVaultName'))]",
                 "[format('{0}/application-insights-connection-string', parameters('keyVaultName'))]",
