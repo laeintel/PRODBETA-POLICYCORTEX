@@ -133,7 +133,15 @@
       "Bash(./update-yaml-resources.sh:*)",
       "Bash(docker push:*)",
       "Bash(test:*)",
-      "Bash(./cleanup.sh:*)"
+      "Bash(./cleanup.sh:*)",
+      "Bash(for app in ca-api-gateway-dev ca-azure-integration-dev ca-ai-engine-dev ca-conversation-dev ca-notification-dev ca-data-processing-dev)",
+      "Bash(do echo \"=== $app ===\")",
+      "Bash(done)",
+      "Bash(do echo \"Updating $app...\")",
+      "Bash(for service in azure_integration notification data_processing)",
+      "Bash(do echo \"=== $service ===\")",
+      "Bash(for app in ca-api-gateway-dev ca-azure-integration-dev ca-ai-engine-dev ca-conversation-dev ca-notification-dev ca-data-processing-dev ca-frontend-dev)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

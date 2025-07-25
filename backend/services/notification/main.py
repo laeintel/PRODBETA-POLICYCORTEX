@@ -22,8 +22,8 @@ from starlette.responses import PlainTextResponse
 
 from shared.config import get_settings
 from shared.database import get_async_db, DatabaseUtils
-from .auth import AuthManager
-from .models import (
+from services.notification.auth import AuthManager
+from services.notification.models import (
     HealthResponse,
     APIResponse,
     ErrorResponse,
@@ -42,7 +42,7 @@ from .models import (
     ScheduledNotificationRequest,
     NotificationPreferences
 )
-from .services import (
+from services.notification.services import (
     EmailService,
     SMSService,
     PushNotificationService,

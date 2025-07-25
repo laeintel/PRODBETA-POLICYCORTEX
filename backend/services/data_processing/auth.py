@@ -8,7 +8,7 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
-import aioredis
+import redis.asyncio as redis
 import structlog
 from jose import JWTError, jwt as jose_jwt
 from azure.identity.aio import DefaultAzureCredential
@@ -31,10 +31,10 @@ class AuthManager:
         self.key_vault_client = None
         self._permissions_cache = {}
     
-    async def _get_redis_client(self) -> aioredis.Redis:
+    async def _get_redis_client(self) -> redis.Redis:
         """Get Redis client for session management."""
         if self.redis_client is None:
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

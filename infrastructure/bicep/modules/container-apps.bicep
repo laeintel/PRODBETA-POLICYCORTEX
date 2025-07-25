@@ -266,7 +266,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
               secretRef: 'cognitive-services-key'
             }
             {
-              name: 'COGNITIVE_SERVICES_ENDPOINT'
+              name: 'COGNITIVE_SERVICES_ENPOINT'
               secretRef: 'cognitive-services-endpoint'
             }
             {
@@ -338,6 +338,10 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
               value: string(service.port)
             }
             {
+              name: 'SERVICE_HOST'
+              value: '0.0.0.0'
+            }
+            {
               name: 'VITE_AZURE_CLIENT_ID'
               secretRef: 'managed-identity-client-id'
             }
@@ -350,8 +354,60 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
               value: service.name == 'frontend' ? 'https://ca-api-gateway-${environment}.${containerAppsEnvironmentDefaultDomain}' : ''
             }
           ]
-          // Health probes temporarily disabled for troubleshooting
-          probes: []
+          probes: [
+            {
+              type: 'startup'
+              httpGet: {
+                path: '/health'
+                port: service.port
+                httpHeaders: [
+                  {
+                    name: 'Accept'
+                    value: 'application/json'
+                  }
+                ]
+              }
+              initialDelaySeconds: 10
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 3
+              successThreshold: 1
+            }
+            {
+              type: 'readiness'
+              httpGet: {
+                path: '/ready'
+                port: service.port
+                httpHeaders: [
+                  {
+                    name: 'Accept'
+                    value: 'application/json'
+                  }
+                ]
+              }
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+              successThreshold: 1
+            }
+            {
+              type: 'liveness'
+              httpGet: {
+                path: '/health'
+                port: service.port
+                httpHeaders: [
+                  {
+                    name: 'Accept'
+                    value: 'application/json'
+                  }
+                ]
+              }
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+              successThreshold: 1
+            }
+          ]
         }
       ]
       scale: {

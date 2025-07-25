@@ -31,9 +31,6 @@ RUN groupadd -r azureapp && useradd -r -g azureapp azureapp
 RUN chown -R azureapp:azureapp /app
 USER azureapp
 
-# Set working directory to the service
-WORKDIR /app/services/azure_integration
-
 # Expose port
 EXPOSE 8001
 
@@ -41,5 +38,5 @@ EXPOSE 8001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
     CMD curl -f http://localhost:8001/health || exit 1
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+# Run the application from root directory
+CMD ["python", "-m", "uvicorn", "services.azure_integration.main:app", "--host", "0.0.0.0", "--port", "8001"]

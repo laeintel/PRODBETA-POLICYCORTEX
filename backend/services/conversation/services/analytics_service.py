@@ -6,7 +6,7 @@ Tracks conversation metrics, user behavior, and system performance.
 import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-import aioredis
+import redis.asyncio as redis
 import structlog
 from collections import defaultdict, Counter
 
@@ -30,10 +30,10 @@ class AnalyticsService:
         self.analytics_retention_days = 90
         self.metrics_update_interval = 300  # 5 minutes
     
-    async def _get_redis_client(self) -> aioredis.Redis:
+    async def _get_redis_client(self) -> redis.Redis:
         """Get Redis client for analytics storage."""
         if self.redis_client is None:
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,
@@ -500,7 +500,7 @@ class AnalyticsService:
     
     async def _collect_analytics_data(
         self,
-        redis_client: aioredis.Redis,
+        redis_client: redis.Redis,
         user_id: Optional[str],
         start_date: datetime,
         end_date: datetime
@@ -585,7 +585,7 @@ class AnalyticsService:
         
         return analytics_data
     
-    async def _get_active_sessions_count(self, redis_client: aioredis.Redis) -> int:
+    async def _get_active_sessions_count(self, redis_client: redis.Redis) -> int:
         """Get count of active conversation sessions."""
         try:
             # Count active session keys

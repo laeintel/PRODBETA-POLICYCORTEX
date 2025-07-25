@@ -20,7 +20,7 @@ from starlette.responses import PlainTextResponse
 
 from shared.config import get_settings
 from shared.database import get_async_db, DatabaseUtils
-from .models import (
+from services.azure_integration.models import (
     HealthResponse,
     APIResponse,
     ErrorResponse,
@@ -34,7 +34,7 @@ from .models import (
     AzureAuthRequest,
     AzureAuthResponse
 )
-from .services import (
+from services.azure_integration.services import (
     PolicyManagementService,
     RBACManagementService,
     CostManagementService,
@@ -42,7 +42,8 @@ from .services import (
     ResourceManagementService,
     AzureAuthService
 )
-from .middleware import AzureAuthMiddleware
+from services.azure_integration.services.event_collector import AzureEventCollector
+from services.azure_integration.middleware import AzureAuthMiddleware
 
 # Configuration
 settings = get_settings()
@@ -87,6 +88,7 @@ cost_service = CostManagementService()
 network_service = NetworkManagementService()
 resource_service = ResourceManagementService()
 auth_service = AzureAuthService()
+event_collector = AzureEventCollector(settings)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):

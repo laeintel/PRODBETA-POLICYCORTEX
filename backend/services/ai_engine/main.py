@@ -50,6 +50,8 @@ from .services.predictive_analytics import PredictiveAnalyticsService
 from .services.sentiment_analyzer import SentimentAnalyzer
 from .services.feature_engineer import FeatureEngineer
 from .services.model_monitor import ModelMonitor
+from .ml_models.compliance_predictor import CompliancePredictor
+from .ml_models.correlation_engine import CrossDomainCorrelationEngine
 
 # Configuration
 settings = get_settings()
@@ -99,6 +101,8 @@ predictive_analytics = PredictiveAnalyticsService()
 sentiment_analyzer = SentimentAnalyzer()
 feature_engineer = FeatureEngineer()
 model_monitor = ModelMonitor()
+compliance_predictor = CompliancePredictor()
+correlation_engine = CrossDomainCorrelationEngine()
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -221,6 +225,8 @@ async def startup_event():
         await sentiment_analyzer.initialize()
         await feature_engineer.initialize()
         await model_monitor.initialize()
+        await compliance_predictor.initialize()
+        await correlation_engine.initialize()
         
         # Update metrics
         ACTIVE_MODELS.set(len(model_manager.active_models))
@@ -650,6 +656,331 @@ async def analyze_sentiment(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Sentiment analysis failed: {str(e)}"
+        )
+
+
+# Enhanced AI/ML Capability endpoints for Patent Implementation
+
+@app.post("/api/v1/compliance-prediction", response_model=APIResponse)
+async def predict_compliance(
+    request: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Predict compliance violations using advanced temporal analysis and drift detection."""
+    start_time = time.time()
+    request_id = request.get('request_id', str(uuid.uuid4()))
+    
+    try:
+        logger.info("compliance_prediction_started", request_id=request_id)
+        
+        # Extract parameters
+        resource_data = request.get('resource_data', {})
+        horizon_hours = request.get('horizon_hours', 24)
+        
+        # Perform compliance prediction
+        prediction_results = await compliance_predictor.predict_compliance(
+            resource_data=resource_data,
+            horizon_hours=horizon_hours
+        )
+        
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name="compliance_predictor", status="success").inc()
+        MODEL_INFERENCE_DURATION.labels(model_name="compliance_predictor").observe(duration)
+        
+        logger.info("compliance_prediction_completed",
+                   request_id=request_id,
+                   duration_ms=round(duration * 1000, 2))
+        
+        return APIResponse(
+            success=True,
+            data=prediction_results,
+            message="Compliance prediction completed successfully"
+        )
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name="compliance_predictor", status="error").inc()
+        
+        logger.error("compliance_prediction_failed",
+                    request_id=request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Compliance prediction failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/cross-domain-correlation", response_model=APIResponse)
+async def analyze_cross_domain_correlations(
+    request: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Analyze cross-domain correlations with graph neural networks and impact prediction."""
+    start_time = time.time()
+    request_id = request.get('request_id', str(uuid.uuid4()))
+    
+    try:
+        logger.info("correlation_analysis_started", request_id=request_id)
+        
+        # Extract governance data
+        governance_data = request.get('governance_data', {})
+        
+        # Perform correlation analysis
+        correlation_results = await correlation_engine.analyze_governance_correlations(
+            governance_data=governance_data
+        )
+        
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name="correlation_engine", status="success").inc()
+        MODEL_INFERENCE_DURATION.labels(model_name="correlation_engine").observe(duration)
+        
+        logger.info("correlation_analysis_completed",
+                   request_id=request_id,
+                   duration_ms=round(duration * 1000, 2))
+        
+        return APIResponse(
+            success=True,
+            data=correlation_results,
+            message="Cross-domain correlation analysis completed successfully"
+        )
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name="correlation_engine", status="error").inc()
+        
+        logger.error("correlation_analysis_failed",
+                    request_id=request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Cross-domain correlation analysis failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/train-compliance-model", response_model=APIResponse)
+async def train_compliance_model(
+    request: Dict[str, Any],
+    background_tasks: BackgroundTasks,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Train the compliance prediction model with historical data."""
+    try:
+        logger.info("compliance_model_training_started")
+        
+        # Extract training data
+        historical_data = request.get('historical_data', {})
+        
+        # Start training in background
+        task_id = str(uuid.uuid4())
+        background_tasks.add_task(
+            compliance_predictor.train,
+            historical_data
+        )
+        
+        return APIResponse(
+            success=True,
+            data={
+                'task_id': task_id,
+                'status': 'training_started',
+                'message': 'Compliance model training started'
+            },
+            message="Training initiated successfully"
+        )
+        
+    except Exception as e:
+        logger.error("compliance_model_training_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start compliance model training: {str(e)}"
+        )
+
+
+@app.post("/api/v1/drift-detection", response_model=APIResponse)
+async def detect_configuration_drift(
+    request: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Detect configuration drift using VAE-based drift detection."""
+    start_time = time.time()
+    request_id = request.get('request_id', str(uuid.uuid4()))
+    
+    try:
+        logger.info("drift_detection_started", request_id=request_id)
+        
+        # Extract current configuration
+        current_config = request.get('current_config', {})
+        
+        # Perform drift detection
+        drift_results = await compliance_predictor.drift_detector.detect_drift(current_config)
+        
+        duration = time.time() - start_time
+        
+        logger.info("drift_detection_completed",
+                   request_id=request_id,
+                   drift_class=drift_results.get('drift_class'),
+                   duration_ms=round(duration * 1000, 2))
+        
+        return APIResponse(
+            success=True,
+            data=drift_results,
+            message="Configuration drift detection completed"
+        )
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        
+        logger.error("drift_detection_failed",
+                    request_id=request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Drift detection failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/temporal-analysis", response_model=APIResponse)
+async def analyze_temporal_patterns(
+    request: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Analyze temporal patterns in compliance data."""
+    start_time = time.time()
+    request_id = request.get('request_id', str(uuid.uuid4()))
+    
+    try:
+        logger.info("temporal_analysis_started", request_id=request_id)
+        
+        # Extract time series data
+        time_series_data = request.get('time_series', [])
+        
+        if not time_series_data:
+            raise ValueError("Time series data is required")
+        
+        # Convert to pandas Series
+        import pandas as pd
+        ts_data = pd.Series(time_series_data)
+        
+        # Perform temporal analysis
+        decomposition = await compliance_predictor.pattern_analyzer.decompose_time_series(ts_data)
+        motifs = await compliance_predictor.pattern_analyzer.discover_motifs(ts_data.values)
+        regime_changes = await compliance_predictor.pattern_analyzer.detect_regime_changes(ts_data.values)
+        
+        duration = time.time() - start_time
+        
+        results = {
+            'decomposition': decomposition,
+            'motifs': motifs[:5],  # Return top 5 motifs
+            'regime_changes': regime_changes,
+            'statistics': {
+                'data_points': len(time_series_data),
+                'motifs_found': len(motifs),
+                'regime_changes_found': len(regime_changes)
+            }
+        }
+        
+        logger.info("temporal_analysis_completed",
+                   request_id=request_id,
+                   motifs_found=len(motifs),
+                   regime_changes=len(regime_changes),
+                   duration_ms=round(duration * 1000, 2))
+        
+        return APIResponse(
+            success=True,
+            data=results,
+            message="Temporal pattern analysis completed"
+        )
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        
+        logger.error("temporal_analysis_failed",
+                    request_id=request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Temporal analysis failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/governance-insights", response_model=APIResponse)
+async def get_governance_insights(
+    domains: Optional[str] = None,
+    time_range: Optional[str] = "7d",
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get comprehensive governance insights across domains."""
+    try:
+        logger.info("governance_insights_requested",
+                   domains=domains,
+                   time_range=time_range)
+        
+        # Parse domains
+        selected_domains = domains.split(',') if domains else ['policy', 'rbac', 'network', 'cost']
+        
+        # Generate mock insights (in production, this would query real data)
+        insights = {
+            'summary': {
+                'total_resources': 1247,
+                'compliance_score': 87.3,
+                'risk_score': 6.2,
+                'cost_trend': '+3.2%',
+                'time_range': time_range
+            },
+            'domain_insights': {},
+            'correlations': {
+                'strong_correlations': [
+                    {'domains': ['policy', 'cost'], 'strength': 0.82},
+                    {'domains': ['rbac', 'network'], 'strength': 0.76}
+                ],
+                'risks': [
+                    {'type': 'cascade_risk', 'score': 7.1, 'affected_domains': ['policy', 'rbac']},
+                    {'type': 'volatility_risk', 'score': 5.8, 'affected_domains': ['cost']}
+                ]
+            },
+            'recommendations': [
+                {
+                    'type': 'policy_optimization',
+                    'priority': 'high',
+                    'description': 'Consolidate overlapping policies to reduce complexity',
+                    'expected_benefit': '15% reduction in compliance overhead'
+                },
+                {
+                    'type': 'cost_optimization',
+                    'priority': 'medium',
+                    'description': 'Right-size underutilized resources',
+                    'expected_benefit': '$12K monthly savings'
+                }
+            ]
+        }
+        
+        # Add domain-specific insights
+        for domain in selected_domains:
+            insights['domain_insights'][domain] = {
+                'status': 'healthy',
+                'score': np.random.uniform(75, 95),
+                'recent_changes': np.random.randint(5, 25),
+                'alerts': np.random.randint(0, 5)
+            }
+        
+        return APIResponse(
+            success=True,
+            data=insights,
+            message="Governance insights retrieved successfully"
+        )
+        
+    except Exception as e:
+        logger.error("governance_insights_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve governance insights: {str(e)}"
         )
 
 

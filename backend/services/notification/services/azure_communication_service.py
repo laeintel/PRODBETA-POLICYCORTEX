@@ -5,12 +5,12 @@ Azure Communication Services integration for email and SMS notifications.
 import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-import aioredis
+import redis.asyncio as redis
 import httpx
 import structlog
 import uuid
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import (
     EmailRequest,
     SMSRequest,
@@ -38,7 +38,7 @@ class AzureCommunicationService:
         """Initialize Azure Communication Services."""
         try:
             # Initialize Redis client
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

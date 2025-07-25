@@ -5,6 +5,8 @@ Central entry point for all microservices with authentication, routing, and moni
 
 import time
 import uuid
+import sys
+import os
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
@@ -19,22 +21,36 @@ from prometheus_client import Counter, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
-from shared.config import get_settings
-from shared.database import get_async_db, DatabaseUtils
-from .auth import AuthManager
-from .rate_limiter import RateLimiter
-from .circuit_breaker import CircuitBreaker
-from .models import (
-    HealthResponse, 
-    APIResponse, 
-    ErrorResponse,
-    ServiceRoute,
-    GatewayMetrics
-)
+# Add the backend directory to Python path for shared modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+try:
+    from shared.config import get_settings
+    from shared.database import get_async_db, DatabaseUtils
+    from .auth import AuthManager
+    from .rate_limiter import RateLimiter
+    from .circuit_breaker import CircuitBreaker
+    from .models import (
+        HealthResponse, 
+        APIResponse, 
+        ErrorResponse,
+        ServiceRoute,
+        GatewayMetrics
+    )
+except ImportError as e:
+    print(f"Failed to import modules: {e}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Python path: {sys.path}")
+    sys.exit(1)
 
 # Configuration
-settings = get_settings()
-logger = structlog.get_logger(__name__)
+try:
+    settings = get_settings()
+    logger = structlog.get_logger(__name__)
+    logger.info("API Gateway starting up", environment=settings.environment.value)
+except Exception as e:
+    print(f"Failed to initialize settings: {e}")
+    sys.exit(1)
 
 # Metrics
 REQUEST_COUNT = Counter('api_gateway_requests_total', 'Total API requests', ['method', 'endpoint', 'status'])

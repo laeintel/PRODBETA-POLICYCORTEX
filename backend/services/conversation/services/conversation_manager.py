@@ -7,7 +7,7 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
-import aioredis
+import redis.asyncio as redis
 import structlog
 from sqlalchemy import select, insert, update, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,10 +36,10 @@ class ConversationManager:
         self.session_timeout = timedelta(hours=4)  # Default session timeout
         self.max_context_length = 20  # Maximum messages in context
     
-    async def _get_redis_client(self) -> aioredis.Redis:
+    async def _get_redis_client(self) -> redis.Redis:
         """Get Redis client for session caching."""
         if self.redis_client is None:
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

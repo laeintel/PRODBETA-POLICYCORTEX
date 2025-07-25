@@ -6,7 +6,7 @@ Manages conversation context, history, and state for better response generation.
 import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-import aioredis
+import redis.asyncio as redis
 import structlog
 
 from ....shared.config import get_settings
@@ -30,10 +30,10 @@ class ContextManager:
         self.max_context_age = timedelta(hours=2)  # Maximum age for context relevance
         self.max_context_items = 10  # Maximum number of context items to keep
     
-    async def _get_redis_client(self) -> aioredis.Redis:
+    async def _get_redis_client(self) -> redis.Redis:
         """Get Redis client for context storage."""
         if self.redis_client is None:
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,

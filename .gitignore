@@ -135,4 +135,11 @@ test_simple.py
 secrets/ 
 create-github-secrets.ps1
 
+# Patent Documentation and Proprietary Materials
+Project_viewpoint/
+C:\Users\LeonardEsere\Documents\AeoliTech\policycortex\Project_viewpoint/
+**/Project_viewpoint/**
+*.patent
+*.proprietary
+
 nul

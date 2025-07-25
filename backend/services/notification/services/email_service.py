@@ -17,11 +17,11 @@ import structlog
 from pathlib import Path
 import uuid
 import json
-import aioredis
+import redis.asyncio as redis
 import aiofiles
 import base64
 
-from ....shared.config import get_settings
+from shared.config import get_settings
 from ..models import (
     EmailRequest, 
     NotificationResponse, 
@@ -48,7 +48,7 @@ class EmailService:
         """Initialize the email service."""
         try:
             # Initialize Redis client
-            self.redis_client = aioredis.from_url(
+            self.redis_client = redis.from_url(
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,
