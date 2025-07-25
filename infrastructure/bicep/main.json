@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.36.1.42791",
-      "templateHash": "8109557144213613836"
+      "templateHash": "241706090838857523"
     }
   },
   "parameters": {
@@ -2439,7 +2439,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "8948281121947907242"
+              "templateHash": "8889746022318881010"
             }
           },
           "parameters": {
@@ -2527,18 +2527,40 @@
                 "managedEnvironmentId": "[parameters('containerAppsEnvironmentId')]",
                 "workloadProfileName": "[variables('services')[copyIndex()].workloadProfile]",
                 "configuration": {
-                  "ingress": "[if(variables('services')[copyIndex()].ingress, createObject('external', variables('services')[copyIndex()].external, 'targetPort', variables('services')[copyIndex()].port, 'allowInsecure', false(), 'traffic', createArray(createObject('latestRevision', true(), 'weight', 100))), null())]"
+                  "ingress": "[if(variables('services')[copyIndex()].ingress, createObject('external', variables('services')[copyIndex()].external, 'targetPort', variables('services')[copyIndex()].port, 'allowInsecure', false(), 'traffic', createArray(createObject('latestRevision', true(), 'weight', 100))), null())]",
+                  "secrets": [
+                    {
+                      "name": "jwt-secret",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/jwt-secret', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "encryption-key",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/encryption-key', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "azure-client-id",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/azure-client-id', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    },
+                    {
+                      "name": "azure-tenant-id",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/azure-tenant-id', parameters('keyVaultName'))]",
+                      "identity": "[parameters('userAssignedIdentityId')]"
+                    }
+                  ]
                 },
                 "template": {
                   "containers": [
                     {
                       "name": "[variables('services')[copyIndex()].name]",
-                      "image": "[if(equals(variables('services')[copyIndex()].name, 'frontend'), 'nginx:alpine', 'nginx:alpine')]",
+                      "image": "[format('{0}/policortex001-{1}:latest', parameters('containerRegistryLoginServer'), variables('services')[copyIndex()].name)]",
                       "resources": {
                         "cpu": "[json(variables('services')[copyIndex()].cpu)]",
                         "memory": "[variables('services')[copyIndex()].memory]"
                       },
-                      "env": "[if(equals(variables('services')[copyIndex()].name, 'frontend'), createArray(createObject('name', 'ENVIRONMENT', 'value', parameters('environment')), createObject('name', 'SERVICE_NAME', 'value', variables('services')[copyIndex()].name), createObject('name', 'PORT', 'value', string(variables('services')[copyIndex()].port)), createObject('name', 'LOG_LEVEL', 'value', 'INFO'), createObject('name', 'VITE_API_BASE_URL', 'value', format('https://ca-api-gateway-{0}.{1}/api', parameters('environment'), parameters('containerAppsEnvironmentDefaultDomain'))), createObject('name', 'VITE_WS_URL', 'value', format('wss://ca-api-gateway-{0}.{1}/ws', parameters('environment'), parameters('containerAppsEnvironmentDefaultDomain'))), createObject('name', 'VITE_AZURE_CLIENT_ID', 'value', 'placeholder-client-id'), createObject('name', 'VITE_AZURE_TENANT_ID', 'value', 'placeholder-tenant-id'), createObject('name', 'VITE_AZURE_REDIRECT_URI', 'value', format('https://ca-frontend-{0}.{1}', parameters('environment'), parameters('containerAppsEnvironmentDefaultDomain'))), createObject('name', 'VITE_APP_VERSION', 'value', '1.0.0')), createArray(createObject('name', 'ENVIRONMENT', 'value', parameters('environment')), createObject('name', 'SERVICE_NAME', 'value', variables('services')[copyIndex()].name), createObject('name', 'PORT', 'value', string(variables('services')[copyIndex()].port)), createObject('name', 'LOG_LEVEL', 'value', 'INFO'), createObject('name', 'JWT_SECRET', 'value', 'placeholder-jwt-secret'), createObject('name', 'ENCRYPTION_KEY', 'value', 'placeholder-encryption-key')))]"
+                      "env": "[if(equals(variables('services')[copyIndex()].name, 'frontend'), createArray(createObject('name', 'ENVIRONMENT', 'value', parameters('environment')), createObject('name', 'SERVICE_NAME', 'value', variables('services')[copyIndex()].name), createObject('name', 'PORT', 'value', string(variables('services')[copyIndex()].port)), createObject('name', 'LOG_LEVEL', 'value', 'INFO'), createObject('name', 'VITE_API_BASE_URL', 'value', format('https://ca-api-gateway-{0}.{1}/api', parameters('environment'), parameters('containerAppsEnvironmentDefaultDomain'))), createObject('name', 'VITE_WS_URL', 'value', format('wss://ca-api-gateway-{0}.{1}/ws', parameters('environment'), parameters('containerAppsEnvironmentDefaultDomain'))), createObject('name', 'VITE_AZURE_CLIENT_ID', 'secretRef', 'azure-client-id'), createObject('name', 'VITE_AZURE_TENANT_ID', 'secretRef', 'azure-tenant-id'), createObject('name', 'VITE_AZURE_REDIRECT_URI', 'value', format('https://ca-frontend-{0}.{1}', parameters('environment'), parameters('containerAppsEnvironmentDefaultDomain'))), createObject('name', 'VITE_APP_VERSION', 'value', '1.0.0')), createArray(createObject('name', 'ENVIRONMENT', 'value', parameters('environment')), createObject('name', 'SERVICE_NAME', 'value', variables('services')[copyIndex()].name), createObject('name', 'PORT', 'value', string(variables('services')[copyIndex()].port)), createObject('name', 'LOG_LEVEL', 'value', 'INFO'), createObject('name', 'JWT_SECRET', 'secretRef', 'jwt-secret'), createObject('name', 'ENCRYPTION_KEY', 'secretRef', 'encryption-key')))]"
                     }
                   ],
                   "scale": {
