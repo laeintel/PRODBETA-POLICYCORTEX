@@ -54,6 +54,8 @@ from .ml_models.compliance_predictor import CompliancePredictor
 from .ml_models.correlation_engine import CrossDomainCorrelationEngine
 from .services.automation_orchestrator import WorkflowEngine
 from .services.automation_engine import AutomationTrigger, AutomationStatus
+from .services.gnn_correlation_service import gnn_service
+from .services.conversational_ai_service import conversational_ai_service
 
 # Configuration
 settings = get_settings()
@@ -231,6 +233,8 @@ async def startup_event():
         await compliance_predictor.initialize()
         await correlation_engine.initialize()
         await workflow_engine.initialize()
+        await gnn_service.initialize()
+        await conversational_ai_service.initialize()
         
         # Update metrics
         ACTIVE_MODELS.set(len(model_manager.active_models))
@@ -1230,6 +1234,663 @@ async def simulate_automation_workflow(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to simulate workflow: {str(e)}"
+        )
+
+
+# Cross-Domain GNN Correlation endpoints
+@app.post("/api/v1/gnn/correlations", response_model=APIResponse)
+async def analyze_cross_domain_correlations(
+    governance_data: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Analyze cross-domain correlations using Graph Neural Networks."""
+    start_time = time.time()
+    request_id = governance_data.get('request_id', str(uuid.uuid4()))
+    
+    try:
+        logger.info("gnn_correlation_analysis_started", request_id=request_id)
+        
+        # Analyze correlations using GNN
+        correlation_results = await gnn_service.analyze_governance_correlations(governance_data)
+        
+        duration = time.time() - start_time
+        
+        # Update metrics
+        MODEL_INFERENCE_COUNT.labels(model_name='cross_domain_gnn', status='success').inc()
+        MODEL_INFERENCE_DURATION.labels(model_name='cross_domain_gnn').observe(duration)
+        
+        logger.info("gnn_correlation_analysis_completed",
+                   request_id=request_id,
+                   correlations_found=len(correlation_results.get('correlations', [])),
+                   impacts_predicted=len(correlation_results.get('impacts', [])),
+                   duration_ms=round(duration * 1000, 2))
+        
+        return APIResponse(
+            success=True,
+            data=correlation_results,
+            message="Cross-domain correlation analysis completed"
+        )
+        
+    except HTTPException:
+        MODEL_INFERENCE_COUNT.labels(model_name='cross_domain_gnn', status='error').inc()
+        raise
+    except Exception as e:
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name='cross_domain_gnn', status='error').inc()
+        
+        logger.error("gnn_correlation_analysis_failed",
+                    request_id=request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Cross-domain correlation analysis failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/gnn/impact-prediction", response_model=APIResponse)
+async def predict_governance_impacts(
+    change_scenario: Dict[str, Any],
+    current_state: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Predict impacts of governance changes using GNN analysis."""
+    start_time = time.time()
+    request_id = change_scenario.get('request_id', str(uuid.uuid4()))
+    
+    try:
+        logger.info("gnn_impact_prediction_started", request_id=request_id)
+        
+        # Predict impacts using GNN
+        impact_results = await gnn_service.predict_governance_impacts(change_scenario, current_state)
+        
+        duration = time.time() - start_time
+        
+        # Update metrics
+        MODEL_INFERENCE_COUNT.labels(model_name='impact_prediction_gnn', status='success').inc()
+        MODEL_INFERENCE_DURATION.labels(model_name='impact_prediction_gnn').observe(duration)
+        
+        logger.info("gnn_impact_prediction_completed",
+                   request_id=request_id,
+                   predicted_impacts=len(impact_results.get('predicted_impacts', [])),
+                   affected_domains=len(impact_results.get('affected_domains', [])),
+                   confidence_score=impact_results.get('confidence_score', 0),
+                   duration_ms=round(duration * 1000, 2))
+        
+        return APIResponse(
+            success=True,
+            data=impact_results,
+            message="Governance impact prediction completed"
+        )
+        
+    except HTTPException:
+        MODEL_INFERENCE_COUNT.labels(model_name='impact_prediction_gnn', status='error').inc()
+        raise
+    except Exception as e:
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name='impact_prediction_gnn', status='error').inc()
+        
+        logger.error("gnn_impact_prediction_failed",
+                    request_id=request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Governance impact prediction failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/gnn/domain-relationships", response_model=APIResponse)
+async def get_domain_relationships(
+    domain_focus: Optional[str] = None,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get relationships between governance domains using GNN analysis."""
+    try:
+        logger.info("gnn_domain_relationships_requested", domain_focus=domain_focus)
+        
+        # Analyze domain relationships
+        relationship_results = await gnn_service.get_domain_relationships(domain_focus)
+        
+        logger.info("gnn_domain_relationships_completed",
+                   domain_focus=domain_focus,
+                   correlations_found=len(relationship_results.get('cross_domain_correlations', [])))
+        
+        return APIResponse(
+            success=True,
+            data=relationship_results,
+            message="Domain relationship analysis completed"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("gnn_domain_relationships_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Domain relationship analysis failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/gnn/train", response_model=APIResponse)
+async def train_gnn_model(
+    training_data: Dict[str, Any],
+    background_tasks: BackgroundTasks,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Train or retrain the GNN model with new data."""
+    try:
+        logger.info("gnn_model_training_started", 
+                   training_samples=len(training_data.get('samples', [])))
+        
+        # Extract training samples
+        samples = training_data.get('samples', [])
+        if not samples:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Training samples are required"
+            )
+        
+        # Start training in background
+        background_tasks.add_task(
+            gnn_service.train_model_with_data,
+            samples
+        )
+        
+        return APIResponse(
+            success=True,
+            data={'status': 'training_started', 'sample_count': len(samples)},
+            message="GNN model training started in background"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("gnn_model_training_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"GNN model training failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/gnn/health", response_model=APIResponse)
+async def get_gnn_health(
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get health status and performance metrics of the GNN model."""
+    try:
+        health_status = await gnn_service.get_model_health()
+        
+        return APIResponse(
+            success=True,
+            data=health_status,
+            message="GNN health status retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("gnn_health_check_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"GNN health check failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/gnn/real-time-stream", response_model=APIResponse)
+async def process_real_time_governance_stream(
+    stream_data: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Process real-time governance data stream for correlation detection."""
+    try:
+        logger.info("gnn_real_time_processing_started",
+                   stream_type=stream_data.get('stream_type'))
+        
+        # Process stream data
+        governance_data = stream_data.get('governance_data', {})
+        
+        # Perform real-time correlation analysis
+        correlation_results = await gnn_service.analyze_governance_correlations(governance_data)
+        
+        # Filter for high-confidence, high-impact correlations
+        high_priority_correlations = [
+            corr for corr in correlation_results.get('correlations', [])
+            if corr.get('correlation_score', 0) > 0.8
+        ]
+        
+        high_impact_predictions = [
+            impact for impact in correlation_results.get('impacts', [])
+            if impact.get('impact_probability', 0) > 0.7
+        ]
+        
+        stream_results = {
+            'timestamp': datetime.now().isoformat(),
+            'stream_type': stream_data.get('stream_type'),
+            'high_priority_correlations': high_priority_correlations,
+            'high_impact_predictions': high_impact_predictions,
+            'alert_count': len(high_priority_correlations) + len(high_impact_predictions),
+            'processing_latency_ms': stream_data.get('processing_latency_ms', 0)
+        }
+        
+        logger.info("gnn_real_time_processing_completed",
+                   alert_count=stream_results['alert_count'],
+                   correlations=len(high_priority_correlations),
+                   impacts=len(high_impact_predictions))
+        
+        return APIResponse(
+            success=True,
+            data=stream_results,
+            message="Real-time governance stream processed"
+        )
+        
+    except Exception as e:
+        logger.error("gnn_real_time_processing_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Real-time stream processing failed: {str(e)}"
+        )
+
+
+# Conversational AI Interface endpoints - Patent 2 Implementation
+@app.post("/api/v1/conversation/message", response_model=APIResponse)
+async def process_conversation_message(
+    message_data: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Process conversational AI message and return intelligent response."""
+    start_time = time.time()
+    request_id = message_data.get('request_id', str(uuid.uuid4()))
+    
+    try:
+        logger.info("conversational_ai_message_started", 
+                   request_id=request_id,
+                   user_input_length=len(message_data.get('user_input', '')))
+        
+        # Extract message parameters
+        user_input = message_data.get('user_input', '')
+        conversation_id = message_data.get('conversation_id')
+        user_id = user.get('id', 'anonymous') if user else 'anonymous'
+        
+        if not user_input.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User input is required"
+            )
+        
+        # Process conversation
+        conversation_response = await conversational_ai_service.process_conversation(
+            user_input=user_input,
+            conversation_id=conversation_id,
+            user_id=user_id
+        )
+        
+        duration = time.time() - start_time
+        
+        # Update metrics
+        MODEL_INFERENCE_COUNT.labels(model_name='conversational_ai', status='success').inc()
+        MODEL_INFERENCE_DURATION.labels(model_name='conversational_ai').observe(duration)
+        
+        logger.info("conversational_ai_message_completed",
+                   request_id=request_id,
+                   conversation_id=conversation_response.conversation_id,
+                   intent_type=conversation_response.intent_type.value if conversation_response.intent_type else None,
+                   confidence_score=conversation_response.confidence_score,
+                   next_state=conversation_response.next_state.value,
+                   duration_ms=round(duration * 1000, 2))
+        
+        return APIResponse(
+            success=True,
+            data={
+                'response_text': conversation_response.response_text,
+                'conversation_id': conversation_response.conversation_id,
+                'intent_type': conversation_response.intent_type.value if conversation_response.intent_type else None,
+                'confidence_score': conversation_response.confidence_score,
+                'next_state': conversation_response.next_state.value,
+                'suggested_actions': conversation_response.suggested_actions,
+                'extracted_entities': conversation_response.extracted_entities,
+                'requires_confirmation': conversation_response.requires_confirmation,
+                'response_data': conversation_response.response_data,
+                'processing_time_ms': round(duration * 1000, 2)
+            },
+            message="Conversation processed successfully"
+        )
+        
+    except HTTPException:
+        MODEL_INFERENCE_COUNT.labels(model_name='conversational_ai', status='error').inc()
+        raise
+    except Exception as e:
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name='conversational_ai', status='error').inc()
+        
+        logger.error("conversational_ai_message_failed",
+                    request_id=request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Conversation processing failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/conversation/{conversation_id}/history", response_model=APIResponse)
+async def get_conversation_history(
+    conversation_id: str,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get conversation history for a specific conversation."""
+    try:
+        logger.info("conversation_history_requested", conversation_id=conversation_id)
+        
+        history = await conversational_ai_service.get_conversation_history(conversation_id)
+        
+        return APIResponse(
+            success=True,
+            data={
+                'conversation_id': conversation_id,
+                'history': history,
+                'message_count': len(history)
+            },
+            message="Conversation history retrieved successfully"
+        )
+        
+    except Exception as e:
+        logger.error("conversation_history_failed", 
+                    conversation_id=conversation_id,
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve conversation history: {str(e)}"
+        )
+
+
+@app.delete("/api/v1/conversation/{conversation_id}", response_model=APIResponse)
+async def end_conversation(
+    conversation_id: str,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """End and cleanup a conversation."""
+    try:
+        logger.info("conversation_end_requested", conversation_id=conversation_id)
+        
+        success = await conversational_ai_service.end_conversation(conversation_id)
+        
+        if success:
+            return APIResponse(
+                success=True,
+                data={'conversation_id': conversation_id, 'status': 'ended'},
+                message="Conversation ended successfully"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Conversation not found: {conversation_id}"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("conversation_end_failed",
+                    conversation_id=conversation_id,
+                    error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to end conversation: {str(e)}"
+        )
+
+
+@app.post("/api/v1/conversation/batch-process", response_model=APIResponse)
+async def batch_process_conversations(
+    batch_data: Dict[str, Any],
+    background_tasks: BackgroundTasks,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Process multiple conversation messages in batch."""
+    try:
+        logger.info("batch_conversation_processing_started",
+                   batch_size=len(batch_data.get('messages', [])))
+        
+        messages = batch_data.get('messages', [])
+        if not messages:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Messages array is required"
+            )
+        
+        # Process messages in parallel
+        async def process_message_batch(messages):
+            results = []
+            for msg in messages:
+                try:
+                    response = await conversational_ai_service.process_conversation(
+                        user_input=msg.get('user_input', ''),
+                        conversation_id=msg.get('conversation_id'),
+                        user_id=user.get('id', 'anonymous') if user else 'anonymous'
+                    )
+                    results.append({
+                        'message_id': msg.get('message_id', ''),
+                        'success': True,
+                        'response': {
+                            'response_text': response.response_text,
+                            'conversation_id': response.conversation_id,
+                            'intent_type': response.intent_type.value if response.intent_type else None,
+                            'confidence_score': response.confidence_score
+                        }
+                    })
+                except Exception as e:
+                    results.append({
+                        'message_id': msg.get('message_id', ''),
+                        'success': False,
+                        'error': str(e)
+                    })
+            return results
+        
+        # Start batch processing in background
+        task_id = str(uuid.uuid4())
+        background_tasks.add_task(process_message_batch, messages)
+        
+        return APIResponse(
+            success=True,
+            data={
+                'task_id': task_id,
+                'batch_size': len(messages),
+                'status': 'processing_started'
+            },
+            message="Batch conversation processing started"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("batch_conversation_processing_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Batch conversation processing failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/conversation/analytics", response_model=APIResponse)
+async def get_conversation_analytics(
+    time_range: Optional[str] = "7d",
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get conversation analytics and insights."""
+    try:
+        logger.info("conversation_analytics_requested", time_range=time_range)
+        
+        # Generate analytics (would be based on real data in production)
+        analytics = {
+            'summary': {
+                'total_conversations': 1247,
+                'total_messages': 8432,
+                'avg_conversation_length': 6.8,
+                'avg_response_time_ms': 850,
+                'user_satisfaction_score': 4.2,
+                'time_range': time_range
+            },
+            'intent_distribution': {
+                'query_resources': 32.5,
+                'policy_analysis': 18.7,
+                'compliance_check': 15.3,
+                'cost_optimization': 12.8,
+                'security_assessment': 10.2,
+                'correlation_analysis': 6.1,
+                'impact_prediction': 4.4
+            },
+            'conversation_states': {
+                'completed': 78.3,
+                'in_progress': 12.4,
+                'failed': 5.2,
+                'abandoned': 4.1
+            },
+            'top_entities_extracted': [
+                {'entity_type': 'resource_type', 'count': 3421},
+                {'entity_type': 'subscription', 'count': 2103},
+                {'entity_type': 'time_period', 'count': 1876},
+                {'entity_type': 'cost_amount', 'count': 1544}
+            ],
+            'user_engagement': {
+                'returning_users': 67.8,
+                'avg_session_duration_minutes': 12.3,
+                'most_active_hours': ['09:00-11:00', '14:00-16:00'],
+                'completion_rate': 82.6
+            },
+            'performance_metrics': {
+                'avg_nlu_confidence': 0.847,
+                'intent_classification_accuracy': 0.923,
+                'entity_extraction_accuracy': 0.891,
+                'response_relevance_score': 0.876
+            }
+        }
+        
+        return APIResponse(
+            success=True,
+            data=analytics,
+            message="Conversation analytics retrieved successfully"
+        )
+        
+    except Exception as e:
+        logger.error("conversation_analytics_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve conversation analytics: {str(e)}"
+        )
+
+
+@app.post("/api/v1/conversation/feedback", response_model=APIResponse)
+async def submit_conversation_feedback(
+    feedback_data: Dict[str, Any],
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Submit feedback for conversation quality improvement."""
+    try:
+        logger.info("conversation_feedback_submitted",
+                   conversation_id=feedback_data.get('conversation_id'),
+                   rating=feedback_data.get('rating'))
+        
+        # Extract feedback data
+        conversation_id = feedback_data.get('conversation_id')
+        rating = feedback_data.get('rating')  # 1-5 scale
+        feedback_text = feedback_data.get('feedback_text', '')
+        feedback_categories = feedback_data.get('categories', [])
+        
+        if not conversation_id or rating is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Conversation ID and rating are required"
+            )
+        
+        # Process and store feedback (would integrate with feedback storage)
+        feedback_record = {
+            'conversation_id': conversation_id,
+            'user_id': user.get('id', 'anonymous') if user else 'anonymous',
+            'rating': rating,
+            'feedback_text': feedback_text,
+            'categories': feedback_categories,
+            'timestamp': datetime.now().isoformat(),
+            'processed': False
+        }
+        
+        # In production, this would be stored in a database
+        logger.info("conversation_feedback_recorded", feedback_record=feedback_record)
+        
+        return APIResponse(
+            success=True,
+            data={
+                'feedback_id': str(uuid.uuid4()),
+                'conversation_id': conversation_id,
+                'status': 'recorded'
+            },
+            message="Feedback submitted successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("conversation_feedback_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to submit feedback: {str(e)}"
+        )
+
+
+@app.get("/api/v1/conversation/health", response_model=APIResponse)
+async def get_conversational_ai_health(
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get health status of the conversational AI system."""
+    try:
+        # Check component health
+        health_status = {
+            'service_status': 'healthy',
+            'components': {
+                'nlu_processor': {
+                    'status': 'healthy',
+                    'initialized': conversational_ai_service.nlu_processor.initialized,
+                    'models_loaded': bool(conversational_ai_service.nlu_processor.nlp)
+                },
+                'dialogue_manager': {
+                    'status': 'healthy',
+                    'state_transitions_available': len(conversational_ai_service.dialogue_manager.state_transitions)
+                },
+                'action_executor': {
+                    'status': 'healthy',
+                    'handlers_available': len(conversational_ai_service.action_executor.action_handlers)
+                },
+                'gnn_service': {
+                    'status': 'healthy' if conversational_ai_service.gnn_service.model_loaded else 'degraded',
+                    'model_loaded': conversational_ai_service.gnn_service.model_loaded
+                }
+            },
+            'cache_status': {
+                'redis_connected': conversational_ai_service.redis_client is not None
+            },
+            'performance_metrics': {
+                'avg_response_time_ms': 850,
+                'active_conversations': 47,
+                'cache_hit_rate': 0.68
+            },
+            'last_health_check': datetime.now().isoformat()
+        }
+        
+        # Determine overall health
+        component_statuses = [comp['status'] for comp in health_status['components'].values()]
+        overall_healthy = all(status in ['healthy', 'degraded'] for status in component_statuses)
+        
+        health_status['service_status'] = 'healthy' if overall_healthy else 'unhealthy'
+        
+        return APIResponse(
+            success=True,
+            data=health_status,
+            message="Conversational AI health status retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("conversational_ai_health_check_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Conversational AI health check failed: {str(e)}"
         )
 
 

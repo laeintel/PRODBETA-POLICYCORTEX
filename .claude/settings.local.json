@@ -142,7 +142,9 @@
       "Bash(do echo \"=== $service ===\")",
       "Bash(for app in ca-api-gateway-dev ca-azure-integration-dev ca-ai-engine-dev ca-conversation-dev ca-notification-dev ca-data-processing-dev ca-frontend-dev)",
       "Bash(echo:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(for service in ca-azure-integration-dev ca-conversation-dev ca-api-gateway-dev ca-data-processing-dev ca-notification-dev)",
+      "Bash(do echo \"Updating $service...\")"
     ],
     "deny": []
   }
