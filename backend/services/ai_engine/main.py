@@ -20,8 +20,8 @@ from prometheus_client import Counter, Histogram, Gauge, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
-from shared.config import get_settings
-from shared.database import get_async_db, DatabaseUtils
+from backend.shared.config import get_settings
+from backend.shared.database import get_async_db, DatabaseUtils
 from .auth import AuthManager
 from .models import (
     HealthResponse,

@@ -23,8 +23,9 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire backend directory structure
 COPY . /app/
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r /app/services/ai_engine/requirements.txt
+# Install Python dependencies (use minimal for faster builds)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/services/ai_engine/requirements-minimal.txt
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs
