@@ -56,6 +56,8 @@ from .services.automation_orchestrator import WorkflowEngine
 from .services.automation_engine import AutomationTrigger, AutomationStatus
 from .services.gnn_correlation_service import gnn_service
 from .services.conversational_ai_service import conversational_ai_service
+from .services.multi_objective_optimizer import multi_objective_optimizer
+from .services.automation_orchestrator import automation_orchestrator
 
 # Configuration
 settings = get_settings()
@@ -235,6 +237,18 @@ async def startup_event():
         await workflow_engine.initialize()
         await gnn_service.initialize()
         await conversational_ai_service.initialize()
+        
+        # Initialize Patent 2 components
+        await multi_objective_optimizer.initialize(
+            resource_analyzer=cost_optimizer,
+            compliance_checker=compliance_predictor,
+            performance_monitor=model_monitor
+        )
+        await automation_orchestrator.initialize(
+            resource_manager=cost_optimizer,
+            policy_engine=compliance_predictor,
+            security_service=anomaly_detector
+        )
         
         # Update metrics
         ACTIVE_MODELS.set(len(model_manager.active_models))
@@ -1891,6 +1905,320 @@ async def get_conversational_ai_health(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Conversational AI health check failed: {str(e)}"
+        )
+
+
+# Multi-Objective Optimization endpoints (Patent 2)
+@app.post("/api/v1/optimization/multi-objective", 
+          response_model=APIResponse,
+          status_code=status.HTTP_200_OK,
+          tags=["optimization"])
+async def run_multi_objective_optimization(
+    request: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    """Run multi-objective optimization for governance scenarios."""
+    request_id = str(uuid.uuid4())
+    
+    try:
+        logger.info("multi_objective_optimization_request", request_id=request_id)
+        
+        # Extract parameters
+        objectives = []
+        for obj_data in request.get('objectives', []):
+            from .services.multi_objective_optimizer import Objective, ObjectiveType
+            objectives.append(Objective(
+                name=obj_data['name'],
+                type=ObjectiveType(obj_data['type']),
+                weight=obj_data.get('weight', 1.0),
+                target_value=obj_data.get('target_value'),
+                importance=obj_data.get('importance', 1.0)
+            ))
+        
+        constraints = []
+        for constr_data in request.get('constraints', []):
+            from .services.multi_objective_optimizer import Constraint, ConstraintType
+            constraints.append(Constraint(
+                name=constr_data['name'],
+                type=ConstraintType(constr_data['type']),
+                min_value=constr_data.get('min_value'),
+                max_value=constr_data.get('max_value'),
+                is_hard=constr_data.get('is_hard', True),
+                penalty_weight=constr_data.get('penalty_weight', 1.0)
+            ))
+        
+        decision_variables = request.get('decision_variables', {})
+        algorithm = request.get('algorithm', 'nsga2')
+        selection_method = request.get('selection_method', 'weighted_sum')
+        
+        # Run optimization
+        result = await multi_objective_optimizer.optimize(
+            objectives=objectives,
+            constraints=constraints,
+            decision_variables=decision_variables,
+            algorithm=algorithm,
+            selection_method=selection_method,
+            max_generations=request.get('max_generations', 100),
+            population_size=request.get('population_size', 100)
+        )
+        
+        return APIResponse(
+            status="success",
+            data={
+                'solution_id': result.solution_id,
+                'selected_solution': result.selected_solution,
+                'pareto_front_size': len(result.pareto_front),
+                'optimization_time': result.optimization_time,
+                'metadata': result.metadata
+            },
+            message="Multi-objective optimization completed successfully"
+        )
+        
+    except Exception as e:
+        logger.error("multi_objective_optimization_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Multi-objective optimization failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/optimization/history",
+         response_model=APIResponse,
+         tags=["optimization"])
+async def get_optimization_history(
+    limit: int = 10,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get optimization history."""
+    try:
+        history = await multi_objective_optimizer.get_optimization_history(limit=limit)
+        
+        return APIResponse(
+            status="success",
+            data={
+                'history': [
+                    {
+                        'solution_id': h.solution_id,
+                        'objectives': [obj.name for obj in h.objectives],
+                        'optimization_time': h.optimization_time,
+                        'metadata': h.metadata
+                    }
+                    for h in history
+                ]
+            },
+            message="Optimization history retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("get_optimization_history_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get optimization history: {str(e)}"
+        )
+
+
+@app.post("/api/v1/optimization/apply/{solution_id}",
+          response_model=APIResponse,
+          tags=["optimization"])
+async def apply_optimization_solution(
+    solution_id: str,
+    dry_run: bool = True,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Apply an optimization solution."""
+    try:
+        result = await multi_objective_optimizer.apply_solution(
+            solution_id=solution_id,
+            dry_run=dry_run
+        )
+        
+        return APIResponse(
+            status="success",
+            data=result,
+            message=f"Solution {'preview' if dry_run else 'applied'} successfully"
+        )
+        
+    except Exception as e:
+        logger.error("apply_optimization_solution_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to apply solution: {str(e)}"
+        )
+
+
+# Automation Orchestrator endpoints (Patent 2)
+@app.post("/api/v1/automation/workflow",
+          response_model=APIResponse,
+          tags=["automation"])
+async def create_automation_workflow(
+    workflow_data: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Create an automation workflow."""
+    try:
+        from .services.automation_orchestrator import AutomationWorkflow, TriggerType
+        
+        # Parse workflow data
+        workflow = AutomationWorkflow(
+            workflow_id=workflow_data.get('workflow_id'),
+            name=workflow_data['name'],
+            description=workflow_data['description'],
+            trigger=workflow_data['trigger'],
+            actions=[],  # Parse actions from workflow_data
+            conditions=workflow_data.get('conditions', []),
+            max_execution_time=workflow_data.get('max_execution_time', 3600),
+            auto_rollback=workflow_data.get('auto_rollback', True),
+            approval_required=workflow_data.get('approval_required', False)
+        )
+        
+        workflow_id = await automation_orchestrator.create_workflow(workflow)
+        
+        return APIResponse(
+            status="success",
+            data={'workflow_id': workflow_id},
+            message="Workflow created successfully"
+        )
+        
+    except Exception as e:
+        logger.error("create_automation_workflow_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create workflow: {str(e)}"
+        )
+
+
+@app.post("/api/v1/automation/workflow/{workflow_id}/execute",
+          response_model=APIResponse,
+          tags=["automation"])
+async def execute_automation_workflow(
+    workflow_id: str,
+    parameters: Dict[str, Any] = {},
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Execute an automation workflow."""
+    try:
+        execution_id = await automation_orchestrator.execute_workflow(
+            workflow_id=workflow_id,
+            parameters=parameters
+        )
+        
+        return APIResponse(
+            status="success",
+            data={'execution_id': execution_id},
+            message="Workflow execution started"
+        )
+        
+    except Exception as e:
+        logger.error("execute_automation_workflow_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to execute workflow: {str(e)}"
+        )
+
+
+@app.post("/api/v1/automation/optimize",
+          response_model=APIResponse,
+          tags=["automation"])
+async def trigger_optimization_workflow(
+    objectives: List[str],
+    constraints: List[str],
+    parameters: Dict[str, Any] = {},
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Trigger an optimization-based automation workflow."""
+    try:
+        execution_id = await automation_orchestrator.trigger_optimization_workflow(
+            objectives=objectives,
+            constraints=constraints,
+            parameters=parameters
+        )
+        
+        return APIResponse(
+            status="success",
+            data={'execution_id': execution_id},
+            message="Optimization workflow triggered"
+        )
+        
+    except Exception as e:
+        logger.error("trigger_optimization_workflow_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to trigger optimization workflow: {str(e)}"
+        )
+
+
+@app.get("/api/v1/automation/workflow/{workflow_id}/status",
+         response_model=APIResponse,
+         tags=["automation"])
+async def get_workflow_status(
+    workflow_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get workflow status."""
+    try:
+        status_info = await automation_orchestrator.get_workflow_status(workflow_id)
+        
+        return APIResponse(
+            status="success",
+            data=status_info,
+            message="Workflow status retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("get_workflow_status_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get workflow status: {str(e)}"
+        )
+
+
+@app.delete("/api/v1/automation/execution/{execution_id}",
+            response_model=APIResponse,
+            tags=["automation"])
+async def cancel_workflow_execution(
+    execution_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Cancel a workflow execution."""
+    try:
+        result = await automation_orchestrator.cancel_execution(execution_id)
+        
+        return APIResponse(
+            status="success",
+            data=result,
+            message="Execution cancelled"
+        )
+        
+    except Exception as e:
+        logger.error("cancel_workflow_execution_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to cancel execution: {str(e)}"
+        )
+
+
+@app.get("/api/v1/automation/insights",
+         response_model=APIResponse,
+         tags=["automation"])
+async def get_optimization_insights(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get insights from optimization workflows."""
+    try:
+        insights = await automation_orchestrator.get_optimization_insights()
+        
+        return APIResponse(
+            status="success",
+            data=insights,
+            message="Optimization insights retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("get_optimization_insights_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get optimization insights: {str(e)}"
         )
 
 
