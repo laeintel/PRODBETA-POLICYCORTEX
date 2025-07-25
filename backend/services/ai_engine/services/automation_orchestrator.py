@@ -1,32 +1,933 @@
 """
-Intelligent Automation Orchestrator for PolicyCortex.
-Orchestrates complex automation workflows for governance scenarios.
+Automation Orchestrator
+Part of Patent 2: Unified AI-Driven Platform with Multi-Objective Optimization
+Enhanced with multi-objective optimization integration
 """
 
 import asyncio
-import json
 import uuid
+from typing import List, Dict, Any, Optional, Set, Tuple
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, field
-import structlog
-from .automation_engine import (
-    AutomationAction, AutomationWorkflow, AutomationExecution, 
-    AutomationTrigger, AutomationStatus, ActionPriority, ActionExecutor
-)
+from enum import Enum
+import logging
+import json
+from collections import defaultdict
+import networkx as nx
+import numpy as np
+from concurrent.futures import ThreadPoolExecutor
 
-logger = structlog.get_logger(__name__)
+from backend.core.config import settings
+from backend.core.redis_client import redis_client
+from backend.core.exceptions import APIError
+
+logger = logging.getLogger(__name__)
+
+
+class AutomationState(str, Enum):
+    """States of automation workflows"""
+    PENDING = "pending"
+    RUNNING = "running"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    PARTIALLY_COMPLETED = "partially_completed"
+
+
+class ActionType(str, Enum):
+    """Types of automation actions"""
+    RESOURCE_SCALING = "resource_scaling"
+    POLICY_UPDATE = "policy_update"
+    SECURITY_REMEDIATION = "security_remediation"
+    COMPLIANCE_ENFORCEMENT = "compliance_enforcement"
+    COST_OPTIMIZATION = "cost_optimization"
+    PERFORMANCE_TUNING = "performance_tuning"
+    BACKUP_RESTORE = "backup_restore"
+    ALERT_RESPONSE = "alert_response"
+    WORKFLOW_TRIGGER = "workflow_trigger"
+    CUSTOM_SCRIPT = "custom_script"
+    OPTIMIZATION_APPLY = "optimization_apply"
+
+
+class TriggerType(str, Enum):
+    """Types of automation triggers"""
+    SCHEDULED = "scheduled"
+    EVENT_BASED = "event_based"
+    THRESHOLD_BASED = "threshold_based"
+    MANUAL = "manual"
+    OPTIMIZATION_RESULT = "optimization_result"
+    ANOMALY_DETECTED = "anomaly_detected"
+    COMPLIANCE_VIOLATION = "compliance_violation"
+    COST_THRESHOLD = "cost_threshold"
+    PERFORMANCE_DEGRADATION = "performance_degradation"
+
+
+class ActionPriority(str, Enum):
+    """Priority levels for actions"""
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+@dataclass
+class AutomationAction:
+    """Represents an automation action"""
+    action_id: str
+    type: ActionType
+    name: str
+    description: str
+    parameters: Dict[str, Any]
+    target_resource: Optional[str] = None
+    dependencies: List[str] = field(default_factory=list)
+    timeout: int = 300  # seconds
+    retry_count: int = 3
+    rollback_action: Optional[str] = None
+    priority: ActionPriority = ActionPriority.MEDIUM
+    approval_required: bool = False
+    validation_rules: List[Dict[str, Any]] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class AutomationWorkflow:
+    """Represents an automation workflow"""
+    workflow_id: str
+    name: str
+    description: str
+    trigger: Dict[str, Any]
+    actions: List[AutomationAction]
+    conditions: List[Dict[str, Any]] = field(default_factory=list)
+    state: AutomationState = AutomationState.PENDING
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    execution_history: List[Dict[str, Any]] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    max_execution_time: int = 3600  # seconds
+    auto_rollback: bool = True
+    approval_required: bool = False
+
+
+@dataclass
+class ExecutionContext:
+    """Context for workflow execution"""
+    workflow_id: str
+    execution_id: str
+    started_at: datetime
+    parameters: Dict[str, Any]
+    trigger_event: Dict[str, Any] = field(default_factory=dict)
+    results: Dict[str, Any] = field(default_factory=dict)
+    errors: List[Dict[str, Any]] = field(default_factory=list)
+    completed_actions: Set[str] = field(default_factory=set)
+    failed_actions: Set[str] = field(default_factory=set)
+    rollback_executed: bool = False
+
+
+class WorkflowValidator:
+    """Validates automation workflows"""
+    
+    @staticmethod
+    def validate_workflow(workflow: AutomationWorkflow) -> Tuple[bool, List[str]]:
+        """Validate workflow configuration"""
+        errors = []
+        
+        # Check for circular dependencies
+        if WorkflowValidator._has_circular_dependencies(workflow.actions):
+            errors.append("Circular dependencies detected in workflow")
+        
+        # Validate action parameters
+        for action in workflow.actions:
+            action_errors = WorkflowValidator._validate_action(action)
+            errors.extend(action_errors)
+        
+        # Validate trigger configuration
+        trigger_errors = WorkflowValidator._validate_trigger(workflow.trigger)
+        errors.extend(trigger_errors)
+        
+        return len(errors) == 0, errors
+    
+    @staticmethod
+    def _has_circular_dependencies(actions: List[AutomationAction]) -> bool:
+        """Check for circular dependencies using topological sort"""
+        graph = nx.DiGraph()
+        
+        for action in actions:
+            graph.add_node(action.action_id)
+            for dep in action.dependencies:
+                graph.add_edge(dep, action.action_id)
+        
+        try:
+            nx.topological_sort(graph)
+            return False
+        except nx.NetworkXError:
+            return True
+    
+    @staticmethod
+    def _validate_action(action: AutomationAction) -> List[str]:
+        """Validate individual action"""
+        errors = []
+        
+        if not action.name:
+            errors.append(f"Action {action.action_id} missing name")
+        
+        if action.timeout <= 0:
+            errors.append(f"Action {action.action_id} has invalid timeout")
+        
+        # Validate action type specific parameters
+        required_params = {
+            ActionType.RESOURCE_SCALING: ['resource_type', 'scale_factor'],
+            ActionType.POLICY_UPDATE: ['policy_id', 'updates'],
+            ActionType.SECURITY_REMEDIATION: ['threat_id', 'remediation_steps'],
+            ActionType.COMPLIANCE_ENFORCEMENT: ['compliance_rule', 'enforcement_action'],
+            ActionType.OPTIMIZATION_APPLY: ['optimization_id', 'solution_id']
+        }
+        
+        if action.type in required_params:
+            for param in required_params[action.type]:
+                if param not in action.parameters:
+                    errors.append(f"Action {action.action_id} missing required parameter: {param}")
+        
+        return errors
+    
+    @staticmethod
+    def _validate_trigger(trigger: Dict[str, Any]) -> List[str]:
+        """Validate trigger configuration"""
+        errors = []
+        
+        if 'type' not in trigger:
+            errors.append("Trigger missing type")
+            return errors
+        
+        trigger_type = trigger.get('type')
+        
+        if trigger_type == TriggerType.SCHEDULED.value:
+            if 'cron_expression' not in trigger:
+                errors.append("Scheduled trigger missing cron_expression")
+        
+        elif trigger_type == TriggerType.THRESHOLD_BASED.value:
+            required = ['metric', 'threshold', 'operator']
+            for field in required:
+                if field not in trigger:
+                    errors.append(f"Threshold trigger missing {field}")
+        
+        elif trigger_type == TriggerType.EVENT_BASED.value:
+            if 'event_type' not in trigger:
+                errors.append("Event trigger missing event_type")
+        
+        return errors
+
+
+class ActionExecutor:
+    """Executes automation actions"""
+    
+    def __init__(self, resource_manager=None, policy_engine=None, security_service=None, azure_client=None):
+        self.resource_manager = resource_manager
+        self.policy_engine = policy_engine
+        self.security_service = security_service
+        self.azure_client = azure_client
+        self.execution_handlers = {
+            ActionType.RESOURCE_SCALING: self._execute_resource_scaling,
+            ActionType.POLICY_UPDATE: self._execute_policy_update,
+            ActionType.SECURITY_REMEDIATION: self._execute_security_remediation,
+            ActionType.COMPLIANCE_ENFORCEMENT: self._execute_compliance_enforcement,
+            ActionType.COST_OPTIMIZATION: self._execute_cost_optimization,
+            ActionType.PERFORMANCE_TUNING: self._execute_performance_tuning,
+            ActionType.BACKUP_RESTORE: self._execute_backup_restore,
+            ActionType.ALERT_RESPONSE: self._execute_alert_response,
+            ActionType.WORKFLOW_TRIGGER: self._execute_workflow_trigger,
+            ActionType.CUSTOM_SCRIPT: self._execute_custom_script,
+            ActionType.OPTIMIZATION_APPLY: self._execute_optimization_apply
+        }
+    
+    async def execute_action(self, 
+                           action: AutomationAction,
+                           context: ExecutionContext) -> Dict[str, Any]:
+        """Execute a single automation action"""
+        
+        logger.info(f"Executing action {action.action_id} of type {action.type}")
+        
+        try:
+            # Check dependencies
+            for dep in action.dependencies:
+                if dep not in context.completed_actions:
+                    raise APIError(f"Dependency {dep} not completed", status_code=400)
+            
+            # Get handler
+            handler = self.execution_handlers.get(action.type)
+            if not handler:
+                raise APIError(f"No handler for action type {action.type}", status_code=400)
+            
+            # Execute with timeout
+            result = await asyncio.wait_for(
+                handler(action, context),
+                timeout=action.timeout
+            )
+            
+            # Mark as completed
+            context.completed_actions.add(action.action_id)
+            context.results[action.action_id] = result
+            
+            return result
+            
+        except asyncio.TimeoutError:
+            logger.error(f"Action {action.action_id} timed out")
+            context.failed_actions.add(action.action_id)
+            context.errors.append({
+                'action_id': action.action_id,
+                'error': 'Action timed out',
+                'timestamp': datetime.now().isoformat()
+            })
+            raise
+        
+        except Exception as e:
+            logger.error(f"Action {action.action_id} failed: {str(e)}")
+            context.failed_actions.add(action.action_id)
+            context.errors.append({
+                'action_id': action.action_id,
+                'error': str(e),
+                'timestamp': datetime.now().isoformat()
+            })
+            
+            # Attempt rollback if configured
+            if action.rollback_action:
+                await self._execute_rollback(action.rollback_action, context)
+            
+            raise
+    
+    async def _execute_resource_scaling(self,
+                                      action: AutomationAction,
+                                      context: ExecutionContext) -> Dict[str, Any]:
+        """Execute resource scaling action"""
+        params = action.parameters
+        
+        # Simulated implementation - would call actual Azure APIs
+        return {
+            'success': True,
+            'action_type': 'resource_scaling',
+            'resource_type': params.get('resource_type'),
+            'scale_factor': params.get('scale_factor'),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_policy_update(self,
+                                   action: AutomationAction,
+                                   context: ExecutionContext) -> Dict[str, Any]:
+        """Execute policy update action"""
+        params = action.parameters
+        
+        # Simulated implementation
+        return {
+            'success': True,
+            'action_type': 'policy_update',
+            'policy_id': params.get('policy_id'),
+            'updates': params.get('updates'),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_security_remediation(self,
+                                          action: AutomationAction,
+                                          context: ExecutionContext) -> Dict[str, Any]:
+        """Execute security remediation action"""
+        params = action.parameters
+        
+        # Simulated implementation
+        return {
+            'success': True,
+            'action_type': 'security_remediation',
+            'threat_id': params.get('threat_id'),
+            'remediation_steps': params.get('remediation_steps'),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_compliance_enforcement(self,
+                                            action: AutomationAction,
+                                            context: ExecutionContext) -> Dict[str, Any]:
+        """Execute compliance enforcement action"""
+        params = action.parameters
+        
+        # Simulated implementation
+        return {
+            'success': True,
+            'action_type': 'compliance_enforcement',
+            'compliance_rule': params.get('compliance_rule'),
+            'enforcement_action': params.get('enforcement_action'),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_optimization_apply(self,
+                                        action: AutomationAction,
+                                        context: ExecutionContext) -> Dict[str, Any]:
+        """Apply optimization solution from multi-objective optimizer"""
+        params = action.parameters
+        optimization_id = params.get('optimization_id')
+        solution_id = params.get('solution_id')
+        
+        # Integrate with multi-objective optimizer
+        from .multi_objective_optimizer import multi_objective_optimizer
+        
+        result = await multi_objective_optimizer.apply_solution(
+            solution_id=solution_id,
+            dry_run=params.get('dry_run', False)
+        )
+        
+        return {
+            'success': True,
+            'action_type': 'optimization_apply',
+            'optimization_id': optimization_id,
+            'solution_id': solution_id,
+            'result': result,
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_cost_optimization(self,
+                                       action: AutomationAction,
+                                       context: ExecutionContext) -> Dict[str, Any]:
+        """Execute cost optimization action"""
+        return {
+            'success': True,
+            'action_type': 'cost_optimization',
+            'optimizations_applied': [],
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_performance_tuning(self,
+                                        action: AutomationAction,
+                                        context: ExecutionContext) -> Dict[str, Any]:
+        """Execute performance tuning action"""
+        return {
+            'success': True,
+            'action_type': 'performance_tuning',
+            'tunings_applied': [],
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_backup_restore(self,
+                                    action: AutomationAction,
+                                    context: ExecutionContext) -> Dict[str, Any]:
+        """Execute backup/restore action"""
+        return {
+            'success': True,
+            'action_type': 'backup_restore',
+            'operation': action.parameters.get('operation', 'backup'),
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_alert_response(self,
+                                    action: AutomationAction,
+                                    context: ExecutionContext) -> Dict[str, Any]:
+        """Execute alert response action"""
+        return {
+            'success': True,
+            'action_type': 'alert_response',
+            'alerts_handled': [],
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_workflow_trigger(self,
+                                      action: AutomationAction,
+                                      context: ExecutionContext) -> Dict[str, Any]:
+        """Execute workflow trigger action"""
+        target_workflow = action.parameters.get('target_workflow_id')
+        
+        return {
+            'success': True,
+            'action_type': 'workflow_trigger',
+            'triggered_workflow': target_workflow,
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_custom_script(self,
+                                   action: AutomationAction,
+                                   context: ExecutionContext) -> Dict[str, Any]:
+        """Execute custom script action"""
+        return {
+            'success': True,
+            'action_type': 'custom_script',
+            'script': action.parameters.get('script', ''),
+            'output': '',
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    async def _execute_rollback(self, rollback_action_id: str, context: ExecutionContext):
+        """Execute rollback action"""
+        logger.info(f"Executing rollback action {rollback_action_id}")
+        # Implement rollback logic
+
+
+class AutomationOrchestrator:
+    """Main automation orchestration service - integrates with multi-objective optimizer"""
+    
+    def __init__(self):
+        self.workflows: Dict[str, AutomationWorkflow] = {}
+        self.executor = None
+        self.validator = WorkflowValidator()
+        self.execution_queue = asyncio.Queue()
+        self.active_executions: Dict[str, ExecutionContext] = {}
+        self._initialized = False
+        self.executor_pool = None
+        self.max_concurrent_executions = 10
+        
+        # Integration with multi-objective optimizer
+        self.optimization_workflows = {}
+    
+    async def initialize(self, resource_manager=None, policy_engine=None, security_service=None, azure_client=None):
+        """Initialize the orchestrator"""
+        self.executor = ActionExecutor(resource_manager, policy_engine, security_service, azure_client)
+        self._initialized = True
+        
+        # Initialize thread pool
+        self.executor_pool = ThreadPoolExecutor(max_workers=self.max_concurrent_executions)
+        
+        # Start execution worker
+        asyncio.create_task(self._execution_worker())
+        
+        # Initialize predefined workflows
+        self._initialize_optimization_workflows()
+        
+        logger.info("Automation orchestrator initialized")
+    
+    def _initialize_optimization_workflows(self):
+        """Initialize workflows that integrate with multi-objective optimizer"""
+        
+        # Cost-Security Optimization Workflow
+        cost_security_workflow = AutomationWorkflow(
+            workflow_id="cost_security_optimization",
+            name="Cost-Security Multi-Objective Optimization",
+            description="Optimizes cost and security objectives simultaneously",
+            trigger={
+                'type': TriggerType.SCHEDULED.value,
+                'cron_expression': '0 0 * * *'  # Daily
+            },
+            actions=[
+                AutomationAction(
+                    action_id="run_optimization",
+                    type=ActionType.OPTIMIZATION_APPLY,
+                    name="Run Multi-Objective Optimization",
+                    description="Execute cost-security optimization",
+                    parameters={
+                        'objectives': ['minimize_cost', 'maximize_security'],
+                        'constraints': ['compliance', 'performance'],
+                        'algorithm': 'nsga2'
+                    },
+                    priority=ActionPriority.HIGH
+                ),
+                AutomationAction(
+                    action_id="apply_optimal_solution",
+                    type=ActionType.OPTIMIZATION_APPLY,
+                    name="Apply Optimal Solution",
+                    description="Apply the selected optimal solution",
+                    parameters={
+                        'optimization_id': '{{run_optimization.result.optimization_id}}',
+                        'solution_id': '{{run_optimization.result.solution_id}}',
+                        'dry_run': False
+                    },
+                    dependencies=['run_optimization'],
+                    priority=ActionPriority.HIGH,
+                    approval_required=True
+                )
+            ]
+        )
+        
+        # Performance-Cost-Compliance Optimization Workflow
+        perf_cost_compliance_workflow = AutomationWorkflow(
+            workflow_id="performance_cost_compliance_optimization",
+            name="Performance-Cost-Compliance Optimization",
+            description="Balances performance, cost, and compliance requirements",
+            trigger={
+                'type': TriggerType.PERFORMANCE_DEGRADATION.value,
+                'threshold': 80  # 80% performance degradation
+            },
+            actions=[
+                AutomationAction(
+                    action_id="analyze_current_state",
+                    type=ActionType.CUSTOM_SCRIPT,
+                    name="Analyze Current State",
+                    description="Gather current metrics",
+                    parameters={
+                        'script': 'analyze_metrics.py'
+                    },
+                    priority=ActionPriority.HIGH
+                ),
+                AutomationAction(
+                    action_id="run_multi_objective_optimization",
+                    type=ActionType.OPTIMIZATION_APPLY,
+                    name="Run Multi-Objective Optimization",
+                    description="Find optimal balance",
+                    parameters={
+                        'objectives': ['maximize_performance', 'minimize_cost', 'minimize_compliance_risk'],
+                        'constraints': ['budget', 'availability'],
+                        'algorithm': 'nsga3',
+                        'selection_method': 'topsis'
+                    },
+                    dependencies=['analyze_current_state'],
+                    priority=ActionPriority.CRITICAL
+                )
+            ]
+        )
+        
+        self.optimization_workflows = {
+            cost_security_workflow.workflow_id: cost_security_workflow,
+            perf_cost_compliance_workflow.workflow_id: perf_cost_compliance_workflow
+        }
+        
+        # Add to main workflow registry
+        self.workflows.update(self.optimization_workflows)
+    
+    async def create_workflow(self, workflow: AutomationWorkflow) -> str:
+        """Create a new automation workflow"""
+        # Validate workflow
+        is_valid, errors = self.validator.validate_workflow(workflow)
+        if not is_valid:
+            raise APIError(f"Invalid workflow: {', '.join(errors)}", status_code=400)
+        
+        # Generate ID if not provided
+        if not workflow.workflow_id:
+            workflow.workflow_id = str(uuid.uuid4())
+        
+        # Store workflow
+        self.workflows[workflow.workflow_id] = workflow
+        
+        # Cache workflow
+        await self._cache_workflow(workflow)
+        
+        # Schedule if needed
+        if workflow.trigger['type'] == TriggerType.SCHEDULED.value:
+            await self._schedule_workflow(workflow)
+        
+        return workflow.workflow_id
+    
+    async def execute_workflow(self,
+                             workflow_id: str,
+                             parameters: Dict[str, Any] = None) -> str:
+        """Execute a workflow"""
+        if workflow_id not in self.workflows:
+            raise APIError(f"Workflow {workflow_id} not found", status_code=404)
+        
+        workflow = self.workflows[workflow_id]
+        
+        # Create execution context
+        execution_id = str(uuid.uuid4())
+        context = ExecutionContext(
+            workflow_id=workflow_id,
+            execution_id=execution_id,
+            started_at=datetime.now(),
+            parameters=parameters or {}
+        )
+        
+        # Add to active executions
+        self.active_executions[execution_id] = context
+        
+        # Queue for execution
+        await self.execution_queue.put((workflow, context))
+        
+        return execution_id
+    
+    async def trigger_optimization_workflow(self,
+                                          objectives: List[str],
+                                          constraints: List[str],
+                                          parameters: Dict[str, Any] = None) -> str:
+        """Trigger a workflow based on optimization objectives"""
+        # Create dynamic optimization workflow
+        workflow = AutomationWorkflow(
+            workflow_id=f"opt_workflow_{uuid.uuid4().hex[:8]}",
+            name="Dynamic Optimization Workflow",
+            description=f"Optimize {', '.join(objectives)}",
+            trigger={'type': TriggerType.OPTIMIZATION_RESULT.value},
+            actions=[
+                AutomationAction(
+                    action_id="run_optimization",
+                    type=ActionType.OPTIMIZATION_APPLY,
+                    name="Run Optimization",
+                    description="Execute multi-objective optimization",
+                    parameters={
+                        'objectives': objectives,
+                        'constraints': constraints,
+                        'algorithm': parameters.get('algorithm', 'nsga2'),
+                        'selection_method': parameters.get('selection_method', 'weighted_sum')
+                    },
+                    priority=ActionPriority.HIGH
+                ),
+                AutomationAction(
+                    action_id="apply_solution",
+                    type=ActionType.OPTIMIZATION_APPLY,
+                    name="Apply Solution",
+                    description="Apply optimization results",
+                    parameters={
+                        'solution_id': '{{run_optimization.result.solution_id}}',
+                        'dry_run': parameters.get('dry_run', True)
+                    },
+                    dependencies=['run_optimization'],
+                    priority=ActionPriority.HIGH,
+                    approval_required=not parameters.get('auto_apply', False)
+                )
+            ]
+        )
+        
+        # Create and execute
+        workflow_id = await self.create_workflow(workflow)
+        execution_id = await self.execute_workflow(workflow_id, parameters)
+        
+        return execution_id
+    
+    async def get_workflow_status(self, workflow_id: str) -> Dict[str, Any]:
+        """Get workflow status"""
+        if workflow_id not in self.workflows:
+            raise APIError(f"Workflow {workflow_id} not found", status_code=404)
+        
+        workflow = self.workflows[workflow_id]
+        
+        # Get active executions
+        active_executions = [
+            {
+                'execution_id': ctx.execution_id,
+                'started_at': ctx.started_at.isoformat(),
+                'completed_actions': list(ctx.completed_actions),
+                'failed_actions': list(ctx.failed_actions)
+            }
+            for ctx in self.active_executions.values()
+            if ctx.workflow_id == workflow_id
+        ]
+        
+        return {
+            'workflow_id': workflow_id,
+            'name': workflow.name,
+            'state': workflow.state.value,
+            'created_at': workflow.created_at.isoformat(),
+            'updated_at': workflow.updated_at.isoformat(),
+            'active_executions': active_executions,
+            'execution_history': workflow.execution_history[-10:]  # Last 10 executions
+        }
+    
+    async def cancel_execution(self, execution_id: str) -> Dict[str, Any]:
+        """Cancel a workflow execution"""
+        if execution_id not in self.active_executions:
+            raise APIError(f"Execution {execution_id} not found", status_code=404)
+        
+        context = self.active_executions[execution_id]
+        
+        # Mark as cancelled
+        context.errors.append({
+            'error': 'Execution cancelled by user',
+            'timestamp': datetime.now().isoformat()
+        })
+        
+        # Remove from active executions
+        del self.active_executions[execution_id]
+        
+        return {
+            'execution_id': execution_id,
+            'status': 'cancelled',
+            'completed_actions': list(context.completed_actions),
+            'failed_actions': list(context.failed_actions)
+        }
+    
+    async def _execution_worker(self):
+        """Worker to process workflow executions"""
+        while True:
+            try:
+                # Get next workflow to execute
+                workflow, context = await self.execution_queue.get()
+                
+                # Execute workflow
+                await self._execute_workflow(workflow, context)
+                
+            except Exception as e:
+                logger.error(f"Execution worker error: {str(e)}")
+                await asyncio.sleep(1)
+    
+    async def _execute_workflow(self,
+                              workflow: AutomationWorkflow,
+                              context: ExecutionContext):
+        """Execute a complete workflow"""
+        logger.info(f"Starting execution of workflow {workflow.workflow_id}")
+        
+        try:
+            # Update workflow state
+            workflow.state = AutomationState.RUNNING
+            workflow.updated_at = datetime.now()
+            
+            # Get execution order (topological sort)
+            execution_order = self._get_execution_order(workflow.actions)
+            
+            # Execute actions in order
+            for action_id in execution_order:
+                action = next(a for a in workflow.actions if a.action_id == action_id)
+                
+                # Check if should continue
+                if context.execution_id not in self.active_executions:
+                    logger.info(f"Execution {context.execution_id} cancelled")
+                    break
+                
+                # Handle approval if required
+                if action.approval_required:
+                    approval = await self._handle_approval(action, context)
+                    if not approval:
+                        context.failed_actions.add(action.action_id)
+                        continue
+                
+                # Execute action with retries
+                for attempt in range(action.retry_count):
+                    try:
+                        await self.executor.execute_action(action, context)
+                        break
+                    except Exception as e:
+                        if attempt == action.retry_count - 1:
+                            raise
+                        logger.warning(f"Action {action_id} failed, retrying...")
+                        await asyncio.sleep(2 ** attempt)  # Exponential backoff
+            
+            # Update workflow state
+            if context.failed_actions:
+                workflow.state = AutomationState.PARTIALLY_COMPLETED
+            else:
+                workflow.state = AutomationState.COMPLETED
+            
+            # Record execution
+            execution_record = {
+                'execution_id': context.execution_id,
+                'started_at': context.started_at.isoformat(),
+                'completed_at': datetime.now().isoformat(),
+                'completed_actions': list(context.completed_actions),
+                'failed_actions': list(context.failed_actions),
+                'results': context.results,
+                'errors': context.errors
+            }
+            
+            workflow.execution_history.append(execution_record)
+            
+        except Exception as e:
+            logger.error(f"Workflow execution failed: {str(e)}")
+            workflow.state = AutomationState.FAILED
+            
+            # Execute rollback if configured
+            if workflow.auto_rollback and context.completed_actions:
+                await self._execute_rollback(workflow, context)
+            
+        finally:
+            # Remove from active executions
+            if context.execution_id in self.active_executions:
+                del self.active_executions[context.execution_id]
+            
+            # Update workflow
+            workflow.updated_at = datetime.now()
+            await self._cache_workflow(workflow)
+    
+    def _get_execution_order(self, actions: List[AutomationAction]) -> List[str]:
+        """Get execution order using topological sort"""
+        graph = nx.DiGraph()
+        
+        for action in actions:
+            graph.add_node(action.action_id)
+            for dep in action.dependencies:
+                graph.add_edge(dep, action.action_id)
+        
+        return list(nx.topological_sort(graph))
+    
+    async def _handle_approval(self, action: AutomationAction, context: ExecutionContext) -> bool:
+        """Handle approval workflow"""
+        # In production, integrate with approval system
+        # For now, auto-approve based on priority
+        if action.priority == ActionPriority.CRITICAL:
+            return False  # Require manual approval
+        return True
+    
+    async def _execute_rollback(self, workflow: AutomationWorkflow, context: ExecutionContext):
+        """Execute rollback for failed workflow"""
+        logger.info(f"Executing rollback for workflow {workflow.workflow_id}")
+        
+        # Execute rollback actions in reverse order
+        for action in reversed(workflow.actions):
+            if action.action_id in context.completed_actions and action.rollback_action:
+                # Create rollback action
+                rollback_action = AutomationAction(
+                    action_id=f"rollback_{action.action_id}",
+                    type=ActionType.CUSTOM_SCRIPT,
+                    name=f"Rollback {action.name}",
+                    description=f"Rollback action for {action.name}",
+                    parameters={'rollback_config': action.rollback_action},
+                    priority=ActionPriority.HIGH
+                )
+                
+                try:
+                    await self.executor.execute_action(rollback_action, context)
+                    context.rollback_executed = True
+                except Exception as e:
+                    logger.error(f"Rollback failed for action {action.action_id}: {str(e)}")
+    
+    async def _schedule_workflow(self, workflow: AutomationWorkflow):
+        """Schedule workflow execution"""
+        # Implement cron-based scheduling
+        pass
+    
+    async def _cache_workflow(self, workflow: AutomationWorkflow):
+        """Cache workflow configuration"""
+        cache_key = f"workflow:{workflow.workflow_id}"
+        cache_data = {
+            'workflow_id': workflow.workflow_id,
+            'name': workflow.name,
+            'state': workflow.state.value,
+            'trigger': workflow.trigger,
+            'updated_at': workflow.updated_at.isoformat()
+        }
+        
+        await redis_client.setex(
+            cache_key,
+            timedelta(hours=24),
+            json.dumps(cache_data)
+        )
+    
+    async def get_optimization_insights(self) -> Dict[str, Any]:
+        """Get insights from optimization workflows"""
+        insights = {
+            'total_optimizations': 0,
+            'successful_optimizations': 0,
+            'cost_savings': 0,
+            'performance_improvements': 0,
+            'security_enhancements': 0,
+            'optimization_trends': []
+        }
+        
+        # Analyze optimization workflow executions
+        for workflow in self.optimization_workflows.values():
+            for execution in workflow.execution_history:
+                insights['total_optimizations'] += 1
+                
+                if not execution.get('failed_actions'):
+                    insights['successful_optimizations'] += 1
+                
+                # Extract optimization results
+                results = execution.get('results', {})
+                for action_id, result in results.items():
+                    if result.get('action_type') == 'optimization_apply':
+                        opt_result = result.get('result', {})
+                        if 'cost_savings' in opt_result:
+                            insights['cost_savings'] += opt_result['cost_savings']
+                        if 'performance_improvement' in opt_result:
+                            insights['performance_improvements'] += opt_result['performance_improvement']
+                        if 'security_score' in opt_result:
+                            insights['security_enhancements'] += opt_result['security_score']
+        
+        return insights
+
+
+# Global instances
+automation_orchestrator = AutomationOrchestrator()
+
+# For backward compatibility
+workflow_engine = None  # Will be initialized when needed
 
 
 class WorkflowEngine:
     """
-    Orchestrates automation workflows with dependency management and rollback capabilities.
+    Legacy orchestration engine - maintained for backward compatibility
+    New implementations should use AutomationOrchestrator
     """
     
     def __init__(self, azure_client=None):
         self.azure_client = azure_client
-        self.action_executor = ActionExecutor(azure_client)
-        self.active_executions: Dict[str, AutomationExecution] = {}
+        self.action_executor = ActionExecutor(azure_client=azure_client)
+        self.active_executions: Dict[str, ExecutionContext] = {}
         self.workflow_registry: Dict[str, AutomationWorkflow] = {}
         self.execution_history: List[AutomationExecution] = []
         self.max_concurrent_executions = 10
