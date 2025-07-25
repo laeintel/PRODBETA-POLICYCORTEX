@@ -163,6 +163,29 @@ jobs:
           CONTAINER_ENV_NAME=$(az containerapp env list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
           echo "container_env_name=$CONTAINER_ENV_NAME" >> $GITHUB_OUTPUT
 
+      - name: Get ACR Credentials
+        id: get_acr_creds
+        run: |
+          ACR_USERNAME=$(az acr credential show --name ${{ steps.get_resources.outputs.acr_name }} --query username -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name ${{ steps.get_resources.outputs.acr_name }} --query passwords[0].value -o tsv)
+          echo "::add-mask::$ACR_PASSWORD"
+          echo "acr_username=$ACR_USERNAME" >> $GITHUB_OUTPUT
+          echo "acr_password=$ACR_PASSWORD" >> $GITHUB_OUTPUT
+
+      - name: Update Container Apps with Registry Credentials
+        run: |
+          # First set registry credentials for each container app
+          for service in api-gateway azure-integration ai-engine data-processing conversation notification frontend; do
+            echo "Setting registry credentials for ca-${service}-dev..."
+            
+            az containerapp registry set \
+              --name ca-${service}-dev \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --server ${{ steps.get_resources.outputs.acr_login_server }} \
+              --username ${{ steps.get_acr_creds.outputs.acr_username }} \
+              --password "${{ steps.get_acr_creds.outputs.acr_password }}"
+          done
+
       - name: Update Container Apps
         run: |
           # Update each container app to use the new images
