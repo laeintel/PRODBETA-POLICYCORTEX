@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.36.1.42791",
-      "templateHash": "9926255868202130968"
+      "templateHash": "4208122785782361823"
     }
   },
   "parameters": {
@@ -602,7 +602,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "14070625802052412738"
+              "templateHash": "8923815403559642134"
             }
           },
           "parameters": {
@@ -653,7 +653,7 @@
                   "defaultAction": "Allow",
                   "bypass": "AzureServices"
                 },
-                "accessPolicies": "[concat(if(parameters('createTerraformAccessPolicy'), createArray(createObject('tenantId', tenant().tenantId, 'objectId', '178e2973-bb20-49da-ab80-0d1ddc7b0649', 'permissions', createObject('keys', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'GetRotationPolicy', 'SetRotationPolicy', 'Rotate'), 'secrets', createArray('Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore'), 'certificates', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'ManageContacts', 'ManageIssuers', 'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers')))), createArray()), if(not(equals(parameters('managedIdentityPrincipalId'), '')), createArray(createObject('tenantId', tenant().tenantId, 'objectId', parameters('managedIdentityPrincipalId'), 'permissions', createObject('secrets', createArray('Get')))), createArray()))]"
+                "accessPolicies": "[concat(if(parameters('createTerraformAccessPolicy'), createArray(createObject('tenantId', tenant().tenantId, 'objectId', '178e2973-bb20-49da-ab80-0d1ddc7b0649', 'permissions', createObject('keys', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'GetRotationPolicy', 'SetRotationPolicy', 'Rotate'), 'secrets', createArray('Get', 'List', 'Set', 'Delete', 'Recover', 'Backup', 'Restore'), 'certificates', createArray('Get', 'List', 'Update', 'Create', 'Import', 'Delete', 'Recover', 'Backup', 'Restore', 'ManageContacts', 'ManageIssuers', 'GetIssuers', 'ListIssuers', 'SetIssuers', 'DeleteIssuers')))), createArray()), if(not(equals(parameters('managedIdentityPrincipalId'), '')), createArray(createObject('tenantId', tenant().tenantId, 'objectId', parameters('managedIdentityPrincipalId'), 'permissions', createObject('secrets', createArray('Get', 'List'), 'keys', createArray('Get', 'List'), 'certificates', createArray('Get', 'List')))), createArray()))]"
               }
             }
           ],
@@ -2587,6 +2587,7 @@
         "containerAppsEnvironment",
         "containerRegistry",
         "keyVault",
+        "keyVaultSecrets",
         "userIdentity"
       ]
     },
