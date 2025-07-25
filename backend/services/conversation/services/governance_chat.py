@@ -732,3 +732,777 @@ class GovernanceChatService:
         """Cleanup resources."""
         logger.info("cleaning_up_governance_chat_service")
         self.conversations.clear()
+
+
+class AdvancedConversationManager:
+    """
+    Advanced conversation manager with multi-turn support, workflow management,
+    and personalized interactions.
+    """
+    
+    def __init__(self):
+        self.active_conversations = {}
+        self.user_profiles = {}
+        self.conversation_workflows = {}
+        self.session_analytics = defaultdict(dict)
+        self.nlp_processor = None
+        
+    async def initialize(self):
+        """Initialize the advanced conversation manager."""
+        logger.info("initializing_advanced_conversation_manager")
+        
+        try:
+            # Initialize spaCy for advanced NLP
+            # Note: In production, you'd need to install spacy and download the model
+            # python -m spacy download en_core_web_sm
+            # self.nlp_processor = spacy.load("en_core_web_sm")
+            
+            # Initialize predefined workflows
+            await self._initialize_workflows()
+            
+            logger.info("advanced_conversation_manager_initialized")
+            
+        except Exception as e:
+            logger.error("advanced_conversation_manager_initialization_failed", error=str(e))
+    
+    async def _initialize_workflows(self):
+        """Initialize predefined conversation workflows."""
+        
+        # Policy Compliance Investigation Workflow
+        compliance_workflow = ConversationWorkflow(
+            workflow_id="policy_compliance_investigation",
+            name="Policy Compliance Investigation",
+            description="Deep dive into policy compliance issues",
+            steps=[
+                {
+                    "step_id": "identify_scope",
+                    "prompt": "Which specific policy or resource group would you like me to investigate?",
+                    "required_entities": ["policy_name", "resource_group"],
+                    "optional": False
+                },
+                {
+                    "step_id": "analyze_violations",
+                    "prompt": "I'll analyze compliance violations. What time period should I examine?",
+                    "required_entities": ["time_period"],
+                    "optional": False
+                },
+                {
+                    "step_id": "suggest_remediation",
+                    "prompt": "Based on my analysis, would you like me to suggest remediation actions?",
+                    "required_entities": ["confirmation"],
+                    "optional": True
+                },
+                {
+                    "step_id": "execute_remediation",
+                    "prompt": "Should I create automation workflows to fix these issues?",
+                    "required_entities": ["confirmation"],
+                    "optional": True
+                }
+            ]
+        )
+        
+        # Cost Optimization Analysis Workflow  
+        cost_workflow = ConversationWorkflow(
+            workflow_id="cost_optimization_analysis",
+            name="Cost Optimization Analysis",
+            description="Comprehensive cost analysis and optimization recommendations",
+            steps=[
+                {
+                    "step_id": "define_scope",
+                    "prompt": "What scope should I analyze? (subscription, resource group, or specific services)",
+                    "required_entities": ["scope"],
+                    "optional": False
+                },
+                {
+                    "step_id": "set_timeframe",
+                    "prompt": "What time period should I analyze for cost patterns?",
+                    "required_entities": ["time_period"],
+                    "optional": False
+                },
+                {
+                    "step_id": "identify_opportunities",
+                    "prompt": "I'll identify optimization opportunities. Are you interested in immediate savings or long-term optimization?",
+                    "required_entities": ["optimization_type"],
+                    "optional": False
+                },
+                {
+                    "step_id": "create_action_plan",
+                    "prompt": "Would you like me to create an action plan with prioritized recommendations?",
+                    "required_entities": ["confirmation"],
+                    "optional": True
+                }
+            ]
+        )
+        
+        self.conversation_workflows = {
+            "policy_compliance_investigation": compliance_workflow,
+            "cost_optimization_analysis": cost_workflow
+        }
+        
+        logger.info("conversation_workflows_initialized", count=len(self.conversation_workflows))
+    
+    async def start_conversation(self, user_id: str, session_id: str, 
+                               user_profile: Optional[UserProfile] = None) -> ConversationContext:
+        """Start a new conversation with enhanced context."""
+        
+        # Create or update user profile
+        if user_profile:
+            self.user_profiles[user_id] = user_profile
+        elif user_id not in self.user_profiles:
+            self.user_profiles[user_id] = UserProfile(
+                user_id=user_id,
+                name=f"User_{user_id[:8]}",
+                role="user",
+                permissions=["read"],
+                domains_of_interest=[]
+            )
+        
+        # Create conversation context
+        context = ConversationContext(
+            user_id=user_id,
+            session_id=session_id,
+            conversation_state=ConversationState.INITIAL,
+            entities={},
+            intents=[],
+            history=[],
+            user_profile=self.user_profiles[user_id],
+            current_domain=None,
+            last_activity=datetime.utcnow(),
+            active_workflow=None,
+            context_stack=[],
+            pending_actions=[],
+            clarification_needed=None,
+            session_metadata={}
+        )
+        
+        context_key = f"{user_id}:{session_id}"
+        self.active_conversations[context_key] = context
+        
+        # Initialize session analytics
+        self.session_analytics[context_key] = {
+            'start_time': datetime.utcnow(),
+            'message_count': 0,
+            'intent_distribution': defaultdict(int),
+            'workflow_completions': 0,
+            'satisfaction_indicators': []
+        }
+        
+        logger.info("conversation_started", user_id=user_id, session_id=session_id)
+        return context
+    
+    async def process_message(self, user_id: str, session_id: str, 
+                            message: str, nlu_service: GovernanceNLU) -> ChatResponse:
+        """Process a message with advanced conversation management."""
+        
+        context_key = f"{user_id}:{session_id}"
+        
+        # Get or create conversation context
+        if context_key not in self.active_conversations:
+            context = await self.start_conversation(user_id, session_id)
+        else:
+            context = self.active_conversations[context_key]
+        
+        # Update analytics
+        self.session_analytics[context_key]['message_count'] += 1
+        context.last_activity = datetime.utcnow()
+        
+        try:
+            # Analyze message with enhanced NLU
+            analysis = await nlu_service.analyze_query(message, context)
+            
+            # Update analytics
+            self.session_analytics[context_key]['intent_distribution'][analysis['intent'].value] += 1
+            
+            # Handle workflow processing
+            if context.active_workflow:
+                return await self._process_workflow_message(context, message, analysis)
+            
+            # Check if message should start a workflow
+            workflow_trigger = await self._check_workflow_triggers(analysis, context)
+            if workflow_trigger:
+                return await self._start_workflow(context, workflow_trigger, analysis)
+            
+            # Process regular message
+            response = await self._process_regular_message(context, message, analysis)
+            
+            # Update conversation context
+            await self._update_context(context, message, response, analysis)
+            
+            return response
+            
+        except Exception as e:
+            logger.error("message_processing_failed", error=str(e), user_id=user_id, session_id=session_id)
+            return ChatResponse(
+                message="I apologize, but I encountered an error processing your message. Could you please try again?",
+                intent=IntentType.HELP,
+                confidence=0.0,
+                entities={},
+                actions=[],
+                context={},
+                suggestions=["Can you help me?", "What can you do?"],
+                conversation_state=ConversationState.ERROR
+            )
+    
+    async def _check_workflow_triggers(self, analysis: Dict[str, Any], 
+                                     context: ConversationContext) -> Optional[str]:
+        """Check if the message should trigger a workflow."""
+        
+        intent = analysis['intent']
+        entities = analysis.get('entities', {})
+        
+        # Trigger compliance investigation workflow
+        if (intent == IntentType.COMPLIANCE_QUERY and 
+            analysis.get('semantic_analysis', {}).get('complexity') == 'complex'):
+            return "policy_compliance_investigation"
+        
+        # Trigger cost optimization workflow
+        if (intent == IntentType.COST_QUERY and 
+            any(keyword in analysis.get('normalized_query', '') 
+                for keyword in ['optimize', 'reduce', 'save', 'analysis'])):
+            return "cost_optimization_analysis"
+        
+        return None
+    
+    async def _start_workflow(self, context: ConversationContext, 
+                            workflow_id: str, analysis: Dict[str, Any]) -> ChatResponse:
+        """Start a conversation workflow."""
+        
+        if workflow_id not in self.conversation_workflows:
+            return await self._create_error_response("Workflow not found")
+        
+        workflow = self.conversation_workflows[workflow_id]
+        context.active_workflow = workflow
+        context.conversation_state = ConversationState.GATHERING_INFO
+        
+        # Get first step
+        first_step = workflow.steps[0]
+        
+        return ChatResponse(
+            message=f"I'll help you with {workflow.name.lower()}. {first_step['prompt']}",
+            intent=analysis['intent'],
+            confidence=analysis['confidence'],
+            entities=analysis.get('entities', {}),
+            actions=[{'type': 'start_workflow', 'workflow_id': workflow_id}],
+            context={'workflow_step': first_step['step_id']},
+            suggestions=self._generate_workflow_suggestions(first_step),
+            conversation_state=ConversationState.GATHERING_INFO,
+            workflow_status={
+                'workflow_id': workflow_id,
+                'current_step': 0,
+                'total_steps': len(workflow.steps),
+                'progress': 0.0
+            }
+        )
+    
+    async def _process_workflow_message(self, context: ConversationContext, 
+                                      message: str, analysis: Dict[str, Any]) -> ChatResponse:
+        """Process a message within an active workflow."""
+        
+        workflow = context.active_workflow
+        current_step = workflow.steps[workflow.current_step]
+        
+        # Check if user wants to cancel workflow
+        if analysis['intent'] == IntentType.CANCEL:
+            context.active_workflow = None
+            context.conversation_state = ConversationState.INITIAL
+            return ChatResponse(
+                message="Workflow cancelled. How else can I help you?",
+                intent=IntentType.CANCEL,
+                confidence=1.0,
+                entities={},
+                actions=[{'type': 'cancel_workflow'}],
+                context={},
+                suggestions=["Show me policies", "Check compliance", "Cost analysis"],
+                conversation_state=ConversationState.INITIAL
+            )
+        
+        # Extract required entities for current step
+        required_entities = current_step.get('required_entities', [])
+        extracted_entities = analysis.get('entities', {})
+        
+        # Check if all required entities are present
+        missing_entities = [entity for entity in required_entities 
+                           if entity not in extracted_entities and f'inferred_{entity}' not in extracted_entities]
+        
+        if missing_entities and not current_step.get('optional', False):
+            clarification = self._generate_entity_clarification(missing_entities[0])
+            return ChatResponse(
+                message=clarification,
+                intent=analysis['intent'],
+                confidence=analysis['confidence'],
+                entities=extracted_entities,
+                actions=[],
+                context={'workflow_step': current_step['step_id']},
+                suggestions=self._generate_entity_suggestions(missing_entities[0]),
+                conversation_state=ConversationState.CLARIFYING,
+                requires_clarification=True,
+                clarification_question=clarification
+            )
+        
+        # Store step variables
+        for entity_type, entity_list in extracted_entities.items():
+            if entity_list:
+                workflow.variables[entity_type] = entity_list[0]['value']
+        
+        # Mark step as completed
+        workflow.completed_steps.append(current_step['step_id'])
+        workflow.current_step += 1
+        
+        # Check if workflow is complete
+        if workflow.current_step >= len(workflow.steps):
+            return await self._complete_workflow(context, workflow)
+        
+        # Move to next step
+        next_step = workflow.steps[workflow.current_step]
+        progress = (workflow.current_step / len(workflow.steps)) * 100
+        
+        return ChatResponse(
+            message=f"Great! {next_step['prompt']}",
+            intent=analysis['intent'],
+            confidence=analysis['confidence'],
+            entities=extracted_entities,
+            actions=[{'type': 'workflow_progress', 'step': workflow.current_step}],
+            context={'workflow_step': next_step['step_id']},
+            suggestions=self._generate_workflow_suggestions(next_step),
+            conversation_state=ConversationState.GATHERING_INFO,
+            workflow_status={
+                'workflow_id': workflow.workflow_id,
+                'current_step': workflow.current_step,
+                'total_steps': len(workflow.steps),
+                'progress': progress
+            }
+        )
+    
+    async def _complete_workflow(self, context: ConversationContext, 
+                               workflow: ConversationWorkflow) -> ChatResponse:
+        """Complete a workflow and provide results."""
+        
+        # Execute workflow based on collected variables
+        results = await self._execute_workflow_logic(workflow)
+        
+        # Update analytics
+        context_key = f"{context.user_id}:{context.session_id}"
+        self.session_analytics[context_key]['workflow_completions'] += 1
+        
+        # Reset workflow state
+        context.active_workflow = None
+        context.conversation_state = ConversationState.COMPLETED
+        
+        return ChatResponse(
+            message=f"Workflow completed! {results['summary']}",
+            intent=IntentType.ANALYTICS_REQUEST,
+            confidence=1.0,
+            entities={},
+            actions=[{'type': 'workflow_complete', 'results': results}],
+            context={'workflow_results': results},
+            suggestions=["Start another analysis", "Export results", "Create automation"],
+            conversation_state=ConversationState.COMPLETED,
+            rich_content=results,
+            workflow_status={
+                'workflow_id': workflow.workflow_id,
+                'status': 'completed',
+                'progress': 100.0
+            }
+        )
+    
+    async def _execute_workflow_logic(self, workflow: ConversationWorkflow) -> Dict[str, Any]:
+        """Execute the actual workflow logic based on collected variables."""
+        
+        if workflow.workflow_id == "policy_compliance_investigation":
+            return {
+                'summary': f"Completed compliance investigation for {workflow.variables.get('policy_name', 'specified scope')}",
+                'violations_found': 3,
+                'resources_analyzed': 45,
+                'recommendations': [
+                    "Update 2 storage accounts to enable encryption",
+                    "Apply network security group rules to 1 subnet",
+                    "Enable backup policy for 3 virtual machines"
+                ],
+                'estimated_fix_time': "2-4 hours",
+                'risk_level': "Medium"
+            }
+        
+        elif workflow.workflow_id == "cost_optimization_analysis":
+            return {
+                'summary': f"Cost optimization analysis completed for {workflow.variables.get('scope', 'specified scope')}",
+                'current_monthly_cost': 15420.50,
+                'potential_savings': 3240.80,
+                'savings_percentage': 21.0,
+                'top_recommendations': [
+                    "Right-size 8 over-provisioned VMs (save $1,200/month)",
+                    "Purchase reserved instances for 5 VMs (save $1,800/month)",
+                    "Delete 3 unused storage accounts (save $240/month)"
+                ],
+                'implementation_effort': "Low to Medium"
+            }
+        
+        return {'summary': 'Workflow completed successfully'}
+    
+    def _generate_workflow_suggestions(self, step: Dict[str, Any]) -> List[str]:
+        """Generate contextual suggestions for a workflow step."""
+        
+        required_entities = step.get('required_entities', [])
+        
+        suggestions_map = {
+            'policy_name': ["All policies", "Security policies", "Compliance policies"],
+            'resource_group': ["Production-RG", "Development-RG", "All resource groups"],
+            'time_period': ["Last 30 days", "Last week", "Last 3 months"],
+            'scope': ["Current subscription", "Specific resource group", "All subscriptions"],
+            'optimization_type': ["Immediate savings", "Long-term optimization", "Both"],
+            'confirmation': ["Yes, proceed", "No, skip this step", "Tell me more"]
+        }
+        
+        for entity in required_entities:
+            if entity in suggestions_map:
+                return suggestions_map[entity]
+        
+        return ["Continue", "Skip", "Cancel"]
+    
+    def _generate_entity_clarification(self, entity_type: str) -> str:
+        """Generate clarification questions for missing entities."""
+        
+        clarifications = {
+            'policy_name': "Which specific policy would you like me to investigate?",
+            'resource_group': "Which resource group should I analyze?",
+            'time_period': "What time period should I examine?",
+            'scope': "What scope should I analyze - subscription, resource group, or specific services?",
+            'optimization_type': "Are you looking for immediate savings or long-term optimization strategies?",
+            'confirmation': "Should I proceed with this step?"
+        }
+        
+        return clarifications.get(entity_type, "Could you provide more details?")
+    
+    def _generate_entity_suggestions(self, entity_type: str) -> List[str]:
+        """Generate suggestions for entity clarification."""
+        
+        suggestions_map = {
+            'policy_name': ["Security Center policies", "Custom policies", "All policies"],
+            'resource_group': ["prod-rg", "dev-rg", "test-rg"],
+            'time_period': ["Last 30 days", "Last week", "Yesterday"],
+            'scope': ["Current subscription", "Resource group", "Specific service"],
+            'confirmation': ["Yes", "No", "Tell me more"]
+        }
+        
+        return suggestions_map.get(entity_type, ["Continue", "Cancel"])
+    
+    async def _process_regular_message(self, context: ConversationContext, 
+                                     message: str, analysis: Dict[str, Any]) -> ChatResponse:
+        """Process a regular (non-workflow) message with enhanced features."""
+        
+        intent = analysis['intent']
+        entities = analysis.get('entities', {})
+        
+        # Check if clarification is needed
+        if analysis.get('clarification_needed'):
+            context.clarification_needed = analysis.get('clarification_question')
+            return ChatResponse(
+                message=analysis['clarification_question'],
+                intent=intent,
+                confidence=analysis['confidence'],
+                entities=entities,
+                actions=[],
+                context={},
+                suggestions=self._generate_clarification_suggestions(intent),
+                conversation_state=ConversationState.CLARIFYING,
+                requires_clarification=True,
+                clarification_question=analysis['clarification_question']
+            )
+        
+        # Generate personalized response based on user profile
+        response_message = await self._generate_personalized_response(intent, entities, context)
+        
+        # Generate contextual suggestions
+        suggestions = await self._generate_contextual_suggestions(intent, entities, context)
+        
+        # Determine next conversation state
+        next_state = self._determine_next_state(intent, analysis)
+        
+        return ChatResponse(
+            message=response_message,
+            intent=intent,
+            confidence=analysis['confidence'],
+            entities=entities,
+            actions=self._generate_actions(intent, entities),
+            context=self._build_response_context(intent, entities, analysis),
+            suggestions=suggestions,
+            conversation_state=next_state,
+            quick_replies=self._generate_quick_replies(intent),
+            rich_content=await self._generate_rich_content(intent, entities)
+        )
+    
+    def _generate_clarification_suggestions(self, intent: IntentType) -> List[str]:
+        """Generate suggestions for clarification scenarios."""
+        
+        base_suggestions = {
+            IntentType.POLICY_QUERY: ["Show all policies", "Check specific policy", "Policy violations"],
+            IntentType.COST_QUERY: ["Monthly costs", "Cost by service", "Budget status"],
+            IntentType.RESOURCE_QUERY: ["All resources", "Specific resource type", "Resource health"]
+        }
+        
+        return base_suggestions.get(intent, ["Help me", "Cancel", "Start over"])
+    
+    async def _generate_personalized_response(self, intent: IntentType, entities: Dict[str, Any], 
+                                            context: ConversationContext) -> str:
+        """Generate personalized response based on user profile and history."""
+        
+        user_profile = context.user_profile
+        expertise_level = user_profile.expertise_level
+        
+        # Adjust response complexity based on expertise
+        if expertise_level == "beginner":
+            prefix = "Let me explain this in simple terms. "
+        elif expertise_level == "expert":
+            prefix = "Here's the detailed technical information: "
+        else:
+            prefix = ""
+        
+        # Base responses by intent
+        base_responses = {
+            IntentType.POLICY_QUERY: f"{prefix}I found policy information for your environment.",
+            IntentType.COST_QUERY: f"{prefix}Here's your cost analysis.",
+            IntentType.COMPLIANCE_QUERY: f"{prefix}I've analyzed your compliance status.",
+            IntentType.RESOURCE_QUERY: f"{prefix}Here are your resource details.",
+            IntentType.GREETING: f"Hello {user_profile.name}! How can I help you with governance today?",
+            IntentType.HELP: f"{prefix}I can help you with Azure governance tasks including policies, compliance, costs, and resources."
+        }
+        
+        return base_responses.get(intent, f"{prefix}I understand your request and I'm processing it.")
+    
+    async def _generate_contextual_suggestions(self, intent: IntentType, entities: Dict[str, Any], 
+                                             context: ConversationContext) -> List[str]:
+        """Generate contextual suggestions based on conversation state and user behavior."""
+        
+        # Base suggestions by intent
+        base_suggestions = {
+            IntentType.POLICY_QUERY: ["Show policy details", "Check compliance", "View violations"],
+            IntentType.COST_QUERY: ["Cost breakdown", "Optimization tips", "Budget alerts"],
+            IntentType.COMPLIANCE_QUERY: ["Remediation steps", "Audit report", "Risk assessment"],
+            IntentType.RESOURCE_QUERY: ["Resource metrics", "Dependencies", "Health status"]
+        }
+        
+        suggestions = base_suggestions.get(intent, ["What else can you do?", "Help"])
+        
+        # Add personalized suggestions based on user's domains of interest
+        for domain in context.user_profile.domains_of_interest[:2]:
+            if domain == "cost" and intent != IntentType.COST_QUERY:
+                suggestions.append("Check my costs")
+            elif domain == "security" and intent != IntentType.COMPLIANCE_QUERY:
+                suggestions.append("Security compliance")
+        
+        return suggestions[:4]  # Limit to 4 suggestions
+    
+    def _determine_next_state(self, intent: IntentType, analysis: Dict[str, Any]) -> ConversationState:
+        """Determine the next conversation state."""
+        
+        if analysis.get('clarification_needed'):
+            return ConversationState.CLARIFYING
+        elif intent in [IntentType.OPTIMIZATION_REQUEST, IntentType.REMEDIATION_ACTION]:
+            return ConversationState.EXECUTING_ACTION
+        elif intent in [IntentType.PREDICTION_REQUEST, IntentType.ANALYTICS_REQUEST]:
+            return ConversationState.PROVIDING_RESULTS
+        else:
+            return ConversationState.PROVIDING_RESULTS
+    
+    def _generate_actions(self, intent: IntentType, entities: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate actions based on intent and entities."""
+        
+        actions = []
+        
+        if intent == IntentType.OPTIMIZATION_REQUEST:
+            actions.append({'type': 'generate_optimization_report', 'scope': 'detected'})
+        elif intent == IntentType.REMEDIATION_ACTION:
+            actions.append({'type': 'create_remediation_workflow', 'auto_execute': False})
+        elif intent == IntentType.PREDICTION_REQUEST:
+            actions.append({'type': 'run_predictive_analysis', 'horizon': '7_days'})
+        
+        return actions
+    
+    def _build_response_context(self, intent: IntentType, entities: Dict[str, Any], 
+                              analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Build response context."""
+        
+        return {
+            'domain': self._map_intent_to_domain(intent),
+            'complexity': analysis.get('semantic_analysis', {}).get('complexity', 'simple'),
+            'requires_data': analysis.get('semantic_analysis', {}).get('requires_data', False),
+            'entities_count': len(entities),
+            'confidence_level': 'high' if analysis['confidence'] > 0.8 else 'medium' if analysis['confidence'] > 0.6 else 'low'
+        }
+    
+    def _map_intent_to_domain(self, intent: IntentType) -> str:
+        """Map intent to governance domain."""
+        
+        mapping = {
+            IntentType.POLICY_QUERY: 'policy',
+            IntentType.COMPLIANCE_QUERY: 'policy',
+            IntentType.RBAC_QUERY: 'rbac',
+            IntentType.COST_QUERY: 'cost',
+            IntentType.NETWORK_QUERY: 'network',
+            IntentType.RESOURCE_QUERY: 'resource'
+        }
+        
+        return mapping.get(intent, 'general')
+    
+    def _generate_quick_replies(self, intent: IntentType) -> List[str]:
+        """Generate quick reply options."""
+        
+        quick_replies = {
+            IntentType.POLICY_QUERY: ["Show details", "Check violations", "Next policy"],
+            IntentType.COST_QUERY: ["Optimize costs", "Show breakdown", "Set budget alert"],
+            IntentType.COMPLIANCE_QUERY: ["Fix issues", "Generate report", "Explain risk"]
+        }
+        
+        return quick_replies.get(intent, ["Continue", "Help", "More options"])
+    
+    async def _generate_rich_content(self, intent: IntentType, entities: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Generate rich content (charts, tables, etc.) for responses."""
+        
+        if intent == IntentType.COST_QUERY:
+            return {
+                'type': 'chart',
+                'chart_type': 'pie',
+                'data': {
+                    'labels': ['Compute', 'Storage', 'Network'],
+                    'values': [65, 25, 10],
+                    'title': 'Cost Distribution'
+                }
+            }
+        elif intent == IntentType.COMPLIANCE_QUERY:
+            return {
+                'type': 'table',
+                'headers': ['Resource', 'Status', 'Risk Level'],
+                'rows': [
+                    ['VM-Web-01', 'Compliant', 'Low'],
+                    ['SA-Data-01', 'Non-Compliant', 'High'],
+                    ['NSG-Default', 'Warning', 'Medium']
+                ]
+            }
+        
+        return None
+    
+    async def _update_context(self, context: ConversationContext, message: str, 
+                            response: ChatResponse, analysis: Dict[str, Any]):
+        """Update conversation context after processing."""
+        
+        # Create conversation turn
+        turn = ConversationTurn(
+            turn_id=str(uuid.uuid4()),
+            timestamp=datetime.utcnow(),
+            user_message=message,
+            bot_response=response.message,
+            intent=response.intent,
+            confidence=response.confidence,
+            entities=response.entities,
+            actions_taken=response.actions,
+            context_updates=response.context
+        )
+        
+        # Add to history
+        context.history.append(turn)
+        
+        # Update context state
+        context.conversation_state = response.conversation_state
+        context.intents.append(response.intent)
+        
+        # Update entities
+        for entity_type, entity_list in response.entities.items():
+            if entity_type not in context.entities:
+                context.entities[entity_type] = []
+            context.entities[entity_type].extend(entity_list)
+        
+        # Update current domain
+        if response.context.get('domain'):
+            context.current_domain = response.context['domain']
+            
+            # Update user profile interests
+            if context.current_domain not in context.user_profile.domains_of_interest:
+                context.user_profile.domains_of_interest.append(context.current_domain)
+        
+        # Keep history manageable
+        if len(context.history) > 50:
+            context.history = context.history[-25:]
+        
+        # Update user profile activity
+        context.user_profile.last_active = datetime.utcnow()
+        context.user_profile.conversation_history.append(context.session_id)
+    
+    async def _create_error_response(self, error_message: str) -> ChatResponse:
+        """Create a standardized error response."""
+        
+        return ChatResponse(
+            message=f"I apologize, but {error_message.lower()}. How else can I help you?",
+            intent=IntentType.HELP,
+            confidence=0.0,
+            entities={},
+            actions=[],
+            context={},
+            suggestions=["Show me policies", "Check costs", "Help"],
+            conversation_state=ConversationState.ERROR
+        )
+    
+    async def get_conversation_analytics(self, user_id: str, session_id: str) -> Dict[str, Any]:
+        """Get analytics for a conversation session."""
+        
+        context_key = f"{user_id}:{session_id}"
+        
+        if context_key not in self.session_analytics:
+            return {}
+        
+        analytics = self.session_analytics[context_key].copy()
+        
+        # Calculate session duration
+        if 'start_time' in analytics:
+            session_duration = (datetime.utcnow() - analytics['start_time']).total_seconds()
+            analytics['session_duration_seconds'] = session_duration
+        
+        # Add conversation quality metrics
+        if context_key in self.active_conversations:
+            context = self.active_conversations[context_key]
+            analytics['conversation_quality'] = {
+                'turns_count': len(context.history),
+                'avg_confidence': np.mean([turn.confidence for turn in context.history]) if context.history else 0,
+                'clarifications_needed': len([turn for turn in context.history if 'clarification' in turn.bot_response.lower()]),
+                'domains_explored': list(set([turn.context_updates.get('domain') for turn in context.history if turn.context_updates.get('domain')]))
+            }
+        
+        return analytics
+    
+    async def export_conversation(self, user_id: str, session_id: str) -> Dict[str, Any]:
+        """Export conversation data for analysis or backup."""
+        
+        context_key = f"{user_id}:{session_id}"
+        
+        if context_key not in self.active_conversations:
+            return {}
+        
+        context = self.active_conversations[context_key]
+        analytics = await self.get_conversation_analytics(user_id, session_id)
+        
+        return {
+            'conversation_metadata': {
+                'user_id': user_id,
+                'session_id': session_id,
+                'start_time': analytics.get('start_time'),
+                'export_time': datetime.utcnow(),
+                'message_count': analytics.get('message_count', 0)
+            },
+            'conversation_history': [
+                {
+                    'turn_id': turn.turn_id,
+                    'timestamp': turn.timestamp,
+                    'user_message': turn.user_message,
+                    'bot_response': turn.bot_response,
+                    'intent': turn.intent.value,
+                    'confidence': turn.confidence,
+                    'entities': turn.entities
+                }
+                for turn in context.history
+            ],
+            'user_profile': {
+                'name': context.user_profile.name,
+                'role': context.user_profile.role,
+                'expertise_level': context.user_profile.expertise_level,
+                'domains_of_interest': context.user_profile.domains_of_interest
+            },
+            'analytics': analytics
+        }

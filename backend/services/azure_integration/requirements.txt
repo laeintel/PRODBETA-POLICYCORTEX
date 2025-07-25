@@ -14,8 +14,13 @@ azure-mgmt-costmanagement==4.0.1
 azure-mgmt-consumption==10.0.0
 azure-mgmt-policyinsights==1.1.0b4
 azure-mgmt-monitor==6.0.2
+azure-monitor-query==1.2.0
 azure-mgmt-subscription==3.1.1
 azure-keyvault-secrets==4.7.0
+azure-storage-blob==12.19.0
+azure-cosmos==4.5.1
+azure-servicebus==7.11.4
+azure-eventhub==5.11.4
 azure-core==1.29.5
 
 # HTTP client
@@ -43,6 +48,7 @@ prometheus-client==0.19.0
 
 # Configuration and environment
 python-dotenv==1.0.0
+aiofiles==23.2.1
 
 # Date and time handling
 python-dateutil==2.8.2

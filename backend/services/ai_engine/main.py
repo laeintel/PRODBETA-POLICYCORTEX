@@ -52,6 +52,8 @@ from .services.feature_engineer import FeatureEngineer
 from .services.model_monitor import ModelMonitor
 from .ml_models.compliance_predictor import CompliancePredictor
 from .ml_models.correlation_engine import CrossDomainCorrelationEngine
+from .services.automation_orchestrator import WorkflowEngine
+from .services.automation_engine import AutomationTrigger, AutomationStatus
 
 # Configuration
 settings = get_settings()
@@ -103,6 +105,7 @@ feature_engineer = FeatureEngineer()
 model_monitor = ModelMonitor()
 compliance_predictor = CompliancePredictor()
 correlation_engine = CrossDomainCorrelationEngine()
+workflow_engine = WorkflowEngine()
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -227,6 +230,7 @@ async def startup_event():
         await model_monitor.initialize()
         await compliance_predictor.initialize()
         await correlation_engine.initialize()
+        await workflow_engine.initialize()
         
         # Update metrics
         ACTIVE_MODELS.set(len(model_manager.active_models))
@@ -253,6 +257,7 @@ async def shutdown_event():
         await sentiment_analyzer.cleanup()
         await feature_engineer.cleanup()
         await model_monitor.cleanup()
+        await workflow_engine.cleanup()
         
         logger.info("AI Engine service shutdown complete")
         
@@ -981,6 +986,250 @@ async def get_governance_insights(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve governance insights: {str(e)}"
+        )
+
+
+# Intelligent Automation Framework endpoints
+@app.post("/api/v1/automation/trigger", response_model=APIResponse)
+async def trigger_automation_workflow(
+    trigger_event: Dict[str, Any],
+    workflow_id: Optional[str] = None,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Trigger an automation workflow based on an event."""
+    try:
+        logger.info("automation_workflow_trigger_requested",
+                   trigger_type=trigger_event.get('trigger_type'),
+                   workflow_id=workflow_id)
+        
+        # Add user context to trigger event
+        if user:
+            trigger_event['triggered_by'] = user.get('id')
+            trigger_event['user_permissions'] = user.get('permissions', [])
+        
+        # Trigger workflow
+        execution_id = await workflow_engine.trigger_workflow(trigger_event, workflow_id)
+        
+        if execution_id:
+            return APIResponse(
+                success=True,
+                data={
+                    'execution_id': execution_id,
+                    'status': 'triggered',
+                    'workflow_id': workflow_id
+                },
+                message="Automation workflow triggered successfully"
+            )
+        else:
+            return APIResponse(
+                success=False,
+                data={},
+                message="No matching workflow found or conditions not met"
+            )
+        
+    except Exception as e:
+        logger.error("automation_trigger_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to trigger automation workflow: {str(e)}"
+        )
+
+
+@app.get("/api/v1/automation/execution/{execution_id}", response_model=APIResponse)
+async def get_automation_execution_status(
+    execution_id: str,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get the status of an automation workflow execution."""
+    try:
+        execution_status = await workflow_engine.get_execution_status(execution_id)
+        
+        if execution_status:
+            return APIResponse(
+                success=True,
+                data=execution_status,
+                message="Execution status retrieved successfully"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Execution not found: {execution_id}"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_execution_status_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get execution status: {str(e)}"
+        )
+
+
+@app.post("/api/v1/automation/execution/{execution_id}/cancel", response_model=APIResponse)
+async def cancel_automation_execution(
+    execution_id: str,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Cancel a running automation workflow execution."""
+    try:
+        success = await workflow_engine.cancel_execution(execution_id)
+        
+        if success:
+            return APIResponse(
+                success=True,
+                data={'execution_id': execution_id, 'status': 'cancelled'},
+                message="Execution cancelled successfully"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Execution not found or cannot be cancelled: {execution_id}"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("cancel_execution_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to cancel execution: {str(e)}"
+        )
+
+
+@app.get("/api/v1/automation/workflows", response_model=APIResponse)
+async def list_automation_workflows(
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """List all available automation workflows."""
+    try:
+        workflows = []
+        
+        for workflow_id, workflow in workflow_engine.workflow_registry.items():
+            workflows.append({
+                'workflow_id': workflow.workflow_id,
+                'name': workflow.name,
+                'description': workflow.description,
+                'trigger': workflow.trigger.value,
+                'action_count': len(workflow.actions),
+                'approval_required': workflow.approval_required,
+                'auto_rollback': workflow.auto_rollback,
+                'created_at': workflow.created_at.isoformat(),
+                'created_by': workflow.created_by
+            })
+        
+        return APIResponse(
+            success=True,
+            data={'workflows': workflows, 'total_count': len(workflows)},
+            message="Workflows retrieved successfully"
+        )
+        
+    except Exception as e:
+        logger.error("list_workflows_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list workflows: {str(e)}"
+        )
+
+
+@app.get("/api/v1/automation/analytics", response_model=APIResponse)
+async def get_automation_analytics(
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get automation analytics and metrics."""
+    try:
+        analytics = await workflow_engine.get_workflow_analytics()
+        
+        return APIResponse(
+            success=True,
+            data=analytics,
+            message="Automation analytics retrieved successfully"
+        )
+        
+    except Exception as e:
+        logger.error("get_automation_analytics_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get automation analytics: {str(e)}"
+        )
+
+
+@app.post("/api/v1/automation/simulate", response_model=APIResponse)
+async def simulate_automation_workflow(
+    trigger_event: Dict[str, Any],
+    workflow_id: Optional[str] = None,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Simulate an automation workflow without executing actions."""
+    try:
+        logger.info("automation_simulation_requested",
+                   trigger_type=trigger_event.get('trigger_type'),
+                   workflow_id=workflow_id)
+        
+        # Find appropriate workflow
+        if workflow_id:
+            workflow = workflow_engine.workflow_registry.get(workflow_id)
+            if not workflow:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Workflow not found: {workflow_id}"
+                )
+        else:
+            trigger_type = AutomationTrigger(trigger_event.get('trigger_type', 'manual'))
+            workflow = None
+            for w in workflow_engine.workflow_registry.values():
+                if w.trigger == trigger_type:
+                    workflow = w
+                    break
+            
+            if not workflow:
+                return APIResponse(
+                    success=False,
+                    data={},
+                    message="No matching workflow found for trigger"
+                )
+        
+        # Check conditions
+        conditions_met = await workflow_engine._evaluate_conditions(workflow.conditions, trigger_event)
+        
+        # Simulate execution plan
+        simulation_result = {
+            'workflow_id': workflow.workflow_id,
+            'workflow_name': workflow.name,
+            'conditions_met': conditions_met,
+            'estimated_duration': f"{len(workflow.actions) * 30} seconds",
+            'action_plan': [
+                {
+                    'action_id': action.action_id,
+                    'name': action.name,
+                    'action_type': action.action_type,
+                    'target_resource': action.target_resource,
+                    'priority': action.priority.value,
+                    'dependencies': action.dependencies,
+                    'approval_required': getattr(action, 'approval_required', False)
+                }
+                for action in workflow.actions
+            ],
+            'risk_assessment': {
+                'rollback_available': workflow.auto_rollback,
+                'approval_required': workflow.approval_required,
+                'high_risk_actions': len([a for a in workflow.actions if a.priority.value in ['critical', 'high']])
+            }
+        }
+        
+        return APIResponse(
+            success=True,
+            data=simulation_result,
+            message="Workflow simulation completed successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("automation_simulation_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to simulate workflow: {str(e)}"
         )
 
 

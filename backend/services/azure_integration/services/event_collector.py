@@ -9,9 +9,21 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable
 import structlog
 from azure.identity.aio import DefaultAzureCredential
-from azure.monitor.query.aio import LogsQueryClient
-from azure.eventgrid.aio import EventGridPublisherClient
-from azure.eventgrid import EventGridEvent
+try:
+    from azure.monitor.query.aio import LogsQueryClient
+    AZURE_MONITOR_AVAILABLE = True
+except ImportError:
+    LogsQueryClient = None
+    AZURE_MONITOR_AVAILABLE = False
+
+try:
+    from azure.eventgrid.aio import EventGridPublisherClient
+    from azure.eventgrid import EventGridEvent
+    AZURE_EVENTGRID_AVAILABLE = True
+except ImportError:
+    EventGridPublisherClient = None
+    EventGridEvent = None
+    AZURE_EVENTGRID_AVAILABLE = False
 from azure.core.credentials import AccessToken
 
 logger = structlog.get_logger(__name__)

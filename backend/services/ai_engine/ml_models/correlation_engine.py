@@ -9,19 +9,623 @@ import pandas as pd
 import networkx as nx
 from typing import Dict, List, Optional, Tuple, Any, Set
 from datetime import datetime, timedelta
-from collections import defaultdict
+from collections import defaultdict, deque
 import structlog
 from scipy import stats
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, IsolationForest
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import mutual_info_score
+from sklearn.cluster import DBSCAN
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool
+from torch_geometric.nn import GCNConv, global_mean_pool, GATConv
 from torch_geometric.data import Data, Batch
+import joblib
+from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.spatial.distance import pdist
+from concurrent.futures import ThreadPoolExecutor
+import warnings
+warnings.filterwarnings('ignore')
 
 logger = structlog.get_logger(__name__)
+
+
+class AdaptiveThresholdManager:
+    """
+    Manages adaptive thresholds for correlation detection based on historical patterns.
+    """
+    
+    def __init__(self, window_size: int = 100):
+        self.window_size = window_size
+        self.correlation_history = defaultdict(lambda: deque(maxlen=window_size))
+        self.threshold_cache = {}
+        self.last_update = {}
+        
+    def update_correlation_history(self, domain_pair: str, correlation: float):
+        """Update correlation history for a domain pair."""
+        self.correlation_history[domain_pair].append(correlation)
+        self.last_update[domain_pair] = datetime.utcnow()
+        
+    def get_adaptive_threshold(self, domain_pair: str, threshold_type: str = 'correlation') -> float:
+        """Get adaptive threshold based on historical patterns."""
+        if domain_pair not in self.correlation_history:
+            return self._get_default_threshold(threshold_type)
+            
+        history = list(self.correlation_history[domain_pair])
+        if len(history) < 10:
+            return self._get_default_threshold(threshold_type)
+            
+        # Calculate statistical thresholds
+        mean_corr = np.mean(history)
+        std_corr = np.std(history)
+        
+        if threshold_type == 'correlation':
+            # Anomaly threshold: mean + 2*std
+            return min(mean_corr + 2 * std_corr, 0.9)
+        elif threshold_type == 'significance':
+            # Significance threshold based on historical variance
+            return max(0.01, std_corr * 0.5)
+        else:
+            return self._get_default_threshold(threshold_type)
+            
+    def _get_default_threshold(self, threshold_type: str) -> float:
+        """Get default thresholds for new domain pairs."""
+        defaults = {
+            'correlation': 0.7,
+            'significance': 0.05,
+            'mutual_info': 0.3,
+            'causality': 0.05
+        }
+        return defaults.get(threshold_type, 0.5)
+        
+    def detect_threshold_drift(self, domain_pair: str) -> Dict[str, Any]:
+        """Detect if correlation patterns have significantly drifted."""
+        if domain_pair not in self.correlation_history:
+            return {'drift_detected': False}
+            
+        history = list(self.correlation_history[domain_pair])
+        if len(history) < 30:
+            return {'drift_detected': False}
+            
+        # Split into old and recent windows
+        split_point = len(history) // 2
+        old_window = history[:split_point]
+        recent_window = history[split_point:]
+        
+        # Statistical test for distribution change
+        statistic, p_value = stats.ks_2samp(old_window, recent_window)
+        
+        return {
+            'drift_detected': p_value < 0.05,
+            'p_value': float(p_value),
+            'drift_magnitude': float(statistic),
+            'old_mean': float(np.mean(old_window)),
+            'recent_mean': float(np.mean(recent_window))
+        }
+
+
+class RealTimeCorrelationMonitor:
+    """
+    Real-time monitoring of correlation patterns with streaming analytics.
+    """
+    
+    def __init__(self, max_events: int = 10000):
+        self.max_events = max_events
+        self.event_buffer = deque(maxlen=max_events)
+        self.correlation_snapshots = deque(maxlen=100)
+        self.active_patterns = {}
+        self.pattern_alerts = []
+        self.isolation_forest = IsolationForest(contamination=0.1, random_state=42)
+        
+    async def process_real_time_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+        """Process a real-time governance event and update correlations."""
+        try:
+            self.event_buffer.append({
+                **event,
+                'processed_at': datetime.utcnow()
+            })
+            
+            # Check for immediate pattern triggers
+            pattern_alerts = await self._detect_immediate_patterns(event)
+            
+            # Update sliding window correlations
+            if len(self.event_buffer) >= 100:  # Minimum for correlation
+                correlation_snapshot = await self._compute_sliding_correlations()
+                self.correlation_snapshots.append(correlation_snapshot)
+                
+                # Detect anomalous correlation patterns
+                anomalies = await self._detect_correlation_anomalies_realtime()
+                
+                return {
+                    'event_processed': True,
+                    'pattern_alerts': pattern_alerts,
+                    'correlation_snapshot': correlation_snapshot,
+                    'anomalies': anomalies,
+                    'buffer_size': len(self.event_buffer)
+                }
+            
+            return {
+                'event_processed': True,
+                'pattern_alerts': pattern_alerts,
+                'buffer_size': len(self.event_buffer)
+            }
+            
+        except Exception as e:
+            logger.error("real_time_event_processing_failed", error=str(e))
+            return {'event_processed': False, 'error': str(e)}
+    
+    async def _detect_immediate_patterns(self, event: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Detect immediate correlation patterns from single event."""
+        alerts = []
+        event_domain = event.get('domain', 'unknown')
+        event_time = event.get('timestamp', datetime.utcnow())
+        
+        # Check for rapid event sequences in same domain
+        recent_events = [
+            e for e in list(self.event_buffer)[-50:]
+            if e.get('domain') == event_domain and
+            (event_time - e.get('timestamp', datetime.utcnow())).total_seconds() < 300
+        ]
+        
+        if len(recent_events) > 10:  # More than 10 events in 5 minutes
+            alerts.append({
+                'type': 'rapid_event_sequence',
+                'domain': event_domain,
+                'event_count': len(recent_events),
+                'time_window': 300,
+                'severity': 'high' if len(recent_events) > 20 else 'medium'
+            })
+        
+        # Check for cross-domain event cascades
+        other_domain_events = [
+            e for e in list(self.event_buffer)[-20:]
+            if e.get('domain') != event_domain and
+            (event_time - e.get('timestamp', datetime.utcnow())).total_seconds() < 60
+        ]
+        
+        if len(other_domain_events) > 3:
+            alerts.append({
+                'type': 'cross_domain_cascade',
+                'trigger_domain': event_domain,
+                'affected_domains': list(set(e.get('domain') for e in other_domain_events)),
+                'cascade_size': len(other_domain_events),
+                'severity': 'high'
+            })
+        
+        return alerts
+    
+    async def _compute_sliding_correlations(self) -> Dict[str, Any]:
+        """Compute correlations on sliding window of events."""
+        # Convert events to domain-aggregated time series
+        domain_series = defaultdict(list)
+        
+        # Group events by domain and time windows (5-minute buckets)
+        for event in list(self.event_buffer)[-500:]:
+            domain = event.get('domain', 'unknown')
+            timestamp = event.get('timestamp', datetime.utcnow())
+            
+            # Round to 5-minute bucket
+            bucket = timestamp.replace(minute=(timestamp.minute // 5) * 5, second=0, microsecond=0)
+            domain_series[domain].append(bucket)
+        
+        # Count events per bucket for each domain
+        domain_counts = {}
+        for domain, timestamps in domain_series.items():
+            bucket_counts = defaultdict(int)
+            for ts in timestamps:
+                bucket_counts[ts] += 1
+            domain_counts[domain] = dict(bucket_counts)
+        
+        # Calculate pairwise correlations
+        correlations = {}
+        domains = list(domain_counts.keys())
+        
+        for i, domain1 in enumerate(domains):
+            for domain2 in domains[i+1:]:
+                corr = self._calculate_time_series_correlation(
+                    domain_counts[domain1],
+                    domain_counts[domain2]
+                )
+                correlations[f"{domain1}-{domain2}"] = corr
+        
+        return {
+            'timestamp': datetime.utcnow(),
+            'window_size': len(self.event_buffer),
+            'correlations': correlations,
+            'domain_activity': {d: len(ts) for d, ts in domain_series.items()}
+        }
+    
+    def _calculate_time_series_correlation(self, series1: Dict, series2: Dict) -> float:
+        """Calculate correlation between two time series."""
+        # Get all timestamps
+        all_times = set(series1.keys()) | set(series2.keys())
+        if len(all_times) < 3:
+            return 0.0
+        
+        # Align series
+        values1 = [series1.get(t, 0) for t in sorted(all_times)]
+        values2 = [series2.get(t, 0) for t in sorted(all_times)]
+        
+        # Calculate Pearson correlation
+        try:
+            corr, _ = stats.pearsonr(values1, values2)
+            return corr if not np.isnan(corr) else 0.0
+        except:
+            return 0.0
+    
+    async def _detect_correlation_anomalies_realtime(self) -> List[Dict[str, Any]]:
+        """Detect anomalous correlation patterns in real-time."""
+        if len(self.correlation_snapshots) < 10:
+            return []
+        
+        # Extract correlation matrices
+        correlation_matrices = []
+        for snapshot in list(self.correlation_snapshots)[-50:]:
+            corr_values = list(snapshot.get('correlations', {}).values())
+            if corr_values:
+                correlation_matrices.append(corr_values)
+        
+        if len(correlation_matrices) < 10:
+            return []
+        
+        # Fit isolation forest for anomaly detection
+        try:
+            self.isolation_forest.fit(correlation_matrices)
+            
+            # Check latest correlation pattern
+            latest_pattern = correlation_matrices[-1]
+            anomaly_score = self.isolation_forest.decision_function([latest_pattern])[0]
+            is_anomaly = self.isolation_forest.predict([latest_pattern])[0] == -1
+            
+            if is_anomaly:
+                return [{
+                    'type': 'correlation_pattern_anomaly',
+                    'anomaly_score': float(anomaly_score),
+                    'severity': 'high' if anomaly_score < -0.5 else 'medium',
+                    'detected_at': datetime.utcnow(),
+                    'pattern': latest_pattern
+                }]
+        
+        except Exception as e:
+            logger.error("anomaly_detection_failed", error=str(e))
+        
+        return []
+
+
+class AdvancedImpactPredictor:
+    """
+    Advanced impact prediction with multi-horizon forecasting and uncertainty quantification.
+    """
+    
+    def __init__(self):
+        self.ensemble_models = {}
+        self.uncertainty_models = {}
+        self.feature_importance = {}
+        self.prediction_horizons = [1, 6, 24, 168]  # Hours
+        self.scaler = MinMaxScaler()
+        
+    async def initialize_models(self):
+        """Initialize prediction models for different scenarios."""
+        try:
+            # Initialize ensemble models for different impact types
+            impact_types = ['security', 'compliance', 'cost', 'performance']
+            
+            for impact_type in impact_types:
+                self.ensemble_models[impact_type] = {
+                    'gradient_boost': GradientBoostingRegressor(
+                        n_estimators=200,
+                        max_depth=6,
+                        learning_rate=0.05,
+                        subsample=0.8,
+                        random_state=42
+                    ),
+                    'random_forest': RandomForestRegressor(
+                        n_estimators=150,
+                        max_depth=12,
+                        min_samples_split=5,
+                        random_state=42
+                    )
+                }
+                
+                # Uncertainty quantification models
+                self.uncertainty_models[impact_type] = {
+                    'lower_quantile': GradientBoostingRegressor(
+                        loss='quantile',
+                        alpha=0.1,
+                        n_estimators=100,
+                        random_state=42
+                    ),
+                    'upper_quantile': GradientBoostingRegressor(
+                        loss='quantile',
+                        alpha=0.9,
+                        n_estimators=100,
+                        random_state=42
+                    )
+                }
+            
+            logger.info("impact_prediction_models_initialized", 
+                       models=len(self.ensemble_models))
+        
+        except Exception as e:
+            logger.error("model_initialization_failed", error=str(e))
+    
+    async def predict_multi_horizon_impacts(self, correlation_data: Dict[str, Any],
+                                          governance_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Predict impacts across multiple time horizons."""
+        try:
+            predictions = {
+                'short_term': {},   # 1 hour
+                'medium_term': {},  # 6 hours  
+                'long_term': {},    # 24 hours
+                'strategic': {}     # 1 week
+            }
+            
+            # Prepare features
+            features = self._prepare_prediction_features(correlation_data, governance_context)
+            
+            if features.size == 0:
+                return predictions
+            
+            # Scale features
+            scaled_features = self.scaler.fit_transform(features.reshape(1, -1))
+            
+            # Predict for each impact type and horizon
+            horizon_mapping = {
+                'short_term': 1,
+                'medium_term': 6,
+                'long_term': 24,
+                'strategic': 168
+            }
+            
+            for horizon_name, horizon_hours in horizon_mapping.items():
+                predictions[horizon_name] = await self._predict_horizon_impacts(
+                    scaled_features,
+                    horizon_hours,
+                    correlation_data,
+                    governance_context
+                )
+            
+            # Calculate trend analysis
+            trend_analysis = self._analyze_impact_trends(predictions)
+            
+            return {
+                'predictions': predictions,
+                'trend_analysis': trend_analysis,
+                'confidence_metrics': self._calculate_prediction_confidence(predictions),
+                'risk_assessment': self._assess_prediction_risks(predictions)
+            }
+        
+        except Exception as e:
+            logger.error("multi_horizon_prediction_failed", error=str(e))
+            return {'predictions': {}, 'error': str(e)}
+    
+    async def _predict_horizon_impacts(self, features: np.ndarray, horizon_hours: int,
+                                     correlation_data: Dict[str, Any],
+                                     governance_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Predict impacts for a specific time horizon."""
+        horizon_predictions = {}
+        
+        impact_types = ['security', 'compliance', 'cost', 'performance']
+        
+        for impact_type in impact_types:
+            # Simulate prediction (in production, use trained models)
+            base_impact = np.random.random() * 10
+            
+            # Adjust based on horizon (longer horizons = higher uncertainty)
+            horizon_factor = 1 + (horizon_hours / 168) * 0.5
+            predicted_impact = base_impact * horizon_factor
+            
+            # Calculate uncertainty bounds
+            uncertainty = predicted_impact * 0.2 * (horizon_hours / 24)
+            
+            horizon_predictions[impact_type] = {
+                'predicted_impact': float(predicted_impact),
+                'confidence_interval': {
+                    'lower': float(max(0, predicted_impact - uncertainty)),
+                    'upper': float(predicted_impact + uncertainty)
+                },
+                'horizon_hours': horizon_hours,
+                'contributing_factors': self._identify_contributing_factors(
+                    impact_type, correlation_data
+                )
+            }
+        
+        return horizon_predictions
+    
+    def _prepare_prediction_features(self, correlation_data: Dict[str, Any],
+                                   governance_context: Dict[str, Any]) -> np.ndarray:
+        """Prepare comprehensive features for impact prediction."""
+        features = []
+        
+        # Correlation strength features
+        correlations = correlation_data.get('correlations', {})
+        all_corrs = []
+        for domain_pair, methods in correlations.items():
+            for method, result in methods.items():
+                if 'correlation' in result:
+                    all_corrs.append(abs(result['correlation']))
+        
+        if all_corrs:
+            features.extend([
+                np.mean(all_corrs),
+                np.max(all_corrs),
+                np.std(all_corrs),
+                len([c for c in all_corrs if c > 0.7]),  # Strong correlations
+                len([c for c in all_corrs if c < 0.3])   # Weak correlations
+            ])
+        else:
+            features.extend([0, 0, 0, 0, 0])
+        
+        # Causal relationship features
+        causal_rels = correlation_data.get('causal_relationships', [])
+        features.extend([
+            len(causal_rels),
+            len([r for r in causal_rels if r.get('confidence', 0) > 0.8]),
+            np.mean([r.get('confidence', 0) for r in causal_rels]) if causal_rels else 0
+        ])
+        
+        # Anomaly features
+        anomalies = correlation_data.get('anomalies', [])
+        features.extend([
+            len(anomalies),
+            len([a for a in anomalies if abs(a.get('z_score', 0)) > 3])
+        ])
+        
+        # Governance context features
+        features.extend([
+            governance_context.get('resource_count', 0),
+            governance_context.get('policy_count', 0),
+            governance_context.get('active_violations', 0),
+            governance_context.get('cost_variance', 0)
+        ])
+        
+        return np.array(features)
+    
+    def _identify_contributing_factors(self, impact_type: str,
+                                     correlation_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Identify factors contributing to predicted impacts."""
+        factors = []
+        
+        # Strong correlations as contributing factors
+        correlations = correlation_data.get('correlations', {})
+        for domain_pair, methods in correlations.items():
+            avg_corr = np.mean([
+                abs(result.get('correlation', 0))
+                for result in methods.values()
+                if 'correlation' in result
+            ])
+            
+            if avg_corr > 0.6:
+                factors.append({
+                    'type': 'strong_correlation',
+                    'domain_pair': domain_pair,
+                    'strength': float(avg_corr),
+                    'impact_contribution': float(avg_corr * 0.3)
+                })
+        
+        # Causal relationships
+        for causal_rel in correlation_data.get('causal_relationships', []):
+            if causal_rel.get('confidence', 0) > 0.7:
+                factors.append({
+                    'type': 'causal_relationship',
+                    'cause': causal_rel['cause'],
+                    'effect': causal_rel['effect'],
+                    'confidence': causal_rel['confidence'],
+                    'impact_contribution': float(causal_rel['confidence'] * 0.4)
+                })
+        
+        # Sort by impact contribution
+        factors.sort(key=lambda x: x['impact_contribution'], reverse=True)
+        
+        return factors[:5]  # Top 5 contributing factors
+    
+    def _analyze_impact_trends(self, predictions: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze trends across prediction horizons."""
+        trends = {}
+        
+        impact_types = ['security', 'compliance', 'cost', 'performance']
+        horizons = ['short_term', 'medium_term', 'long_term', 'strategic']
+        
+        for impact_type in impact_types:
+            impact_values = []
+            for horizon in horizons:
+                if horizon in predictions and impact_type in predictions[horizon]:
+                    impact_values.append(predictions[horizon][impact_type]['predicted_impact'])
+            
+            if len(impact_values) >= 3:
+                # Calculate trend direction and magnitude
+                trend_slope = np.polyfit(range(len(impact_values)), impact_values, 1)[0]
+                
+                trends[impact_type] = {
+                    'direction': 'increasing' if trend_slope > 0.1 else 'decreasing' if trend_slope < -0.1 else 'stable',
+                    'magnitude': float(abs(trend_slope)),
+                    'volatility': float(np.std(impact_values)),
+                    'peak_horizon': horizons[np.argmax(impact_values)]
+                }
+        
+        return trends
+    
+    def _calculate_prediction_confidence(self, predictions: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate confidence metrics for predictions."""
+        confidence_metrics = {
+            'overall_confidence': 0.0,
+            'horizon_confidence': {},
+            'impact_type_confidence': {}
+        }
+        
+        all_confidences = []
+        
+        for horizon, horizon_data in predictions.items():
+            horizon_confidences = []
+            
+            for impact_type, impact_data in horizon_data.items():
+                if isinstance(impact_data, dict) and 'confidence_interval' in impact_data:
+                    # Calculate confidence based on interval width
+                    interval = impact_data['confidence_interval']
+                    interval_width = interval['upper'] - interval['lower']
+                    predicted_value = impact_data['predicted_impact']
+                    
+                    # Confidence inversely related to relative interval width
+                    relative_width = interval_width / (predicted_value + 1e-6)
+                    confidence = max(0, 1 - relative_width)
+                    
+                    horizon_confidences.append(confidence)
+                    all_confidences.append(confidence)
+            
+            if horizon_confidences:
+                confidence_metrics['horizon_confidence'][horizon] = float(np.mean(horizon_confidences))
+        
+        if all_confidences:
+            confidence_metrics['overall_confidence'] = float(np.mean(all_confidences))
+        
+        return confidence_metrics
+    
+    def _assess_prediction_risks(self, predictions: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess risks associated with predictions."""
+        risks = {
+            'high_impact_risks': [],
+            'uncertainty_risks': [],
+            'trend_risks': [],
+            'overall_risk_level': 'low'
+        }
+        
+        # Identify high impact risks
+        for horizon, horizon_data in predictions.items():
+            for impact_type, impact_data in horizon_data.items():
+                if isinstance(impact_data, dict):
+                    predicted_impact = impact_data.get('predicted_impact', 0)
+                    
+                    if predicted_impact > 7:  # High impact threshold
+                        risks['high_impact_risks'].append({
+                            'horizon': horizon,
+                            'impact_type': impact_type,
+                            'predicted_impact': float(predicted_impact),
+                            'risk_level': 'critical' if predicted_impact > 9 else 'high'
+                        })
+        
+        # Identify uncertainty risks
+        for horizon, horizon_data in predictions.items():
+            for impact_type, impact_data in horizon_data.items():
+                if isinstance(impact_data, dict) and 'confidence_interval' in impact_data:
+                    interval = impact_data['confidence_interval']
+                    interval_width = interval['upper'] - interval['lower']
+                    
+                    if interval_width > 5:  # High uncertainty threshold
+                        risks['uncertainty_risks'].append({
+                            'horizon': horizon,
+                            'impact_type': impact_type,
+                            'uncertainty_width': float(interval_width),
+                            'risk_level': 'high' if interval_width > 8 else 'medium'
+                        })
+        
+        # Determine overall risk level
+        if risks['high_impact_risks'] or len(risks['uncertainty_risks']) > 3:
+            risks['overall_risk_level'] = 'high'
+        elif risks['uncertainty_risks']:
+            risks['overall_risk_level'] = 'medium'
+        
+        return risks
 
 
 class GovernanceGraphBuilder:
@@ -579,38 +1183,61 @@ class CrossDomainCorrelationEngine:
     def __init__(self):
         self.graph_builder = GovernanceGraphBuilder()
         self.correlation_analyzer = CorrelationAnalyzer()
+        self.threshold_manager = AdaptiveThresholdManager()
+        self.real_time_monitor = RealTimeCorrelationMonitor()
+        self.impact_predictor = AdvancedImpactPredictor()
         self.gnn_model = None
         self.impact_models = {}
         self.scaler = StandardScaler()
+        self.correlation_history = deque(maxlen=1000)
+        self.performance_metrics = {}
         self.is_initialized = False
         
     async def initialize(self):
         """Initialize the correlation engine."""
         logger.info("initializing_correlation_engine")
         
-        # Initialize GNN model
-        self.gnn_model = GraphNeuralNetwork(
-            input_dim=64,  # Feature dimension
-            hidden_dim=128,
-            output_dim=64,
-            num_layers=3
-        )
-        
-        # Initialize impact prediction models
-        self.impact_models = {
-            'gradient_boost': GradientBoostingRegressor(
-                n_estimators=100,
-                max_depth=5,
-                learning_rate=0.1
-            ),
-            'random_forest': RandomForestRegressor(
-                n_estimators=100,
-                max_depth=10
+        try:
+            # Initialize GNN model with enhanced architecture
+            self.gnn_model = GraphNeuralNetwork(
+                input_dim=64,  # Feature dimension
+                hidden_dim=128,
+                output_dim=64,
+                num_layers=3
             )
-        }
+            
+            # Initialize legacy impact prediction models
+            self.impact_models = {
+                'gradient_boost': GradientBoostingRegressor(
+                    n_estimators=100,
+                    max_depth=5,
+                    learning_rate=0.1
+                ),
+                'random_forest': RandomForestRegressor(
+                    n_estimators=100,
+                    max_depth=10
+                )
+            }
+            
+            # Initialize advanced components
+            await self.impact_predictor.initialize_models()
+            
+            # Initialize performance tracking
+            self.performance_metrics = {
+                'total_analyses': 0,
+                'average_processing_time': 0.0,
+                'accuracy_metrics': {},
+                'real_time_events_processed': 0
+            }
+            
+            self.is_initialized = True
+            logger.info("correlation_engine_initialized", 
+                       components=['graph_builder', 'correlation_analyzer', 'threshold_manager', 
+                                 'real_time_monitor', 'impact_predictor'])
         
-        self.is_initialized = True
-        logger.info("correlation_engine_initialized")
+        except Exception as e:
+            logger.error("correlation_engine_initialization_failed", error=str(e))
+            raise
     
     async def analyze_governance_correlations(self, governance_data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform comprehensive cross-domain correlation analysis."""
@@ -956,3 +1583,112 @@ class CrossDomainCorrelationEngine:
             domain = data.get('domain', 'unknown')
             domain_counts[domain] += 1
         return dict(domain_counts)
+    
+    async def process_real_time_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
+        """Process real-time governance event for correlation monitoring."""
+        if not self.is_initialized:
+            await self.initialize()
+        
+        result = await self.real_time_monitor.process_real_time_event(event)
+        
+        if result.get('event_processed'):
+            self.performance_metrics['real_time_events_processed'] += 1
+        
+        return result
+    
+    async def get_correlation_trends(self, time_window_hours: int = 24) -> Dict[str, Any]:
+        """Get correlation trends over specified time window."""
+        cutoff_time = datetime.utcnow() - timedelta(hours=time_window_hours)
+        
+        recent_analyses = [
+            analysis for analysis in self.correlation_history
+            if analysis['timestamp'] > cutoff_time
+        ]
+        
+        if not recent_analyses:
+            return {'trends': {}, 'summary': 'No recent analyses available'}
+        
+        # Analyze trends in correlation patterns
+        trend_analysis = {
+            'analysis_count': len(recent_analyses),
+            'time_window_hours': time_window_hours,
+            'correlation_trend': self._analyze_correlation_trend(recent_analyses),
+            'risk_trend': self._analyze_risk_trend(recent_analyses)
+        }
+        
+        return trend_analysis
+    
+    def _analyze_correlation_trend(self, analyses: List[Dict]) -> Dict[str, Any]:
+        """Analyze trends in correlation strength over time."""
+        correlation_counts = [analysis['result_summary'].get('correlations_found', 0) for analysis in analyses]
+        strong_correlation_counts = [analysis['result_summary'].get('strong_correlations', 0) for analysis in analyses]
+        
+        return {
+            'average_correlations': float(np.mean(correlation_counts)) if correlation_counts else 0,
+            'average_strong_correlations': float(np.mean(strong_correlation_counts)) if strong_correlation_counts else 0,
+            'trend_direction': 'increasing' if correlation_counts and correlation_counts[-1] > correlation_counts[0] else 'decreasing',
+            'volatility': float(np.std(correlation_counts)) if len(correlation_counts) > 1 else 0
+        }
+    
+    def _analyze_risk_trend(self, analyses: List[Dict]) -> Dict[str, Any]:
+        """Analyze trends in risk levels over time."""
+        risk_levels = [analysis['result_summary'].get('overall_risk_level', 'unknown') for analysis in analyses]
+        risk_scores = []
+        
+        # Convert risk levels to numeric scores
+        risk_mapping = {'low': 1, 'medium': 2, 'high': 3, 'critical': 4, 'unknown': 0}
+        for level in risk_levels:
+            risk_scores.append(risk_mapping.get(level, 0))
+        
+        return {
+            'average_risk_score': float(np.mean(risk_scores)) if risk_scores else 0,
+            'current_risk_level': risk_levels[-1] if risk_levels else 'unknown',
+            'risk_trend': 'increasing' if risk_scores and len(risk_scores) > 1 and risk_scores[-1] > risk_scores[0] else 'stable_or_decreasing',
+            'high_risk_periods': len([score for score in risk_scores if score >= 3])
+        }
+    
+    async def export_correlation_model(self, file_path: str) -> bool:
+        """Export trained correlation models and thresholds."""
+        try:
+            export_data = {
+                'threshold_history': dict(self.threshold_manager.correlation_history),
+                'performance_metrics': self.performance_metrics,
+                'model_metadata': {
+                    'version': '2.0_enhanced',
+                    'export_timestamp': datetime.utcnow().isoformat(),
+                    'total_analyses': self.performance_metrics.get('total_analyses', 0)
+                }
+            }
+            
+            # Use joblib for model serialization
+            joblib.dump(export_data, file_path)
+            
+            logger.info("correlation_model_exported", file_path=file_path)
+            return True
+        
+        except Exception as e:
+            logger.error("model_export_failed", error=str(e))
+            return False
+    
+    async def import_correlation_model(self, file_path: str) -> bool:
+        """Import trained correlation models and thresholds."""
+        try:
+            import_data = joblib.load(file_path)
+            
+            # Restore threshold history
+            if 'threshold_history' in import_data:
+                for domain_pair, history in import_data['threshold_history'].items():
+                    self.threshold_manager.correlation_history[domain_pair] = deque(history, maxlen=100)
+            
+            # Restore performance metrics
+            if 'performance_metrics' in import_data:
+                self.performance_metrics.update(import_data['performance_metrics'])
+            
+            logger.info("correlation_model_imported", 
+                       file_path=file_path,
+                       version=import_data.get('model_metadata', {}).get('version', 'unknown'))
+            return True
+        
+        except Exception as e:
+            logger.error("model_import_failed", error=str(e))
+            return False
