@@ -71,34 +71,12 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
           }
         ]
       } : null
-      secrets: [
-        {
-          name: 'jwt-secret'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/jwt-secret'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'encryption-key'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/encryption-key'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'azure-client-id'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-client-id'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'azure-tenant-id'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-tenant-id'
-          identity: userAssignedIdentityId
-        }
-      ]
     }
     template: {
       containers: [
         {
           name: service.name
-          image: '${containerRegistryLoginServer}/${service.name}:latest'
+          image: service.name == 'frontend' ? 'nginx:alpine' : 'nginx:alpine'
           resources: {
             cpu: json(service.cpu)
             memory: service.memory
@@ -130,11 +108,11 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             }
             {
               name: 'VITE_AZURE_CLIENT_ID'
-              secretRef: 'azure-client-id'
+              value: 'placeholder-client-id'
             }
             {
               name: 'VITE_AZURE_TENANT_ID'
-              secretRef: 'azure-tenant-id'
+              value: 'placeholder-tenant-id'
             }
             {
               name: 'VITE_AZURE_REDIRECT_URI'
@@ -163,11 +141,11 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             }
             {
               name: 'JWT_SECRET'
-              secretRef: 'jwt-secret'
+              value: 'placeholder-jwt-secret'
             }
             {
               name: 'ENCRYPTION_KEY'
-              secretRef: 'encryption-key'
+              value: 'placeholder-encryption-key'
             }
           ]
         }
