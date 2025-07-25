@@ -45,10 +45,10 @@ jobs:
     strategy:
       matrix:
         service:
-          - api-gateway
-          - azure-integration
-          - ai-engine
-          - data-processing
+          - api_gateway
+          - azure_integration
+          - ai_engine
+          - data_processing
           - conversation
           - notification
 
@@ -75,7 +75,9 @@ jobs:
 
       - name: Build and Push ${{ matrix.service }}
         run: |
-          IMAGE_TAG=${{ steps.get_acr.outputs.acr_login_server }}/${{ env.DEPLOYMENT_PREFIX }}-${{ matrix.service }}:latest
+          # Convert underscores to hyphens for image name
+          SERVICE_NAME=$(echo "${{ matrix.service }}" | tr '_' '-')
+          IMAGE_TAG=${{ steps.get_acr.outputs.acr_login_server }}/${{ env.DEPLOYMENT_PREFIX }}-${SERVICE_NAME}:latest
           
           echo "Building ${{ matrix.service }} with tag: $IMAGE_TAG"
           
