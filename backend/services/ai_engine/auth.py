@@ -10,8 +10,14 @@ from typing import Dict, Any, Optional, List
 import redis.asyncio as redis
 import structlog
 from jose import JWTError, jwt as jose_jwt
-from azure.identity.aio import DefaultAzureCredential
-from azure.keyvault.secrets.aio import SecretClient
+try:
+    from azure.identity.aio import DefaultAzureCredential
+    from azure.keyvault.secrets.aio import SecretClient
+    AZURE_KEYVAULT_AVAILABLE = True
+except ImportError:
+    AZURE_KEYVAULT_AVAILABLE = False
+    DefaultAzureCredential = None
+    SecretClient = None
 
 from shared.config import get_settings
 from .models import ModelInfo
@@ -40,8 +46,11 @@ class AuthManager:
             )
         return self.redis_client
     
-    async def _get_key_vault_client(self) -> SecretClient:
+    async def _get_key_vault_client(self):
         """Get Azure Key Vault client."""
+        if not AZURE_KEYVAULT_AVAILABLE:
+            raise ImportError("Azure KeyVault client not available")
+        
         if self.key_vault_client is None:
             if self.azure_credential is None:
                 self.azure_credential = DefaultAzureCredential()
@@ -54,13 +63,13 @@ class AuthManager:
     async def _get_jwt_secret(self) -> str:
         """Get JWT secret from Key Vault or configuration."""
         try:
-            if self.settings.is_production():
+            if self.settings.is_production() and AZURE_KEYVAULT_AVAILABLE:
                 # In production, get secret from Key Vault
                 key_vault_client = await self._get_key_vault_client()
                 secret = await key_vault_client.get_secret("jwt-secret-key")
                 return secret.value
             else:
-                # In development, use configuration
+                # In development or if KeyVault unavailable, use configuration
                 return self.settings.security.jwt_secret_key
         except Exception as e:
             logger.warning(

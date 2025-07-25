@@ -136,9 +136,11 @@ class AIConfig(BaseSettings):
     model_registry_uri: Optional[str] = Field(None, env="ML_MODEL_REGISTRY_URI")
     model_cache_dir: str = Field("./models", env="ML_MODEL_CACHE_DIR")
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": False,
+        "protected_namespaces": ('settings_',)
+    }
 
 
 class SecurityConfig(BaseSettings):

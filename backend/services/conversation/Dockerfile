@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
 
 # Set work directory
 WORKDIR /app
@@ -23,10 +23,10 @@ COPY . /app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/services/conversation/requirements.txt
+    pip install --no-cache-dir -r /app/services/conversation/requirements-minimal.txt
 
-# Download spaCy model (skip if not available)
-RUN python -m spacy download en_core_web_sm || echo "SpaCy model download failed, continuing..."
+# Skip spaCy model download for minimal build
+# RUN python -m spacy download en_core_web_sm || echo "SpaCy model download failed, continuing..."
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser

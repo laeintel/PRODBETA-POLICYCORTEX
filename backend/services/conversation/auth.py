@@ -10,8 +10,14 @@ from typing import Dict, Any, Optional, List
 import redis.asyncio as redis
 import structlog
 from jose import JWTError, jwt as jose_jwt
-from azure.identity.aio import DefaultAzureCredential
-from azure.keyvault.secrets.aio import SecretClient
+try:
+    from azure.identity.aio import DefaultAzureCredential
+    from azure.keyvault.secrets.aio import SecretClient
+    AZURE_KEYVAULT_AVAILABLE = True
+except ImportError:
+    DefaultAzureCredential = None
+    SecretClient = None
+    AZURE_KEYVAULT_AVAILABLE = False
 
 from shared.config import get_settings
 
@@ -39,8 +45,11 @@ class AuthManager:
             )
         return self.redis_client
     
-    async def _get_key_vault_client(self) -> SecretClient:
+    async def _get_key_vault_client(self):
         """Get Azure Key Vault client."""
+        if not AZURE_KEYVAULT_AVAILABLE:
+            raise ImportError("Azure KeyVault client not available")
+        
         if self.key_vault_client is None:
             if self.azure_credential is None:
                 self.azure_credential = DefaultAzureCredential()

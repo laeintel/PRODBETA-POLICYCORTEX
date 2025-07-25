@@ -41,7 +41,7 @@ var services = [
     maxReplicas: 10
     ingress: false
     external: false
-    workloadProfile: 'HighPerformance'  // Dedicated-D8 equivalent for high performance
+    workloadProfile: 'GeneralPurpose'  // Dedicated-D4 equivalent
   }
   {
     name: 'data-processing'
