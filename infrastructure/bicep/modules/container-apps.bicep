@@ -110,9 +110,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
       containers: [
         {
           name: service.name
-          image: service.name == 'data-processing' ? '${containerRegistryLoginServer}/policortex001-data_processing:latest' : 
-                 service.name == 'frontend' ? '${containerRegistryLoginServer}/policortex001-frontend:latest' :
-                 'nginx:alpine'
+          image: service.name == 'data-processing' ? '${containerRegistryLoginServer}/policortex001-data-processing:latest' : (service.name == 'frontend' ? '${containerRegistryLoginServer}/policortex001-frontend:latest' : '${containerRegistryLoginServer}/policortex001-${service.name}:latest')
           resources: {
             cpu: json(service.cpu)
             memory: service.memory
