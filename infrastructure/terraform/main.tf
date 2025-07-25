@@ -432,6 +432,13 @@ resource "azurerm_container_app_environment" "main" {
     maximum_count         = 2
   }
   
+  workload_profile {
+    name                  = "Dedicated-D16"
+    workload_profile_type = "D16"
+    minimum_count         = 0
+    maximum_count         = 2
+  }
+  
   # Resource providers should be manually registered if needed
   # depends_on = [
   #   azurerm_resource_provider_registration.container_apps,

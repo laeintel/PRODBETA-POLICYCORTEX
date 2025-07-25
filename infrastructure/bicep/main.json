@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.36.1.42791",
-      "templateHash": "4208209244635164664"
+      "templateHash": "14359519862048959731"
     }
   },
   "parameters": {
@@ -2305,7 +2305,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "5606591899239847676"
+              "templateHash": "13040799418163909282"
             }
           },
           "parameters": {
@@ -2356,6 +2356,18 @@
                     "workloadProfileType": "D4",
                     "minimumCount": 0,
                     "maximumCount": 10
+                  },
+                  {
+                    "name": "HighPerformance",
+                    "workloadProfileType": "D8",
+                    "minimumCount": 0,
+                    "maximumCount": 5
+                  },
+                  {
+                    "name": "AIWorkload",
+                    "workloadProfileType": "D16",
+                    "minimumCount": 0,
+                    "maximumCount": 3
                   }
                 ]
               }
@@ -2415,6 +2427,9 @@
           },
           "keyVaultName": {
             "value": "[reference('keyVault').outputs.keyVaultName.value]"
+          },
+          "containerAppsEnvironmentDefaultDomain": {
+            "value": "[reference('containerAppsEnvironment').outputs.defaultDomain.value]"
           }
         },
         "template": {
@@ -2424,7 +2439,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.36.1.42791",
-              "templateHash": "16256032502022178719"
+              "templateHash": "9985730657835879028"
             }
           },
           "parameters": {
@@ -2449,79 +2464,34 @@
             },
             "keyVaultName": {
               "type": "string"
+            },
+            "containerAppsEnvironmentDefaultDomain": {
+              "type": "string"
             }
           },
           "variables": {
             "services": [
               {
                 "name": "api-gateway",
-                "port": 80,
-                "cpu": "0.5",
-                "memory": "1Gi",
-                "minReplicas": 1,
-                "maxReplicas": 5,
+                "port": 8000,
+                "cpu": "1.0",
+                "memory": "2Gi",
+                "minReplicas": 2,
+                "maxReplicas": 20,
                 "ingress": true,
-                "external": true
-              },
-              {
-                "name": "azure-integration",
-                "port": 8001,
-                "cpu": "0.25",
-                "memory": "0.5Gi",
-                "minReplicas": 1,
-                "maxReplicas": 3,
-                "ingress": false,
-                "external": false
+                "external": true,
+                "workloadProfile": "GeneralPurpose"
               },
               {
                 "name": "ai-engine",
                 "port": 8002,
-                "cpu": "1",
-                "memory": "2Gi",
-                "minReplicas": 1,
-                "maxReplicas": 10,
+                "cpu": "2.0",
+                "memory": "4Gi",
+                "minReplicas": 2,
+                "maxReplicas": 16,
                 "ingress": false,
-                "external": false
-              },
-              {
-                "name": "data-processing",
-                "port": 8003,
-                "cpu": "0.5",
-                "memory": "1Gi",
-                "minReplicas": 1,
-                "maxReplicas": 5,
-                "ingress": false,
-                "external": false
-              },
-              {
-                "name": "conversation",
-                "port": 8004,
-                "cpu": "0.25",
-                "memory": "0.5Gi",
-                "minReplicas": 1,
-                "maxReplicas": 3,
-                "ingress": false,
-                "external": false
-              },
-              {
-                "name": "notification",
-                "port": 8005,
-                "cpu": "0.25",
-                "memory": "0.5Gi",
-                "minReplicas": 1,
-                "maxReplicas": 3,
-                "ingress": false,
-                "external": false
-              },
-              {
-                "name": "frontend",
-                "port": 80,
-                "cpu": "0.25",
-                "memory": "0.5Gi",
-                "minReplicas": 1,
-                "maxReplicas": 5,
-                "ingress": true,
-                "external": true
+                "external": false,
+                "workloadProfile": "HighPerformance"
               }
             ]
           },
@@ -2532,140 +2502,31 @@
                 "count": "[length(variables('services'))]"
               },
               "type": "Microsoft.App/containerApps",
-              "apiVersion": "2023-05-01",
+              "apiVersion": "2024-03-01",
               "name": "[format('ca-{0}-{1}', variables('services')[copyIndex()].name, parameters('environment'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
-              "identity": {
-                "type": "UserAssigned",
-                "userAssignedIdentities": {
-                  "[format('{0}', parameters('userAssignedIdentityId'))]": {}
-                }
-              },
               "properties": {
                 "managedEnvironmentId": "[parameters('containerAppsEnvironmentId')]",
+                "workloadProfileName": "[variables('services')[copyIndex()].workloadProfile]",
                 "configuration": {
-                  "activeRevisionsMode": "Single",
-                  "ingress": "[if(variables('services')[copyIndex()].ingress, createObject('external', variables('services')[copyIndex()].external, 'targetPort', variables('services')[copyIndex()].port, 'transport', 'auto', 'allowInsecure', false(), 'traffic', createArray(createObject('weight', 100, 'latestRevision', true()))), null())]",
-                  "registries": [
-                    {
-                      "server": "[parameters('containerRegistryLoginServer')]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    }
-                  ],
+                  "ingress": "[if(variables('services')[copyIndex()].ingress, createObject('external', variables('services')[copyIndex()].external, 'targetPort', variables('services')[copyIndex()].port, 'allowInsecure', false(), 'traffic', createArray(createObject('latestRevision', true(), 'weight', 100))), null())]",
                   "secrets": [
                     {
-                      "name": "jwt-secret-key",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/jwt-secret-key', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
+                      "name": "jwt-secret",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/jwt-secret', parameters('keyVaultName'))]"
                     },
                     {
-                      "name": "managed-identity-client-id",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/managed-identity-client-id', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "storage-account-name",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/storage-account-name', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "application-insights-connection-string",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/application-insights-connection-string', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "cognitive-services-key",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cognitive-services-key', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "cognitive-services-endpoint",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cognitive-services-endpoint', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "redis-connection-string",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/redis-connection-string', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "cosmos-connection-string",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cosmos-connection-string', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "cosmos-endpoint",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cosmos-endpoint', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "cosmos-key",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/cosmos-key', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "sql-server",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/sql-server', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "sql-username",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/sql-username', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "sql-password",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/sql-password', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "key-vault-name",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/key-vault-name', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "ml-workspace-name",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/ml-workspace-name', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "tenant-id",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/tenant-id', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "client-id",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/client-id', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "client-secret",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/client-secret', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "resource-group",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/resource-group', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "service-bus-namespace",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/service-bus-namespace', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
-                    },
-                    {
-                      "name": "subscription-id",
-                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/subscription-id', parameters('keyVaultName'))]",
-                      "identity": "[parameters('userAssignedIdentityId')]"
+                      "name": "encryption-key",
+                      "keyVaultUrl": "[format('https://{0}.vault.azure.net/secrets/encryption-key', parameters('keyVaultName'))]"
                     }
                   ]
                 },
                 "template": {
                   "containers": [
                     {
-                      "image": "[format('{0}/policortex001-{1}:latest', parameters('containerRegistryLoginServer'), variables('services')[copyIndex()].name)]",
                       "name": "[variables('services')[copyIndex()].name]",
+                      "image": "[format('{0}/{1}:latest', parameters('containerRegistryLoginServer'), variables('services')[copyIndex()].name)]",
                       "resources": {
                         "cpu": "[json(variables('services')[copyIndex()].cpu)]",
                         "memory": "[variables('services')[copyIndex()].memory]"
@@ -2676,142 +2537,43 @@
                           "value": "[parameters('environment')]"
                         },
                         {
-                          "name": "JWT_SECRET_KEY",
-                          "secretRef": "jwt-secret-key"
-                        },
-                        {
-                          "name": "AZURE_CLIENT_ID",
-                          "secretRef": "managed-identity-client-id"
-                        },
-                        {
-                          "name": "STORAGE_ACCOUNT_NAME",
-                          "secretRef": "storage-account-name"
-                        },
-                        {
-                          "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                          "secretRef": "application-insights-connection-string"
-                        },
-                        {
-                          "name": "COGNITIVE_SERVICES_KEY",
-                          "secretRef": "cognitive-services-key"
-                        },
-                        {
-                          "name": "COGNITIVE_SERVICES_ENDPOINT",
-                          "secretRef": "cognitive-services-endpoint"
-                        },
-                        {
-                          "name": "REDIS_CONNECTION_STRING",
-                          "secretRef": "redis-connection-string"
-                        },
-                        {
-                          "name": "COSMOS_CONNECTION_STRING",
-                          "secretRef": "cosmos-connection-string"
-                        },
-                        {
-                          "name": "COSMOS_ENDPOINT",
-                          "secretRef": "cosmos-endpoint"
-                        },
-                        {
-                          "name": "COSMOS_KEY",
-                          "secretRef": "cosmos-key"
-                        },
-                        {
-                          "name": "SQL_SERVER",
-                          "secretRef": "sql-server"
-                        },
-                        {
-                          "name": "SQL_USERNAME",
-                          "secretRef": "sql-username"
-                        },
-                        {
-                          "name": "SQL_PASSWORD",
-                          "secretRef": "sql-password"
-                        },
-                        {
-                          "name": "KEY_VAULT_NAME",
-                          "secretRef": "key-vault-name"
-                        },
-                        {
-                          "name": "ML_WORKSPACE_NAME",
-                          "secretRef": "ml-workspace-name"
-                        },
-                        {
-                          "name": "TENANT_ID",
-                          "secretRef": "tenant-id"
-                        },
-                        {
-                          "name": "CLIENT_ID",
-                          "secretRef": "client-id"
-                        },
-                        {
-                          "name": "CLIENT_SECRET",
-                          "secretRef": "client-secret"
-                        },
-                        {
-                          "name": "RESOURCE_GROUP",
-                          "secretRef": "resource-group"
-                        },
-                        {
-                          "name": "SERVICE_BUS_NAMESPACE",
-                          "secretRef": "service-bus-namespace"
-                        },
-                        {
-                          "name": "SUBSCRIPTION_ID",
-                          "secretRef": "subscription-id"
+                          "name": "SERVICE_NAME",
+                          "value": "[variables('services')[copyIndex()].name]"
                         },
                         {
                           "name": "PORT",
                           "value": "[string(variables('services')[copyIndex()].port)]"
                         },
                         {
-                          "name": "VITE_AZURE_CLIENT_ID",
-                          "secretRef": "managed-identity-client-id"
+                          "name": "LOG_LEVEL",
+                          "value": "INFO"
                         },
                         {
-                          "name": "VITE_AZURE_TENANT_ID",
-                          "value": "[tenant().tenantId]"
+                          "name": "JWT_SECRET",
+                          "secretRef": "jwt-secret"
                         },
                         {
-                          "name": "VITE_API_BASE_URL",
-                          "value": "[if(equals(variables('services')[copyIndex()].name, 'frontend'), 'https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io', '')]"
+                          "name": "ENCRYPTION_KEY",
+                          "secretRef": "encryption-key"
                         }
-                      ],
-                      "probes": []
+                      ]
                     }
                   ],
                   "scale": {
                     "minReplicas": "[variables('services')[copyIndex()].minReplicas]",
-                    "maxReplicas": "[variables('services')[copyIndex()].maxReplicas]",
-                    "rules": [
-                      {
-                        "name": "http-scaling",
-                        "http": {
-                          "metadata": {
-                            "concurrentRequests": "30"
-                          }
-                        }
-                      }
-                    ]
+                    "maxReplicas": "[variables('services')[copyIndex()].maxReplicas]"
                   }
                 }
               }
             }
           ],
           "outputs": {
-            "containerAppUrls": {
+            "containerAppNames": {
               "type": "array",
               "copy": {
                 "count": "[length(variables('services'))]",
-                "input": "[if(and(variables('services')[copyIndex()].ingress, variables('services')[copyIndex()].external), createObject('name', variables('services')[copyIndex()].name, 'url', format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('ca-{0}-{1}', variables('services')[copyIndex()].name, parameters('environment'))), '2023-05-01').configuration.ingress.fqdn)), createObject('name', variables('services')[copyIndex()].name, 'url', 'internal'))]"
+                "input": "[format('ca-{0}-{1}', variables('services')[copyIndex()].name, parameters('environment'))]"
               }
-            },
-            "apiGatewayUrl": {
-              "type": "string",
-              "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('ca-{0}-{1}', variables('services')[0].name, parameters('environment'))), '2023-05-01').configuration.ingress.fqdn)]"
-            },
-            "frontendUrl": {
-              "type": "string",
-              "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('ca-{0}-{1}', variables('services')[6].name, parameters('environment'))), '2023-05-01').configuration.ingress.fqdn)]"
             }
           }
         }

@@ -60,6 +60,7 @@ from .services.multi_objective_optimizer import multi_objective_optimizer
 from .services.automation_orchestrator import automation_orchestrator
 from .services.governance_intelligence import governance_intelligence
 from .services.conversation_analytics import conversation_analytics
+from .services.cross_domain_correlator import cross_domain_correlator
 
 # Configuration
 settings = get_settings()
@@ -255,6 +256,9 @@ async def startup_event():
         # Initialize Patent 3 components
         await governance_intelligence.initialize()
         await conversation_analytics.initialize()
+        
+        # Initialize Patent 4 components
+        await cross_domain_correlator.initialize()
         
         # Update metrics
         ACTIVE_MODELS.set(len(model_manager.active_models))
@@ -2517,6 +2521,423 @@ async def get_governance_intelligence_health(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Governance intelligence health check failed: {str(e)}"
+        )
+
+
+# Cross-Domain Correlation Engine endpoints (Patent 4)
+@app.post("/api/v1/correlation/analyze",
+          response_model=APIResponse,
+          tags=["correlation"])
+async def analyze_cross_domain_correlations(
+    request: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Perform cross-domain correlation analysis."""
+    try:
+        logger.info("correlation_analysis_started")
+        
+        # Extract events from request
+        events_data = request.get('events', [])
+        correlation_types = request.get('correlation_types', [])
+        
+        # Convert events data to CorrelationEvent objects
+        from .services.cross_domain_correlator import CorrelationEvent, DomainType, CorrelationType
+        events = []
+        for event_data in events_data:
+            event = CorrelationEvent(
+                event_id=event_data['event_id'],
+                domain=DomainType(event_data['domain']),
+                timestamp=datetime.fromisoformat(event_data['timestamp']),
+                event_type=event_data['event_type'],
+                severity=event_data['severity'],
+                attributes=event_data.get('attributes', {}),
+                metadata=event_data.get('metadata', {})
+            )
+            events.append(event)
+        
+        # Convert correlation types
+        if correlation_types:
+            correlation_types = [CorrelationType(ct) for ct in correlation_types]
+        
+        # Perform correlation analysis
+        results = await cross_domain_correlator.analyze_correlations(
+            events=events,
+            correlation_types=correlation_types
+        )
+        
+        return APIResponse(
+            status="success",
+            data=results,
+            message="Cross-domain correlation analysis completed"
+        )
+        
+    except Exception as e:
+        logger.error("correlation_analysis_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Correlation analysis failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/correlation/patterns",
+         response_model=APIResponse,
+         tags=["correlation"])
+async def get_correlation_patterns(
+    correlation_type: Optional[str] = None,
+    min_confidence: float = 0.0,
+    limit: int = 50,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get discovered correlation patterns."""
+    try:
+        from .services.cross_domain_correlator import CorrelationType
+        
+        # Convert correlation type
+        correlation_type_enum = None
+        if correlation_type:
+            correlation_type_enum = CorrelationType(correlation_type)
+        
+        patterns = await cross_domain_correlator.get_correlation_patterns(
+            correlation_type=correlation_type_enum,
+            min_confidence=min_confidence,
+            limit=limit
+        )
+        
+        # Convert patterns to dictionaries
+        pattern_data = []
+        for pattern in patterns:
+            pattern_dict = {
+                'pattern_id': pattern.pattern_id,
+                'correlation_type': pattern.correlation_type.value,
+                'domains': [d.value for d in pattern.domains],
+                'strength': pattern.strength.value,
+                'confidence': pattern.confidence,
+                'event_count': len(pattern.events),
+                'frequency': pattern.frequency,
+                'description': pattern.description,
+                'created_at': pattern.created_at.isoformat(),
+                'last_seen': pattern.last_seen.isoformat(),
+                'metadata': pattern.metadata
+            }
+            pattern_data.append(pattern_dict)
+        
+        return APIResponse(
+            status="success",
+            data={
+                'patterns': pattern_data,
+                'total_count': len(pattern_data)
+            },
+            message="Correlation patterns retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("get_correlation_patterns_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get correlation patterns: {str(e)}"
+        )
+
+
+@app.get("/api/v1/correlation/insights",
+         response_model=APIResponse,
+         tags=["correlation"])
+async def get_correlation_insights(
+    priority: Optional[str] = None,
+    category: Optional[str] = None,
+    limit: int = 20,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get correlation insights and recommendations."""
+    try:
+        insights = await cross_domain_correlator.get_correlation_insights(
+            priority=priority,
+            category=category,
+            limit=limit
+        )
+        
+        # Convert insights to dictionaries
+        insight_data = []
+        for insight in insights:
+            insight_dict = {
+                'insight_id': insight.insight_id,
+                'title': insight.title,
+                'description': insight.description,
+                'category': insight.category,
+                'priority': insight.priority,
+                'confidence': insight.confidence,
+                'affected_domains': [d.value for d in insight.affected_domains],
+                'pattern_count': len(insight.patterns),
+                'recommendations': insight.recommendations,
+                'potential_impact': insight.potential_impact,
+                'risk_score': insight.risk_score,
+                'created_at': insight.created_at.isoformat(),
+                'metadata': insight.metadata
+            }
+            insight_data.append(insight_dict)
+        
+        return APIResponse(
+            status="success",
+            data={
+                'insights': insight_data,
+                'total_count': len(insight_data)
+            },
+            message="Correlation insights retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("get_correlation_insights_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get correlation insights: {str(e)}"
+        )
+
+
+@app.get("/api/v1/correlation/domain/{domain}/summary",
+         response_model=APIResponse,
+         tags=["correlation"])
+async def get_domain_correlation_summary(
+    domain: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get correlation summary for a specific domain."""
+    try:
+        from .services.cross_domain_correlator import DomainType
+        
+        domain_enum = DomainType(domain)
+        summary = await cross_domain_correlator.get_domain_correlation_summary(domain_enum)
+        
+        return APIResponse(
+            status="success",
+            data=summary,
+            message=f"Domain correlation summary for {domain} retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("get_domain_correlation_summary_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get domain correlation summary: {str(e)}"
+        )
+
+
+@app.post("/api/v1/correlation/temporal",
+          response_model=APIResponse,
+          tags=["correlation"])
+async def analyze_temporal_correlations(
+    request: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Analyze temporal correlations between events."""
+    try:
+        # Extract events
+        events_data = request.get('events', [])
+        window_size = request.get('window_size', 3600)  # 1 hour default
+        
+        from .services.cross_domain_correlator import CorrelationEvent, DomainType
+        events = []
+        for event_data in events_data:
+            event = CorrelationEvent(
+                event_id=event_data['event_id'],
+                domain=DomainType(event_data['domain']),
+                timestamp=datetime.fromisoformat(event_data['timestamp']),
+                event_type=event_data['event_type'],
+                severity=event_data['severity'],
+                attributes=event_data.get('attributes', {}),
+                metadata=event_data.get('metadata', {})
+            )
+            events.append(event)
+        
+        # Analyze temporal correlations
+        temporal_patterns = await cross_domain_correlator.temporal_analyzer.analyze_temporal_correlations(events)
+        
+        # Convert patterns to dictionaries
+        pattern_data = []
+        for pattern in temporal_patterns:
+            pattern_dict = {
+                'pattern_id': pattern.pattern_id,
+                'domains': [d.value for d in pattern.domains],
+                'strength': pattern.strength.value,
+                'confidence': pattern.confidence,
+                'temporal_window_seconds': pattern.temporal_window.total_seconds() if pattern.temporal_window else None,
+                'description': pattern.description,
+                'event_count': len(pattern.events)
+            }
+            pattern_data.append(pattern_dict)
+        
+        return APIResponse(
+            status="success",
+            data={
+                'temporal_patterns': pattern_data,
+                'window_size': window_size,
+                'analysis_timestamp': datetime.now().isoformat()
+            },
+            message="Temporal correlation analysis completed"
+        )
+        
+    except Exception as e:
+        logger.error("temporal_correlation_analysis_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Temporal correlation analysis failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/correlation/causal",
+          response_model=APIResponse,
+          tags=["correlation"])
+async def analyze_causal_relationships(
+    request: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Analyze causal relationships between domains."""
+    try:
+        # Extract events
+        events_data = request.get('events', [])
+        
+        from .services.cross_domain_correlator import CorrelationEvent, DomainType
+        events = []
+        for event_data in events_data:
+            event = CorrelationEvent(
+                event_id=event_data['event_id'],
+                domain=DomainType(event_data['domain']),
+                timestamp=datetime.fromisoformat(event_data['timestamp']),
+                event_type=event_data['event_type'],
+                severity=event_data['severity'],
+                attributes=event_data.get('attributes', {}),
+                metadata=event_data.get('metadata', {})
+            )
+            events.append(event)
+        
+        # Analyze causal relationships
+        causal_patterns = await cross_domain_correlator.causal_engine.infer_causal_relationships(events)
+        
+        # Convert patterns to dictionaries
+        pattern_data = []
+        for pattern in causal_patterns:
+            pattern_dict = {
+                'pattern_id': pattern.pattern_id,
+                'cause_domain': pattern.domains[0].value if len(pattern.domains) >= 1 else None,
+                'effect_domain': pattern.domains[1].value if len(pattern.domains) >= 2 else None,
+                'confidence': pattern.confidence,
+                'strength': pattern.strength.value,
+                'description': pattern.description,
+                'event_count': len(pattern.events)
+            }
+            pattern_data.append(pattern_dict)
+        
+        return APIResponse(
+            status="success",
+            data={
+                'causal_patterns': pattern_data,
+                'analysis_timestamp': datetime.now().isoformat()
+            },
+            message="Causal relationship analysis completed"
+        )
+        
+    except Exception as e:
+        logger.error("causal_analysis_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Causal relationship analysis failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/correlation/anomaly",
+          response_model=APIResponse,
+          tags=["correlation"])
+async def detect_anomaly_correlations(
+    request: Dict[str, Any],
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Detect correlations in anomalous events."""
+    try:
+        # Extract events
+        events_data = request.get('events', [])
+        
+        from .services.cross_domain_correlator import CorrelationEvent, DomainType
+        events = []
+        for event_data in events_data:
+            event = CorrelationEvent(
+                event_id=event_data['event_id'],
+                domain=DomainType(event_data['domain']),
+                timestamp=datetime.fromisoformat(event_data['timestamp']),
+                event_type=event_data['event_type'],
+                severity=event_data['severity'],
+                attributes=event_data.get('attributes', {}),
+                metadata=event_data.get('metadata', {})
+            )
+            events.append(event)
+        
+        # Detect anomaly correlations
+        anomaly_patterns = await cross_domain_correlator.anomaly_detector.detect_anomaly_correlations(events)
+        
+        # Convert patterns to dictionaries
+        pattern_data = []
+        for pattern in anomaly_patterns:
+            pattern_dict = {
+                'pattern_id': pattern.pattern_id,
+                'domains': [d.value for d in pattern.domains],
+                'confidence': pattern.confidence,
+                'strength': pattern.strength.value,
+                'description': pattern.description,
+                'anomaly_count': len(pattern.events)
+            }
+            pattern_data.append(pattern_dict)
+        
+        return APIResponse(
+            status="success",
+            data={
+                'anomaly_correlations': pattern_data,
+                'analysis_timestamp': datetime.now().isoformat()
+            },
+            message="Anomaly correlation detection completed"
+        )
+        
+    except Exception as e:
+        logger.error("anomaly_correlation_detection_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Anomaly correlation detection failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/correlation/health",
+         response_model=APIResponse,
+         tags=["correlation"])
+async def get_correlation_engine_health(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get health status of the cross-domain correlation engine."""
+    try:
+        health_status = {
+            'components': {
+                'correlation_engine': cross_domain_correlator._initialized,
+                'temporal_analyzer': cross_domain_correlator.temporal_analyzer._initialized if hasattr(cross_domain_correlator.temporal_analyzer, '_initialized') else True,
+                'causal_engine': cross_domain_correlator.causal_engine._initialized if hasattr(cross_domain_correlator.causal_engine, '_initialized') else True,
+                'anomaly_detector': cross_domain_correlator.anomaly_detector._initialized if hasattr(cross_domain_correlator.anomaly_detector, '_initialized') else True,
+                'gnn_model': cross_domain_correlator.gnn_model is not None
+            },
+            'metrics': {
+                'stored_patterns': len(cross_domain_correlator.pattern_store),
+                'stored_insights': len(cross_domain_correlator.insight_store),
+                'correlation_graph_nodes': cross_domain_correlator.correlation_graph.number_of_nodes(),
+                'correlation_graph_edges': cross_domain_correlator.correlation_graph.number_of_edges()
+            },
+            'status': 'healthy' if cross_domain_correlator._initialized else 'degraded',
+            'last_health_check': datetime.now().isoformat()
+        }
+        
+        return APIResponse(
+            status="success",
+            data=health_status,
+            message="Cross-domain correlation engine health status retrieved"
+        )
+        
+    except Exception as e:
+        logger.error("correlation_health_check_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Correlation engine health check failed: {str(e)}"
         )
 
 

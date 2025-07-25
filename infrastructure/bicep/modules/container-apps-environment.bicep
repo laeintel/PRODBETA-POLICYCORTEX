@@ -45,6 +45,12 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01'
         minimumCount: 0
         maximumCount: 5
       }
+      {
+        name: 'AIWorkload'
+        workloadProfileType: 'D16'
+        minimumCount: 0
+        maximumCount: 3
+      }
     ]
   }
 }
