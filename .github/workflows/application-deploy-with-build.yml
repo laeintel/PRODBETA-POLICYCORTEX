@@ -1,0 +1,206 @@
+name: Application Deployment (With Build)
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  issues: write
+  pull-requests: write
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose*.yml'
+      - '.github/workflows/application-deploy-with-build.yml'
+      - 'Dockerfile*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  DEPLOYMENT_PREFIX: 'policortex001'
+
+jobs:
+  build-and-push-backend:
+    name: Build and Push Backend Images
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - azure-integration
+          - ai-engine
+          - data-processing
+          - conversation
+          - notification
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get ACR Details
+        id: get_acr
+        run: |
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
+          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Login to ACR
+        run: |
+          az acr login --name ${{ steps.get_acr.outputs.acr_name }}
+
+      - name: Build and Push ${{ matrix.service }}
+        run: |
+          IMAGE_TAG=${{ steps.get_acr.outputs.acr_login_server }}/${{ env.DEPLOYMENT_PREFIX }}-${{ matrix.service }}:latest
+          
+          echo "Building ${{ matrix.service }} with tag: $IMAGE_TAG"
+          
+          docker build \
+            -f backend/services/${{ matrix.service }}/Dockerfile \
+            -t $IMAGE_TAG \
+            backend/
+          
+          docker push $IMAGE_TAG
+          
+          echo "✅ Successfully built and pushed ${{ matrix.service }}"
+
+  build-and-push-frontend:
+    name: Build and Push Frontend Image
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get ACR Details
+        id: get_acr
+        run: |
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
+          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+
+      - name: Login to ACR
+        run: |
+          az acr login --name ${{ steps.get_acr.outputs.acr_name }}
+
+      - name: Build and Push Frontend
+        run: |
+          IMAGE_TAG=${{ steps.get_acr.outputs.acr_login_server }}/${{ env.DEPLOYMENT_PREFIX }}-frontend:latest
+          
+          echo "Building frontend with tag: $IMAGE_TAG"
+          
+          docker build \
+            -f frontend/Dockerfile \
+            -t $IMAGE_TAG \
+            --build-arg VITE_API_BASE_URL=https://ca-api-gateway-dev.delightfulbay-9f0db0c7.eastus.azurecontainerapps.io \
+            --build-arg VITE_AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
+            --build-arg VITE_AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
+            frontend/
+          
+          docker push $IMAGE_TAG
+          
+          echo "✅ Successfully built and pushed frontend"
+
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [build-and-push-backend, build-and-push-frontend]
+    if: github.ref == 'refs/heads/main'
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Azure Resources
+        id: get_resources
+        run: |
+          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+          echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+          
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
+          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          
+          CONTAINER_ENV_NAME=$(az containerapp env list --resource-group "$RESOURCE_GROUP" --query "[0].name" -o tsv)
+          echo "container_env_name=$CONTAINER_ENV_NAME" >> $GITHUB_OUTPUT
+
+      - name: Update Container Apps
+        run: |
+          # Update each container app to use the new images
+          for service in api-gateway azure-integration ai-engine data-processing conversation notification frontend; do
+            echo "Updating ca-${service}-dev with new image..."
+            
+            IMAGE_TAG="${{ steps.get_resources.outputs.acr_login_server }}/${{ env.DEPLOYMENT_PREFIX }}-${service}:latest"
+            
+            az containerapp update \
+              --name ca-${service}-dev \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --image $IMAGE_TAG \
+              --min-replicas 1 \
+              --max-replicas 3 \
+              --cpu 0.5 \
+              --memory 1.0Gi
+            
+            echo "✅ Updated ca-${service}-dev"
+          done
+
+      - name: Verify Deployments
+        run: |
+          echo "Verifying container app deployments..."
+          
+          az containerapp list \
+            --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+            --query "[].{name:name, state:properties.provisioningState, latestRevision:properties.latestRevisionName}" \
+            -o table
+
+      - name: Display Service URLs
+        run: |
+          echo "=== Service URLs ===" 
+          
+          for service in api-gateway azure-integration ai-engine data-processing conversation notification frontend; do
+            FQDN=$(az containerapp show \
+              --name ca-${service}-dev \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --query "properties.configuration.ingress.fqdn" -o tsv)
+            
+            if [ ! -z "$FQDN" ]; then
+              echo "${service}: https://${FQDN}"
+            fi
+          done
