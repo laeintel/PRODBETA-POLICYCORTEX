@@ -296,6 +296,9 @@ module containerApps 'modules/container-apps.bicep' = if (deployContainerApps) {
     keyVaultName: keyVault.outputs.keyVaultName
     containerAppsEnvironmentDefaultDomain: containerAppsEnvironment.outputs.defaultDomain
   }
+  dependsOn: [
+    keyVaultSecrets
+  ]
 }
 
 // Key Vault Secrets

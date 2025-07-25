@@ -84,6 +84,15 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
           permissions: {
             secrets: [
               'Get'
+              'List'
+            ]
+            keys: [
+              'Get'
+              'List'
+            ]
+            certificates: [
+              'Get'
+              'List'
             ]
           }
         }
