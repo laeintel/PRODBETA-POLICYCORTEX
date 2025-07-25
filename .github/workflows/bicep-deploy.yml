@@ -172,7 +172,11 @@ jobs:
           echo "Building and pushing placeholder images..."
           
           # Login to ACR
-          az acr login --name ${{ steps.outputs.outputs.container_registry }}
+          ACR_USERNAME=$(az acr credential show --name ${{ steps.outputs.outputs.container_registry }} --query "username" -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name ${{ steps.outputs.outputs.container_registry }} --query "passwords[0].value" -o tsv)
+          
+          # Login using admin credentials
+          echo $ACR_PASSWORD | docker login ${{ steps.outputs.outputs.container_registry }}.azurecr.io --username $ACR_USERNAME --password-stdin
           
           # Build and push placeholder images for each service
           services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
