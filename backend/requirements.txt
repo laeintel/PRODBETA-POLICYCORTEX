@@ -21,7 +21,7 @@ azure-mgmt-sql==3.0.1
 azure-mgmt-cosmosdb==9.2.0
 azure-mgmt-monitor==6.0.2
 azure-mgmt-policyinsights==1.1.0b4
-azure-mgmt-policy==1.0.0
+# azure-mgmt-policy==23.0.0  # Package not available, may be included in azure-mgmt-resource
 azure-mgmt-costmanagement==4.0.1
 azure-storage-blob==12.19.0
 azure-cosmos==4.5.1
