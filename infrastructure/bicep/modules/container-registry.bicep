@@ -50,6 +50,17 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }
 
+// Role assignment for managed identity to push images (for CI/CD scenarios)
+resource acrPushRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (managedIdentityPrincipalId != '') {
+  scope: containerRegistry
+  name: guid(containerRegistry.id, managedIdentityPrincipalId, 'AcrPush')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec') // AcrPush
+    principalId: managedIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 output registryId string = containerRegistry.id
 output registryName string = containerRegistry.name
 output loginServer string = containerRegistry.properties.loginServer
