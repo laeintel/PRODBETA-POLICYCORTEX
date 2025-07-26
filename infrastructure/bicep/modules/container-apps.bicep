@@ -104,7 +104,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
       containers: [
         {
           name: service.name
-          image: '${containerRegistryLoginServer}/policortex001-${service.name}:latest'
+          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           resources: {
             cpu: json(service.cpu)
             memory: service.memory

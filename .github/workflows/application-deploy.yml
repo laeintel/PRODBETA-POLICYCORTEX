@@ -124,11 +124,14 @@ jobs:
           path: bandit-results.json
         continue-on-error: true
 
-  skip-build-backend:
-    name: Skip Backend Build (Use Existing Images)
+  build-and-push:
+    name: Build and Push Images
     runs-on: ubuntu-latest
     needs: [test-all]
     if: always()  # Run even if tests fail
+    outputs:
+      acr_name: ${{ steps.get_acr.outputs.acr_name }}
+      acr_login_server: ${{ steps.get_acr.outputs.acr_login_server }}
     
     steps:
       - name: Checkout code
@@ -146,59 +149,71 @@ jobs:
           ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          echo "Found ACR: $ACR_NAME at $ACR_LOGIN_SERVER"
 
-      - name: Skip ACR Login and List Existing Images
+      - name: Login to ACR
         run: |
-          echo "Skipping ACR login due to network connectivity issues..."
-          echo "Will use existing images for Container Apps deployment"
-          echo "ACR: ${{ steps.get_acr.outputs.acr_login_server }}"
-          
-          # List existing images (for reference)
-          echo "Existing images in ACR:"
-          az acr repository list --name ${{ steps.get_acr.outputs.acr_name }} --output table || echo "Could not list repositories"
-          
-          echo "✅ Skipped ACR login - will use existing images for deployment"
+          az acr login --name ${{ steps.get_acr.outputs.acr_name }}
 
-  skip-build-frontend:
-    name: Skip Frontend Build (Use Existing Images)
-    runs-on: ubuntu-latest
-    needs: [test-all]
-    if: always()  # Run even if tests fail
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Get ACR Details
-        id: get_acr
+      - name: Build and Push Backend Images
         run: |
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
-          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
-          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
-          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          # Set environment variables
+          export ACR_LOGIN_SERVER=${{ steps.get_acr.outputs.acr_login_server }}
+          
+          # Build and push each backend service
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
+          
+          for service in "${services[@]}"; do
+            echo "🏗️ Building policortex001-$service..."
+            
+            # Build the image
+            docker build -t $ACR_LOGIN_SERVER/policortex001-$service:latest \
+              -t $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }} \
+              -f backend/services/${service//-/_}/Dockerfile backend/
+            
+            # Push the images
+            echo "📤 Pushing policortex001-$service..."
+            docker push $ACR_LOGIN_SERVER/policortex001-$service:latest
+            docker push $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }}
+            
+            echo "✅ Completed policortex001-$service"
+          done
 
-      - name: Skip ACR Login and List Existing Images
+      - name: Build and Push Frontend Image
         run: |
-          echo "Skipping ACR login due to network connectivity issues..."
-          echo "Will use existing images for Container Apps deployment"
-          echo "ACR: ${{ steps.get_acr.outputs.acr_login_server }}"
+          export ACR_LOGIN_SERVER=${{ steps.get_acr.outputs.acr_login_server }}
           
-          # List existing images (for reference)
-          echo "Existing images in ACR:"
-          az acr repository list --name ${{ steps.get_acr.outputs.acr_name }} --output table || echo "Could not list repositories"
+          echo "🏗️ Building policortex001-frontend..."
           
-          echo "✅ Skipped ACR login - will use existing images for deployment"
+          # Build the frontend image
+          docker build -t $ACR_LOGIN_SERVER/policortex001-frontend:latest \
+            -t $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }} \
+            frontend/
+          
+          # Push the images
+          echo "📤 Pushing policortex001-frontend..."
+          docker push $ACR_LOGIN_SERVER/policortex001-frontend:latest
+          docker push $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }}
+          
+          echo "✅ Completed policortex001-frontend"
+
+      - name: Verify Images
+        run: |
+          echo "📦 Verifying images in ACR..."
+          az acr repository list --name ${{ steps.get_acr.outputs.acr_name }} --output table
+          
+          # Check each service image
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          for service in "${services[@]}"; do
+            echo "🏷️ Tags for policortex001-$service:"
+            az acr repository show-tags --name ${{ steps.get_acr.outputs.acr_name }} --repository policortex001-$service --output table || echo "No tags found for $service"
+          done
 
   deploy-dev:
     name: Deploy to Development
     runs-on: ubuntu-latest
-    needs: [skip-build-backend, skip-build-frontend]
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [build-and-push]
+    if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     environment: dev
     
     steps:
@@ -224,11 +239,9 @@ jobs:
           echo "Using resource group: $RESOURCE_GROUP"
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           
-          # Get ACR details
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
-          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
-          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
-          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          # Use ACR details from build-and-push job
+          echo "acr_name=${{ needs.build-and-push.outputs.acr_name }}" >> $GITHUB_OUTPUT
+          echo "acr_login_server=${{ needs.build-and-push.outputs.acr_login_server }}" >> $GITHUB_OUTPUT
           
           # Get Container App Environment - add error checking
           if [ -n "$RESOURCE_GROUP" ]; then
@@ -414,7 +427,7 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [skip-build-backend, skip-build-frontend]
+    needs: [build-and-push]
     if: github.event_name == 'workflow_dispatch' && contains(fromJson('["staging", "prod"]'), github.event.inputs.environment)
     environment: staging
     
@@ -433,7 +446,7 @@ jobs:
           az containerapp update \
             --name ca-api-gateway-staging \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} \
-            --image ${{ env.REGISTRY }}/policortex001-api-gateway:${{ github.sha }}
+            --image ${{ needs.build-and-push.outputs.acr_login_server }}/policortex001-api-gateway:${{ github.sha }}
           
           az containerapp update \
             --name ca-azure-integration-staging \
@@ -481,7 +494,7 @@ jobs:
   deploy-prod:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [skip-build-backend, skip-build-frontend]
+    needs: [build-and-push]
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
     environment: prod
     
