@@ -464,6 +464,13 @@ resource "azurerm_role_assignment" "container_apps_acr_pull" {
   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
 }
 
+# Role assignment for Container Apps to push to ACR (for CI/CD scenarios)
+resource "azurerm_role_assignment" "container_apps_acr_push" {
+  scope                = azurerm_container_registry.main.id
+  role_definition_name = "AcrPush"
+  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+}
+
 # Role assignment for Container Apps to access Key Vault
 resource "azurerm_role_assignment" "container_apps_keyvault" {
   scope                = azurerm_key_vault.main.id
