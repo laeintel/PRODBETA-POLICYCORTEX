@@ -175,6 +175,7 @@ jobs:
           echo "🏗️ Building policortex001-frontend..."
           
           # Build the frontend image
+          # Environment variables will be injected at runtime by Container Apps
           docker build -t $ACR_LOGIN_SERVER/policortex001-frontend:latest \
             -t $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }} \
             frontend/
