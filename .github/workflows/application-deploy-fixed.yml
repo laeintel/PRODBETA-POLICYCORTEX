@@ -244,27 +244,73 @@ jobs:
 
       - name: Deploy to Container Apps
         run: |
-          echo "🚀 Deploying to Container Apps with latest images..."
+          echo "🚀 Deploying to Container Apps with latest images and Key Vault environment variables..."
           
           # Create revision suffix with timestamp to force new revisions
           REVISION_SUFFIX="r$(date +%s)"
           echo "Using revision suffix: $REVISION_SUFFIX"
           
+          # Get Container Apps Environment domain for dynamic URLs
+          API_GATEWAY_FQDN=$(az containerapp show --name ca-api-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_FQDN=$(az containerapp show --name ca-frontend-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "API Gateway FQDN: $API_GATEWAY_FQDN"
+          echo "Frontend FQDN: $FRONTEND_FQDN"
+          
           # Deploy each microservice using latest tags
           services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
           
           for service in "${services[@]}"; do
-            echo "📦 Deploying ca-$service-dev with new revision..."
+            echo "📦 Deploying ca-$service-dev with new revision and Key Vault secrets..."
             
-            # Force new revision by using revision suffix and image tag
-            az containerapp update \
-              --name ca-$service-dev \
-              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-              --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
-              --revision-suffix $REVISION_SUFFIX \
-              --output table
+            if [ "$service" = "frontend" ]; then
+              # Frontend environment variables with Key Vault secrets
+              az containerapp update \
+                --name ca-$service-dev \
+                --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+                --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
+                --revision-suffix $REVISION_SUFFIX \
+                --set-env-vars \
+                  "ENVIRONMENT=dev" \
+                  "SERVICE_NAME=frontend" \
+                  "PORT=8080" \
+                  "LOG_LEVEL=INFO" \
+                  "VITE_API_BASE_URL=https://$API_GATEWAY_FQDN/api" \
+                  "VITE_WS_URL=wss://$API_GATEWAY_FQDN/ws" \
+                  "VITE_AZURE_REDIRECT_URI=https://$FRONTEND_FQDN" \
+                  "VITE_APP_VERSION=1.0.0" \
+                --replace-env-vars \
+                  "VITE_AZURE_CLIENT_ID=secretref:azure-client-id" \
+                  "VITE_AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                --output table
+            else
+              # Backend services environment variables with Key Vault secrets
+              az containerapp update \
+                --name ca-$service-dev \
+                --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+                --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
+                --revision-suffix $REVISION_SUFFIX \
+                --set-env-vars \
+                  "ENVIRONMENT=dev" \
+                  "SERVICE_NAME=$service" \
+                  "SERVICE_PORT=$(case $service in api-gateway) echo 8000;; azure-integration) echo 8001;; ai-engine) echo 8002;; data-processing) echo 8003;; conversation) echo 8004;; notification) echo 8005;; *) echo 8000;; esac)" \
+                  "LOG_LEVEL=INFO" \
+                --replace-env-vars \
+                  "JWT_SECRET_KEY=secretref:jwt-secret" \
+                  "ENCRYPTION_KEY=secretref:encryption-key" \
+                  "AZURE_CLIENT_ID=secretref:azure-client-id" \
+                  "AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                  "AZURE_COSMOS_ENDPOINT=secretref:cosmos-endpoint" \
+                  "AZURE_COSMOS_KEY=secretref:cosmos-key" \
+                  "REDIS_CONNECTION_STRING=secretref:redis-connection-string" \
+                  "AZURE_STORAGE_ACCOUNT_NAME=secretref:storage-account-name" \
+                  "COGNITIVE_SERVICES_KEY=secretref:cognitive-services-key" \
+                  "COGNITIVE_SERVICES_ENDPOINT=secretref:cognitive-services-endpoint" \
+                  "APPLICATION_INSIGHTS_CONNECTION_STRING=secretref:application-insights-connection-string" \
+                --output table
+            fi
               
-            echo "✅ Deployed ca-$service-dev with revision suffix $REVISION_SUFFIX"
+            echo "✅ Deployed ca-$service-dev with Key Vault secrets and revision suffix $REVISION_SUFFIX"
           done
 
       - name: Wait for deployments
