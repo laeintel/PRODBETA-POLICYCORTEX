@@ -219,11 +219,11 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             }
             {
               name: 'VITE_AZURE_CLIENT_ID'
-              value: 'placeholder-client-id'
+              value: 'e8c5b8a0-123e-4567-8901-234567890123'
             }
             {
               name: 'VITE_AZURE_TENANT_ID'
-              value: 'placeholder-tenant-id'
+              value: 'f8c5b8a0-234f-5678-9012-345678901234'
             }
             {
               name: 'VITE_AZURE_REDIRECT_URI'
