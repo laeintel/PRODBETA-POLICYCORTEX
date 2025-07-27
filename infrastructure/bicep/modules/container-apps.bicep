@@ -1,4 +1,4 @@
-// Container Apps module
+// Container Apps module with real images
 param environment string
 param location string
 param tags object = {}
@@ -19,18 +19,68 @@ var services = [
     maxReplicas: 20
     ingress: true
     external: true
-    workloadProfile: 'GeneralPurpose'
+    workloadProfile: 'Consumption'
+    imageName: 'policortex001-api-gateway'
+  }
+  {
+    name: 'azure-integration'
+    port: 8001
+    cpu: '1.0'
+    memory: '2Gi'
+    minReplicas: 1
+    maxReplicas: 10
+    ingress: false
+    external: false
+    workloadProfile: 'Consumption'
+    imageName: 'policortex001-azure-integration'
   }
   {
     name: 'ai-engine'
     port: 8002
     cpu: '2.0'
     memory: '4Gi'
-    minReplicas: 2
-    maxReplicas: 16
+    minReplicas: 1
+    maxReplicas: 8
     ingress: false
     external: false
-    workloadProfile: 'HighPerformance'
+    workloadProfile: 'Consumption'
+    imageName: 'policortex001-ai-engine'
+  }
+  {
+    name: 'data-processing'
+    port: 8003
+    cpu: '1.0'
+    memory: '2Gi'
+    minReplicas: 1
+    maxReplicas: 10
+    ingress: false
+    external: false
+    workloadProfile: 'Consumption'
+    imageName: 'policortex001-data-processing'
+  }
+  {
+    name: 'conversation'
+    port: 8004
+    cpu: '1.0'
+    memory: '2Gi'
+    minReplicas: 1
+    maxReplicas: 10
+    ingress: false
+    external: false
+    workloadProfile: 'Consumption'
+    imageName: 'policortex001-conversation'
+  }
+  {
+    name: 'notification'
+    port: 8005
+    cpu: '0.5'
+    memory: '1Gi'
+    minReplicas: 1
+    maxReplicas: 5
+    ingress: false
+    external: false
+    workloadProfile: 'Consumption'
+    imageName: 'policortex001-notification'
   }
   {
     name: 'frontend'
@@ -41,7 +91,8 @@ var services = [
     maxReplicas: 10
     ingress: true
     external: true
-    workloadProfile: 'GeneralPurpose'
+    workloadProfile: 'Consumption'
+    imageName: 'policortex001-frontend'
   }
 ]
 
@@ -98,13 +149,48 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
           keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-tenant-id'
           identity: userAssignedIdentityId
         }
+        {
+          name: 'cosmos-endpoint'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-endpoint'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cosmos-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-key'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'redis-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/redis-connection-string'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'storage-account-name'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/storage-account-name'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cognitive-services-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-key'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cognitive-services-endpoint'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-endpoint'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'application-insights-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/application-insights-connection-string'
+          identity: userAssignedIdentityId
+        }
       ]
     }
     template: {
       containers: [
         {
           name: service.name
-          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+          image: '${containerRegistryLoginServer}/${service.imageName}:latest'
           resources: {
             cpu: json(service.cpu)
             memory: service.memory
@@ -160,7 +246,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
               value: service.name
             }
             {
-              name: 'PORT'
+              name: 'SERVICE_PORT'
               value: string(service.port)
             }
             {
@@ -168,12 +254,48 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
               value: 'INFO'
             }
             {
-              name: 'JWT_SECRET'
+              name: 'JWT_SECRET_KEY'
               secretRef: 'jwt-secret'
             }
             {
               name: 'ENCRYPTION_KEY'
               secretRef: 'encryption-key'
+            }
+            {
+              name: 'AZURE_CLIENT_ID'
+              secretRef: 'azure-client-id'
+            }
+            {
+              name: 'AZURE_TENANT_ID'
+              secretRef: 'azure-tenant-id'
+            }
+            {
+              name: 'AZURE_COSMOS_ENDPOINT'
+              secretRef: 'cosmos-endpoint'
+            }
+            {
+              name: 'AZURE_COSMOS_KEY'
+              secretRef: 'cosmos-key'
+            }
+            {
+              name: 'REDIS_CONNECTION_STRING'
+              secretRef: 'redis-connection-string'
+            }
+            {
+              name: 'AZURE_STORAGE_ACCOUNT_NAME'
+              secretRef: 'storage-account-name'
+            }
+            {
+              name: 'COGNITIVE_SERVICES_KEY'
+              secretRef: 'cognitive-services-key'
+            }
+            {
+              name: 'COGNITIVE_SERVICES_ENDPOINT'
+              secretRef: 'cognitive-services-endpoint'
+            }
+            {
+              name: 'APPLICATION_INSIGHTS_CONNECTION_STRING'
+              secretRef: 'application-insights-connection-string'
             }
           ]
         }
@@ -187,4 +309,5 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
 }]
 
 // Outputs
-output containerAppNames array = [for service in services: 'ca-${service.name}-${environment}'] 
+output containerAppNames array = [for service in services: 'ca-${service.name}-${environment}']
+output containerAppUrls array = [for (service, i) in services: service.ingress && service.external ? 'https://${containerApps[i].properties.configuration.ingress.fqdn}' : '']
