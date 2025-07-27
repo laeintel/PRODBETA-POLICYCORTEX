@@ -58,5 +58,9 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8080/ || exit 1
 
+# Create entrypoint script
+COPY scripts/generate-config.sh /app/
+RUN chmod +x /app/generate-config.sh
+
 # Serve the built application with Node.js
-CMD ["serve", "-s", "dist", "-l", "8080", "--no-clipboard"]
+ENTRYPOINT ["/bin/sh", "-c", "/app/generate-config.sh && serve -s dist -l 8080 --no-clipboard"]
