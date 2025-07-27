@@ -28,30 +28,6 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01'
       internal: false
     }
     zoneRedundant: false
-    workloadProfiles: [
-      {
-        name: 'Consumption'
-        workloadProfileType: 'Consumption'
-      }
-      {
-        name: 'GeneralPurpose'
-        workloadProfileType: 'D4'
-        minimumCount: 0
-        maximumCount: 10
-      }
-      {
-        name: 'HighPerformance'
-        workloadProfileType: 'D8'
-        minimumCount: 0
-        maximumCount: 5
-      }
-      {
-        name: 'AIWorkload'
-        workloadProfileType: 'D16'
-        minimumCount: 0
-        maximumCount: 3
-      }
-    ]
   }
 }
 

@@ -109,7 +109,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
   }
   properties: {
     managedEnvironmentId: containerAppsEnvironmentId
-    workloadProfileName: service.workloadProfile
+    workloadProfileName: service.workloadProfile == 'Consumption' ? null : service.workloadProfile
     configuration: {
       ingress: service.ingress ? {
         external: service.external
@@ -128,63 +128,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
           identity: userAssignedIdentityId
         }
       ]
-      secrets: [
-        {
-          name: 'jwt-secret'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/jwt-secret'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'encryption-key'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/encryption-key'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'azure-client-id'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-client-id'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'azure-tenant-id'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-tenant-id'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'cosmos-endpoint'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-endpoint'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'cosmos-key'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-key'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'redis-connection-string'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/redis-connection-string'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'storage-account-name'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/storage-account-name'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'cognitive-services-key'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-key'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'cognitive-services-endpoint'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-endpoint'
-          identity: userAssignedIdentityId
-        }
-        {
-          name: 'application-insights-connection-string'
-          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/application-insights-connection-string'
-          identity: userAssignedIdentityId
-        }
-      ]
+      secrets: []
     }
     template: {
       containers: [
@@ -222,11 +166,11 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             }
             {
               name: 'VITE_AZURE_CLIENT_ID'
-              secretRef: 'azure-client-id'
+              value: 'placeholder-client-id'
             }
             {
               name: 'VITE_AZURE_TENANT_ID'
-              secretRef: 'azure-tenant-id'
+              value: 'placeholder-tenant-id'
             }
             {
               name: 'VITE_AZURE_REDIRECT_URI'
@@ -255,47 +199,47 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             }
             {
               name: 'JWT_SECRET_KEY'
-              secretRef: 'jwt-secret'
+              value: 'placeholder-jwt-secret'
             }
             {
               name: 'ENCRYPTION_KEY'
-              secretRef: 'encryption-key'
+              value: 'placeholder-encryption-key'
             }
             {
               name: 'AZURE_CLIENT_ID'
-              secretRef: 'azure-client-id'
+              value: 'placeholder-client-id'
             }
             {
               name: 'AZURE_TENANT_ID'
-              secretRef: 'azure-tenant-id'
+              value: 'placeholder-tenant-id'
             }
             {
               name: 'AZURE_COSMOS_ENDPOINT'
-              secretRef: 'cosmos-endpoint'
+              value: 'placeholder-cosmos-endpoint'
             }
             {
               name: 'AZURE_COSMOS_KEY'
-              secretRef: 'cosmos-key'
+              value: 'placeholder-cosmos-key'
             }
             {
               name: 'REDIS_CONNECTION_STRING'
-              secretRef: 'redis-connection-string'
+              value: 'placeholder-redis-connection'
             }
             {
               name: 'AZURE_STORAGE_ACCOUNT_NAME'
-              secretRef: 'storage-account-name'
+              value: 'placeholder-storage-account'
             }
             {
               name: 'COGNITIVE_SERVICES_KEY'
-              secretRef: 'cognitive-services-key'
+              value: 'placeholder-cognitive-key'
             }
             {
               name: 'COGNITIVE_SERVICES_ENDPOINT'
-              secretRef: 'cognitive-services-endpoint'
+              value: 'placeholder-cognitive-endpoint'
             }
             {
               name: 'APPLICATION_INSIGHTS_CONNECTION_STRING'
-              secretRef: 'application-insights-connection-string'
+              value: 'placeholder-insights-connection'
             }
           ]
         }
@@ -303,6 +247,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
       scale: {
         minReplicas: service.minReplicas
         maxReplicas: service.maxReplicas
+        rules: []
       }
     }
   }
