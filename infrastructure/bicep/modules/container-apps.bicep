@@ -19,7 +19,7 @@ var services = [
     maxReplicas: 20
     ingress: true
     external: true
-    workloadProfile: 'Consumption'
+    workloadProfile: 'GeneralPurpose'
     imageName: 'policortex001-api-gateway'
   }
   {
@@ -31,7 +31,7 @@ var services = [
     maxReplicas: 10
     ingress: false
     external: false
-    workloadProfile: 'Consumption'
+    workloadProfile: 'GeneralPurpose'
     imageName: 'policortex001-azure-integration'
   }
   {
@@ -43,7 +43,7 @@ var services = [
     maxReplicas: 8
     ingress: false
     external: false
-    workloadProfile: 'Consumption'
+    workloadProfile: 'GeneralPurpose'
     imageName: 'policortex001-ai-engine'
   }
   {
@@ -55,7 +55,7 @@ var services = [
     maxReplicas: 10
     ingress: false
     external: false
-    workloadProfile: 'Consumption'
+    workloadProfile: 'GeneralPurpose'
     imageName: 'policortex001-data-processing'
   }
   {
@@ -67,7 +67,7 @@ var services = [
     maxReplicas: 10
     ingress: false
     external: false
-    workloadProfile: 'Consumption'
+    workloadProfile: 'GeneralPurpose'
     imageName: 'policortex001-conversation'
   }
   {
@@ -79,7 +79,7 @@ var services = [
     maxReplicas: 5
     ingress: false
     external: false
-    workloadProfile: 'Consumption'
+    workloadProfile: 'GeneralPurpose'
     imageName: 'policortex001-notification'
   }
   {
@@ -91,7 +91,7 @@ var services = [
     maxReplicas: 10
     ingress: true
     external: true
-    workloadProfile: 'Consumption'
+    workloadProfile: 'GeneralPurpose'
     imageName: 'policortex001-frontend'
   }
 ]
@@ -109,7 +109,7 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
   }
   properties: {
     managedEnvironmentId: containerAppsEnvironmentId
-    workloadProfileName: service.workloadProfile == 'Consumption' ? null : service.workloadProfile
+    workloadProfileName: service.workloadProfile
     configuration: {
       ingress: service.ingress ? {
         external: service.external
