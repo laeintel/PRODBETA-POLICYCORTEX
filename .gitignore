@@ -116,6 +116,7 @@ docs/_templates/
 
 # Temporary files
 *.tmp
+*.tmp.*
 *.temp
 *.bak
 *.swp
@@ -126,6 +127,25 @@ docs/_templates/
 main_simple.py
 main_local.py
 test_simple.py
+test-*.py
+
+# Generated files
+infrastructure/bicep/*.json
+infrastructure/terraform/*.json
+
+# Installers
+*.msi
+*.exe
+*.dmg
+
+# Virtual environments
+backend/venv/
+**/venv/
+**/env/
+
+# Requirements duplicates
+**/requirements-fixed.txt
+**/requirements-minimal.txt
 
 # Certificates and secrets
 *.pem
