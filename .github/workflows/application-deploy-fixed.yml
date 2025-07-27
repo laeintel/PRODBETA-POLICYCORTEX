@@ -218,15 +218,25 @@ jobs:
       - name: Get Azure Resources
         id: get_resources
         run: |
-          # Get resource group for dev environment
-          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+          # Get resource group for dev environment - exact match first
+          RESOURCE_GROUP=$(az group list --query "[?name=='rg-policortex001-app-dev'].name" -o tsv | head -n 1)
           
-          # Fallback to any dev resource group if not found
+          # Fallback pattern if exact match not found
           if [ -z "$RESOURCE_GROUP" ]; then
-            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex') && contains(name, 'dev') && contains(name, 'app')].name" -o tsv | head -n 1)
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
           fi
           
-          echo "Using resource group: $RESOURCE_GROUP"
+          # Final fallback to any policortex app dev resource group
+          if [ -z "$RESOURCE_GROUP" ]; then
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'policortex') && contains(name, 'app') && contains(name, 'dev')].name" -o tsv | head -n 1)
+          fi
+          
+          if [ -z "$RESOURCE_GROUP" ]; then
+            echo "❌ ERROR: No suitable resource group found for dev environment"
+            exit 1
+          fi
+          
+          echo "✅ Using resource group: $RESOURCE_GROUP"
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           
           # Use ACR details from build-and-push job
@@ -236,19 +246,25 @@ jobs:
         run: |
           echo "🚀 Deploying to Container Apps with latest images..."
           
+          # Create revision suffix with timestamp to force new revisions
+          REVISION_SUFFIX="r$(date +%s)"
+          echo "Using revision suffix: $REVISION_SUFFIX"
+          
           # Deploy each microservice using latest tags
           services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
           
           for service in "${services[@]}"; do
-            echo "📦 Deploying ca-$service-dev..."
+            echo "📦 Deploying ca-$service-dev with new revision..."
             
+            # Force new revision by using revision suffix and image tag
             az containerapp update \
               --name ca-$service-dev \
               --resource-group ${{ steps.get_resources.outputs.resource_group }} \
               --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
-              --output none
+              --revision-suffix $REVISION_SUFFIX \
+              --output table
               
-            echo "✅ Deployed ca-$service-dev"
+            echo "✅ Deployed ca-$service-dev with revision suffix $REVISION_SUFFIX"
           done
 
       - name: Wait for deployments
@@ -256,12 +272,22 @@ jobs:
           echo "⏳ Waiting for Container Apps to stabilize..."
           sleep 90
           
-          echo "📊 Checking deployment status..."
+          echo "📊 Checking deployment status and new revisions..."
           services=("api-gateway" "frontend")
           
           for service in "${services[@]}"; do
+            echo "=== ca-$service-dev ==="
             status=$(az containerapp show --name ca-$service-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.provisioningState" -o tsv)
-            echo "ca-$service-dev: $status"
+            echo "Provisioning State: $status"
+            
+            # Show latest revision
+            echo "Latest revision:"
+            az containerapp revision list \
+              --name ca-$service-dev \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --query "[0].{Name:name, CreatedTime:properties.createdTime, Active:properties.active, TrafficWeight:properties.trafficWeight}" \
+              --output table
+            echo ""
           done
 
       - name: Run health checks
