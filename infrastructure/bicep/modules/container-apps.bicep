@@ -128,7 +128,63 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
           identity: userAssignedIdentityId
         }
       ]
-      secrets: []
+      secrets: [
+        {
+          name: 'jwt-secret'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/jwt-secret'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'encryption-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/encryption-key'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'azure-client-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-client-id'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'azure-tenant-id'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/azure-tenant-id'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cosmos-endpoint'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-endpoint'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cosmos-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cosmos-key'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'redis-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/redis-connection-string'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'storage-account-name'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/storage-account-name'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cognitive-services-key'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-key'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'cognitive-services-endpoint'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/cognitive-services-endpoint'
+          identity: userAssignedIdentityId
+        }
+        {
+          name: 'application-insights-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/application-insights-connection-string'
+          identity: userAssignedIdentityId
+        }
+      ]
     }
     template: {
       containers: [
@@ -219,11 +275,11 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             }
             {
               name: 'VITE_AZURE_CLIENT_ID'
-              value: 'e8c5b8a0-123e-4567-8901-234567890123'
+              secretRef: 'azure-client-id'
             }
             {
               name: 'VITE_AZURE_TENANT_ID'
-              value: 'f8c5b8a0-234f-5678-9012-345678901234'
+              secretRef: 'azure-tenant-id'
             }
             {
               name: 'VITE_AZURE_REDIRECT_URI'
@@ -252,47 +308,47 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             }
             {
               name: 'JWT_SECRET_KEY'
-              value: 'placeholder-jwt-secret'
+              secretRef: 'jwt-secret'
             }
             {
               name: 'ENCRYPTION_KEY'
-              value: 'placeholder-encryption-key'
+              secretRef: 'encryption-key'
             }
             {
               name: 'AZURE_CLIENT_ID'
-              value: 'placeholder-client-id'
+              secretRef: 'azure-client-id'
             }
             {
               name: 'AZURE_TENANT_ID'
-              value: 'placeholder-tenant-id'
+              secretRef: 'azure-tenant-id'
             }
             {
               name: 'AZURE_COSMOS_ENDPOINT'
-              value: 'placeholder-cosmos-endpoint'
+              secretRef: 'cosmos-endpoint'
             }
             {
               name: 'AZURE_COSMOS_KEY'
-              value: 'placeholder-cosmos-key'
+              secretRef: 'cosmos-key'
             }
             {
               name: 'REDIS_CONNECTION_STRING'
-              value: 'placeholder-redis-connection'
+              secretRef: 'redis-connection-string'
             }
             {
               name: 'AZURE_STORAGE_ACCOUNT_NAME'
-              value: 'placeholder-storage-account'
+              secretRef: 'storage-account-name'
             }
             {
               name: 'COGNITIVE_SERVICES_KEY'
-              value: 'placeholder-cognitive-key'
+              secretRef: 'cognitive-services-key'
             }
             {
               name: 'COGNITIVE_SERVICES_ENDPOINT'
-              value: 'placeholder-cognitive-endpoint'
+              secretRef: 'cognitive-services-endpoint'
             }
             {
               name: 'APPLICATION_INSIGHTS_CONNECTION_STRING'
-              value: 'placeholder-insights-connection'
+              secretRef: 'application-insights-connection-string'
             }
           ]
         }
