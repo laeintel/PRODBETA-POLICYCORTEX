@@ -124,7 +124,6 @@ docs/_templates/
 *~
 
 # Development test files
-main_simple.py
 main_local.py
 test_simple.py
 test-*.py

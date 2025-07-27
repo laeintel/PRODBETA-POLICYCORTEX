@@ -139,6 +139,59 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
             cpu: json(service.cpu)
             memory: service.memory
           }
+          probes: service.ingress ? [
+            {
+              type: 'Startup'
+              httpGet: {
+                path: service.name == 'frontend' ? '/' : '/health'
+                port: service.port
+                scheme: 'HTTP'
+              }
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              successThreshold: 1
+              failureThreshold: 30
+            }
+            {
+              type: 'Liveness'
+              httpGet: {
+                path: service.name == 'frontend' ? '/' : '/health'
+                port: service.port
+                scheme: 'HTTP'
+              }
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 10
+              failureThreshold: 3
+            }
+            {
+              type: 'Readiness'
+              httpGet: {
+                path: service.name == 'frontend' ? '/' : '/ready'
+                port: service.port
+                scheme: 'HTTP'
+              }
+              initialDelaySeconds: 5
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 3
+            }
+          ] : [
+            {
+              type: 'Startup'
+              httpGet: {
+                path: '/health'
+                port: service.port
+                scheme: 'HTTP'
+              }
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              successThreshold: 1
+              failureThreshold: 30
+            }
+          ]
           env: service.name == 'frontend' ? [
             {
               name: 'ENVIRONMENT'

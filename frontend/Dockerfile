@@ -54,9 +54,9 @@ USER nodejs
 # Expose port
 EXPOSE 8080
 
-# Health check
+# Health check (serve static files, so check root)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+  CMD curl -f http://localhost:8080/ || exit 1
 
 # Serve the built application with Node.js
 CMD ["serve", "-s", "dist", "-l", "8080", "--no-clipboard"]

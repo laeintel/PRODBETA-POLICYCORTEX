@@ -39,4 +39,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
     CMD curl -f http://localhost:8001/health || exit 1
 
 # Run the application from root directory
-CMD ["python", "-m", "uvicorn", "services.azure_integration.main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["python", "-m", "uvicorn", "services.azure_integration.main_simple:app", "--host", "0.0.0.0", "--port", "8001"]
