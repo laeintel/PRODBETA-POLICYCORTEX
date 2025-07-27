@@ -170,7 +170,8 @@
       "Bash(../../venv/Scripts/python.exe -m uvicorn main:app --port 8000 --host 0.0.0.0)",
       "Bash(backend/venv/Scripts/python.exe test-api.py)",
       "Bash(git pull:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(pwsh:*)"
     ],
     "deny": []
   }
