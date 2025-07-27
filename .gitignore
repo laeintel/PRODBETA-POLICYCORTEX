@@ -142,4 +142,5 @@ C:\Users\LeonardEsere\Documents\AeoliTech\policycortex\Project_viewpoint/
 *.patent
 *.proprietary
 
-nul
+nul# Azure CLI installer
+AzureCLI.msi
