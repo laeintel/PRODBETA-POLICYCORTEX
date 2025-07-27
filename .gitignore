@@ -145,7 +145,6 @@ backend/venv/
 
 # Requirements duplicates
 **/requirements-fixed.txt
-**/requirements-minimal.txt
 
 # Certificates and secrets
 *.pem
