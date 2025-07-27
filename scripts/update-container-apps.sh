@@ -35,7 +35,7 @@ update_container_app() {
             --resource-group "${RESOURCE_GROUP}" \
             --image "${CONTAINER_REGISTRY}/${image_name}:latest" \
             --revision-suffix "${revision_suffix}" \
-            --set-env-vars \
+            --replace-env-vars \
                 "ENVIRONMENT=${ENVIRONMENT}" \
                 "SERVICE_NAME=frontend" \
                 "PORT=8080" \
@@ -44,7 +44,6 @@ update_container_app() {
                 "VITE_WS_URL=wss://${api_fqdn}/ws" \
                 "VITE_AZURE_REDIRECT_URI=https://${frontend_fqdn}" \
                 "VITE_APP_VERSION=1.0.0" \
-            --replace-env-vars \
                 "VITE_AZURE_CLIENT_ID=secretref:azure-client-id" \
                 "VITE_AZURE_TENANT_ID=secretref:azure-tenant-id" \
             --output table
@@ -66,12 +65,17 @@ update_container_app() {
             --resource-group "${RESOURCE_GROUP}" \
             --image "${CONTAINER_REGISTRY}/${image_name}:latest" \
             --revision-suffix "${revision_suffix}" \
-            --set-env-vars \
+            --replace-env-vars \
                 "ENVIRONMENT=${ENVIRONMENT}" \
                 "SERVICE_NAME=${service_name}" \
                 "SERVICE_PORT=${service_port}" \
                 "LOG_LEVEL=INFO" \
-            --replace-env-vars \
+                "API_GATEWAY_URL=http://ca-api-gateway-${ENVIRONMENT}" \
+                "AZURE_INTEGRATION_URL=http://ca-azure-integration-${ENVIRONMENT}" \
+                "AI_ENGINE_URL=http://ca-ai-engine-${ENVIRONMENT}" \
+                "DATA_PROCESSING_URL=http://ca-data-processing-${ENVIRONMENT}" \
+                "CONVERSATION_URL=http://ca-conversation-${ENVIRONMENT}" \
+                "NOTIFICATION_URL=http://ca-notification-${ENVIRONMENT}" \
                 "JWT_SECRET_KEY=secretref:jwt-secret" \
                 "ENCRYPTION_KEY=secretref:encryption-key" \
                 "AZURE_CLIENT_ID=secretref:azure-client-id" \

@@ -307,6 +307,30 @@ resource containerApps 'Microsoft.App/containerApps@2024-03-01' = [for service i
               value: 'INFO'
             }
             {
+              name: 'API_GATEWAY_URL'
+              value: 'http://ca-api-gateway-${environment}'
+            }
+            {
+              name: 'AZURE_INTEGRATION_URL'
+              value: 'http://ca-azure-integration-${environment}'
+            }
+            {
+              name: 'AI_ENGINE_URL'
+              value: 'http://ca-ai-engine-${environment}'
+            }
+            {
+              name: 'DATA_PROCESSING_URL'
+              value: 'http://ca-data-processing-${environment}'
+            }
+            {
+              name: 'CONVERSATION_URL'
+              value: 'http://ca-conversation-${environment}'
+            }
+            {
+              name: 'NOTIFICATION_URL'
+              value: 'http://ca-notification-${environment}'
+            }
+            {
               name: 'JWT_SECRET_KEY'
               secretRef: 'jwt-secret'
             }
