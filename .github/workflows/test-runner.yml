@@ -6,7 +6,7 @@ on:
 jobs:
   test-connection:
     name: Test Runner Connection
-    runs-on: self-hosted
+    runs-on: [self-hosted, DESKTOP-L421JCF]
     steps:
       - name: Test Basic Commands
         run: |
