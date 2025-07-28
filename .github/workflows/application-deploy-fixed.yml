@@ -7,6 +7,10 @@ permissions:
   issues: write
   pull-requests: write
 
+defaults:
+  run:
+    shell: bash
+
 on:
   workflow_dispatch:  # Manual trigger only
     inputs:
@@ -37,7 +41,7 @@ jobs:
   # Combined tests to save minutes
   test-all:
     name: Run Tests (Optional)
-    runs-on: ubuntu-latest
+    runs-on: DESKTOP-L421JCF
     if: github.event.inputs.skip_tests != 'true'
     continue-on-error: true
     steps:
@@ -71,7 +75,7 @@ jobs:
   # Security scanning
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: DESKTOP-L421JCF
     continue-on-error: true
     
     steps:
@@ -96,7 +100,7 @@ jobs:
   # Build and push all images
   build-and-push:
     name: Build and Push Images
-    runs-on: ubuntu-latest
+    runs-on: DESKTOP-L421JCF
     needs: [test-all]
     if: always()  # Run even if tests fail
     outputs:
@@ -186,7 +190,7 @@ jobs:
   # Deploy to Development
   deploy-dev:
     name: Deploy to Development
-    runs-on: ubuntu-latest
+    runs-on: DESKTOP-L421JCF
     needs: [build-and-push]
     if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     environment: dev
@@ -384,7 +388,7 @@ jobs:
   # Deployment Summary
   deployment-summary:
     name: Deployment Summary
-    runs-on: ubuntu-latest
+    runs-on: DESKTOP-L421JCF
     needs: [build-and-push, deploy-dev]
     if: always()
     
