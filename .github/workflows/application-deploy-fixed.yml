@@ -1,5 +1,11 @@
 name: Application Deployment
 
+# Windows Self-Hosted Runner Compatibility:
+# - Uses Git Bash (available by default on Windows runners)
+# - Requires Docker Desktop installed and running
+# - Requires Azure CLI installed
+# - All commands compatible with Windows via Git Bash
+
 permissions:
   contents: read
   actions: read
