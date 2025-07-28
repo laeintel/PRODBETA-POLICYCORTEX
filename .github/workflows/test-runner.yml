@@ -1,0 +1,25 @@
+name: Test Windows Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-connection:
+    name: Test Runner Connection
+    runs-on: DESKTOP-L421JCF
+    steps:
+      - name: Test Basic Commands
+        run: |
+          echo "Runner is working!"
+          echo "OS: $env:OS"
+          echo "Computer: $env:COMPUTERNAME"
+          echo "User: $env:USERNAME"
+          Get-Date
+        shell: pwsh
+      
+      - name: Test Git Bash
+        run: |
+          echo "Testing Git Bash..."
+          pwd
+          ls -la
+        shell: bash
