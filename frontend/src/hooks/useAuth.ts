@@ -16,14 +16,17 @@ export const useAuth = () => {
   // Initialize authentication
   const initialize = useCallback(async () => {
     try {
+      console.log('Auth initialize called, accounts:', accounts.length, 'inProgress:', inProgress)
       setIsLoading(true)
       setError(null)
 
       // Check if we have an active account
       if (accounts.length > 0) {
+        console.log('Found active account:', accounts[0].username)
         const account = accounts[0]
         await acquireTokenSilent(account)
       } else {
+        console.log('No active account found')
         // No active account, user needs to login
         setAuthenticated(false)
       }
@@ -34,7 +37,7 @@ export const useAuth = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [accounts, setAuthenticated])
+  }, [accounts, setAuthenticated, inProgress])
 
   // Login with redirect
   const login = useCallback(async () => {
@@ -67,7 +70,18 @@ export const useAuth = () => {
       })
 
       if (result.account) {
-        await acquireTokenSilent(result.account)
+        // Create mock user immediately after login
+        const mockUser: User = {
+          id: result.account.homeAccountId,
+          email: result.account.username,
+          name: result.account.name || result.account.username,
+          role: { id: '1', name: 'admin' } as any,
+          permissions: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        setUser(mockUser)
+        setAuthenticated(true)
       }
     } catch (error) {
       console.error('Login popup error:', error)
@@ -110,9 +124,21 @@ export const useAuth = () => {
       const response = await instance.acquireTokenSilent(silentTokenRequest)
       
       if (response.accessToken) {
-        // Get user profile from backend
-        const userProfile = await authService.getProfile(response.accessToken)
-        setUser(userProfile)
+        // TODO: Get user profile from backend when API is ready
+        // const userProfile = await authService.getProfile(response.accessToken)
+        
+        // For now, create user profile from Azure AD account info
+        const mockUser: User = {
+          id: account.homeAccountId,
+          email: account.username,
+          name: account.name || account.username,
+          role: { id: '1', name: 'admin' } as any,
+          permissions: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        
+        setUser(mockUser)
         setAuthenticated(true)
         return response.accessToken
       }
@@ -182,14 +208,27 @@ export const useAuth = () => {
   const refreshProfile = useCallback(async () => {
     try {
       const token = await getAccessToken()
-      if (token) {
-        const userProfile = await authService.getProfile(token)
-        setUser(userProfile)
+      if (token && accounts.length > 0) {
+        // TODO: Get user profile from backend when API is ready
+        // const userProfile = await authService.getProfile(token)
+        
+        // For now, use account info
+        const account = accounts[0]
+        const mockUser: User = {
+          id: account.homeAccountId,
+          email: account.username,
+          name: account.name || account.username,
+          role: { id: '1', name: 'admin' } as any,
+          permissions: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        setUser(mockUser)
       }
     } catch (error) {
       console.error('Failed to refresh profile:', error)
     }
-  }, [getAccessToken, setUser])
+  }, [getAccessToken, setUser, accounts])
 
   // Effect to handle account changes
   useEffect(() => {
