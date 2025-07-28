@@ -43,13 +43,18 @@ export const useAuth = () => {
   // Login with redirect
   const login = useCallback(async () => {
     try {
+      console.log('login() called - starting redirect flow')
       setIsLoading(true)
       setError(null)
+
+      console.log('MSAL instance:', instance)
+      console.log('Login request config:', { ...loginRequest, prompt: 'select_account' })
 
       await instance.loginRedirect({
         ...loginRequest,
         prompt: 'select_account',
       })
+      console.log('loginRedirect() completed - should be redirecting now')
     } catch (error) {
       console.error('Login error:', error)
       setError('Failed to login')
@@ -62,13 +67,18 @@ export const useAuth = () => {
   // Login with popup
   const loginPopup = useCallback(async () => {
     try {
+      console.log('loginPopup() called - starting popup flow')
       setIsLoading(true)
       setError(null)
+
+      console.log('MSAL instance:', instance)
+      console.log('Login request config:', { ...loginRequest, prompt: 'select_account' })
 
       const result = await instance.loginPopup({
         ...loginRequest,
         prompt: 'select_account',
       })
+      console.log('loginPopup() result:', result)
 
       if (result.account) {
         // Create mock user immediately after login
