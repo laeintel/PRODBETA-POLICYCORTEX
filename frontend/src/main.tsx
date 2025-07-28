@@ -15,6 +15,24 @@ import './index.css'
 // Create MSAL instance
 const msalInstance = new PublicClientApplication(msalConfig)
 
+// Initialize MSAL
+msalInstance.initialize().then(() => {
+  console.log('MSAL initialized successfully')
+  
+  // Handle redirect promise
+  msalInstance.handleRedirectPromise().then((tokenResponse) => {
+    if (tokenResponse) {
+      console.log('Redirect response received:', tokenResponse)
+    } else {
+      console.log('No redirect response - normal page load')
+    }
+  }).catch((error) => {
+    console.error('Error handling redirect:', error)
+  })
+}).catch((error) => {
+  console.error('MSAL initialization error:', error)
+})
+
 // Create React Query client
 const queryClient = new QueryClient({
   defaultOptions: {

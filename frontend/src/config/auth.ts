@@ -1,6 +1,11 @@
 import { Configuration, PopupRequest, RedirectRequest } from '@azure/msal-browser'
 import { env } from './environment'
 
+// Log configuration for debugging
+console.log('MSAL Config - Client ID:', env.AZURE_CLIENT_ID)
+console.log('MSAL Config - Tenant ID:', env.AZURE_TENANT_ID)
+console.log('MSAL Config - Redirect URI:', env.AZURE_REDIRECT_URI || window.location.origin)
+
 // MSAL configuration
 export const msalConfig: Configuration = {
   auth: {
