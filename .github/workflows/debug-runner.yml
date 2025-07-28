@@ -1,0 +1,33 @@
+name: Debug Runner Targeting
+
+on:
+  workflow_dispatch:
+
+jobs:
+  # Try method 1: Exact name
+  test-exact-name:
+    name: Test Exact Name
+    runs-on: DESKTOP-L421JCF
+    steps:
+      - run: echo "Method 1 worked - exact name"
+    
+  # Try method 2: self-hosted label
+  test-self-hosted:
+    name: Test Self Hosted
+    runs-on: self-hosted
+    steps:
+      - run: echo "Method 2 worked - self-hosted label"
+      
+  # Try method 3: Array with multiple labels
+  test-array:
+    name: Test Array Format
+    runs-on: [self-hosted, windows]
+    steps:
+      - run: echo "Method 3 worked - array format"
+      
+  # Try method 4: Just windows label
+  test-windows:
+    name: Test Windows Label
+    runs-on: windows
+    steps:
+      - run: echo "Method 4 worked - windows only"
