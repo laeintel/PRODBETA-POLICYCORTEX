@@ -4,9 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Try multiple formats to see which works
   test-connection:
-    name: Test Runner Connection
-    runs-on: [self-hosted, DESKTOP-L421JCF]
+    name: Test Runner Connection  
+    runs-on: DESKTOP-L421JCF
     steps:
       - name: Test Basic Commands
         run: |
