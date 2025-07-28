@@ -16,6 +16,9 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Copy production environment file
+COPY .env.production .env.production
+
 # Build arguments for environment variables
 ARG NODE_ENV=production
 ARG VITE_API_BASE_URL

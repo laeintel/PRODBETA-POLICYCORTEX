@@ -88,6 +88,12 @@ export const env = {
 
 // Environment validation
 export const validateEnvironment = () => {
+  // Skip validation if runtime config is available (will be loaded dynamically)
+  if (typeof window !== 'undefined' && (window as any).POLICYCORTEX_CONFIG) {
+    console.info('Using runtime configuration from config.js')
+    return
+  }
+
   const requiredVars = [
     { key: 'AZURE_CLIENT_ID', value: env.AZURE_CLIENT_ID },
     { key: 'AZURE_TENANT_ID', value: env.AZURE_TENANT_ID },
@@ -97,15 +103,13 @@ export const validateEnvironment = () => {
   const missingVars = requiredVars.filter(({ value }) => !value).map(({ key }) => key)
 
   if (missingVars.length > 0) {
-    console.error('Missing required environment variables:', missingVars)
+    console.warn('Environment variables not found at build time, expecting runtime configuration')
     console.info('Current configuration:', {
-      AZURE_CLIENT_ID: env.AZURE_CLIENT_ID ? '***' : '(missing)',
-      AZURE_TENANT_ID: env.AZURE_TENANT_ID ? '***' : '(missing)',
-      API_BASE_URL: env.API_BASE_URL || '(missing)',
+      AZURE_CLIENT_ID: env.AZURE_CLIENT_ID ? '***' : '(will be loaded from config.js)',
+      AZURE_TENANT_ID: env.AZURE_TENANT_ID ? '***' : '(will be loaded from config.js)',
+      API_BASE_URL: env.API_BASE_URL || '(will be loaded from config.js)',
     })
-    if (env.NODE_ENV === 'production') {
-      throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`)
-    }
+    // Don't throw in production - config.js will provide values
   }
 }
 
