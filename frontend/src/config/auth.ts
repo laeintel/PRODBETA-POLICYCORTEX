@@ -1,11 +1,12 @@
 import { Configuration, PopupRequest, RedirectRequest } from '@azure/msal-browser'
+import { env } from './environment'
 
 // MSAL configuration
 export const msalConfig: Configuration = {
   auth: {
-    clientId: import.meta.env.VITE_AZURE_CLIENT_ID || '',
-    authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AZURE_TENANT_ID || 'common'}`,
-    redirectUri: import.meta.env.VITE_AZURE_REDIRECT_URI || window.location.origin,
+    clientId: env.AZURE_CLIENT_ID || '',
+    authority: `https://login.microsoftonline.com/${env.AZURE_TENANT_ID || 'common'}`,
+    redirectUri: env.AZURE_REDIRECT_URI || window.location.origin,
     postLogoutRedirectUri: window.location.origin,
     navigateToLoginRequestUrl: false,
   },
@@ -83,7 +84,7 @@ export const silentRequest = {
 export const tokenScopes = {
   arm: ['https://management.azure.com/user_impersonation'],
   graph: ['https://graph.microsoft.com/User.Read'],
-  api: [`api://${import.meta.env.VITE_AZURE_CLIENT_ID}/access_as_user`],
+  api: [`api://${env.AZURE_CLIENT_ID}/access_as_user`],
 }
 
 // Auth endpoints
