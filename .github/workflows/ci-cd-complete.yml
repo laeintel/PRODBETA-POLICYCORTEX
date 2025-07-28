@@ -28,6 +28,7 @@ jobs:
   code-quality:
     name: Code Quality & Linting
     runs-on: DESKTOP-L421JCF
+    if: false  # Temporarily disabled for Windows runner setup
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
