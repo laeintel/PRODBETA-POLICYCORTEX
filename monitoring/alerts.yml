@@ -1,0 +1,210 @@
+# Prometheus Alert Rules for PolicyCortex
+
+groups:
+  # Service Health Alerts
+  - name: service_health
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 2 minutes"
+          runbook_url: "https://wiki.policycortex.com/runbooks/service-down"
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (job)
+            /
+            sum(rate(http_requests_total[5m])) by (job)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High error rate for {{ $labels.job }}"
+          description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.job }}"
+
+  # Performance Alerts
+  - name: performance
+    interval: 30s
+    rules:
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (job, le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High response time for {{ $labels.job }}"
+          description: "95th percentile response time is {{ $value }}s for {{ $labels.job }}"
+
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)
+            / node_memory_MemTotal_bytes
+          ) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+  # Database Alerts
+  - name: database
+    interval: 30s
+    rules:
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (
+            pg_stat_database_numbackends
+            / pg_settings_max_connections
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "{{ $value | humanizePercentage }} of connections are in use"
+
+      - alert: DatabaseSlowQueries
+        expr: |
+          rate(pg_stat_statements_mean_exec_time_seconds[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Average query execution time is {{ $value }}s"
+
+  # AI Engine Alerts
+  - name: ai_engine
+    interval: 30s
+    rules:
+      - alert: ModelInferenceSlowdown
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(ai_model_inference_duration_seconds_bucket[5m])) by (model, le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: ml
+        annotations:
+          summary: "Model inference slowdown for {{ $labels.model }}"
+          description: "95th percentile inference time is {{ $value }}s"
+
+      - alert: ModelLoadFailure
+        expr: |
+          increase(ai_model_load_failures_total[5m]) > 0
+        labels:
+          severity: critical
+          team: ml
+        annotations:
+          summary: "Model load failure for {{ $labels.model }}"
+          description: "Model {{ $labels.model }} failed to load {{ $value }} times"
+
+  # Queue and Messaging Alerts
+  - name: messaging
+    interval: 30s
+    rules:
+      - alert: MessageQueueBacklog
+        expr: |
+          redis_list_length{list="notification_queue"} > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Large message queue backlog"
+          description: "{{ $value }} messages in notification queue"
+
+      - alert: ServiceBusDeadLetters
+        expr: |
+          increase(servicebus_dead_letter_messages_total[5m]) > 10
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Service Bus dead letters increasing"
+          description: "{{ $value }} new dead letter messages in last 5 minutes"
+
+  # Business Metrics Alerts
+  - name: business_metrics
+    interval: 1m
+    rules:
+      - alert: LowUserActivity
+        expr: |
+          sum(increase(user_login_total[1h])) < 10
+        for: 2h
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "Low user activity detected"
+          description: "Only {{ $value }} logins in the last hour"
+
+      - alert: PolicyViolationsIncreasing
+        expr: |
+          rate(policy_violations_total[1h]) > 
+          rate(policy_violations_total[1h] offset 1d) * 1.5
+        for: 30m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Policy violations increasing"
+          description: "Policy violations increased by 50% compared to yesterday"
+
+  # Cost Alerts
+  - name: cost_management
+    interval: 5m
+    rules:
+      - alert: HighAzureCostProjection
+        expr: |
+          predict_linear(azure_monthly_cost[1d], 30*86400) > 10000
+        labels:
+          severity: warning
+          team: finance
+        annotations:
+          summary: "High Azure cost projection"
+          description: "Projected monthly cost: ${{ $value }}"
+
+      - alert: UnusualCostSpike
+        expr: |
+          (
+            azure_daily_cost - azure_daily_cost offset 1d
+          ) / azure_daily_cost offset 1d > 0.2
+        labels:
+          severity: warning
+          team: finance
+        annotations:
+          summary: "Unusual cost spike detected"
+          description: "Daily cost increased by {{ $value | humanizePercentage }}"
