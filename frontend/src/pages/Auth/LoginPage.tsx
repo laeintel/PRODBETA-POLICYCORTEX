@@ -26,10 +26,17 @@ const LoginPage = () => {
   const [loginMethod, setLoginMethod] = useState<'redirect' | 'popup'>('redirect')
 
   const handleLogin = async () => {
-    if (loginMethod === 'popup') {
-      await loginPopup()
-    } else {
-      await login()
+    console.log('handleLogin called with method:', loginMethod)
+    try {
+      if (loginMethod === 'popup') {
+        console.log('Calling loginPopup...')
+        await loginPopup()
+      } else {
+        console.log('Calling login (redirect)...')
+        await login()
+      }
+    } catch (error) {
+      console.error('Login error in handleLogin:', error)
     }
   }
 
