@@ -5,6 +5,7 @@ import { loginRequest, silentRequest, tokenScopes } from '@/config/auth'
 import { useAuthStore } from '@/store/authStore'
 import { User, UserRole } from '@/types'
 import { authService } from '@/services/authService'
+import { env } from '@/config/environment'
 import toast from 'react-hot-toast'
 
 export const useAuth = () => {
@@ -74,11 +75,46 @@ export const useAuth = () => {
         const mockUser: User = {
           id: result.account.homeAccountId,
           email: result.account.username,
-          name: result.account.name || result.account.username,
-          role: { id: '1', name: 'admin' } as any,
+          firstName: result.account.name?.split(' ')[0] || result.account.username.split('@')[0],
+          lastName: result.account.name?.split(' ').slice(1).join(' ') || '',
+          displayName: result.account.name || result.account.username,
+          role: { id: '1', name: 'admin', description: 'Administrator', permissions: [], isDefault: false },
           permissions: [],
+          preferences: {
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            currency: 'USD',
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h',
+            notifications: {
+              email: true,
+              push: true,
+              sms: false,
+              inApp: true,
+              frequency: 'instant',
+              categories: []
+            },
+            dashboard: {
+              layout: 'grid',
+              widgets: [],
+              refreshInterval: 300000,
+              showWelcome: true,
+              compactMode: false
+            },
+            accessibility: {
+              highContrast: false,
+              reducedMotion: false,
+              screenReader: false,
+              fontSize: 'medium',
+              keyboardNavigation: true
+            }
+          },
+          isActive: true,
+          tenantId: env.AZURE_TENANT_ID || 'default',
+          departments: [],
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
         setUser(mockUser)
         setAuthenticated(true)
@@ -131,11 +167,46 @@ export const useAuth = () => {
         const mockUser: User = {
           id: account.homeAccountId,
           email: account.username,
-          name: account.name || account.username,
-          role: { id: '1', name: 'admin' } as any,
+          firstName: account.name?.split(' ')[0] || account.username.split('@')[0],
+          lastName: account.name?.split(' ').slice(1).join(' ') || '',
+          displayName: account.name || account.username,
+          role: { id: '1', name: 'admin', description: 'Administrator', permissions: [], isDefault: false },
           permissions: [],
+          preferences: {
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            currency: 'USD',
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h',
+            notifications: {
+              email: true,
+              push: true,
+              sms: false,
+              inApp: true,
+              frequency: 'instant',
+              categories: []
+            },
+            dashboard: {
+              layout: 'grid',
+              widgets: [],
+              refreshInterval: 300000,
+              showWelcome: true,
+              compactMode: false
+            },
+            accessibility: {
+              highContrast: false,
+              reducedMotion: false,
+              screenReader: false,
+              fontSize: 'medium',
+              keyboardNavigation: true
+            }
+          },
+          isActive: true,
+          tenantId: env.AZURE_TENANT_ID || 'default',
+          departments: [],
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
         
         setUser(mockUser)
@@ -217,11 +288,46 @@ export const useAuth = () => {
         const mockUser: User = {
           id: account.homeAccountId,
           email: account.username,
-          name: account.name || account.username,
-          role: { id: '1', name: 'admin' } as any,
+          firstName: account.name?.split(' ')[0] || account.username.split('@')[0],
+          lastName: account.name?.split(' ').slice(1).join(' ') || '',
+          displayName: account.name || account.username,
+          role: { id: '1', name: 'admin', description: 'Administrator', permissions: [], isDefault: false },
           permissions: [],
+          preferences: {
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            currency: 'USD',
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h',
+            notifications: {
+              email: true,
+              push: true,
+              sms: false,
+              inApp: true,
+              frequency: 'instant',
+              categories: []
+            },
+            dashboard: {
+              layout: 'grid',
+              widgets: [],
+              refreshInterval: 300000,
+              showWelcome: true,
+              compactMode: false
+            },
+            accessibility: {
+              highContrast: false,
+              reducedMotion: false,
+              screenReader: false,
+              fontSize: 'medium',
+              keyboardNavigation: true
+            }
+          },
+          isActive: true,
+          tenantId: env.AZURE_TENANT_ID || 'default',
+          departments: [],
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
         setUser(mockUser)
       }
