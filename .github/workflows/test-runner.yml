@@ -15,7 +15,7 @@ jobs:
           echo "Computer: $env:COMPUTERNAME"
           echo "User: $env:USERNAME"
           Get-Date
-        shell: pwsh
+        shell: powershell
       
       - name: Test Git Bash
         run: |
