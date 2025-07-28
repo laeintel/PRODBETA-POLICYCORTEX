@@ -21,7 +21,6 @@ from starlette.responses import PlainTextResponse
 from shared.config import get_settings
 from shared.database import get_async_db, DatabaseUtils
 from .auth import AuthManager
-from .models import (
     HealthResponse,
     APIResponse,
     ErrorResponse,
@@ -57,19 +56,35 @@ settings = get_settings()
 logger = structlog.get_logger(__name__)
 
 # Metrics
-REQUEST_COUNT = Counter('data_processing_requests_total', 'Total API requests', ['method', 'endpoint', 'status'])
+REQUEST_COUNT = Counter(
+    'data_processing_requests_total',
+    'Total API requests',
+    ['method',
+    'endpoint',
+    'status']
+)
 REQUEST_DURATION = Histogram('data_processing_request_duration_seconds', 'Request duration')
-PIPELINE_EXECUTIONS = Counter('data_processing_pipeline_executions_total', 'Pipeline executions', ['pipeline_type', 'status'])
-PROCESSING_LATENCY = Histogram('data_processing_latency_seconds', 'Processing latency', ['operation'])
+PIPELINE_EXECUTIONS = Counter(
+    'data_processing_pipeline_executions_total',
+    'Pipeline executions',
+    ['pipeline_type',
+    'status']
+)
+PROCESSING_LATENCY = Histogram(
+    'data_processing_latency_seconds',
+    'Processing latency',
+    ['operation']
+)
 
 # FastAPI app
 app = FastAPI(
     title="PolicyCortex Data Processing Service",
-    description="Data processing microservice for ETL, stream processing, and data quality management",
+    description="Data processing microservice for ETL, stream processing, and
+        data quality management",
     version=settings.service.service_version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
-)
+        )
 
 # Security
 security = HTTPBearer(auto_error=False)
@@ -81,7 +96,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=settings.security.cors_methods,
     allow_headers=settings.security.cors_headers,
-)
+        )
 
 app.add_middleware(
     TrustedHostMiddleware,
@@ -103,14 +118,14 @@ data_pipeline = DataPipeline(settings)
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for request/response logging and metrics."""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         request_id = str(uuid.uuid4())
-        
+
         # Add request ID to headers
         request.state.request_id = request_id
-        
+
         # Log request
         logger.info(
             "request_started",
@@ -120,13 +135,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             user_agent=request.headers.get("user-agent"),
             client_ip=request.client.host if request.client else None
         )
-        
+
         try:
             response = await call_next(request)
-            
+
             # Calculate duration
             duration = time.time() - start_time
-            
+
             # Update metrics
             REQUEST_COUNT.labels(
                 method=request.method,
@@ -134,7 +149,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status=response.status_code
             ).inc()
             REQUEST_DURATION.observe(duration)
-            
+
             # Log response
             logger.info(
                 "request_completed",
@@ -142,15 +157,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status_code=response.status_code,
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Add request ID to response headers
             response.headers["X-Request-ID"] = request_id
-            
+
             return response
-            
+
         except Exception as e:
             duration = time.time() - start_time
-            
+
             # Log error
             logger.error(
                 "request_failed",
@@ -158,14 +173,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 error=str(e),
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Update error metrics
             REQUEST_COUNT.labels(
                 method=request.method,
                 endpoint=request.url.path,
                 status=500
             ).inc()
-            
+
             raise
 
 
@@ -200,17 +215,17 @@ async def verify_authentication(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Optional[Dict[str, Any]]:
     """Verify authentication for protected endpoints."""
-    
+
     # Skip authentication for health checks and metrics
     if request.url.path in ["/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"]:
         return None
-    
+
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required"
         )
-    
+
     try:
         user_info = await auth_manager.verify_token(credentials.credentials)
         request.state.user = user_info
@@ -242,10 +257,10 @@ async def readiness_check():
         # Check database connectivity
         db = await get_async_db()
         await db.execute("SELECT 1")
-        
+
         # Check Azure services connectivity
         azure_health = await azure_connector.health_check()
-        
+
         if azure_health["status"] == "healthy":
             return HealthResponse(
                 status="ready",
@@ -259,7 +274,7 @@ async def readiness_check():
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Azure services not ready"
             )
-            
+
     except Exception as e:
         logger.error("readiness_check_failed", error=str(e))
         raise HTTPException(
@@ -284,7 +299,7 @@ async def create_etl_pipeline(
     """Create and execute ETL pipeline."""
     try:
         start_time = time.time()
-        
+
         # Create pipeline
         pipeline_id = await etl_pipeline.create_pipeline(
             source_config=request.source_config,
@@ -293,7 +308,7 @@ async def create_etl_pipeline(
             schedule=request.schedule,
             user_id=user.get("id") if user else None
         )
-        
+
         # Track lineage
         await lineage_tracker.track_pipeline_creation(
             pipeline_id=pipeline_id,
@@ -301,7 +316,7 @@ async def create_etl_pipeline(
             target_config=request.target_config,
             user_id=user.get("id") if user else None
         )
-        
+
         # Execute pipeline if immediate execution is requested
         if request.execute_immediately:
             background_tasks.add_task(
@@ -309,17 +324,19 @@ async def create_etl_pipeline(
                 pipeline_id,
                 user.get("id") if user else None
             )
-        
+
         # Update metrics
         PIPELINE_EXECUTIONS.labels(pipeline_type="etl", status="created").inc()
         PROCESSING_LATENCY.labels(operation="pipeline_creation").observe(time.time() - start_time)
-        
+
         return ETLPipelineResponse(
             pipeline_id=pipeline_id,
-            status=PipelineStatus.CREATED if not request.execute_immediately else PipelineStatus.RUNNING,
+            status = (
+                PipelineStatus.CREATED if not request.execute_immediately else PipelineStatus.RUNNING,
+            )
             message="ETL pipeline created successfully"
         )
-        
+
     except Exception as e:
         logger.error("etl_pipeline_creation_failed", error=str(e))
         PIPELINE_EXECUTIONS.labels(pipeline_type="etl", status="failed").inc()
@@ -337,14 +354,14 @@ async def get_etl_pipeline(
     """Get ETL pipeline status and details."""
     try:
         pipeline_info = await etl_pipeline.get_pipeline_info(pipeline_id)
-        
+
         return ETLPipelineResponse(
             pipeline_id=pipeline_id,
             status=pipeline_info["status"],
             message=pipeline_info.get("message", ""),
             details=pipeline_info.get("details", {})
         )
-        
+
     except Exception as e:
         logger.error("etl_pipeline_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -361,12 +378,12 @@ async def delete_etl_pipeline(
     """Delete ETL pipeline."""
     try:
         await etl_pipeline.delete_pipeline(pipeline_id)
-        
+
         return APIResponse(
             success=True,
             message="ETL pipeline deleted successfully"
         )
-        
+
     except Exception as e:
         logger.error("etl_pipeline_deletion_failed", error=str(e))
         raise HTTPException(
@@ -384,7 +401,7 @@ async def create_stream_processor(
     """Create and start stream processor."""
     try:
         start_time = time.time()
-        
+
         # Create stream processor
         processor_id = await stream_processor.create_processor(
             source_config=request.source_config,
@@ -392,7 +409,7 @@ async def create_stream_processor(
             output_config=request.output_config,
             user_id=user.get("id") if user else None
         )
-        
+
         # Track lineage
         await lineage_tracker.track_stream_processor_creation(
             processor_id=processor_id,
@@ -400,17 +417,19 @@ async def create_stream_processor(
             output_config=request.output_config,
             user_id=user.get("id") if user else None
         )
-        
+
         # Update metrics
         PIPELINE_EXECUTIONS.labels(pipeline_type="stream", status="created").inc()
-        PROCESSING_LATENCY.labels(operation="stream_processor_creation").observe(time.time() - start_time)
-        
+        PROCESSING_LATENCY.labels(operation = (
+            "stream_processor_creation").observe(time.time() - start_time)
+        )
+
         return StreamProcessingResponse(
             processor_id=processor_id,
             status=PipelineStatus.RUNNING,
             message="Stream processor created and started successfully"
         )
-        
+
     except Exception as e:
         logger.error("stream_processor_creation_failed", error=str(e))
         PIPELINE_EXECUTIONS.labels(pipeline_type="stream", status="failed").inc()
@@ -428,14 +447,14 @@ async def get_stream_processor(
     """Get stream processor status and details."""
     try:
         processor_info = await stream_processor.get_processor_info(processor_id)
-        
+
         return StreamProcessingResponse(
             processor_id=processor_id,
             status=processor_info["status"],
             message=processor_info.get("message", ""),
             details=processor_info.get("details", {})
         )
-        
+
     except Exception as e:
         logger.error("stream_processor_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -453,7 +472,7 @@ async def transform_data(
     """Transform data using specified rules."""
     try:
         start_time = time.time()
-        
+
         # Transform data
         result = await data_transformer.transform_data(
             data=request.data,
@@ -461,7 +480,7 @@ async def transform_data(
             output_format=request.output_format,
             user_id=user.get("id") if user else None
         )
-        
+
         # Track lineage
         await lineage_tracker.track_data_transformation(
             transformation_id=result["transformation_id"],
@@ -470,17 +489,17 @@ async def transform_data(
             output_data=result["transformed_data"],
             user_id=user.get("id") if user else None
         )
-        
+
         # Update metrics
         PROCESSING_LATENCY.labels(operation="data_transformation").observe(time.time() - start_time)
-        
+
         return DataTransformationResponse(
             transformation_id=result["transformation_id"],
             transformed_data=result["transformed_data"],
             status="completed",
             message="Data transformation completed successfully"
         )
-        
+
     except Exception as e:
         logger.error("data_transformation_failed", error=str(e))
         raise HTTPException(
@@ -498,7 +517,7 @@ async def validate_data(
     """Validate data quality and integrity."""
     try:
         start_time = time.time()
-        
+
         # Validate data
         result = await data_validator.validate_data(
             data=request.data,
@@ -506,7 +525,7 @@ async def validate_data(
             quality_threshold=request.quality_threshold,
             user_id=user.get("id") if user else None
         )
-        
+
         # Track lineage
         await lineage_tracker.track_data_validation(
             validation_id=result["validation_id"],
@@ -515,10 +534,10 @@ async def validate_data(
             results=result["validation_results"],
             user_id=user.get("id") if user else None
         )
-        
+
         # Update metrics
         PROCESSING_LATENCY.labels(operation="data_validation").observe(time.time() - start_time)
-        
+
         return DataValidationResponse(
             validation_id=result["validation_id"],
             validation_results=result["validation_results"],
@@ -526,7 +545,7 @@ async def validate_data(
             status="completed",
             message="Data validation completed successfully"
         )
-        
+
     except Exception as e:
         logger.error("data_validation_failed", error=str(e))
         raise HTTPException(
@@ -544,7 +563,7 @@ async def aggregate_data(
     """Aggregate data using specified rules."""
     try:
         start_time = time.time()
-        
+
         # Aggregate data
         result = await data_aggregator.aggregate_data(
             data=request.data,
@@ -552,7 +571,7 @@ async def aggregate_data(
             group_by_fields=request.group_by_fields,
             user_id=user.get("id") if user else None
         )
-        
+
         # Track lineage
         await lineage_tracker.track_data_aggregation(
             aggregation_id=result["aggregation_id"],
@@ -561,17 +580,17 @@ async def aggregate_data(
             output_data=result["aggregated_data"],
             user_id=user.get("id") if user else None
         )
-        
+
         # Update metrics
         PROCESSING_LATENCY.labels(operation="data_aggregation").observe(time.time() - start_time)
-        
+
         return DataAggregationResponse(
             aggregation_id=result["aggregation_id"],
             aggregated_data=result["aggregated_data"],
             status="completed",
             message="Data aggregation completed successfully"
         )
-        
+
     except Exception as e:
         logger.error("data_aggregation_failed", error=str(e))
         raise HTTPException(
@@ -593,7 +612,7 @@ async def get_data_lineage(
             entity_id=entity_id,
             entity_type=entity_type
         )
-        
+
         return DataLineageResponse(
             entity_id=entity_id,
             entity_type=entity_type,
@@ -603,7 +622,7 @@ async def get_data_lineage(
             status="completed",
             message="Data lineage retrieved successfully"
         )
-        
+
     except Exception as e:
         logger.error("data_lineage_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -622,7 +641,7 @@ async def export_data(
     """Export data to specified destination."""
     try:
         start_time = time.time()
-        
+
         # Create export job
         export_id = await data_exporter.create_export_job(
             source_config=request.source_config,
@@ -631,14 +650,14 @@ async def export_data(
             filters=request.filters,
             user_id=user.get("id") if user else None
         )
-        
+
         # Execute export in background
         background_tasks.add_task(
             data_exporter.execute_export,
             export_id,
             user.get("id") if user else None
         )
-        
+
         # Track lineage
         await lineage_tracker.track_data_export(
             export_id=export_id,
@@ -646,16 +665,18 @@ async def export_data(
             destination_config=request.destination_config,
             user_id=user.get("id") if user else None
         )
-        
+
         # Update metrics
-        PROCESSING_LATENCY.labels(operation="data_export_creation").observe(time.time() - start_time)
-        
+        PROCESSING_LATENCY.labels(operation = (
+            "data_export_creation").observe(time.time() - start_time)
+        )
+
         return DataExportResponse(
             export_id=export_id,
             status="started",
             message="Data export job created and started successfully"
         )
-        
+
     except Exception as e:
         logger.error("data_export_failed", error=str(e))
         raise HTTPException(
@@ -672,14 +693,14 @@ async def get_export_status(
     """Get data export status and details."""
     try:
         export_info = await data_exporter.get_export_info(export_id)
-        
+
         return DataExportResponse(
             export_id=export_id,
             status=export_info["status"],
             message=export_info.get("message", ""),
             details=export_info.get("details", {})
         )
-        
+
     except Exception as e:
         logger.error("data_export_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -699,10 +720,10 @@ async def process_pipeline_data(
     try:
         # Convert string to enum
         data_source = DataSourceType(source_type)
-        
+
         # Process data through pipeline
         result = await data_pipeline.process_data(data, data_source)
-        
+
         return {
             "processing_result": {
                 "source_type": result.source_type.value,
@@ -722,11 +743,13 @@ async def process_pipeline_data(
                 "errors": result.errors
             }
         }
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid source type: {source_type}. Valid types: {[t.value for t in DataSourceType]}"
+            detail = (
+                f"Invalid source type: {source_type}. Valid types: {[t.value for t in DataSourceType]}"
+            )
         )
     except Exception as e:
         logger.error("pipeline_data_processing_failed", error=str(e))
@@ -744,7 +767,7 @@ async def get_pipeline_statistics(
     try:
         stats = await data_pipeline.get_processing_statistics()
         return {"pipeline_statistics": stats}
-        
+
     except Exception as e:
         logger.error("pipeline_statistics_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -766,7 +789,7 @@ async def get_pipeline_status(
                 "total_tasks": len(data_pipeline.processing_tasks)
             }
         }
-        
+
     except Exception as e:
         logger.error("pipeline_status_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -783,7 +806,7 @@ async def get_processing_metrics(
     """Get data processing metrics."""
     try:
         metrics = await etl_pipeline.get_processing_metrics()
-        
+
         return ProcessingMetrics(
             active_pipelines=metrics["active_pipelines"],
             completed_pipelines=metrics["completed_pipelines"],
@@ -792,7 +815,7 @@ async def get_processing_metrics(
             average_processing_time=metrics["average_processing_time"],
             quality_score_average=metrics["quality_score_average"]
         )
-        
+
     except Exception as e:
         logger.error("processing_metrics_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -810,7 +833,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         error=str(exc),
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
@@ -823,7 +846,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "main:app",
         host=settings.service.service_host,

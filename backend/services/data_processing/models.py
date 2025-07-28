@@ -86,7 +86,10 @@ class DataSourceConfig(BaseModel):
     table: Optional[str] = Field(None, description="Table name")
     query: Optional[str] = Field(None, description="SQL query or filter")
     authentication: Optional[Dict[str, Any]] = Field(None, description="Authentication config")
-    additional_config: Optional[Dict[str, Any]] = Field(None, description="Additional configuration")
+    additional_config: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Additional configuration"
+    )
 
 
 class DataTargetConfig(BaseModel):
@@ -99,7 +102,10 @@ class DataTargetConfig(BaseModel):
     table: Optional[str] = Field(None, description="Table name")
     write_mode: str = Field("append", description="Write mode (append, overwrite, upsert)")
     authentication: Optional[Dict[str, Any]] = Field(None, description="Authentication config")
-    additional_config: Optional[Dict[str, Any]] = Field(None, description="Additional configuration")
+    additional_config: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Additional configuration"
+    )
 
 
 class TransformationRule(BaseModel):
@@ -146,10 +152,19 @@ class ETLPipelineRequest(BaseModel):
     description: Optional[str] = Field(None, description="Pipeline description")
     source_config: DataSourceConfig = Field(..., description="Source configuration")
     target_config: DataTargetConfig = Field(..., description="Target configuration")
-    transformation_rules: List[TransformationRule] = Field(default_factory=list, description="Transformation rules")
-    validation_rules: List[ValidationRule] = Field(default_factory=list, description="Validation rules")
+    transformation_rules: List[TransformationRule] = Field(
+        default_factory=list,
+        description="Transformation rules"
+    )
+    validation_rules: List[ValidationRule] = Field(
+        default_factory=list,
+        description="Validation rules"
+    )
     schedule: Optional[ScheduleConfig] = Field(None, description="Schedule configuration")
-    processing_engine: ProcessingEngineType = Field(ProcessingEngineType.PANDAS, description="Processing engine")
+    processing_engine: ProcessingEngineType = Field(
+        ProcessingEngineType.PANDAS,
+        description="Processing engine"
+    )
     batch_size: int = Field(1000, description="Batch size for processing")
     parallel_processing: bool = Field(False, description="Enable parallel processing")
     execute_immediately: bool = Field(False, description="Execute pipeline immediately")
@@ -197,14 +212,20 @@ class DataTransformationRequest(BaseModel):
     data: Union[Dict[str, Any], List[Dict[str, Any]]] = Field(..., description="Data to transform")
     transformation_rules: List[TransformationRule] = Field(..., description="Transformation rules")
     output_format: DataFormat = Field(DataFormat.JSON, description="Output format")
-    processing_engine: ProcessingEngineType = Field(ProcessingEngineType.PANDAS, description="Processing engine")
+    processing_engine: ProcessingEngineType = Field(
+        ProcessingEngineType.PANDAS,
+        description="Processing engine"
+    )
     validate_output: bool = Field(True, description="Validate output data")
 
 
 class DataTransformationResponse(BaseModel):
     """Data transformation response model."""
     transformation_id: str = Field(..., description="Transformation identifier")
-    transformed_data: Union[Dict[str, Any], List[Dict[str, Any]]] = Field(..., description="Transformed data")
+    transformed_data: Union[Dict[str, Any], List[Dict[str, Any]]] = Field(
+        ...,
+        description="Transformed data"
+    )
     status: str = Field(..., description="Transformation status")
     message: str = Field(..., description="Response message")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Transformation metadata")
@@ -258,7 +279,10 @@ class DataAggregationRequest(BaseModel):
 class DataAggregationResponse(BaseModel):
     """Data aggregation response model."""
     aggregation_id: str = Field(..., description="Aggregation identifier")
-    aggregated_data: Union[Dict[str, Any], List[Dict[str, Any]]] = Field(..., description="Aggregated data")
+    aggregated_data: Union[Dict[str, Any], List[Dict[str, Any]]] = Field(
+        ...,
+        description="Aggregated data"
+    )
     status: str = Field(..., description="Aggregation status")
     message: str = Field(..., description="Response message")
     record_count: int = Field(0, description="Number of aggregated records")
@@ -282,7 +306,10 @@ class LineageEdge(BaseModel):
     source_id: str = Field(..., description="Source entity ID")
     target_id: str = Field(..., description="Target entity ID")
     relationship_type: str = Field(..., description="Relationship type")
-    transformation_info: Optional[Dict[str, Any]] = Field(None, description="Transformation information")
+    transformation_info: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Transformation information"
+    )
     created_at: datetime = Field(..., description="Creation timestamp")
 
 
@@ -379,7 +406,10 @@ class SparkConfig(BaseModel):
     max_result_size: str = Field("1g", description="Max result size")
     sql_adaptive_enabled: bool = Field(True, description="Enable adaptive query execution")
     sql_adaptive_coalesce_partitions: bool = Field(True, description="Enable partition coalescing")
-    additional_config: Optional[Dict[str, Any]] = Field(None, description="Additional Spark configuration")
+    additional_config: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Additional Spark configuration"
+    )
 
 
 class DataConnectorHealth(BaseModel):
@@ -397,7 +427,10 @@ class ServiceHealth(BaseModel):
     service_name: str = Field(..., description="Service name")
     status: str = Field(..., description="Overall health status")
     connectors: List[DataConnectorHealth] = Field(..., description="Connector health status")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Health check timestamp")
+    timestamp: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="Health check timestamp"
+    )
     uptime_seconds: int = Field(0, description="Service uptime in seconds")
     memory_usage_mb: Optional[int] = Field(None, description="Memory usage in MB")
     cpu_usage_percent: Optional[float] = Field(None, description="CPU usage percentage")

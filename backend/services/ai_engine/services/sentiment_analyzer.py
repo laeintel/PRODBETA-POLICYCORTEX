@@ -21,7 +21,7 @@ logger = structlog.get_logger(__name__)
 
 class SentimentAnalyzer:
     """Sentiment analysis service for text processing."""
-    
+
     def __init__(self):
         self.settings = settings
         self.text_analytics_client = None
@@ -29,7 +29,7 @@ class SentimentAnalyzer:
         self.sentiment_lexicon = self._load_sentiment_lexicon()
         self.emotion_patterns = self._load_emotion_patterns()
         self.domain_specific_terms = self._load_domain_terms()
-    
+
     def _load_sentiment_lexicon(self) -> Dict[str, Dict[str, float]]:
         """Load sentiment lexicon with word scores."""
         return {
@@ -63,7 +63,7 @@ class SentimentAnalyzer:
                 "analysis": 0.0, "evaluation": 0.0, "report": 0.0
             }
         }
-    
+
     def _load_emotion_patterns(self) -> Dict[str, List[str]]:
         """Load emotion detection patterns."""
         return {
@@ -92,7 +92,7 @@ class SentimentAnalyzer:
                 r"not sure", r"unsure", r"questionable"
             ]
         }
-    
+
     def _load_domain_terms(self) -> Dict[str, Dict[str, float]]:
         """Load domain-specific terms and their sentiment weights."""
         return {
@@ -123,52 +123,52 @@ class SentimentAnalyzer:
                 "affordable": 0.6, "costly": -0.6
             }
         }
-    
+
     async def initialize(self) -> None:
         """Initialize the sentiment analyzer."""
         try:
             logger.info("Initializing sentiment analyzer")
-            
+
             # Initialize Azure Text Analytics client if available
             if self.settings.azure.client_id and self.settings.is_production():
                 await self._initialize_azure_text_analytics()
-            
+
             logger.info("Sentiment analyzer initialized successfully")
-            
+
         except Exception as e:
             logger.error("Sentiment analyzer initialization failed", error=str(e))
             raise
-    
+
     async def _initialize_azure_text_analytics(self) -> None:
         """Initialize Azure Text Analytics client."""
         try:
             # For production, use Azure Text Analytics
             endpoint = "https://your-text-analytics-resource.cognitiveservices.azure.com/"
-            
+
             if hasattr(self.settings, 'azure_text_analytics_key'):
                 credential = AzureKeyCredential(self.settings.azure_text_analytics_key)
             else:
                 self.azure_credential = DefaultAzureCredential()
                 credential = self.azure_credential
-            
+
             self.text_analytics_client = TextAnalyticsClient(
                 endpoint=endpoint,
                 credential=credential
             )
-            
+
             logger.info("Azure Text Analytics client initialized")
-            
+
         except Exception as e:
             logger.warning("Failed to initialize Azure Text Analytics", error=str(e))
-    
+
     async def analyze_sentiment(self, text: str, analysis_type: Optional[str] = None,
                               options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analyze sentiment of text."""
         try:
-            logger.info("Starting sentiment analysis", 
+            logger.info("Starting sentiment analysis",
                        text_length=len(text),
                        analysis_type=analysis_type)
-            
+
             # Initialize results
             results = {
                 "text_length": len(text),
@@ -181,7 +181,7 @@ class SentimentAnalyzer:
                 "sentiment_scores": {},
                 "domain_analysis": {}
             }
-            
+
             # Use Azure Text Analytics if available
             if self.text_analytics_client:
                 azure_results = await self._analyze_with_azure(text)
@@ -190,38 +190,38 @@ class SentimentAnalyzer:
                 # Use local sentiment analysis
                 local_results = await self._analyze_with_local_methods(text)
                 results.update(local_results)
-            
+
             # Perform emotion analysis
             emotions = await self._analyze_emotions(text)
             results["emotions"] = emotions
-            
+
             # Extract key phrases
             key_phrases = await self._extract_key_phrases(text)
             results["key_phrases"] = key_phrases
-            
+
             # Domain-specific analysis
             domain_analysis = await self._analyze_domain_sentiment(text, analysis_type)
             results["domain_analysis"] = domain_analysis
-            
+
             # Adjust sentiment based on domain analysis
             results = await self._adjust_sentiment_for_domain(results, domain_analysis)
-            
+
             logger.info("Sentiment analysis completed",
                        sentiment=results["sentiment"],
                        confidence=results["confidence"])
-            
+
             return results
-            
+
         except Exception as e:
             logger.error("Sentiment analysis failed", error=str(e))
             raise
-    
+
     async def _analyze_with_azure(self, text: str) -> Dict[str, Any]:
         """Analyze sentiment using Azure Text Analytics."""
         try:
             # Split text into chunks if too long
             chunks = self._split_text_into_chunks(text, 5000)
-            
+
             all_results = []
             for chunk in chunks:
                 response = await self.text_analytics_client.analyze_sentiment(
@@ -229,28 +229,28 @@ class SentimentAnalyzer:
                     show_opinion_mining=True
                 )
                 all_results.extend(response)
-            
+
             # Aggregate results
             if all_results:
                 # Get overall sentiment
                 sentiments = [doc.sentiment for doc in all_results]
                 confidence_scores = [doc.confidence_scores for doc in all_results]
-                
+
                 # Determine overall sentiment
                 sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
                 total_confidence = {"positive": 0, "negative": 0, "neutral": 0}
-                
+
                 for i, sentiment in enumerate(sentiments):
                     sentiment_counts[sentiment] += 1
                     scores = confidence_scores[i]
                     total_confidence["positive"] += scores.positive
                     total_confidence["negative"] += scores.negative
                     total_confidence["neutral"] += scores.neutral
-                
+
                 # Determine overall sentiment
                 overall_sentiment = max(sentiment_counts, key=sentiment_counts.get)
                 avg_confidence = total_confidence[overall_sentiment] / len(all_results)
-                
+
                 return {
                     "sentiment": overall_sentiment,
                     "confidence": avg_confidence,
@@ -260,49 +260,49 @@ class SentimentAnalyzer:
                         "neutral": total_confidence["neutral"] / len(all_results)
                     }
                 }
-            
+
             return {"sentiment": "neutral", "confidence": 0.0}
-            
+
         except Exception as e:
             logger.error("Azure sentiment analysis failed", error=str(e))
             return {"sentiment": "neutral", "confidence": 0.0}
-    
+
     async def _analyze_with_local_methods(self, text: str) -> Dict[str, Any]:
         """Analyze sentiment using local methods."""
         try:
             # Tokenize and clean text
             words = self._tokenize_text(text)
-            
+
             # Calculate sentiment scores
             positive_score = 0.0
             negative_score = 0.0
             neutral_score = 0.0
             total_words = 0
-            
+
             for word in words:
                 word_lower = word.lower()
-                
+
                 # Check positive words
                 if word_lower in self.sentiment_lexicon["positive"]:
                     positive_score += self.sentiment_lexicon["positive"][word_lower]
                     total_words += 1
-                
+
                 # Check negative words
                 elif word_lower in self.sentiment_lexicon["negative"]:
                     negative_score += abs(self.sentiment_lexicon["negative"][word_lower])
                     total_words += 1
-                
+
                 # Check neutral words
                 elif word_lower in self.sentiment_lexicon["neutral"]:
                     neutral_score += 1
                     total_words += 1
-            
+
             # Normalize scores
             if total_words > 0:
                 positive_score /= total_words
                 negative_score /= total_words
                 neutral_score /= total_words
-            
+
             # Determine overall sentiment
             if positive_score > negative_score and positive_score > neutral_score:
                 sentiment = SentimentType.POSITIVE
@@ -313,7 +313,7 @@ class SentimentAnalyzer:
             else:
                 sentiment = SentimentType.NEUTRAL
                 confidence = neutral_score
-            
+
             return {
                 "sentiment": sentiment,
                 "confidence": min(confidence, 1.0),
@@ -323,11 +323,11 @@ class SentimentAnalyzer:
                     "neutral": neutral_score
                 }
             }
-            
+
         except Exception as e:
             logger.error("Local sentiment analysis failed", error=str(e))
             return {"sentiment": SentimentType.NEUTRAL, "confidence": 0.0}
-    
+
     async def _analyze_emotions(self, text: str) -> Dict[str, float]:
         """Analyze emotions in text."""
         try:
@@ -339,41 +339,41 @@ class SentimentAnalyzer:
                 "urgency": 0.0,
                 "uncertainty": 0.0
             }
-            
+
             text_lower = text.lower()
-            
+
             for emotion, patterns in self.emotion_patterns.items():
                 emotion_score = 0.0
                 for pattern in patterns:
                     matches = len(re.findall(pattern, text_lower))
                     emotion_score += matches
-                
+
                 # Normalize by text length
                 emotions[emotion] = min(emotion_score / (len(text.split()) / 100), 1.0)
-            
+
             return emotions
-            
+
         except Exception as e:
             logger.error("Emotion analysis failed", error=str(e))
             return {}
-    
+
     async def _extract_key_phrases(self, text: str) -> List[str]:
         """Extract key phrases from text."""
         try:
             key_phrases = []
-            
+
             # Simple key phrase extraction
             # Look for noun phrases and important terms
             words = self._tokenize_text(text)
-            
+
             # Extract important words (simplified)
             important_words = []
             for word in words:
                 word_lower = word.lower()
-                if (len(word) > 3 and 
+                if (len(word) > 3 and
                     word_lower not in ["the", "and", "or", "but", "with", "for", "from", "that", "this"]):
                     important_words.append(word)
-            
+
             # Create phrases from consecutive important words
             current_phrase = []
             for word in important_words:
@@ -385,104 +385,104 @@ class SentimentAnalyzer:
                     if current_phrase:
                         key_phrases.append(" ".join(current_phrase))
                     current_phrase = [word]
-            
+
             if current_phrase:
                 key_phrases.append(" ".join(current_phrase))
-            
+
             # Return top phrases
             return key_phrases[:10]
-            
+
         except Exception as e:
             logger.error("Key phrase extraction failed", error=str(e))
             return []
-    
-    async def _analyze_domain_sentiment(self, text: str, 
+
+    async def _analyze_domain_sentiment(self, text: str,
                                       analysis_type: Optional[str]) -> Dict[str, Any]:
         """Analyze sentiment for specific domains."""
         try:
             domain_analysis = {}
-            
+
             # Check each domain
             for domain, terms in self.domain_specific_terms.items():
                 domain_score = 0.0
                 domain_mentions = 0
-                
+
                 text_lower = text.lower()
-                
+
                 for term, weight in terms.items():
                     term_clean = term.replace("_", " ")
                     if term_clean in text_lower:
                         domain_score += weight
                         domain_mentions += 1
-                
+
                 if domain_mentions > 0:
                     domain_analysis[domain] = {
                         "score": domain_score / domain_mentions,
                         "mentions": domain_mentions,
                         "sentiment": "positive" if domain_score > 0 else "negative" if domain_score < 0 else "neutral"
                     }
-            
+
             return domain_analysis
-            
+
         except Exception as e:
             logger.error("Domain sentiment analysis failed", error=str(e))
             return {}
-    
-    async def _adjust_sentiment_for_domain(self, results: Dict[str, Any], 
+
+    async def _adjust_sentiment_for_domain(self, results: Dict[str, Any],
                                          domain_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Adjust sentiment based on domain-specific analysis."""
         try:
             if not domain_analysis:
                 return results
-            
+
             # Calculate domain-weighted sentiment
             domain_weights = {"compliance": 0.3, "security": 0.25, "performance": 0.2, "cost": 0.15}
-            
+
             weighted_sentiment = 0.0
             total_weight = 0.0
-            
+
             for domain, analysis in domain_analysis.items():
                 weight = domain_weights.get(domain, 0.1)
                 domain_score = analysis.get("score", 0.0)
-                
+
                 weighted_sentiment += domain_score * weight
                 total_weight += weight
-            
+
             if total_weight > 0:
                 weighted_sentiment /= total_weight
-                
+
                 # Adjust confidence based on domain analysis
                 domain_confidence = min(abs(weighted_sentiment), 1.0)
-                
+
                 # Combine with original sentiment
                 original_confidence = results.get("confidence", 0.0)
                 combined_confidence = (original_confidence + domain_confidence) / 2
-                
+
                 # Adjust sentiment if domain analysis is strong
                 if abs(weighted_sentiment) > 0.3:
                     if weighted_sentiment > 0:
                         results["sentiment"] = SentimentType.POSITIVE
                     else:
                         results["sentiment"] = SentimentType.NEGATIVE
-                    
+
                     results["confidence"] = combined_confidence
-            
+
             return results
-            
+
         except Exception as e:
             logger.error("Sentiment adjustment failed", error=str(e))
             return results
-    
+
     def _split_text_into_chunks(self, text: str, max_chars: int) -> List[str]:
         """Split text into chunks for processing."""
         if len(text) <= max_chars:
             return [text]
-        
+
         chunks = []
         current_chunk = ""
-        
+
         sentences = re.split(r'[.!?]+', text)
-        
+
         for sentence in sentences:
             if len(current_chunk) + len(sentence) <= max_chars:
                 current_chunk += sentence + ". "
@@ -490,30 +490,30 @@ class SentimentAnalyzer:
                 if current_chunk:
                     chunks.append(current_chunk.strip())
                 current_chunk = sentence + ". "
-        
+
         if current_chunk:
             chunks.append(current_chunk.strip())
-        
+
         return chunks
-    
+
     def _tokenize_text(self, text: str) -> List[str]:
         """Tokenize text into words."""
         # Simple tokenization
         text = re.sub(r'[^\w\s]', ' ', text)
         words = text.split()
         return [word for word in words if len(word) > 1]
-    
+
     def is_ready(self) -> bool:
         """Check if sentiment analyzer is ready."""
         return len(self.sentiment_lexicon) > 0
-    
+
     async def cleanup(self) -> None:
         """Cleanup resources on shutdown."""
         try:
             if self.text_analytics_client:
                 await self.text_analytics_client.close()
-            
+
             logger.info("Sentiment analyzer cleanup completed")
-            
+
         except Exception as e:
             logger.error("Sentiment analyzer cleanup failed", error=str(e))

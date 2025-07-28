@@ -99,7 +99,10 @@ class ModelInfo(BaseModel):
     accuracy: Optional[float] = Field(None, description="Model accuracy")
     metrics: Optional[Dict[str, float]] = Field(None, description="Model performance metrics")
     parameters: Optional[Dict[str, Any]] = Field(None, description="Model parameters")
-    training_data_info: Optional[Dict[str, Any]] = Field(None, description="Training data information")
+    training_data_info: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Training data information"
+    )
 
 
 class ModelTrainingRequest(BaseModel):
@@ -164,7 +167,10 @@ class AnomalyDetectionRequest(BaseModel):
     detection_type: DetectionType = Field(..., description="Type of anomaly detection")
     threshold: float = Field(0.95, description="Anomaly detection threshold")
     time_window: Optional[str] = Field(None, description="Time window for analysis")
-    baseline_data: Optional[Dict[str, Any]] = Field(None, description="Baseline data for comparison")
+    baseline_data: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Baseline data for comparison"
+    )
 
 
 class AnomalyDetectionResponse(BaseModel):
@@ -174,7 +180,10 @@ class AnomalyDetectionResponse(BaseModel):
     analysis_summary: Dict[str, Any] = Field(..., description="Analysis summary")
     confidence_score: float = Field(..., description="Overall confidence score")
     severity_levels: Optional[Dict[str, int]] = Field(None, description="Anomaly severity counts")
-    recommendations: Optional[List[Dict[str, Any]]] = Field(None, description="Remediation recommendations")
+    recommendations: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Remediation recommendations"
+    )
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 
 
@@ -191,7 +200,10 @@ class CostOptimizationRequest(BaseModel):
 class CostOptimizationResponse(BaseModel):
     """Cost optimization response model."""
     request_id: str = Field(..., description="Request identifier")
-    recommendations: List[Dict[str, Any]] = Field(..., description="Cost optimization recommendations")
+    recommendations: List[Dict[str, Any]] = Field(
+        ...,
+        description="Cost optimization recommendations"
+    )
     projected_savings: Dict[str, float] = Field(..., description="Projected cost savings")
     implementation_plan: Dict[str, Any] = Field(..., description="Implementation plan")
     risk_assessment: Optional[Dict[str, Any]] = Field(None, description="Risk assessment")
@@ -206,7 +218,10 @@ class PredictiveAnalyticsRequest(BaseModel):
     prediction_horizon: str = Field(..., description="Prediction time horizon")
     metrics: List[str] = Field(..., description="Metrics to predict")
     seasonality: Optional[bool] = Field(None, description="Consider seasonality patterns")
-    external_factors: Optional[Dict[str, Any]] = Field(None, description="External factors to consider")
+    external_factors: Optional[Dict[str, Any]] = Field(
+        None,
+        description="External factors to consider"
+    )
 
 
 class PredictiveAnalyticsResponse(BaseModel):
@@ -215,7 +230,10 @@ class PredictiveAnalyticsResponse(BaseModel):
     predictions: List[Dict[str, Any]] = Field(..., description="Prediction results")
     trends: Dict[str, Any] = Field(..., description="Trend analysis")
     forecast_accuracy: Dict[str, float] = Field(..., description="Forecast accuracy metrics")
-    confidence_intervals: Dict[str, Dict[str, float]] = Field(..., description="Confidence intervals")
+    confidence_intervals: Dict[str, Dict[str, float]] = Field(
+        ...,
+        description="Confidence intervals"
+    )
     risk_factors: Optional[List[Dict[str, Any]]] = Field(None, description="Risk factors")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 
@@ -236,7 +254,10 @@ class SentimentAnalysisResponse(BaseModel):
     confidence_score: float = Field(..., description="Confidence score")
     emotions: Dict[str, float] = Field(..., description="Emotion scores")
     key_phrases: List[str] = Field(..., description="Key phrases")
-    sentiment_scores: Optional[Dict[str, float]] = Field(None, description="Detailed sentiment scores")
+    sentiment_scores: Optional[Dict[str, float]] = Field(
+        None,
+        description="Detailed sentiment scores"
+    )
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 
 
@@ -246,14 +267,20 @@ class FeatureEngineeringRequest(BaseModel):
     raw_data: Dict[str, Any] = Field(..., description="Raw data for feature engineering")
     feature_types: List[str] = Field(..., description="Types of features to generate")
     preprocessing_steps: Optional[List[str]] = Field(None, description="Preprocessing steps")
-    target_variable: Optional[str] = Field(None, description="Target variable for supervised learning")
+    target_variable: Optional[str] = Field(
+        None,
+        description="Target variable for supervised learning"
+    )
 
 
 class FeatureEngineeringResponse(BaseModel):
     """Feature engineering response model."""
     request_id: str = Field(..., description="Request identifier")
     engineered_features: Dict[str, Any] = Field(..., description="Engineered features")
-    feature_importance: Optional[Dict[str, float]] = Field(None, description="Feature importance scores")
+    feature_importance: Optional[Dict[str, float]] = Field(
+        None,
+        description="Feature importance scores"
+    )
     preprocessing_summary: Dict[str, Any] = Field(..., description="Preprocessing summary")
     feature_statistics: Dict[str, Any] = Field(..., description="Feature statistics")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")

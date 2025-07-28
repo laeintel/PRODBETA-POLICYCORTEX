@@ -193,7 +193,8 @@
       "Bash(--value \"1ecc95d1-e5bb-43e2-9324-30a17cb6b01c\" )",
       "Bash(--id 1ecc95d1-e5bb-43e2-9324-30a17cb6b01c )",
       "Bash(--api 00000003-0000-0000-c000-000000000000 )",
-      "Bash(--api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope )"
+      "Bash(--api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope )",
+      "Bash(del fix_whitespace.py comprehensive_lint_fix.py fix_syntax_errors.py)"
     ],
     "deny": []
   }

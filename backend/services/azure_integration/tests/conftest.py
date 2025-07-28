@@ -22,7 +22,7 @@ def mock_azure_auth():
     with patch("backend.services.azure_integration.services.AzureAuthService") as mock_auth:
         mock_instance = MagicMock()
         mock_auth.return_value = mock_instance
-        
+
         # Mock authentication methods
         mock_instance.authenticate = AsyncMock(return_value={
             "access_token": "test-access-token",
@@ -34,7 +34,7 @@ def mock_azure_auth():
             "access_token": "new-access-token",
             "expires_in": 3600
         })
-        
+
         yield mock_instance
 
 
@@ -44,7 +44,7 @@ def mock_policy_service():
     with patch("backend.services.azure_integration.services.PolicyManagementService") as mock_service:
         mock_instance = MagicMock()
         mock_service.return_value = mock_instance
-        
+
         # Mock policy operations
         mock_instance.list_policies = AsyncMock(return_value=[
             {
@@ -75,7 +75,7 @@ def mock_policy_service():
             "compliant": True,
             "violations": []
         })
-        
+
         yield mock_instance
 
 
@@ -85,7 +85,7 @@ def mock_rbac_service():
     with patch("backend.services.azure_integration.services.RBACManagementService") as mock_service:
         mock_instance = MagicMock()
         mock_service.return_value = mock_instance
-        
+
         # Mock RBAC operations
         mock_instance.list_roles = AsyncMock(return_value=[
             {
@@ -107,7 +107,7 @@ def mock_rbac_service():
             "status": "created"
         })
         mock_instance.delete_role_assignment = AsyncMock(return_value=True)
-        
+
         yield mock_instance
 
 
@@ -117,7 +117,7 @@ def mock_cost_service():
     with patch("backend.services.azure_integration.services.CostManagementService") as mock_service:
         mock_instance = MagicMock()
         mock_service.return_value = mock_instance
-        
+
         # Mock cost operations
         mock_instance.get_usage_details = AsyncMock(return_value={
             "costs": [
@@ -147,7 +147,7 @@ def mock_cost_service():
                 "potential_savings": 200.00
             }
         ])
-        
+
         yield mock_instance
 
 
@@ -157,7 +157,7 @@ def mock_network_service():
     with patch("backend.services.azure_integration.services.NetworkManagementService") as mock_service:
         mock_instance = MagicMock()
         mock_service.return_value = mock_instance
-        
+
         # Mock network operations
         mock_instance.list_virtual_networks = AsyncMock(return_value=[
             {
@@ -180,7 +180,7 @@ def mock_network_service():
             "recommendations": [],
             "score": 85
         })
-        
+
         yield mock_instance
 
 
@@ -190,7 +190,7 @@ def mock_resource_service():
     with patch("backend.services.azure_integration.services.ResourceManagementService") as mock_service:
         mock_instance = MagicMock()
         mock_service.return_value = mock_instance
-        
+
         # Mock resource operations
         mock_instance.list_resources = AsyncMock(return_value=[
             {
@@ -216,7 +216,7 @@ def mock_resource_service():
             }
         ])
         mock_instance.update_resource_tags = AsyncMock(return_value=True)
-        
+
         yield mock_instance
 
 
@@ -271,13 +271,13 @@ def mock_prometheus_metrics():
          patch("backend.services.azure_integration.main.REQUEST_DURATION") as mock_histogram, \
          patch("backend.services.azure_integration.main.AZURE_API_CALLS") as mock_api_counter, \
          patch("backend.services.azure_integration.main.AZURE_API_DURATION") as mock_api_histogram:
-        
+
         # Mock counter methods
         mock_counter.labels.return_value.inc = MagicMock()
         mock_histogram.observe = MagicMock()
         mock_api_counter.labels.return_value.inc = MagicMock()
         mock_api_histogram.labels.return_value.observe = MagicMock()
-        
+
         yield {
             "request_count": mock_counter,
             "request_duration": mock_histogram,
@@ -306,26 +306,26 @@ def mock_azure_sdk_clients():
          patch("azure.mgmt.consumption.ConsumptionManagementClient") as mock_consumption_client, \
          patch("azure.mgmt.network.NetworkManagementClient") as mock_network_client, \
          patch("azure.mgmt.monitor.MonitorManagementClient") as mock_monitor_client:
-        
+
         # Mock credential
         mock_credential.return_value = MagicMock()
-        
+
         # Mock clients
         mock_resource_instance = MagicMock()
         mock_resource_client.return_value = mock_resource_instance
-        
+
         mock_auth_instance = MagicMock()
         mock_auth_client.return_value = mock_auth_instance
-        
+
         mock_consumption_instance = MagicMock()
         mock_consumption_client.return_value = mock_consumption_instance
-        
+
         mock_network_instance = MagicMock()
         mock_network_client.return_value = mock_network_instance
-        
+
         mock_monitor_instance = MagicMock()
         mock_monitor_client.return_value = mock_monitor_instance
-        
+
         yield {
             "credential": mock_credential,
             "resource_client": mock_resource_instance,

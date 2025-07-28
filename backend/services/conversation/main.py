@@ -24,7 +24,6 @@ import asyncio
 from backend.shared.config import get_settings
 from backend.shared.database import get_async_db, DatabaseUtils
 from backend.services.conversation.auth import AuthManager
-from backend.services.conversation.models import (
     HealthResponse,
     ConversationRequest,
     ConversationResponse,
@@ -40,7 +39,7 @@ from backend.services.conversation.services.conversation_manager import Conversa
 from backend.services.conversation.services.intent_classifier import IntentClassifier
 from backend.services.conversation.services.context_manager import ContextManager
 from backend.services.conversation.services.response_generator import ResponseGenerator
-from backend.services.conversation.services.query_router import QueryRouter
+    from backend.services.conversation.services.query_router import QueryRouter
 from backend.services.conversation.services.analytics_service import AnalyticsService
 from backend.services.conversation.services.governance_chat import GovernanceChatService
 
@@ -49,7 +48,13 @@ settings = get_settings()
 logger = structlog.get_logger(__name__)
 
 # Metrics
-REQUEST_COUNT = Counter('conversation_requests_total', 'Total conversation requests', ['method', 'endpoint', 'status'])
+REQUEST_COUNT = Counter(
+    'conversation_requests_total',
+    'Total conversation requests',
+    ['method',
+    'endpoint',
+    'status']
+)
 REQUEST_DURATION = Histogram('conversation_request_duration_seconds', 'Request duration')
 CONVERSATION_COUNT = Counter('conversations_total', 'Total conversations', ['intent', 'status'])
 WEBSOCKET_CONNECTIONS = Counter('websocket_connections_total', 'Total WebSocket connections')
@@ -58,11 +63,13 @@ WEBSOCKET_MESSAGES = Counter('websocket_messages_total', 'Total WebSocket messag
 # FastAPI app
 app = FastAPI(
     title="PolicyCortex Conversation Service",
-    description="Natural language interface for Azure governance with AI-powered conversation management",
+    description = (
+        "Natural language interface for Azure governance with AI-powered conversation management",
+    )
     version=settings.service.service_version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
-)
+        )
 
 # Security
 security = HTTPBearer(auto_error=False)
@@ -74,7 +81,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=settings.security.cors_methods,
     allow_headers=settings.security.cors_headers,
-)
+        )
 
 app.add_middleware(
     TrustedHostMiddleware,
@@ -94,11 +101,11 @@ governance_chat_service = GovernanceChatService()
 # WebSocket connection manager
 class ConnectionManager:
     """Manages WebSocket connections for real-time conversations."""
-    
+
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
         self.user_sessions: Dict[str, str] = {}  # user_id -> session_id
-    
+
     async def connect(self, websocket: WebSocket, session_id: str, user_id: str):
         """Connect a new WebSocket."""
         await websocket.accept()
@@ -110,7 +117,7 @@ class ConnectionManager:
             session_id=session_id,
             user_id=user_id
         )
-    
+
     def disconnect(self, session_id: str, user_id: str):
         """Disconnect a WebSocket."""
         if session_id in self.active_connections:
@@ -122,7 +129,7 @@ class ConnectionManager:
             session_id=session_id,
             user_id=user_id
         )
-    
+
     async def send_personal_message(self, message: dict, session_id: str):
         """Send message to specific session."""
         if session_id in self.active_connections:
@@ -136,7 +143,7 @@ class ConnectionManager:
                     session_id=session_id,
                     error=str(e)
                 )
-    
+
     async def broadcast_to_user(self, message: dict, user_id: str):
         """Broadcast message to all user sessions."""
         session_id = self.user_sessions.get(user_id)
@@ -157,7 +164,7 @@ async def startup_event():
         raise
 
 
-@app.on_event("shutdown") 
+@app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup services on shutdown."""
     try:
@@ -169,14 +176,14 @@ async def shutdown_event():
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for request/response logging and metrics."""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         request_id = str(uuid.uuid4())
-        
+
         # Add request ID to headers
         request.state.request_id = request_id
-        
+
         # Log request
         logger.info(
             "request_started",
@@ -186,13 +193,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             user_agent=request.headers.get("user-agent"),
             client_ip=request.client.host if request.client else None
         )
-        
+
         try:
             response = await call_next(request)
-            
+
             # Calculate duration
             duration = time.time() - start_time
-            
+
             # Update metrics
             REQUEST_COUNT.labels(
                 method=request.method,
@@ -200,7 +207,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status=response.status_code
             ).inc()
             REQUEST_DURATION.observe(duration)
-            
+
             # Log response
             logger.info(
                 "request_completed",
@@ -208,15 +215,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status_code=response.status_code,
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Add request ID to response headers
             response.headers["X-Request-ID"] = request_id
-            
+
             return response
-            
+
         except Exception as e:
             duration = time.time() - start_time
-            
+
             # Log error
             logger.error(
                 "request_failed",
@@ -224,14 +231,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 error=str(e),
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Update error metrics
             REQUEST_COUNT.labels(
                 method=request.method,
                 endpoint=request.url.path,
                 status=500
             ).inc()
-            
+
             raise
 
 
@@ -244,17 +251,17 @@ async def verify_authentication(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Optional[Dict[str, Any]]:
     """Verify authentication for protected endpoints."""
-    
+
     # Skip authentication for health checks and public endpoints
     if request.url.path in ["/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"]:
         return None
-    
+
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required"
         )
-    
+
     try:
         user_info = await auth_manager.verify_token(credentials.credentials)
         request.state.user = user_info
@@ -319,19 +326,19 @@ async def start_conversation(
             user_id=user["id"],
             session_id=request.session_id
         )
-        
+
         # Classify intent
         intent_result = await intent_classifier.classify_intent(
             text=request.message,
             context=session.context
         )
-        
+
         # Extract entities
         entities = await intent_classifier.extract_entities(
             text=request.message,
             intent=intent_result.intent
         )
-        
+
         # Update conversation context
         await context_manager.update_context(
             session_id=session.session_id,
@@ -339,7 +346,7 @@ async def start_conversation(
             intent=intent_result.intent,
             entities=entities
         )
-        
+
         # Route query to appropriate service
         service_response = await query_router.route_query(
             intent=intent_result.intent,
@@ -347,7 +354,7 @@ async def start_conversation(
             message=request.message,
             user_info=user
         )
-        
+
         # Generate response
         response = await response_generator.generate_response(
             message=request.message,
@@ -356,7 +363,7 @@ async def start_conversation(
             context=session.context,
             service_data=service_response
         )
-        
+
         # Save conversation turn
         await conversation_manager.add_message(
             session_id=session.session_id,
@@ -365,13 +372,13 @@ async def start_conversation(
             intent=intent_result.intent,
             entities=entities
         )
-        
+
         # Update metrics
         CONVERSATION_COUNT.labels(
             intent=intent_result.intent,
             status="success"
         ).inc()
-        
+
         # Send WebSocket update if connected
         if session.session_id in connection_manager.active_connections:
             await connection_manager.send_personal_message(
@@ -384,7 +391,7 @@ async def start_conversation(
                 },
                 session.session_id
             )
-        
+
         return ConversationResponse(
             session_id=session.session_id,
             message=response.message,
@@ -395,7 +402,7 @@ async def start_conversation(
             follow_up_questions=response.follow_up_questions,
             timestamp=datetime.utcnow()
         )
-        
+
     except Exception as e:
         logger.error(
             "conversation_failed",
@@ -403,12 +410,12 @@ async def start_conversation(
             user_id=user["id"],
             message=request.message
         )
-        
+
         CONVERSATION_COUNT.labels(
             intent="unknown",
             status="error"
         ).inc()
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Conversation processing failed: {str(e)}"
@@ -430,14 +437,14 @@ async def get_conversation_history(
             limit=limit,
             offset=offset
         )
-        
+
         return ConversationHistoryResponse(
             session_id=session_id,
             messages=history.messages,
             total_count=history.total_count,
             has_more=history.has_more
         )
-        
+
     except Exception as e:
         logger.error(
             "get_conversation_history_failed",
@@ -445,7 +452,7 @@ async def get_conversation_history(
             session_id=session_id,
             user_id=user["id"]
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve conversation history: {str(e)}"
@@ -465,7 +472,7 @@ async def get_user_conversations(
             limit=limit,
             offset=offset
         )
-        
+
         return [
             ConversationSessionResponse(
                 session_id=session.session_id,
@@ -477,14 +484,14 @@ async def get_user_conversations(
             )
             for session in sessions
         ]
-        
+
     except Exception as e:
         logger.error(
             "get_user_conversations_failed",
             error=str(e),
             user_id=user["id"]
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve user conversations: {str(e)}"
@@ -502,9 +509,9 @@ async def delete_conversation(
             session_id=session_id,
             user_id=user["id"]
         )
-        
+
         return {"message": "Conversation deleted successfully"}
-        
+
     except Exception as e:
         logger.error(
             "delete_conversation_failed",
@@ -512,7 +519,7 @@ async def delete_conversation(
             session_id=session_id,
             user_id=user["id"]
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete conversation: {str(e)}"
@@ -531,21 +538,21 @@ async def classify_intent(
             text=request.message,
             context={}
         )
-        
+
         return IntentClassificationResponse(
             intent=result.intent,
             confidence=result.confidence,
             entities=result.entities,
             sub_intents=result.sub_intents
         )
-        
+
     except Exception as e:
         logger.error(
             "intent_classification_failed",
             error=str(e),
             message=request.message
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Intent classification failed: {str(e)}"
@@ -563,19 +570,19 @@ async def extract_entities(
             text=request.message,
             intent=request.intent
         )
-        
+
         return EntityExtractionResponse(
             entities=entities,
             message=request.message
         )
-        
+
     except Exception as e:
         logger.error(
             "entity_extraction_failed",
             error=str(e),
             message=request.message
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Entity extraction failed: {str(e)}"
@@ -596,16 +603,16 @@ async def get_conversation_analytics(
             start_date=start_date,
             end_date=end_date
         )
-        
+
         return analytics
-        
+
     except Exception as e:
         logger.error(
             "get_analytics_failed",
             error=str(e),
             user_id=user["id"]
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve analytics: {str(e)}"
@@ -632,7 +639,7 @@ async def governance_chat(
                 "permissions": user.get("permissions", [])
             }
         )
-        
+
         # Convert governance response to conversation response format
         conversation_response = ConversationResponse(
             session_id=request.session_id or str(uuid.uuid4()),
@@ -644,9 +651,9 @@ async def governance_chat(
             follow_up_questions=[],
             timestamp=datetime.utcnow()
         )
-        
+
         return conversation_response
-        
+
     except Exception as e:
         logger.error(
             "governance_chat_failed",
@@ -654,7 +661,7 @@ async def governance_chat(
             user_id=user["id"],
             message=request.message
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Governance chat processing failed: {str(e)}"
@@ -672,13 +679,13 @@ async def get_governance_chat_history(
             user_id=user["id"],
             session_id=session_id
         )
-        
+
         return {
             "session_id": session_id,
             "history": history,
             "total_count": len(history)
         }
-        
+
     except Exception as e:
         logger.error(
             "get_governance_chat_history_failed",
@@ -686,7 +693,7 @@ async def get_governance_chat_history(
             session_id=session_id,
             user_id=user["id"]
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve governance chat history: {str(e)}"
@@ -704,9 +711,9 @@ async def clear_governance_conversation(
             user_id=user["id"],
             session_id=session_id
         )
-        
+
         return {"message": "Governance conversation cleared successfully"}
-        
+
     except Exception as e:
         logger.error(
             "clear_governance_conversation_failed",
@@ -714,7 +721,7 @@ async def clear_governance_conversation(
             session_id=session_id,
             user_id=user["id"]
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to clear governance conversation: {str(e)}"
@@ -728,20 +735,20 @@ async def get_governance_service_status(
     """Get governance service status."""
     try:
         is_ready = governance_chat_service.is_ready()
-        
+
         return {
             "status": "ready" if is_ready else "not_ready",
             "service": "governance_chat",
             "timestamp": datetime.utcnow()
         }
-        
+
     except Exception as e:
         logger.error(
             "get_governance_status_failed",
             error=str(e),
             user_id=user["id"]
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get governance service status: {str(e)}"
@@ -759,31 +766,31 @@ async def websocket_endpoint(
     try:
         # Verify authentication
         user_info = await auth_manager.verify_token(token)
-        
+
         # Connect WebSocket
         await connection_manager.connect(websocket, session_id, user_info["id"])
-        
+
         try:
             while True:
                 # Receive message
                 data = await websocket.receive_json()
                 WEBSOCKET_MESSAGES.labels(type="inbound").inc()
-                
+
                 message = WebSocketMessage(**data)
-                
+
                 if message.type == "conversation":
                     # Process conversation message
                     conversation_request = ConversationRequest(
                         message=message.content,
                         session_id=session_id
                     )
-                    
+
                     # Process through conversation pipeline
                     response = await start_conversation(
                         conversation_request,
                         user_info
                     )
-                    
+
                     # Send response back
                     await connection_manager.send_personal_message(
                         {
@@ -799,7 +806,7 @@ async def websocket_endpoint(
                         },
                         session_id
                     )
-                
+
                 elif message.type == "typing":
                     # Handle typing indicator
                     await connection_manager.send_personal_message(
@@ -810,7 +817,7 @@ async def websocket_endpoint(
                         },
                         session_id
                     )
-                
+
         except WebSocketDisconnect:
             connection_manager.disconnect(session_id, user_info["id"])
         except Exception as e:
@@ -821,7 +828,7 @@ async def websocket_endpoint(
                 user_id=user_info["id"]
             )
             connection_manager.disconnect(session_id, user_info["id"])
-            
+
     except Exception as e:
         logger.error(
             "websocket_connection_failed",
@@ -841,7 +848,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         error=str(exc),
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
@@ -854,7 +861,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "main:app",
         host=settings.service.service_host,

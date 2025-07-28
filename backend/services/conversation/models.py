@@ -201,7 +201,10 @@ class ConversationAnalytics(BaseModel):
     total_conversations: int = Field(..., description="Total number of conversations")
     total_messages: int = Field(..., description="Total number of messages")
     average_conversation_length: float = Field(..., description="Average conversation length")
-    intent_distribution: Dict[ConversationIntent, int] = Field(..., description="Intent distribution")
+    intent_distribution: Dict[ConversationIntent, int] = Field(
+        ...,
+        description="Intent distribution"
+    )
     common_entities: List[Dict[str, Any]] = Field(..., description="Common entities")
     user_satisfaction: Optional[float] = Field(None, description="User satisfaction score")
     response_times: Dict[str, float] = Field(..., description="Response time statistics")

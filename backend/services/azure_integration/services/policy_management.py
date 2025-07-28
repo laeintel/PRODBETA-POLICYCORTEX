@@ -19,27 +19,30 @@ logger = structlog.get_logger(__name__)
 
 class PolicyManagementService:
     """Service for managing Azure policies."""
-    
+
     def __init__(self):
         self.settings = settings
         self.auth_service = AzureAuthService()
         self.policy_clients = {}
         self.insights_clients = {}
-    
+
     async def _get_policy_client(self, subscription_id: str) -> PolicyClient:
         """Get or create Policy client for subscription."""
         if subscription_id not in self.policy_clients:
             credential = await self.auth_service.get_credential(settings.azure.tenant_id)
             self.policy_clients[subscription_id] = PolicyClient(credential, subscription_id)
         return self.policy_clients[subscription_id]
-    
+
     async def _get_insights_client(self, subscription_id: str) -> PolicyInsightsClient:
         """Get or create Policy Insights client for subscription."""
         if subscription_id not in self.insights_clients:
             credential = await self.auth_service.get_credential(settings.azure.tenant_id)
-            self.insights_clients[subscription_id] = PolicyInsightsClient(credential, subscription_id)
+            self.insights_clients[subscription_id] = PolicyInsightsClient(
+                credential,
+                subscription_id
+            )
         return self.insights_clients[subscription_id]
-    
+
     async def list_policies(
         self,
         subscription_id: str,
@@ -50,7 +53,7 @@ class PolicyManagementService:
         try:
             client = await self._get_policy_client(subscription_id)
             policies = []
-            
+
             # List policies
             if resource_group:
                 # List policies in resource group
@@ -58,12 +61,12 @@ class PolicyManagementService:
             else:
                 # List all policies in subscription
                 policy_list = client.policy_definitions.list()
-            
+
             async for policy in policy_list:
                 # Filter by policy type if specified
                 if policy_type and policy.policy_type != policy_type:
                     continue
-                
+
                 policies.append(PolicyResponse(
                     id=policy.id,
                     name=policy.name,
@@ -76,16 +79,16 @@ class PolicyManagementService:
                     parameters=policy.parameters,
                     policy_rule=policy.policy_rule
                 ))
-            
+
             logger.info(
                 "policies_listed",
                 subscription_id=subscription_id,
                 resource_group=resource_group,
                 count=len(policies)
             )
-            
+
             return policies
-            
+
         except AzureError as e:
             logger.error(
                 "list_policies_failed",
@@ -93,7 +96,7 @@ class PolicyManagementService:
                 subscription_id=subscription_id
             )
             raise Exception(f"Failed to list policies: {str(e)}")
-    
+
     async def get_policy(
         self,
         subscription_id: str,
@@ -102,18 +105,18 @@ class PolicyManagementService:
         """Get a specific policy by ID."""
         try:
             client = await self._get_policy_client(subscription_id)
-            
+
             # Extract policy name from ID if full resource ID provided
             policy_name = policy_id.split('/')[-1] if '/' in policy_id else policy_id
-            
+
             policy = await client.policy_definitions.get(policy_name)
-            
+
             logger.info(
                 "policy_retrieved",
                 subscription_id=subscription_id,
                 policy_id=policy_id
             )
-            
+
             return PolicyResponse(
                 id=policy.id,
                 name=policy.name,
@@ -126,7 +129,7 @@ class PolicyManagementService:
                 parameters=policy.parameters,
                 policy_rule=policy.policy_rule
             )
-            
+
         except ResourceNotFoundError:
             logger.error(
                 "policy_not_found",
@@ -142,7 +145,7 @@ class PolicyManagementService:
                 policy_id=policy_id
             )
             raise Exception(f"Failed to get policy: {str(e)}")
-    
+
     async def create_policy(
         self,
         subscription_id: str,
@@ -151,7 +154,7 @@ class PolicyManagementService:
         """Create a new policy."""
         try:
             client = await self._get_policy_client(subscription_id)
-            
+
             # Create policy definition
             policy_def = {
                 "display_name": policy_data["display_name"],
@@ -162,19 +165,19 @@ class PolicyManagementService:
                 "parameters": policy_data.get("parameters", {}),
                 "policy_rule": policy_data["policy_rule"]
             }
-            
+
             # Create policy
             policy = await client.policy_definitions.create_or_update(
                 policy_definition_name=policy_data["name"],
                 parameters=policy_def
             )
-            
+
             logger.info(
                 "policy_created",
                 subscription_id=subscription_id,
                 policy_name=policy_data["name"]
             )
-            
+
             return PolicyResponse(
                 id=policy.id,
                 name=policy.name,
@@ -188,7 +191,7 @@ class PolicyManagementService:
                 policy_rule=policy.policy_rule,
                 created_on=datetime.utcnow()
             )
-            
+
         except AzureError as e:
             logger.error(
                 "create_policy_failed",
@@ -197,7 +200,7 @@ class PolicyManagementService:
                 policy_name=policy_data.get("name")
             )
             raise Exception(f"Failed to create policy: {str(e)}")
-    
+
     async def update_policy(
         self,
         subscription_id: str,
@@ -207,13 +210,13 @@ class PolicyManagementService:
         """Update an existing policy."""
         try:
             client = await self._get_policy_client(subscription_id)
-            
+
             # Extract policy name from ID
             policy_name = policy_id.split('/')[-1] if '/' in policy_id else policy_id
-            
+
             # Get existing policy
             existing_policy = await client.policy_definitions.get(policy_name)
-            
+
             # Update policy definition
             policy_def = {
                 "display_name": policy_data.get("display_name", existing_policy.display_name),
@@ -224,19 +227,19 @@ class PolicyManagementService:
                 "parameters": policy_data.get("parameters", existing_policy.parameters),
                 "policy_rule": policy_data.get("policy_rule", existing_policy.policy_rule)
             }
-            
+
             # Update policy
             policy = await client.policy_definitions.create_or_update(
                 policy_definition_name=policy_name,
                 parameters=policy_def
             )
-            
+
             logger.info(
                 "policy_updated",
                 subscription_id=subscription_id,
                 policy_id=policy_id
             )
-            
+
             return PolicyResponse(
                 id=policy.id,
                 name=policy.name,
@@ -250,7 +253,7 @@ class PolicyManagementService:
                 policy_rule=policy.policy_rule,
                 updated_on=datetime.utcnow()
             )
-            
+
         except ResourceNotFoundError:
             logger.error(
                 "policy_not_found",
@@ -266,7 +269,7 @@ class PolicyManagementService:
                 policy_id=policy_id
             )
             raise Exception(f"Failed to update policy: {str(e)}")
-    
+
     async def delete_policy(
         self,
         subscription_id: str,
@@ -275,19 +278,19 @@ class PolicyManagementService:
         """Delete a policy."""
         try:
             client = await self._get_policy_client(subscription_id)
-            
+
             # Extract policy name from ID
             policy_name = policy_id.split('/')[-1] if '/' in policy_id else policy_id
-            
+
             # Delete policy
             await client.policy_definitions.delete(policy_name)
-            
+
             logger.info(
                 "policy_deleted",
                 subscription_id=subscription_id,
                 policy_id=policy_id
             )
-            
+
         except ResourceNotFoundError:
             logger.error(
                 "policy_not_found",
@@ -303,7 +306,7 @@ class PolicyManagementService:
                 policy_id=policy_id
             )
             raise Exception(f"Failed to delete policy: {str(e)}")
-    
+
     async def get_policy_compliance(
         self,
         subscription_id: str,
@@ -312,7 +315,7 @@ class PolicyManagementService:
         """Get compliance status for a policy."""
         try:
             insights_client = await self._get_insights_client(subscription_id)
-            
+
             # Get policy states
             scope = f"/subscriptions/{subscription_id}"
             policy_states = insights_client.policy_states.list_query_results_for_subscription(
@@ -322,19 +325,19 @@ class PolicyManagementService:
                     "$filter": f"policyDefinitionId eq '{policy_id}'"
                 }
             )
-            
+
             # Calculate compliance statistics
             total_resources = 0
             compliant = 0
             non_compliant = 0
             conflicting = 0
             exempt = 0
-            
+
             compliance_details = []
-            
+
             async for state in policy_states:
                 total_resources += 1
-                
+
                 if state.compliance_state == "Compliant":
                     compliant += 1
                 elif state.compliance_state == "NonCompliant":
@@ -343,17 +346,19 @@ class PolicyManagementService:
                     conflicting += 1
                 elif state.compliance_state == "Exempt":
                     exempt += 1
-                
+
                 compliance_details.append({
                     "resource_id": state.resource_id,
                     "resource_type": state.resource_type,
                     "compliance_state": state.compliance_state,
                     "timestamp": state.timestamp.isoformat() if state.timestamp else None
                 })
-            
+
             # Calculate compliance percentage
-            compliance_percentage = (compliant / total_resources * 100) if total_resources > 0 else 0
-            
+            compliance_percentage = (
+                (compliant / total_resources * 100) if total_resources > 0 else 0
+            )
+
             # Determine overall compliance state
             if total_resources == 0:
                 overall_state = PolicyComplianceState.UNKNOWN
@@ -363,7 +368,7 @@ class PolicyManagementService:
                 overall_state = PolicyComplianceState.CONFLICT
             else:
                 overall_state = PolicyComplianceState.COMPLIANT
-            
+
             logger.info(
                 "policy_compliance_retrieved",
                 subscription_id=subscription_id,
@@ -371,7 +376,7 @@ class PolicyManagementService:
                 total_resources=total_resources,
                 compliance_percentage=compliance_percentage
             )
-            
+
             return PolicyComplianceResponse(
                 policy_id=policy_id,
                 policy_name=policy_id.split('/')[-1],
@@ -385,7 +390,7 @@ class PolicyManagementService:
                 last_evaluated=datetime.utcnow(),
                 details=compliance_details[:100]  # Limit details to first 100 resources
             ).dict()
-            
+
         except AzureError as e:
             logger.error(
                 "get_policy_compliance_failed",
@@ -394,7 +399,7 @@ class PolicyManagementService:
                 policy_id=policy_id
             )
             raise Exception(f"Failed to get policy compliance: {str(e)}")
-    
+
     async def get_policy_assignments(
         self,
         subscription_id: str,
@@ -404,13 +409,13 @@ class PolicyManagementService:
         try:
             client = await self._get_policy_client(subscription_id)
             assignments = []
-            
+
             # List assignments
             if resource_group:
                 assignment_list = client.policy_assignments.list_for_resource_group(resource_group)
             else:
                 assignment_list = client.policy_assignments.list()
-            
+
             async for assignment in assignment_list:
                 assignments.append({
                     "id": assignment.id,
@@ -424,9 +429,9 @@ class PolicyManagementService:
                     "enforcement_mode": assignment.enforcement_mode,
                     "metadata": assignment.metadata
                 })
-            
+
             return assignments
-            
+
         except AzureError as e:
             logger.error(
                 "get_policy_assignments_failed",
