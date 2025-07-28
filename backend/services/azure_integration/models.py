@@ -84,7 +84,10 @@ class AzureAuthRequest(BaseModel):
     tenant_id: str = Field(..., description="Azure AD tenant ID")
     client_id: str = Field(..., description="Azure AD application client ID")
     client_secret: str = Field(..., description="Azure AD application client secret")
-    subscription_ids: Optional[List[str]] = Field(None, description="List of subscription IDs to access")
+    subscription_ids: Optional[List[str]] = Field(
+        None,
+        description="List of subscription IDs to access"
+    )
 
 
 class AzureAuthResponse(BaseModel):
@@ -148,7 +151,10 @@ class PolicyComplianceResponse(BaseModel):
     total_resources: int = Field(..., description="Total number of resources")
     compliance_percentage: float = Field(..., description="Compliance percentage")
     last_evaluated: datetime = Field(..., description="Last evaluation timestamp")
-    details: Optional[List[Dict[str, Any]]] = Field(None, description="Compliance details by resource")
+    details: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Compliance details by resource"
+    )
 
 
 # RBAC Management Models
@@ -197,9 +203,15 @@ class CostResponse(BaseModel):
     time_period: Dict[str, str] = Field(..., description="Time period for cost data")
     currency: str = Field(..., description="Currency code")
     total_cost: float = Field(..., description="Total cost for the period")
-    cost_breakdown: Optional[List[Dict[str, Any]]] = Field(None, description="Cost breakdown by service/resource")
+    cost_breakdown: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Cost breakdown by service/resource"
+    )
     forecast: Optional[Dict[str, Any]] = Field(None, description="Cost forecast data")
-    recommendations: Optional[List[Dict[str, Any]]] = Field(None, description="Cost optimization recommendations")
+    recommendations: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Cost optimization recommendations"
+    )
     budget_status: Optional[Dict[str, Any]] = Field(None, description="Budget status information")
 
 
@@ -254,7 +266,10 @@ class NetworkSecurityGroupResponse(BaseModel):
     resource_group: str = Field(..., description="Resource group name")
     security_rules: List[Dict[str, Any]] = Field(..., description="Security rules")
     default_security_rules: List[Dict[str, Any]] = Field(..., description="Default security rules")
-    network_interfaces: Optional[List[str]] = Field(None, description="Associated network interfaces")
+    network_interfaces: Optional[List[str]] = Field(
+        None,
+        description="Associated network interfaces"
+    )
     subnets: Optional[List[str]] = Field(None, description="Associated subnets")
     tags: Optional[Dict[str, str]] = Field(None, description="Resource tags")
 
@@ -265,7 +280,10 @@ class NetworkSecurityAnalysis(BaseModel):
     total_nsgs: int = Field(..., description="Total number of NSGs analyzed")
     security_issues: List[Dict[str, Any]] = Field(..., description="Identified security issues")
     open_ports: List[Dict[str, Any]] = Field(..., description="Open ports to internet")
-    overly_permissive_rules: List[Dict[str, Any]] = Field(..., description="Overly permissive rules")
+    overly_permissive_rules: List[Dict[str, Any]] = Field(
+        ...,
+        description="Overly permissive rules"
+    )
     missing_nsgs: List[Dict[str, Any]] = Field(..., description="Subnets without NSGs")
     recommendations: List[Dict[str, Any]] = Field(..., description="Security recommendations")
     risk_score: int = Field(..., description="Overall risk score (0-100)")

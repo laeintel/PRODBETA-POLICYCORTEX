@@ -18,12 +18,12 @@ logger = structlog.get_logger(__name__)
 
 class NetworkManagementService:
     """Service for managing Azure virtual networks and network security."""
-    
+
     def __init__(self):
         self.settings = settings
         self.auth_service = AzureAuthService()
         self.network_clients = {}
-    
+
     async def _get_network_client(self, subscription_id: str) -> NetworkManagementClient:
         """Get or create Network client for subscription."""
         if subscription_id not in self.network_clients:
@@ -32,7 +32,7 @@ class NetworkManagementService:
                 credential, subscription_id
             )
         return self.network_clients[subscription_id]
-    
+
     async def list_virtual_networks(
         self,
         subscription_id: str,
@@ -42,13 +42,13 @@ class NetworkManagementService:
         try:
             client = await self._get_network_client(subscription_id)
             networks = []
-            
+
             # List virtual networks
             if resource_group:
                 vnet_list = client.virtual_networks.list(resource_group)
             else:
                 vnet_list = client.virtual_networks.list_all()
-            
+
             async for vnet in vnet_list:
                 # Get subnets
                 subnets = []
@@ -68,7 +68,7 @@ class NetworkManagementService:
                                 for delegation in subnet.delegations
                             ] if subnet.delegations else []
                         })
-                
+
                 # Get peerings
                 peerings = []
                 if vnet.virtual_network_peerings:
@@ -84,7 +84,7 @@ class NetworkManagementService:
                             "allow_gateway_transit": peering.allow_gateway_transit,
                             "use_remote_gateways": peering.use_remote_gateways
                         })
-                
+
                 networks.append(NetworkResponse(
                     id=vnet.id,
                     name=vnet.name,
@@ -97,16 +97,16 @@ class NetworkManagementService:
                     dns_servers=vnet.dhcp_options.dns_servers if vnet.dhcp_options else None,
                     tags=vnet.tags
                 ))
-            
+
             logger.info(
                 "virtual_networks_listed",
                 subscription_id=subscription_id,
                 resource_group=resource_group,
                 count=len(networks)
             )
-            
+
             return networks
-            
+
         except AzureError as e:
             logger.error(
                 "list_virtual_networks_failed",
@@ -114,7 +114,7 @@ class NetworkManagementService:
                 subscription_id=subscription_id
             )
             raise Exception(f"Failed to list virtual networks: {str(e)}")
-    
+
     async def get_virtual_network(
         self,
         subscription_id: str,
@@ -124,10 +124,10 @@ class NetworkManagementService:
         """Get a specific virtual network."""
         try:
             client = await self._get_network_client(subscription_id)
-            
+
             # Get virtual network
             vnet = await client.virtual_networks.get(resource_group, network_name)
-            
+
             # Process subnets
             subnets = []
             if vnet.subnets:
@@ -139,7 +139,7 @@ class NetworkManagementService:
                         "route_table": subnet.route_table.id if subnet.route_table else None,
                         "network_security_group": subnet.network_security_group.id if subnet.network_security_group else None
                     })
-            
+
             # Process peerings
             peerings = []
             if vnet.virtual_network_peerings:
@@ -151,14 +151,14 @@ class NetworkManagementService:
                         "peering_state": peering.peering_state,
                         "provisioning_state": peering.provisioning_state
                     })
-            
+
             logger.info(
                 "virtual_network_retrieved",
                 subscription_id=subscription_id,
                 resource_group=resource_group,
                 network_name=network_name
             )
-            
+
             return NetworkResponse(
                 id=vnet.id,
                 name=vnet.name,
@@ -171,7 +171,7 @@ class NetworkManagementService:
                 dns_servers=vnet.dhcp_options.dns_servers if vnet.dhcp_options else None,
                 tags=vnet.tags
             )
-            
+
         except ResourceNotFoundError:
             logger.error(
                 "virtual_network_not_found",
@@ -189,7 +189,7 @@ class NetworkManagementService:
                 network_name=network_name
             )
             raise Exception(f"Failed to get virtual network: {str(e)}")
-    
+
     async def list_network_security_groups(
         self,
         subscription_id: str,
@@ -199,13 +199,13 @@ class NetworkManagementService:
         try:
             client = await self._get_network_client(subscription_id)
             nsgs = []
-            
+
             # List NSGs
             if resource_group:
                 nsg_list = client.network_security_groups.list(resource_group)
             else:
                 nsg_list = client.network_security_groups.list_all()
-            
+
             async for nsg in nsg_list:
                 # Process security rules
                 security_rules = []
@@ -225,7 +225,7 @@ class NetworkManagementService:
                             "direction": rule.direction,
                             "provisioning_state": rule.provisioning_state
                         })
-                
+
                 # Process default security rules
                 default_rules = []
                 if nsg.default_security_rules:
@@ -243,16 +243,16 @@ class NetworkManagementService:
                             "priority": rule.priority,
                             "direction": rule.direction
                         })
-                
+
                 # Get associated resources
                 network_interfaces = []
                 if nsg.network_interfaces:
                     network_interfaces = [ni.id for ni in nsg.network_interfaces]
-                
+
                 subnets = []
                 if nsg.subnets:
                     subnets = [subnet.id for subnet in nsg.subnets]
-                
+
                 nsgs.append({
                     "id": nsg.id,
                     "name": nsg.name,
@@ -265,16 +265,16 @@ class NetworkManagementService:
                     "subnets": subnets,
                     "tags": nsg.tags
                 })
-            
+
             logger.info(
                 "network_security_groups_listed",
                 subscription_id=subscription_id,
                 resource_group=resource_group,
                 count=len(nsgs)
             )
-            
+
             return nsgs
-            
+
         except AzureError as e:
             logger.error(
                 "list_network_security_groups_failed",
@@ -282,7 +282,7 @@ class NetworkManagementService:
                 subscription_id=subscription_id
             )
             raise Exception(f"Failed to list network security groups: {str(e)}")
-    
+
     async def analyze_network_security(
         self,
         subscription_id: str,
@@ -293,22 +293,22 @@ class NetworkManagementService:
             # Get networks and NSGs
             networks = await self.list_virtual_networks(subscription_id, resource_group)
             nsgs = await self.list_network_security_groups(subscription_id, resource_group)
-            
+
             # Initialize analysis results
             security_issues = []
             open_ports = []
             overly_permissive_rules = []
             missing_nsgs = []
             recommendations = []
-            
+
             # Analyze NSG rules
             for nsg in nsgs:
                 for rule in nsg.get("security_rules", []):
                     # Check for overly permissive rules
-                    if (rule.get("source_address_prefix") == "*" and 
-                        rule.get("access") == "Allow" and 
+                    if (rule.get("source_address_prefix") == "*" and
+                        rule.get("access") == "Allow" and
                         rule.get("direction") == "Inbound"):
-                        
+
                         overly_permissive_rules.append({
                             "nsg_name": nsg["name"],
                             "rule_name": rule["name"],
@@ -317,12 +317,12 @@ class NetworkManagementService:
                             "protocol": rule.get("protocol"),
                             "destination_port_range": rule.get("destination_port_range")
                         })
-                    
+
                     # Check for open ports to internet
                     if (rule.get("source_address_prefix") in ["*", "0.0.0.0/0", "Internet"] and
                         rule.get("access") == "Allow" and
                         rule.get("direction") == "Inbound"):
-                        
+
                         open_ports.append({
                             "nsg_name": nsg["name"],
                             "rule_name": rule["name"],
@@ -330,14 +330,14 @@ class NetworkManagementService:
                             "protocol": rule.get("protocol"),
                             "priority": rule.get("priority")
                         })
-                    
+
                     # Check for common insecure ports
                     insecure_ports = ["22", "3389", "1433", "1521", "3306", "5432", "27017"]
                     dest_port = rule.get("destination_port_range", "")
                     if (any(port in dest_port for port in insecure_ports) and
                         rule.get("source_address_prefix") == "*" and
                         rule.get("access") == "Allow"):
-                        
+
                         security_issues.append({
                             "type": "insecure_port_exposure",
                             "severity": "high",
@@ -346,7 +346,7 @@ class NetworkManagementService:
                             "port": dest_port,
                             "description": f"Insecure port {dest_port} exposed to internet"
                         })
-            
+
             # Check for subnets without NSGs
             for network in networks:
                 for subnet in network.subnets:
@@ -356,7 +356,7 @@ class NetworkManagementService:
                             "subnet_name": subnet["name"],
                             "address_prefix": subnet["address_prefix"]
                         })
-            
+
             # Generate recommendations
             if overly_permissive_rules:
                 recommendations.append({
@@ -366,16 +366,17 @@ class NetworkManagementService:
                     "description": f"Found {len(overly_permissive_rules)} overly permissive rules. Consider restricting source IP ranges.",
                     "affected_count": len(overly_permissive_rules)
                 })
-            
+
             if open_ports:
                 recommendations.append({
                     "type": "security",
                     "priority": "high",
                     "title": "Secure open ports",
-                    "description": f"Found {len(open_ports)} rules with ports open to internet. Review and restrict access.",
+                    "description": f"Found {len(open_ports)} rules with ports open to internet. Review and
+                        restrict access.",
                     "affected_count": len(open_ports)
                 })
-            
+
             if missing_nsgs:
                 recommendations.append({
                     "type": "security",
@@ -384,7 +385,7 @@ class NetworkManagementService:
                     "description": f"Found {len(missing_nsgs)} subnets without NSGs. Consider adding network security groups.",
                     "affected_count": len(missing_nsgs)
                 })
-            
+
             # Calculate risk score
             risk_score = 0
             risk_score += len(security_issues) * 20
@@ -392,7 +393,7 @@ class NetworkManagementService:
             risk_score += len(open_ports) * 10
             risk_score += len(missing_nsgs) * 5
             risk_score = min(risk_score, 100)  # Cap at 100
-            
+
             logger.info(
                 "network_security_analysis_completed",
                 subscription_id=subscription_id,
@@ -402,7 +403,7 @@ class NetworkManagementService:
                 security_issues=len(security_issues),
                 risk_score=risk_score
             )
-            
+
             return NetworkSecurityAnalysis(
                 total_networks=len(networks),
                 total_nsgs=len(nsgs),
@@ -414,7 +415,7 @@ class NetworkManagementService:
                 risk_score=risk_score,
                 analysis_timestamp=datetime.utcnow()
             ).dict()
-            
+
         except Exception as e:
             logger.error(
                 "analyze_network_security_failed",
@@ -422,7 +423,7 @@ class NetworkManagementService:
                 subscription_id=subscription_id
             )
             raise Exception(f"Failed to analyze network security: {str(e)}")
-    
+
     async def create_network_security_rule(
         self,
         subscription_id: str,
@@ -433,7 +434,7 @@ class NetworkManagementService:
         """Create a new network security rule."""
         try:
             client = await self._get_network_client(subscription_id)
-            
+
             # Create security rule parameters
             rule_params = {
                 "description": rule_data.get("description"),
@@ -446,7 +447,7 @@ class NetworkManagementService:
                 "priority": rule_data["priority"],
                 "direction": rule_data["direction"]
             }
-            
+
             # Create the rule
             rule = await client.security_rules.begin_create_or_update(
                 resource_group_name=resource_group,
@@ -454,7 +455,7 @@ class NetworkManagementService:
                 security_rule_name=rule_data["name"],
                 security_rule_parameters=rule_params
             )
-            
+
             logger.info(
                 "security_rule_created",
                 subscription_id=subscription_id,
@@ -462,7 +463,7 @@ class NetworkManagementService:
                 nsg_name=nsg_name,
                 rule_name=rule_data["name"]
             )
-            
+
             return {
                 "id": rule.id,
                 "name": rule.name,
@@ -477,7 +478,7 @@ class NetworkManagementService:
                 "direction": rule.direction,
                 "provisioning_state": rule.provisioning_state
             }
-            
+
         except AzureError as e:
             logger.error(
                 "create_security_rule_failed",
@@ -487,7 +488,7 @@ class NetworkManagementService:
                 nsg_name=nsg_name
             )
             raise Exception(f"Failed to create security rule: {str(e)}")
-    
+
     async def get_network_topology(
         self,
         subscription_id: str,
@@ -498,14 +499,14 @@ class NetworkManagementService:
             # Get networks and NSGs
             networks = await self.list_virtual_networks(subscription_id, resource_group)
             nsgs = await self.list_network_security_groups(subscription_id, resource_group)
-            
+
             # Build topology
             topology = {
                 "networks": [],
                 "security_groups": [],
                 "connections": []
             }
-            
+
             # Process networks
             for network in networks:
                 network_info = {
@@ -517,7 +518,7 @@ class NetworkManagementService:
                     "location": network.location
                 }
                 topology["networks"].append(network_info)
-            
+
             # Process NSGs
             for nsg in nsgs:
                 nsg_info = {
@@ -529,7 +530,7 @@ class NetworkManagementService:
                     "default_rules_count": len(nsg.get("default_security_rules", []))
                 }
                 topology["security_groups"].append(nsg_info)
-            
+
             # Identify connections (peerings)
             for network in networks:
                 for peering in network.peerings:
@@ -539,7 +540,7 @@ class NetworkManagementService:
                         "peering_state": peering.get("peering_state"),
                         "connection_type": "peering"
                     })
-            
+
             logger.info(
                 "network_topology_retrieved",
                 subscription_id=subscription_id,
@@ -547,9 +548,9 @@ class NetworkManagementService:
                 networks_count=len(networks),
                 nsgs_count=len(nsgs)
             )
-            
+
             return topology
-            
+
         except Exception as e:
             logger.error(
                 "get_network_topology_failed",

@@ -20,7 +20,6 @@ from starlette.responses import PlainTextResponse
 
 from shared.config import get_settings
 from shared.database import get_async_db, DatabaseUtils
-from services.azure_integration.models import (
     HealthResponse,
     APIResponse,
     ErrorResponse,
@@ -34,7 +33,6 @@ from services.azure_integration.models import (
     AzureAuthRequest,
     AzureAuthResponse
 )
-from services.azure_integration.services import (
     PolicyManagementService,
     RBACManagementService,
     CostManagementService,
@@ -43,16 +41,28 @@ from services.azure_integration.services import (
     AzureAuthService
 )
 from services.azure_integration.services.event_collector import AzureEventCollector
-from services.azure_integration.middleware import AzureAuthMiddleware
+    from services.azure_integration.middleware import AzureAuthMiddleware
 
 # Configuration
 settings = get_settings()
 logger = structlog.get_logger(__name__)
 
 # Metrics
-REQUEST_COUNT = Counter('azure_integration_requests_total', 'Total API requests', ['method', 'endpoint', 'status'])
+REQUEST_COUNT = Counter(
+    'azure_integration_requests_total',
+    'Total API requests',
+    ['method',
+    'endpoint',
+    'status']
+)
 REQUEST_DURATION = Histogram('azure_integration_request_duration_seconds', 'Request duration')
-AZURE_API_CALLS = Counter('azure_api_calls_total', 'Azure API calls', ['service', 'operation', 'status'])
+AZURE_API_CALLS = Counter(
+    'azure_api_calls_total',
+    'Azure API calls',
+    ['service',
+    'operation',
+    'status']
+)
 AZURE_API_DURATION = Histogram('azure_api_duration_seconds', 'Azure API call duration', ['service'])
 
 # FastAPI app
@@ -62,7 +72,7 @@ app = FastAPI(
     version=settings.service.service_version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
-)
+        )
 
 # Security
 security = HTTPBearer(auto_error=False)
@@ -74,7 +84,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=settings.security.cors_methods,
     allow_headers=settings.security.cors_headers,
-)
+        )
 
 app.add_middleware(
     TrustedHostMiddleware,
@@ -93,14 +103,14 @@ event_collector = AzureEventCollector(settings)
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for request/response logging and metrics."""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         request_id = str(uuid.uuid4())
-        
+
         # Add request ID to headers
         request.state.request_id = request_id
-        
+
         # Log request
         logger.info(
             "request_started",
@@ -110,13 +120,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             user_agent=request.headers.get("user-agent"),
             client_ip=request.client.host if request.client else None
         )
-        
+
         try:
             response = await call_next(request)
-            
+
             # Calculate duration
             duration = time.time() - start_time
-            
+
             # Update metrics
             REQUEST_COUNT.labels(
                 method=request.method,
@@ -124,7 +134,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status=response.status_code
             ).inc()
             REQUEST_DURATION.observe(duration)
-            
+
             # Log response
             logger.info(
                 "request_completed",
@@ -132,15 +142,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status_code=response.status_code,
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Add request ID to response headers
             response.headers["X-Request-ID"] = request_id
-            
+
             return response
-            
+
         except Exception as e:
             duration = time.time() - start_time
-            
+
             # Log error
             logger.error(
                 "request_failed",
@@ -148,14 +158,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 error=str(e),
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Update error metrics
             REQUEST_COUNT.labels(
                 method=request.method,
                 endpoint=request.url.path,
                 status=500
             ).inc()
-            
+
             raise
 
 
@@ -266,11 +276,11 @@ async def list_policies(
             resource_group=resource_group,
             policy_type=policy_type
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="policy", operation="list", status="success").inc()
         AZURE_API_DURATION.labels(service="policy").observe(time.time() - start_time)
-        
+
         return policies
     except Exception as e:
         AZURE_API_CALLS.labels(service="policy", operation="list", status="error").inc()
@@ -294,11 +304,11 @@ async def get_policy(
             subscription_id=subscription_id,
             policy_id=policy_id
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="policy", operation="get", status="success").inc()
         AZURE_API_DURATION.labels(service="policy").observe(time.time() - start_time)
-        
+
         return policy
     except Exception as e:
         AZURE_API_CALLS.labels(service="policy", operation="get", status="error").inc()
@@ -322,11 +332,11 @@ async def create_policy(
             subscription_id=subscription_id,
             policy_data=policy_request.dict()
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="policy", operation="create", status="success").inc()
         AZURE_API_DURATION.labels(service="policy").observe(time.time() - start_time)
-        
+
         return policy
     except Exception as e:
         AZURE_API_CALLS.labels(service="policy", operation="create", status="error").inc()
@@ -352,11 +362,11 @@ async def update_policy(
             policy_id=policy_id,
             policy_data=policy_request.dict()
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="policy", operation="update", status="success").inc()
         AZURE_API_DURATION.labels(service="policy").observe(time.time() - start_time)
-        
+
         return policy
     except Exception as e:
         AZURE_API_CALLS.labels(service="policy", operation="update", status="error").inc()
@@ -380,11 +390,11 @@ async def delete_policy(
             subscription_id=subscription_id,
             policy_id=policy_id
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="policy", operation="delete", status="success").inc()
         AZURE_API_DURATION.labels(service="policy").observe(time.time() - start_time)
-        
+
         return {"message": f"Policy {policy_id} deleted successfully"}
     except Exception as e:
         AZURE_API_CALLS.labels(service="policy", operation="delete", status="error").inc()
@@ -408,11 +418,11 @@ async def get_policy_compliance(
             subscription_id=subscription_id,
             policy_id=policy_id
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="policy", operation="compliance", status="success").inc()
         AZURE_API_DURATION.labels(service="policy").observe(time.time() - start_time)
-        
+
         return compliance
     except Exception as e:
         AZURE_API_CALLS.labels(service="policy", operation="compliance", status="error").inc()
@@ -437,11 +447,11 @@ async def list_roles(
             subscription_id=subscription_id,
             scope=scope
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="rbac", operation="list_roles", status="success").inc()
         AZURE_API_DURATION.labels(service="rbac").observe(time.time() - start_time)
-        
+
         return roles
     except Exception as e:
         AZURE_API_CALLS.labels(service="rbac", operation="list_roles", status="error").inc()
@@ -467,11 +477,11 @@ async def list_role_assignments(
             principal_id=principal_id,
             scope=scope
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="rbac", operation="list_assignments", status="success").inc()
         AZURE_API_DURATION.labels(service="rbac").observe(time.time() - start_time)
-        
+
         return assignments
     except Exception as e:
         AZURE_API_CALLS.labels(service="rbac", operation="list_assignments", status="error").inc()
@@ -495,11 +505,15 @@ async def create_role_assignment(
             subscription_id=subscription_id,
             assignment_data=rbac_request.dict()
         )
-        
+
         # Update metrics
-        AZURE_API_CALLS.labels(service="rbac", operation="create_assignment", status="success").inc()
+        AZURE_API_CALLS.labels(
+            service="rbac",
+            operation="create_assignment",
+            status="success").inc(
+        )
         AZURE_API_DURATION.labels(service="rbac").observe(time.time() - start_time)
-        
+
         return assignment
     except Exception as e:
         AZURE_API_CALLS.labels(service="rbac", operation="create_assignment", status="error").inc()
@@ -523,11 +537,15 @@ async def delete_role_assignment(
             subscription_id=subscription_id,
             assignment_id=assignment_id
         )
-        
+
         # Update metrics
-        AZURE_API_CALLS.labels(service="rbac", operation="delete_assignment", status="success").inc()
+        AZURE_API_CALLS.labels(
+            service="rbac",
+            operation="delete_assignment",
+            status="success").inc(
+        )
         AZURE_API_DURATION.labels(service="rbac").observe(time.time() - start_time)
-        
+
         return {"message": f"Role assignment {assignment_id} deleted successfully"}
     except Exception as e:
         AZURE_API_CALLS.labels(service="rbac", operation="delete_assignment", status="error").inc()
@@ -556,11 +574,11 @@ async def get_cost_usage(
             end_date=end_date,
             granularity=granularity
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="cost", operation="usage", status="success").inc()
         AZURE_API_DURATION.labels(service="cost").observe(time.time() - start_time)
-        
+
         return cost_data
     except Exception as e:
         AZURE_API_CALLS.labels(service="cost", operation="usage", status="error").inc()
@@ -584,11 +602,11 @@ async def get_cost_forecast(
             subscription_id=subscription_id,
             forecast_days=forecast_days
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="cost", operation="forecast", status="success").inc()
         AZURE_API_DURATION.labels(service="cost").observe(time.time() - start_time)
-        
+
         return forecast
     except Exception as e:
         AZURE_API_CALLS.labels(service="cost", operation="forecast", status="error").inc()
@@ -608,11 +626,11 @@ async def list_budgets(
     try:
         start_time = time.time()
         budgets = await cost_service.list_budgets(subscription_id=subscription_id)
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="cost", operation="list_budgets", status="success").inc()
         AZURE_API_DURATION.labels(service="cost").observe(time.time() - start_time)
-        
+
         return budgets
     except Exception as e:
         AZURE_API_CALLS.labels(service="cost", operation="list_budgets", status="error").inc()
@@ -634,11 +652,11 @@ async def get_cost_recommendations(
         recommendations = await cost_service.get_cost_recommendations(
             subscription_id=subscription_id
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="cost", operation="recommendations", status="success").inc()
         AZURE_API_DURATION.labels(service="cost").observe(time.time() - start_time)
-        
+
         return recommendations
     except Exception as e:
         AZURE_API_CALLS.labels(service="cost", operation="recommendations", status="error").inc()
@@ -663,11 +681,11 @@ async def list_networks(
             subscription_id=subscription_id,
             resource_group=resource_group
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="network", operation="list", status="success").inc()
         AZURE_API_DURATION.labels(service="network").observe(time.time() - start_time)
-        
+
         return networks
     except Exception as e:
         AZURE_API_CALLS.labels(service="network", operation="list", status="error").inc()
@@ -691,11 +709,11 @@ async def list_network_security_groups(
             subscription_id=subscription_id,
             resource_group=resource_group
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="network", operation="list_nsgs", status="success").inc()
         AZURE_API_DURATION.labels(service="network").observe(time.time() - start_time)
-        
+
         return nsgs
     except Exception as e:
         AZURE_API_CALLS.labels(service="network", operation="list_nsgs", status="error").inc()
@@ -719,14 +737,22 @@ async def analyze_network_security(
             subscription_id=subscription_id,
             resource_group=resource_group
         )
-        
+
         # Update metrics
-        AZURE_API_CALLS.labels(service="network", operation="security_analysis", status="success").inc()
+        AZURE_API_CALLS.labels(
+            service="network",
+            operation="security_analysis",
+            status="success").inc(
+        )
         AZURE_API_DURATION.labels(service="network").observe(time.time() - start_time)
-        
+
         return analysis
     except Exception as e:
-        AZURE_API_CALLS.labels(service="network", operation="security_analysis", status="error").inc()
+        AZURE_API_CALLS.labels(
+            service="network",
+            operation="security_analysis",
+            status="error").inc(
+        )
         logger.error("analyze_network_security_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -752,11 +778,11 @@ async def list_resources(
             resource_type=resource_type,
             tags=tags
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="resource", operation="list", status="success").inc()
         AZURE_API_DURATION.labels(service="resource").observe(time.time() - start_time)
-        
+
         return resources
     except Exception as e:
         AZURE_API_CALLS.labels(service="resource", operation="list", status="error").inc()
@@ -776,11 +802,11 @@ async def get_resource(
     try:
         start_time = time.time()
         resource = await resource_service.get_resource(resource_id=resource_id)
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="resource", operation="get", status="success").inc()
         AZURE_API_DURATION.labels(service="resource").observe(time.time() - start_time)
-        
+
         return resource
     except Exception as e:
         AZURE_API_CALLS.labels(service="resource", operation="get", status="error").inc()
@@ -802,11 +828,11 @@ async def list_resource_groups(
         resource_groups = await resource_service.list_resource_groups(
             subscription_id=subscription_id
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="resource", operation="list_groups", status="success").inc()
         AZURE_API_DURATION.labels(service="resource").observe(time.time() - start_time)
-        
+
         return resource_groups
     except Exception as e:
         AZURE_API_CALLS.labels(service="resource", operation="list_groups", status="error").inc()
@@ -830,11 +856,11 @@ async def update_resource_tags(
             resource_id=resource_id,
             tags=tags
         )
-        
+
         # Update metrics
         AZURE_API_CALLS.labels(service="resource", operation="update_tags", status="success").inc()
         AZURE_API_DURATION.labels(service="resource").observe(time.time() - start_time)
-        
+
         return {"message": f"Tags updated successfully for resource {resource_id}"}
     except Exception as e:
         AZURE_API_CALLS.labels(service="resource", operation="update_tags", status="error").inc()
@@ -854,7 +880,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         error=str(exc),
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
@@ -867,7 +893,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "main:app",
         host=settings.service.service_host,

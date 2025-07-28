@@ -23,7 +23,6 @@ from starlette.responses import PlainTextResponse
 from backend.shared.config import get_settings
 from backend.shared.database import get_async_db, DatabaseUtils
 from .auth import AuthManager
-from .models import (
     HealthResponse,
     APIResponse,
     ErrorResponse,
@@ -45,20 +44,20 @@ from .models import (
 from .services.model_manager import ModelManager
 from .services.nlp_service import NLPService
 from .services.anomaly_detector import AnomalyDetector
-from .services.cost_optimizer import CostOptimizer
+    from .services.cost_optimizer import CostOptimizer
 from .services.predictive_analytics import PredictiveAnalyticsService
 from .services.sentiment_analyzer import SentimentAnalyzer
 from .services.feature_engineer import FeatureEngineer
 from .services.model_monitor import ModelMonitor
-from .ml_models.compliance_predictor import CompliancePredictor
-from .ml_models.correlation_engine import CrossDomainCorrelationEngine
+    from .ml_models.compliance_predictor import CompliancePredictor
+    from .ml_models.correlation_engine import CrossDomainCorrelationEngine
 from .services.automation_orchestrator import WorkflowEngine
 from .services.automation_engine import AutomationTrigger, AutomationStatus
 from .services.gnn_correlation_service import gnn_service
 from .services.conversational_ai_service import conversational_ai_service
 from .services.multi_objective_optimizer import multi_objective_optimizer
 from .services.automation_orchestrator import automation_orchestrator
-from .services.governance_intelligence import governance_intelligence
+    from .services.governance_intelligence import governance_intelligence
 from .services.conversation_analytics import conversation_analytics
 from .services.cross_domain_correlator import cross_domain_correlator
 
@@ -67,12 +66,32 @@ settings = get_settings()
 logger = structlog.get_logger(__name__)
 
 # Metrics
-REQUEST_COUNT = Counter('ai_engine_requests_total', 'Total AI Engine requests', ['method', 'endpoint', 'status'])
+REQUEST_COUNT = Counter(
+    'ai_engine_requests_total',
+    'Total AI Engine requests',
+    ['method',
+    'endpoint',
+    'status']
+)
 REQUEST_DURATION = Histogram('ai_engine_request_duration_seconds', 'Request duration')
-MODEL_INFERENCE_COUNT = Counter('ai_engine_model_inference_total', 'Model inference requests', ['model_name', 'status'])
-MODEL_INFERENCE_DURATION = Histogram('ai_engine_model_inference_duration_seconds', 'Model inference duration', ['model_name'])
+MODEL_INFERENCE_COUNT = Counter(
+    'ai_engine_model_inference_total',
+    'Model inference requests',
+    ['model_name',
+    'status']
+)
+MODEL_INFERENCE_DURATION = Histogram(
+    'ai_engine_model_inference_duration_seconds',
+    'Model inference duration',
+    ['model_name']
+)
 ACTIVE_MODELS = Gauge('ai_engine_active_models', 'Number of active models')
-MODEL_ACCURACY = Gauge('ai_engine_model_accuracy', 'Model accuracy metrics', ['model_name', 'metric_type'])
+MODEL_ACCURACY = Gauge(
+    'ai_engine_model_accuracy',
+    'Model accuracy metrics',
+    ['model_name',
+    'metric_type']
+)
 
 # FastAPI app
 app = FastAPI(
@@ -81,7 +100,7 @@ app = FastAPI(
     version=settings.service.service_version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
-)
+        )
 
 # Security
 security = HTTPBearer(auto_error=False)
@@ -93,7 +112,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=settings.security.cors_methods,
     allow_headers=settings.security.cors_headers,
-)
+        )
 
 app.add_middleware(
     TrustedHostMiddleware,
@@ -117,14 +136,14 @@ workflow_engine = WorkflowEngine()
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for request/response logging and metrics."""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         request_id = str(uuid.uuid4())
-        
+
         # Add request ID to headers
         request.state.request_id = request_id
-        
+
         # Log request
         logger.info(
             "request_started",
@@ -134,13 +153,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             user_agent=request.headers.get("user-agent"),
             client_ip=request.client.host if request.client else None
         )
-        
+
         try:
             response = await call_next(request)
-            
+
             # Calculate duration
             duration = time.time() - start_time
-            
+
             # Update metrics
             REQUEST_COUNT.labels(
                 method=request.method,
@@ -148,7 +167,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status=response.status_code
             ).inc()
             REQUEST_DURATION.observe(duration)
-            
+
             # Log response
             logger.info(
                 "request_completed",
@@ -156,15 +175,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 status_code=response.status_code,
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Add request ID to response headers
             response.headers["X-Request-ID"] = request_id
-            
+
             return response
-            
+
         except Exception as e:
             duration = time.time() - start_time
-            
+
             # Log error
             logger.error(
                 "request_failed",
@@ -172,14 +191,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 error=str(e),
                 duration_ms=round(duration * 1000, 2)
             )
-            
+
             # Update error metrics
             REQUEST_COUNT.labels(
                 method=request.method,
                 endpoint=request.url.path,
                 status=500
             ).inc()
-            
+
             raise
 
 
@@ -192,17 +211,17 @@ async def verify_authentication(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Optional[Dict[str, Any]]:
     """Verify authentication for protected endpoints."""
-    
+
     # Skip authentication for health checks and public endpoints
     if request.url.path in ["/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"]:
         return None
-    
+
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required"
         )
-    
+
     try:
         user_info = await auth_manager.verify_token(credentials.credentials)
         request.state.user = user_info
@@ -219,14 +238,14 @@ async def verify_authentication(
 async def startup_event():
     """Initialize services on startup."""
     logger.info("Starting AI Engine service")
-    
+
     try:
         # Initialize model manager
         await model_manager.initialize()
-        
+
         # Load pre-trained models
         await model_manager.load_default_models()
-        
+
         # Initialize services
         await nlp_service.initialize()
         await anomaly_detector.initialize()
@@ -240,7 +259,7 @@ async def startup_event():
         await workflow_engine.initialize()
         await gnn_service.initialize()
         await conversational_ai_service.initialize()
-        
+
         # Initialize Patent 2 components
         await multi_objective_optimizer.initialize(
             resource_analyzer=cost_optimizer,
@@ -252,19 +271,19 @@ async def startup_event():
             policy_engine=compliance_predictor,
             security_service=anomaly_detector
         )
-        
+
         # Initialize Patent 3 components
         await governance_intelligence.initialize()
         await conversation_analytics.initialize()
-        
+
         # Initialize Patent 4 components
         await cross_domain_correlator.initialize()
-        
+
         # Update metrics
         ACTIVE_MODELS.set(len(model_manager.active_models))
-        
+
         logger.info("AI Engine service started successfully")
-        
+
     except Exception as e:
         logger.error("Failed to start AI Engine service", error=str(e))
         raise
@@ -274,7 +293,7 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup on shutdown."""
     logger.info("Shutting down AI Engine service")
-    
+
     try:
         # Cleanup services
         await model_manager.cleanup()
@@ -286,9 +305,9 @@ async def shutdown_event():
         await feature_engineer.cleanup()
         await model_monitor.cleanup()
         await workflow_engine.cleanup()
-        
+
         logger.info("AI Engine service shutdown complete")
-        
+
     except Exception as e:
         logger.error("Error during shutdown", error=str(e))
 
@@ -318,7 +337,7 @@ async def readiness_check():
             "predictive_analytics": predictive_analytics.is_ready(),
             "sentiment_analyzer": sentiment_analyzer.is_ready()
         }
-        
+
         if all(services_ready.values()):
             return HealthResponse(
                 status="ready",
@@ -332,7 +351,7 @@ async def readiness_check():
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"Some services are not ready: {services_ready}"
             )
-            
+
     except Exception as e:
         logger.error("readiness_check_failed", error=str(e))
         raise HTTPException(
@@ -406,14 +425,14 @@ async def train_model(
             request.parameters,
             task_id
         )
-        
+
         return ModelTrainingResponse(
             task_id=task_id,
             model_name=model_name,
             status="training_started",
             message="Model training started in background"
         )
-        
+
     except Exception as e:
         logger.error("train_model_failed", model_name=model_name, error=str(e))
         raise HTTPException(
@@ -454,40 +473,40 @@ async def analyze_policy(
 ):
     """Analyze policy documents using NLP."""
     start_time = time.time()
-    
+
     try:
         logger.info("policy_analysis_started", request_id=request.request_id)
-        
+
         result = await nlp_service.analyze_policy(
             policy_text=request.policy_text,
             analysis_type=request.analysis_type,
             options=request.options
         )
-        
+
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="policy_analyzer", status="success").inc()
         MODEL_INFERENCE_DURATION.labels(model_name="policy_analyzer").observe(duration)
-        
-        logger.info("policy_analysis_completed", 
-                   request_id=request.request_id,
-                   duration_ms=round(duration * 1000, 2))
-        
+
+        logger.info("policy_analysis_completed",
+                request_id=request.request_id,
+                duration_ms=round(duration * 1000, 2))
+
         return PolicyAnalysisResponse(
             request_id=request.request_id,
             analysis_results=result,
             confidence_score=result.get("confidence", 0.0),
             processing_time_ms=round(duration * 1000, 2)
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="policy_analyzer", status="error").inc()
-        
-        logger.error("policy_analysis_failed", 
+
+        logger.error("policy_analysis_failed",
                     request_id=request.request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Policy analysis failed: {str(e)}"
@@ -501,25 +520,25 @@ async def detect_anomalies(
 ):
     """Detect anomalies in Azure resources."""
     start_time = time.time()
-    
+
     try:
         logger.info("anomaly_detection_started", request_id=request.request_id)
-        
+
         result = await anomaly_detector.detect_anomalies(
             resource_data=request.resource_data,
             detection_type=request.detection_type,
             threshold=request.threshold
         )
-        
+
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="anomaly_detector", status="success").inc()
         MODEL_INFERENCE_DURATION.labels(model_name="anomaly_detector").observe(duration)
-        
+
         logger.info("anomaly_detection_completed",
-                   request_id=request.request_id,
-                   anomalies_found=len(result.get("anomalies", [])),
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request.request_id,
+                anomalies_found=len(result.get("anomalies", [])),
+                duration_ms=round(duration * 1000, 2))
+
         return AnomalyDetectionResponse(
             request_id=request.request_id,
             anomalies=result.get("anomalies", []),
@@ -527,16 +546,16 @@ async def detect_anomalies(
             confidence_score=result.get("confidence", 0.0),
             processing_time_ms=round(duration * 1000, 2)
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="anomaly_detector", status="error").inc()
-        
+
         logger.error("anomaly_detection_failed",
                     request_id=request.request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Anomaly detection failed: {str(e)}"
@@ -550,25 +569,25 @@ async def optimize_costs(
 ):
     """Generate cost optimization recommendations."""
     start_time = time.time()
-    
+
     try:
         logger.info("cost_optimization_started", request_id=request.request_id)
-        
+
         result = await cost_optimizer.optimize_costs(
             resource_data=request.resource_data,
             optimization_goals=request.optimization_goals,
             constraints=request.constraints
         )
-        
+
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="cost_optimizer", status="success").inc()
         MODEL_INFERENCE_DURATION.labels(model_name="cost_optimizer").observe(duration)
-        
+
         logger.info("cost_optimization_completed",
-                   request_id=request.request_id,
-                   recommendations_count=len(result.get("recommendations", [])),
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request.request_id,
+                recommendations_count=len(result.get("recommendations", [])),
+                duration_ms=round(duration * 1000, 2))
+
         return CostOptimizationResponse(
             request_id=request.request_id,
             recommendations=result.get("recommendations", []),
@@ -577,16 +596,16 @@ async def optimize_costs(
             confidence_score=result.get("confidence", 0.0),
             processing_time_ms=round(duration * 1000, 2)
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="cost_optimizer", status="error").inc()
-        
+
         logger.error("cost_optimization_failed",
                     request_id=request.request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cost optimization failed: {str(e)}"
@@ -600,24 +619,24 @@ async def predict_resource_usage(
 ):
     """Predict resource usage patterns."""
     start_time = time.time()
-    
+
     try:
         logger.info("predictive_analytics_started", request_id=request.request_id)
-        
+
         result = await predictive_analytics.predict_usage(
             historical_data=request.historical_data,
             prediction_horizon=request.prediction_horizon,
             metrics=request.metrics
         )
-        
+
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="predictive_analytics", status="success").inc()
         MODEL_INFERENCE_DURATION.labels(model_name="predictive_analytics").observe(duration)
-        
+
         logger.info("predictive_analytics_completed",
-                   request_id=request.request_id,
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request.request_id,
+                duration_ms=round(duration * 1000, 2))
+
         return PredictiveAnalyticsResponse(
             request_id=request.request_id,
             predictions=result.get("predictions", []),
@@ -626,16 +645,16 @@ async def predict_resource_usage(
             confidence_intervals=result.get("confidence_intervals", {}),
             processing_time_ms=round(duration * 1000, 2)
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="predictive_analytics", status="error").inc()
-        
+
         logger.error("predictive_analytics_failed",
                     request_id=request.request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Predictive analytics failed: {str(e)}"
@@ -649,25 +668,25 @@ async def analyze_sentiment(
 ):
     """Analyze sentiment of compliance reports."""
     start_time = time.time()
-    
+
     try:
         logger.info("sentiment_analysis_started", request_id=request.request_id)
-        
+
         result = await sentiment_analyzer.analyze_sentiment(
             text=request.text,
             analysis_type=request.analysis_type,
             options=request.options
         )
-        
+
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="sentiment_analyzer", status="success").inc()
         MODEL_INFERENCE_DURATION.labels(model_name="sentiment_analyzer").observe(duration)
-        
+
         logger.info("sentiment_analysis_completed",
-                   request_id=request.request_id,
-                   sentiment=result.get("sentiment", "unknown"),
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request.request_id,
+                sentiment=result.get("sentiment", "unknown"),
+                duration_ms=round(duration * 1000, 2))
+
         return SentimentAnalysisResponse(
             request_id=request.request_id,
             sentiment=result.get("sentiment", "neutral"),
@@ -676,16 +695,16 @@ async def analyze_sentiment(
             key_phrases=result.get("key_phrases", []),
             processing_time_ms=round(duration * 1000, 2)
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="sentiment_analyzer", status="error").inc()
-        
+
         logger.error("sentiment_analysis_failed",
                     request_id=request.request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Sentiment analysis failed: {str(e)}"
@@ -702,43 +721,43 @@ async def predict_compliance(
     """Predict compliance violations using advanced temporal analysis and drift detection."""
     start_time = time.time()
     request_id = request.get('request_id', str(uuid.uuid4()))
-    
+
     try:
         logger.info("compliance_prediction_started", request_id=request_id)
-        
+
         # Extract parameters
         resource_data = request.get('resource_data', {})
         horizon_hours = request.get('horizon_hours', 24)
-        
+
         # Perform compliance prediction
         prediction_results = await compliance_predictor.predict_compliance(
             resource_data=resource_data,
             horizon_hours=horizon_hours
         )
-        
+
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="compliance_predictor", status="success").inc()
         MODEL_INFERENCE_DURATION.labels(model_name="compliance_predictor").observe(duration)
-        
+
         logger.info("compliance_prediction_completed",
-                   request_id=request_id,
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request_id,
+                duration_ms=round(duration * 1000, 2))
+
         return APIResponse(
             success=True,
             data=prediction_results,
             message="Compliance prediction completed successfully"
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="compliance_predictor", status="error").inc()
-        
+
         logger.error("compliance_prediction_failed",
                     request_id=request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Compliance prediction failed: {str(e)}"
@@ -753,41 +772,41 @@ async def analyze_cross_domain_correlations(
     """Analyze cross-domain correlations with graph neural networks and impact prediction."""
     start_time = time.time()
     request_id = request.get('request_id', str(uuid.uuid4()))
-    
+
     try:
         logger.info("correlation_analysis_started", request_id=request_id)
-        
+
         # Extract governance data
         governance_data = request.get('governance_data', {})
-        
+
         # Perform correlation analysis
         correlation_results = await correlation_engine.analyze_governance_correlations(
             governance_data=governance_data
         )
-        
+
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="correlation_engine", status="success").inc()
         MODEL_INFERENCE_DURATION.labels(model_name="correlation_engine").observe(duration)
-        
+
         logger.info("correlation_analysis_completed",
-                   request_id=request_id,
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request_id,
+                duration_ms=round(duration * 1000, 2))
+
         return APIResponse(
             success=True,
             data=correlation_results,
             message="Cross-domain correlation analysis completed successfully"
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name="correlation_engine", status="error").inc()
-        
+
         logger.error("correlation_analysis_failed",
                     request_id=request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cross-domain correlation analysis failed: {str(e)}"
@@ -803,17 +822,17 @@ async def train_compliance_model(
     """Train the compliance prediction model with historical data."""
     try:
         logger.info("compliance_model_training_started")
-        
+
         # Extract training data
         historical_data = request.get('historical_data', {})
-        
+
         # Start training in background
         task_id = str(uuid.uuid4())
         background_tasks.add_task(
             compliance_predictor.train,
             historical_data
         )
-        
+
         return APIResponse(
             success=True,
             data={
@@ -823,7 +842,7 @@ async def train_compliance_model(
             },
             message="Training initiated successfully"
         )
-        
+
     except Exception as e:
         logger.error("compliance_model_training_failed", error=str(e))
         raise HTTPException(
@@ -840,37 +859,37 @@ async def detect_configuration_drift(
     """Detect configuration drift using VAE-based drift detection."""
     start_time = time.time()
     request_id = request.get('request_id', str(uuid.uuid4()))
-    
+
     try:
         logger.info("drift_detection_started", request_id=request_id)
-        
+
         # Extract current configuration
         current_config = request.get('current_config', {})
-        
+
         # Perform drift detection
         drift_results = await compliance_predictor.drift_detector.detect_drift(current_config)
-        
+
         duration = time.time() - start_time
-        
+
         logger.info("drift_detection_completed",
-                   request_id=request_id,
-                   drift_class=drift_results.get('drift_class'),
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request_id,
+                drift_class=drift_results.get('drift_class'),
+                duration_ms=round(duration * 1000, 2))
+
         return APIResponse(
             success=True,
             data=drift_results,
             message="Configuration drift detection completed"
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
-        
+
         logger.error("drift_detection_failed",
                     request_id=request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Drift detection failed: {str(e)}"
@@ -885,27 +904,29 @@ async def analyze_temporal_patterns(
     """Analyze temporal patterns in compliance data."""
     start_time = time.time()
     request_id = request.get('request_id', str(uuid.uuid4()))
-    
+
     try:
         logger.info("temporal_analysis_started", request_id=request_id)
-        
+
         # Extract time series data
         time_series_data = request.get('time_series', [])
-        
+
         if not time_series_data:
             raise ValueError("Time series data is required")
-        
+
         # Convert to pandas Series
         import pandas as pd
         ts_data = pd.Series(time_series_data)
-        
+
         # Perform temporal analysis
         decomposition = await compliance_predictor.pattern_analyzer.decompose_time_series(ts_data)
         motifs = await compliance_predictor.pattern_analyzer.discover_motifs(ts_data.values)
-        regime_changes = await compliance_predictor.pattern_analyzer.detect_regime_changes(ts_data.values)
-        
+        regime_changes = (
+            await compliance_predictor.pattern_analyzer.detect_regime_changes(ts_data.values)
+        )
+
         duration = time.time() - start_time
-        
+
         results = {
             'decomposition': decomposition,
             'motifs': motifs[:5],  # Return top 5 motifs
@@ -916,27 +937,27 @@ async def analyze_temporal_patterns(
                 'regime_changes_found': len(regime_changes)
             }
         }
-        
+
         logger.info("temporal_analysis_completed",
-                   request_id=request_id,
-                   motifs_found=len(motifs),
-                   regime_changes=len(regime_changes),
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request_id,
+                motifs_found=len(motifs),
+                regime_changes=len(regime_changes),
+                duration_ms=round(duration * 1000, 2))
+
         return APIResponse(
             success=True,
             data=results,
             message="Temporal pattern analysis completed"
         )
-        
+
     except Exception as e:
         duration = time.time() - start_time
-        
+
         logger.error("temporal_analysis_failed",
                     request_id=request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Temporal analysis failed: {str(e)}"
@@ -952,12 +973,12 @@ async def get_governance_insights(
     """Get comprehensive governance insights across domains."""
     try:
         logger.info("governance_insights_requested",
-                   domains=domains,
-                   time_range=time_range)
-        
+                domains=domains,
+                time_range=time_range)
+
         # Parse domains
         selected_domains = domains.split(',') if domains else ['policy', 'rbac', 'network', 'cost']
-        
+
         # Generate mock insights (in production, this would query real data)
         insights = {
             'summary': {
@@ -993,7 +1014,7 @@ async def get_governance_insights(
                 }
             ]
         }
-        
+
         # Add domain-specific insights
         for domain in selected_domains:
             insights['domain_insights'][domain] = {
@@ -1002,13 +1023,13 @@ async def get_governance_insights(
                 'recent_changes': np.random.randint(5, 25),
                 'alerts': np.random.randint(0, 5)
             }
-        
+
         return APIResponse(
             success=True,
             data=insights,
             message="Governance insights retrieved successfully"
         )
-        
+
     except Exception as e:
         logger.error("governance_insights_failed", error=str(e))
         raise HTTPException(
@@ -1027,17 +1048,17 @@ async def trigger_automation_workflow(
     """Trigger an automation workflow based on an event."""
     try:
         logger.info("automation_workflow_trigger_requested",
-                   trigger_type=trigger_event.get('trigger_type'),
-                   workflow_id=workflow_id)
-        
+                trigger_type=trigger_event.get('trigger_type'),
+                workflow_id=workflow_id)
+
         # Add user context to trigger event
         if user:
             trigger_event['triggered_by'] = user.get('id')
             trigger_event['user_permissions'] = user.get('permissions', [])
-        
+
         # Trigger workflow
         execution_id = await workflow_engine.trigger_workflow(trigger_event, workflow_id)
-        
+
         if execution_id:
             return APIResponse(
                 success=True,
@@ -1054,7 +1075,7 @@ async def trigger_automation_workflow(
                 data={},
                 message="No matching workflow found or conditions not met"
             )
-        
+
     except Exception as e:
         logger.error("automation_trigger_failed", error=str(e))
         raise HTTPException(
@@ -1071,7 +1092,7 @@ async def get_automation_execution_status(
     """Get the status of an automation workflow execution."""
     try:
         execution_status = await workflow_engine.get_execution_status(execution_id)
-        
+
         if execution_status:
             return APIResponse(
                 success=True,
@@ -1083,7 +1104,7 @@ async def get_automation_execution_status(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Execution not found: {execution_id}"
             )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1102,7 +1123,7 @@ async def cancel_automation_execution(
     """Cancel a running automation workflow execution."""
     try:
         success = await workflow_engine.cancel_execution(execution_id)
-        
+
         if success:
             return APIResponse(
                 success=True,
@@ -1114,7 +1135,7 @@ async def cancel_automation_execution(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Execution not found or cannot be cancelled: {execution_id}"
             )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1132,7 +1153,7 @@ async def list_automation_workflows(
     """List all available automation workflows."""
     try:
         workflows = []
-        
+
         for workflow_id, workflow in workflow_engine.workflow_registry.items():
             workflows.append({
                 'workflow_id': workflow.workflow_id,
@@ -1145,13 +1166,13 @@ async def list_automation_workflows(
                 'created_at': workflow.created_at.isoformat(),
                 'created_by': workflow.created_by
             })
-        
+
         return APIResponse(
             success=True,
             data={'workflows': workflows, 'total_count': len(workflows)},
             message="Workflows retrieved successfully"
         )
-        
+
     except Exception as e:
         logger.error("list_workflows_failed", error=str(e))
         raise HTTPException(
@@ -1167,13 +1188,13 @@ async def get_automation_analytics(
     """Get automation analytics and metrics."""
     try:
         analytics = await workflow_engine.get_workflow_analytics()
-        
+
         return APIResponse(
             success=True,
             data=analytics,
             message="Automation analytics retrieved successfully"
         )
-        
+
     except Exception as e:
         logger.error("get_automation_analytics_failed", error=str(e))
         raise HTTPException(
@@ -1191,9 +1212,9 @@ async def simulate_automation_workflow(
     """Simulate an automation workflow without executing actions."""
     try:
         logger.info("automation_simulation_requested",
-                   trigger_type=trigger_event.get('trigger_type'),
-                   workflow_id=workflow_id)
-        
+                trigger_type=trigger_event.get('trigger_type'),
+                workflow_id=workflow_id)
+
         # Find appropriate workflow
         if workflow_id:
             workflow = workflow_engine.workflow_registry.get(workflow_id)
@@ -1209,17 +1230,20 @@ async def simulate_automation_workflow(
                 if w.trigger == trigger_type:
                     workflow = w
                     break
-            
+
             if not workflow:
                 return APIResponse(
                     success=False,
                     data={},
                     message="No matching workflow found for trigger"
                 )
-        
+
         # Check conditions
-        conditions_met = await workflow_engine._evaluate_conditions(workflow.conditions, trigger_event)
-        
+        conditions_met = await workflow_engine._evaluate_conditions(
+            workflow.conditions,
+            trigger_event
+        )
+
         # Simulate execution plan
         simulation_result = {
             'workflow_id': workflow.workflow_id,
@@ -1241,16 +1265,19 @@ async def simulate_automation_workflow(
             'risk_assessment': {
                 'rollback_available': workflow.auto_rollback,
                 'approval_required': workflow.approval_required,
-                'high_risk_actions': len([a for a in workflow.actions if a.priority.value in ['critical', 'high']])
+                'high_risk_actions': len(
+                    [a for a in workflow.actions if a.priority.value in ['critical',
+                    'high']]
+                )
             }
         }
-        
+
         return APIResponse(
             success=True,
             data=simulation_result,
             message="Workflow simulation completed successfully"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1270,43 +1297,43 @@ async def analyze_cross_domain_correlations(
     """Analyze cross-domain correlations using Graph Neural Networks."""
     start_time = time.time()
     request_id = governance_data.get('request_id', str(uuid.uuid4()))
-    
+
     try:
         logger.info("gnn_correlation_analysis_started", request_id=request_id)
-        
+
         # Analyze correlations using GNN
         correlation_results = await gnn_service.analyze_governance_correlations(governance_data)
-        
+
         duration = time.time() - start_time
-        
+
         # Update metrics
         MODEL_INFERENCE_COUNT.labels(model_name='cross_domain_gnn', status='success').inc()
         MODEL_INFERENCE_DURATION.labels(model_name='cross_domain_gnn').observe(duration)
-        
+
         logger.info("gnn_correlation_analysis_completed",
-                   request_id=request_id,
-                   correlations_found=len(correlation_results.get('correlations', [])),
-                   impacts_predicted=len(correlation_results.get('impacts', [])),
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request_id,
+                correlations_found=len(correlation_results.get('correlations', [])),
+                impacts_predicted=len(correlation_results.get('impacts', [])),
+                duration_ms=round(duration * 1000, 2))
+
         return APIResponse(
             success=True,
             data=correlation_results,
             message="Cross-domain correlation analysis completed"
         )
-        
+
     except HTTPException:
         MODEL_INFERENCE_COUNT.labels(model_name='cross_domain_gnn', status='error').inc()
         raise
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name='cross_domain_gnn', status='error').inc()
-        
+
         logger.error("gnn_correlation_analysis_failed",
                     request_id=request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Cross-domain correlation analysis failed: {str(e)}"
@@ -1322,44 +1349,47 @@ async def predict_governance_impacts(
     """Predict impacts of governance changes using GNN analysis."""
     start_time = time.time()
     request_id = change_scenario.get('request_id', str(uuid.uuid4()))
-    
+
     try:
         logger.info("gnn_impact_prediction_started", request_id=request_id)
-        
+
         # Predict impacts using GNN
-        impact_results = await gnn_service.predict_governance_impacts(change_scenario, current_state)
-        
+        impact_results = await gnn_service.predict_governance_impacts(
+            change_scenario,
+            current_state
+        )
+
         duration = time.time() - start_time
-        
+
         # Update metrics
         MODEL_INFERENCE_COUNT.labels(model_name='impact_prediction_gnn', status='success').inc()
         MODEL_INFERENCE_DURATION.labels(model_name='impact_prediction_gnn').observe(duration)
-        
+
         logger.info("gnn_impact_prediction_completed",
-                   request_id=request_id,
-                   predicted_impacts=len(impact_results.get('predicted_impacts', [])),
-                   affected_domains=len(impact_results.get('affected_domains', [])),
-                   confidence_score=impact_results.get('confidence_score', 0),
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request_id,
+                predicted_impacts=len(impact_results.get('predicted_impacts', [])),
+                affected_domains=len(impact_results.get('affected_domains', [])),
+                confidence_score=impact_results.get('confidence_score', 0),
+                duration_ms=round(duration * 1000, 2))
+
         return APIResponse(
             success=True,
             data=impact_results,
             message="Governance impact prediction completed"
         )
-        
+
     except HTTPException:
         MODEL_INFERENCE_COUNT.labels(model_name='impact_prediction_gnn', status='error').inc()
         raise
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name='impact_prediction_gnn', status='error').inc()
-        
+
         logger.error("gnn_impact_prediction_failed",
                     request_id=request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Governance impact prediction failed: {str(e)}"
@@ -1374,20 +1404,23 @@ async def get_domain_relationships(
     """Get relationships between governance domains using GNN analysis."""
     try:
         logger.info("gnn_domain_relationships_requested", domain_focus=domain_focus)
-        
+
         # Analyze domain relationships
         relationship_results = await gnn_service.get_domain_relationships(domain_focus)
-        
+
         logger.info("gnn_domain_relationships_completed",
-                   domain_focus=domain_focus,
-                   correlations_found=len(relationship_results.get('cross_domain_correlations', [])))
-        
+                domain_focus=domain_focus,
+                correlations_found=len(
+                    relationship_results.get('cross_domain_correlations',
+                    []))
+                )
+
         return APIResponse(
             success=True,
             data=relationship_results,
             message="Domain relationship analysis completed"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1406,9 +1439,9 @@ async def train_gnn_model(
 ):
     """Train or retrain the GNN model with new data."""
     try:
-        logger.info("gnn_model_training_started", 
-                   training_samples=len(training_data.get('samples', [])))
-        
+        logger.info("gnn_model_training_started",
+                training_samples=len(training_data.get('samples', [])))
+
         # Extract training samples
         samples = training_data.get('samples', [])
         if not samples:
@@ -1416,19 +1449,19 @@ async def train_gnn_model(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Training samples are required"
             )
-        
+
         # Start training in background
         background_tasks.add_task(
             gnn_service.train_model_with_data,
             samples
         )
-        
+
         return APIResponse(
             success=True,
             data={'status': 'training_started', 'sample_count': len(samples)},
             message="GNN model training started in background"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1446,13 +1479,13 @@ async def get_gnn_health(
     """Get health status and performance metrics of the GNN model."""
     try:
         health_status = await gnn_service.get_model_health()
-        
+
         return APIResponse(
             success=True,
             data=health_status,
             message="GNN health status retrieved"
         )
-        
+
     except Exception as e:
         logger.error("gnn_health_check_failed", error=str(e))
         raise HTTPException(
@@ -1469,25 +1502,25 @@ async def process_real_time_governance_stream(
     """Process real-time governance data stream for correlation detection."""
     try:
         logger.info("gnn_real_time_processing_started",
-                   stream_type=stream_data.get('stream_type'))
-        
+                stream_type=stream_data.get('stream_type'))
+
         # Process stream data
         governance_data = stream_data.get('governance_data', {})
-        
+
         # Perform real-time correlation analysis
         correlation_results = await gnn_service.analyze_governance_correlations(governance_data)
-        
+
         # Filter for high-confidence, high-impact correlations
         high_priority_correlations = [
             corr for corr in correlation_results.get('correlations', [])
             if corr.get('correlation_score', 0) > 0.8
         ]
-        
+
         high_impact_predictions = [
             impact for impact in correlation_results.get('impacts', [])
             if impact.get('impact_probability', 0) > 0.7
         ]
-        
+
         stream_results = {
             'timestamp': datetime.now().isoformat(),
             'stream_type': stream_data.get('stream_type'),
@@ -1496,18 +1529,18 @@ async def process_real_time_governance_stream(
             'alert_count': len(high_priority_correlations) + len(high_impact_predictions),
             'processing_latency_ms': stream_data.get('processing_latency_ms', 0)
         }
-        
+
         logger.info("gnn_real_time_processing_completed",
-                   alert_count=stream_results['alert_count'],
-                   correlations=len(high_priority_correlations),
-                   impacts=len(high_impact_predictions))
-        
+                alert_count=stream_results['alert_count'],
+                correlations=len(high_priority_correlations),
+                impacts=len(high_impact_predictions))
+
         return APIResponse(
             success=True,
             data=stream_results,
             message="Real-time governance stream processed"
         )
-        
+
     except Exception as e:
         logger.error("gnn_real_time_processing_failed", error=str(e))
         raise HTTPException(
@@ -1525,44 +1558,46 @@ async def process_conversation_message(
     """Process conversational AI message and return intelligent response."""
     start_time = time.time()
     request_id = message_data.get('request_id', str(uuid.uuid4()))
-    
+
     try:
-        logger.info("conversational_ai_message_started", 
-                   request_id=request_id,
-                   user_input_length=len(message_data.get('user_input', '')))
-        
+        logger.info("conversational_ai_message_started",
+                request_id=request_id,
+                user_input_length=len(message_data.get('user_input', '')))
+
         # Extract message parameters
         user_input = message_data.get('user_input', '')
         conversation_id = message_data.get('conversation_id')
         user_id = user.get('id', 'anonymous') if user else 'anonymous'
-        
+
         if not user_input.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User input is required"
             )
-        
+
         # Process conversation
         conversation_response = await conversational_ai_service.process_conversation(
             user_input=user_input,
             conversation_id=conversation_id,
             user_id=user_id
         )
-        
+
         duration = time.time() - start_time
-        
+
         # Update metrics
         MODEL_INFERENCE_COUNT.labels(model_name='conversational_ai', status='success').inc()
         MODEL_INFERENCE_DURATION.labels(model_name='conversational_ai').observe(duration)
-        
+
         logger.info("conversational_ai_message_completed",
-                   request_id=request_id,
-                   conversation_id=conversation_response.conversation_id,
-                   intent_type=conversation_response.intent_type.value if conversation_response.intent_type else None,
-                   confidence_score=conversation_response.confidence_score,
-                   next_state=conversation_response.next_state.value,
-                   duration_ms=round(duration * 1000, 2))
-        
+                request_id=request_id,
+                conversation_id=conversation_response.conversation_id,
+                intent_type = (
+                    conversation_response.intent_type.value if conversation_response.intent_type else None,
+                )
+                confidence_score=conversation_response.confidence_score,
+                next_state=conversation_response.next_state.value,
+                duration_ms=round(duration * 1000, 2))
+
         return APIResponse(
             success=True,
             data={
@@ -1579,19 +1614,19 @@ async def process_conversation_message(
             },
             message="Conversation processed successfully"
         )
-        
+
     except HTTPException:
         MODEL_INFERENCE_COUNT.labels(model_name='conversational_ai', status='error').inc()
         raise
     except Exception as e:
         duration = time.time() - start_time
         MODEL_INFERENCE_COUNT.labels(model_name='conversational_ai', status='error').inc()
-        
+
         logger.error("conversational_ai_message_failed",
                     request_id=request_id,
                     error=str(e),
                     duration_ms=round(duration * 1000, 2))
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Conversation processing failed: {str(e)}"
@@ -1606,9 +1641,9 @@ async def get_conversation_history(
     """Get conversation history for a specific conversation."""
     try:
         logger.info("conversation_history_requested", conversation_id=conversation_id)
-        
+
         history = await conversational_ai_service.get_conversation_history(conversation_id)
-        
+
         return APIResponse(
             success=True,
             data={
@@ -1618,9 +1653,9 @@ async def get_conversation_history(
             },
             message="Conversation history retrieved successfully"
         )
-        
+
     except Exception as e:
-        logger.error("conversation_history_failed", 
+        logger.error("conversation_history_failed",
                     conversation_id=conversation_id,
                     error=str(e))
         raise HTTPException(
@@ -1637,9 +1672,9 @@ async def end_conversation(
     """End and cleanup a conversation."""
     try:
         logger.info("conversation_end_requested", conversation_id=conversation_id)
-        
+
         success = await conversational_ai_service.end_conversation(conversation_id)
-        
+
         if success:
             return APIResponse(
                 success=True,
@@ -1651,7 +1686,7 @@ async def end_conversation(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Conversation not found: {conversation_id}"
             )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1673,15 +1708,15 @@ async def batch_process_conversations(
     """Process multiple conversation messages in batch."""
     try:
         logger.info("batch_conversation_processing_started",
-                   batch_size=len(batch_data.get('messages', [])))
-        
+                batch_size=len(batch_data.get('messages', [])))
+
         messages = batch_data.get('messages', [])
         if not messages:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Messages array is required"
             )
-        
+
         # Process messages in parallel
         async def process_message_batch(messages):
             results = []
@@ -1709,11 +1744,11 @@ async def batch_process_conversations(
                         'error': str(e)
                     })
             return results
-        
+
         # Start batch processing in background
         task_id = str(uuid.uuid4())
         background_tasks.add_task(process_message_batch, messages)
-        
+
         return APIResponse(
             success=True,
             data={
@@ -1723,7 +1758,7 @@ async def batch_process_conversations(
             },
             message="Batch conversation processing started"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1742,7 +1777,7 @@ async def get_conversation_analytics(
     """Get conversation analytics and insights."""
     try:
         logger.info("conversation_analytics_requested", time_range=time_range)
-        
+
         # Generate analytics (would be based on real data in production)
         analytics = {
             'summary': {
@@ -1787,13 +1822,13 @@ async def get_conversation_analytics(
                 'response_relevance_score': 0.876
             }
         }
-        
+
         return APIResponse(
             success=True,
             data=analytics,
             message="Conversation analytics retrieved successfully"
         )
-        
+
     except Exception as e:
         logger.error("conversation_analytics_failed", error=str(e))
         raise HTTPException(
@@ -1810,21 +1845,21 @@ async def submit_conversation_feedback(
     """Submit feedback for conversation quality improvement."""
     try:
         logger.info("conversation_feedback_submitted",
-                   conversation_id=feedback_data.get('conversation_id'),
-                   rating=feedback_data.get('rating'))
-        
+                conversation_id=feedback_data.get('conversation_id'),
+                rating=feedback_data.get('rating'))
+
         # Extract feedback data
         conversation_id = feedback_data.get('conversation_id')
         rating = feedback_data.get('rating')  # 1-5 scale
         feedback_text = feedback_data.get('feedback_text', '')
         feedback_categories = feedback_data.get('categories', [])
-        
+
         if not conversation_id or rating is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Conversation ID and rating are required"
             )
-        
+
         # Process and store feedback (would integrate with feedback storage)
         feedback_record = {
             'conversation_id': conversation_id,
@@ -1835,10 +1870,10 @@ async def submit_conversation_feedback(
             'timestamp': datetime.now().isoformat(),
             'processed': False
         }
-        
+
         # In production, this would be stored in a database
         logger.info("conversation_feedback_recorded", feedback_record=feedback_record)
-        
+
         return APIResponse(
             success=True,
             data={
@@ -1848,7 +1883,7 @@ async def submit_conversation_feedback(
             },
             message="Feedback submitted successfully"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1897,19 +1932,19 @@ async def get_conversational_ai_health(
             },
             'last_health_check': datetime.now().isoformat()
         }
-        
+
         # Determine overall health
         component_statuses = [comp['status'] for comp in health_status['components'].values()]
         overall_healthy = all(status in ['healthy', 'degraded'] for status in component_statuses)
-        
+
         health_status['service_status'] = 'healthy' if overall_healthy else 'unhealthy'
-        
+
         return APIResponse(
             success=True,
             data=health_status,
             message="Conversational AI health status retrieved"
         )
-        
+
     except Exception as e:
         logger.error("conversational_ai_health_check_failed", error=str(e))
         raise HTTPException(
@@ -1919,10 +1954,10 @@ async def get_conversational_ai_health(
 
 
 # Multi-Objective Optimization endpoints (Patent 2)
-@app.post("/api/v1/optimization/multi-objective", 
-          response_model=APIResponse,
-          status_code=status.HTTP_200_OK,
-          tags=["optimization"])
+@app.post("/api/v1/optimization/multi-objective",
+        response_model=APIResponse,
+        status_code=status.HTTP_200_OK,
+        tags=["optimization"])
 async def run_multi_objective_optimization(
     request: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -1930,10 +1965,10 @@ async def run_multi_objective_optimization(
 ):
     """Run multi-objective optimization for governance scenarios."""
     request_id = str(uuid.uuid4())
-    
+
     try:
         logger.info("multi_objective_optimization_request", request_id=request_id)
-        
+
         # Extract parameters
         objectives = []
         for obj_data in request.get('objectives', []):
@@ -1945,7 +1980,7 @@ async def run_multi_objective_optimization(
                 target_value=obj_data.get('target_value'),
                 importance=obj_data.get('importance', 1.0)
             ))
-        
+
         constraints = []
         for constr_data in request.get('constraints', []):
             from .services.multi_objective_optimizer import Constraint, ConstraintType
@@ -1957,11 +1992,11 @@ async def run_multi_objective_optimization(
                 is_hard=constr_data.get('is_hard', True),
                 penalty_weight=constr_data.get('penalty_weight', 1.0)
             ))
-        
+
         decision_variables = request.get('decision_variables', {})
         algorithm = request.get('algorithm', 'nsga2')
         selection_method = request.get('selection_method', 'weighted_sum')
-        
+
         # Run optimization
         result = await multi_objective_optimizer.optimize(
             objectives=objectives,
@@ -1972,7 +2007,7 @@ async def run_multi_objective_optimization(
             max_generations=request.get('max_generations', 100),
             population_size=request.get('population_size', 100)
         )
-        
+
         return APIResponse(
             status="success",
             data={
@@ -1984,7 +2019,7 @@ async def run_multi_objective_optimization(
             },
             message="Multi-objective optimization completed successfully"
         )
-        
+
     except Exception as e:
         logger.error("multi_objective_optimization_failed", error=str(e))
         raise HTTPException(
@@ -1994,8 +2029,8 @@ async def run_multi_objective_optimization(
 
 
 @app.get("/api/v1/optimization/history",
-         response_model=APIResponse,
-         tags=["optimization"])
+        response_model=APIResponse,
+        tags=["optimization"])
 async def get_optimization_history(
     limit: int = 10,
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2003,7 +2038,7 @@ async def get_optimization_history(
     """Get optimization history."""
     try:
         history = await multi_objective_optimizer.get_optimization_history(limit=limit)
-        
+
         return APIResponse(
             status="success",
             data={
@@ -2019,7 +2054,7 @@ async def get_optimization_history(
             },
             message="Optimization history retrieved"
         )
-        
+
     except Exception as e:
         logger.error("get_optimization_history_failed", error=str(e))
         raise HTTPException(
@@ -2029,8 +2064,8 @@ async def get_optimization_history(
 
 
 @app.post("/api/v1/optimization/apply/{solution_id}",
-          response_model=APIResponse,
-          tags=["optimization"])
+        response_model=APIResponse,
+        tags=["optimization"])
 async def apply_optimization_solution(
     solution_id: str,
     dry_run: bool = True,
@@ -2042,13 +2077,13 @@ async def apply_optimization_solution(
             solution_id=solution_id,
             dry_run=dry_run
         )
-        
+
         return APIResponse(
             status="success",
             data=result,
             message=f"Solution {'preview' if dry_run else 'applied'} successfully"
         )
-        
+
     except Exception as e:
         logger.error("apply_optimization_solution_failed", error=str(e))
         raise HTTPException(
@@ -2059,8 +2094,8 @@ async def apply_optimization_solution(
 
 # Automation Orchestrator endpoints (Patent 2)
 @app.post("/api/v1/automation/workflow",
-          response_model=APIResponse,
-          tags=["automation"])
+        response_model=APIResponse,
+        tags=["automation"])
 async def create_automation_workflow(
     workflow_data: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2068,7 +2103,7 @@ async def create_automation_workflow(
     """Create an automation workflow."""
     try:
         from .services.automation_orchestrator import AutomationWorkflow, TriggerType
-        
+
         # Parse workflow data
         workflow = AutomationWorkflow(
             workflow_id=workflow_data.get('workflow_id'),
@@ -2081,15 +2116,15 @@ async def create_automation_workflow(
             auto_rollback=workflow_data.get('auto_rollback', True),
             approval_required=workflow_data.get('approval_required', False)
         )
-        
+
         workflow_id = await automation_orchestrator.create_workflow(workflow)
-        
+
         return APIResponse(
             status="success",
             data={'workflow_id': workflow_id},
             message="Workflow created successfully"
         )
-        
+
     except Exception as e:
         logger.error("create_automation_workflow_failed", error=str(e))
         raise HTTPException(
@@ -2099,8 +2134,8 @@ async def create_automation_workflow(
 
 
 @app.post("/api/v1/automation/workflow/{workflow_id}/execute",
-          response_model=APIResponse,
-          tags=["automation"])
+        response_model=APIResponse,
+        tags=["automation"])
 async def execute_automation_workflow(
     workflow_id: str,
     parameters: Dict[str, Any] = {},
@@ -2112,13 +2147,13 @@ async def execute_automation_workflow(
             workflow_id=workflow_id,
             parameters=parameters
         )
-        
+
         return APIResponse(
             status="success",
             data={'execution_id': execution_id},
             message="Workflow execution started"
         )
-        
+
     except Exception as e:
         logger.error("execute_automation_workflow_failed", error=str(e))
         raise HTTPException(
@@ -2128,8 +2163,8 @@ async def execute_automation_workflow(
 
 
 @app.post("/api/v1/automation/optimize",
-          response_model=APIResponse,
-          tags=["automation"])
+        response_model=APIResponse,
+        tags=["automation"])
 async def trigger_optimization_workflow(
     objectives: List[str],
     constraints: List[str],
@@ -2143,13 +2178,13 @@ async def trigger_optimization_workflow(
             constraints=constraints,
             parameters=parameters
         )
-        
+
         return APIResponse(
             status="success",
             data={'execution_id': execution_id},
             message="Optimization workflow triggered"
         )
-        
+
     except Exception as e:
         logger.error("trigger_optimization_workflow_failed", error=str(e))
         raise HTTPException(
@@ -2159,8 +2194,8 @@ async def trigger_optimization_workflow(
 
 
 @app.get("/api/v1/automation/workflow/{workflow_id}/status",
-         response_model=APIResponse,
-         tags=["automation"])
+        response_model=APIResponse,
+        tags=["automation"])
 async def get_workflow_status(
     workflow_id: str,
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2168,13 +2203,13 @@ async def get_workflow_status(
     """Get workflow status."""
     try:
         status_info = await automation_orchestrator.get_workflow_status(workflow_id)
-        
+
         return APIResponse(
             status="success",
             data=status_info,
             message="Workflow status retrieved"
         )
-        
+
     except Exception as e:
         logger.error("get_workflow_status_failed", error=str(e))
         raise HTTPException(
@@ -2193,13 +2228,13 @@ async def cancel_workflow_execution(
     """Cancel a workflow execution."""
     try:
         result = await automation_orchestrator.cancel_execution(execution_id)
-        
+
         return APIResponse(
             status="success",
             data=result,
             message="Execution cancelled"
         )
-        
+
     except Exception as e:
         logger.error("cancel_workflow_execution_failed", error=str(e))
         raise HTTPException(
@@ -2209,21 +2244,21 @@ async def cancel_workflow_execution(
 
 
 @app.get("/api/v1/automation/insights",
-         response_model=APIResponse,
-         tags=["automation"])
+        response_model=APIResponse,
+        tags=["automation"])
 async def get_optimization_insights(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """Get insights from optimization workflows."""
     try:
         insights = await automation_orchestrator.get_optimization_insights()
-        
+
         return APIResponse(
             status="success",
             data=insights,
             message="Optimization insights retrieved"
         )
-        
+
     except Exception as e:
         logger.error("get_optimization_insights_failed", error=str(e))
         raise HTTPException(
@@ -2234,8 +2269,8 @@ async def get_optimization_insights(
 
 # Conversational Governance Intelligence endpoints (Patent 3)
 @app.post("/api/v1/governance/conversation",
-          response_model=APIResponse,
-          tags=["governance"])
+        response_model=APIResponse,
+        tags=["governance"])
 async def process_governance_conversation(
     request: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2246,7 +2281,7 @@ async def process_governance_conversation(
         input_text = request.get('input_text', '')
         session_id = request.get('session_id')
         user_context = request.get('user_context', {})
-        
+
         # Process conversation
         result = await governance_intelligence.process_conversation(
             user_id=user_id,
@@ -2254,13 +2289,13 @@ async def process_governance_conversation(
             session_id=session_id,
             user_context=user_context
         )
-        
+
         return APIResponse(
             status="success",
             data=result,
             message="Governance conversation processed successfully"
         )
-        
+
     except Exception as e:
         logger.error("governance_conversation_failed", error=str(e))
         raise HTTPException(
@@ -2270,8 +2305,8 @@ async def process_governance_conversation(
 
 
 @app.get("/api/v1/governance/conversation/{user_id}/insights",
-         response_model=APIResponse,
-         tags=["governance"])
+        response_model=APIResponse,
+        tags=["governance"])
 async def get_conversation_insights(
     user_id: str,
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2279,13 +2314,13 @@ async def get_conversation_insights(
     """Get conversation insights for a specific user."""
     try:
         insights = await governance_intelligence.get_conversation_insights(user_id)
-        
+
         return APIResponse(
             status="success",
             data=insights,
             message="Conversation insights retrieved"
         )
-        
+
     except Exception as e:
         logger.error("get_conversation_insights_failed", error=str(e))
         raise HTTPException(
@@ -2295,8 +2330,8 @@ async def get_conversation_insights(
 
 
 @app.post("/api/v1/governance/analytics/conversation",
-          response_model=APIResponse,
-          tags=["governance"])
+        response_model=APIResponse,
+        tags=["governance"])
 async def analyze_conversations(
     request: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2305,24 +2340,24 @@ async def analyze_conversations(
     try:
         conversations = request.get('conversations', [])
         analysis_types = request.get('analysis_types', [])
-        
+
         # Convert string analysis types to enum
         from .services.conversation_analytics import AnalyticsType
         if analysis_types:
             analysis_types = [AnalyticsType(at) for at in analysis_types]
-        
+
         # Perform analytics
         results = await conversation_analytics.analyze_conversations(
             conversations=conversations,
             analysis_types=analysis_types
         )
-        
+
         return APIResponse(
             status="success",
             data=results,
             message="Conversation analytics completed"
         )
-        
+
     except Exception as e:
         logger.error("conversation_analytics_failed", error=str(e))
         raise HTTPException(
@@ -2332,8 +2367,8 @@ async def analyze_conversations(
 
 
 @app.get("/api/v1/governance/analytics/flow",
-         response_model=APIResponse,
-         tags=["governance"])
+        response_model=APIResponse,
+        tags=["governance"])
 async def get_conversation_flow_analysis(
     limit: int = 100,
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2358,13 +2393,13 @@ async def get_conversation_flow_analysis(
                 "Implement conversation tracking to enable flow optimization"
             ]
         }
-        
+
         return APIResponse(
             status="success",
             data=sample_result,
             message="Conversation flow analysis retrieved"
         )
-        
+
     except Exception as e:
         logger.error("conversation_flow_analysis_failed", error=str(e))
         raise HTTPException(
@@ -2374,8 +2409,8 @@ async def get_conversation_flow_analysis(
 
 
 @app.get("/api/v1/governance/analytics/topics",
-         response_model=APIResponse,
-         tags=["governance"])
+        response_model=APIResponse,
+        tags=["governance"])
 async def get_topic_analysis(
     time_period: str = "7d",
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2413,13 +2448,13 @@ async def get_topic_analysis(
             'time_period': time_period,
             'analysis_date': datetime.now().isoformat()
         }
-        
+
         return APIResponse(
             status="success",
             data=sample_topics,
             message="Topic analysis retrieved"
         )
-        
+
     except Exception as e:
         logger.error("topic_analysis_failed", error=str(e))
         raise HTTPException(
@@ -2429,8 +2464,8 @@ async def get_topic_analysis(
 
 
 @app.get("/api/v1/governance/analytics/knowledge-gaps",
-         response_model=APIResponse,
-         tags=["governance"])
+        response_model=APIResponse,
+        tags=["governance"])
 async def get_knowledge_gaps(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -2469,13 +2504,13 @@ async def get_knowledge_gaps(
                 'Regular knowledge base reviews and updates'
             ]
         }
-        
+
         return APIResponse(
             status="success",
             data=sample_gaps,
             message="Knowledge gaps identified"
         )
-        
+
     except Exception as e:
         logger.error("knowledge_gaps_analysis_failed", error=str(e))
         raise HTTPException(
@@ -2485,8 +2520,8 @@ async def get_knowledge_gaps(
 
 
 @app.get("/api/v1/governance/health",
-         response_model=APIResponse,
-         tags=["governance"])
+        response_model=APIResponse,
+        tags=["governance"])
 async def get_governance_intelligence_health(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -2501,7 +2536,8 @@ async def get_governance_intelligence_health(
             },
             'metrics': {
                 'active_sessions': len(governance_intelligence.active_sessions) if governance_intelligence._initialized else 0,
-                'knowledge_articles': len(governance_intelligence.knowledge_base.knowledge_store) if governance_intelligence._initialized and governance_intelligence.knowledge_base._initialized else 0,
+                'knowledge_articles': len(governance_intelligence.knowledge_base.knowledge_store) if governance_intelligence._initialized and
+                    governance_intelligence.knowledge_base._initialized else 0,
                 'cached_analytics': 'available'
             },
             'status': 'healthy' if all([
@@ -2509,13 +2545,13 @@ async def get_governance_intelligence_health(
                 conversation_analytics._initialized
             ]) else 'degraded'
         }
-        
+
         return APIResponse(
             status="success",
             data=health_status,
             message="Governance intelligence health status retrieved"
         )
-        
+
     except Exception as e:
         logger.error("governance_health_check_failed", error=str(e))
         raise HTTPException(
@@ -2526,8 +2562,8 @@ async def get_governance_intelligence_health(
 
 # Cross-Domain Correlation Engine endpoints (Patent 4)
 @app.post("/api/v1/correlation/analyze",
-          response_model=APIResponse,
-          tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def analyze_cross_domain_correlations(
     request: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2535,11 +2571,11 @@ async def analyze_cross_domain_correlations(
     """Perform cross-domain correlation analysis."""
     try:
         logger.info("correlation_analysis_started")
-        
+
         # Extract events from request
         events_data = request.get('events', [])
         correlation_types = request.get('correlation_types', [])
-        
+
         # Convert events data to CorrelationEvent objects
         from .services.cross_domain_correlator import CorrelationEvent, DomainType, CorrelationType
         events = []
@@ -2554,23 +2590,23 @@ async def analyze_cross_domain_correlations(
                 metadata=event_data.get('metadata', {})
             )
             events.append(event)
-        
+
         # Convert correlation types
         if correlation_types:
             correlation_types = [CorrelationType(ct) for ct in correlation_types]
-        
+
         # Perform correlation analysis
         results = await cross_domain_correlator.analyze_correlations(
             events=events,
             correlation_types=correlation_types
         )
-        
+
         return APIResponse(
             status="success",
             data=results,
             message="Cross-domain correlation analysis completed"
         )
-        
+
     except Exception as e:
         logger.error("correlation_analysis_failed", error=str(e))
         raise HTTPException(
@@ -2580,8 +2616,8 @@ async def analyze_cross_domain_correlations(
 
 
 @app.get("/api/v1/correlation/patterns",
-         response_model=APIResponse,
-         tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def get_correlation_patterns(
     correlation_type: Optional[str] = None,
     min_confidence: float = 0.0,
@@ -2591,18 +2627,18 @@ async def get_correlation_patterns(
     """Get discovered correlation patterns."""
     try:
         from .services.cross_domain_correlator import CorrelationType
-        
+
         # Convert correlation type
         correlation_type_enum = None
         if correlation_type:
             correlation_type_enum = CorrelationType(correlation_type)
-        
+
         patterns = await cross_domain_correlator.get_correlation_patterns(
             correlation_type=correlation_type_enum,
             min_confidence=min_confidence,
             limit=limit
         )
-        
+
         # Convert patterns to dictionaries
         pattern_data = []
         for pattern in patterns:
@@ -2620,7 +2656,7 @@ async def get_correlation_patterns(
                 'metadata': pattern.metadata
             }
             pattern_data.append(pattern_dict)
-        
+
         return APIResponse(
             status="success",
             data={
@@ -2629,7 +2665,7 @@ async def get_correlation_patterns(
             },
             message="Correlation patterns retrieved"
         )
-        
+
     except Exception as e:
         logger.error("get_correlation_patterns_failed", error=str(e))
         raise HTTPException(
@@ -2639,8 +2675,8 @@ async def get_correlation_patterns(
 
 
 @app.get("/api/v1/correlation/insights",
-         response_model=APIResponse,
-         tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def get_correlation_insights(
     priority: Optional[str] = None,
     category: Optional[str] = None,
@@ -2654,7 +2690,7 @@ async def get_correlation_insights(
             category=category,
             limit=limit
         )
-        
+
         # Convert insights to dictionaries
         insight_data = []
         for insight in insights:
@@ -2674,7 +2710,7 @@ async def get_correlation_insights(
                 'metadata': insight.metadata
             }
             insight_data.append(insight_dict)
-        
+
         return APIResponse(
             status="success",
             data={
@@ -2683,7 +2719,7 @@ async def get_correlation_insights(
             },
             message="Correlation insights retrieved"
         )
-        
+
     except Exception as e:
         logger.error("get_correlation_insights_failed", error=str(e))
         raise HTTPException(
@@ -2693,8 +2729,8 @@ async def get_correlation_insights(
 
 
 @app.get("/api/v1/correlation/domain/{domain}/summary",
-         response_model=APIResponse,
-         tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def get_domain_correlation_summary(
     domain: str,
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2702,16 +2738,16 @@ async def get_domain_correlation_summary(
     """Get correlation summary for a specific domain."""
     try:
         from .services.cross_domain_correlator import DomainType
-        
+
         domain_enum = DomainType(domain)
         summary = await cross_domain_correlator.get_domain_correlation_summary(domain_enum)
-        
+
         return APIResponse(
             status="success",
             data=summary,
             message=f"Domain correlation summary for {domain} retrieved"
         )
-        
+
     except Exception as e:
         logger.error("get_domain_correlation_summary_failed", error=str(e))
         raise HTTPException(
@@ -2721,8 +2757,8 @@ async def get_domain_correlation_summary(
 
 
 @app.post("/api/v1/correlation/temporal",
-          response_model=APIResponse,
-          tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def analyze_temporal_correlations(
     request: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2732,7 +2768,7 @@ async def analyze_temporal_correlations(
         # Extract events
         events_data = request.get('events', [])
         window_size = request.get('window_size', 3600)  # 1 hour default
-        
+
         from .services.cross_domain_correlator import CorrelationEvent, DomainType
         events = []
         for event_data in events_data:
@@ -2746,10 +2782,12 @@ async def analyze_temporal_correlations(
                 metadata=event_data.get('metadata', {})
             )
             events.append(event)
-        
+
         # Analyze temporal correlations
-        temporal_patterns = await cross_domain_correlator.temporal_analyzer.analyze_temporal_correlations(events)
-        
+        temporal_patterns = (
+            await cross_domain_correlator.temporal_analyzer.analyze_temporal_correlations(events)
+        )
+
         # Convert patterns to dictionaries
         pattern_data = []
         for pattern in temporal_patterns:
@@ -2763,7 +2801,7 @@ async def analyze_temporal_correlations(
                 'event_count': len(pattern.events)
             }
             pattern_data.append(pattern_dict)
-        
+
         return APIResponse(
             status="success",
             data={
@@ -2773,7 +2811,7 @@ async def analyze_temporal_correlations(
             },
             message="Temporal correlation analysis completed"
         )
-        
+
     except Exception as e:
         logger.error("temporal_correlation_analysis_failed", error=str(e))
         raise HTTPException(
@@ -2783,8 +2821,8 @@ async def analyze_temporal_correlations(
 
 
 @app.post("/api/v1/correlation/causal",
-          response_model=APIResponse,
-          tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def analyze_causal_relationships(
     request: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2793,7 +2831,7 @@ async def analyze_causal_relationships(
     try:
         # Extract events
         events_data = request.get('events', [])
-        
+
         from .services.cross_domain_correlator import CorrelationEvent, DomainType
         events = []
         for event_data in events_data:
@@ -2807,10 +2845,12 @@ async def analyze_causal_relationships(
                 metadata=event_data.get('metadata', {})
             )
             events.append(event)
-        
+
         # Analyze causal relationships
-        causal_patterns = await cross_domain_correlator.causal_engine.infer_causal_relationships(events)
-        
+        causal_patterns = (
+            await cross_domain_correlator.causal_engine.infer_causal_relationships(events)
+        )
+
         # Convert patterns to dictionaries
         pattern_data = []
         for pattern in causal_patterns:
@@ -2824,7 +2864,7 @@ async def analyze_causal_relationships(
                 'event_count': len(pattern.events)
             }
             pattern_data.append(pattern_dict)
-        
+
         return APIResponse(
             status="success",
             data={
@@ -2833,7 +2873,7 @@ async def analyze_causal_relationships(
             },
             message="Causal relationship analysis completed"
         )
-        
+
     except Exception as e:
         logger.error("causal_analysis_failed", error=str(e))
         raise HTTPException(
@@ -2843,8 +2883,8 @@ async def analyze_causal_relationships(
 
 
 @app.post("/api/v1/correlation/anomaly",
-          response_model=APIResponse,
-          tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def detect_anomaly_correlations(
     request: Dict[str, Any],
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -2853,7 +2893,7 @@ async def detect_anomaly_correlations(
     try:
         # Extract events
         events_data = request.get('events', [])
-        
+
         from .services.cross_domain_correlator import CorrelationEvent, DomainType
         events = []
         for event_data in events_data:
@@ -2867,10 +2907,12 @@ async def detect_anomaly_correlations(
                 metadata=event_data.get('metadata', {})
             )
             events.append(event)
-        
+
         # Detect anomaly correlations
-        anomaly_patterns = await cross_domain_correlator.anomaly_detector.detect_anomaly_correlations(events)
-        
+        anomaly_patterns = (
+            await cross_domain_correlator.anomaly_detector.detect_anomaly_correlations(events)
+        )
+
         # Convert patterns to dictionaries
         pattern_data = []
         for pattern in anomaly_patterns:
@@ -2883,7 +2925,7 @@ async def detect_anomaly_correlations(
                 'anomaly_count': len(pattern.events)
             }
             pattern_data.append(pattern_dict)
-        
+
         return APIResponse(
             status="success",
             data={
@@ -2892,7 +2934,7 @@ async def detect_anomaly_correlations(
             },
             message="Anomaly correlation detection completed"
         )
-        
+
     except Exception as e:
         logger.error("anomaly_correlation_detection_failed", error=str(e))
         raise HTTPException(
@@ -2902,8 +2944,8 @@ async def detect_anomaly_correlations(
 
 
 @app.get("/api/v1/correlation/health",
-         response_model=APIResponse,
-         tags=["correlation"])
+        response_model=APIResponse,
+        tags=["correlation"])
 async def get_correlation_engine_health(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
@@ -2912,9 +2954,18 @@ async def get_correlation_engine_health(
         health_status = {
             'components': {
                 'correlation_engine': cross_domain_correlator._initialized,
-                'temporal_analyzer': cross_domain_correlator.temporal_analyzer._initialized if hasattr(cross_domain_correlator.temporal_analyzer, '_initialized') else True,
-                'causal_engine': cross_domain_correlator.causal_engine._initialized if hasattr(cross_domain_correlator.causal_engine, '_initialized') else True,
-                'anomaly_detector': cross_domain_correlator.anomaly_detector._initialized if hasattr(cross_domain_correlator.anomaly_detector, '_initialized') else True,
+                'temporal_analyzer': cross_domain_correlator.temporal_analyzer._initialized if hasattr(
+                    cross_domain_correlator.temporal_analyzer,
+                    '_initialized'
+                ) else True,
+                'causal_engine': cross_domain_correlator.causal_engine._initialized if hasattr(
+                    cross_domain_correlator.causal_engine,
+                    '_initialized'
+                ) else True,
+                'anomaly_detector': cross_domain_correlator.anomaly_detector._initialized if hasattr(
+                    cross_domain_correlator.anomaly_detector,
+                    '_initialized'
+                ) else True,
                 'gnn_model': cross_domain_correlator.gnn_model is not None
             },
             'metrics': {
@@ -2926,13 +2977,13 @@ async def get_correlation_engine_health(
             'status': 'healthy' if cross_domain_correlator._initialized else 'degraded',
             'last_health_check': datetime.now().isoformat()
         }
-        
+
         return APIResponse(
             status="success",
             data=health_status,
             message="Cross-domain correlation engine health status retrieved"
         )
-        
+
     except Exception as e:
         logger.error("correlation_health_check_failed", error=str(e))
         raise HTTPException(
@@ -2950,7 +3001,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         error=str(exc),
         request_id=getattr(request.state, "request_id", "unknown")
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
@@ -2963,7 +3014,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "main:app",
         host=settings.service.service_host,

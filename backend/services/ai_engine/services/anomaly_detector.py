@@ -37,7 +37,7 @@ class AnomalyResult:
 
 class AnomalyDetector:
     """Anomaly detection service for Azure resources."""
-    
+
     def __init__(self):
         self.settings = settings
         self.logs_client = None
@@ -46,7 +46,7 @@ class AnomalyDetector:
         self.baseline_cache = {}
         self.anomaly_thresholds = self._load_anomaly_thresholds()
         self.detection_rules = self._load_detection_rules()
-    
+
     def _load_anomaly_thresholds(self) -> Dict[str, Dict[str, float]]:
         """Load anomaly detection thresholds for different metrics."""
         return {
@@ -87,7 +87,7 @@ class AnomalyDetector:
                 "critical": 1.0  # 100% variance
             }
         }
-    
+
     def _load_detection_rules(self) -> Dict[str, Dict[str, Any]]:
         """Load detection rules for different anomaly types."""
         return {
@@ -125,57 +125,65 @@ class AnomalyDetector:
                 "features": ["policy_violations", "access_violations", "configuration_drift"]
             }
         }
-    
+
     async def initialize(self) -> None:
         """Initialize the anomaly detector."""
         try:
             logger.info("Initializing anomaly detector")
-            
+
             # Initialize Azure clients
             if self.settings.is_production():
                 await self._initialize_azure_clients()
-            
+
             # Initialize detection models
             await self._initialize_detection_models()
-            
+
             logger.info("Anomaly detector initialized successfully")
-            
+
         except Exception as e:
             logger.error("Anomaly detector initialization failed", error=str(e))
             raise
-    
+
     async def _initialize_azure_clients(self) -> None:
         """Initialize Azure clients for data collection."""
         try:
             self.azure_credential = DefaultAzureCredential()
-            
+
             # Initialize Azure Monitor Logs client
             self.logs_client = LogsQueryClient(self.azure_credential)
-            
+
             logger.info("Azure clients initialized for anomaly detection")
-            
+
         except Exception as e:
             logger.warning("Failed to initialize Azure clients", error=str(e))
-    
+
     async def _initialize_detection_models(self) -> None:
         """Initialize anomaly detection models."""
         try:
             # Initialize different detection models
             for detection_type, config in self.detection_rules.items():
                 if config["algorithm"] == "isolation_forest":
-                    self.detection_models[detection_type] = await self._create_isolation_forest_model(config)
+                    self.detection_models[detection_type] = (
+                        await self._create_isolation_forest_model(config)
+                    )
                 elif config["algorithm"] == "statistical":
-                    self.detection_models[detection_type] = await self._create_statistical_model(config)
+                    self.detection_models[detection_type] = (
+                        await self._create_statistical_model(config)
+                    )
                 elif config["algorithm"] == "rule_based":
-                    self.detection_models[detection_type] = await self._create_rule_based_model(config)
+                    self.detection_models[detection_type] = (
+                        await self._create_rule_based_model(config)
+                    )
                 elif config["algorithm"] == "time_series":
-                    self.detection_models[detection_type] = await self._create_time_series_model(config)
-            
+                    self.detection_models[detection_type] = (
+                        await self._create_time_series_model(config)
+                    )
+
             logger.info("Detection models initialized", model_count=len(self.detection_models))
-            
+
         except Exception as e:
             logger.error("Failed to initialize detection models", error=str(e))
-    
+
     async def _create_isolation_forest_model(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Create an Isolation Forest model for anomaly detection."""
         try:
@@ -190,13 +198,13 @@ class AnomalyDetector:
                 "trained": False,
                 "last_updated": datetime.utcnow()
             }
-            
+
             return model
-            
+
         except Exception as e:
             logger.error("Failed to create isolation forest model", error=str(e))
             raise
-    
+
     async def _create_statistical_model(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Create a statistical model for anomaly detection."""
         try:
@@ -209,13 +217,13 @@ class AnomalyDetector:
                 "baseline_stats": {},
                 "last_updated": datetime.utcnow()
             }
-            
+
             return model
-            
+
         except Exception as e:
             logger.error("Failed to create statistical model", error=str(e))
             raise
-    
+
     async def _create_rule_based_model(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Create a rule-based model for anomaly detection."""
         try:
@@ -226,13 +234,13 @@ class AnomalyDetector:
                 "rules": self._define_detection_rules(config.get("features", [])),
                 "last_updated": datetime.utcnow()
             }
-            
+
             return model
-            
+
         except Exception as e:
             logger.error("Failed to create rule-based model", error=str(e))
             raise
-    
+
     async def _create_time_series_model(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Create a time series model for anomaly detection."""
         try:
@@ -245,17 +253,17 @@ class AnomalyDetector:
                 "forecast_horizon": 24,  # hours
                 "last_updated": datetime.utcnow()
             }
-            
+
             return model
-            
+
         except Exception as e:
             logger.error("Failed to create time series model", error=str(e))
             raise
-    
+
     def _define_detection_rules(self, features: List[str]) -> List[Dict[str, Any]]:
         """Define detection rules for rule-based models."""
         rules = []
-        
+
         if "login_attempts" in features:
             rules.append({
                 "name": "excessive_login_attempts",
@@ -263,7 +271,7 @@ class AnomalyDetector:
                 "severity": "high",
                 "description": "Excessive login attempts detected"
             })
-        
+
         if "privilege_escalation" in features:
             rules.append({
                 "name": "unauthorized_privilege_escalation",
@@ -271,7 +279,7 @@ class AnomalyDetector:
                 "severity": "critical",
                 "description": "Unauthorized privilege escalation attempt"
             })
-        
+
         if "policy_violations" in features:
             rules.append({
                 "name": "policy_violation",
@@ -279,7 +287,7 @@ class AnomalyDetector:
                 "severity": "medium",
                 "description": "Policy violation detected"
             })
-        
+
         if "configuration_drift" in features:
             rules.append({
                 "name": "configuration_drift",
@@ -287,25 +295,25 @@ class AnomalyDetector:
                 "severity": "medium",
                 "description": "Configuration drift detected"
             })
-        
+
         return rules
-    
-    async def detect_anomalies(self, resource_data: Dict[str, Any], 
+
+    async def detect_anomalies(self, resource_data: Dict[str, Any],
                              detection_type: str, threshold: float) -> Dict[str, Any]:
         """Detect anomalies in resource data."""
         try:
-            logger.info("Starting anomaly detection", 
+            logger.info("Starting anomaly detection",
                        detection_type=detection_type,
                        threshold=threshold)
-            
+
             # Get detection model
             model = self.detection_models.get(detection_type)
             if not model:
                 raise ValueError(f"No model available for detection type: {detection_type}")
-            
+
             # Extract features from resource data
             features = await self._extract_features(resource_data, model["features"])
-            
+
             # Perform anomaly detection based on model type
             if model["type"] == "isolation_forest":
                 anomalies = await self._detect_isolation_forest(features, model, threshold)
@@ -317,26 +325,26 @@ class AnomalyDetector:
                 anomalies = await self._detect_time_series(features, model, threshold)
             else:
                 raise ValueError(f"Unknown model type: {model['type']}")
-            
+
             # Process and format results
             results = await self._process_anomalies(anomalies, resource_data)
-            
+
             logger.info("Anomaly detection completed",
                        detection_type=detection_type,
                        anomalies_found=len(results["anomalies"]))
-            
+
             return results
-            
+
         except Exception as e:
             logger.error("Anomaly detection failed", error=str(e))
             raise
-    
-    async def _extract_features(self, resource_data: Dict[str, Any], 
+
+    async def _extract_features(self, resource_data: Dict[str, Any],
                                feature_names: List[str]) -> Dict[str, Any]:
         """Extract features from resource data."""
         try:
             features = {}
-            
+
             for feature_name in feature_names:
                 if feature_name in resource_data:
                     features[feature_name] = resource_data[feature_name]
@@ -349,25 +357,25 @@ class AnomalyDetector:
                     else:
                         # Set default value
                         features[feature_name] = 0
-            
+
             return features
-            
+
         except Exception as e:
             logger.error("Feature extraction failed", error=str(e))
             return {}
-    
-    async def _detect_isolation_forest(self, features: Dict[str, Any], 
+
+    async def _detect_isolation_forest(self, features: Dict[str, Any],
                                      model: Dict[str, Any], threshold: float) -> List[AnomalyResult]:
         """Detect anomalies using Isolation Forest algorithm."""
         try:
             anomalies = []
-            
+
             # Simulated Isolation Forest detection
             for feature_name, value in features.items():
                 # Simple outlier detection based on thresholds
                 if feature_name in self.anomaly_thresholds:
                     thresholds = self.anomaly_thresholds[feature_name]
-                    
+
                     if isinstance(value, (int, float)):
                         if value > thresholds["critical"]:
                             severity = "critical"
@@ -380,7 +388,7 @@ class AnomalyDetector:
                             confidence = 0.75
                         else:
                             continue
-                        
+
                         if confidence >= threshold:
                             anomaly = AnomalyResult(
                                 timestamp=datetime.utcnow(),
@@ -399,38 +407,38 @@ class AnomalyDetector:
                                 ]
                             )
                             anomalies.append(anomaly)
-            
+
             return anomalies
-            
+
         except Exception as e:
             logger.error("Isolation forest detection failed", error=str(e))
             return []
-    
-    async def _detect_statistical(self, features: Dict[str, Any], 
+
+    async def _detect_statistical(self, features: Dict[str, Any],
                                 model: Dict[str, Any], threshold: float) -> List[AnomalyResult]:
         """Detect anomalies using statistical methods."""
         try:
             anomalies = []
-            
+
             # Get baseline statistics
             baseline_stats = model.get("baseline_stats", {})
             std_threshold = model.get("std_threshold", 2.0)
-            
+
             for feature_name, value in features.items():
                 if feature_name in baseline_stats:
                     stats = baseline_stats[feature_name]
                     mean = stats.get("mean", 0)
                     std = stats.get("std", 1)
-                    
+
                     # Calculate z-score
                     z_score = abs(value - mean) / std if std > 0 else 0
-                    
+
                     if z_score > std_threshold:
                         confidence = min(z_score / std_threshold, 1.0)
-                        
+
                         if confidence >= threshold:
                             severity = "high" if z_score > 3 else "medium"
-                            
+
                             anomaly = AnomalyResult(
                                 timestamp=datetime.utcnow(),
                                 resource_id=features.get("resource_id", "unknown"),
@@ -440,7 +448,9 @@ class AnomalyDetector:
                                 baseline_value=mean,
                                 observed_value=value,
                                 deviation=abs(value - mean),
-                                description=f"Statistical anomaly in {feature_name}: z-score {z_score:.2f}",
+                                description = (
+                                    f"Statistical anomaly in {feature_name}: z-score {z_score:.2f}",
+                                )
                                 recommended_actions=[
                                     f"Investigate {feature_name} deviation",
                                     f"Update baseline for {feature_name}",
@@ -457,30 +467,30 @@ class AnomalyDetector:
                         "max": value,
                         "count": 1
                     }
-            
+
             # Update model with new baseline stats
             model["baseline_stats"] = baseline_stats
-            
+
             return anomalies
-            
+
         except Exception as e:
             logger.error("Statistical detection failed", error=str(e))
             return []
-    
-    async def _detect_rule_based(self, features: Dict[str, Any], 
+
+    async def _detect_rule_based(self, features: Dict[str, Any],
                                model: Dict[str, Any], threshold: float) -> List[AnomalyResult]:
         """Detect anomalies using rule-based methods."""
         try:
             anomalies = []
             rules = model.get("rules", [])
-            
+
             for rule in rules:
                 condition = rule["condition"]
-                
+
                 # Simple condition evaluation
                 if self._evaluate_condition(condition, features):
                     confidence = 1.0  # Rule-based detection has high confidence
-                    
+
                     if confidence >= threshold:
                         anomaly = AnomalyResult(
                             timestamp=datetime.utcnow(),
@@ -499,31 +509,31 @@ class AnomalyDetector:
                             ]
                         )
                         anomalies.append(anomaly)
-            
+
             return anomalies
-            
+
         except Exception as e:
             logger.error("Rule-based detection failed", error=str(e))
             return []
-    
-    async def _detect_time_series(self, features: Dict[str, Any], 
+
+    async def _detect_time_series(self, features: Dict[str, Any],
                                 model: Dict[str, Any], threshold: float) -> List[AnomalyResult]:
         """Detect anomalies using time series analysis."""
         try:
             anomalies = []
-            
+
             # Simulated time series anomaly detection
             for feature_name, value in features.items():
                 if isinstance(value, (int, float)):
                     # Simple trend analysis
                     expected_range = self._calculate_expected_range(feature_name, model)
-                    
+
                     if value < expected_range["min"] or value > expected_range["max"]:
                         confidence = 0.8
-                        
+
                         if confidence >= threshold:
                             severity = "high" if value > expected_range["max"] * 2 else "medium"
-                            
+
                             anomaly = AnomalyResult(
                                 timestamp=datetime.utcnow(),
                                 resource_id=features.get("resource_id", "unknown"),
@@ -532,7 +542,7 @@ class AnomalyDetector:
                                 confidence=confidence,
                                 baseline_value=(expected_range["min"] + expected_range["max"]) / 2,
                                 observed_value=value,
-                                deviation=min(abs(value - expected_range["min"]), 
+                                deviation=min(abs(value - expected_range["min"]),
                                             abs(value - expected_range["max"])),
                                 description=f"Time series anomaly in {feature_name}",
                                 recommended_actions=[
@@ -542,20 +552,20 @@ class AnomalyDetector:
                                 ]
                             )
                             anomalies.append(anomaly)
-            
+
             return anomalies
-            
+
         except Exception as e:
             logger.error("Time series detection failed", error=str(e))
             return []
-    
+
     def _evaluate_condition(self, condition: str, features: Dict[str, Any]) -> bool:
         """Evaluate a rule condition."""
         try:
             # Simple condition evaluation (production would use safe evaluation)
             for feature_name, value in features.items():
                 condition = condition.replace(feature_name, str(value))
-            
+
             # Basic condition evaluation
             if " > " in condition:
                 parts = condition.split(" > ")
@@ -566,14 +576,19 @@ class AnomalyDetector:
                         return left > right
                     except ValueError:
                         return False
-            
+
             return False
-            
+
         except Exception as e:
             logger.error("Condition evaluation failed", error=str(e))
             return False
-    
-    def _calculate_expected_range(self, feature_name: str, model: Dict[str, Any]) -> Dict[str, float]:
+
+    def _calculate_expected_range(
+        self,
+        feature_name: str,
+        model: Dict[str,
+        Any]
+    ) -> Dict[str, float]:
         """Calculate expected range for time series feature."""
         try:
             # Simple expected range calculation
@@ -585,12 +600,12 @@ class AnomalyDetector:
                 }
             else:
                 return {"min": 0, "max": 100}
-                
+
         except Exception as e:
             logger.error("Expected range calculation failed", error=str(e))
             return {"min": 0, "max": 100}
-    
-    async def _process_anomalies(self, anomalies: List[AnomalyResult], 
+
+    async def _process_anomalies(self, anomalies: List[AnomalyResult],
                                resource_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process and format anomaly results."""
         try:
@@ -610,19 +625,19 @@ class AnomalyDetector:
                     "recommended_actions": anomaly.recommended_actions
                 }
                 anomaly_dicts.append(anomaly_dict)
-            
+
             # Calculate severity distribution
             severity_counts = {}
             for anomaly in anomalies:
                 severity = anomaly.severity
                 severity_counts[severity] = severity_counts.get(severity, 0) + 1
-            
+
             # Calculate overall confidence
             if anomalies:
                 overall_confidence = sum(a.confidence for a in anomalies) / len(anomalies)
             else:
                 overall_confidence = 0.0
-            
+
             # Generate summary
             summary = {
                 "total_anomalies": len(anomalies),
@@ -631,33 +646,33 @@ class AnomalyDetector:
                 "detection_timestamp": datetime.utcnow().isoformat(),
                 "resource_count": len(set(a.resource_id for a in anomalies))
             }
-            
+
             return {
                 "anomalies": anomaly_dicts,
                 "summary": summary,
                 "confidence": overall_confidence
             }
-            
+
         except Exception as e:
             logger.error("Anomaly processing failed", error=str(e))
             return {"anomalies": [], "summary": {}, "confidence": 0.0}
-    
+
     def is_ready(self) -> bool:
         """Check if anomaly detector is ready."""
         return len(self.detection_models) > 0
-    
+
     async def cleanup(self) -> None:
         """Cleanup resources on shutdown."""
         try:
             # Clear caches
             self.detection_models.clear()
             self.baseline_cache.clear()
-            
+
             # Close Azure clients
             if self.logs_client:
                 await self.logs_client.close()
-            
+
             logger.info("Anomaly detector cleanup completed")
-            
+
         except Exception as e:
             logger.error("Anomaly detector cleanup failed", error=str(e))
