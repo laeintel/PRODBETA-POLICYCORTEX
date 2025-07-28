@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>PolicyCortex Test Report - 20250728_071342</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #333; }
+        .summary { background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .passed { color: #4caf50; font-weight: bold; }
+        .failed { color: #f44336; font-weight: bold; }
+        .skipped { color: #ff9800; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #2196f3; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .metric { display: inline-block; margin: 10px 20px; }
+        .metric-value { font-size: 24px; font-weight: bold; }
+        .metric-label { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PolicyCortex Test Report</h1>
+        <p>Generated: 2025-07-28 07:14:00</p>
+        
+        <div class="summary">
+            <h2>Executive Summary</h2>
+            <div class="metric">
+                <div class="metric-value">22</div>
+                <div class="metric-label">Total Tests</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value passed">14</div>
+                <div class="metric-label">Passed</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value failed">0</div>
+                <div class="metric-label">Failed</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value skipped">8</div>
+                <div class="metric-label">Skipped/Simulated</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">63.64%</div>
+                <div class="metric-label">Pass Rate</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">17.9s</div>
+                <div class="metric-label">Duration</div>
+            </div>
+        </div>
+        
+        <h2>Test Results by Service</h2>
+        <table>
+            <tr>
+                <th>Service</th>
+                <th>Tests Run</th>
+                <th>Passed</th>
+                <th>Failed</th>
+                <th>Skipped</th>
+                <th>Duration</th>
+            </tr>            <tr>
+                <td><strong>AI Engine</strong></td>
+                <td>3</td>
+                <td class="passed">2</td>
+                <td class="failed">0</td>
+                <td class="skipped">1</td>
+                <td>0.01s</td>
+            </tr>            <tr>
+                <td><strong>API Gateway</strong></td>
+                <td>3</td>
+                <td class="passed">2</td>
+                <td class="failed">0</td>
+                <td class="skipped">1</td>
+                <td>0.01s</td>
+            </tr>            <tr>
+                <td><strong>Azure Integration</strong></td>
+                <td>3</td>
+                <td class="passed">2</td>
+                <td class="failed">0</td>
+                <td class="skipped">1</td>
+                <td>0s</td>
+            </tr>            <tr>
+                <td><strong>Conversation</strong></td>
+                <td>3</td>
+                <td class="passed">2</td>
+                <td class="failed">0</td>
+                <td class="skipped">1</td>
+                <td>0s</td>
+            </tr>            <tr>
+                <td><strong>Data Processing</strong></td>
+                <td>3</td>
+                <td class="passed">2</td>
+                <td class="failed">0</td>
+                <td class="skipped">1</td>
+                <td>0s</td>
+            </tr>            <tr>
+                <td><strong>Frontend</strong></td>
+                <td>2</td>
+                <td class="passed">2</td>
+                <td class="failed">0</td>
+                <td class="skipped">0</td>
+                <td>17.85s</td>
+            </tr>            <tr>
+                <td><strong>Integration</strong></td>
+                <td>2</td>
+                <td class="passed">0</td>
+                <td class="failed">0</td>
+                <td class="skipped">2</td>
+                <td>0s</td>
+            </tr>            <tr>
+                <td><strong>Notification</strong></td>
+                <td>3</td>
+                <td class="passed">2</td>
+                <td class="failed">0</td>
+                <td class="skipped">1</td>
+                <td>0s</td>
+            </tr>        </table>
+        
+        <h2>Detailed Results</h2><h3>AI Engine</h3><ul><li>FastAPI: <span class='passed'>PASSED</span></li><li>Endpoints: <span class='skipped'>SIMULATED</span></li><li>Structure: <span class='passed'>PASSED</span></li></ul><h3>API Gateway</h3><ul><li>FastAPI: <span class='passed'>PASSED</span></li><li>Endpoints: <span class='skipped'>SIMULATED</span></li><li>Structure: <span class='passed'>PASSED</span></li></ul><h3>Azure Integration</h3><ul><li>FastAPI: <span class='passed'>PASSED</span></li><li>Endpoints: <span class='skipped'>SIMULATED</span></li><li>Structure: <span class='passed'>PASSED</span></li></ul><h3>Conversation</h3><ul><li>FastAPI: <span class='passed'>PASSED</span></li><li>Endpoints: <span class='skipped'>SIMULATED</span></li><li>Structure: <span class='passed'>PASSED</span></li></ul><h3>Data Processing</h3><ul><li>FastAPI: <span class='passed'>PASSED</span></li><li>Endpoints: <span class='skipped'>SIMULATED</span></li><li>Structure: <span class='passed'>PASSED</span></li></ul><h3>Frontend</h3><ul><li>Build: <span class='passed'>PASSED</span></li><li>TypeScript: <span class='passed'>PASSED</span></li></ul><h3>Integration</h3><ul><li>InterService: <span class='skipped'>SIMULATED</span></li><li>E2E: <span class='skipped'>SIMULATED</span></li></ul><h3>Notification</h3><ul><li>FastAPI: <span class='passed'>PASSED</span></li><li>Endpoints: <span class='skipped'>SIMULATED</span></li><li>Structure: <span class='passed'>PASSED</span></li></ul>        <h2>Recommendations</h2>
+        <ul><li>Run full test suite with proper environment setup for complete coverage</li>            <li>Review test logs in: C:\Users\leona\AeoliTech\policycortex\testing\results\full_run_20250728_071342</li>
+            <li>Consider setting up automated testing in CI/CD pipeline</li>
+        </ul>
+    </div>
+</body>
+</html>
