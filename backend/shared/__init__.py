@@ -1,1 +1,1 @@
-# Shared components for PolicyCortex microservices 
+# Shared components for PolicyCortex microservices

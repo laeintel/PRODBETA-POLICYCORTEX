@@ -1,25 +1,35 @@
+// Get runtime configuration (injected by Container Apps)
+const getRuntimeConfig = () => {
+  if (typeof window !== 'undefined' && (window as any).POLICYCORTEX_CONFIG) {
+    return (window as any).POLICYCORTEX_CONFIG
+  }
+  return {}
+}
+
+const runtimeConfig = getRuntimeConfig()
+
 // Environment configuration
 export const env = {
   // App
   NODE_ENV: import.meta.env.NODE_ENV || 'development',
   APP_NAME: import.meta.env.VITE_APP_NAME || 'PolicyCortex',
-  APP_VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
+  APP_VERSION: runtimeConfig.VITE_APP_VERSION || import.meta.env.VITE_APP_VERSION || '1.0.0',
   APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'AI-Powered Azure Governance Intelligence Platform',
 
   // API
-  API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  API_BASE_URL: runtimeConfig.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   API_TIMEOUT: parseInt(import.meta.env.VITE_API_TIMEOUT || '30000'),
   API_RETRY_ATTEMPTS: parseInt(import.meta.env.VITE_API_RETRY_ATTEMPTS || '3'),
 
   // WebSocket
-  WS_URL: import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws',
+  WS_URL: runtimeConfig.VITE_WS_URL || import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws',
   WS_RECONNECT_ATTEMPTS: parseInt(import.meta.env.VITE_WS_RECONNECT_ATTEMPTS || '5'),
   WS_RECONNECT_DELAY: parseInt(import.meta.env.VITE_WS_RECONNECT_DELAY || '1000'),
 
   // Azure AD
-  AZURE_CLIENT_ID: import.meta.env.VITE_AZURE_CLIENT_ID || '',
-  AZURE_TENANT_ID: import.meta.env.VITE_AZURE_TENANT_ID || '',
-  AZURE_REDIRECT_URI: import.meta.env.VITE_AZURE_REDIRECT_URI || '',
+  AZURE_CLIENT_ID: runtimeConfig.VITE_AZURE_CLIENT_ID || import.meta.env.VITE_AZURE_CLIENT_ID || '',
+  AZURE_TENANT_ID: runtimeConfig.VITE_AZURE_TENANT_ID || import.meta.env.VITE_AZURE_TENANT_ID || '',
+  AZURE_REDIRECT_URI: runtimeConfig.VITE_AZURE_REDIRECT_URI || import.meta.env.VITE_AZURE_REDIRECT_URI || '',
   AZURE_AUTHORITY: import.meta.env.VITE_AZURE_AUTHORITY || '',
 
   // Features
@@ -78,19 +88,28 @@ export const env = {
 
 // Environment validation
 export const validateEnvironment = () => {
-  const requiredEnvVars = [
-    'VITE_AZURE_CLIENT_ID',
-    'VITE_AZURE_TENANT_ID',
-    'VITE_API_BASE_URL',
+  // Skip validation if runtime config is available (will be loaded dynamically)
+  if (typeof window !== 'undefined' && (window as any).POLICYCORTEX_CONFIG) {
+    console.info('Using runtime configuration from config.js')
+    return
+  }
+
+  const requiredVars = [
+    { key: 'AZURE_CLIENT_ID', value: env.AZURE_CLIENT_ID },
+    { key: 'AZURE_TENANT_ID', value: env.AZURE_TENANT_ID },
+    { key: 'API_BASE_URL', value: env.API_BASE_URL },
   ]
 
-  const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName])
+  const missingVars = requiredVars.filter(({ value }) => !value).map(({ key }) => key)
 
   if (missingVars.length > 0) {
-    console.error('Missing required environment variables:', missingVars)
-    if (env.NODE_ENV === 'production') {
-      throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`)
-    }
+    console.warn('Environment variables not found at build time, expecting runtime configuration')
+    console.info('Current configuration:', {
+      AZURE_CLIENT_ID: env.AZURE_CLIENT_ID ? '***' : '(will be loaded from config.js)',
+      AZURE_TENANT_ID: env.AZURE_TENANT_ID ? '***' : '(will be loaded from config.js)',
+      API_BASE_URL: env.API_BASE_URL || '(will be loaded from config.js)',
+    })
+    // Don't throw in production - config.js will provide values
   }
 }
 

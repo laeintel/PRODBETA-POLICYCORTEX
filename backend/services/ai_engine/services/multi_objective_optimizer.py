@@ -93,28 +93,28 @@ class OptimizationResult:
 
 class GovernanceProblem(Problem):
     """Multi-objective governance optimization problem"""
-    
-    def __init__(self, 
+
+    def __init__(self,
                  objectives: List[Objective],
                  constraints: List[Constraint],
                  decision_variables: Dict[str, Any],
                  evaluator):
-        
+
         n_var = len(decision_variables)
         n_obj = len(objectives)
         n_constr = len([c for c in constraints if c.is_hard])
-        
+
         super().__init__(n_var=n_var, n_obj=n_obj, n_constr=n_constr)
-        
+
         self.objectives = objectives
         self.constraints = constraints
         self.decision_variables = decision_variables
         self.evaluator = evaluator
-        
+
         # Set bounds for decision variables
         self.xl = np.array([var['min'] for var in decision_variables.values()])
         self.xu = np.array([var['max'] for var in decision_variables.values()])
-    
+
     def _evaluate(self, x, out, *args, **kwargs):
         """Evaluate objectives and constraints"""
         # Evaluate objectives
@@ -125,9 +125,9 @@ class GovernanceProblem(Problem):
                 obj_values.append(value)
             else:  # maximize -> minimize negative
                 obj_values.append(-value)
-        
+
         out["F"] = np.array(obj_values)
-        
+
         # Evaluate constraints
         if self.n_constr > 0:
             constr_values = []
@@ -140,21 +140,21 @@ class GovernanceProblem(Problem):
 
 class ObjectiveEvaluator:
     """Evaluates objectives and constraints"""
-    
+
     def __init__(self, resource_analyzer, compliance_checker, performance_monitor):
         self.resource_analyzer = resource_analyzer
         self.compliance_checker = compliance_checker
         self.performance_monitor = performance_monitor
         self.cache = {}
-    
+
     async def evaluate_objective(self, x: np.ndarray, objective: Objective) -> float:
         """Evaluate a single objective"""
         cache_key = f"{hash(x.tobytes())}_{objective.name}"
         if cache_key in self.cache:
             return self.cache[cache_key]
-        
+
         value = 0.0
-        
+
         if objective.type == ObjectiveType.MINIMIZE_COST:
             value = await self._evaluate_cost(x)
         elif objective.type == ObjectiveType.MAXIMIZE_SECURITY:
@@ -171,66 +171,66 @@ class ObjectiveEvaluator:
             value = await self._evaluate_latency(x)
         elif objective.type == ObjectiveType.MAXIMIZE_SCALABILITY:
             value = await self._evaluate_scalability(x)
-        
+
         self.cache[cache_key] = value
         return value
-    
+
     async def evaluate_constraint(self, x: np.ndarray, constraint: Constraint) -> float:
         """Evaluate a single constraint (returns violation amount)"""
         current_value = await self._get_constraint_value(x, constraint)
-        
+
         violation = 0.0
         if constraint.min_value is not None and current_value < constraint.min_value:
             violation = constraint.min_value - current_value
         elif constraint.max_value is not None and current_value > constraint.max_value:
             violation = current_value - constraint.max_value
-        
+
         return violation * constraint.penalty_weight
-    
+
     async def _evaluate_cost(self, x: np.ndarray) -> float:
         """Evaluate cost objective"""
         # Implement cost calculation based on decision variables
         resource_costs = await self.resource_analyzer.calculate_costs(x)
         operational_costs = await self.resource_analyzer.calculate_operational_costs(x)
         return resource_costs + operational_costs
-    
+
     async def _evaluate_security(self, x: np.ndarray) -> float:
         """Evaluate security objective"""
         # Implement security score calculation
         security_score = await self.compliance_checker.calculate_security_score(x)
         return security_score
-    
+
     async def _evaluate_compliance_risk(self, x: np.ndarray) -> float:
         """Evaluate compliance risk objective"""
         risk_score = await self.compliance_checker.calculate_risk_score(x)
         return risk_score
-    
+
     async def _evaluate_performance(self, x: np.ndarray) -> float:
         """Evaluate performance objective"""
         perf_metrics = await self.performance_monitor.get_performance_metrics(x)
         return perf_metrics['overall_score']
-    
+
     async def _evaluate_complexity(self, x: np.ndarray) -> float:
         """Evaluate complexity objective"""
         # Implement complexity calculation
         complexity_score = np.sum(x * np.log(x + 1))  # Example complexity metric
         return complexity_score
-    
+
     async def _evaluate_availability(self, x: np.ndarray) -> float:
         """Evaluate availability objective"""
         availability = await self.performance_monitor.calculate_availability(x)
         return availability
-    
+
     async def _evaluate_latency(self, x: np.ndarray) -> float:
         """Evaluate latency objective"""
         latency = await self.performance_monitor.calculate_latency(x)
         return latency
-    
+
     async def _evaluate_scalability(self, x: np.ndarray) -> float:
         """Evaluate scalability objective"""
         scalability_score = await self.resource_analyzer.calculate_scalability(x)
         return scalability_score
-    
+
     async def _get_constraint_value(self, x: np.ndarray, constraint: Constraint) -> float:
         """Get current value for a constraint"""
         if constraint.type == ConstraintType.BUDGET:
@@ -245,13 +245,13 @@ class ObjectiveEvaluator:
             return await self._evaluate_availability(x)
         elif constraint.type == ConstraintType.RESOURCE:
             return await self.resource_analyzer.get_resource_usage(x)
-        
+
         return 0.0
 
 
 class ParetoOptimalSelector:
     """Selects optimal solution from Pareto front"""
-    
+
     def __init__(self):
         self.selection_methods = {
             'weighted_sum': self._weighted_sum_selection,
@@ -260,39 +260,39 @@ class ParetoOptimalSelector:
             'topsis': self._topsis_selection,
             'compromise': self._compromise_programming
         }
-    
+
     async def select_solution(self,
                             pareto_front: np.ndarray,
                             objectives: List[Objective],
                             method: str = 'weighted_sum') -> Tuple[int, Dict[str, float]]:
         """Select optimal solution from Pareto front"""
-        
+
         if method not in self.selection_methods:
             method = 'weighted_sum'
-        
+
         selection_func = self.selection_methods[method]
         selected_idx, scores = await selection_func(pareto_front, objectives)
-        
+
         return selected_idx, scores
-    
+
     async def _weighted_sum_selection(self,
                                     pareto_front: np.ndarray,
                                     objectives: List[Objective]) -> Tuple[int, Dict[str, float]]:
         """Select using weighted sum method"""
         weights = np.array([obj.weight * obj.importance for obj in objectives])
         weights = weights / np.sum(weights)
-        
+
         # Normalize objectives
         normalized = self._normalize_objectives(pareto_front)
-        
+
         # Calculate weighted scores
         scores = np.dot(normalized, weights)
-        
+
         # Select best (minimum for minimization objectives)
         selected_idx = np.argmin(scores)
-        
+
         return selected_idx, {'weighted_score': float(scores[selected_idx])}
-    
+
     async def _reference_point_selection(self,
                                        pareto_front: np.ndarray,
                                        objectives: List[Objective]) -> Tuple[int, Dict[str, float]]:
@@ -305,24 +305,24 @@ class ParetoOptimalSelector:
             else:
                 # Use best value in Pareto front
                 ref_point.append(np.min(pareto_front[:, i]))
-        
+
         ref_point = np.array(ref_point)
-        
+
         # Calculate distances to reference point
         distances = np.linalg.norm(pareto_front - ref_point, axis=1)
-        
+
         # Select closest to reference point
         selected_idx = np.argmin(distances)
-        
+
         return selected_idx, {'distance_to_reference': float(distances[selected_idx])}
-    
+
     async def _fuzzy_logic_selection(self,
                                    pareto_front: np.ndarray,
                                    objectives: List[Objective]) -> Tuple[int, Dict[str, float]]:
         """Select using fuzzy logic"""
         # Implement fuzzy membership functions
         membership_scores = []
-        
+
         for solution in pareto_front:
             score = 0.0
             for i, obj in enumerate(objectives):
@@ -338,89 +338,89 @@ class ParetoOptimalSelector:
                         membership = 1 - (solution[i] - min_val) / (max_val - min_val)
                     else:
                         membership = 1.0
-                
+
                 score += membership * obj.weight * obj.importance
-            
+
             membership_scores.append(score)
-        
+
         membership_scores = np.array(membership_scores)
         selected_idx = np.argmax(membership_scores)
-        
+
         return selected_idx, {'fuzzy_score': float(membership_scores[selected_idx])}
-    
+
     async def _topsis_selection(self,
                               pareto_front: np.ndarray,
                               objectives: List[Objective]) -> Tuple[int, Dict[str, float]]:
         """TOPSIS (Technique for Order of Preference by Similarity to Ideal Solution)"""
         # Normalize decision matrix
         normalized = self._normalize_objectives(pareto_front)
-        
+
         # Apply weights
         weights = np.array([obj.weight * obj.importance for obj in objectives])
         weights = weights / np.sum(weights)
         weighted = normalized * weights
-        
+
         # Determine ideal and anti-ideal solutions
         ideal = np.min(weighted, axis=0)  # For minimization
         anti_ideal = np.max(weighted, axis=0)
-        
+
         # Calculate distances
         dist_to_ideal = np.linalg.norm(weighted - ideal, axis=1)
         dist_to_anti_ideal = np.linalg.norm(weighted - anti_ideal, axis=1)
-        
+
         # Calculate relative closeness
         closeness = dist_to_anti_ideal / (dist_to_ideal + dist_to_anti_ideal + 1e-10)
-        
+
         # Select best
         selected_idx = np.argmax(closeness)
-        
+
         return selected_idx, {'topsis_score': float(closeness[selected_idx])}
-    
+
     async def _compromise_programming(self,
                                     pareto_front: np.ndarray,
                                     objectives: List[Objective]) -> Tuple[int, Dict[str, float]]:
         """Compromise programming method"""
         # Normalize objectives
         normalized = self._normalize_objectives(pareto_front)
-        
+
         # Apply weights
         weights = np.array([obj.weight * obj.importance for obj in objectives])
         weights = weights / np.sum(weights)
-        
+
         # Calculate Lp metric (using L2 norm)
         ideal = np.zeros(len(objectives))  # Ideal is 0 for normalized minimization
         distances = np.sum((weights * (normalized - ideal)) ** 2, axis=1) ** 0.5
-        
+
         # Select minimum distance
         selected_idx = np.argmin(distances)
-        
+
         return selected_idx, {'compromise_distance': float(distances[selected_idx])}
-    
+
     def _normalize_objectives(self, pareto_front: np.ndarray) -> np.ndarray:
         """Normalize objectives to [0, 1] range"""
         normalized = np.zeros_like(pareto_front)
-        
+
         for i in range(pareto_front.shape[1]):
             min_val = np.min(pareto_front[:, i])
             max_val = np.max(pareto_front[:, i])
-            
+
             if max_val > min_val:
                 normalized[:, i] = (pareto_front[:, i] - min_val) / (max_val - min_val)
             else:
                 normalized[:, i] = 0.0
-        
+
         return normalized
 
 
 class MultiObjectiveOptimizer:
     """Main multi-objective optimization service"""
-    
+
     def __init__(self):
         self.evaluator = None
         self.selector = ParetoOptimalSelector()
         self.optimization_history = defaultdict(list)
         self._initialized = False
-    
+
     async def initialize(self, resource_analyzer, compliance_checker, performance_monitor):
         """Initialize the optimizer"""
         self.evaluator = ObjectiveEvaluator(
@@ -430,7 +430,7 @@ class MultiObjectiveOptimizer:
         )
         self._initialized = True
         logger.info("Multi-objective optimizer initialized")
-    
+
     async def optimize(self,
                       objectives: List[Objective],
                       constraints: List[Constraint],
@@ -440,13 +440,13 @@ class MultiObjectiveOptimizer:
                       max_generations: int = 100,
                       population_size: int = 100) -> OptimizationResult:
         """Perform multi-objective optimization"""
-        
+
         if not self._initialized:
             raise APIError("Optimizer not initialized", status_code=500)
-        
+
         start_time = datetime.now()
         solution_id = f"opt_{start_time.strftime('%Y%m%d_%H%M%S')}"
-        
+
         try:
             # Create optimization problem
             problem = GovernanceProblem(
@@ -455,7 +455,7 @@ class MultiObjectiveOptimizer:
                 decision_variables=decision_variables,
                 evaluator=self.evaluator
             )
-            
+
             # Select algorithm
             if algorithm == 'nsga3':
                 # Create reference directions for NSGA-III
@@ -469,10 +469,10 @@ class MultiObjectiveOptimizer:
                 optimizer = NSGA2(
                     pop_size=population_size
                 )
-            
+
             # Set termination criteria
             termination = get_termination("n_gen", max_generations)
-            
+
             # Run optimization
             res = minimize(
                 problem,
@@ -482,25 +482,25 @@ class MultiObjectiveOptimizer:
                 save_history=True,
                 verbose=True
             )
-            
+
             # Extract Pareto front
             pareto_front = res.F
             pareto_set = res.X
-            
+
             # Select optimal solution
             selected_idx, selection_scores = await self.selector.select_solution(
                 pareto_front,
                 objectives,
                 selection_method
             )
-            
+
             # Prepare results
             selected_solution = {
                 'decision_variables': pareto_set[selected_idx].tolist(),
                 'objective_values': pareto_front[selected_idx].tolist(),
                 'selection_scores': selection_scores
             }
-            
+
             # Prepare all solutions
             all_solutions = []
             for i in range(len(pareto_front)):
@@ -511,13 +511,13 @@ class MultiObjectiveOptimizer:
                     'is_selected': i == selected_idx
                 }
                 all_solutions.append(sol)
-            
+
             # Extract convergence history
             convergence_history = [gen.opt.get("F").mean() for gen in res.history]
-            
+
             # Calculate optimization time
             optimization_time = (datetime.now() - start_time).total_seconds()
-            
+
             # Create result
             result = OptimizationResult(
                 solution_id=solution_id,
@@ -536,43 +536,43 @@ class MultiObjectiveOptimizer:
                     'n_solutions': len(pareto_front)
                 }
             )
-            
+
             # Store in history
             self.optimization_history[solution_id] = result
-            
+
             # Cache result
             await self._cache_result(result)
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Optimization failed: {str(e)}")
             raise APIError(f"Optimization failed: {str(e)}", status_code=500)
-    
-    async def get_optimization_history(self, 
+
+    async def get_optimization_history(self,
                                      limit: int = 10) -> List[OptimizationResult]:
         """Get optimization history"""
         history = list(self.optimization_history.values())
         history.sort(key=lambda x: x.solution_id, reverse=True)
         return history[:limit]
-    
-    async def apply_solution(self, 
+
+    async def apply_solution(self,
                            solution_id: str,
                            dry_run: bool = True) -> Dict[str, Any]:
         """Apply an optimization solution"""
         if solution_id not in self.optimization_history:
             raise APIError(f"Solution {solution_id} not found", status_code=404)
-        
+
         result = self.optimization_history[solution_id]
         solution = result.selected_solution
-        
+
         # Prepare configuration changes
         changes = await self._prepare_configuration_changes(
             solution['decision_variables'],
             result.objectives,
             result.constraints
         )
-        
+
         if dry_run:
             return {
                 'solution_id': solution_id,
@@ -583,14 +583,14 @@ class MultiObjectiveOptimizer:
         else:
             # Apply changes
             applied_changes = await self._apply_configuration_changes(changes)
-            
+
             return {
                 'solution_id': solution_id,
                 'dry_run': False,
                 'applied_changes': applied_changes,
                 'timestamp': datetime.now().isoformat()
             }
-    
+
     async def _prepare_configuration_changes(self,
                                            decision_variables: List[float],
                                            objectives: List[Objective],
@@ -602,43 +602,43 @@ class MultiObjectiveOptimizer:
             'scaling_decisions': {},
             'security_configurations': {}
         }
-        
+
         # Map decision variables to actual changes
         # This is highly domain-specific and would need customization
-        
+
         return changes
-    
+
     async def _apply_configuration_changes(self, changes: Dict[str, Any]) -> Dict[str, Any]:
         """Apply configuration changes to the system"""
         applied = {}
-        
+
         # Apply each type of change
         for change_type, change_details in changes.items():
             if change_details:
                 # Implement actual application logic
                 applied[change_type] = change_details
-        
+
         return applied
-    
+
     async def _calculate_improvements(self,
                                     solution: Dict[str, Any],
                                     result: OptimizationResult) -> Dict[str, float]:
         """Calculate expected improvements from solution"""
         improvements = {}
-        
+
         for i, obj in enumerate(result.objectives):
             current = obj.current_value or 0
             optimized = solution['objective_values'][i]
-            
+
             if obj.type.value.startswith('minimize'):
                 improvement = (current - optimized) / current * 100 if current > 0 else 0
             else:  # maximize
                 improvement = (optimized - current) / current * 100 if current > 0 else 0
-            
+
             improvements[obj.name] = improvement
-        
+
         return improvements
-    
+
     async def _cache_result(self, result: OptimizationResult):
         """Cache optimization result"""
         cache_key = f"optimization:{result.solution_id}"
@@ -648,7 +648,7 @@ class MultiObjectiveOptimizer:
             'metadata': result.metadata,
             'timestamp': datetime.now().isoformat()
         }
-        
+
         await redis_client.setex(
             cache_key,
             timedelta(hours=24),

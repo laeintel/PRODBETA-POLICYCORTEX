@@ -22,9 +22,8 @@ import aiofiles
 import base64
 
 from shared.config import get_settings
-from ..models import (
-    EmailRequest, 
-    NotificationResponse, 
+    EmailRequest,
+    NotificationResponse,
     NotificationTemplate,
     DeliveryStatusEnum,
     EmailProviderConfig
@@ -36,14 +35,14 @@ logger = structlog.get_logger(__name__)
 
 class EmailService:
     """Service for sending email notifications with template engine support."""
-    
+
     def __init__(self):
         self.settings = settings
         self.redis_client = None
         self.jinja_env = None
         self.smtp_configs = {}
         self.template_cache = {}
-        
+
     async def initialize(self) -> None:
         """Initialize the email service."""
         try:
@@ -54,28 +53,28 @@ class EmailService:
                 ssl=self.settings.database.redis_ssl,
                 decode_responses=True
             )
-            
+
             # Initialize Jinja2 environment
             template_dir = Path(__file__).parent.parent / "templates" / "email"
             template_dir.mkdir(parents=True, exist_ok=True)
-            
+
             self.jinja_env = jinja2.Environment(
                 loader=jinja2.FileSystemLoader(str(template_dir)),
                 autoescape=jinja2.select_autoescape(['html', 'xml'])
             )
-            
+
             # Load SMTP configurations
             await self._load_smtp_configs()
-            
+
             # Load templates from cache
             await self._load_templates()
-            
+
             logger.info("email_service_initialized")
-            
+
         except Exception as e:
             logger.error("email_service_initialization_failed", error=str(e))
             raise
-    
+
     async def _load_smtp_configs(self) -> None:
         """Load SMTP configurations from environment/config."""
         try:
@@ -93,61 +92,61 @@ class EmailService:
                     "use_ssl": getattr(self.settings, "smtp_use_ssl", False)
                 }
             )
-            
+
             self.smtp_configs["default"] = default_config
-            
+
             # Add more providers as needed (SendGrid, Mailgun, etc.)
             # These would typically be loaded from database or config
-            
+
             logger.info("smtp_configs_loaded", count=len(self.smtp_configs))
-            
+
         except Exception as e:
             logger.error("smtp_configs_loading_failed", error=str(e))
             raise
-    
+
     async def _load_templates(self) -> None:
         """Load email templates from cache."""
         try:
             # Load templates from Redis cache
             template_keys = await self.redis_client.keys("email_template:*")
-            
+
             for template_key in template_keys:
                 template_data = await self.redis_client.get(template_key)
                 if template_data:
                     template = json.loads(template_data)
                     template_id = template_key.split(":")[-1]
                     self.template_cache[template_id] = template
-            
+
             logger.info("email_templates_loaded", count=len(self.template_cache))
-            
+
         except Exception as e:
             logger.error("email_templates_loading_failed", error=str(e))
-    
+
     async def send_email(self, request: EmailRequest) -> NotificationResponse:
         """Send email notification."""
         try:
             notification_id = request.id or str(uuid.uuid4())
-            
+
             # Get SMTP configuration
             smtp_config = self.smtp_configs.get("default")
             if not smtp_config:
                 raise Exception("No SMTP configuration available")
-            
+
             # Prepare email content
             subject, html_content, text_content = await self._prepare_email_content(request)
-            
+
             # Send to all recipients
             delivery_details = []
             delivered_count = 0
             failed_count = 0
-            
+
             for recipient in request.recipients:
                 try:
                     if not recipient.email:
                         logger.warning("recipient_missing_email", recipient_id=recipient.id)
                         failed_count += 1
                         continue
-                    
+
                     # Send email
                     await self._send_single_email(
                         smtp_config,
@@ -157,20 +156,20 @@ class EmailService:
                         text_content,
                         request
                     )
-                    
+
                     delivered_count += 1
                     delivery_details.append({
                         "recipient": recipient.email,
                         "status": "delivered",
                         "timestamp": datetime.utcnow().isoformat()
                     })
-                    
+
                     logger.info(
                         "email_sent",
                         notification_id=notification_id,
                         recipient=recipient.email
                     )
-                    
+
                 except Exception as e:
                     failed_count += 1
                     delivery_details.append({
@@ -179,14 +178,14 @@ class EmailService:
                         "error": str(e),
                         "timestamp": datetime.utcnow().isoformat()
                     })
-                    
+
                     logger.error(
                         "email_send_failed",
                         notification_id=notification_id,
                         recipient=recipient.email,
                         error=str(e)
                     )
-            
+
             # Store delivery status
             await self._store_delivery_status(
                 notification_id,
@@ -195,9 +194,11 @@ class EmailService:
                 delivered_count,
                 failed_count
             )
-            
-            status = DeliveryStatusEnum.DELIVERED if delivered_count > 0 else DeliveryStatusEnum.FAILED
-            
+
+            status = (
+                DeliveryStatusEnum.DELIVERED if delivered_count > 0 else DeliveryStatusEnum.FAILED
+            )
+
             return NotificationResponse(
                 notification_id=notification_id,
                 status=status,
@@ -207,10 +208,10 @@ class EmailService:
                 failed_count=failed_count,
                 delivery_details=delivery_details
             )
-            
+
         except Exception as e:
             logger.error("email_service_send_failed", error=str(e))
-            
+
             return NotificationResponse(
                 notification_id=notification_id,
                 status=DeliveryStatusEnum.FAILED,
@@ -220,7 +221,7 @@ class EmailService:
                 failed_count=len(request.recipients),
                 delivery_details=[]
             )
-    
+
     async def _prepare_email_content(self, request: EmailRequest) -> tuple:
         """Prepare email content with template processing."""
         try:
@@ -250,9 +251,9 @@ class EmailService:
                 subject = request.content.subject or "Notification"
                 html_content = request.content.html_body or request.content.body
                 text_content = request.content.body
-            
+
             return subject, html_content, text_content
-            
+
         except Exception as e:
             logger.error("email_content_preparation_failed", error=str(e))
             # Return basic content on error
@@ -261,7 +262,7 @@ class EmailService:
                 request.content.html_body or request.content.body,
                 request.content.body
             )
-    
+
     def _render_template(self, template_content: str, variables: Dict[str, Any]) -> str:
         """Render Jinja2 template with variables."""
         try:
@@ -270,7 +271,7 @@ class EmailService:
         except Exception as e:
             logger.error("template_rendering_failed", error=str(e))
             return template_content
-    
+
     async def _send_single_email(
         self,
         smtp_config: EmailProviderConfig,
@@ -287,77 +288,77 @@ class EmailService:
             message["Subject"] = subject
             message["From"] = f"{smtp_config.from_name} <{smtp_config.from_email}>"
             message["To"] = recipient_email
-            
+
             if request.reply_to:
                 message["Reply-To"] = request.reply_to
-            
+
             # Add custom headers
             if request.headers:
                 for header_name, header_value in request.headers.items():
                     message[header_name] = header_value
-            
+
             # Add CC and BCC
             if request.cc:
                 message["Cc"] = ", ".join(request.cc)
-            
+
             # Add text and HTML parts
             text_part = MIMEText(text_content, "plain")
             html_part = MIMEText(html_content, "html")
-            
+
             message.attach(text_part)
             message.attach(html_part)
-            
+
             # Add attachments
             if request.attachments:
                 for attachment in request.attachments:
                     await self._add_attachment(message, attachment)
-            
+
             # Send email
             await self._send_smtp_email(smtp_config, message, recipient_email, request)
-            
+
         except Exception as e:
             logger.error("single_email_send_failed", error=str(e))
             raise
-    
+
     async def _add_attachment(self, message: MIMEMultipart, attachment: Dict[str, Any]) -> None:
         """Add attachment to email message."""
         try:
             if "content" in attachment and "filename" in attachment:
                 # Base64 encoded content
                 content = base64.b64decode(attachment["content"])
-                
+
                 part = MIMEBase("application", "octet-stream")
                 part.set_payload(content)
                 encoders.encode_base64(part)
-                
+
                 part.add_header(
                     "Content-Disposition",
                     f"attachment; filename= {attachment['filename']}"
                 )
-                
+
                 message.attach(part)
-                
+
             elif "file_path" in attachment:
                 # File path
                 file_path = Path(attachment["file_path"])
                 if file_path.exists():
                     async with aiofiles.open(file_path, "rb") as file:
                         content = await file.read()
-                    
+
                     part = MIMEBase("application", "octet-stream")
                     part.set_payload(content)
                     encoders.encode_base64(part)
-                    
+
                     part.add_header(
                         "Content-Disposition",
                         f"attachment; filename= {file_path.name}"
                     )
-                    
+
                     message.attach(part)
-                    
+
         except Exception as e:
             logger.error("attachment_addition_failed", error=str(e))
-    
+
     async def _send_smtp_email(
         self,
         smtp_config: EmailProviderConfig,
@@ -373,7 +374,7 @@ class EmailService:
                 recipients.extend(request.cc)
             if request.bcc:
                 recipients.extend(request.bcc)
-            
+
             # Send email using aiosmtplib
             await aiosmtplib.send(
                 message,
@@ -384,11 +385,11 @@ class EmailService:
                 use_tls=smtp_config.settings.get("use_tls", True),
                 start_tls=smtp_config.settings.get("use_tls", True)
             )
-            
+
         except Exception as e:
             logger.error("smtp_email_send_failed", error=str(e))
             raise
-    
+
     async def _store_delivery_status(
         self,
         notification_id: str,
@@ -409,22 +410,22 @@ class EmailService:
                 "delivery_details": delivery_details,
                 "request_data": request.dict()
             }
-            
+
             # Store in Redis with TTL (30 days)
             await self.redis_client.set(
                 f"email_delivery:{notification_id}",
                 json.dumps(status_data),
                 ex=86400 * 30
             )
-            
+
         except Exception as e:
             logger.error("delivery_status_storage_failed", error=str(e))
-    
+
     async def create_template(self, template: NotificationTemplate) -> str:
         """Create email template."""
         try:
             template_id = template.id or str(uuid.uuid4())
-            
+
             # Store template in cache
             template_data = {
                 "id": template_id,
@@ -439,50 +440,50 @@ class EmailService:
                 "version": template.version,
                 "is_active": template.is_active
             }
-            
+
             await self.redis_client.set(
                 f"email_template:{template_id}",
                 json.dumps(template_data),
                 ex=86400 * 365  # 1 year
             )
-            
+
             # Update local cache
             self.template_cache[template_id] = template_data
-            
+
             logger.info("email_template_created", template_id=template_id)
-            
+
             return template_id
-            
+
         except Exception as e:
             logger.error("email_template_creation_failed", error=str(e))
             raise
-    
+
     async def _get_template(self, template_id: str) -> Optional[Dict[str, Any]]:
         """Get email template by ID."""
         try:
             # Check local cache first
             if template_id in self.template_cache:
                 return self.template_cache[template_id]
-            
+
             # Get from Redis
             template_data = await self.redis_client.get(f"email_template:{template_id}")
             if template_data:
                 template = json.loads(template_data)
                 self.template_cache[template_id] = template
                 return template
-            
+
             return None
-            
+
         except Exception as e:
             logger.error("email_template_retrieval_failed", error=str(e))
             return None
-    
+
     async def get_template_list(self) -> List[Dict[str, Any]]:
         """Get list of all email templates."""
         try:
             template_keys = await self.redis_client.keys("email_template:*")
             templates = []
-            
+
             for template_key in template_keys:
                 template_data = await self.redis_client.get(template_key)
                 if template_data:
@@ -495,13 +496,13 @@ class EmailService:
                         "version": template["version"],
                         "is_active": template["is_active"]
                     })
-            
+
             return templates
-            
+
         except Exception as e:
             logger.error("email_template_list_retrieval_failed", error=str(e))
             return []
-    
+
     async def update_template(self, template_id: str, template: NotificationTemplate) -> None:
         """Update email template."""
         try:
@@ -509,7 +510,7 @@ class EmailService:
             existing_template = await self._get_template(template_id)
             if not existing_template:
                 raise Exception(f"Template {template_id} not found")
-            
+
             # Update template data
             template_data = {
                 "id": template_id,
@@ -524,61 +525,61 @@ class EmailService:
                 "version": existing_template["version"] + 1,
                 "is_active": template.is_active
             }
-            
+
             await self.redis_client.set(
                 f"email_template:{template_id}",
                 json.dumps(template_data),
                 ex=86400 * 365  # 1 year
             )
-            
+
             # Update local cache
             self.template_cache[template_id] = template_data
-            
+
             logger.info("email_template_updated", template_id=template_id)
-            
+
         except Exception as e:
             logger.error("email_template_update_failed", error=str(e))
             raise
-    
+
     async def delete_template(self, template_id: str) -> None:
         """Delete email template."""
         try:
             # Remove from Redis
             await self.redis_client.delete(f"email_template:{template_id}")
-            
+
             # Remove from local cache
             if template_id in self.template_cache:
                 del self.template_cache[template_id]
-            
+
             logger.info("email_template_deleted", template_id=template_id)
-            
+
         except Exception as e:
             logger.error("email_template_deletion_failed", error=str(e))
             raise
-    
+
     async def health_check(self) -> bool:
         """Check email service health."""
         try:
             # Check Redis connection
             await self.redis_client.ping()
-            
+
             # Check SMTP configuration
             if not self.smtp_configs:
                 return False
-            
+
             return True
-            
+
         except Exception as e:
             logger.error("email_service_health_check_failed", error=str(e))
             return False
-    
+
     async def cleanup(self) -> None:
         """Cleanup resources."""
         try:
             if self.redis_client:
                 await self.redis_client.close()
-            
+
             logger.info("email_service_cleanup_completed")
-            
+
         except Exception as e:
             logger.error("email_service_cleanup_failed", error=str(e))

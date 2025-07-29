@@ -62,7 +62,10 @@ class GatewayMetrics(BaseModel):
     """Gateway metrics model."""
     total_requests: int = Field(..., description="Total number of requests")
     service_requests: Dict[str, int] = Field(..., description="Requests per service")
-    circuit_breaker_states: Dict[str, CircuitBreakerState] = Field(..., description="Circuit breaker states")
+    circuit_breaker_states: Dict[str, CircuitBreakerState] = Field(
+        ...,
+        description="Circuit breaker states"
+    )
     uptime_seconds: Optional[int] = Field(None, description="Gateway uptime in seconds")
 
 
@@ -125,4 +128,4 @@ class ProxyResponse(BaseModel):
     body: Optional[Dict[str, Any]] = Field(None, description="Response body")
     execution_time_ms: int = Field(..., description="Execution time in milliseconds")
     service: str = Field(..., description="Source service name")
-    request_id: str = Field(..., description="Request identifier") 
+    request_id: str = Field(..., description="Request identifier")

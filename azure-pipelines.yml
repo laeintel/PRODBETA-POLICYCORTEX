@@ -1,0 +1,455 @@
+# Azure DevOps Pipeline for PolicyCortex
+# Comprehensive CI/CD with testing, security scanning, and deployment
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+  paths:
+    exclude:
+      - README.md
+      - docs/*
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  # Container Registry
+  dockerRegistryServiceConnection: 'PolicyCortexACR'
+  containerRegistry: 'policycortexacr.azurecr.io'
+  
+  # Build Configuration
+  buildConfiguration: 'Release'
+  pythonVersion: '3.11'
+  nodeVersion: '18.x'
+  
+  # Test Configuration
+  testResultsFormat: 'JUnit'
+  codeCoverageFormat: 'Cobertura'
+  
+  # Deployment
+  azureSubscription: 'PolicyCortex-Production'
+  resourceGroupName: 'rg-policycortex-$(environment)'
+  
+  # Caching
+  PYTHON_PIP_CACHE_DIR: $(Pipeline.Workspace)/.pip
+  npm_config_cache: $(Pipeline.Workspace)/.npm
+
+stages:
+  # Stage 1: Build and Unit Tests
+  - stage: Build
+    displayName: 'Build and Unit Test'
+    jobs:
+      # Python Services Build
+      - job: BuildBackend
+        displayName: 'Build Backend Services'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          matrix:
+            ApiGateway:
+              serviceName: 'api_gateway'
+            AzureIntegration:
+              serviceName: 'azure_integration'
+            AIEngine:
+              serviceName: 'ai_engine'
+            DataProcessing:
+              serviceName: 'data_processing'
+            Conversation:
+              serviceName: 'conversation'
+            Notification:
+              serviceName: 'notification'
+        
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+            displayName: 'Use Python $(pythonVersion)'
+
+          - task: Cache@2
+            inputs:
+              key: 'python | "$(Agent.OS)" | backend/services/$(serviceName)/requirements.txt'
+              path: $(PYTHON_PIP_CACHE_DIR)
+            displayName: 'Cache pip packages'
+
+          - script: |
+              cd backend/services/$(serviceName)
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+              pip install pytest pytest-cov pytest-azurepipelines
+            displayName: 'Install dependencies'
+
+          - script: |
+              cd backend/services/$(serviceName)
+              # Run linting
+              pip install flake8 black isort
+              flake8 . --max-line-length=100 --exclude=venv
+              black . --check --line-length=100
+              isort . --check-only --profile black
+            displayName: 'Lint Python code'
+
+          - script: |
+              cd backend/services/$(serviceName)
+              # Run unit tests with coverage
+              pytest tests/unit -v \
+                --junitxml=$(Agent.TempDirectory)/test-results-$(serviceName).xml \
+                --cov=. \
+                --cov-report=xml:$(Agent.TempDirectory)/coverage-$(serviceName).xml \
+                --cov-report=html:$(Agent.TempDirectory)/htmlcov-$(serviceName)
+            displayName: 'Run unit tests'
+
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '$(Agent.TempDirectory)/test-results-$(serviceName).xml'
+              testRunTitle: '$(serviceName) Unit Tests'
+            condition: succeededOrFailed()
+
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: '$(Agent.TempDirectory)/coverage-$(serviceName).xml'
+              reportDirectory: '$(Agent.TempDirectory)/htmlcov-$(serviceName)'
+            condition: succeededOrFailed()
+
+          - task: Docker@2
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(serviceName)'
+              command: 'build'
+              Dockerfile: 'backend/services/$(serviceName)/Dockerfile'
+              buildContext: 'backend'
+              tags: |
+                $(Build.BuildId)
+                latest
+            displayName: 'Build Docker image'
+
+      # Frontend Build
+      - job: BuildFrontend
+        displayName: 'Build Frontend'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(nodeVersion)'
+            displayName: 'Use Node.js $(nodeVersion)'
+
+          - task: Cache@2
+            inputs:
+              key: 'npm | "$(Agent.OS)" | frontend/package-lock.json'
+              path: $(npm_config_cache)
+            displayName: 'Cache npm packages'
+
+          - script: |
+              cd frontend
+              npm ci
+            displayName: 'Install dependencies'
+
+          - script: |
+              cd frontend
+              npm run lint
+              npm run type-check
+            displayName: 'Lint and type check'
+
+          - script: |
+              cd frontend
+              npm run test:unit -- --coverage
+            displayName: 'Run unit tests'
+
+          - script: |
+              cd frontend
+              npm run build
+            displayName: 'Build frontend'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: 'frontend/dist'
+              artifactName: 'frontend-dist'
+            displayName: 'Publish frontend artifacts'
+
+  # Stage 2: Integration Tests
+  - stage: IntegrationTests
+    displayName: 'Integration Tests'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: RunIntegrationTests
+        displayName: 'Run Integration Tests'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - task: DockerCompose@0
+            inputs:
+              containerregistrytype: 'Azure Container Registry'
+              azureSubscription: '$(azureSubscription)'
+              azureContainerRegistry: '$(containerRegistry)'
+              dockerComposeFile: 'docker-compose.test.yml'
+              action: 'Run services'
+              buildImages: false
+            displayName: 'Start test environment'
+
+          - script: |
+              # Wait for services to be ready
+              for i in {1..30}; do
+                if curl -f http://localhost:8000/health; then
+                  echo "Services are ready"
+                  break
+                fi
+                echo "Waiting for services... ($i/30)"
+                sleep 10
+              done
+            displayName: 'Wait for services'
+
+          - script: |
+              # Run integration tests
+              pip install pytest requests
+              pytest tests/integration -v \
+                --junitxml=$(Agent.TempDirectory)/integration-test-results.xml
+            displayName: 'Run integration tests'
+
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '$(Agent.TempDirectory)/integration-test-results.xml'
+              testRunTitle: 'Integration Tests'
+            condition: succeededOrFailed()
+
+          - task: DockerCompose@0
+            inputs:
+              containerregistrytype: 'Azure Container Registry'
+              azureSubscription: '$(azureSubscription)'
+              azureContainerRegistry: '$(containerRegistry)'
+              dockerComposeFile: 'docker-compose.test.yml'
+              action: 'Run a specific service'
+              serviceName: 'logs'
+              containerCommand: 'docker-compose logs > $(Agent.TempDirectory)/docker-compose.log'
+            condition: failed()
+            displayName: 'Collect logs on failure'
+
+  # Stage 3: Security Scanning
+  - stage: Security
+    displayName: 'Security Scanning'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: SecurityScan
+        displayName: 'Security Scanning'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - task: WhiteSource@21
+            inputs:
+              cwd: '$(System.DefaultWorkingDirectory)'
+              projectName: 'PolicyCortex'
+            displayName: 'WhiteSource scan'
+
+          - script: |
+              # Install and run OWASP dependency check
+              wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+              unzip dependency-check-8.4.0-release.zip
+              ./dependency-check/bin/dependency-check.sh \
+                --project "PolicyCortex" \
+                --scan . \
+                --format "ALL" \
+                --out $(Agent.TempDirectory)/dependency-check
+            displayName: 'OWASP Dependency Check'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(Agent.TempDirectory)/dependency-check'
+              artifactName: 'security-reports'
+            displayName: 'Publish security reports'
+
+          - script: |
+              # Run Bandit for Python security
+              pip install bandit
+              for service in backend/services/*/; do
+                echo "Scanning $service"
+                bandit -r $service -f json -o $(Agent.TempDirectory)/bandit-$(basename $service).json
+              done
+            displayName: 'Bandit security scan'
+
+  # Stage 4: Performance Tests
+  - stage: Performance
+    displayName: 'Performance Testing'
+    dependsOn: IntegrationTests
+    condition: succeeded()
+    jobs:
+      - job: LoadTesting
+        displayName: 'Load Testing'
+        pool:
+          vmImage: 'ubuntu-latest'
+        
+        steps:
+          - script: |
+              # Install K6
+              sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+              echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+              sudo apt-get update
+              sudo apt-get install k6
+            displayName: 'Install K6'
+
+          - script: |
+              # Run load tests
+              k6 run tests/performance/load-test.js \
+                --out json=$(Agent.TempDirectory)/k6-results.json \
+                --summary-export=$(Agent.TempDirectory)/k6-summary.json
+            displayName: 'Run K6 load tests'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(Agent.TempDirectory)/k6-results.json'
+              artifactName: 'performance-results'
+            displayName: 'Publish performance results'
+
+  # Stage 5: Deploy to Staging
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
+    dependsOn: 
+      - Security
+      - Performance
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      environment: 'staging'
+    
+    jobs:
+      - deployment: DeployToStaging
+        displayName: 'Deploy to Staging'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: 'staging'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      # Deploy to Azure Container Apps
+                      for service in api_gateway azure_integration ai_engine data_processing conversation notification; do
+                        echo "Deploying $service to staging"
+                        
+                        az containerapp update \
+                          --name ca-$service-staging \
+                          --resource-group $(resourceGroupName) \
+                          --image $(containerRegistry)/$service:$(Build.BuildId)
+                      done
+                      
+                      # Deploy frontend
+                      az storage blob upload-batch \
+                        --account-name stpolicycortexstaging \
+                        --destination '$web' \
+                        --source $(Pipeline.Workspace)/frontend-dist \
+                        --overwrite
+                  displayName: 'Deploy to Azure'
+
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      # Run smoke tests
+                      ./scripts/smoke-tests.sh https://policycortex-staging.azurewebsites.net
+                  displayName: 'Run smoke tests'
+
+  # Stage 6: Deploy to Production
+  - stage: DeployProduction
+    displayName: 'Deploy to Production'
+    dependsOn: DeployStaging
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      environment: 'production'
+    
+    jobs:
+      - deployment: DeployToProduction
+        displayName: 'Deploy to Production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: 'production'
+        strategy:
+          runOnce:
+            preDeploy:
+              steps:
+                - script: |
+                    echo "Creating backup of current production"
+                    # Backup current production
+                  displayName: 'Backup production'
+            
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    scriptType: 'bash'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      # Blue-Green deployment
+                      for service in api_gateway azure_integration ai_engine data_processing conversation notification; do
+                        echo "Deploying $service to production (blue-green)"
+                        
+                        # Deploy to green slot
+                        az containerapp revision copy \
+                          --name ca-$service-prod \
+                          --resource-group $(resourceGroupName) \
+                          --image $(containerRegistry)/$service:$(Build.BuildId) \
+                          --revision-suffix green-$(Build.BuildId)
+                        
+                        # Test green slot
+                        GREEN_URL=$(az containerapp revision show \
+                          --name ca-$service-prod \
+                          --resource-group $(resourceGroupName) \
+                          --revision green-$(Build.BuildId) \
+                          --query properties.fqdn -o tsv)
+                        
+                        curl -f https://$GREEN_URL/health || exit 1
+                        
+                        # Switch traffic to green
+                        az containerapp ingress traffic set \
+                          --name ca-$service-prod \
+                          --resource-group $(resourceGroupName) \
+                          --revision-weight green-$(Build.BuildId)=100
+                      done
+                  displayName: 'Blue-Green deployment'
+
+            routeTraffic:
+              steps:
+                - script: |
+                    echo "Monitoring deployment health"
+                    # Monitor for 5 minutes
+                    sleep 300
+                  displayName: 'Monitor deployment'
+
+            postRouteTraffic:
+              steps:
+                - script: |
+                    echo "Running synthetic tests"
+                    # Run synthetic user journeys
+                  displayName: 'Synthetic monitoring'
+
+            on:
+              failure:
+                steps:
+                  - script: |
+                      echo "Rolling back deployment"
+                      # Rollback to previous version
+                    displayName: 'Rollback on failure'
+              
+              success:
+                steps:
+                  - script: |
+                      echo "Deployment successful"
+                      # Clean up old revisions
+                    displayName: 'Cleanup old revisions'

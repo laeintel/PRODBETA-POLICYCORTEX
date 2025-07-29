@@ -1,6 +1,6 @@
 """
 Automation Orchestrator
-Part of Patent 2: Unified AI-Driven Platform with Multi-Objective Optimization
+    Part of Patent 2: Unified AI-Driven Platform with Multi-Objective Optimization
 Enhanced with multi-objective optimization integration
 """
 
@@ -126,54 +126,54 @@ class ExecutionContext:
 
 class WorkflowValidator:
     """Validates automation workflows"""
-    
+
     @staticmethod
     def validate_workflow(workflow: AutomationWorkflow) -> Tuple[bool, List[str]]:
         """Validate workflow configuration"""
         errors = []
-        
+
         # Check for circular dependencies
         if WorkflowValidator._has_circular_dependencies(workflow.actions):
             errors.append("Circular dependencies detected in workflow")
-        
+
         # Validate action parameters
         for action in workflow.actions:
             action_errors = WorkflowValidator._validate_action(action)
             errors.extend(action_errors)
-        
+
         # Validate trigger configuration
         trigger_errors = WorkflowValidator._validate_trigger(workflow.trigger)
         errors.extend(trigger_errors)
-        
+
         return len(errors) == 0, errors
-    
+
     @staticmethod
     def _has_circular_dependencies(actions: List[AutomationAction]) -> bool:
         """Check for circular dependencies using topological sort"""
         graph = nx.DiGraph()
-        
+
         for action in actions:
             graph.add_node(action.action_id)
             for dep in action.dependencies:
                 graph.add_edge(dep, action.action_id)
-        
+
         try:
             nx.topological_sort(graph)
             return False
         except nx.NetworkXError:
             return True
-    
+
     @staticmethod
     def _validate_action(action: AutomationAction) -> List[str]:
         """Validate individual action"""
         errors = []
-        
+
         if not action.name:
             errors.append(f"Action {action.action_id} missing name")
-        
+
         if action.timeout <= 0:
             errors.append(f"Action {action.action_id} has invalid timeout")
-        
+
         # Validate action type specific parameters
         required_params = {
             ActionType.RESOURCE_SCALING: ['resource_type', 'scale_factor'],
@@ -182,46 +182,52 @@ class WorkflowValidator:
             ActionType.COMPLIANCE_ENFORCEMENT: ['compliance_rule', 'enforcement_action'],
             ActionType.OPTIMIZATION_APPLY: ['optimization_id', 'solution_id']
         }
-        
+
         if action.type in required_params:
             for param in required_params[action.type]:
                 if param not in action.parameters:
                     errors.append(f"Action {action.action_id} missing required parameter: {param}")
-        
+
         return errors
-    
+
     @staticmethod
     def _validate_trigger(trigger: Dict[str, Any]) -> List[str]:
         """Validate trigger configuration"""
         errors = []
-        
+
         if 'type' not in trigger:
             errors.append("Trigger missing type")
             return errors
-        
+
         trigger_type = trigger.get('type')
-        
+
         if trigger_type == TriggerType.SCHEDULED.value:
             if 'cron_expression' not in trigger:
                 errors.append("Scheduled trigger missing cron_expression")
-        
+
         elif trigger_type == TriggerType.THRESHOLD_BASED.value:
             required = ['metric', 'threshold', 'operator']
             for field in required:
                 if field not in trigger:
                     errors.append(f"Threshold trigger missing {field}")
-        
+
         elif trigger_type == TriggerType.EVENT_BASED.value:
             if 'event_type' not in trigger:
                 errors.append("Event trigger missing event_type")
-        
+
         return errors
 
 
 class ActionExecutor:
     """Executes automation actions"""
-    
-    def __init__(self, resource_manager=None, policy_engine=None, security_service=None, azure_client=None):
+
+    def __init__(
+        self,
+        resource_manager=None,
+        policy_engine=None,
+        security_service=None,
+        azure_client=None
+    ):
         self.resource_manager = resource_manager
         self.policy_engine = policy_engine
         self.security_service = security_service
@@ -239,37 +245,37 @@ class ActionExecutor:
             ActionType.CUSTOM_SCRIPT: self._execute_custom_script,
             ActionType.OPTIMIZATION_APPLY: self._execute_optimization_apply
         }
-    
-    async def execute_action(self, 
+
+    async def execute_action(self,
                            action: AutomationAction,
                            context: ExecutionContext) -> Dict[str, Any]:
         """Execute a single automation action"""
-        
+
         logger.info(f"Executing action {action.action_id} of type {action.type}")
-        
+
         try:
             # Check dependencies
             for dep in action.dependencies:
                 if dep not in context.completed_actions:
                     raise APIError(f"Dependency {dep} not completed", status_code=400)
-            
+
             # Get handler
             handler = self.execution_handlers.get(action.type)
             if not handler:
                 raise APIError(f"No handler for action type {action.type}", status_code=400)
-            
+
             # Execute with timeout
             result = await asyncio.wait_for(
                 handler(action, context),
                 timeout=action.timeout
             )
-            
+
             # Mark as completed
             context.completed_actions.add(action.action_id)
             context.results[action.action_id] = result
-            
+
             return result
-            
+
         except asyncio.TimeoutError:
             logger.error(f"Action {action.action_id} timed out")
             context.failed_actions.add(action.action_id)
@@ -279,7 +285,7 @@ class ActionExecutor:
                 'timestamp': datetime.now().isoformat()
             })
             raise
-        
+
         except Exception as e:
             logger.error(f"Action {action.action_id} failed: {str(e)}")
             context.failed_actions.add(action.action_id)
@@ -288,19 +294,19 @@ class ActionExecutor:
                 'error': str(e),
                 'timestamp': datetime.now().isoformat()
             })
-            
+
             # Attempt rollback if configured
             if action.rollback_action:
                 await self._execute_rollback(action.rollback_action, context)
-            
+
             raise
-    
+
     async def _execute_resource_scaling(self,
                                       action: AutomationAction,
                                       context: ExecutionContext) -> Dict[str, Any]:
         """Execute resource scaling action"""
         params = action.parameters
-        
+
         # Simulated implementation - would call actual Azure APIs
         return {
             'success': True,
@@ -309,13 +315,13 @@ class ActionExecutor:
             'scale_factor': params.get('scale_factor'),
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_policy_update(self,
                                    action: AutomationAction,
                                    context: ExecutionContext) -> Dict[str, Any]:
         """Execute policy update action"""
         params = action.parameters
-        
+
         # Simulated implementation
         return {
             'success': True,
@@ -324,13 +330,13 @@ class ActionExecutor:
             'updates': params.get('updates'),
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_security_remediation(self,
                                           action: AutomationAction,
                                           context: ExecutionContext) -> Dict[str, Any]:
         """Execute security remediation action"""
         params = action.parameters
-        
+
         # Simulated implementation
         return {
             'success': True,
@@ -339,13 +345,13 @@ class ActionExecutor:
             'remediation_steps': params.get('remediation_steps'),
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_compliance_enforcement(self,
                                             action: AutomationAction,
                                             context: ExecutionContext) -> Dict[str, Any]:
         """Execute compliance enforcement action"""
         params = action.parameters
-        
+
         # Simulated implementation
         return {
             'success': True,
@@ -354,7 +360,7 @@ class ActionExecutor:
             'enforcement_action': params.get('enforcement_action'),
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_optimization_apply(self,
                                         action: AutomationAction,
                                         context: ExecutionContext) -> Dict[str, Any]:
@@ -362,15 +368,15 @@ class ActionExecutor:
         params = action.parameters
         optimization_id = params.get('optimization_id')
         solution_id = params.get('solution_id')
-        
+
         # Integrate with multi-objective optimizer
         from .multi_objective_optimizer import multi_objective_optimizer
-        
+
         result = await multi_objective_optimizer.apply_solution(
             solution_id=solution_id,
             dry_run=params.get('dry_run', False)
         )
-        
+
         return {
             'success': True,
             'action_type': 'optimization_apply',
@@ -379,7 +385,7 @@ class ActionExecutor:
             'result': result,
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_cost_optimization(self,
                                        action: AutomationAction,
                                        context: ExecutionContext) -> Dict[str, Any]:
@@ -390,7 +396,7 @@ class ActionExecutor:
             'optimizations_applied': [],
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_performance_tuning(self,
                                         action: AutomationAction,
                                         context: ExecutionContext) -> Dict[str, Any]:
@@ -401,7 +407,7 @@ class ActionExecutor:
             'tunings_applied': [],
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_backup_restore(self,
                                     action: AutomationAction,
                                     context: ExecutionContext) -> Dict[str, Any]:
@@ -412,7 +418,7 @@ class ActionExecutor:
             'operation': action.parameters.get('operation', 'backup'),
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_alert_response(self,
                                     action: AutomationAction,
                                     context: ExecutionContext) -> Dict[str, Any]:
@@ -423,20 +429,20 @@ class ActionExecutor:
             'alerts_handled': [],
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_workflow_trigger(self,
                                       action: AutomationAction,
                                       context: ExecutionContext) -> Dict[str, Any]:
         """Execute workflow trigger action"""
         target_workflow = action.parameters.get('target_workflow_id')
-        
+
         return {
             'success': True,
             'action_type': 'workflow_trigger',
             'triggered_workflow': target_workflow,
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_custom_script(self,
                                    action: AutomationAction,
                                    context: ExecutionContext) -> Dict[str, Any]:
@@ -448,7 +454,7 @@ class ActionExecutor:
             'output': '',
             'timestamp': datetime.now().isoformat()
         }
-    
+
     async def _execute_rollback(self, rollback_action_id: str, context: ExecutionContext):
         """Execute rollback action"""
         logger.info(f"Executing rollback action {rollback_action_id}")
@@ -457,7 +463,7 @@ class ActionExecutor:
 
 class AutomationOrchestrator:
     """Main automation orchestration service - integrates with multi-objective optimizer"""
-    
+
     def __init__(self):
         self.workflows: Dict[str, AutomationWorkflow] = {}
         self.executor = None
@@ -467,29 +473,40 @@ class AutomationOrchestrator:
         self._initialized = False
         self.executor_pool = None
         self.max_concurrent_executions = 10
-        
+
         # Integration with multi-objective optimizer
         self.optimization_workflows = {}
-    
-    async def initialize(self, resource_manager=None, policy_engine=None, security_service=None, azure_client=None):
+
+    async def initialize(
+        self,
+        resource_manager=None,
+        policy_engine=None,
+        security_service=None,
+        azure_client=None
+    ):
         """Initialize the orchestrator"""
-        self.executor = ActionExecutor(resource_manager, policy_engine, security_service, azure_client)
+        self.executor = ActionExecutor(
+            resource_manager,
+            policy_engine,
+            security_service,
+            azure_client
+        )
         self._initialized = True
-        
+
         # Initialize thread pool
         self.executor_pool = ThreadPoolExecutor(max_workers=self.max_concurrent_executions)
-        
+
         # Start execution worker
         asyncio.create_task(self._execution_worker())
-        
+
         # Initialize predefined workflows
         self._initialize_optimization_workflows()
-        
+
         logger.info("Automation orchestrator initialized")
-    
+
     def _initialize_optimization_workflows(self):
         """Initialize workflows that integrate with multi-objective optimizer"""
-        
+
         # Cost-Security Optimization Workflow
         cost_security_workflow = AutomationWorkflow(
             workflow_id="cost_security_optimization",
@@ -528,7 +545,7 @@ class AutomationOrchestrator:
                 )
             ]
         )
-        
+
         # Performance-Cost-Compliance Optimization Workflow
         perf_cost_compliance_workflow = AutomationWorkflow(
             workflow_id="performance_cost_compliance_optimization",
@@ -565,47 +582,47 @@ class AutomationOrchestrator:
                 )
             ]
         )
-        
+
         self.optimization_workflows = {
             cost_security_workflow.workflow_id: cost_security_workflow,
             perf_cost_compliance_workflow.workflow_id: perf_cost_compliance_workflow
         }
-        
+
         # Add to main workflow registry
         self.workflows.update(self.optimization_workflows)
-    
+
     async def create_workflow(self, workflow: AutomationWorkflow) -> str:
         """Create a new automation workflow"""
         # Validate workflow
         is_valid, errors = self.validator.validate_workflow(workflow)
         if not is_valid:
             raise APIError(f"Invalid workflow: {', '.join(errors)}", status_code=400)
-        
+
         # Generate ID if not provided
         if not workflow.workflow_id:
             workflow.workflow_id = str(uuid.uuid4())
-        
+
         # Store workflow
         self.workflows[workflow.workflow_id] = workflow
-        
+
         # Cache workflow
         await self._cache_workflow(workflow)
-        
+
         # Schedule if needed
         if workflow.trigger['type'] == TriggerType.SCHEDULED.value:
             await self._schedule_workflow(workflow)
-        
+
         return workflow.workflow_id
-    
+
     async def execute_workflow(self,
                              workflow_id: str,
                              parameters: Dict[str, Any] = None) -> str:
         """Execute a workflow"""
         if workflow_id not in self.workflows:
             raise APIError(f"Workflow {workflow_id} not found", status_code=404)
-        
+
         workflow = self.workflows[workflow_id]
-        
+
         # Create execution context
         execution_id = str(uuid.uuid4())
         context = ExecutionContext(
@@ -614,15 +631,15 @@ class AutomationOrchestrator:
             started_at=datetime.now(),
             parameters=parameters or {}
         )
-        
+
         # Add to active executions
         self.active_executions[execution_id] = context
-        
+
         # Queue for execution
         await self.execution_queue.put((workflow, context))
-        
+
         return execution_id
-    
+
     async def trigger_optimization_workflow(self,
                                           objectives: List[str],
                                           constraints: List[str],
@@ -663,20 +680,20 @@ class AutomationOrchestrator:
                 )
             ]
         )
-        
+
         # Create and execute
         workflow_id = await self.create_workflow(workflow)
         execution_id = await self.execute_workflow(workflow_id, parameters)
-        
+
         return execution_id
-    
+
     async def get_workflow_status(self, workflow_id: str) -> Dict[str, Any]:
         """Get workflow status"""
         if workflow_id not in self.workflows:
             raise APIError(f"Workflow {workflow_id} not found", status_code=404)
-        
+
         workflow = self.workflows[workflow_id]
-        
+
         # Get active executions
         active_executions = [
             {
@@ -688,7 +705,7 @@ class AutomationOrchestrator:
             for ctx in self.active_executions.values()
             if ctx.workflow_id == workflow_id
         ]
-        
+
         return {
             'workflow_id': workflow_id,
             'name': workflow.name,
@@ -698,74 +715,74 @@ class AutomationOrchestrator:
             'active_executions': active_executions,
             'execution_history': workflow.execution_history[-10:]  # Last 10 executions
         }
-    
+
     async def cancel_execution(self, execution_id: str) -> Dict[str, Any]:
         """Cancel a workflow execution"""
         if execution_id not in self.active_executions:
             raise APIError(f"Execution {execution_id} not found", status_code=404)
-        
+
         context = self.active_executions[execution_id]
-        
+
         # Mark as cancelled
         context.errors.append({
             'error': 'Execution cancelled by user',
             'timestamp': datetime.now().isoformat()
         })
-        
+
         # Remove from active executions
         del self.active_executions[execution_id]
-        
+
         return {
             'execution_id': execution_id,
             'status': 'cancelled',
             'completed_actions': list(context.completed_actions),
             'failed_actions': list(context.failed_actions)
         }
-    
+
     async def _execution_worker(self):
         """Worker to process workflow executions"""
         while True:
             try:
                 # Get next workflow to execute
                 workflow, context = await self.execution_queue.get()
-                
+
                 # Execute workflow
                 await self._execute_workflow(workflow, context)
-                
+
             except Exception as e:
                 logger.error(f"Execution worker error: {str(e)}")
                 await asyncio.sleep(1)
-    
+
     async def _execute_workflow(self,
                               workflow: AutomationWorkflow,
                               context: ExecutionContext):
         """Execute a complete workflow"""
         logger.info(f"Starting execution of workflow {workflow.workflow_id}")
-        
+
         try:
             # Update workflow state
             workflow.state = AutomationState.RUNNING
             workflow.updated_at = datetime.now()
-            
+
             # Get execution order (topological sort)
             execution_order = self._get_execution_order(workflow.actions)
-            
+
             # Execute actions in order
             for action_id in execution_order:
                 action = next(a for a in workflow.actions if a.action_id == action_id)
-                
+
                 # Check if should continue
                 if context.execution_id not in self.active_executions:
                     logger.info(f"Execution {context.execution_id} cancelled")
                     break
-                
+
                 # Handle approval if required
                 if action.approval_required:
                     approval = await self._handle_approval(action, context)
                     if not approval:
                         context.failed_actions.add(action.action_id)
                         continue
-                
+
                 # Execute action with retries
                 for attempt in range(action.retry_count):
                     try:
@@ -776,13 +793,13 @@ class AutomationOrchestrator:
                             raise
                         logger.warning(f"Action {action_id} failed, retrying...")
                         await asyncio.sleep(2 ** attempt)  # Exponential backoff
-            
+
             # Update workflow state
             if context.failed_actions:
                 workflow.state = AutomationState.PARTIALLY_COMPLETED
             else:
                 workflow.state = AutomationState.COMPLETED
-            
+
             # Record execution
             execution_record = {
                 'execution_id': context.execution_id,
@@ -793,37 +810,37 @@ class AutomationOrchestrator:
                 'results': context.results,
                 'errors': context.errors
             }
-            
+
             workflow.execution_history.append(execution_record)
-            
+
         except Exception as e:
             logger.error(f"Workflow execution failed: {str(e)}")
             workflow.state = AutomationState.FAILED
-            
+
             # Execute rollback if configured
             if workflow.auto_rollback and context.completed_actions:
                 await self._execute_rollback(workflow, context)
-            
+
         finally:
             # Remove from active executions
             if context.execution_id in self.active_executions:
                 del self.active_executions[context.execution_id]
-            
+
             # Update workflow
             workflow.updated_at = datetime.now()
             await self._cache_workflow(workflow)
-    
+
     def _get_execution_order(self, actions: List[AutomationAction]) -> List[str]:
         """Get execution order using topological sort"""
         graph = nx.DiGraph()
-        
+
         for action in actions:
             graph.add_node(action.action_id)
             for dep in action.dependencies:
                 graph.add_edge(dep, action.action_id)
-        
+
         return list(nx.topological_sort(graph))
-    
+
     async def _handle_approval(self, action: AutomationAction, context: ExecutionContext) -> bool:
         """Handle approval workflow"""
         # In production, integrate with approval system
@@ -831,11 +848,11 @@ class AutomationOrchestrator:
         if action.priority == ActionPriority.CRITICAL:
             return False  # Require manual approval
         return True
-    
+
     async def _execute_rollback(self, workflow: AutomationWorkflow, context: ExecutionContext):
         """Execute rollback for failed workflow"""
         logger.info(f"Executing rollback for workflow {workflow.workflow_id}")
-        
+
         # Execute rollback actions in reverse order
         for action in reversed(workflow.actions):
             if action.action_id in context.completed_actions and action.rollback_action:
@@ -848,18 +865,18 @@ class AutomationOrchestrator:
                     parameters={'rollback_config': action.rollback_action},
                     priority=ActionPriority.HIGH
                 )
-                
+
                 try:
                     await self.executor.execute_action(rollback_action, context)
                     context.rollback_executed = True
                 except Exception as e:
                     logger.error(f"Rollback failed for action {action.action_id}: {str(e)}")
-    
+
     async def _schedule_workflow(self, workflow: AutomationWorkflow):
         """Schedule workflow execution"""
         # Implement cron-based scheduling
         pass
-    
+
     async def _cache_workflow(self, workflow: AutomationWorkflow):
         """Cache workflow configuration"""
         cache_key = f"workflow:{workflow.workflow_id}"
@@ -870,13 +887,13 @@ class AutomationOrchestrator:
             'trigger': workflow.trigger,
             'updated_at': workflow.updated_at.isoformat()
         }
-        
+
         await redis_client.setex(
             cache_key,
             timedelta(hours=24),
             json.dumps(cache_data)
         )
-    
+
     async def get_optimization_insights(self) -> Dict[str, Any]:
         """Get insights from optimization workflows"""
         insights = {
@@ -887,15 +904,15 @@ class AutomationOrchestrator:
             'security_enhancements': 0,
             'optimization_trends': []
         }
-        
+
         # Analyze optimization workflow executions
         for workflow in self.optimization_workflows.values():
             for execution in workflow.execution_history:
                 insights['total_optimizations'] += 1
-                
+
                 if not execution.get('failed_actions'):
                     insights['successful_optimizations'] += 1
-                
+
                 # Extract optimization results
                 results = execution.get('results', {})
                 for action_id, result in results.items():
@@ -904,10 +921,12 @@ class AutomationOrchestrator:
                         if 'cost_savings' in opt_result:
                             insights['cost_savings'] += opt_result['cost_savings']
                         if 'performance_improvement' in opt_result:
-                            insights['performance_improvements'] += opt_result['performance_improvement']
+                            insights['performance_improvements'] + = (
+                                opt_result['performance_improvement']
+                            )
                         if 'security_score' in opt_result:
                             insights['security_enhancements'] += opt_result['security_score']
-        
+
         return insights
 
 
@@ -923,7 +942,7 @@ class WorkflowEngine:
     Legacy orchestration engine - maintained for backward compatibility
     New implementations should use AutomationOrchestrator
     """
-    
+
     def __init__(self, azure_client=None):
         self.azure_client = azure_client
         self.action_executor = ActionExecutor(azure_client=azure_client)
@@ -932,10 +951,10 @@ class WorkflowEngine:
         self.execution_history: List[AutomationExecution] = []
         self.max_concurrent_executions = 10
         self.executor_pool = None
-        
+
         # Pre-built governance workflows
         self._initialize_predefined_workflows()
-    
+
     def _initialize_predefined_workflows(self):
         """Initialize common governance automation workflows."""
         try:
@@ -1002,7 +1021,7 @@ class WorkflowEngine:
                 approval_required=False,
                 auto_rollback=True
             )
-            
+
             # Security Incident Response Workflow
             security_workflow = AutomationWorkflow(
                 workflow_id="security_incident_response",
@@ -1058,7 +1077,7 @@ class WorkflowEngine:
                 approval_required=False,
                 auto_rollback=False  # Security actions should not auto-rollback
             )
-            
+
             # Cost Optimization Workflow
             cost_optimization_workflow = AutomationWorkflow(
                 workflow_id="cost_optimization_response",
@@ -1112,7 +1131,7 @@ class WorkflowEngine:
                 approval_required=True,
                 auto_rollback=True
             )
-            
+
             # Performance Degradation Workflow
             performance_workflow = AutomationWorkflow(
                 workflow_id="performance_degradation_response",
@@ -1155,7 +1174,8 @@ class WorkflowEngine:
                         parameters={
                             "type": "teams",
                             "recipients": ["operations-team"],
-                            "message": "Performance degradation detected and auto-scaling initiated for {{event.resource_id}}"
+                            "message": "Performance degradation detected and
+                                auto-scaling initiated for {{event.resource_id}}"
                         },
                         priority=ActionPriority.MEDIUM
                     )
@@ -1164,7 +1184,7 @@ class WorkflowEngine:
                 auto_rollback=True,
                 max_execution_time=900  # 15 minutes
             )
-            
+
             # Register workflows
             self.workflow_registry = {
                 compliance_workflow.workflow_id: compliance_workflow,
@@ -1172,38 +1192,38 @@ class WorkflowEngine:
                 cost_optimization_workflow.workflow_id: cost_optimization_workflow,
                 performance_workflow.workflow_id: performance_workflow
             }
-            
-            logger.info("predefined_workflows_initialized", 
+
+            logger.info("predefined_workflows_initialized",
                        workflow_count=len(self.workflow_registry))
-        
+
         except Exception as e:
             logger.error("workflow_initialization_failed", error=str(e))
-    
+
     async def initialize(self):
         """Initialize the workflow engine."""
         try:
             logger.info("initializing_workflow_engine")
-            
+
             # Initialize thread pool for concurrent execution
             self.executor_pool = ThreadPoolExecutor(max_workers=self.max_concurrent_executions)
-            
+
             logger.info("workflow_engine_initialized")
-        
+
         except Exception as e:
             logger.error("workflow_engine_initialization_failed", error=str(e))
             raise
-    
-    async def trigger_workflow(self, trigger_event: Dict[str, Any], 
+
+    async def trigger_workflow(self, trigger_event: Dict[str, Any],
                               workflow_id: Optional[str] = None) -> Optional[str]:
         """Trigger a workflow based on an event."""
         try:
             trigger_type = AutomationTrigger(trigger_event.get('trigger_type', 'manual'))
-            
+
             logger.info("triggering_workflow",
                        trigger_type=trigger_type.value,
                        workflow_id=workflow_id,
                        event_id=trigger_event.get('event_id'))
-            
+
             # Find appropriate workflow
             if workflow_id:
                 workflow = self.workflow_registry.get(workflow_id)
@@ -1215,17 +1235,17 @@ class WorkflowEngine:
                 if not workflow:
                     logger.warning("no_matching_workflow_found", trigger_type=trigger_type.value)
                     return None
-            
+
             # Check if conditions are met
             if not await self._evaluate_conditions(workflow.conditions, trigger_event):
                 logger.info("workflow_conditions_not_met", workflow_id=workflow.workflow_id)
                 return None
-            
+
             # Check concurrent execution limits
             if len(self.active_executions) >= self.max_concurrent_executions:
                 logger.warning("max_concurrent_executions_reached")
                 return None
-            
+
             # Create execution instance
             execution = AutomationExecution(
                 execution_id=str(uuid.uuid4()),
@@ -1235,38 +1255,38 @@ class WorkflowEngine:
                 started_at=datetime.utcnow(),
                 actions_total=len(workflow.actions)
             )
-            
+
             # Start execution
             self.active_executions[execution.execution_id] = execution
-            
+
             # Execute workflow asynchronously
             asyncio.create_task(self._execute_workflow(workflow, execution))
-            
+
             logger.info("workflow_triggered",
                        execution_id=execution.execution_id,
                        workflow_id=workflow.workflow_id)
-            
+
             return execution.execution_id
-        
+
         except Exception as e:
             logger.error("workflow_trigger_failed", error=str(e))
             return None
-    
-    async def _find_matching_workflow(self, trigger_event: Dict[str, Any], 
+
+    async def _find_matching_workflow(self, trigger_event: Dict[str, Any],
                                      trigger_type: AutomationTrigger) -> Optional[AutomationWorkflow]:
         """Find workflow that matches the trigger event."""
         try:
             for workflow in self.workflow_registry.values():
                 if workflow.trigger == trigger_type:
                     return workflow
-            
+
             return None
-        
+
         except Exception as e:
             logger.error("workflow_matching_failed", error=str(e))
             return None
-    
-    async def _evaluate_conditions(self, conditions: List[Dict[str, Any]], 
+
+    async def _evaluate_conditions(self, conditions: List[Dict[str, Any]],
                                   trigger_event: Dict[str, Any]) -> bool:
         """Evaluate if workflow conditions are met."""
         try:
@@ -1274,18 +1294,18 @@ class WorkflowEngine:
                 condition_type = condition.get('type')
                 operator = condition.get('operator')
                 expected_value = condition.get('value')
-                
+
                 actual_value = trigger_event.get(condition_type)
-                
+
                 if not self._evaluate_condition(actual_value, operator, expected_value):
                     return False
-            
+
             return True
-        
+
         except Exception as e:
             logger.error("condition_evaluation_failed", error=str(e))
             return False
-    
+
     def _evaluate_condition(self, actual_value: Any, operator: str, expected_value: Any) -> bool:
         """Evaluate a single condition."""
         try:
@@ -1309,10 +1329,10 @@ class WorkflowEngine:
                 return expected_value in str(actual_value)
             else:
                 return False
-        
+
         except Exception:
             return False
-    
+
     async def _execute_workflow(self, workflow: AutomationWorkflow, execution: AutomationExecution):
         """Execute a workflow with all its actions."""
         try:
@@ -1320,33 +1340,33 @@ class WorkflowEngine:
             logger.info("executing_workflow",
                        execution_id=execution.execution_id,
                        workflow_id=workflow.workflow_id)
-            
+
             # Build action dependency graph
             action_graph = self._build_action_graph(workflow.actions)
-            
+
             # Execute actions respecting dependencies
             executed_actions = set()
             failed_actions = set()
-            
+
             while len(executed_actions) < len(workflow.actions) and not failed_actions:
                 # Check for timeout
                 if (datetime.utcnow() - execution.started_at).total_seconds() > workflow.max_execution_time:
                     execution.status = AutomationStatus.FAILED
                     execution.errors.append("Workflow execution timeout")
                     break
-                
+
                 # Find actions ready to execute
                 ready_actions = self._get_ready_actions(
                     workflow.actions, action_graph, executed_actions, failed_actions
                 )
-                
+
                 if not ready_actions:
                     # No more actions can be executed
                     break
-                
+
                 # Execute ready actions in parallel (by priority)
                 ready_actions.sort(key=lambda a: self._get_priority_value(a.priority), reverse=True)
-                
+
                 tasks = []
                 for action in ready_actions:
                     if workflow.approval_required and action.approval_required:
@@ -1355,16 +1375,16 @@ class WorkflowEngine:
                         if not approval_result:
                             failed_actions.add(action.action_id)
                             continue
-                    
+
                     # Create execution context
                     context = self._create_execution_context(execution, workflow)
-                    
+
                     # Execute action
                     task = asyncio.create_task(
                         self._execute_action_with_tracking(action, context, execution)
                     )
                     tasks.append((action, task))
-                
+
                 # Wait for all actions to complete
                 for action, task in tasks:
                     try:
@@ -1375,75 +1395,75 @@ class WorkflowEngine:
                         else:
                             failed_actions.add(action.action_id)
                             execution.errors.append(f"Action {action.action_id} failed: {result.get('error')}")
-                    
+
                     except Exception as e:
                         failed_actions.add(action.action_id)
                         execution.errors.append(f"Action {action.action_id} failed: {str(e)}")
-            
+
             # Determine final status
             if failed_actions:
                 if executed_actions:
                     execution.status = AutomationStatus.PARTIALLY_COMPLETED
                 else:
                     execution.status = AutomationStatus.FAILED
-                
+
                 # Execute rollback if enabled
                 if workflow.auto_rollback:
                     await self._execute_rollback(workflow, execution, executed_actions)
             else:
                 execution.status = AutomationStatus.COMPLETED
-            
+
             execution.completed_at = datetime.utcnow()
-            
+
             # Move to history and cleanup
             self.execution_history.append(execution)
             if execution.execution_id in self.active_executions:
                 del self.active_executions[execution.execution_id]
-            
+
             # Limit history size
             if len(self.execution_history) > 1000:
                 self.execution_history = self.execution_history[-500:]
-            
+
             logger.info("workflow_execution_completed",
                        execution_id=execution.execution_id,
                        status=execution.status.value,
                        actions_completed=execution.actions_completed,
                        actions_total=execution.actions_total)
-        
+
         except Exception as e:
             execution.status = AutomationStatus.FAILED
             execution.errors.append(f"Workflow execution failed: {str(e)}")
             execution.completed_at = datetime.utcnow()
-            
+
             logger.error("workflow_execution_failed",
                         execution_id=execution.execution_id,
                         error=str(e))
-    
+
     def _build_action_graph(self, actions: List[AutomationAction]) -> Dict[str, List[str]]:
         """Build action dependency graph."""
         graph = {}
         for action in actions:
             graph[action.action_id] = action.dependencies.copy()
         return graph
-    
-    def _get_ready_actions(self, actions: List[AutomationAction], 
+
+    def _get_ready_actions(self, actions: List[AutomationAction],
                           action_graph: Dict[str, List[str]],
-                          executed_actions: Set[str], 
+                          executed_actions: Set[str],
                           failed_actions: Set[str]) -> List[AutomationAction]:
         """Get actions that are ready to execute."""
         ready = []
-        
+
         for action in actions:
             if action.action_id in executed_actions or action.action_id in failed_actions:
                 continue
-            
+
             # Check if all dependencies are satisfied
             dependencies = action_graph.get(action.action_id, [])
             if all(dep in executed_actions for dep in dependencies):
                 ready.append(action)
-        
+
         return ready
-    
+
     def _get_priority_value(self, priority: ActionPriority) -> int:
         """Convert priority to numeric value for sorting."""
         priority_map = {
@@ -1453,43 +1473,43 @@ class WorkflowEngine:
             ActionPriority.LOW: 1
         }
         return priority_map.get(priority, 1)
-    
-    async def _execute_action_with_tracking(self, action: AutomationAction, 
+
+    async def _execute_action_with_tracking(self, action: AutomationAction,
                                           context: Dict[str, Any],
                                           execution: AutomationExecution) -> Dict[str, Any]:
         """Execute action and track results."""
         try:
             # Substitute template variables in action
             resolved_action = self._resolve_action_templates(action, context)
-            
+
             # Execute action
             result = await self.action_executor.execute_action(resolved_action, context)
-            
+
             # Track result
             execution.results.append({
                 'action_id': action.action_id,
                 'result': result,
                 'timestamp': datetime.utcnow().isoformat()
             })
-            
+
             return result
-        
+
         except Exception as e:
             error_result = {
                 'success': False,
                 'error': str(e),
                 'action_id': action.action_id
             }
-            
+
             execution.results.append({
                 'action_id': action.action_id,
                 'result': error_result,
                 'timestamp': datetime.utcnow().isoformat()
             })
-            
+
             return error_result
-    
-    def _create_execution_context(self, execution: AutomationExecution, 
+
+    def _create_execution_context(self, execution: AutomationExecution,
                                  workflow: AutomationWorkflow) -> Dict[str, Any]:
         """Create execution context for actions."""
         return {
@@ -1500,8 +1520,8 @@ class WorkflowEngine:
             'user_permissions': ['*'],  # For development - in production, get from auth
             'azure_client': self.azure_client
         }
-    
-    def _resolve_action_templates(self, action: AutomationAction, 
+
+    def _resolve_action_templates(self, action: AutomationAction,
                                  context: Dict[str, Any]) -> AutomationAction:
         """Resolve template variables in action parameters."""
         try:
@@ -1519,42 +1539,42 @@ class WorkflowEngine:
                 validation_rules=action.validation_rules,
                 dependencies=action.dependencies
             )
-            
+
             return resolved_action
-        
+
         except Exception as e:
-            logger.error("template_resolution_failed", 
+            logger.error("template_resolution_failed",
                         action_id=action.action_id,
                         error=str(e))
             return action
-    
+
     def _resolve_template_string(self, template: str, context: Dict[str, Any]) -> str:
         """Resolve template variables in a string."""
         try:
             # Simple template resolution
             result = template
-            
+
             # Replace event variables
             event = context.get('trigger_event', {})
             for key, value in event.items():
                 result = result.replace(f"{{{{event.{key}}}}}", str(value))
-            
+
             # Replace context variables
             for key, value in context.items():
                 if key != 'trigger_event':
                     result = result.replace(f"{{{{{key}}}}}", str(value))
-            
+
             return result
-        
+
         except Exception:
             return template
-    
-    def _resolve_template_dict(self, template_dict: Dict[str, Any], 
+
+    def _resolve_template_dict(self, template_dict: Dict[str, Any],
                               context: Dict[str, Any]) -> Dict[str, Any]:
         """Resolve template variables in a dictionary."""
         try:
             result = {}
-            
+
             for key, value in template_dict.items():
                 if isinstance(value, str):
                     result[key] = self._resolve_template_string(value, context)
@@ -1562,37 +1582,41 @@ class WorkflowEngine:
                     result[key] = self._resolve_template_dict(value, context)
                 elif isinstance(value, list):
                     result[key] = [
-                        self._resolve_template_string(item, context) if isinstance(item, str) else item
+                        self._resolve_template_string(
+                            item,
+                            context) if isinstance(item,
+                            str
+                        ) else item
                         for item in value
                     ]
                 else:
                     result[key] = value
-            
+
             return result
-        
+
         except Exception:
             return template_dict
-    
-    async def _handle_approval(self, action: AutomationAction, 
+
+    async def _handle_approval(self, action: AutomationAction,
                               execution: AutomationExecution) -> bool:
         """Handle approval workflow for actions."""
         try:
             logger.info("approval_required",
                        action_id=action.action_id,
                        execution_id=execution.execution_id)
-            
+
             # For development, auto-approve non-critical actions
             # In production, this would integrate with approval systems
             if action.priority in [ActionPriority.CRITICAL, ActionPriority.HIGH]:
                 return False  # Require manual approval
             else:
                 return True  # Auto-approve medium/low priority
-        
+
         except Exception as e:
             logger.error("approval_handling_failed", error=str(e))
             return False
-    
-    async def _execute_rollback(self, workflow: AutomationWorkflow, 
+
+    async def _execute_rollback(self, workflow: AutomationWorkflow,
                                execution: AutomationExecution,
                                executed_actions: Set[str]):
         """Execute rollback actions for failed workflow."""
@@ -1600,9 +1624,9 @@ class WorkflowEngine:
             logger.info("executing_rollback",
                        execution_id=execution.execution_id,
                        executed_actions=len(executed_actions))
-            
+
             rollback_tasks = []
-            
+
             # Execute rollback actions for completed actions (in reverse order)
             for action in reversed(workflow.actions):
                 if action.action_id in executed_actions and action.rollback_actions:
@@ -1616,31 +1640,31 @@ class WorkflowEngine:
                             priority=ActionPriority.HIGH,
                             timeout_seconds=120
                         )
-                        
+
                         context = self._create_execution_context(execution, workflow)
                         task = asyncio.create_task(
                             self.action_executor.execute_action(rollback_action, context)
                         )
                         rollback_tasks.append(task)
-            
+
             # Wait for all rollback actions
             if rollback_tasks:
                 rollback_results = await asyncio.gather(*rollback_tasks, return_exceptions=True)
                 execution.rollback_executed = True
-                
-                successful_rollbacks = sum(1 for result in rollback_results 
+
+                successful_rollbacks = sum(1 for result in rollback_results
                                          if isinstance(result, dict) and result.get('success'))
-                
+
                 logger.info("rollback_completed",
                            execution_id=execution.execution_id,
                            successful_rollbacks=successful_rollbacks,
                            total_rollbacks=len(rollback_tasks))
-        
+
         except Exception as e:
             logger.error("rollback_execution_failed",
                         execution_id=execution.execution_id,
                         error=str(e))
-    
+
     async def get_execution_status(self, execution_id: str) -> Optional[Dict[str, Any]]:
         """Get status of a workflow execution."""
         try:
@@ -1648,18 +1672,18 @@ class WorkflowEngine:
             if execution_id in self.active_executions:
                 execution = self.active_executions[execution_id]
                 return self._execution_to_dict(execution)
-            
+
             # Check history
             for execution in self.execution_history:
                 if execution.execution_id == execution_id:
                     return self._execution_to_dict(execution)
-            
+
             return None
-        
+
         except Exception as e:
             logger.error("get_execution_status_failed", error=str(e))
             return None
-    
+
     def _execution_to_dict(self, execution: AutomationExecution) -> Dict[str, Any]:
         """Convert execution to dictionary."""
         return {
@@ -1675,7 +1699,7 @@ class WorkflowEngine:
             'rollback_executed': execution.rollback_executed,
             'results': execution.results
         }
-    
+
     async def cancel_execution(self, execution_id: str) -> bool:
         """Cancel a running workflow execution."""
         try:
@@ -1683,26 +1707,26 @@ class WorkflowEngine:
                 execution = self.active_executions[execution_id]
                 execution.status = AutomationStatus.CANCELLED
                 execution.completed_at = datetime.utcnow()
-                
+
                 logger.info("execution_cancelled", execution_id=execution_id)
                 return True
-            
+
             return False
-        
+
         except Exception as e:
             logger.error("cancel_execution_failed", error=str(e))
             return False
-    
+
     async def get_workflow_analytics(self) -> Dict[str, Any]:
         """Get analytics about workflow executions."""
         try:
             total_executions = len(self.execution_history) + len(self.active_executions)
-            
+
             status_counts = {}
             for execution in self.execution_history:
                 status = execution.status.value
                 status_counts[status] = status_counts.get(status, 0) + 1
-            
+
             return {
                 'total_executions': total_executions,
                 'active_executions': len(self.active_executions),
@@ -1711,25 +1735,25 @@ class WorkflowEngine:
                 'available_workflows': len(self.workflow_registry),
                 'workflow_types': list(self.workflow_registry.keys())
             }
-        
+
         except Exception as e:
             logger.error("get_workflow_analytics_failed", error=str(e))
             return {}
-    
+
     async def cleanup(self):
         """Cleanup workflow engine resources."""
         try:
             logger.info("cleaning_up_workflow_engine")
-            
+
             # Cancel active executions
             for execution_id in list(self.active_executions.keys()):
                 await self.cancel_execution(execution_id)
-            
+
             # Shutdown thread pool
             if self.executor_pool:
                 self.executor_pool.shutdown(wait=True)
-            
+
             logger.info("workflow_engine_cleanup_completed")
-        
+
         except Exception as e:
             logger.error("workflow_engine_cleanup_failed", error=str(e))
