@@ -23,6 +23,7 @@ from starlette.responses import PlainTextResponse
 from backend.shared.config import get_settings
 from backend.shared.database import get_async_db, DatabaseUtils
 from .auth import AuthManager
+from .models import (
     HealthResponse,
     APIResponse,
     ErrorResponse,

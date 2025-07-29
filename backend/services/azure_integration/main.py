@@ -20,6 +20,7 @@ from starlette.responses import PlainTextResponse
 
 from shared.config import get_settings
 from shared.database import get_async_db, DatabaseUtils
+from .models import (
     HealthResponse,
     APIResponse,
     ErrorResponse,

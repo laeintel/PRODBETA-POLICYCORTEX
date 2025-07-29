@@ -695,8 +695,8 @@ class PolicyCompliancePredictor:
             Risk predictions and recommendations
         """
         logger.info(
-            f"Predicting compliance risk for resource: {resource_data.get('resource_id',
-            'unknown')}"
+            f"Predicting compliance risk for resource: {resource_data.get('resource_id', "
+            f"'unknown')}"
         )
 
         try:

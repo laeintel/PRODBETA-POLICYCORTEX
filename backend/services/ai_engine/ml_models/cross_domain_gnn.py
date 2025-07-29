@@ -84,8 +84,8 @@ class GovernanceGraphBuilder:
             self._add_impact_edges(graph, governance_data.get('impacts', []))
             self._add_temporal_edges(graph, governance_data.get('temporal_relationships', []))
 
-            logger.info(f"Built governance graph with {len(graph.node_types)} node types and
-                {len(graph.edge_types)} edge types")
+            logger.info(f"Built governance graph with {len(graph.node_types)} node types and "
+                        f"{len(graph.edge_types)} edge types")
             return graph
 
         except Exception as e:

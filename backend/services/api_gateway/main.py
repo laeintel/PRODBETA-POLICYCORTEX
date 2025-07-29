@@ -30,6 +30,7 @@ try:
     from .auth import AuthManager
     from .rate_limiter import RateLimiter
     from .circuit_breaker import CircuitBreaker
+    from .models import (
         HealthResponse,
         APIResponse,
         ErrorResponse,
