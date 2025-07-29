@@ -14,7 +14,7 @@ output "ml_workspace_name" {
 output "ml_workspace_discovery_url" {
   description = "Discovery URL of the Machine Learning workspace"
   value       = var.deploy_ml_workspace ? azurerm_machine_learning_workspace.main[0].discovery_url : null
-}-
+}
 
 # Container Registry outputs
 output "ml_container_registry_id" {
