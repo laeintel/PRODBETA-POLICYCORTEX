@@ -7,14 +7,14 @@ jobs:
   # Try method 1: Exact name
   test-exact-name:
     name: Test Exact Name
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     steps:
       - run: echo "Method 1 worked - exact name"
     
   # Try method 2: self-hosted label
   test-self-hosted:
     name: Test Self Hosted
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     steps:
       - run: echo "Method 2 worked - self-hosted label"
       
@@ -28,6 +28,6 @@ jobs:
   # Try method 4: Just windows label
   test-windows:
     name: Test Windows Label
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     steps:
       - run: echo "Method 4 worked - windows only"
