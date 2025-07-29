@@ -5,6 +5,7 @@ import { loginRequest, silentRequest, tokenScopes } from '@/config/auth'
 import { useAuthStore } from '@/store/authStore'
 import { User, UserRole } from '@/types'
 import { authService } from '@/services/authService'
+import { env } from '@/config/environment'
 import toast from 'react-hot-toast'
 
 export const useAuth = () => {
@@ -16,14 +17,17 @@ export const useAuth = () => {
   // Initialize authentication
   const initialize = useCallback(async () => {
     try {
+      console.log('Auth initialize called, accounts:', accounts.length, 'inProgress:', inProgress)
       setIsLoading(true)
       setError(null)
 
       // Check if we have an active account
       if (accounts.length > 0) {
+        console.log('Found active account:', accounts[0].username)
         const account = accounts[0]
         await acquireTokenSilent(account)
       } else {
+        console.log('No active account found')
         // No active account, user needs to login
         setAuthenticated(false)
       }
@@ -34,18 +38,23 @@ export const useAuth = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [accounts, setAuthenticated])
+  }, [accounts, setAuthenticated, inProgress])
 
   // Login with redirect
   const login = useCallback(async () => {
     try {
+      console.log('login() called - starting redirect flow')
       setIsLoading(true)
       setError(null)
+
+      console.log('MSAL instance:', instance)
+      console.log('Login request config:', { ...loginRequest, prompt: 'select_account' })
 
       await instance.loginRedirect({
         ...loginRequest,
         prompt: 'select_account',
       })
+      console.log('loginRedirect() completed - should be redirecting now')
     } catch (error) {
       console.error('Login error:', error)
       setError('Failed to login')
@@ -58,16 +67,67 @@ export const useAuth = () => {
   // Login with popup
   const loginPopup = useCallback(async () => {
     try {
+      console.log('loginPopup() called - starting popup flow')
       setIsLoading(true)
       setError(null)
+
+      console.log('MSAL instance:', instance)
+      console.log('Login request config:', { ...loginRequest, prompt: 'select_account' })
 
       const result = await instance.loginPopup({
         ...loginRequest,
         prompt: 'select_account',
       })
+      console.log('loginPopup() result:', result)
 
       if (result.account) {
-        await acquireTokenSilent(result.account)
+        // Create mock user immediately after login
+        const mockUser: User = {
+          id: result.account.homeAccountId,
+          email: result.account.username,
+          firstName: result.account.name?.split(' ')[0] || result.account.username.split('@')[0],
+          lastName: result.account.name?.split(' ').slice(1).join(' ') || '',
+          displayName: result.account.name || result.account.username,
+          role: { id: '1', name: 'admin', description: 'Administrator', permissions: [], isDefault: false },
+          permissions: [],
+          preferences: {
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            currency: 'USD',
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h',
+            notifications: {
+              email: true,
+              push: true,
+              sms: false,
+              inApp: true,
+              frequency: 'instant',
+              categories: []
+            },
+            dashboard: {
+              layout: 'grid',
+              widgets: [],
+              refreshInterval: 300000,
+              showWelcome: true,
+              compactMode: false
+            },
+            accessibility: {
+              highContrast: false,
+              reducedMotion: false,
+              screenReader: false,
+              fontSize: 'medium',
+              keyboardNavigation: true
+            }
+          },
+          isActive: true,
+          tenantId: env.AZURE_TENANT_ID || 'default',
+          departments: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+        setUser(mockUser)
+        setAuthenticated(true)
       }
     } catch (error) {
       console.error('Login popup error:', error)
@@ -110,9 +170,56 @@ export const useAuth = () => {
       const response = await instance.acquireTokenSilent(silentTokenRequest)
       
       if (response.accessToken) {
-        // Get user profile from backend
-        const userProfile = await authService.getProfile(response.accessToken)
-        setUser(userProfile)
+        // TODO: Get user profile from backend when API is ready
+        // const userProfile = await authService.getProfile(response.accessToken)
+        
+        // For now, create user profile from Azure AD account info
+        const mockUser: User = {
+          id: account.homeAccountId,
+          email: account.username,
+          firstName: account.name?.split(' ')[0] || account.username.split('@')[0],
+          lastName: account.name?.split(' ').slice(1).join(' ') || '',
+          displayName: account.name || account.username,
+          role: { id: '1', name: 'admin', description: 'Administrator', permissions: [], isDefault: false },
+          permissions: [],
+          preferences: {
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            currency: 'USD',
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h',
+            notifications: {
+              email: true,
+              push: true,
+              sms: false,
+              inApp: true,
+              frequency: 'instant',
+              categories: []
+            },
+            dashboard: {
+              layout: 'grid',
+              widgets: [],
+              refreshInterval: 300000,
+              showWelcome: true,
+              compactMode: false
+            },
+            accessibility: {
+              highContrast: false,
+              reducedMotion: false,
+              screenReader: false,
+              fontSize: 'medium',
+              keyboardNavigation: true
+            }
+          },
+          isActive: true,
+          tenantId: env.AZURE_TENANT_ID || 'default',
+          departments: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+        
+        setUser(mockUser)
         setAuthenticated(true)
         return response.accessToken
       }
@@ -182,14 +289,62 @@ export const useAuth = () => {
   const refreshProfile = useCallback(async () => {
     try {
       const token = await getAccessToken()
-      if (token) {
-        const userProfile = await authService.getProfile(token)
-        setUser(userProfile)
+      if (token && accounts.length > 0) {
+        // TODO: Get user profile from backend when API is ready
+        // const userProfile = await authService.getProfile(token)
+        
+        // For now, use account info
+        const account = accounts[0]
+        const mockUser: User = {
+          id: account.homeAccountId,
+          email: account.username,
+          firstName: account.name?.split(' ')[0] || account.username.split('@')[0],
+          lastName: account.name?.split(' ').slice(1).join(' ') || '',
+          displayName: account.name || account.username,
+          role: { id: '1', name: 'admin', description: 'Administrator', permissions: [], isDefault: false },
+          permissions: [],
+          preferences: {
+            theme: 'light',
+            language: 'en',
+            timezone: 'UTC',
+            currency: 'USD',
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h',
+            notifications: {
+              email: true,
+              push: true,
+              sms: false,
+              inApp: true,
+              frequency: 'instant',
+              categories: []
+            },
+            dashboard: {
+              layout: 'grid',
+              widgets: [],
+              refreshInterval: 300000,
+              showWelcome: true,
+              compactMode: false
+            },
+            accessibility: {
+              highContrast: false,
+              reducedMotion: false,
+              screenReader: false,
+              fontSize: 'medium',
+              keyboardNavigation: true
+            }
+          },
+          isActive: true,
+          tenantId: env.AZURE_TENANT_ID || 'default',
+          departments: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+        setUser(mockUser)
       }
     } catch (error) {
       console.error('Failed to refresh profile:', error)
     }
-  }, [getAccessToken, setUser])
+  }, [getAccessToken, setUser, accounts])
 
   // Effect to handle account changes
   useEffect(() => {

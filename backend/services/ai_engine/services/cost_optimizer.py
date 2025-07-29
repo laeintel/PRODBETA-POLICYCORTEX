@@ -38,7 +38,7 @@ class CostOptimizationRecommendation:
 
 class CostOptimizer:
     """AI-driven cost optimization service."""
-    
+
     def __init__(self):
         self.settings = settings
         self.consumption_client = None
@@ -47,7 +47,7 @@ class CostOptimizer:
         self.optimization_rules = self._load_optimization_rules()
         self.cost_patterns = self._load_cost_patterns()
         self.savings_calculator = self._initialize_savings_calculator()
-    
+
     def _load_optimization_rules(self) -> Dict[str, Dict[str, Any]]:
         """Load cost optimization rules."""
         return {
@@ -90,7 +90,7 @@ class CostOptimizer:
                 "action": "optimize_backup_policy"
             }
         }
-    
+
     def _load_cost_patterns(self) -> Dict[str, Dict[str, Any]]:
         """Load cost pattern analysis rules."""
         return {
@@ -115,7 +115,7 @@ class CostOptimizer:
                 "savings_potential": 0.50
             }
         }
-    
+
     def _initialize_savings_calculator(self) -> Dict[str, Any]:
         """Initialize savings calculation parameters."""
         return {
@@ -149,52 +149,52 @@ class CostOptimizer:
                 "tier_3": {"threshold": 10000, "discount": 0.15}
             }
         }
-    
+
     async def initialize(self) -> None:
         """Initialize the cost optimizer."""
         try:
             logger.info("Initializing cost optimizer")
-            
+
             # Initialize Azure clients
             if self.settings.is_production():
                 await self._initialize_azure_clients()
-            
+
             logger.info("Cost optimizer initialized successfully")
-            
+
         except Exception as e:
             logger.error("Cost optimizer initialization failed", error=str(e))
             raise
-    
+
     async def _initialize_azure_clients(self) -> None:
         """Initialize Azure clients for cost data."""
         try:
             self.azure_credential = DefaultAzureCredential()
-            
+
             # Initialize Consumption Management client
             self.consumption_client = ConsumptionManagementClient(
                 credential=self.azure_credential,
                 subscription_id=self.settings.azure.subscription_id
             )
-            
+
             # Initialize Resource Management client
             self.resource_client = ResourceManagementClient(
                 credential=self.azure_credential,
                 subscription_id=self.settings.azure.subscription_id
             )
-            
+
             logger.info("Azure clients initialized for cost optimization")
-            
+
         except Exception as e:
             logger.warning("Failed to initialize Azure clients", error=str(e))
-    
-    async def optimize_costs(self, resource_data: Dict[str, Any], 
-                           optimization_goals: List[str], 
+
+    async def optimize_costs(self, resource_data: Dict[str, Any],
+                           optimization_goals: List[str],
                            constraints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Generate cost optimization recommendations."""
         try:
-            logger.info("Starting cost optimization analysis", 
+            logger.info("Starting cost optimization analysis",
                        goals=optimization_goals)
-            
+
             # Initialize results
             results = {
                 "optimization_goals": optimization_goals,
@@ -217,71 +217,77 @@ class CostOptimizer:
                 },
                 "confidence": 0.0
             }
-            
+
             # Analyze resources for optimization opportunities
             resources = resource_data.get("resources", [])
             current_cost = resource_data.get("current_cost", 0)
-            
+
             # Generate recommendations based on goals
             for goal in optimization_goals:
                 if goal == OptimizationGoal.MINIMIZE_COST:
-                    recommendations = await self._generate_cost_minimization_recommendations(resources)
+                    recommendations = (
+                        await self._generate_cost_minimization_recommendations(resources)
+                    )
                 elif goal == OptimizationGoal.MAXIMIZE_PERFORMANCE:
-                    recommendations = await self._generate_performance_optimization_recommendations(resources)
+                    recommendations = (
+                        await self._generate_performance_optimization_recommendations(resources)
+                    )
                 elif goal == OptimizationGoal.BALANCE_COST_PERFORMANCE:
                     recommendations = await self._generate_balanced_recommendations(resources)
                 elif goal == OptimizationGoal.OPTIMIZE_UTILIZATION:
-                    recommendations = await self._generate_utilization_optimization_recommendations(resources)
+                    recommendations = (
+                        await self._generate_utilization_optimization_recommendations(resources)
+                    )
                 else:
                     recommendations = []
-                
+
                 results["recommendations"].extend(recommendations)
-            
+
             # Remove duplicates and prioritize
             results["recommendations"] = await self._prioritize_recommendations(
                 results["recommendations"], constraints
             )
-            
+
             # Calculate projected savings
             results["projected_savings"] = await self._calculate_projected_savings(
                 results["recommendations"], current_cost
             )
-            
+
             # Create implementation plan
             results["implementation_plan"] = await self._create_implementation_plan(
                 results["recommendations"]
             )
-            
+
             # Assess risks
             results["risk_assessment"] = await self._assess_risks(
                 results["recommendations"]
             )
-            
+
             # Calculate confidence score
             results["confidence"] = await self._calculate_confidence_score(
                 results["recommendations"], resource_data
             )
-            
+
             logger.info("Cost optimization analysis completed",
                        recommendations_count=len(results["recommendations"]),
                        projected_monthly_savings=results["projected_savings"]["monthly"])
-            
+
             return results
-            
+
         except Exception as e:
             logger.error("Cost optimization failed", error=str(e))
             raise
-    
-    async def _generate_cost_minimization_recommendations(self, 
+
+    async def _generate_cost_minimization_recommendations(self,
                                                         resources: List[Dict[str, Any]]) -> List[CostOptimizationRecommendation]:
         """Generate recommendations focused on cost minimization."""
         recommendations = []
-        
+
         try:
             for resource in resources:
                 resource_type = resource.get("type", "")
                 resource_id = resource.get("id", "")
-                
+
                 # Check for underutilized VMs
                 if resource_type == "Microsoft.Compute/virtualMachines":
                     if await self._is_underutilized_vm(resource):
@@ -308,7 +314,7 @@ class CostOptimizer:
                             }
                         )
                         recommendations.append(recommendation)
-                
+
                 # Check for unused storage
                 elif resource_type == "Microsoft.Storage/storageAccounts":
                     if await self._is_unused_storage(resource):
@@ -335,7 +341,7 @@ class CostOptimizer:
                             }
                         )
                         recommendations.append(recommendation)
-                
+
                 # Check for idle databases
                 elif resource_type == "Microsoft.Sql/servers/databases":
                     if await self._is_idle_database(resource):
@@ -347,7 +353,8 @@ class CostOptimizer:
                             potential_savings=await self._calculate_database_savings(resource, 0.8),
                             implementation_effort="medium",
                             risk_level="medium",
-                            description="Database has minimal activity and can be paused or scaled down",
+                            description="Database has minimal activity and
+                                can be paused or scaled down",
                             detailed_actions=[
                                 "Analyze database connection patterns",
                                 "Implement database pause/resume schedule",
@@ -362,23 +369,23 @@ class CostOptimizer:
                             }
                         )
                         recommendations.append(recommendation)
-            
+
             return recommendations
-            
+
         except Exception as e:
             logger.error("Cost minimization recommendations failed", error=str(e))
             return []
-    
-    async def _generate_performance_optimization_recommendations(self, 
+
+    async def _generate_performance_optimization_recommendations(self,
                                                                resources: List[Dict[str, Any]]) -> List[CostOptimizationRecommendation]:
         """Generate recommendations focused on performance optimization."""
         recommendations = []
-        
+
         try:
             for resource in resources:
                 resource_type = resource.get("type", "")
                 resource_id = resource.get("id", "")
-                
+
                 # Check for oversized VMs
                 if resource_type == "Microsoft.Compute/virtualMachines":
                     if await self._is_oversized_vm(resource):
@@ -387,10 +394,14 @@ class CostOptimizer:
                             resource_type=resource_type,
                             recommendation_type="oversized_vm",
                             priority="medium",
-                            potential_savings=await self._calculate_vm_savings(resource, -0.2),  # Negative for cost increase
+                            potential_savings=await self._calculate_vm_savings(
+                                resource,
+                                -0.2
+                            ),  # Negative for cost increase
                             implementation_effort="medium",
                             risk_level="low",
-                            description="VM is consistently at high utilization and may need scaling up",
+                            description="VM is consistently at high utilization and
+                                may need scaling up",
                             detailed_actions=[
                                 "Monitor performance metrics",
                                 "Scale up to higher performance tier",
@@ -405,23 +416,23 @@ class CostOptimizer:
                             }
                         )
                         recommendations.append(recommendation)
-            
+
             return recommendations
-            
+
         except Exception as e:
             logger.error("Performance optimization recommendations failed", error=str(e))
             return []
-    
-    async def _generate_balanced_recommendations(self, 
+
+    async def _generate_balanced_recommendations(self,
                                                resources: List[Dict[str, Any]]) -> List[CostOptimizationRecommendation]:
         """Generate recommendations balancing cost and performance."""
         recommendations = []
-        
+
         try:
             # Combine cost and performance recommendations with balanced priorities
             cost_recs = await self._generate_cost_minimization_recommendations(resources)
             perf_recs = await self._generate_performance_optimization_recommendations(resources)
-            
+
             # Adjust priorities for balanced approach
             for rec in cost_recs:
                 if rec.risk_level == "low" and rec.potential_savings > 100:
@@ -429,35 +440,35 @@ class CostOptimizer:
                 else:
                     rec.priority = "medium"
                 recommendations.append(rec)
-            
+
             for rec in perf_recs:
                 if rec.impact_analysis.get("performance_impact") == "significant improvement":
                     rec.priority = "high"
                 recommendations.append(rec)
-            
+
             return recommendations
-            
+
         except Exception as e:
             logger.error("Balanced recommendations failed", error=str(e))
             return []
-    
-    async def _generate_utilization_optimization_recommendations(self, 
+
+    async def _generate_utilization_optimization_recommendations(self,
                                                               resources: List[Dict[str, Any]]) -> List[CostOptimizationRecommendation]:
         """Generate recommendations focused on utilization optimization."""
         recommendations = []
-        
+
         try:
             for resource in resources:
                 resource_type = resource.get("type", "")
                 resource_id = resource.get("id", "")
-                
+
                 # Check utilization patterns
                 utilization = resource.get("utilization", {})
-                
+
                 if resource_type == "Microsoft.Compute/virtualMachines":
                     cpu_avg = utilization.get("cpu_average", 0)
                     memory_avg = utilization.get("memory_average", 0)
-                    
+
                     if cpu_avg < 0.2 or memory_avg < 0.3:  # Low utilization
                         recommendation = CostOptimizationRecommendation(
                             resource_id=resource_id,
@@ -482,54 +493,54 @@ class CostOptimizer:
                             }
                         )
                         recommendations.append(recommendation)
-            
+
             return recommendations
-            
+
         except Exception as e:
             logger.error("Utilization optimization recommendations failed", error=str(e))
             return []
-    
+
     async def _is_underutilized_vm(self, resource: Dict[str, Any]) -> bool:
         """Check if VM is underutilized."""
         try:
             utilization = resource.get("utilization", {})
             cpu_avg = utilization.get("cpu_average", 0)
             memory_avg = utilization.get("memory_average", 0)
-            
+
             rule = self.optimization_rules["underutilized_vm"]
-            return (cpu_avg < rule["cpu_threshold"] and 
+            return (cpu_avg < rule["cpu_threshold"] and
                    memory_avg < rule["memory_threshold"])
-            
+
         except Exception as e:
             logger.error("VM utilization check failed", error=str(e))
             return False
-    
+
     async def _is_oversized_vm(self, resource: Dict[str, Any]) -> bool:
         """Check if VM is oversized."""
         try:
             utilization = resource.get("utilization", {})
             cpu_avg = utilization.get("cpu_average", 0)
             memory_avg = utilization.get("memory_average", 0)
-            
+
             rule = self.optimization_rules["oversized_vm"]
-            return (cpu_avg > rule["cpu_threshold"] or 
+            return (cpu_avg > rule["cpu_threshold"] or
                    memory_avg > rule["memory_threshold"])
-            
+
         except Exception as e:
             logger.error("VM oversize check failed", error=str(e))
             return False
-    
+
     async def _is_unused_storage(self, resource: Dict[str, Any]) -> bool:
         """Check if storage is unused."""
         try:
             metrics = resource.get("metrics", {})
             transactions = metrics.get("transactions_last_30_days", 0)
             return transactions == 0
-            
+
         except Exception as e:
             logger.error("Storage usage check failed", error=str(e))
             return False
-    
+
     async def _is_idle_database(self, resource: Dict[str, Any]) -> bool:
         """Check if database is idle."""
         try:
@@ -537,55 +548,65 @@ class CostOptimizer:
             connections = metrics.get("active_connections", 0)
             queries = metrics.get("queries_last_7_days", 0)
             return connections == 0 and queries == 0
-            
+
         except Exception as e:
             logger.error("Database idle check failed", error=str(e))
             return False
-    
+
     async def _calculate_vm_savings(self, resource: Dict[str, Any], savings_rate: float) -> float:
         """Calculate potential VM cost savings."""
         try:
             vm_size = resource.get("size", "Standard_D2s_v3")
             pricing = self.savings_calculator["pricing_data"]["vm_hourly_rates"]
             hourly_rate = pricing.get(vm_size, 0.096)
-            
+
             # Calculate monthly savings
             monthly_cost = hourly_rate * 24 * 30  # 30 days
             return monthly_cost * savings_rate
-            
+
         except Exception as e:
             logger.error("VM savings calculation failed", error=str(e))
             return 0.0
-    
-    async def _calculate_storage_savings(self, resource: Dict[str, Any], savings_rate: float) -> float:
+
+    async def _calculate_storage_savings(
+        self,
+        resource: Dict[str,
+        Any],
+        savings_rate: float
+    ) -> float:
         """Calculate potential storage cost savings."""
         try:
             storage_size = resource.get("size_gb", 100)
             storage_type = resource.get("tier", "standard_ssd")
             pricing = self.savings_calculator["pricing_data"]["storage_monthly_rates"]
             monthly_rate = pricing.get(storage_type, 0.05)
-            
+
             monthly_cost = storage_size * monthly_rate
             return monthly_cost * savings_rate
-            
+
         except Exception as e:
             logger.error("Storage savings calculation failed", error=str(e))
             return 0.0
-    
-    async def _calculate_database_savings(self, resource: Dict[str, Any], savings_rate: float) -> float:
+
+    async def _calculate_database_savings(
+        self,
+        resource: Dict[str,
+        Any],
+        savings_rate: float
+    ) -> float:
         """Calculate potential database cost savings."""
         try:
             db_tier = resource.get("tier", "Standard_S1")
             pricing = self.savings_calculator["pricing_data"]["database_hourly_rates"]
             hourly_rate = pricing.get(db_tier, 0.02)
-            
+
             monthly_cost = hourly_rate * 24 * 30
             return monthly_cost * savings_rate
-            
+
         except Exception as e:
             logger.error("Database savings calculation failed", error=str(e))
             return 0.0
-    
+
     async def _prioritize_recommendations(self, recommendations: List[CostOptimizationRecommendation],
                                         constraints: Optional[Dict[str, Any]]) -> List[CostOptimizationRecommendation]:
         """Prioritize recommendations based on impact and constraints."""
@@ -595,55 +616,58 @@ class CostOptimizer:
                 priority_weights = {"high": 3, "medium": 2, "low": 1}
                 effort_weights = {"low": 3, "medium": 2, "high": 1}
                 risk_weights = {"low": 3, "medium": 2, "high": 1}
-                
-                return (priority_weights.get(rec.priority, 0) * 
+
+                return (priority_weights.get(rec.priority, 0) *
                        effort_weights.get(rec.implementation_effort, 0) *
                        risk_weights.get(rec.risk_level, 0) *
                        rec.potential_savings)
-            
+
             sorted_recommendations = sorted(recommendations, key=priority_score, reverse=True)
-            
+
             # Remove duplicates based on resource_id
             seen_resources = set()
             unique_recommendations = []
-            
+
             for rec in sorted_recommendations:
                 if rec.resource_id not in seen_resources:
                     seen_resources.add(rec.resource_id)
                     unique_recommendations.append(rec)
-            
+
             return unique_recommendations
-            
+
         except Exception as e:
             logger.error("Recommendation prioritization failed", error=str(e))
             return recommendations
-    
+
     async def _calculate_projected_savings(self, recommendations: List[CostOptimizationRecommendation],
                                          current_cost: float) -> Dict[str, float]:
         """Calculate projected savings from recommendations."""
         try:
             total_monthly_savings = sum(rec.potential_savings for rec in recommendations)
             annual_savings = total_monthly_savings * 12
-            
+
             percentage_savings = 0.0
             if current_cost > 0:
                 percentage_savings = (total_monthly_savings / current_cost) * 100
-            
+
             return {
                 "monthly": total_monthly_savings,
                 "annual": annual_savings,
                 "percentage": percentage_savings
             }
-            
+
         except Exception as e:
             logger.error("Savings calculation failed", error=str(e))
             return {"monthly": 0.0, "annual": 0.0, "percentage": 0.0}
-    
-    async def _create_implementation_plan(self, recommendations: List[CostOptimizationRecommendation]) -> Dict[str, List[Dict[str, Any]]]:
+
+    async def _create_implementation_plan(
+        self,
+        recommendations: List[CostOptimizationRecommendation]
+    ) -> Dict[str, List[Dict[str, Any]]]:
         """Create implementation plan categorized by timeline."""
         try:
             plan = {"quick_wins": [], "medium_term": [], "long_term": []}
-            
+
             for rec in recommendations:
                 item = {
                     "resource_id": rec.resource_id,
@@ -653,25 +677,28 @@ class CostOptimizer:
                     "estimated_timeline": rec.estimated_timeline,
                     "actions": rec.detailed_actions
                 }
-                
+
                 if rec.implementation_effort == "low":
                     plan["quick_wins"].append(item)
                 elif rec.implementation_effort == "medium":
                     plan["medium_term"].append(item)
                 else:
                     plan["long_term"].append(item)
-            
+
             return plan
-            
+
         except Exception as e:
             logger.error("Implementation plan creation failed", error=str(e))
             return {"quick_wins": [], "medium_term": [], "long_term": []}
-    
-    async def _assess_risks(self, recommendations: List[CostOptimizationRecommendation]) -> Dict[str, List[Dict[str, Any]]]:
+
+    async def _assess_risks(
+        self,
+        recommendations: List[CostOptimizationRecommendation]
+    ) -> Dict[str, List[Dict[str, Any]]]:
         """Assess risks for recommendations."""
         try:
             risk_assessment = {"low_risk": [], "medium_risk": [], "high_risk": []}
-            
+
             for rec in recommendations:
                 risk_item = {
                     "resource_id": rec.resource_id,
@@ -680,16 +707,19 @@ class CostOptimizer:
                     "impact_analysis": rec.impact_analysis,
                     "mitigation_strategies": self._get_mitigation_strategies(rec)
                 }
-                
+
                 risk_assessment[f"{rec.risk_level}_risk"].append(risk_item)
-            
+
             return risk_assessment
-            
+
         except Exception as e:
             logger.error("Risk assessment failed", error=str(e))
             return {"low_risk": [], "medium_risk": [], "high_risk": []}
-    
-    def _get_mitigation_strategies(self, recommendation: CostOptimizationRecommendation) -> List[str]:
+
+    def _get_mitigation_strategies(
+        self,
+        recommendation: CostOptimizationRecommendation
+    ) -> List[str]:
         """Get mitigation strategies for a recommendation."""
         strategies = {
             "underutilized_vm": [
@@ -708,75 +738,75 @@ class CostOptimizer:
                 "Update documentation"
             ]
         }
-        
+
         return strategies.get(recommendation.recommendation_type, [
             "Test in non-production environment",
             "Create rollback plan",
             "Monitor after implementation"
         ])
-    
+
     async def _calculate_confidence_score(self, recommendations: List[CostOptimizationRecommendation],
                                         resource_data: Dict[str, Any]) -> float:
         """Calculate confidence score for recommendations."""
         try:
             if not recommendations:
                 return 0.0
-            
+
             # Base confidence factors
             data_quality = resource_data.get("data_quality", 0.8)
             sample_size = min(len(resource_data.get("resources", [])) / 10, 1.0)
-            
+
             # Calculate average confidence based on recommendation characteristics
             recommendation_confidence = 0.0
             for rec in recommendations:
                 rec_confidence = 0.5  # Base confidence
-                
+
                 # Adjust based on implementation effort
                 if rec.implementation_effort == "low":
                     rec_confidence += 0.2
                 elif rec.implementation_effort == "medium":
                     rec_confidence += 0.1
-                
+
                 # Adjust based on risk level
                 if rec.risk_level == "low":
                     rec_confidence += 0.2
                 elif rec.risk_level == "medium":
                     rec_confidence += 0.1
-                
+
                 # Adjust based on potential savings
                 if rec.potential_savings > 500:
                     rec_confidence += 0.1
-                
+
                 recommendation_confidence += rec_confidence
-            
+
             recommendation_confidence /= len(recommendations)
-            
+
             # Combine factors
-            overall_confidence = (data_quality * 0.4 + 
-                                sample_size * 0.3 + 
+            overall_confidence = (data_quality * 0.4 +
+                                sample_size * 0.3 +
                                 recommendation_confidence * 0.3)
-            
+
             return min(overall_confidence, 1.0)
-            
+
         except Exception as e:
             logger.error("Confidence calculation failed", error=str(e))
             return 0.5
-    
+
     def is_ready(self) -> bool:
         """Check if cost optimizer is ready."""
         return len(self.optimization_rules) > 0
-    
+
     async def cleanup(self) -> None:
         """Cleanup resources on shutdown."""
         try:
             # Close Azure clients
             if self.consumption_client:
                 await self.consumption_client.close()
-            
+
             if self.resource_client:
                 await self.resource_client.close()
-            
+
             logger.info("Cost optimizer cleanup completed")
-            
+
         except Exception as e:
             logger.error("Cost optimizer cleanup failed", error=str(e))

@@ -1,1 +1,1 @@
-# API Gateway Service for PolicyCortex 
+# API Gateway Service for PolicyCortex

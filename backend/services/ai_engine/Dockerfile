@@ -44,4 +44,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
     CMD curl -f http://localhost:${SERVICE_PORT}/health || exit 1
 
 # Run the application
-CMD ["python", "-m", "uvicorn", "services.ai_engine.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["python", "-m", "uvicorn", "services.ai_engine.main_simple:app", "--host", "0.0.0.0", "--port", "8002"]

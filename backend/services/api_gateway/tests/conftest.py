@@ -102,12 +102,12 @@ def mock_prometheus_metrics():
     with patch("main.REQUEST_COUNT") as mock_counter, \
          patch("main.REQUEST_DURATION") as mock_histogram, \
          patch("main.SERVICE_REQUESTS") as mock_service_counter:
-        
+
         # Mock counter methods
         mock_counter.labels.return_value.inc = MagicMock()
         mock_histogram.observe = MagicMock()
         mock_service_counter.labels.return_value.inc = MagicMock()
-        
+
         yield {
             "request_count": mock_counter,
             "request_duration": mock_histogram,

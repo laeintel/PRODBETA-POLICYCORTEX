@@ -7,7 +7,7 @@ import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, Generator, AsyncGenerator
-import uuid
+    import uuid
 from datetime import datetime, timedelta
 
 import httpx
@@ -26,7 +26,7 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
-)
+        )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -269,7 +269,7 @@ def mock_redis():
     with patch("redis.Redis") as mock_redis_class:
         mock_instance = MagicMock()
         mock_redis_class.return_value = mock_instance
-        
+
         # Mock async operations
         mock_instance.get = AsyncMock(return_value=None)
         mock_instance.set = AsyncMock(return_value=True)
@@ -280,7 +280,7 @@ def mock_redis():
         mock_instance.hget = AsyncMock(return_value=None)
         mock_instance.hset = AsyncMock(return_value=True)
         mock_instance.hgetall = AsyncMock(return_value={})
-        
+
         yield mock_instance
 
 
@@ -288,30 +288,30 @@ def mock_redis():
 def mock_azure_sdk():
     """Mock Azure SDK clients."""
     with patch("azure.identity.DefaultAzureCredential") as mock_credential, \
-         patch("azure.mgmt.resource.ResourceManagementClient") as mock_resource_client, \
-         patch("azure.mgmt.authorization.AuthorizationManagementClient") as mock_auth_client, \
-         patch("azure.mgmt.consumption.ConsumptionManagementClient") as mock_consumption_client, \
-         patch("azure.mgmt.network.NetworkManagementClient") as mock_network_client:
-        
+        patch("azure.mgmt.resource.ResourceManagementClient") as mock_resource_client, \
+        patch("azure.mgmt.authorization.AuthorizationManagementClient") as mock_auth_client, \
+        patch("azure.mgmt.consumption.ConsumptionManagementClient") as mock_consumption_client, \
+        patch("azure.mgmt.network.NetworkManagementClient") as mock_network_client:
+
         # Mock credential
         mock_credential.return_value = MagicMock()
-        
+
         # Mock resource client
         mock_resource_instance = MagicMock()
         mock_resource_client.return_value = mock_resource_instance
-        
+
         # Mock auth client
         mock_auth_instance = MagicMock()
         mock_auth_client.return_value = mock_auth_instance
-        
+
         # Mock consumption client
         mock_consumption_instance = MagicMock()
         mock_consumption_client.return_value = mock_consumption_instance
-        
+
         # Mock network client
         mock_network_instance = MagicMock()
         mock_network_client.return_value = mock_network_instance
-        
+
         yield {
             "credential": mock_credential,
             "resource_client": mock_resource_instance,
@@ -327,13 +327,16 @@ def mock_ai_models():
     with patch("backend.services.ai_engine.services.model_manager.ModelManager") as mock_model_manager:
         mock_instance = MagicMock()
         mock_model_manager.return_value = mock_instance
-        
+
         # Mock model operations
         mock_instance.load_model = AsyncMock(return_value=True)
         mock_instance.predict = AsyncMock(return_value={"prediction": "test", "confidence": 0.95})
         mock_instance.train_model = AsyncMock(return_value={"task_id": "test-task-id"})
-        mock_instance.get_model_info = AsyncMock(return_value={"name": "test-model", "version": "1.0"})
-        
+        mock_instance.get_model_info = AsyncMock(
+            return_value={"name": "test-model",
+            "version": "1.0"}
+        )
+
         yield mock_instance
 
 
@@ -378,17 +381,17 @@ def mock_background_tasks():
 
 class MockResponse:
     """Mock HTTP response for testing."""
-    
+
     def __init__(self, json_data=None, status_code=200, headers=None, text=""):
         self.json_data = json_data or {}
         self.status_code = status_code
         self.headers = headers or {}
         self.text = text
         self.content = text.encode() if isinstance(text, str) else text
-    
+
     def json(self):
         return self.json_data
-    
+
     def raise_for_status(self):
         if 400 <= self.status_code < 600:
             raise httpx.HTTPStatusError(
@@ -410,13 +413,13 @@ def create_test_client(app, dependencies_override=None):
     if dependencies_override:
         for dependency, override in dependencies_override.items():
             app.dependency_overrides[dependency] = override
-    
+
     client = TestClient(app)
-    
+
     # Clean up overrides after test
     def cleanup():
         app.dependency_overrides.clear()
-    
+
     client.cleanup = cleanup
     return client
 
@@ -445,7 +448,7 @@ def create_mock_auth_token(user_data=None):
             "email": "test@example.com",
             "name": "Test User"
         }
-    
+
     # In a real implementation, this would be a JWT token
     # For testing, we'll just return a simple string
     return "test-auth-token"

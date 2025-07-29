@@ -118,9 +118,15 @@ class NotificationContent(BaseModel):
 
 class NotificationRequest(BaseModel):
     """Base notification request model."""
-    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="Notification ID")
+    id: Optional[str] = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Notification ID"
+    )
     type: NotificationType = Field(..., description="Notification type")
-    priority: NotificationPriority = Field(NotificationPriority.MEDIUM, description="Notification priority")
+    priority: NotificationPriority = Field(
+        NotificationPriority.MEDIUM,
+        description="Notification priority"
+    )
     recipients: List[NotificationRecipient] = Field(..., description="Recipients list")
     content: NotificationContent = Field(..., description="Notification content")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
@@ -129,7 +135,7 @@ class NotificationRequest(BaseModel):
     retry_count: Optional[int] = Field(3, description="Number of retry attempts")
     callback_url: Optional[str] = Field(None, description="Callback URL for delivery status")
     tags: Optional[List[str]] = Field(None, description="Notification tags")
-    
+
     @validator("recipients")
     def validate_recipients(cls, v):
         """Validate recipients list."""
@@ -146,7 +152,10 @@ class NotificationResponse(BaseModel):
     sent_at: datetime = Field(..., description="Timestamp when sent")
     delivered_count: int = Field(0, description="Number of successful deliveries")
     failed_count: int = Field(0, description="Number of failed deliveries")
-    delivery_details: Optional[List[Dict[str, Any]]] = Field(None, description="Detailed delivery information")
+    delivery_details: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Detailed delivery information"
+    )
     tracking_id: Optional[str] = Field(None, description="External tracking identifier")
 
 
@@ -175,7 +184,10 @@ class EmailTemplate(BaseModel):
     variables: Optional[List[str]] = Field(None, description="Template variables")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Template metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="Last update timestamp"
+    )
 
 
 # SMS-specific models
@@ -235,7 +247,10 @@ class AlertRequest(BaseModel):
     initial_recipients: List[NotificationRecipient] = Field(..., description="Initial recipients")
     escalation_rules: Optional[List[EscalationRule]] = Field(None, description="Escalation rules")
     auto_resolve: bool = Field(False, description="Auto-resolve when conditions are met")
-    resolve_conditions: Optional[Dict[str, Any]] = Field(None, description="Auto-resolve conditions")
+    resolve_conditions: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Auto-resolve conditions"
+    )
     metadata: Optional[Dict[str, Any]] = Field(None, description="Alert metadata")
     tags: Optional[List[str]] = Field(None, description="Alert tags")
 
@@ -267,7 +282,10 @@ class NotificationPreferences(BaseModel):
 
 class SubscriptionRequest(BaseModel):
     """Subscription request model."""
-    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="Subscription ID")
+    id: Optional[str] = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Subscription ID"
+    )
     user_id: str = Field(..., description="User identifier")
     channel: NotificationType = Field(..., description="Notification channel")
     topic: str = Field(..., description="Subscription topic")
@@ -307,7 +325,10 @@ class NotificationTemplate(BaseModel):
     variables: Optional[List[str]] = Field(None, description="Template variables")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Template metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="Last update timestamp"
+    )
     version: int = Field(1, description="Template version")
     is_active: bool = Field(True, description="Template active status")
 
@@ -349,7 +370,10 @@ class NotificationStats(BaseModel):
     total_failed: int = Field(..., description="Total notifications failed")
     delivery_rate: float = Field(..., description="Delivery rate percentage")
     avg_delivery_time: float = Field(..., description="Average delivery time in seconds")
-    stats_by_type: Dict[str, Dict[str, int]] = Field(..., description="Statistics by notification type")
+    stats_by_type: Dict[str, Dict[str, int]] = Field(
+        ...,
+        description="Statistics by notification type"
+    )
     stats_by_priority: Dict[str, Dict[str, int]] = Field(..., description="Statistics by priority")
     time_series: Optional[List[Dict[str, Any]]] = Field(None, description="Time series data")
     top_failures: Optional[List[Dict[str, Any]]] = Field(None, description="Top failure reasons")

@@ -10,7 +10,6 @@ import httpx
 import asyncio
 
 from ....shared.config import get_settings
-from ..models import (
     ConversationIntent,
     Entity,
     QueryRouterResult
@@ -22,13 +21,13 @@ logger = structlog.get_logger(__name__)
 
 class QueryRouter:
     """Routes queries to appropriate backend services."""
-    
+
     def __init__(self):
         self.settings = settings
         self.service_endpoints = self._initialize_service_endpoints()
         self.timeout = 30
         self.max_retries = 2
-    
+
     def _initialize_service_endpoints(self) -> Dict[str, Dict[str, Any]]:
         """Initialize service endpoint configurations."""
         return {
@@ -67,7 +66,7 @@ class QueryRouter:
                 "timeout": 45
             }
         }
-    
+
     async def route_query(
         self,
         intent: ConversationIntent,
@@ -79,7 +78,7 @@ class QueryRouter:
         try:
             # Determine routing based on intent
             routing_plan = self._create_routing_plan(intent, entities, message)
-            
+
             if not routing_plan:
                 logger.warning(
                     "no_routing_plan_created",
@@ -87,15 +86,15 @@ class QueryRouter:
                     message=message
                 )
                 return None
-            
+
             # Execute routing plan
             results = await self._execute_routing_plan(routing_plan, entities, user_info)
-            
+
             # Aggregate results
             aggregated_results = self._aggregate_results(results, intent)
-            
+
             return aggregated_results
-            
+
         except Exception as e:
             logger.error(
                 "query_routing_failed",
@@ -104,7 +103,7 @@ class QueryRouter:
                 message=message
             )
             return None
-    
+
     def _create_routing_plan(
         self,
         intent: ConversationIntent,
@@ -113,7 +112,7 @@ class QueryRouter:
     ) -> List[Dict[str, Any]]:
         """Create routing plan based on intent and entities."""
         routing_plan = []
-        
+
         if intent == ConversationIntent.COST_ANALYSIS:
             routing_plan.extend([
                 {
@@ -135,7 +134,7 @@ class QueryRouter:
                     "required": False
                 }
             ])
-        
+
         elif intent == ConversationIntent.POLICY_QUERY:
             routing_plan.extend([
                 {
@@ -151,7 +150,7 @@ class QueryRouter:
                     "required": False
                 }
             ])
-        
+
         elif intent == ConversationIntent.RESOURCE_MANAGEMENT:
             routing_plan.extend([
                 {
@@ -167,7 +166,7 @@ class QueryRouter:
                     "required": False
                 }
             ])
-        
+
         elif intent == ConversationIntent.SECURITY_ANALYSIS:
             routing_plan.extend([
                 {
@@ -183,7 +182,7 @@ class QueryRouter:
                     "required": False
                 }
             ])
-        
+
         elif intent == ConversationIntent.RBAC_QUERY:
             routing_plan.extend([
                 {
@@ -193,7 +192,7 @@ class QueryRouter:
                     "required": True
                 }
             ])
-        
+
         elif intent == ConversationIntent.NETWORK_ANALYSIS:
             routing_plan.extend([
                 {
@@ -209,7 +208,7 @@ class QueryRouter:
                     "required": False
                 }
             ])
-        
+
         elif intent == ConversationIntent.OPTIMIZATION_SUGGESTION:
             routing_plan.extend([
                 {
@@ -225,7 +224,7 @@ class QueryRouter:
                     "required": False
                 }
             ])
-        
+
         elif intent == ConversationIntent.COMPLIANCE_CHECK:
             routing_plan.extend([
                 {
@@ -241,12 +240,12 @@ class QueryRouter:
                     "required": False
                 }
             ])
-        
+
         # Sort by priority
         routing_plan.sort(key=lambda x: x["priority"])
-        
+
         return routing_plan
-    
+
     async def _execute_routing_plan(
         self,
         routing_plan: List[Dict[str, Any]],
@@ -255,41 +254,41 @@ class QueryRouter:
     ) -> List[QueryRouterResult]:
         """Execute routing plan and collect results."""
         results = []
-        
+
         # Execute required services first
         required_tasks = [
             self._call_service(route, entities, user_info)
             for route in routing_plan
             if route["required"]
         ]
-        
+
         if required_tasks:
             required_results = await asyncio.gather(*required_tasks, return_exceptions=True)
-            
+
             for result in required_results:
                 if isinstance(result, QueryRouterResult):
                     results.append(result)
                 elif isinstance(result, Exception):
                     logger.error("required_service_call_failed", error=str(result))
-        
+
         # Execute optional services
         optional_tasks = [
             self._call_service(route, entities, user_info)
             for route in routing_plan
             if not route["required"]
         ]
-        
+
         if optional_tasks:
             optional_results = await asyncio.gather(*optional_tasks, return_exceptions=True)
-            
+
             for result in optional_results:
                 if isinstance(result, QueryRouterResult):
                     results.append(result)
                 elif isinstance(result, Exception):
                     logger.warning("optional_service_call_failed", error=str(result))
-        
+
         return results
-    
+
     async def _call_service(
         self,
         route: Dict[str, Any],
@@ -300,20 +299,20 @@ class QueryRouter:
         try:
             service_name = route["service"]
             endpoint_name = route["endpoint"]
-            
+
             service_config = self.service_endpoints[service_name]
             endpoint_path = service_config["endpoints"][endpoint_name]
             service_url = service_config["url"]
             timeout = service_config["timeout"]
-            
+
             # Build request parameters
             request_params = self._build_request_params(
                 endpoint_name, entities, user_info
             )
-            
+
             # Make HTTP request
             full_url = f"{service_url}{endpoint_path}"
-            
+
             async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
                     full_url,
@@ -325,15 +324,15 @@ class QueryRouter:
                         "X-Tenant-ID": user_info.get("tenant_id", "")
                     }
                 )
-                
+
                 response.raise_for_status()
                 response_data = response.json()
-            
+
             # Calculate confidence based on response quality
             confidence = self._calculate_service_confidence(
                 response_data, endpoint_name
             )
-            
+
             return QueryRouterResult(
                 service=service_name,
                 endpoint=endpoint_path,
@@ -341,7 +340,7 @@ class QueryRouter:
                 confidence=confidence,
                 data=response_data
             )
-            
+
         except httpx.TimeoutException:
             logger.error(
                 "service_call_timeout",
@@ -349,7 +348,7 @@ class QueryRouter:
                 endpoint=endpoint_name
             )
             raise Exception(f"Service call timeout: {service_name}/{endpoint_name}")
-        
+
         except httpx.HTTPStatusError as e:
             logger.error(
                 "service_call_http_error",
@@ -358,7 +357,7 @@ class QueryRouter:
                 status_code=e.response.status_code
             )
             raise Exception(f"Service call HTTP error: {e.response.status_code}")
-        
+
         except Exception as e:
             logger.error(
                 "service_call_failed",
@@ -367,7 +366,7 @@ class QueryRouter:
                 error=str(e)
             )
             raise Exception(f"Service call failed: {str(e)}")
-    
+
     def _build_request_params(
         self,
         endpoint_name: str,
@@ -380,13 +379,13 @@ class QueryRouter:
             "tenant_id": user_info.get("tenant_id"),
             "subscription_ids": user_info.get("subscription_ids", [])
         }
-        
+
         # Add entity-based parameters
         entity_params = {}
         for entity in entities:
             entity_type = entity.type.value
             entity_value = entity.value
-            
+
             if entity_type == "subscription":
                 entity_params["subscription_id"] = entity_value
             elif entity_type == "resource_group":
@@ -403,9 +402,9 @@ class QueryRouter:
                 if "tags" not in entity_params:
                     entity_params["tags"] = []
                 entity_params["tags"].append(entity_value)
-        
+
         params.update(entity_params)
-        
+
         # Add endpoint-specific parameters
         if endpoint_name == "cost_analysis":
             params.update({
@@ -413,40 +412,40 @@ class QueryRouter:
                 "granularity": "daily",
                 "group_by": ["resource_type", "location"]
             })
-        
+
         elif endpoint_name == "policy_check":
             params.update({
                 "include_violations": True,
                 "policy_types": ["security", "compliance", "cost"]
             })
-        
+
         elif endpoint_name == "security_scan":
             params.update({
                 "scan_types": ["vulnerability", "configuration", "access"],
                 "include_recommendations": True
             })
-        
+
         elif endpoint_name == "rbac_analysis":
             params.update({
                 "include_permissions": True,
                 "analyze_access_patterns": True
             })
-        
+
         elif endpoint_name == "resource_list":
             params.update({
                 "include_metadata": True,
                 "include_tags": True,
                 "include_dependencies": True
             })
-        
+
         elif endpoint_name == "recommendations":
             params.update({
                 "recommendation_types": ["cost", "security", "performance"],
                 "priority_threshold": "medium"
             })
-        
+
         return params
-    
+
     def _calculate_service_confidence(
         self,
         response_data: Dict[str, Any],
@@ -454,35 +453,35 @@ class QueryRouter:
     ) -> float:
         """Calculate confidence score for service response."""
         confidence = 0.7  # Base confidence
-        
+
         # Check response completeness
         if response_data.get("success", False):
             confidence += 0.1
-        
+
         # Check data quality
         data = response_data.get("data", {})
         if data:
             confidence += 0.1
-            
+
             # Check for specific data indicators
             if endpoint_name == "cost_analysis":
                 if "total_cost" in data and "breakdown" in data:
                     confidence += 0.1
-            
+
             elif endpoint_name == "policy_check":
                 if "compliant" in data and "violations" in data:
                     confidence += 0.1
-            
+
             elif endpoint_name == "security_scan":
                 if "findings" in data and "score" in data:
                     confidence += 0.1
-        
+
         # Check for errors
         if response_data.get("error"):
             confidence -= 0.2
-        
+
         return max(0.0, min(1.0, confidence))
-    
+
     def _aggregate_results(
         self,
         results: List[QueryRouterResult],
@@ -491,7 +490,7 @@ class QueryRouter:
         """Aggregate results from multiple services."""
         if not results:
             return {}
-        
+
         aggregated = {
             "intent": intent.value,
             "services_called": len(results),
@@ -499,27 +498,27 @@ class QueryRouter:
             "data": {},
             "summary": {}
         }
-        
+
         # Aggregate by service
         for result in results:
             service_name = result.service
             aggregated["data"][service_name] = result.data
-        
+
         # Create intent-specific summaries
         if intent == ConversationIntent.COST_ANALYSIS:
             aggregated["summary"] = self._summarize_cost_analysis(results)
-        
+
         elif intent == ConversationIntent.POLICY_QUERY:
             aggregated["summary"] = self._summarize_policy_analysis(results)
-        
+
         elif intent == ConversationIntent.SECURITY_ANALYSIS:
             aggregated["summary"] = self._summarize_security_analysis(results)
-        
+
         elif intent == ConversationIntent.RESOURCE_MANAGEMENT:
             aggregated["summary"] = self._summarize_resource_analysis(results)
-        
+
         return aggregated
-    
+
     def _summarize_cost_analysis(self, results: List[QueryRouterResult]) -> Dict[str, Any]:
         """Summarize cost analysis results."""
         summary = {
@@ -528,7 +527,7 @@ class QueryRouter:
             "optimization_opportunities": [],
             "trends": {}
         }
-        
+
         for result in results:
             if result.service == "azure_integration":
                 data = result.data.get("data", {})
@@ -536,19 +535,19 @@ class QueryRouter:
                     summary["total_cost"] = data["total_cost"]
                 if "breakdown" in data:
                     summary["cost_breakdown"] = data["breakdown"]
-            
+
             elif result.service == "ai_engine":
                 data = result.data.get("data", {})
                 if "recommendations" in data:
                     summary["optimization_opportunities"] = data["recommendations"]
-            
+
             elif result.service == "data_processing":
                 data = result.data.get("data", {})
                 if "trends" in data:
                     summary["trends"] = data["trends"]
-        
+
         return summary
-    
+
     def _summarize_policy_analysis(self, results: List[QueryRouterResult]) -> Dict[str, Any]:
         """Summarize policy analysis results."""
         summary = {
@@ -556,19 +555,21 @@ class QueryRouter:
             "violations": [],
             "recommendations": []
         }
-        
+
         for result in results:
             if result.service == "azure_integration":
                 data = result.data.get("data", {})
                 if "compliant" in data:
-                    summary["compliance_status"] = "compliant" if data["compliant"] else "non_compliant"
+                    summary["compliance_status"] = (
+                        "compliant" if data["compliant"] else "non_compliant"
+                    )
                 if "violations" in data:
                     summary["violations"] = data["violations"]
                 if "recommendations" in data:
                     summary["recommendations"] = data["recommendations"]
-        
+
         return summary
-    
+
     def _summarize_security_analysis(self, results: List[QueryRouterResult]) -> Dict[str, Any]:
         """Summarize security analysis results."""
         summary = {
@@ -577,7 +578,7 @@ class QueryRouter:
             "recommendations": [],
             "anomalies": []
         }
-        
+
         for result in results:
             if result.service == "azure_integration":
                 data = result.data.get("data", {})
@@ -585,16 +586,16 @@ class QueryRouter:
                     summary["security_score"] = data["score"]
                 if "findings" in data:
                     summary["vulnerabilities"] = data["findings"]
-            
+
             elif result.service == "ai_engine":
                 data = result.data.get("data", {})
                 if "anomalies" in data:
                     summary["anomalies"] = data["anomalies"]
                 if "recommendations" in data:
                     summary["recommendations"] = data["recommendations"]
-        
+
         return summary
-    
+
     def _summarize_resource_analysis(self, results: List[QueryRouterResult]) -> Dict[str, Any]:
         """Summarize resource analysis results."""
         summary = {
@@ -603,22 +604,25 @@ class QueryRouter:
             "recommendations": [],
             "optimization_opportunities": []
         }
-        
+
         for result in results:
             if result.service == "azure_integration":
                 data = result.data.get("data", {})
                 if "resources" in data:
                     resources = data["resources"]
                     summary["resource_count"] = len(resources)
-                    
+
                     # Count by type
                     for resource in resources:
                         resource_type = resource.get("type", "unknown")
-                        summary["resource_types"][resource_type] = summary["resource_types"].get(resource_type, 0) + 1
-            
+                        summary["resource_types"][resource_type] = summary["resource_types"].get(
+                            resource_type,
+                            0
+                        ) + 1
+
             elif result.service == "ai_engine":
                 data = result.data.get("data", {})
                 if "recommendations" in data:
                     summary["recommendations"] = data["recommendations"]
-        
+
         return summary

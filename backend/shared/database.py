@@ -25,23 +25,29 @@ Base = declarative_base()
 
 class BaseModel(Base):
     """Base model with common fields for all entities."""
-    
+
     __abstract__ = True
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False
+    )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     created_by = Column(String(255), nullable=True)
     updated_by = Column(String(255), nullable=True)
-    
+
     def to_dict(self) -> dict:
         """Convert model instance to dictionary."""
         return {
             column.name: getattr(self, column.name)
             for column in self.__table__.columns
         }
-    
+
     def __repr__(self) -> str:
         """String representation of the model."""
         return f"<{self.__class__.__name__}(id={self.id})>"
@@ -49,9 +55,9 @@ class BaseModel(Base):
 
 class AuditLog(BaseModel):
     """Audit log model for tracking changes and actions."""
-    
+
     __tablename__ = "audit_logs"
-    
+
     entity_type = Column(String(100), nullable=False)
     entity_id = Column(String(255), nullable=False)
     action = Column(String(50), nullable=False)  # CREATE, UPDATE, DELETE, VIEW
@@ -66,9 +72,9 @@ class AuditLog(BaseModel):
 
 class UserSession(BaseModel):
     """User session model for tracking active sessions."""
-    
+
     __tablename__ = "user_sessions"
-    
+
     user_id = Column(String(255), nullable=False)
     session_token = Column(String(500), nullable=False, unique=True)
     refresh_token = Column(String(500), nullable=True)
@@ -81,9 +87,9 @@ class UserSession(BaseModel):
 
 class ServiceHealth(BaseModel):
     """Service health tracking model."""
-    
+
     __tablename__ = "service_health"
-    
+
     service_name = Column(String(100), nullable=False)
     status = Column(String(20), nullable=False)  # HEALTHY, DEGRADED, UNHEALTHY
     last_check = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -95,7 +101,7 @@ class ServiceHealth(BaseModel):
 # Database Engine Configuration
 def create_database_engine(connection_string: str, is_async: bool = False):
     """Create database engine with appropriate configuration."""
-    
+
     if is_async:
         engine = create_async_engine(
             connection_string,
@@ -114,7 +120,7 @@ def create_database_engine(connection_string: str, is_async: bool = False):
             pool_pre_ping=True,
             pool_recycle=3600,
         )
-    
+
     return engine
 
 
@@ -145,21 +151,21 @@ SessionLocal = sessionmaker(
 
 class DatabaseManager:
     """Database manager for handling connections and operations."""
-    
+
     def __init__(self):
         self.async_engine = async_engine
         self.sync_engine = sync_engine
-    
+
     async def create_tables(self):
         """Create all database tables."""
         async with self.async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-    
+
     async def drop_tables(self):
         """Drop all database tables."""
         async with self.async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
-    
+
     async def health_check(self) -> dict:
         """Perform database health check."""
         try:
@@ -220,7 +226,7 @@ async def async_db_transaction() -> AsyncGenerator[AsyncSession, None]:
 # Database utilities
 class DatabaseUtils:
     """Utility functions for database operations."""
-    
+
     @staticmethod
     async def log_audit_event(
         session: AsyncSession,
@@ -234,7 +240,7 @@ class DatabaseUtils:
     ):
         """Log an audit event."""
         import json
-        
+
         audit_log = AuditLog(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -244,10 +250,10 @@ class DatabaseUtils:
             new_values=json.dumps(new_values) if new_values else None,
             details=details
         )
-        
+
         session.add(audit_log)
         await session.flush()
-    
+
     @staticmethod
     async def update_service_health(
         session: AsyncSession,
@@ -259,12 +265,12 @@ class DatabaseUtils:
     ):
         """Update service health status."""
         from sqlalchemy import select, update
-        
+
         # Check if record exists
         stmt = select(ServiceHealth).where(ServiceHealth.service_name == service_name)
         result = await session.execute(stmt)
         existing = result.scalar_one_or_none()
-        
+
         if existing:
             # Update existing record
             update_stmt = update(ServiceHealth).where(
@@ -288,7 +294,7 @@ class DatabaseUtils:
                 details=details
             )
             session.add(health_record)
-        
+
         await session.flush()
 
 
@@ -299,33 +305,33 @@ db_manager = DatabaseManager()
 # Cosmos DB Configuration (for NoSQL data)
 class CosmosDBManager:
     """Manager for Cosmos DB operations."""
-    
+
     def __init__(self):
         self.endpoint = settings.database.cosmos_endpoint
         self.key = settings.database.cosmos_key
         self.database_name = settings.database.cosmos_database
         self._client = None
         self._database = None
-    
+
     async def get_client(self):
         """Get Cosmos DB client."""
         if self._client is None:
             from azure.cosmos.aio import CosmosClient
             self._client = CosmosClient(self.endpoint, self.key)
         return self._client
-    
+
     async def get_database(self):
         """Get Cosmos DB database."""
         if self._database is None:
             client = await self.get_client()
             self._database = client.get_database_client(self.database_name)
         return self._database
-    
+
     async def get_container(self, container_name: str):
         """Get Cosmos DB container."""
         database = await self.get_database()
         return database.get_container_client(container_name)
-    
+
     async def health_check(self) -> dict:
         """Perform Cosmos DB health check."""
         try:
@@ -343,4 +349,4 @@ class CosmosDBManager:
 
 
 # Global Cosmos DB manager instance
-cosmos_manager = CosmosDBManager() 
+cosmos_manager = CosmosDBManager()

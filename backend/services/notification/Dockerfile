@@ -42,5 +42,5 @@ EXPOSE ${PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Run the startup script
-CMD ["python", "/app/services/notification/startup.py"]
+# Run the application
+CMD ["python", "-m", "uvicorn", "services.notification.main_simple:app", "--host", "0.0.0.0", "--port", "8005"]

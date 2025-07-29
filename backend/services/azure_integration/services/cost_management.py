@@ -19,13 +19,13 @@ logger = structlog.get_logger(__name__)
 
 class CostManagementService:
     """Service for managing Azure costs and budgets."""
-    
+
     def __init__(self):
         self.settings = settings
         self.auth_service = AzureAuthService()
         self.cost_clients = {}
         self.consumption_clients = {}
-    
+
     async def _get_cost_client(self, subscription_id: str) -> CostManagementClient:
         """Get or create Cost Management client for subscription."""
         if subscription_id not in self.cost_clients:
@@ -34,7 +34,7 @@ class CostManagementService:
                 credential, subscription_id
             )
         return self.cost_clients[subscription_id]
-    
+
     async def _get_consumption_client(self, subscription_id: str) -> ConsumptionManagementClient:
         """Get or create Consumption Management client for subscription."""
         if subscription_id not in self.consumption_clients:
@@ -43,7 +43,7 @@ class CostManagementService:
                 credential, subscription_id
             )
         return self.consumption_clients[subscription_id]
-    
+
     async def get_usage_details(
         self,
         subscription_id: str,
@@ -54,10 +54,10 @@ class CostManagementService:
         """Get cost usage details for a subscription."""
         try:
             client = await self._get_cost_client(subscription_id)
-            
+
             # Build query parameters
             scope = f"/subscriptions/{subscription_id}"
-            
+
             # Define the query
             query = {
                 "type": "ActualCost",
@@ -82,14 +82,14 @@ class CostManagementService:
                     ]
                 }
             }
-            
+
             # Execute query
             result = await client.query.usage(scope, query)
-            
+
             # Process results
             total_cost = 0
             cost_breakdown = []
-            
+
             if result.rows:
                 for row in result.rows:
                     # Assuming columns are: [Cost, ServiceName, Currency, Date]
@@ -97,7 +97,7 @@ class CostManagementService:
                     service_name = row[1] if len(row) > 1 else "Unknown"
                     currency = row[2] if len(row) > 2 else "USD"
                     date_str = row[3] if len(row) > 3 else None
-                    
+
                     total_cost += cost
                     cost_breakdown.append({
                         "service_name": service_name,
@@ -105,10 +105,10 @@ class CostManagementService:
                         "currency": currency,
                         "date": date_str
                     })
-            
+
             # Get budget status
             budget_status = await self._get_budget_status(subscription_id)
-            
+
             logger.info(
                 "usage_details_retrieved",
                 subscription_id=subscription_id,
@@ -116,7 +116,7 @@ class CostManagementService:
                 end_date=end_date,
                 total_cost=total_cost
             )
-            
+
             return CostResponse(
                 subscription_id=subscription_id,
                 time_period={"from": start_date, "to": end_date},
@@ -125,7 +125,7 @@ class CostManagementService:
                 cost_breakdown=cost_breakdown,
                 budget_status=budget_status
             )
-            
+
         except AzureError as e:
             logger.error(
                 "get_usage_details_failed",
@@ -133,7 +133,7 @@ class CostManagementService:
                 subscription_id=subscription_id
             )
             raise Exception(f"Failed to get usage details: {str(e)}")
-    
+
     async def get_cost_forecast(
         self,
         subscription_id: str,
@@ -142,13 +142,13 @@ class CostManagementService:
         """Get cost forecast for a subscription."""
         try:
             client = await self._get_cost_client(subscription_id)
-            
+
             # Calculate forecast period
             start_date = datetime.now().date()
             end_date = start_date + timedelta(days=forecast_days)
-            
+
             scope = f"/subscriptions/{subscription_id}"
-            
+
             # Define the forecast query
             query = {
                 "type": "ForecastActualCost",
@@ -167,33 +167,33 @@ class CostManagementService:
                     }
                 }
             }
-            
+
             # Execute forecast query
             result = await client.query.usage(scope, query)
-            
+
             # Process forecast results
             total_forecast = 0
             forecast_breakdown = []
-            
+
             if result.rows:
                 for row in result.rows:
                     cost = float(row[0]) if row[0] else 0
                     date_str = row[1] if len(row) > 1 else None
-                    
+
                     total_forecast += cost
                     forecast_breakdown.append({
                         "date": date_str,
                         "forecast_cost": cost,
                         "currency": "USD"
                     })
-            
+
             logger.info(
                 "cost_forecast_retrieved",
                 subscription_id=subscription_id,
                 forecast_days=forecast_days,
                 total_forecast=total_forecast
             )
-            
+
             return CostResponse(
                 subscription_id=subscription_id,
                 time_period={
@@ -208,7 +208,7 @@ class CostManagementService:
                     "daily_breakdown": forecast_breakdown
                 }
             )
-            
+
         except AzureError as e:
             logger.error(
                 "get_cost_forecast_failed",
@@ -216,7 +216,7 @@ class CostManagementService:
                 subscription_id=subscription_id
             )
             raise Exception(f"Failed to get cost forecast: {str(e)}")
-    
+
     async def list_budgets(
         self,
         subscription_id: str
@@ -225,17 +225,17 @@ class CostManagementService:
         try:
             consumption_client = await self._get_consumption_client(subscription_id)
             budgets = []
-            
+
             # List budgets
             budget_list = consumption_client.budgets.list()
-            
+
             async for budget in budget_list:
                 # Calculate budget usage
                 spent = budget.current_spend.amount if budget.current_spend else 0
                 amount = budget.amount
                 remaining = amount - spent
                 percentage_used = (spent / amount * 100) if amount > 0 else 0
-                
+
                 budgets.append({
                     "id": budget.id,
                     "name": budget.name,
@@ -261,15 +261,15 @@ class CostManagementService:
                     ] if budget.notifications else [],
                     "forecast_spend": budget.forecast_spend.amount if budget.forecast_spend else None
                 })
-            
+
             logger.info(
                 "budgets_listed",
                 subscription_id=subscription_id,
                 count=len(budgets)
             )
-            
+
             return budgets
-            
+
         except AzureError as e:
             logger.error(
                 "list_budgets_failed",
@@ -277,7 +277,7 @@ class CostManagementService:
                 subscription_id=subscription_id
             )
             raise Exception(f"Failed to list budgets: {str(e)}")
-    
+
     async def create_budget(
         self,
         subscription_id: str,
@@ -286,7 +286,7 @@ class CostManagementService:
         """Create a new budget."""
         try:
             consumption_client = await self._get_consumption_client(subscription_id)
-            
+
             # Create budget parameters
             budget_params = {
                 "category": budget_data.get("category", "Cost"),
@@ -297,11 +297,11 @@ class CostManagementService:
                     "end_date": budget_data.get("end_date")
                 }
             }
-            
+
             # Add filters if provided
             if budget_data.get("filters"):
                 budget_params["filters"] = budget_data["filters"]
-            
+
             # Add notifications if provided
             if budget_data.get("notifications"):
                 budget_params["notifications"] = {}
@@ -313,20 +313,20 @@ class CostManagementService:
                         "contact_emails": notif.get("contact_emails", []),
                         "contact_groups": notif.get("contact_groups", [])
                     }
-            
+
             # Create budget
             budget = await consumption_client.budgets.create_or_update(
                 budget_name=budget_data["name"],
                 parameters=budget_params
             )
-            
+
             logger.info(
                 "budget_created",
                 subscription_id=subscription_id,
                 budget_name=budget_data["name"],
                 amount=budget_data["amount"]
             )
-            
+
             return {
                 "id": budget.id,
                 "name": budget.name,
@@ -340,7 +340,7 @@ class CostManagementService:
                 },
                 "notifications": budget.notifications
             }
-            
+
         except AzureError as e:
             logger.error(
                 "create_budget_failed",
@@ -349,7 +349,7 @@ class CostManagementService:
                 budget_name=budget_data.get("name")
             )
             raise Exception(f"Failed to create budget: {str(e)}")
-    
+
     async def get_cost_recommendations(
         self,
         subscription_id: str
@@ -357,17 +357,17 @@ class CostManagementService:
         """Get cost optimization recommendations."""
         try:
             recommendations = []
-            
+
             # Get usage data for analysis
             end_date = datetime.now().date()
             start_date = end_date - timedelta(days=30)
-            
+
             usage_data = await self.get_usage_details(
                 subscription_id=subscription_id,
                 start_date=start_date.isoformat(),
                 end_date=end_date.isoformat()
             )
-            
+
             # Analyze cost patterns
             if usage_data.cost_breakdown:
                 # Find top cost services
@@ -376,7 +376,7 @@ class CostManagementService:
                     key=lambda x: x.get("cost", 0),
                     reverse=True
                 )
-                
+
                 # Recommend optimization for top 3 services
                 for i, service in enumerate(sorted_costs[:3]):
                     if service.get("cost", 0) > 100:  # $100 threshold
@@ -393,7 +393,7 @@ class CostManagementService:
                                 "Implement auto-scaling"
                             ]
                         })
-            
+
             # Add generic recommendations
             recommendations.extend([
                 {
@@ -421,15 +421,15 @@ class CostManagementService:
                     ]
                 }
             ])
-            
+
             logger.info(
                 "cost_recommendations_generated",
                 subscription_id=subscription_id,
                 recommendation_count=len(recommendations)
             )
-            
+
             return recommendations
-            
+
         except Exception as e:
             logger.error(
                 "get_cost_recommendations_failed",
@@ -437,12 +437,12 @@ class CostManagementService:
                 subscription_id=subscription_id
             )
             return []
-    
+
     async def _get_budget_status(self, subscription_id: str) -> Dict[str, Any]:
         """Get budget status for subscription."""
         try:
             budgets = await self.list_budgets(subscription_id)
-            
+
             if not budgets:
                 return {
                     "has_budgets": False,
@@ -450,20 +450,23 @@ class CostManagementService:
                     "total_spent": 0,
                     "budget_utilization": 0
                 }
-            
+
             total_budget = sum(b.get("amount", 0) for b in budgets)
             total_spent = sum(b.get("spent", 0) for b in budgets)
             utilization = (total_spent / total_budget * 100) if total_budget > 0 else 0
-            
+
             return {
                 "has_budgets": True,
                 "budget_count": len(budgets),
                 "total_budget": total_budget,
                 "total_spent": total_spent,
                 "budget_utilization": utilization,
-                "budgets_over_threshold": len([b for b in budgets if b.get("percentage_used", 0) > 80])
+                "budgets_over_threshold": len(
+                    [b for b in budgets if b.get("percentage_used",
+                    0) > 80]
+                )
             }
-            
+
         except Exception as e:
             logger.error(
                 "get_budget_status_failed",
