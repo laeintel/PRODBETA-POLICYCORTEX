@@ -6,7 +6,7 @@ Provides environment-based configuration management using Pydantic Settings.
 import os
 from typing import List, Optional, Dict, Any
 from pydantic import Field, validator
-    from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings
 from enum import Enum
 
 

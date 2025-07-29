@@ -7,7 +7,7 @@ import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, Generator, AsyncGenerator
-    import uuid
+import uuid
 from datetime import datetime, timedelta
 
 import httpx
