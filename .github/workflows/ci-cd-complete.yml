@@ -108,17 +108,29 @@ jobs:
         working-directory: ./backend/services/api_gateway
         continue-on-error: true
         env:
+          # Real Test Environment Configuration
           TESTING: "true"
           DEBUG: "true"
-          SQL_SERVER: "localhost"
-          SQL_USERNAME: "test"
-          SQL_PASSWORD: "test"
-          COSMOS_ENDPOINT: "https://test.documents.azure.com:443/"
-          COSMOS_KEY: "test-key"
-          AZURE_CLIENT_ID: "test-client-id"
-          AZURE_CLIENT_SECRET: "test-client-secret"
-          AZURE_TENANT_ID: "test-tenant-id"
-          AZURE_SUBSCRIPTION_ID: "test-subscription-id"
+          INTEGRATION_TESTING: "false"
+          # Database Configuration (using test database)
+          TEST_SQL_SERVER: "localhost"
+          TEST_SQL_USERNAME: "testuser"
+          TEST_SQL_PASSWORD: "testpass123"
+          TEST_SQL_DATABASE: "policycortex_unit_test"
+          # Redis Configuration
+          TEST_REDIS_HOST: "localhost"
+          TEST_REDIS_PORT: "6379"
+          TEST_REDIS_DB: "1"
+          # Azure Test Configuration (for SDK testing)
+          TEST_AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'test-subscription-id' }}"
+          TEST_AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'test-tenant-id' }}"
+          TEST_AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'test-client-id' }}"
+          TEST_AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'test-client-secret' }}"
+          TEST_AZURE_RESOURCE_GROUP: "rg-policycortex-test"
+          # Cosmos DB Test Configuration (using emulator)
+          TEST_COSMOS_ENDPOINT: "https://localhost:8081"
+          TEST_COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          TEST_COSMOS_DATABASE: "policycortex_test"
         run: |
           if [ -d "tests" ]; then
             python -m pytest tests/ -v --cov=. --cov-report=xml || echo "Tests failed but continuing..."
@@ -156,17 +168,29 @@ jobs:
         working-directory: ./backend/services/azure_integration
         continue-on-error: true
         env:
+          # Real Test Environment Configuration
           TESTING: "true"
           DEBUG: "true"
-          SQL_SERVER: "localhost"
-          SQL_USERNAME: "test"
-          SQL_PASSWORD: "test"
-          COSMOS_ENDPOINT: "https://test.documents.azure.com:443/"
-          COSMOS_KEY: "test-key"
-          AZURE_CLIENT_ID: "test-client-id"
-          AZURE_CLIENT_SECRET: "test-client-secret"
-          AZURE_TENANT_ID: "test-tenant-id"
-          AZURE_SUBSCRIPTION_ID: "test-subscription-id"
+          INTEGRATION_TESTING: "false"
+          # Database Configuration (using test database)
+          TEST_SQL_SERVER: "localhost"
+          TEST_SQL_USERNAME: "testuser"
+          TEST_SQL_PASSWORD: "testpass123"
+          TEST_SQL_DATABASE: "policycortex_unit_test"
+          # Redis Configuration
+          TEST_REDIS_HOST: "localhost"
+          TEST_REDIS_PORT: "6379"
+          TEST_REDIS_DB: "1"
+          # Azure Test Configuration (for SDK testing)
+          TEST_AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'test-subscription-id' }}"
+          TEST_AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'test-tenant-id' }}"
+          TEST_AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'test-client-id' }}"
+          TEST_AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'test-client-secret' }}"
+          TEST_AZURE_RESOURCE_GROUP: "rg-policycortex-test"
+          # Cosmos DB Test Configuration (using emulator)
+          TEST_COSMOS_ENDPOINT: "https://localhost:8081"
+          TEST_COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          TEST_COSMOS_DATABASE: "policycortex_test"
         run: |
           if [ -d "tests" ]; then
             python -m pytest tests/ -v --cov=. --cov-report=xml || echo "Tests failed but continuing..."
@@ -204,17 +228,29 @@ jobs:
         working-directory: ./backend/services/ai_engine
         continue-on-error: true
         env:
+          # Real Test Environment Configuration
           TESTING: "true"
           DEBUG: "true"
-          SQL_SERVER: "localhost"
-          SQL_USERNAME: "test"
-          SQL_PASSWORD: "test"
-          COSMOS_ENDPOINT: "https://test.documents.azure.com:443/"
-          COSMOS_KEY: "test-key"
-          AZURE_CLIENT_ID: "test-client-id"
-          AZURE_CLIENT_SECRET: "test-client-secret"
-          AZURE_TENANT_ID: "test-tenant-id"
-          AZURE_SUBSCRIPTION_ID: "test-subscription-id"
+          INTEGRATION_TESTING: "false"
+          # Database Configuration (using test database)
+          TEST_SQL_SERVER: "localhost"
+          TEST_SQL_USERNAME: "testuser"
+          TEST_SQL_PASSWORD: "testpass123"
+          TEST_SQL_DATABASE: "policycortex_unit_test"
+          # Redis Configuration
+          TEST_REDIS_HOST: "localhost"
+          TEST_REDIS_PORT: "6379"
+          TEST_REDIS_DB: "1"
+          # Azure Test Configuration (for SDK testing)
+          TEST_AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'test-subscription-id' }}"
+          TEST_AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'test-tenant-id' }}"
+          TEST_AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'test-client-id' }}"
+          TEST_AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'test-client-secret' }}"
+          TEST_AZURE_RESOURCE_GROUP: "rg-policycortex-test"
+          # Cosmos DB Test Configuration (using emulator)
+          TEST_COSMOS_ENDPOINT: "https://localhost:8081"
+          TEST_COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          TEST_COSMOS_DATABASE: "policycortex_test"
         run: |
           if [ -d "tests" ]; then
             python -m pytest tests/ -v --cov=. --cov-report=xml || echo "Tests failed but continuing..."
@@ -252,17 +288,29 @@ jobs:
         working-directory: ./backend/services/data_processing
         continue-on-error: true
         env:
+          # Real Test Environment Configuration
           TESTING: "true"
           DEBUG: "true"
-          SQL_SERVER: "localhost"
-          SQL_USERNAME: "test"
-          SQL_PASSWORD: "test"
-          COSMOS_ENDPOINT: "https://test.documents.azure.com:443/"
-          COSMOS_KEY: "test-key"
-          AZURE_CLIENT_ID: "test-client-id"
-          AZURE_CLIENT_SECRET: "test-client-secret"
-          AZURE_TENANT_ID: "test-tenant-id"
-          AZURE_SUBSCRIPTION_ID: "test-subscription-id"
+          INTEGRATION_TESTING: "false"
+          # Database Configuration (using test database)
+          TEST_SQL_SERVER: "localhost"
+          TEST_SQL_USERNAME: "testuser"
+          TEST_SQL_PASSWORD: "testpass123"
+          TEST_SQL_DATABASE: "policycortex_unit_test"
+          # Redis Configuration
+          TEST_REDIS_HOST: "localhost"
+          TEST_REDIS_PORT: "6379"
+          TEST_REDIS_DB: "1"
+          # Azure Test Configuration (for SDK testing)
+          TEST_AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'test-subscription-id' }}"
+          TEST_AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'test-tenant-id' }}"
+          TEST_AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'test-client-id' }}"
+          TEST_AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'test-client-secret' }}"
+          TEST_AZURE_RESOURCE_GROUP: "rg-policycortex-test"
+          # Cosmos DB Test Configuration (using emulator)
+          TEST_COSMOS_ENDPOINT: "https://localhost:8081"
+          TEST_COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          TEST_COSMOS_DATABASE: "policycortex_test"
         run: |
           if [ -d "tests" ]; then
             python -m pytest tests/ -v --cov=. --cov-report=xml || echo "Tests failed but continuing..."
@@ -300,17 +348,29 @@ jobs:
         working-directory: ./backend/services/conversation
         continue-on-error: true
         env:
+          # Real Test Environment Configuration
           TESTING: "true"
           DEBUG: "true"
-          SQL_SERVER: "localhost"
-          SQL_USERNAME: "test"
-          SQL_PASSWORD: "test"
-          COSMOS_ENDPOINT: "https://test.documents.azure.com:443/"
-          COSMOS_KEY: "test-key"
-          AZURE_CLIENT_ID: "test-client-id"
-          AZURE_CLIENT_SECRET: "test-client-secret"
-          AZURE_TENANT_ID: "test-tenant-id"
-          AZURE_SUBSCRIPTION_ID: "test-subscription-id"
+          INTEGRATION_TESTING: "false"
+          # Database Configuration (using test database)
+          TEST_SQL_SERVER: "localhost"
+          TEST_SQL_USERNAME: "testuser"
+          TEST_SQL_PASSWORD: "testpass123"
+          TEST_SQL_DATABASE: "policycortex_unit_test"
+          # Redis Configuration
+          TEST_REDIS_HOST: "localhost"
+          TEST_REDIS_PORT: "6379"
+          TEST_REDIS_DB: "1"
+          # Azure Test Configuration (for SDK testing)
+          TEST_AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'test-subscription-id' }}"
+          TEST_AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'test-tenant-id' }}"
+          TEST_AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'test-client-id' }}"
+          TEST_AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'test-client-secret' }}"
+          TEST_AZURE_RESOURCE_GROUP: "rg-policycortex-test"
+          # Cosmos DB Test Configuration (using emulator)
+          TEST_COSMOS_ENDPOINT: "https://localhost:8081"
+          TEST_COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          TEST_COSMOS_DATABASE: "policycortex_test"
         run: |
           if [ -d "tests" ]; then
             python -m pytest tests/ -v --cov=. --cov-report=xml || echo "Tests failed but continuing..."
@@ -348,17 +408,29 @@ jobs:
         working-directory: ./backend/services/notification
         continue-on-error: true
         env:
+          # Real Test Environment Configuration
           TESTING: "true"
           DEBUG: "true"
-          SQL_SERVER: "localhost"
-          SQL_USERNAME: "test"
-          SQL_PASSWORD: "test"
-          COSMOS_ENDPOINT: "https://test.documents.azure.com:443/"
-          COSMOS_KEY: "test-key"
-          AZURE_CLIENT_ID: "test-client-id"
-          AZURE_CLIENT_SECRET: "test-client-secret"
-          AZURE_TENANT_ID: "test-tenant-id"
-          AZURE_SUBSCRIPTION_ID: "test-subscription-id"
+          INTEGRATION_TESTING: "false"
+          # Database Configuration (using test database)
+          TEST_SQL_SERVER: "localhost"
+          TEST_SQL_USERNAME: "testuser"
+          TEST_SQL_PASSWORD: "testpass123"
+          TEST_SQL_DATABASE: "policycortex_unit_test"
+          # Redis Configuration
+          TEST_REDIS_HOST: "localhost"
+          TEST_REDIS_PORT: "6379"
+          TEST_REDIS_DB: "1"
+          # Azure Test Configuration (for SDK testing)
+          TEST_AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'test-subscription-id' }}"
+          TEST_AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'test-tenant-id' }}"
+          TEST_AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'test-client-id' }}"
+          TEST_AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'test-client-secret' }}"
+          TEST_AZURE_RESOURCE_GROUP: "rg-policycortex-test"
+          # Cosmos DB Test Configuration (using emulator)
+          TEST_COSMOS_ENDPOINT: "https://localhost:8081"
+          TEST_COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          TEST_COSMOS_DATABASE: "policycortex_test"
         run: |
           if [ -d "tests" ]; then
             python -m pytest tests/ -v --cov=. --cov-report=xml || echo "Tests failed but continuing..."
@@ -494,18 +566,39 @@ jobs:
 
       - name: Run integration tests
         env:
-          # Use staging test environment
+          # Real Integration Test Environment Configuration
           TESTING: "true"
           DEBUG: "true"
+          INTEGRATION_TESTING: "true"
+          # Database Configuration (for integration tests)
+          TEST_SQL_SERVER: "localhost"
+          TEST_SQL_USERNAME: "testuser"
+          TEST_SQL_PASSWORD: "testpass123"
+          TEST_SQL_DATABASE: "policycortex_integration_test"
+          # Redis Configuration
+          TEST_REDIS_HOST: "localhost"
+          TEST_REDIS_PORT: "6379"
+          TEST_REDIS_DB: "0"
+          # Azure Test Configuration (for integration SDK testing)
+          TEST_AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'integration-test-subscription' }}"
+          TEST_AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'integration-test-tenant' }}"
+          TEST_AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'integration-test-client' }}"
+          TEST_AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'integration-test-secret' }}"
+          TEST_AZURE_RESOURCE_GROUP: "rg-policycortex-integration-test"
+          # Cosmos DB Test Configuration (using emulator)
+          TEST_COSMOS_ENDPOINT: "https://localhost:8081"
+          TEST_COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          TEST_COSMOS_DATABASE: "policycortex_integration_test"
+          # Legacy environment variables for Docker Compose compatibility
           SQL_SERVER: "localhost"
           SQL_USERNAME: "testuser"
           SQL_PASSWORD: "testpass123"
           COSMOS_ENDPOINT: "https://localhost:8081"
           COSMOS_KEY: "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-          AZURE_CLIENT_ID: "integration-test-client"
-          AZURE_CLIENT_SECRET: "integration-test-secret"
-          AZURE_TENANT_ID: "integration-test-tenant"
-          AZURE_SUBSCRIPTION_ID: "integration-test-subscription"
+          AZURE_CLIENT_ID: "${{ secrets.TEST_AZURE_CLIENT_ID || 'integration-test-client' }}"
+          AZURE_CLIENT_SECRET: "${{ secrets.TEST_AZURE_CLIENT_SECRET || 'integration-test-secret' }}"
+          AZURE_TENANT_ID: "${{ secrets.TEST_AZURE_TENANT_ID || 'integration-test-tenant' }}"
+          AZURE_SUBSCRIPTION_ID: "${{ secrets.TEST_AZURE_SUBSCRIPTION_ID || 'integration-test-subscription' }}"
           REDIS_URL: "redis://localhost:6379"
         run: |
           echo "🔧 Setting up integration test environment..."
@@ -563,7 +656,7 @@ jobs:
           EOF
           
           echo "🚀 Starting integration test services..."
-          docker-compose -f docker-compose.integration.yml up -d
+          docker compose -f docker-compose.integration.yml up -d
           
           echo "⏳ Waiting for services to be ready..."
           sleep 45
@@ -581,7 +674,7 @@ jobs:
           
           # Test 2: Database Connectivity
           echo "Test 2: Database connectivity"
-          if docker-compose -f docker-compose.integration.yml exec -T postgres psql -U testuser -d policycortex_integration_test -c "SELECT 1;"; then
+          if docker compose -f docker-compose.integration.yml exec -T postgres psql -U testuser -d policycortex_integration_test -c "SELECT 1;"; then
             echo "✅ Database connectivity test passed"
           else
             echo "❌ Database connectivity test failed"
@@ -590,7 +683,7 @@ jobs:
           
           # Test 3: Redis Connectivity  
           echo "Test 3: Redis connectivity"
-          if docker-compose -f docker-compose.integration.yml exec -T redis redis-cli ping | grep -q PONG; then
+          if docker compose -f docker-compose.integration.yml exec -T redis redis-cli ping | grep -q PONG; then
             echo "✅ Redis connectivity test passed"
           else
             echo "❌ Redis connectivity test failed"
@@ -612,7 +705,7 @@ jobs:
           echo "✅ Inter-service communication test passed (simulated)"
           
           echo "🧹 Cleaning up integration test services..."
-          docker-compose -f docker-compose.integration.yml down -v
+          docker compose -f docker-compose.integration.yml down -v
           
           echo "✅ All integration tests completed successfully!"
 
