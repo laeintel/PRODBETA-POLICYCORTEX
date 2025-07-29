@@ -143,7 +143,7 @@ resource "azurerm_container_app" "api_gateway" {
   }
 
   template {
-    min_replicas = 2  # Enhanced for high availability
+    min_replicas = 0  # Set to zero for cost optimization
     max_replicas = 20  # Enhanced for enterprise scale
     
     container {
@@ -315,7 +315,7 @@ resource "azurerm_container_app" "azure_integration" {
   }
 
   template {
-    min_replicas = 2  # Enhanced for high availability
+    min_replicas = 0  # Set to zero for cost optimization
     max_replicas = 10  # Enhanced for enterprise scale
     
     container {
@@ -441,7 +441,7 @@ resource "azurerm_container_app" "ai_engine" {
   }
 
   template {
-    min_replicas = 2  # Enhanced for high availability
+    min_replicas = 0  # Set to zero for cost optimization
     max_replicas = 16  # Enhanced for enterprise AI scale
     
     container {
@@ -540,7 +540,7 @@ resource "azurerm_container_app" "data_processing" {
   }
 
   template {
-    min_replicas = 2  # Enhanced for high availability
+    min_replicas = 0  # Set to zero for cost optimization
     max_replicas = 10  # Enhanced for enterprise data processing
     
     container {
@@ -646,7 +646,7 @@ resource "azurerm_container_app" "conversation" {
   }
 
   template {
-    min_replicas = 2  # Enhanced for high availability
+    min_replicas = 0  # Set to zero for cost optimization
     max_replicas = 12  # Enhanced for enterprise conversational AI
     
     container {
@@ -752,7 +752,7 @@ resource "azurerm_container_app" "notification" {
   }
 
   template {
-    min_replicas = 2  # Enhanced for high availability
+    min_replicas = 0  # Set to zero for cost optimization
     max_replicas = 8  # Enhanced for enterprise notification scale
     
     container {
@@ -851,7 +851,7 @@ resource "azurerm_container_app" "frontend" {
   }
 
   template {
-    min_replicas = 2  # Enhanced for high availability
+    min_replicas = 0  # Set to zero for cost optimization
     max_replicas = 20  # Enhanced for enterprise UI scale
     
     container {

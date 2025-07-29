@@ -12,18 +12,20 @@ permissions:
   pull-requests: write
 
 on:
-  # Temporarily disabled automatic triggers due to billing issues
-  # push:
-  #   branches: [ main ]
-  #   paths:
-  #     - 'infrastructure/bicep/**'
-  #     - '.github/workflows/bicep-deploy.yml'
-  # pull_request:
-  #   branches: [ main ]
-  #   paths:
-  #     - 'infrastructure/bicep/**'
-  #     - '.github/workflows/bicep-deploy.yml'
-  workflow_dispatch:  # Manual trigger only
+  # Auto-trigger enabled for infrastructure changes
+  push:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/bicep/**'
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/bicep-deploy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/bicep/**'
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/bicep-deploy.yml'
+  workflow_dispatch:  # Manual trigger also available
     inputs:
       environment:
         description: 'Target environment'
