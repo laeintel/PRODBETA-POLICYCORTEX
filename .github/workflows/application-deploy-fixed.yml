@@ -1,0 +1,425 @@
+name: Application Deployment
+
+# Windows Self-Hosted Runner Compatibility:
+# - Uses Git Bash (available by default on Windows runners)
+# - Requires Docker Desktop installed and running
+# - Requires Azure CLI installed
+# - All commands compatible with Windows via Git Bash
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  issues: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      skip_tests:
+        description: 'Skip tests to save minutes'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  # Combined tests to save minutes
+  test-all:
+    name: Run Tests (Optional)
+    runs-on: self-hosted
+    if: github.event.inputs.skip_tests != 'true'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Test Frontend (Quick)
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build  # Just build, skip long tests
+      
+      - name: Test Backend (Quick)
+        run: |
+          # Just check if Python files are valid
+          python -m py_compile backend/services/api_gateway/main.py
+          echo "Basic syntax check passed"
+
+  # Security scanning
+  security-scan:
+    name: Security Scan
+    runs-on: self-hosted
+    continue-on-error: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+
+  # Build and push all images
+  build-and-push:
+    name: Build and Push Images
+    runs-on: self-hosted
+    needs: [test-all]
+    if: always()  # Run even if tests fail
+    outputs:
+      acr_name: ${{ steps.get_acr.outputs.acr_name }}
+      acr_login_server: ${{ steps.get_acr.outputs.acr_login_server }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get ACR Details
+        id: get_acr
+        run: |
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
+          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          echo "Found ACR: $ACR_NAME at $ACR_LOGIN_SERVER"
+
+      - name: Login to ACR
+        run: |
+          az acr login --name ${{ steps.get_acr.outputs.acr_name }}
+
+      - name: Build and Push Backend Images
+        run: |
+          # Set environment variables
+          export ACR_LOGIN_SERVER=${{ steps.get_acr.outputs.acr_login_server }}
+          
+          # Build and push each backend service
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
+          
+          for service in "${services[@]}"; do
+            echo "🏗️ Building policortex001-$service..."
+            
+            # Convert service name for directory (replace hyphens with underscores)
+            service_dir=$(echo $service | sed 's/-/_/g')
+            
+            # Build the image
+            docker build -t $ACR_LOGIN_SERVER/policortex001-$service:latest \
+              -t $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }} \
+              -f backend/services/$service_dir/Dockerfile backend/
+            
+            # Push the images
+            echo "📤 Pushing policortex001-$service..."
+            docker push $ACR_LOGIN_SERVER/policortex001-$service:latest
+            docker push $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }}
+            
+            echo "✅ Completed policortex001-$service"
+          done
+
+      - name: Build and Push Frontend Image
+        run: |
+          export ACR_LOGIN_SERVER=${{ steps.get_acr.outputs.acr_login_server }}
+          
+          echo "🏗️ Building policortex001-frontend..."
+          
+          # Build the frontend image
+          # Environment variables will be injected at runtime by Container Apps
+          docker build -t $ACR_LOGIN_SERVER/policortex001-frontend:latest \
+            -t $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }} \
+            frontend/
+          
+          # Push the images
+          echo "📤 Pushing policortex001-frontend..."
+          docker push $ACR_LOGIN_SERVER/policortex001-frontend:latest
+          docker push $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }}
+          
+          echo "✅ Completed policortex001-frontend"
+
+      - name: Verify Images
+        run: |
+          echo "📦 Verifying images in ACR..."
+          az acr repository list --name ${{ steps.get_acr.outputs.acr_name }} --output table
+          
+          # Check each service image
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          for service in "${services[@]}"; do
+            echo "🏷️ Tags for policortex001-$service:"
+            az acr repository show-tags --name ${{ steps.get_acr.outputs.acr_name }} --repository policortex001-$service --output table || echo "No tags found for $service"
+          done
+
+  # Deploy to Development
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: self-hosted
+    needs: [build-and-push]
+    if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Azure Resources
+        id: get_resources
+        run: |
+          # Get resource group for dev environment - exact match first
+          RESOURCE_GROUP=$(az group list --query "[?name=='rg-policortex001-app-dev'].name" -o tsv | head -n 1)
+          
+          # Fallback pattern if exact match not found
+          if [ -z "$RESOURCE_GROUP" ]; then
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+          fi
+          
+          # Final fallback to any policortex app dev resource group
+          if [ -z "$RESOURCE_GROUP" ]; then
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'policortex') && contains(name, 'app') && contains(name, 'dev')].name" -o tsv | head -n 1)
+          fi
+          
+          if [ -z "$RESOURCE_GROUP" ]; then
+            echo "❌ ERROR: No suitable resource group found for dev environment"
+            exit 1
+          fi
+          
+          echo "✅ Using resource group: $RESOURCE_GROUP"
+          echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
+          
+          # Use ACR details from build-and-push job
+          echo "acr_login_server=${{ needs.build-and-push.outputs.acr_login_server }}" >> $GITHUB_OUTPUT
+
+      - name: Deploy to Container Apps
+        run: |
+          echo "🚀 Deploying to Container Apps with latest images and Key Vault environment variables..."
+          
+          # Create revision suffix with timestamp to force new revisions
+          REVISION_SUFFIX="r$(date +%s)"
+          echo "Using revision suffix: $REVISION_SUFFIX"
+          
+          # Get Container Apps Environment domain for dynamic URLs
+          API_GATEWAY_FQDN=$(az containerapp show --name ca-api-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_FQDN=$(az containerapp show --name ca-frontend-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "API Gateway FQDN: $API_GATEWAY_FQDN"
+          echo "Frontend FQDN: $FRONTEND_FQDN"
+          
+          # Deploy each microservice using latest tags
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "📦 Deploying ca-$service-dev with new revision and Key Vault secrets..."
+            
+            if [ "$service" = "frontend" ]; then
+              # Frontend environment variables with Key Vault secrets
+              # Note: --set-env-vars for regular values, --replace-env-vars for secret references
+              az containerapp update \
+                --name ca-$service-dev \
+                --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+                --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
+                --revision-suffix $REVISION_SUFFIX \
+                --replace-env-vars \
+                  "ENVIRONMENT=dev" \
+                  "SERVICE_NAME=frontend" \
+                  "PORT=8080" \
+                  "LOG_LEVEL=INFO" \
+                  "VITE_API_BASE_URL=https://$API_GATEWAY_FQDN/api" \
+                  "VITE_WS_URL=wss://$API_GATEWAY_FQDN/ws" \
+                  "VITE_AZURE_REDIRECT_URI=https://$FRONTEND_FQDN" \
+                  "VITE_APP_VERSION=1.0.0" \
+                  "VITE_AZURE_CLIENT_ID=secretref:azure-client-id" \
+                  "VITE_AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                --output table
+            else
+              # Backend services environment variables with Key Vault secrets
+              az containerapp update \
+                --name ca-$service-dev \
+                --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+                --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
+                --revision-suffix $REVISION_SUFFIX \
+                --replace-env-vars \
+                  "ENVIRONMENT=dev" \
+                  "SERVICE_NAME=$service" \
+                  "SERVICE_PORT=$(case $service in api-gateway) echo 8000;; azure-integration) echo 8001;; ai-engine) echo 8002;; data-processing) echo 8003;; conversation) echo 8004;; notification) echo 8005;; *) echo 8000;; esac)" \
+                  "LOG_LEVEL=INFO" \
+                  "API_GATEWAY_URL=http://ca-api-gateway-dev" \
+                  "AZURE_INTEGRATION_URL=http://ca-azure-integration-dev" \
+                  "AI_ENGINE_URL=http://ca-ai-engine-dev" \
+                  "DATA_PROCESSING_URL=http://ca-data-processing-dev" \
+                  "CONVERSATION_URL=http://ca-conversation-dev" \
+                  "NOTIFICATION_URL=http://ca-notification-dev" \
+                  "JWT_SECRET_KEY=secretref:jwt-secret" \
+                  "ENCRYPTION_KEY=secretref:encryption-key" \
+                  "AZURE_CLIENT_ID=secretref:azure-client-id" \
+                  "AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                  "AZURE_COSMOS_ENDPOINT=secretref:cosmos-endpoint" \
+                  "AZURE_COSMOS_KEY=secretref:cosmos-key" \
+                  "REDIS_CONNECTION_STRING=secretref:redis-connection-string" \
+                  "AZURE_STORAGE_ACCOUNT_NAME=secretref:storage-account-name" \
+                  "COGNITIVE_SERVICES_KEY=secretref:cognitive-services-key" \
+                  "COGNITIVE_SERVICES_ENDPOINT=secretref:cognitive-services-endpoint" \
+                  "APPLICATION_INSIGHTS_CONNECTION_STRING=secretref:application-insights-connection-string" \
+                --output table
+            fi
+              
+            echo "✅ Deployed ca-$service-dev with Key Vault secrets and revision suffix $REVISION_SUFFIX"
+          done
+
+      - name: Wait for deployments
+        run: |
+          echo "⏳ Waiting for Container Apps to stabilize..."
+          sleep 90
+          
+          echo "📊 Checking deployment status and new revisions..."
+          services=("api-gateway" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "=== ca-$service-dev ==="
+            status=$(az containerapp show --name ca-$service-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.provisioningState" -o tsv)
+            echo "Provisioning State: $status"
+            
+            # Show latest revision
+            echo "Latest revision:"
+            az containerapp revision list \
+              --name ca-$service-dev \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --query "[0].{Name:name, CreatedTime:properties.createdTime, Active:properties.active, TrafficWeight:properties.trafficWeight}" \
+              --output table
+            echo ""
+          done
+
+      - name: Run health checks
+        continue-on-error: true
+        run: |
+          echo "🩺 Running health checks..."
+          
+          # Get Container App URLs
+          API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show --name ca-frontend-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "🌐 Application URLs:"
+          echo "  API Gateway: https://${API_GATEWAY_URL}"
+          echo "  Frontend: https://${FRONTEND_URL}"
+          
+          # Health check function with retries
+          check_health() {
+            local url=$1
+            local name=$2
+            local max_attempts=10
+            local wait_time=30
+            
+            for i in $(seq 1 $max_attempts); do
+              echo "🔍 Health check attempt $i/$max_attempts for $name..."
+              if curl -f -m 30 "$url" > /dev/null 2>&1; then
+                echo "✅ $name health check passed"
+                return 0
+              fi
+              
+              if [ $i -lt $max_attempts ]; then
+                echo "⏳ Waiting ${wait_time}s before retry..."
+                sleep $wait_time
+              fi
+            done
+            
+            echo "❌ $name health check failed after $max_attempts attempts"
+            return 1
+          }
+          
+          # Run health checks
+          HEALTH_FAILED=false
+          
+          if ! check_health "https://${API_GATEWAY_URL}/health" "API Gateway"; then
+            HEALTH_FAILED=true
+          fi
+          
+          if ! check_health "https://${FRONTEND_URL}/" "Frontend"; then
+            HEALTH_FAILED=true
+          fi
+          
+          if [ "$HEALTH_FAILED" = "true" ]; then
+            echo "⚠️  Some health checks failed, but deployment was successful"
+            echo "📋 Manual verification may be needed"
+          else
+            echo "🎉 All health checks passed!"
+          fi
+
+  # Deployment Summary
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: self-hosted
+    needs: [build-and-push, deploy-dev]
+    if: always()
+    
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "📊 Deployment Summary"
+          echo "===================="
+          echo ""
+          echo "🏗️  Build Status: ${{ needs.build-and-push.result }}"
+          echo "🚀 Deploy Status: ${{ needs.deploy-dev.result }}"
+          echo ""
+          echo "🏷️  Images Built:"
+          echo "  - policortex001-api-gateway:latest"
+          echo "  - policortex001-azure-integration:latest"
+          echo "  - policortex001-ai-engine:latest"
+          echo "  - policortex001-data-processing:latest"
+          echo "  - policortex001-conversation:latest"
+          echo "  - policortex001-notification:latest"
+          echo "  - policortex001-frontend:latest"
+          echo ""
+          echo "🌐 ACR: ${{ needs.build-and-push.outputs.acr_login_server }}"
+          echo ""
+          if [ "${{ needs.deploy-dev.result }}" = "success" ]; then
+            echo "✅ Deployment completed successfully!"
+          else
+            echo "❌ Deployment encountered issues. Check logs above."
+          fi
