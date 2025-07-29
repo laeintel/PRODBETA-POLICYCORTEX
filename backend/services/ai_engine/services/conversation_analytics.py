@@ -6,6 +6,7 @@ Provides deep analytics, learning capabilities, and conversation optimization
 
 import asyncio
 import json
+import uuid
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional, Tuple
