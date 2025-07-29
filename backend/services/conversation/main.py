@@ -24,6 +24,7 @@ import asyncio
 from backend.shared.config import get_settings
 from backend.shared.database import get_async_db, DatabaseUtils
 from backend.services.conversation.auth import AuthManager
+from .models import (
     HealthResponse,
     ConversationRequest,
     ConversationResponse,

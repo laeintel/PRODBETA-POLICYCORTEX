@@ -364,10 +364,8 @@ class ActionExecutor:
                     'remediated_resources': remediated_resources,
                     'failed_resources': failed_resources
                 },
-                'message': f"Remediated {len(
-                    remediated_resources)} resources,
-                    {len(failed_resources
-                )} failed"
+                'message': f"Remediated {len(remediated_resources)} resources, "
+                          f"{len(failed_resources)} failed"
             }
 
         except Exception as e:
