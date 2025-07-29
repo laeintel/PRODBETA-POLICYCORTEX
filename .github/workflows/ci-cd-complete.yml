@@ -27,7 +27,7 @@ jobs:
   # Job 1: Code Quality Checks
   code-quality:
     name: Code Quality & Linting
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     if: false  # Temporarily disabled for Windows runner setup
     steps:
       - name: Checkout code
@@ -123,7 +123,7 @@ jobs:
   # Job 2: Unit Tests
   unit-tests:
     name: Unit Tests
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: code-quality
     if: always()  # Run even if code-quality has issues
     strategy:
@@ -159,7 +159,7 @@ jobs:
   # Job 3: Frontend Tests
   frontend-tests:
     name: Frontend Tests
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: code-quality
     if: always()  # Run even if code-quality has issues
     steps:
@@ -195,7 +195,7 @@ jobs:
   # Job 4: Integration Tests
   integration-tests:
     name: Integration Tests
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: [unit-tests, frontend-tests]
     services:
       postgres:
@@ -290,7 +290,7 @@ jobs:
   # Job 5: E2E Tests
   e2e-tests:
     name: End-to-End Tests
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: integration-tests
     steps:
       - uses: actions/checkout@v4
@@ -330,7 +330,7 @@ jobs:
   # Job 6: Security Scanning
   security-scan:
     name: Security Scanning
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: code-quality
     if: always()  # Run even if code-quality has issues
     steps:
@@ -365,7 +365,7 @@ jobs:
   # Job 7: Performance Tests
   performance-tests:
     name: Performance Tests
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: integration-tests
     steps:
       - uses: actions/checkout@v4
@@ -395,7 +395,7 @@ jobs:
   # Job 8: Build Docker Images
   build-images:
     name: Build Docker Images
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: [unit-tests, integration-tests, security-scan]
     permissions:
       contents: read
@@ -443,7 +443,7 @@ jobs:
   # Job 9: Deploy to Environment
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: [build-images, e2e-tests, performance-tests]
     if: github.ref == 'refs/heads/main'
     environment: 
@@ -490,7 +490,7 @@ jobs:
   # Job 10: Post-deployment verification
   verify-deployment:
     name: Verify Deployment
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: deploy
     if: github.ref == 'refs/heads/main'
     steps:
@@ -524,7 +524,7 @@ jobs:
   # Job 11: Cleanup
   cleanup:
     name: Cleanup
-    runs-on: self-hosted
+    runs-on: DESKTOP-L421JCF
     needs: [verify-deployment]
     if: always()
     steps:
