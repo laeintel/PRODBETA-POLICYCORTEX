@@ -201,7 +201,8 @@
       "Bash(cls)",
       "Bash(clear)",
       "Bash(git stash:*)",
-      "Bash(pip index versions:*)"
+      "Bash(pip index versions:*)",
+      "Bash(git log:*)"
     ],
     "deny": []
   }
