@@ -47,6 +47,73 @@ variable "deploy_container_apps" {
   default     = false
 }
 
+# Kubernetes deployment variables
+variable "deploy_kubernetes" {
+  description = "Whether to deploy AKS cluster instead of Container Apps"
+  type        = bool
+  default     = false
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for AKS cluster"
+  type        = string
+  default     = "1.28.3"
+}
+
+variable "kubernetes_node_count" {
+  description = "Number of nodes in the default node pool"
+  type        = number
+  default     = 3
+}
+
+variable "kubernetes_node_vm_size" {
+  description = "VM size for Kubernetes nodes"
+  type        = string
+  default     = "Standard_D4s_v3"
+}
+
+variable "kubernetes_enable_auto_scaling" {
+  description = "Enable auto-scaling for Kubernetes node pool"
+  type        = bool
+  default     = true
+}
+
+variable "kubernetes_min_node_count" {
+  description = "Minimum number of nodes when auto-scaling is enabled"
+  type        = number
+  default     = 2
+}
+
+variable "kubernetes_max_node_count" {
+  description = "Maximum number of nodes when auto-scaling is enabled" 
+  type        = number
+  default     = 10
+}
+
+variable "kubernetes_enable_ai_node_pool" {
+  description = "Enable dedicated node pool for AI workloads"
+  type        = bool
+  default     = false
+}
+
+variable "kubernetes_ai_node_vm_size" {
+  description = "VM size for AI node pool"
+  type        = string
+  default     = "Standard_NC6s_v3"
+}
+
+variable "kubernetes_ai_node_count" {
+  description = "Number of nodes in AI node pool"
+  type        = number
+  default     = 1
+}
+
+variable "enable_application_gateway" {
+  description = "Enable Application Gateway for Kubernetes ingress"
+  type        = bool
+  default     = false
+}
+
 variable "jwt_secret_key" {
   description = "Secret key for JWT token signing"
   type        = string

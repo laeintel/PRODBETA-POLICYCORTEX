@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: policycortex-config
+  namespace: policycortex
+data:
+  # Application configuration
+  APP_NAME: "PolicyCortex"
+  LOG_LEVEL: "INFO"
+  ENVIRONMENT: "kubernetes"
+  
+  # Service URLs (internal communication)
+  API_GATEWAY_URL: "http://api-gateway-service"
+  AZURE_INTEGRATION_URL: "http://azure-integration-service"
+  AI_ENGINE_URL: "http://ai-engine-service"
+  DATA_PROCESSING_URL: "http://data-processing-service"
+  CONVERSATION_URL: "http://conversation-service"
+  NOTIFICATION_URL: "http://notification-service"
+  
+  # Database configuration
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "20"
+  DB_POOL_TIMEOUT: "30"
+  
+  # Redis configuration
+  REDIS_MAX_CONNECTIONS: "10"
+  REDIS_RETRY_ON_TIMEOUT: "true"
+  
+  # API configuration
+  API_VERSION: "v1"
+  API_TIMEOUT: "30"
+  MAX_CONTENT_LENGTH: "16777216"  # 16MB
+  
+  # AI Engine configuration
+  AI_MODEL_CACHE_SIZE: "1000"
+  AI_BATCH_SIZE: "32"
+  AI_MAX_TOKENS: "4096"
+  
+  # Data processing configuration
+  BATCH_SIZE: "100"
+  PROCESSING_TIMEOUT: "300"
+  RETRY_ATTEMPTS: "3"
+  
+  # Monitoring configuration
+  METRICS_ENABLED: "true"
+  HEALTH_CHECK_INTERVAL: "30"
+  
+  # Security configuration
+  CORS_ORIGINS: "*"
+  RATE_LIMIT_PER_MINUTE: "100"
