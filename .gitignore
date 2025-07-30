@@ -162,3 +162,8 @@ C:\Users\LeonardEsere\Documents\AeoliTech\policycortex\Project_viewpoint/
 
 nul# Azure CLI installer
 AzureCLI.msi
+
+# Docker Compose (local testing only)
+docker-compose*.yml
+docker-compose*.yaml
+docker-compose.override.*
