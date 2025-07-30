@@ -143,8 +143,8 @@ resource "azurerm_container_app" "api_gateway" {
   }
 
   template {
-    min_replicas = 0  # Set to zero for cost optimization
-    max_replicas = 20  # Enhanced for enterprise scale
+    min_replicas = 0  # Zero replicas unless requests/jobs are running
+    max_replicas = 5   # Limited scale for cost optimization
     
     container {
       name   = "api-gateway"
@@ -315,8 +315,8 @@ resource "azurerm_container_app" "azure_integration" {
   }
 
   template {
-    min_replicas = 0  # Set to zero for cost optimization
-    max_replicas = 10  # Enhanced for enterprise scale
+    min_replicas = 0  # Zero replicas unless requests/jobs are running
+    max_replicas = 5   # Limited scale for cost optimization
     
     container {
       name   = "azure-integration"
@@ -441,8 +441,8 @@ resource "azurerm_container_app" "ai_engine" {
   }
 
   template {
-    min_replicas = 0  # Set to zero for cost optimization
-    max_replicas = 16  # Enhanced for enterprise AI scale
+    min_replicas = 0  # Zero replicas unless requests/jobs are running
+    max_replicas = 5   # Limited scale for cost optimization
     
     container {
       name   = "ai-engine"
@@ -540,8 +540,8 @@ resource "azurerm_container_app" "data_processing" {
   }
 
   template {
-    min_replicas = 0  # Set to zero for cost optimization
-    max_replicas = 10  # Enhanced for enterprise data processing
+    min_replicas = 0  # Zero replicas unless requests/jobs are running
+    max_replicas = 5   # Limited scale for cost optimization
     
     container {
       name   = "data-processing"
@@ -646,8 +646,8 @@ resource "azurerm_container_app" "conversation" {
   }
 
   template {
-    min_replicas = 0  # Set to zero for cost optimization
-    max_replicas = 12  # Enhanced for enterprise conversational AI
+    min_replicas = 0  # Zero replicas unless requests/jobs are running
+    max_replicas = 5   # Limited scale for cost optimization
     
     container {
       name   = "conversation"
@@ -752,8 +752,8 @@ resource "azurerm_container_app" "notification" {
   }
 
   template {
-    min_replicas = 0  # Set to zero for cost optimization
-    max_replicas = 8  # Enhanced for enterprise notification scale
+    min_replicas = 0  # Zero replicas unless requests/jobs are running
+    max_replicas = 5   # Limited scale for cost optimization
     
     container {
       name   = "notification"
@@ -851,8 +851,8 @@ resource "azurerm_container_app" "frontend" {
   }
 
   template {
-    min_replicas = 0  # Set to zero for cost optimization
-    max_replicas = 20  # Enhanced for enterprise UI scale
+    min_replicas = 0  # Zero replicas unless requests/jobs are running
+    max_replicas = 5   # Limited scale for cost optimization
     
     container {
       name   = "frontend"
