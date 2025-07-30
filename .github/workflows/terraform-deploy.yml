@@ -12,18 +12,8 @@ permissions:
   pull-requests: write
 
 on:
-  # Auto-trigger for terraform infrastructure changes
-  push:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/terraform/**'
-      - '.github/workflows/terraform-deploy.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/terraform/**'
-      - '.github/workflows/terraform-deploy.yml'
-  workflow_dispatch:  # Manual trigger also available
+  # Manual trigger only - Terraform deployments require manual approval
+  workflow_dispatch:  # Manual trigger only
     inputs:
       environment:
         description: 'Target environment'
