@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processing
+  namespace: policycortex
+  labels:
+    app: data-processing
+    component: data
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: data-processing
+  template:
+    metadata:
+      labels:
+        app: data-processing
+        component: data
+    spec:
+      containers:
+      - name: data-processing
+        image: ${ACR_NAME}.azurecr.io/policycortex-data-processing:latest
+        ports:
+        - containerPort: 8003
+          name: http
+        env:
+        - name: ENVIRONMENT
+          value: "kubernetes"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: policycortex-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: policycortex-secrets
+              key: redis-url
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: policycortex-secrets
+              key: azure-storage-connection-string
+        - name: AZURE_EVENT_HUB_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: policycortex-secrets
+              key: azure-event-hub-connection-string
+        - name: COSMOS_DB_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: policycortex-secrets
+              key: cosmos-db-connection-string
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "300m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8003
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-processing-service
+  namespace: policycortex
+  labels:
+    app: data-processing
+spec:
+  selector:
+    app: data-processing
+  ports:
+  - port: 80
+    targetPort: 8003
+    protocol: TCP
+    name: http
+  type: ClusterIP
