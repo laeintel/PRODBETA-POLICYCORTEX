@@ -37,100 +37,10 @@ module "kubernetes" {
   tags = local.common_tags
 }
 
-# Kubernetes provider configuration (only when Kubernetes is deployed)
-provider "kubernetes" {
-  count = var.deploy_kubernetes ? 1 : 0
-  
-  host                   = var.deploy_kubernetes ? module.kubernetes[0].host : ""
-  client_certificate     = var.deploy_kubernetes ? base64decode(module.kubernetes[0].client_certificate) : null
-  client_key             = var.deploy_kubernetes ? base64decode(module.kubernetes[0].client_key) : null
-  cluster_ca_certificate = var.deploy_kubernetes ? base64decode(module.kubernetes[0].cluster_ca_certificate) : null
-}
+# Note: Providers cannot use count. They will be configured when Kubernetes is available.
 
-# Helm provider configuration (only when Kubernetes is deployed)
-provider "helm" {
-  count = var.deploy_kubernetes ? 1 : 0
-  
-  kubernetes {
-    host                   = var.deploy_kubernetes ? module.kubernetes[0].host : ""
-    client_certificate     = var.deploy_kubernetes ? base64decode(module.kubernetes[0].client_certificate) : null
-    client_key             = var.deploy_kubernetes ? base64decode(module.kubernetes[0].client_key) : null
-    cluster_ca_certificate = var.deploy_kubernetes ? base64decode(module.kubernetes[0].cluster_ca_certificate) : null
-  }
-}
-
-# Install NGINX Ingress Controller
-resource "helm_release" "nginx_ingress" {
-  count      = var.deploy_kubernetes ? 1 : 0
-  name       = "nginx-ingress"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  namespace  = "ingress-nginx"
-  
-  create_namespace = true
-  
-  set {
-    name  = "controller.service.type"
-    value = "LoadBalancer"
-  }
-  
-  set {
-    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/azure-load-balancer-health-probe-request-path"
-    value = "/healthz"
-  }
-  
-  depends_on = [module.kubernetes]
-}
-
-# Install cert-manager for TLS certificates
-resource "helm_release" "cert_manager" {
-  count      = var.deploy_kubernetes ? 1 : 0
-  name       = "cert-manager"
-  repository = "https://charts.jetstack.io"
-  chart      = "cert-manager"
-  namespace  = "cert-manager"
-  version    = "v1.13.0"
-  
-  create_namespace = true
-  
-  set {
-    name  = "installCRDs"
-    value = "true"
-  }
-  
-  depends_on = [module.kubernetes]
-}
-
-# Azure Application Gateway Ingress Controller (AGIC)
-resource "helm_release" "agic" {
-  count      = var.deploy_kubernetes && var.enable_application_gateway ? 1 : 0
-  name       = "ingress-azure"
-  repository = "https://appgwingress.blob.core.windows.net/ingress-azure-helm-package/"
-  chart      = "ingress-azure"
-  namespace  = "default"
-  
-  set {
-    name  = "appgw.name"
-    value = "${var.name_prefix}-appgw-${var.environment}"
-  }
-  
-  set {
-    name  = "appgw.resourceGroup"
-    value = azurerm_resource_group.main.name
-  }
-  
-  set {
-    name  = "appgw.subscriptionId"
-    value = data.azurerm_client_config.current.subscription_id
-  }
-  
-  set {
-    name  = "kubernetes.watchNamespace"
-    value = "policycortex"
-  }
-  
-  depends_on = [module.kubernetes]
-}
+# Helm charts will be installed manually or via separate deployment
+# Due to provider configuration limitations with conditional deployment
 
 # Output Kubernetes information when deployed
 output "kubernetes_cluster_name" {

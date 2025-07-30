@@ -23,6 +23,12 @@ variable "project_name" {
   default     = "policycortex"
 }
 
+variable "name_prefix" {
+  description = "Prefix for all resource names"
+  type        = string
+  default     = "policycortex"
+}
+
 variable "owner" {
   description = "Owner of the resources"
   type        = string

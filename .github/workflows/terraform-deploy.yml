@@ -40,6 +40,10 @@ env:
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   TF_VAR_environment: ${{ github.event.inputs.environment || 'dev' }}
+  TF_VAR_deploy_kubernetes: true
+  TF_VAR_deploy_container_apps: false
+  TF_VAR_kubernetes_enable_auto_scaling: true
+  TF_VAR_kubernetes_enable_ai_node_pool: true
 
 jobs:
   terraform-plan:
@@ -60,6 +64,11 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.3'
 
       - name: Terraform Init
         id: tf-init
@@ -82,7 +91,15 @@ jobs:
         run: |
           cd infrastructure/terraform
           export exitcode=0
-          terraform plan -detailed-exitcode -no-color -out tfplan || export exitcode=$?
+          terraform plan -detailed-exitcode -no-color -out tfplan \
+            -var="deploy_kubernetes=true" \
+            -var="deploy_container_apps=false" \
+            -var="kubernetes_enable_auto_scaling=true" \
+            -var="kubernetes_node_count=3" \
+            -var="kubernetes_min_node_count=2" \
+            -var="kubernetes_max_node_count=10" \
+            -var="kubernetes_enable_ai_node_pool=true" \
+            || export exitcode=$?
           
           echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
           
@@ -179,6 +196,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.3'
+
       - name: Terraform Init
         id: tf-init
         run: |
@@ -198,28 +220,50 @@ jobs:
       - name: Terraform Apply
         run: |
           cd infrastructure/terraform
-          echo "Applying Terraform changes to update container app replicas..."
+          echo "Applying Terraform changes to deploy AKS cluster and infrastructure..."
           terraform apply -auto-approve tfplan
-          echo "✅ Terraform apply completed - Container apps should now have min_replicas=0, max_replicas=5"
+          echo "✅ Terraform apply completed - AKS cluster and Kubernetes infrastructure deployed"
 
       - name: Display Deployment Summary
         run: |
           echo "=================================="
-          echo "🎉 Terraform Infrastructure Update Complete!"
+          echo "🎉 Kubernetes Infrastructure Deployment Complete!"
           echo "=================================="
-          echo "✅ All container apps now configured with:"
-          echo "   • min_replicas = 0 (zero cost when idle)"
-          echo "   • max_replicas = 5 (cost-optimized scaling)"
+          echo "✅ AKS cluster deployed with:"
+          echo "   • Auto-scaling enabled (2-10 nodes)"
+          echo "   • AI node pool with GPU support"
+          echo "   • Integration with ACR and Key Vault"
+          echo "   • Log Analytics monitoring"
           echo ""
-          echo "📝 Container Apps Updated:"
-          echo "   • API Gateway"
-          echo "   • Azure Integration" 
-          echo "   • AI Engine"
-          echo "   • Data Processing"
-          echo "   • Conversation"
-          echo "   • Notification"
-          echo "   • Frontend"
+          echo "📝 Next Steps:"
+          echo "   1. Configure kubectl: az aks get-credentials --resource-group <rg> --name <cluster>"
+          echo "   2. Deploy applications: cd infrastructure/kubernetes && ./deploy.sh"
+          echo "   3. Set environment variables: export ACR_NAME=<your-acr>"
+          echo ""
+          echo "🔗 Infrastructure Ready For:"
+          echo "   • API Gateway deployment"
+          echo "   • Azure Integration service" 
+          echo "   • AI Engine with GPU support"
+          echo "   • Data Processing pipelines"
+          echo "   • Conversation service"
+          echo "   • Notification service"
           echo "=================================="
+
+      - name: Get AKS Credentials
+        run: |
+          echo "Getting AKS cluster credentials..."
+          cd infrastructure/terraform
+          CLUSTER_NAME=$(terraform output -raw kubernetes_cluster_name 2>/dev/null || echo "")
+          RESOURCE_GROUP=$(terraform output -raw resource_group_name 2>/dev/null || echo "")
+          
+          if [ -n "$CLUSTER_NAME" ] && [ -n "$RESOURCE_GROUP" ]; then
+            echo "Configuring kubectl for cluster: $CLUSTER_NAME in RG: $RESOURCE_GROUP"
+            az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --overwrite-existing
+            kubectl cluster-info
+            kubectl get nodes
+          else
+            echo "Unable to retrieve cluster information from Terraform outputs"
+          fi
 
   terraform-destroy:
     name: Terraform Destroy
@@ -239,6 +283,11 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.3'
 
       - name: Terraform Init
         run: |
