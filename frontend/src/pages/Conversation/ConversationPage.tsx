@@ -117,16 +117,17 @@ const ConversationPage = () => {
         user_id: 'current_user' // Replace with actual user ID
       })
 
-      if (response.data.success) {
+      if (response.data.response) {
         const assistantMessage: ConversationMessage = {
           id: `assistant_${Date.now()}`,
           type: 'assistant',
-          content: response.data.data.response,
+          content: response.data.response,
           timestamp: new Date(),
-          intent: response.data.data.intent,
-          entities: response.data.data.entities,
-          confidence: response.data.data.confidence,
-          metadata: response.data.data.data
+          intent: response.data.intent,
+          entities: response.data.entities,
+          confidence: response.data.confidence,
+          suggestions: response.data.suggestions,
+          metadata: response.data.azure_context
         }
 
         setMessages(prev => [...prev, assistantMessage])
