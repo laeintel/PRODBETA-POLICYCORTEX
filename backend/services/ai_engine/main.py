@@ -40,7 +40,17 @@ from .models import (
     ModelInfo,
     ModelTrainingRequest,
     ModelTrainingResponse,
-    ModelMetrics
+    ModelMetrics,
+    UnifiedAIAnalysisRequest,
+    UnifiedAIAnalysisResponse,
+    GovernanceOptimizationRequest,
+    GovernanceOptimizationResponse,
+    ConversationRequest,
+    ConversationResponse,
+    PolicySynthesisRequest,
+    PolicySynthesisResponse,
+    ConversationHistoryRequest,
+    ConversationHistoryResponse
 )
 from .services.model_manager import ModelManager
 from .services.nlp_service import NLPService
@@ -61,6 +71,17 @@ from .services.automation_orchestrator import automation_orchestrator
     from .services.governance_intelligence import governance_intelligence
 from .services.conversation_analytics import conversation_analytics
 from .services.cross_domain_correlator import cross_domain_correlator
+# Try to import real models, fall back to mock models for testing
+try:
+    from .ml_models.unified_ai_platform import unified_ai_platform, UnifiedAIConfig
+    from .ml_models.conversational_governance_intelligence import conversational_intelligence, ConversationConfig
+    USE_MOCK_MODELS = False
+    logger.info("Using production AI models")
+except ImportError as e:
+    logger.warning(f"ML dependencies not available ({e}), using mock models for testing")
+    from .ml_models.mock_models import mock_unified_ai_platform as unified_ai_platform
+    from .ml_models.mock_models import mock_conversational_intelligence as conversational_intelligence
+    USE_MOCK_MODELS = True
 
 # Configuration
 settings = get_settings()
@@ -2990,6 +3011,272 @@ async def get_correlation_engine_health(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Correlation engine health check failed: {str(e)}"
+        )
+
+
+# Patent 2 Implementation: Unified AI Platform endpoints
+@app.post("/api/v1/unified-ai/analyze", response_model=UnifiedAIAnalysisResponse)
+async def analyze_unified_governance(
+    request: UnifiedAIAnalysisRequest,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Analyze governance state using Unified AI Platform (Patent 2)."""
+    start_time = time.time()
+    
+    try:
+        logger.info("unified_ai_analysis_started", request_id=request.request_id)
+        
+        # Process with unified AI platform
+        analysis_result = await unified_ai_platform.analyze_governance_state(
+            request.governance_data
+        )
+        
+        duration = time.time() - start_time
+        
+        if analysis_result['success']:
+            MODEL_INFERENCE_COUNT.labels(model_name="unified_ai_platform", status="success").inc()
+            MODEL_INFERENCE_DURATION.labels(model_name="unified_ai_platform").observe(duration)
+            
+            return UnifiedAIAnalysisResponse(
+                request_id=request.request_id,
+                optimization_scores=analysis_result['optimization_scores'],
+                domain_correlations=analysis_result['domain_correlations'],
+                embeddings=analysis_result['embeddings'],
+                recommendations=[],  # Extract from analysis
+                confidence_score=0.85,  # Calculate from analysis
+                processing_time_ms=round(duration * 1000, 2)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Analysis failed: {analysis_result.get('error')}"
+            )
+            
+    except Exception as e:
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name="unified_ai_platform", status="error").inc()
+        
+        logger.error("unified_ai_analysis_failed",
+                    request_id=request.request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unified AI analysis failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/unified-ai/optimize", response_model=GovernanceOptimizationResponse)
+async def optimize_governance_configuration(
+    request: GovernanceOptimizationRequest,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Run multi-objective governance optimization (Patent 2)."""
+    start_time = time.time()
+    
+    try:
+        logger.info("governance_optimization_started", request_id=request.request_id)
+        
+        # Run optimization
+        optimization_result = await unified_ai_platform.optimize_governance_configuration(
+            request.governance_data,
+            request.preferences
+        )
+        
+        duration = time.time() - start_time
+        
+        if optimization_result['success']:
+            MODEL_INFERENCE_COUNT.labels(model_name="governance_optimizer", status="success").inc()
+            MODEL_INFERENCE_DURATION.labels(model_name="governance_optimizer").observe(duration)
+            
+            best_solution = optimization_result['best_solution']
+            
+            return GovernanceOptimizationResponse(
+                request_id=request.request_id,
+                best_solution=best_solution,
+                pareto_front_size=len(optimization_result['optimization_result']['pareto_front']),
+                convergence_achieved=True,
+                recommendations=optimization_result['recommendations'],
+                utility_score=best_solution['utility_score'],
+                processing_time_ms=round(duration * 1000, 2)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Optimization failed: {optimization_result.get('error')}"
+            )
+            
+    except Exception as e:
+        duration = time.time() - start_time
+        MODEL_INFERENCE_COUNT.labels(model_name="governance_optimizer", status="error").inc()
+        
+        logger.error("governance_optimization_failed",
+                    request_id=request.request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Governance optimization failed: {str(e)}"
+        )
+
+
+# Patent 3 Implementation: Conversational Governance Intelligence endpoints
+@app.post("/api/v1/conversation/governance", response_model=ConversationResponse)
+async def process_governance_conversation(
+    request: ConversationRequest,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Process governance conversation using Conversational AI (Patent 3)."""
+    start_time = time.time()
+    
+    try:
+        logger.info("governance_conversation_started", 
+                   session_id=request.session_id,
+                   user_id=request.user_id)
+        
+        # Process conversation
+        conversation_result = await conversational_intelligence.process_conversation(
+            request.user_input,
+            request.session_id,
+            request.user_id
+        )
+        
+        duration = time.time() - start_time
+        
+        if conversation_result['success']:
+            CONVERSATION_REQUESTS.labels(
+                intent=conversation_result['intent'],
+                domain='governance',
+                status='success'
+            ).inc()
+            
+            return ConversationResponse(
+                response=conversation_result['response'],
+                intent=conversation_result['intent'],
+                entities=conversation_result['entities'],
+                confidence=0.9,  # Calculate from result
+                api_call=conversation_result.get('api_call'),
+                clarification_needed=conversation_result.get('clarification_needed'),
+                data=conversation_result.get('data'),
+                success=True
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Conversation processing failed: {conversation_result.get('error')}"
+            )
+            
+    except Exception as e:
+        duration = time.time() - start_time
+        CONVERSATION_REQUESTS.labels(
+            intent='unknown',
+            domain='governance',
+            status='error'
+        ).inc()
+        
+        logger.error("governance_conversation_failed",
+                    session_id=request.session_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Governance conversation failed: {str(e)}"
+        )
+
+
+@app.post("/api/v1/conversation/policy-synthesis", response_model=PolicySynthesisResponse)
+async def synthesize_governance_policy(
+    request: PolicySynthesisRequest,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Synthesize governance policy from natural language (Patent 3)."""
+    start_time = time.time()
+    
+    try:
+        logger.info("policy_synthesis_started", request_id=request.request_id)
+        
+        # Synthesize policy using conversational intelligence
+        synthesis_result = conversational_intelligence.policy_synthesizer.synthesize_policy(
+            request.description,
+            request.domain,
+            request.policy_type
+        )
+        
+        duration = time.time() - start_time
+        
+        if 'error' not in synthesis_result:
+            with POLICY_SYNTHESIS_DURATION.time():
+                pass
+                
+            return PolicySynthesisResponse(
+                request_id=request.request_id,
+                policy_text=synthesis_result['policy_text'],
+                structured_policy=synthesis_result['structured_policy'],
+                domain=synthesis_result['domain'],
+                confidence_score=synthesis_result['confidence_score'],
+                validation_results=None,  # Add validation if needed
+                processing_time_ms=round(duration * 1000, 2)
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Policy synthesis failed: {synthesis_result['error']}"
+            )
+            
+    except Exception as e:
+        duration = time.time() - start_time
+        
+        logger.error("policy_synthesis_failed",
+                    request_id=request.request_id,
+                    error=str(e),
+                    duration_ms=round(duration * 1000, 2))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Policy synthesis failed: {str(e)}"
+        )
+
+
+@app.get("/api/v1/conversation/history/{session_id}", response_model=ConversationHistoryResponse)
+async def get_governance_conversation_history(
+    session_id: str,
+    include_metadata: bool = True,
+    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+):
+    """Get conversation history for governance session (Patent 3)."""
+    try:
+        logger.info("conversation_history_requested", session_id=session_id)
+        
+        history_result = conversational_intelligence.get_conversation_history(session_id)
+        
+        if history_result.get('success', True):
+            return ConversationHistoryResponse(
+                session_id=session_id,
+                user_id=history_result.get('user_id', 'unknown'),
+                history=history_result.get('history', []),
+                current_state=history_result.get('current_state', 'unknown'),
+                entities=history_result.get('entities', {}),
+                success=True
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("conversation_history_failed",
+                    session_id=session_id,
+                    error=str(e))
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get conversation history: {str(e)}"
         )
 
 
