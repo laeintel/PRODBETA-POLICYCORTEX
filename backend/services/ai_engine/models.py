@@ -403,3 +403,100 @@ class ModelVersionResponse(BaseModel):
     size_mb: Optional[float] = Field(None, description="Version size in MB")
     checksum: Optional[str] = Field(None, description="Model checksum")
     metrics: Optional[Dict[str, float]] = Field(None, description="Version metrics")
+
+
+# Patent Implementation Models
+
+class UnifiedAIAnalysisRequest(BaseModel):
+    """Unified AI Platform analysis request model (Patent 2)."""
+    request_id: str = Field(..., description="Request identifier")
+    governance_data: Dict[str, Any] = Field(..., description="Multi-domain governance data")
+    analysis_scope: List[str] = Field(..., description="Domains to analyze")
+    optimization_preferences: Optional[Dict[str, float]] = Field(None, description="Optimization preferences")
+
+
+class UnifiedAIAnalysisResponse(BaseModel):
+    """Unified AI Platform analysis response model (Patent 2)."""
+    request_id: str = Field(..., description="Request identifier")
+    optimization_scores: List[float] = Field(..., description="Multi-objective optimization scores")
+    domain_correlations: Dict[str, float] = Field(..., description="Cross-domain correlations")
+    embeddings: Dict[str, List[float]] = Field(..., description="Hierarchical embeddings")
+    recommendations: List[Dict[str, Any]] = Field(..., description="Governance recommendations")
+    confidence_score: float = Field(..., description="Analysis confidence")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+
+
+class GovernanceOptimizationRequest(BaseModel):
+    """Governance optimization request model (Patent 2)."""
+    request_id: str = Field(..., description="Request identifier")
+    governance_data: Dict[str, Any] = Field(..., description="Current governance state")
+    preferences: Dict[str, float] = Field(..., description="Optimization preferences")
+    constraints: Optional[Dict[str, Any]] = Field(None, description="Optimization constraints")
+    max_generations: Optional[int] = Field(200, description="Maximum optimization generations")
+
+
+class GovernanceOptimizationResponse(BaseModel):
+    """Governance optimization response model (Patent 2)."""
+    request_id: str = Field(..., description="Request identifier")
+    best_solution: Dict[str, Any] = Field(..., description="Best optimization solution")
+    pareto_front_size: int = Field(..., description="Size of Pareto front")
+    convergence_achieved: bool = Field(..., description="Whether optimization converged")
+    recommendations: List[Dict[str, Any]] = Field(..., description="Implementation recommendations")
+    utility_score: float = Field(..., description="Solution utility score")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+
+
+class ConversationRequest(BaseModel):
+    """Conversational governance intelligence request model (Patent 3)."""
+    user_input: str = Field(..., description="Natural language user input")
+    session_id: str = Field(..., description="Conversation session identifier")
+    user_id: str = Field(..., description="User identifier")
+    context_override: Optional[Dict[str, Any]] = Field(None, description="Context override data")
+
+
+class ConversationResponse(BaseModel):
+    """Conversational governance intelligence response model (Patent 3)."""
+    response: str = Field(..., description="Natural language response")
+    intent: str = Field(..., description="Detected user intent")
+    entities: Dict[str, List[str]] = Field(..., description="Extracted entities")
+    confidence: float = Field(..., description="Intent classification confidence")
+    api_call: Optional[Dict[str, Any]] = Field(None, description="Generated API call")
+    clarification_needed: Optional[List[str]] = Field(None, description="Required clarifications")
+    data: Optional[Dict[str, Any]] = Field(None, description="Response data")
+    success: bool = Field(..., description="Request success status")
+
+
+class PolicySynthesisRequest(BaseModel):
+    """Policy synthesis request model (Patent 3)."""
+    request_id: str = Field(..., description="Request identifier")
+    description: str = Field(..., description="Natural language policy description")
+    domain: str = Field(..., description="Governance domain")
+    policy_type: Optional[str] = Field("general", description="Policy type")
+    constraints: Optional[List[str]] = Field(None, description="Policy constraints")
+
+
+class PolicySynthesisResponse(BaseModel):
+    """Policy synthesis response model (Patent 3)."""
+    request_id: str = Field(..., description="Request identifier")
+    policy_text: str = Field(..., description="Generated policy text")
+    structured_policy: Dict[str, Any] = Field(..., description="Structured policy components")
+    domain: str = Field(..., description="Policy domain")
+    confidence_score: float = Field(..., description="Generation confidence")
+    validation_results: Optional[Dict[str, Any]] = Field(None, description="Policy validation results")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+
+
+class ConversationHistoryRequest(BaseModel):
+    """Conversation history request model."""
+    session_id: str = Field(..., description="Session identifier")
+    include_metadata: bool = Field(True, description="Include conversation metadata")
+
+
+class ConversationHistoryResponse(BaseModel):
+    """Conversation history response model."""
+    session_id: str = Field(..., description="Session identifier")
+    user_id: str = Field(..., description="User identifier")
+    history: List[Dict[str, Any]] = Field(..., description="Conversation history")
+    current_state: str = Field(..., description="Current conversation state")
+    entities: Dict[str, Any] = Field(..., description="Accumulated entities")
+    success: bool = Field(..., description="Request success status")
