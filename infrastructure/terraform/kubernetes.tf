@@ -9,10 +9,10 @@ module "kubernetes" {
   name_prefix         = var.name_prefix
   environment         = var.environment
   location            = var.location
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.app.name
   
-  # Networking
-  subnet_id         = module.networking.private_subnet_id
+  # Networking - use data_services subnet for AKS
+  subnet_id         = module.networking.subnet_ids["data_services"]
   dns_service_ip    = "10.2.0.10"
   service_cidr      = "10.2.0.0/24"
   
@@ -30,14 +30,30 @@ module "kubernetes" {
   ai_node_count       = var.kubernetes_ai_node_count
   
   # Dependencies
-  container_registry_id        = azurerm_container_registry.acr.id
+  container_registry_id        = azurerm_container_registry.main.id
   key_vault_id                = azurerm_key_vault.main.id
   log_analytics_workspace_id  = module.monitoring[0].log_analytics_workspace_id
   
   tags = local.common_tags
 }
 
+#  module name "kubernetes" {
+#   count  = var.deploy_kubernetes ? 1 : 0
+#   source = "./modules/kubernetes"
+
+#   name_prefix         = var.name_prefix
+#   environment         = var.environment
+#   location            = var.location
+#   resource_group_name = azurerm_resource_group.app.name
+  
+#   # Networking - use data_services subnet for AKS
+#   subnet_id         = module.networking.subnet_ids["data_services"]
+#   dns_service_ip    = "
+   
+#  }
+
 # Note: Providers cannot use count. They will be configured when Kubernetes is available.
+# Due to provider configuration limitations with conditional deployment
 
 # Helm charts will be installed manually or via separate deployment
 # Due to provider configuration limitations with conditional deployment

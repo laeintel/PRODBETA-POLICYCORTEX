@@ -8,8 +8,23 @@ allowed_ips   = []  # Add your IP addresses here if needed
 # Set to false if Key Vault access policy already exists
 create_terraform_access_policy = false
 
-# Container Apps deployment (enable after infrastructure is deployed)
+# Container Apps deployment (disabled for AKS deployment)
 deploy_container_apps = false
+
+# Kubernetes/AKS deployment (enable for AKS deployment)
+deploy_kubernetes = true
+kubernetes_version = "1.28.3"
+kubernetes_node_count = 3
+kubernetes_node_vm_size = "Standard_D4s_v3"
+kubernetes_enable_auto_scaling = true
+kubernetes_min_node_count = 2
+kubernetes_max_node_count = 10
+kubernetes_enable_ai_node_pool = false  # Enable if you need GPU nodes for AI workloads
+kubernetes_ai_node_vm_size = "Standard_NC6s_v3"
+kubernetes_ai_node_count = 1
+
+# Application Gateway for ingress (optional)
+enable_application_gateway = false
 
 # Data Services Configuration
 deploy_sql_server = false  # SQL Server provisioning restricted in East US

@@ -17,16 +17,9 @@ spec:
         app: ai-engine
         component: ai
     spec:
-      nodeSelector:
-        workload: ai
-      tolerations:
-      - key: "workload"
-        operator: "Equal"
-        value: "ai"
-        effect: "NoSchedule"
       containers:
       - name: ai-engine
-        image: ${ACR_NAME}.azurecr.io/policycortex-ai-engine:latest
+        image: ${ACR_NAME}.azurecr.io/policortex001-ai-engine:latest
         ports:
         - containerPort: 8002
           name: http
@@ -36,42 +29,40 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: database-url
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: redis-url
         - name: AZURE_OPENAI_ENDPOINT
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-openai-endpoint
         - name: AZURE_OPENAI_KEY
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-openai-key
         - name: AZURE_COGNITIVE_SERVICES_KEY
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-cognitive-services-key
         - name: AZURE_COGNITIVE_SERVICES_ENDPOINT
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-cognitive-services-endpoint
         resources:
           requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
             memory: "1Gi"
             cpu: "500m"
-            nvidia.com/gpu: 1
-          limits:
-            memory: "4Gi"
-            cpu: "2"
-            nvidia.com/gpu: 1
         livenessProbe:
           httpGet:
             path: /health

@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 # Simple configuration from environment variables
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 SERVICE_NAME = os.getenv("SERVICE_NAME", "api-gateway")
-SERVICE_PORT = int(os.getenv("SERVICE_PORT", "8000"))
+SERVICE_PORT = int(os.getenv("SERVICE_PORT", "8001"))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # FastAPI app
@@ -72,6 +72,28 @@ async def api_status():
         "environment": ENVIRONMENT,
         "timestamp": datetime.utcnow().isoformat()
     }
+
+@app.post("/api/v1/conversation/governance")
+async def conversation_governance(request: Request):
+    """Mock conversation endpoint for development."""
+    data = await request.json()
+    user_input = data.get("user_input", "")
+    session_id = data.get("session_id", "")
+    
+    # Mock AI response for development
+    mock_response = {
+        "response": f"I understand you're asking about: '{user_input}'. This is a mock response from the development API. In production, this would connect to the AI Engine service to provide intelligent Azure governance insights.",
+        "session_id": session_id,
+        "timestamp": datetime.utcnow().isoformat(),
+        "source": "mock-api-gateway",
+        "suggestions": [
+            "Review your current Azure Policy assignments",
+            "Check compliance status of your resources",
+            "Optimize cost management policies"
+        ]
+    }
+    
+    return mock_response
 
 if __name__ == "__main__":
     import uvicorn

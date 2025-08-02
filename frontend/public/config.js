@@ -3,10 +3,10 @@
 // Container Apps will replace these values using environment variables
 
 window.POLICYCORTEX_CONFIG = {
-  VITE_API_BASE_URL: window.VITE_API_BASE_URL || 'https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io/api',
-  VITE_WS_URL: window.VITE_WS_URL || 'wss://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io/ws',
-  VITE_AZURE_CLIENT_ID: window.VITE_AZURE_CLIENT_ID || '',
-  VITE_AZURE_TENANT_ID: window.VITE_AZURE_TENANT_ID || '',
-  VITE_AZURE_REDIRECT_URI: window.VITE_AZURE_REDIRECT_URI || window.location.origin,
+  VITE_API_BASE_URL: window.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  VITE_WS_URL: window.VITE_WS_URL || 'ws://localhost:8000/ws',
+  VITE_AZURE_CLIENT_ID: window.VITE_AZURE_CLIENT_ID || '9ff9bdf6-a2b2-4b39-a270-71a9b8b9178d',
+  VITE_AZURE_TENANT_ID: window.VITE_AZURE_TENANT_ID || '9ef5b184-d371-462a-bc75-5024ce8baff7',
+  VITE_AZURE_REDIRECT_URI: window.VITE_AZURE_REDIRECT_URI || 'http://localhost:3000',
   VITE_APP_VERSION: window.VITE_APP_VERSION || '1.0.0'
 };

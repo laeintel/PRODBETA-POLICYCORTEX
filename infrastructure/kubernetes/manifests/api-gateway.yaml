@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: api-gateway
-        image: ${ACR_NAME}.azurecr.io/policycortex-api-gateway:latest
+        image: ${ACR_NAME}.azurecr.io/policortex001-api-gateway:latest
         ports:
         - containerPort: 8000
           name: http
@@ -29,32 +29,32 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: database-url
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: redis-url
         - name: JWT_SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: jwt-secret-key
         - name: AZURE_CLIENT_ID
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-client-id
         - name: AZURE_CLIENT_SECRET
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-client-secret
         - name: AZURE_TENANT_ID
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-tenant-id
         resources:
           requests:

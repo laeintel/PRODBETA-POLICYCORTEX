@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: data-processing
-        image: ${ACR_NAME}.azurecr.io/policycortex-data-processing:latest
+        image: ${ACR_NAME}.azurecr.io/policortex001-data-processing:latest
         ports:
         - containerPort: 8003
           name: http
@@ -29,27 +29,27 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: database-url
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: redis-url
         - name: AZURE_STORAGE_CONNECTION_STRING
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-storage-connection-string
         - name: AZURE_EVENT_HUB_CONNECTION_STRING
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-event-hub-connection-string
         - name: COSMOS_DB_CONNECTION_STRING
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: cosmos-db-connection-string
         resources:
           requests:

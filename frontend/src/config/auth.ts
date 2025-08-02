@@ -48,13 +48,7 @@ export const msalConfig: Configuration = {
 
 // Add scopes for ID token to be used at Microsoft identity platform endpoints
 export const loginRequest: RedirectRequest = {
-  scopes: [
-    'openid',
-    'profile',
-    'email',
-    'User.Read',
-    'https://graph.microsoft.com/User.Read',
-  ],
+  scopes: ['User.Read'], // Simplified to just User.Read - openid/profile/email are included automatically
 }
 
 // Add scopes for access token to be used at Azure Resource Manager endpoints
@@ -76,12 +70,7 @@ export const graphRequest: PopupRequest = {
 
 // Silent request for token renewal
 export const silentRequest = {
-  scopes: [
-    'openid',
-    'profile',
-    'email',
-    'User.Read',
-  ],
+  scopes: ['User.Read'], // Simplified scope for token renewal
   account: null as any,
 }
 
@@ -89,7 +78,7 @@ export const silentRequest = {
 export const tokenScopes = {
   arm: ['https://management.azure.com/user_impersonation'],
   graph: ['https://graph.microsoft.com/User.Read'],
-  api: [`api://${env.AZURE_CLIENT_ID}/access_as_user`],
+  api: [`api://${env.AZURE_CLIENT_ID}/.default`], // Use .default scope which is automatically available
 }
 
 // Auth endpoints

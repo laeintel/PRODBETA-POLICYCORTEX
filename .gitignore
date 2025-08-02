@@ -157,6 +157,8 @@ create-github-secrets.ps1
 Project_viewpoint/
 C:\Users\LeonardEsere\Documents\AeoliTech\policycortex\Project_viewpoint/
 **/Project_viewpoint/**
+docs/builddetails/
+**/builddetails/**
 *.patent
 *.proprietary
 

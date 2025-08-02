@@ -48,13 +48,13 @@ function App() {
         }}
       >
         <AuthenticatedTemplate>
-          <NotificationProvider>
-            <WebSocketProvider>
+          <WebSocketProvider>
+            <NotificationProvider>
               <Layout>
                 <AppRoutes />
               </Layout>
-            </WebSocketProvider>
-          </NotificationProvider>
+            </NotificationProvider>
+          </WebSocketProvider>
         </AuthenticatedTemplate>
 
         <UnauthenticatedTemplate>

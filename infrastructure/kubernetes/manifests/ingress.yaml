@@ -1,25 +1,22 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: policycortex-ingress
+  name: policortex001-ingress
   namespace: policycortex
   annotations:
-    kubernetes.io/ingress.class: "azure/application-gateway"
-    appgw.ingress.kubernetes.io/ssl-redirect: "true"
-    appgw.ingress.kubernetes.io/connection-draining: "true"
-    appgw.ingress.kubernetes.io/connection-draining-timeout: "30"
-    appgw.ingress.kubernetes.io/cookie-based-affinity: "true"
-    appgw.ingress.kubernetes.io/request-timeout: "30"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  tls:
-  - hosts:
-    - api.policycortex.com
-    secretName: policycortex-tls
   rules:
-  - host: api.policycortex.com
-    http:
+  - http:
       paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
       - path: /api/v1/gateway
         pathType: Prefix
         backend:
@@ -67,7 +64,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: policycortex-internal-ingress
+  name: policortex001-internal-ingress
   namespace: policycortex
   annotations:
     kubernetes.io/ingress.class: "nginx"

@@ -212,7 +212,8 @@ resource "azurerm_container_app" "api_gateway" {
         for_each = local.security_env_vars
         content {
           name        = env.value.name
-          secret_name = env.value.secret_name
+          secret_name = lookup(env.value, "secret_name", null)
+          value       = lookup(env.value, "value", null)
         }
       }
       
@@ -236,10 +237,10 @@ resource "azurerm_container_app" "api_gateway" {
     }
     
     # Enhanced security headers
-    custom_domain {
-      name = "api.${var.environment}.policycortex.com"
-      certificate_id = azurerm_container_app_environment_certificate.api_gateway.id
-    }
+    # custom_domain {
+    #   name = "api.${var.environment}.policycortex.com"
+    #   certificate_id = azurerm_container_app_environment_certificate.api_gateway.id
+    # }
   }
   
   registry {
@@ -935,10 +936,10 @@ resource "azurerm_container_app" "frontend" {
     }
     
     # Enhanced security headers
-    custom_domain {
-      name = "app.${var.environment}.policycortex.com"
-      certificate_id = azurerm_container_app_environment_certificate.frontend.id
-    }
+    # custom_domain {
+    #   name = "app.${var.environment}.policycortex.com"
+    #   certificate_id = azurerm_container_app_environment_certificate.frontend.id
+    # }
   }
   
   registry {

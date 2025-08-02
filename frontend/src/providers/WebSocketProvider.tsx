@@ -43,6 +43,10 @@ export const WebSocketProvider = ({ children }: WebSocketProviderProps) => {
 
   // Initialize WebSocket connection
   useEffect(() => {
+    // Temporarily disable WebSocket connection until backend is ready
+    console.log('WebSocket temporarily disabled for development')
+    return
+    
     if (!user || !env.ENABLE_WEBSOCKET) return
 
     const initializeSocket = async () => {

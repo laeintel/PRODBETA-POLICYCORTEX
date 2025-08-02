@@ -1,6 +1,6 @@
 // API Configuration
 export const apiConfig = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001',
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000,
