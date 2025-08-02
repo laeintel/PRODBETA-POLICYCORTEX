@@ -20,23 +20,33 @@ import { motion } from 'framer-motion'
 import { env } from '@/config/environment'
 
 const LoginPage = () => {
+  console.log('🚀 LoginPage component rendering')
   const theme = useTheme()
   const { theme: appTheme, toggleTheme } = useAppTheme() || { theme: 'light', toggleTheme: () => {} }
   const { login, loginPopup, isLoading, error } = useAuth()
   const [loginMethod, setLoginMethod] = useState<'redirect' | 'popup'>('redirect')
+  
+  console.log('🚀 LoginPage state:', { loginMethod, isLoading, error })
+  console.log('🚀 Auth functions available:', { 
+    loginExists: !!login, 
+    loginPopupExists: !!loginPopup 
+  })
 
   const handleLogin = async () => {
-    console.log('handleLogin called with method:', loginMethod)
+    console.log('🚀 handleLogin called with method:', loginMethod)
+    console.log('🚀 isLoading:', isLoading)
+    console.log('🚀 login function:', login)
+    console.log('🚀 loginPopup function:', loginPopup)
     try {
       if (loginMethod === 'popup') {
-        console.log('Calling loginPopup...')
+        console.log('🚀 Calling loginPopup...')
         await loginPopup()
       } else {
-        console.log('Calling login (redirect)...')
+        console.log('🚀 Calling login (redirect)...')
         await login()
       }
     } catch (error) {
-      console.error('Login error in handleLogin:', error)
+      console.error('🚀 Login error in handleLogin:', error)
     }
   }
 
@@ -158,7 +168,10 @@ const LoginPage = () => {
                   <Button
                     variant="contained"
                     size="large"
-                    onClick={handleLogin}
+                    onClick={(e) => {
+                      console.log('🚀 Button click event triggered!', e)
+                      handleLogin()
+                    }}
                     disabled={isLoading}
                     startIcon={isLoading ? <CircularProgress size={20} /> : <LoginOutlined />}
                     sx={{

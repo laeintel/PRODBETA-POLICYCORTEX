@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: notification
-        image: ${ACR_NAME}.azurecr.io/policycortex-notification:latest
+        image: ${ACR_NAME}.azurecr.io/policortex001-notification:latest
         ports:
         - containerPort: 8005
           name: http
@@ -29,32 +29,32 @@ spec:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: database-url
         - name: REDIS_URL
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: redis-url
         - name: AZURE_COMMUNICATION_CONNECTION_STRING
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: azure-communication-connection-string
         - name: SENDGRID_API_KEY
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: sendgrid-api-key
         - name: TWILIO_ACCOUNT_SID
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: twilio-account-sid
         - name: TWILIO_AUTH_TOKEN
           valueFrom:
             secretKeyRef:
-              name: policycortex-secrets
+              name: policortex001-secrets
               key: twilio-auth-token
         resources:
           requests:

@@ -18,7 +18,12 @@ export const useAuth = () => {
   const initialize = useCallback(async () => {
     try {
       console.log('Auth initialize called, accounts:', accounts.length, 'inProgress:', inProgress)
-      setIsLoading(true)
+      
+      // Don't set loading during startup phase
+      if (inProgress !== 'startup') {
+        setIsLoading(true)
+      }
+      
       setError(null)
 
       // Check if we have an active account
@@ -36,6 +41,7 @@ export const useAuth = () => {
       setError('Failed to initialize authentication')
       setAuthenticated(false)
     } finally {
+      // Always set loading to false when done
       setIsLoading(false)
     }
   }, [accounts, setAuthenticated, inProgress])
@@ -356,6 +362,14 @@ export const useAuth = () => {
       })
     }
   }, [accounts, inProgress, acquireTokenSilent, setAuthenticated])
+
+  // Effect to set loading state to false when MSAL is ready
+  useEffect(() => {
+    if (inProgress === 'none') {
+      console.log('MSAL ready, setting isLoading to false')
+      setIsLoading(false)
+    }
+  }, [inProgress])
 
   return {
     // State

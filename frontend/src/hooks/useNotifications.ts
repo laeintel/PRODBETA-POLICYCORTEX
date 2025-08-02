@@ -10,7 +10,7 @@ export const useNotifications = () => {
   const queryClient = useQueryClient()
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Fetch notifications
+  // Fetch notifications (temporarily disabled for development)
   const {
     data: notifications,
     isLoading,
@@ -19,11 +19,10 @@ export const useNotifications = () => {
   } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const token = await getAccessToken()
-      if (!token) throw new Error('No access token')
-      return notificationService.getNotifications(token)
+      // Return empty array for development
+      return []
     },
-    enabled: !!getAccessToken,
+    enabled: false, // Disable until backend is ready
     refetchInterval: 30000, // Refetch every 30 seconds
   })
 

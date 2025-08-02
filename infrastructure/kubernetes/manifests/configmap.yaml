@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: policycortex-config
+  name: policortex001-config
   namespace: policycortex
 data:
   # Application configuration
