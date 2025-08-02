@@ -1,6 +1,8 @@
+import { env } from './environment'
+
 // API Configuration
 export const apiConfig = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001',
+  baseURL: env.API_BASE_URL,
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000,
