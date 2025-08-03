@@ -170,7 +170,7 @@ module keyVault 'modules/key-vault.bicep' = {
   scope: appResourceGroup
   name: 'keyVault-${uniqueString(deployment().name)}'
   params: {
-    keyVaultName: 'kv-${resourcePrefix}-${environment}-${substring(uniqueString(subscription().id, environment), 0, 6)}'
+    keyVaultName: 'kv-${resourcePrefix}-${environment}'
     location: location
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
