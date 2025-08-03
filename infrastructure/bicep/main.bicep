@@ -1,4 +1,5 @@
 // Main Bicep template for policortex infrastructure
+// Clean deployment after fixing Cosmos DB name mismatch - 2025-08-03
 targetScope = 'subscription'
 
 // Parameters
