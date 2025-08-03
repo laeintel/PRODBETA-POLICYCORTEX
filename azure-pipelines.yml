@@ -197,13 +197,13 @@ stages:
             displayName: 'Start test environment'
 
           - script: |
-              # Wait for services to be ready
+              # Wait for services to be ready - check Container Apps instead of localhost
               for i in {1..30}; do
-                if curl -f http://localhost:8000/health; then
-                  echo "Services are ready"
+                if curl -f https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io/health; then
+                  echo "Container Apps services are ready"
                   break
                 fi
-                echo "Waiting for services... ($i/30)"
+                echo "Waiting for Container Apps services... ($i/30)"
                 sleep 10
               done
             displayName: 'Wait for services'
