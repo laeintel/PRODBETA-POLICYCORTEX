@@ -139,14 +139,33 @@ jobs:
           # Deploy using Bicep
           DEPLOYMENT_NAME="policortex001-dev-$(date +%Y%m%d-%H%M%S)"
           echo "Deployment name: $DEPLOYMENT_NAME"
+          echo "DEPLOYMENT_NAME=$DEPLOYMENT_NAME" >> $GITHUB_ENV
           
+          # Create parameter file to avoid Azure CLI issues
+          cat > /tmp/deploy-params.json << EOF
+          {
+            "\$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+              "jwtSecretKey": {
+                "value": "${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}"
+              }
+            }
+          }
+          EOF
+          
+          # Deploy with parameter file
           az deployment sub create \
             --location "East US" \
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/dev.bicepparam \
-            --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}" \
+            --parameters @/tmp/deploy-params.json \
             --name "$DEPLOYMENT_NAME" \
-            --output json
+            --only-show-errors || {
+              echo "❌ Deployment failed. Checking error details..."
+              az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.error" -o json || true
+              exit 1
+            }
           
           echo "✅ Infrastructure deployment completed"
         working-directory: .
@@ -159,16 +178,16 @@ jobs:
           # Use the deployment name from previous step
           DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
           if [ -z "$DEPLOYMENT_NAME" ]; then
-            # Fallback to getting the latest deployment
-            DEPLOYMENT_NAME=$(az deployment sub list --query "[0].name" -o tsv)
+            # Fallback to getting the latest successful deployment
+            DEPLOYMENT_NAME=$(az deployment sub list --query "[?properties.provisioningState=='Succeeded' && contains(name, 'policortex001-dev')] | [0].name" -o tsv)
           fi
           
           echo "Using deployment: $DEPLOYMENT_NAME"
           
           # Get outputs with error handling
-          RESOURCE_GROUP=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.resourceGroupName.value" -o tsv || echo "rg-policortex001-app-dev")
-          CONTAINER_REGISTRY=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.containerRegistryName.value" -o tsv || echo "crpolicortex001dev")
-          KEY_VAULT=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.keyVaultName.value" -o tsv || echo "kv-pcx001-dev02")
+          RESOURCE_GROUP=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.resourceGroupName.value" -o tsv 2>/dev/null || echo "rg-policortex001-app-dev")
+          CONTAINER_REGISTRY=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.containerRegistryName.value" -o tsv 2>/dev/null || echo "crpolicortex001dev")
+          KEY_VAULT=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.keyVaultName.value" -o tsv 2>/dev/null || echo "kv-pcx001-dev02")
           
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           echo "container_registry=$CONTAINER_REGISTRY" >> $GITHUB_OUTPUT
