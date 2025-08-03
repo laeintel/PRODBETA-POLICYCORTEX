@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import ResourceDetailModal from '../../components/ResourceDetailModal'
 import {
   Box,
   Typography,
@@ -117,6 +118,9 @@ const PolicyDetailsPage = () => {
   const [tabValue, setTabValue] = useState(0)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [resourceModalOpen, setResourceModalOpen] = useState(false)
+  const [selectedResourceId, setSelectedResourceId] = useState('')
+  const [selectedResourceName, setSelectedResourceName] = useState('')
 
   const fetchPolicyDetails = async () => {
     if (!policyId) return
@@ -155,6 +159,18 @@ const PolicyDetailsPage = () => {
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString()
+  }
+
+  const handleResourceClick = (resourceId: string, resourceName: string) => {
+    setSelectedResourceId(resourceId)
+    setSelectedResourceName(resourceName)
+    setResourceModalOpen(true)
+  }
+
+  const handleResourceModalClose = () => {
+    setResourceModalOpen(false)
+    setSelectedResourceId('')
+    setSelectedResourceName('')
   }
 
   const filteredResources = policy?.resources?.filter(resource => {
@@ -377,7 +393,17 @@ const PolicyDetailsPage = () => {
                     </TableRow>
                   ) : (
                     filteredResources.map((resource) => (
-                      <TableRow key={resource.id} hover>
+                      <TableRow 
+                        key={resource.id} 
+                        hover
+                        onClick={() => handleResourceClick(resource.id, resource.name)}
+                        sx={{ 
+                          cursor: 'pointer',
+                          '&:hover': {
+                            backgroundColor: 'action.hover'
+                          }
+                        }}
+                      >
                         <TableCell>
                           <Typography variant="subtitle2">
                             {resource.name}
@@ -617,6 +643,14 @@ const PolicyDetailsPage = () => {
           </Typography>
         </Box>
       </Box>
+
+      {/* Resource Detail Modal */}
+      <ResourceDetailModal
+        open={resourceModalOpen}
+        onClose={handleResourceModalClose}
+        resourceId={selectedResourceId}
+        resourceName={selectedResourceName}
+      />
     </>
   )
 }
