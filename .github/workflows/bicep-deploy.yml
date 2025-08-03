@@ -12,20 +12,8 @@ permissions:
   pull-requests: write
 
 on:
-  # Auto-trigger enabled for infrastructure changes
-  push:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/bicep/**'
-      - 'infrastructure/terraform/**'
-      - '.github/workflows/bicep-deploy.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/bicep/**'
-      - 'infrastructure/terraform/**'
-      - '.github/workflows/bicep-deploy.yml'
-  workflow_dispatch:  # Manual trigger also available
+  # Manual trigger only for infrastructure changes
+  workflow_dispatch:  # Manual trigger only
     inputs:
       environment:
         description: 'Target environment'
@@ -248,6 +236,24 @@ jobs:
           fi
         working-directory: .
 
+      - name: Setup Key Vault Secrets
+        run: |
+          echo "🔐 Setting up Key Vault secrets..."
+          
+          # Make the script executable
+          chmod +x scripts/setup-keyvault-secrets.sh
+          
+          # Set environment variables for the script
+          export ENVIRONMENT=dev
+          export AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}"
+          export AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}"
+          
+          # Run the Key Vault secrets setup script
+          ./scripts/setup-keyvault-secrets.sh dev
+          
+          echo "✅ Key Vault secrets configured"
+        working-directory: .
+
       - name: Display Deployment Summary
         run: |
           echo "=================================="
@@ -258,6 +264,7 @@ jobs:
           echo "Container Registry: ${{ steps.outputs.outputs.container_registry }}"
           echo "Key Vault: ${{ steps.outputs.outputs.key_vault }}"
           echo ""
+          echo "📝 Key Vault secrets have been automatically configured"
           echo "📝 Next Steps:"
           echo "1. Run application deployment to deploy your actual services"
           echo "2. Check Azure Portal for detailed resource information"
