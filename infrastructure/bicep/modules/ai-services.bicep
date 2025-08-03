@@ -23,7 +23,7 @@ var shortUniqueSuffix = substring(uniqueSuffix, 0, 6)
 
 // Cognitive Services Account
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: 'policortex001-cog-inc-${environment}'
+  name: 'cog-pcx-${environment}'
   location: location
   tags: tags
   sku: {
@@ -32,7 +32,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
   kind: 'CognitiveServices'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'policortex001-cog-inc-${environment}'
+    customSubDomainName: 'cog-pcx-${environment}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -45,7 +45,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 
 // Azure OpenAI Service (conditional)
 resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployOpenAI) {
-  name: 'policortex001-oai-inc-${environment}'
+  name: 'oai-pcx-${environment}'
   location: location
   tags: tags
   sku: {
@@ -54,7 +54,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
   kind: 'OpenAI'
   properties: {
     apiProperties: {}
-    customSubDomainName: 'policortex001-oai-inc-${environment}'
+    customSubDomainName: 'oai-pcx-${environment}'
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -67,14 +67,14 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
 
 // ML Workspace (conditional)
 resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' = if (deployMLWorkspace) {
-  name: 'policortex001-ml-inc-${environment}'
+  name: 'ml-pcx-${environment}'
   location: location
   tags: tags
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    friendlyName: 'policortex ML Workspace'
+    friendlyName: 'PolicyCortex ML Workspace'
     description: 'Machine Learning workspace for policortex AI models'
     storageAccount: storageAccountId
     containerRegistry: createMLContainerRegistry ? mlContainerRegistry.id : containerRegistryId
@@ -89,7 +89,7 @@ resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' =
 
 // ML Container Registry (conditional)
 resource mlContainerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = if (createMLContainerRegistry) {
-  name: 'crpc001mlinc${environment}'
+  name: 'crpcxml${environment}${substring(uniqueString(resourceGroup().id), 0, 4)}'
   location: location
   tags: tags
   sku: {
@@ -138,7 +138,7 @@ resource mlComputeInstance 'Microsoft.MachineLearningServices/workspaces/compute
 
 // EventGrid Topic for ML Operations
 resource eventGridTopic 'Microsoft.EventGrid/topics@2023-12-15-preview' = {
-  name: 'pc001-ml-events-inc-${environment}'
+  name: 'eg-pcx-mlevents-${environment}'
   location: location
   tags: tags
   properties: {
@@ -148,154 +148,13 @@ resource eventGridTopic 'Microsoft.EventGrid/topics@2023-12-15-preview' = {
   }
 }
 
-// Private Endpoints
-resource cognitivePrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'pc001-cog-pe-inc-${environment}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointsSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'cognitive-connection'
-        properties: {
-          privateLinkServiceId: cognitiveServices.id
-          groupIds: ['account']
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            description: 'Cognitive Services private endpoint'
-          }
-        }
-      }
-    ]
-  }
-}
-
-resource openAIPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployOpenAI) {
-  name: 'pc001-oai-pe-inc-${environment}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointsSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'openai-connection'
-        properties: {
-          privateLinkServiceId: openAIService.id
-          groupIds: ['account']
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            description: 'OpenAI private endpoint'
-          }
-        }
-      }
-    ]
-  }
-}
-
-resource eventGridPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'pc001-eg-pe-inc-${environment}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointsSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'eventgrid-connection'
-        properties: {
-          privateLinkServiceId: eventGridTopic.id
-          groupIds: ['topic']
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            description: 'EventGrid private endpoint'
-          }
-        }
-      }
-    ]
-  }
-}
-
-resource mlPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deployMLWorkspace) {
-  name: 'pc001-ml-pe-inc-${environment}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointsSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'ml-connection'
-        properties: {
-          privateLinkServiceId: mlWorkspace.id
-          groupIds: ['amlworkspace']
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            description: 'ML Workspace private endpoint'
-          }
-        }
-      }
-    ]
-  }
-}
-
-// Private DNS Zone Groups
-resource cognitiveDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
-  parent: cognitivePrivateEndpoint
-  name: 'cognitive-dns-zone-group'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'cognitive-config'
-        properties: {
-          privateDnsZoneId: privateDnsZones.cognitive
-        }
-      }
-    ]
-  }
-}
-
-resource openAIDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = if (deployOpenAI) {
-  parent: openAIPrivateEndpoint
-  name: 'openai-dns-zone-group'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'openai-config'
-        properties: {
-          privateDnsZoneId: privateDnsZones.openai
-        }
-      }
-    ]
-  }
-}
-
-resource mlDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = if (deployMLWorkspace) {
-  parent: mlPrivateEndpoint
-  name: 'ml-dns-zone-group'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'ml-config'
-        properties: {
-          privateDnsZoneId: privateDnsZones.ml
-        }
-      }
-    ]
-  }
-}
 
 // Outputs
 output cognitiveServicesId string = cognitiveServices.id
 output cognitiveServicesName string = cognitiveServices.name
 output cognitiveServicesEndpoint string = cognitiveServices.properties.endpoint
-output cognitiveServicesKey string = cognitiveServices.listKeys().key1
+// Removed cognitiveServicesKey output to avoid secrets in outputs
+// Key will be retrieved directly in Key Vault secrets module
 output openAIServiceId string = deployOpenAI ? openAIService.id : ''
 output openAIServiceName string = deployOpenAI ? openAIService.name : ''
 output openAIEndpoint string = ''  // Will be set manually if OpenAI is deployed

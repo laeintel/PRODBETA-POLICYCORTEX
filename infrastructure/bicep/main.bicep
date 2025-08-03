@@ -26,6 +26,11 @@ param deployContainerApps bool = false
 @secure()
 param jwtSecretKey string
 
+// Override parameters for existing resources
+param storageAccountName string = ''
+param containerRegistryName string = ''
+param redisName string = ''
+
 // Data Services Parameters
 @description('Whether to deploy SQL Server')
 param deploySqlServer bool = true
@@ -101,15 +106,18 @@ param budgetAlertEmails array = []
 param monthlyBudgetAmount int = 1000
 
 // Variables
+var resourcePrefix = 'pcx'
+var projectName = 'policycortex'
+
 var commonTags = {
   Environment: environment
-  Project: 'policortex'
+  Project: projectName
   Owner: owner
   ManagedBy: 'Bicep'
 }
 
-var networkResourceGroupName = 'rg-policortex001-network-${environment}'
-var appResourceGroupName = 'rg-policortex001-app-${environment}'
+var networkResourceGroupName = 'rg-${resourcePrefix}-network-${environment}'
+var appResourceGroupName = 'rg-${resourcePrefix}-app-${environment}'
 
 // Network Resource Group for networking infrastructure
 resource networkResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
@@ -134,7 +142,7 @@ module storageAccount 'modules/storage.bicep' = {
   scope: appResourceGroup
   name: 'storageAccount'
   params: {
-    storageAccountName: 'stpolicortex001${environment}'
+    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'st${resourcePrefix}${environment}${uniqueString(resourceGroup().id)}'
     location: location
     tags: commonTags
     allowedIps: allowedIps
@@ -146,7 +154,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
   scope: appResourceGroup
   name: 'containerRegistry'
   params: {
-    registryName: 'crpolicortex001${environment}'
+    registryName: !empty(containerRegistryName) ? containerRegistryName : 'cr${resourcePrefix}${environment}${uniqueString(resourceGroup().id)}'
     location: location
     tags: commonTags
     managedIdentityPrincipalId: userIdentity.outputs.principalId
@@ -159,9 +167,9 @@ module containerRegistry 'modules/container-registry.bicep' = {
 // Key Vault
 module keyVault 'modules/key-vault.bicep' = {
   scope: appResourceGroup
-  name: 'keyVault'
+  name: 'keyVault-${uniqueString(deployment().name)}'
   params: {
-    keyVaultName: 'kvpolicortex001${environment}'
+    keyVaultName: 'kv-${resourcePrefix}-${environment}'
     location: location
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
@@ -178,7 +186,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
   scope: appResourceGroup
   name: 'logAnalytics'
   params: {
-    workspaceName: 'law-policortex001-${environment}'
+    workspaceName: 'law-${resourcePrefix}-${environment}'
     location: location
     tags: commonTags
   }
@@ -189,7 +197,7 @@ module applicationInsights 'modules/application-insights.bicep' = {
   scope: appResourceGroup
   name: 'applicationInsights'
   params: {
-    appInsightsName: 'ai-policortex001-${environment}'
+    appInsightsName: 'ai-${resourcePrefix}-${environment}'
     location: location
     tags: commonTags
     workspaceResourceId: logAnalytics.outputs.workspaceId
@@ -201,7 +209,7 @@ module userIdentity 'modules/user-identity.bicep' = {
   scope: appResourceGroup
   name: 'userIdentity'
   params: {
-    identityName: 'id-policortex001-${environment}'
+    identityName: 'id-${resourcePrefix}-${environment}'
     location: location
     tags: commonTags
   }
@@ -221,7 +229,7 @@ module networking 'modules/networking.bicep' = {
 // Data Services module
 module dataServices 'modules/data-services.bicep' = {
   scope: appResourceGroup
-  name: 'dataServices'
+  name: 'dataServices-${uniqueString(deployment().name)}'
   params: {
     environment: environment
     location: location
@@ -241,6 +249,7 @@ module dataServices 'modules/data-services.bicep' = {
     cosmosMaxThroughput: cosmosMaxThroughput
     redisCapacity: redisCapacity
     redisSKUName: redisSKUName
+    redisName: redisName
   }
 }
 
@@ -272,9 +281,9 @@ module aiServices 'modules/ai-services.bicep' = {
 // Container Apps Environment
 module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   scope: appResourceGroup
-  name: 'containerAppsEnvironment'
+  name: 'containerAppsEnvironment-${uniqueString(deployment().name)}'
   params: {
-    environmentName: 'cae-policortex001-${environment}'
+    environmentName: 'cae-${resourcePrefix}-${environment}'
     location: location
     tags: commonTags
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
@@ -282,8 +291,8 @@ module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   }
 }
 
-// Container Apps (conditional deployment - using simplified version)
-module containerApps 'modules/container-apps-simple.bicep' = if (deployContainerApps) {
+// Container Apps (comprehensive deployment)
+module containerApps 'modules/container-apps-comprehensive.bicep' = if (deployContainerApps) {
   scope: appResourceGroup
   name: 'containerApps'
   params: {
@@ -294,11 +303,12 @@ module containerApps 'modules/container-apps-simple.bicep' = if (deployContainer
     containerRegistryLoginServer: containerRegistry.outputs.loginServer
     userAssignedIdentityId: userIdentity.outputs.identityId
     keyVaultName: keyVault.outputs.keyVaultName
+    keyVaultUri: keyVault.outputs.keyVaultUri
     jwtSecretKey: jwtSecretKey
-    containerAppsEnvironmentDefaultDomain: containerAppsEnvironment.outputs.defaultDomain
   }
   dependsOn: [
     keyVaultSecrets
+    containerAppsEnvironment
   ]
 }
 
@@ -312,13 +322,45 @@ module keyVaultSecrets 'modules/key-vault-secrets.bicep' = {
     managedIdentityClientId: userIdentity.outputs.clientId
     storageAccountName: storageAccount.outputs.storageAccountName
     applicationInsightsConnectionString: applicationInsights.outputs.connectionString
-    cognitiveServicesKey: aiServices.outputs.cognitiveServicesKey
+    cognitiveServicesKey: 'placeholder-key-retrieved-directly-from-cognitive-services'
     cognitiveServicesEndpoint: aiServices.outputs.cognitiveServicesEndpoint
     redisConnectionString: dataServices.outputs.redisConnectionString
     cosmosConnectionString: dataServices.outputs.cosmosConnectionString
     cosmosEndpoint: dataServices.outputs.cosmosEndpoint
     cosmosKey: dataServices.outputs.cosmosKey
     resourceGroupName: appResourceGroup.name
+  }
+  dependsOn: [
+    dataServices
+    aiServices
+  ]
+}
+
+// Private Endpoints module (deployed to network resource group)
+module privateEndpoints 'modules/private-endpoints.bicep' = {
+  scope: networkResourceGroup
+  name: 'privateEndpoints'
+  params: {
+    environment: environment
+    location: location
+    tags: commonTags
+    privateEndpointsSubnetId: networking.outputs.privateEndpointsSubnetId
+    privateDnsZones: networking.outputs.privateDnsZones
+    // Data Services
+    cosmosAccountId: dataServices.outputs.cosmosAccountId
+    cosmosAccountName: dataServices.outputs.cosmosAccountName
+    redisId: dataServices.outputs.redisCacheId
+    redisName: dataServices.outputs.redisCacheName
+    sqlServerId: dataServices.outputs.sqlServerId
+    sqlServerName: dataServices.outputs.sqlServerName
+    deploySqlServer: deploySqlServer
+    // AI Services
+    cognitiveServicesId: aiServices.outputs.cognitiveServicesId
+    openAIServiceId: aiServices.outputs.openAIServiceId
+    mlWorkspaceId: aiServices.outputs.mlWorkspaceId
+    eventGridTopicId: aiServices.outputs.eventGridTopicId
+    deployOpenAI: deployOpenAI
+    deployMLWorkspace: deployMLWorkspace
   }
   dependsOn: [
     dataServices

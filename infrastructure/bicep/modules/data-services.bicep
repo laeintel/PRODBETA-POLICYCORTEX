@@ -17,11 +17,12 @@ param cosmosFailoverLocation string = 'West US 2'
 param cosmosMaxThroughput int = 4000
 param redisCapacity int = 2
 param redisSKUName string = 'Standard'
+param redisName string = ''
 
 
 // Cosmos DB Account
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: 'policortex001-cosmos-${environment}'
+  name: 'cosmos-pcx-${environment}-${substring(uniqueString(resourceGroup().id), 0, 4)}'
   location: location
   tags: tags
   kind: 'GlobalDocumentDB'
@@ -76,7 +77,7 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
 // Cosmos DB Database
 resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
   parent: cosmosAccount
-  name: 'policortexDB'
+  name: 'pcxDB'
   properties: {
     resource: {
       id: 'policortexDB'
@@ -128,9 +129,9 @@ resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/co
   }
 }]
 
-// Redis Cache
+// Redis Cache (with unique name to avoid conflicts)
 resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
-  name: 'policortex001-redis-${environment}'
+  name: !empty(redisName) ? redisName : 'redis-pcx-${environment}-${substring(uniqueString(resourceGroup().id), 0, 6)}'
   location: location
   tags: tags
   properties: {
@@ -161,7 +162,7 @@ resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
 
 // SQL Server (conditional)
 resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if (deploySqlServer) {
-  name: 'policortex001-sql-${environment}'
+  name: 'sql-pcx-${environment}'
   location: location
   tags: tags
   properties: {
@@ -184,7 +185,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if (deploySqlSer
 // SQL Database (conditional)
 resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-05-01-preview' = if (deploySqlServer) {
   parent: sqlServer
-  name: 'policortexDB'
+  name: 'pcxDB'
   location: location
   tags: tags
   sku: {
@@ -213,124 +214,6 @@ resource sqlFirewallAzure 'Microsoft.Sql/servers/firewallRules@2023-05-01-previe
   }
 }
 
-// Private Endpoints
-resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policortex001-cosmos-pe-${environment}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointsSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'cosmos-connection'
-        properties: {
-          privateLinkServiceId: cosmosAccount.id
-          groupIds: ['Sql']
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            description: 'Cosmos DB private endpoint'
-          }
-        }
-      }
-    ]
-  }
-}
-
-resource redisPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policortex001-redis-pe-${environment}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointsSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'redis-connection'
-        properties: {
-          privateLinkServiceId: redisCache.id
-          groupIds: ['redisCache']
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            description: 'Redis Cache private endpoint'
-          }
-        }
-      }
-    ]
-  }
-}
-
-resource sqlPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deploySqlServer) {
-  name: 'policortex001-sql-pe-${environment}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointsSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'sql-connection'
-        properties: {
-          privateLinkServiceId: sqlServer.id
-          groupIds: ['sqlServer']
-          privateLinkServiceConnectionState: {
-            status: 'Approved'
-            description: 'SQL Server private endpoint'
-          }
-        }
-      }
-    ]
-  }
-}
-
-// Private DNS Zone Groups
-resource cosmosDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
-  parent: cosmosPrivateEndpoint
-  name: 'cosmos-dns-zone-group'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'cosmos-config'
-        properties: {
-          privateDnsZoneId: privateDnsZones.cosmos
-        }
-      }
-    ]
-  }
-}
-
-resource redisDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = {
-  parent: redisPrivateEndpoint
-  name: 'redis-dns-zone-group'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'redis-config'
-        properties: {
-          privateDnsZoneId: privateDnsZones.redis
-        }
-      }
-    ]
-  }
-}
-
-resource sqlDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' = if (deploySqlServer) {
-  parent: sqlPrivateEndpoint
-  name: 'sql-dns-zone-group'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'sql-config'
-        properties: {
-          privateDnsZoneId: privateDnsZones.sql
-        }
-      }
-    ]
-  }
-}
 
 // Outputs
 output cosmosAccountId string = cosmosAccount.id
