@@ -4,12 +4,17 @@ param keyVaultName string
 param jwtSecretKey string
 param managedIdentityClientId string
 param storageAccountName string
+@secure()
 param applicationInsightsConnectionString string
+@secure()
 param cognitiveServicesKey string
 param cognitiveServicesEndpoint string
+@secure()
 param redisConnectionString string
+@secure()
 param cosmosConnectionString string
 param cosmosEndpoint string
+@secure()
 param cosmosKey string
 param tenantId string = tenant().tenantId
 param resourceGroupName string

@@ -253,7 +253,14 @@
       "Bash(env SERVICE_PORT=8016 \"..\\..\\venv\\Scripts\\python.exe\" main_simple.py)",
       "Bash(env VITE_PORT=3000 npm run dev)",
       "Bash(where az)",
-      "Bash(del debug-runner.yml kubernetes-deploy.yml test-runner.yml)"
+      "Bash(del debug-runner.yml kubernetes-deploy.yml test-runner.yml)",
+      "Bash(./deploy-infrastructure-step-by-step.sh:*)",
+      "Bash(./deploy-simple.sh)",
+      "Bash(.\\venv\\Scripts\\pip.exe install aiohttp fastapi uvicorn python-jose[cryptography] python-multipart pydantic structlog httpx)",
+      "Bash(./deploy-missing-resources.sh:*)",
+      "Bash(./create-container-apps.sh:*)",
+      "Bash(./create-container-apps-simple.sh:*)",
+      "Bash(true)"
     ],
     "deny": []
   }
