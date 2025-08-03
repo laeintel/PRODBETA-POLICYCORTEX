@@ -145,7 +145,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
           allowedOrigins: [
             'http://localhost:3000'
             'http://localhost:5173'
-            'https://${containerAppPrefix}-web-${environment}.${containerAppsEnvironmentDefaultDomain}'
+            'https://*.azurecontainerapps.io'
           ]
           allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
           allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID']
@@ -241,7 +241,7 @@ resource frontend 'Microsoft.App/containerApps@2023-05-01' = {
           env: [
             {
               name: 'VITE_API_BASE_URL'
-              value: 'https://${containerApps[0].properties.configuration.ingress.fqdn}/api'
+              value: '/api'
             }
             {
               name: 'VITE_APP_TITLE'
@@ -278,6 +278,3 @@ output apiGatewayFqdn string = containerApps[0].properties.configuration.ingress
 output apiGatewayUrl string = 'https://${containerApps[0].properties.configuration.ingress.fqdn}'
 output frontendFqdn string = frontend.properties.configuration.ingress.fqdn
 output frontendUrl string = 'https://${frontend.properties.configuration.ingress.fqdn}'
-
-// Default domain for internal use
-var containerAppsEnvironmentDefaultDomain = split(containerApps[0].properties.configuration.ingress.fqdn, '.')[1]

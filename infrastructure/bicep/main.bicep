@@ -142,7 +142,7 @@ module storageAccount 'modules/storage.bicep' = {
   scope: appResourceGroup
   name: 'storageAccount'
   params: {
-    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'st${resourcePrefix}${environment}${uniqueString(resourceGroup().id)}'
+    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'st${resourcePrefix}${environment}${uniqueString(subscription().id, environment)}'
     location: location
     tags: commonTags
     allowedIps: allowedIps
@@ -154,7 +154,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
   scope: appResourceGroup
   name: 'containerRegistry'
   params: {
-    registryName: !empty(containerRegistryName) ? containerRegistryName : 'cr${resourcePrefix}${environment}${uniqueString(resourceGroup().id)}'
+    registryName: !empty(containerRegistryName) ? containerRegistryName : 'cr${resourcePrefix}${environment}${uniqueString(subscription().id, environment)}'
     location: location
     tags: commonTags
     managedIdentityPrincipalId: userIdentity.outputs.principalId

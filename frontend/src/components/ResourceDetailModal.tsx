@@ -111,7 +111,7 @@ const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
     setLoading(true)
     setError(null)
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8012'
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
       const response = await fetch(`${apiBaseUrl}/api/v1/resources/${encodeURIComponent(resourceId)}/compliance`)
       
       if (!response.ok) {
