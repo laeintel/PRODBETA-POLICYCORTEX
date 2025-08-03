@@ -23,7 +23,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
     enableRbacAuthorization: false
-    enablePurgeProtection: false
+    enablePurgeProtection: true  // Match existing soft-deleted vault
     createMode: 'recover'  // Recover if soft-deleted
     networkAcls: {
       defaultAction: 'Allow'
