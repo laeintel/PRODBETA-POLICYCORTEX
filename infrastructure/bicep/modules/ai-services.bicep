@@ -295,7 +295,8 @@ resource mlDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups
 output cognitiveServicesId string = cognitiveServices.id
 output cognitiveServicesName string = cognitiveServices.name
 output cognitiveServicesEndpoint string = cognitiveServices.properties.endpoint
-output cognitiveServicesKey string = cognitiveServices.listKeys().key1
+// Removed cognitiveServicesKey output to avoid secrets in outputs
+// Key will be retrieved directly in Key Vault secrets module
 output openAIServiceId string = deployOpenAI ? openAIService.id : ''
 output openAIServiceName string = deployOpenAI ? openAIService.name : ''
 output openAIEndpoint string = ''  // Will be set manually if OpenAI is deployed
