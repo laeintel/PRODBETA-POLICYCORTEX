@@ -23,7 +23,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 7  // Minimum retention for faster cleanup
     enableRbacAuthorization: false
-    enablePurgeProtection: false  // Disable for easier cleanup in dev
+    enablePurgeProtection: true  // Cannot be disabled once enabled
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
