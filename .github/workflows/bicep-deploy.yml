@@ -12,9 +12,9 @@ permissions:
   pull-requests: write
 
 on:
-  # Auto-trigger on pipeline-manual-trigger-keyvault-setup branch
+  # Auto-trigger on main and pipeline-manual-trigger-keyvault-setup branches
   push:
-    branches: [ pipeline-manual-trigger-keyvault-setup ]
+    branches: [ main, pipeline-manual-trigger-keyvault-setup ]
     paths:
       - 'infrastructure/bicep/**'
       - '.github/workflows/bicep-deploy.yml'
