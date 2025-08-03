@@ -128,9 +128,9 @@ resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/co
   }
 }]
 
-// Redis Cache
+// Redis Cache (with unique name to avoid conflicts)
 resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
-  name: 'policortex001-redis-${environment}'
+  name: 'pcx001-redis-${environment}-${substring(uniqueString(resourceGroup().id), 0, 4)}'
   location: location
   tags: tags
   properties: {
