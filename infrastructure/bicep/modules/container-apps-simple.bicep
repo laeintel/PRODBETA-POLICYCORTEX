@@ -7,6 +7,7 @@ param containerRegistryLoginServer string
 param userAssignedIdentityId string
 param keyVaultName string
 param containerAppsEnvironmentDefaultDomain string
+@secure()
 param jwtSecretKey string = 'development-secret-key-change-in-production'
 
 // Only deploy API Gateway for now to avoid Key Vault issues
