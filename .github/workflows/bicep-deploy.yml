@@ -131,6 +131,45 @@ jobs:
       - name: Install Bicep CLI
         run: az bicep install
 
+      - name: Pre-deployment Setup
+        run: |
+          echo "Setting up deployment environment..."
+          
+          # Ensure resource groups exist
+          az group create --name "rg-policortex001-network-dev" --location "East US" 2>/dev/null || echo "Network RG exists"
+          az group create --name "rg-policortex001-app-dev" --location "East US" 2>/dev/null || echo "App RG exists"
+          
+          # Check for existing resources to avoid conflicts
+          echo "Checking for existing resources..."
+          
+          # Get existing resource names if they exist
+          STORAGE_NAME=$(az storage account list --resource-group "rg-policortex001-app-dev" --query "[?contains(name, 'stpcx001dev')].name | [0]" -o tsv 2>/dev/null || echo "")
+          ACR_NAME=$(az acr list --resource-group "rg-policortex001-app-dev" --query "[?contains(name, 'crpcx001dev')].name | [0]" -o tsv 2>/dev/null || echo "")
+          REDIS_NAME=$(az redis list --resource-group "rg-policortex001-app-dev" --query "[?contains(name, 'pcx001redis')].name | [0]" -o tsv 2>/dev/null || echo "")
+          
+          # Create resources if they don't exist
+          if [ -z "$STORAGE_NAME" ]; then
+            echo "Creating storage account..."
+            STORAGE_NAME="stpcx001dev$(date +%s | tail -c 5)"
+            az storage account create --name "$STORAGE_NAME" --resource-group "rg-policortex001-app-dev" --location "East US" --sku Standard_LRS || true
+          fi
+          
+          if [ -z "$ACR_NAME" ]; then
+            echo "Creating container registry..."
+            ACR_NAME="crpcx001dev$(date +%s | tail -c 5)"
+            az acr create --name "$ACR_NAME" --resource-group "rg-policortex001-app-dev" --location "East US" --sku Basic --admin-enabled || true
+          fi
+          
+          # Export resource names
+          echo "STORAGE_NAME=$STORAGE_NAME" >> $GITHUB_ENV
+          echo "ACR_NAME=$ACR_NAME" >> $GITHUB_ENV
+          echo "REDIS_NAME=$REDIS_NAME" >> $GITHUB_ENV
+          
+          echo "Resources configured:"
+          echo "- Storage: $STORAGE_NAME"
+          echo "- ACR: $ACR_NAME"
+          echo "- Redis: $REDIS_NAME"
+
       - name: Deploy Infrastructure
         id: deploy
         run: |
@@ -141,12 +180,15 @@ jobs:
           echo "Deployment name: $DEPLOYMENT_NAME"
           echo "DEPLOYMENT_NAME=$DEPLOYMENT_NAME" >> $GITHUB_ENV
           
-          # Deploy directly with inline parameters
+          # Deploy with inline parameter overrides
           az deployment sub create \
             --location "East US" \
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/dev.bicepparam \
             --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}" \
+            --parameters storageAccountName="${STORAGE_NAME:-stpolicortex001dev}" \
+            --parameters containerRegistryName="${ACR_NAME:-crpolicortex001dev}" \
+            --parameters redisName="${REDIS_NAME:-pcx001redisdev}" \
             --name "$DEPLOYMENT_NAME" \
             --only-show-errors || {
               echo "❌ Deployment failed. Checking error details..."
@@ -171,10 +213,10 @@ jobs:
           
           echo "Using deployment: $DEPLOYMENT_NAME"
           
-          # Get outputs with error handling
-          RESOURCE_GROUP=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.resourceGroupName.value" -o tsv 2>/dev/null || echo "rg-policortex001-app-dev")
-          CONTAINER_REGISTRY=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.containerRegistryName.value" -o tsv 2>/dev/null || echo "crpolicortex001dev")
-          KEY_VAULT=$(az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.outputs.keyVaultName.value" -o tsv 2>/dev/null || echo "kv-pcx001-dev02")
+          # Get outputs with error handling (use actual resource names from environment)
+          RESOURCE_GROUP="rg-policortex001-app-dev"
+          CONTAINER_REGISTRY="${ACR_NAME:-crpolicortex001dev}"
+          KEY_VAULT="kv-pcx001-dev02"
           
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           echo "container_registry=$CONTAINER_REGISTRY" >> $GITHUB_OUTPUT
