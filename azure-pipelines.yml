@@ -1,22 +1,10 @@
 # Azure DevOps Pipeline for PolicyCortex
 # Comprehensive CI/CD with testing, security scanning, and deployment
 
-trigger:
-  branches:
-    include:
-      - main
-      - develop
-      - feature/*
-  paths:
-    exclude:
-      - README.md
-      - docs/*
+# Manual trigger only for Azure DevOps Pipeline
+trigger: none
 
-pr:
-  branches:
-    include:
-      - main
-      - develop
+pr: none
 
 variables:
   # Container Registry
