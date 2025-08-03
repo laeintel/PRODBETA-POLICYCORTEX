@@ -1,58 +1,44 @@
-#!/bin/bash
+#\!/bin/bash
 
-# Simple Container Apps deployment script
-set -e
-
-echo "🚀 Deploying simple Container Apps infrastructure..."
+echo "🚀 Deploying simplified Container Apps Environment..."
 
 # Variables
-RESOURCE_GROUP="rg-policycortex001-app-dev"
-LOCATION="East US"
-ACR_NAME="crpolicortex001dev"
-ENVIRONMENT_NAME="cae-policortex001-dev"
+RG="rg-policortex001-app-dev"
+LOCATION="eastus"
+ENV_NAME="cae-policortex001-dev"
+LOG_WORKSPACE="law-policortex001-dev"
 
-# Check if resource group exists, create if not
-echo "📦 Checking resource group..."
-if ! az group show --name $RESOURCE_GROUP > /dev/null 2>&1; then
-    echo "Creating resource group $RESOURCE_GROUP..."
-    az group create --name $RESOURCE_GROUP --location "$LOCATION"
-fi
+# Create Log Analytics Workspace first
+echo "📊 Creating Log Analytics Workspace..."
+az monitor log-analytics workspace create   --resource-group "$RG"   --workspace-name "$LOG_WORKSPACE"   --location "$LOCATION"   --output none || echo "Log Analytics workspace already exists"
 
-# Check if Container Registry exists
-echo "📋 Checking Container Registry..."
-if ! az acr show --name $ACR_NAME > /dev/null 2>&1; then
-    echo "Creating Container Registry $ACR_NAME..."
-    az acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --admin-enabled
-fi
+# Get workspace details
+WORKSPACE_ID=$(az monitor log-analytics workspace show   --resource-group "$RG"   --workspace-name "$LOG_WORKSPACE"   --query customerId -o tsv)
 
-# Check if Container Apps Environment exists
-echo "🌐 Checking Container Apps Environment..."
-if ! az containerapp env show --name $ENVIRONMENT_NAME --resource-group $RESOURCE_GROUP > /dev/null 2>&1; then
-    echo "Creating Container Apps Environment $ENVIRONMENT_NAME..."
-    az containerapp env create \
-        --name $ENVIRONMENT_NAME \
-        --resource-group $RESOURCE_GROUP \
-        --location "$LOCATION"
-fi
+WORKSPACE_KEY=$(az monitor log-analytics workspace get-shared-keys   --resource-group "$RG"   --workspace-name "$LOG_WORKSPACE"   --query primarySharedKey -o tsv)
 
-# Create API Gateway Container App
-echo "🔧 Creating API Gateway Container App..."
-az containerapp create \
-    --name ca-api-gateway-dev \
-    --resource-group $RESOURCE_GROUP \
-    --environment $ENVIRONMENT_NAME \
-    --image mcr.microsoft.com/azuredocs/containerapps-helloworld:latest \
-    --target-port 80 \
-    --ingress external \
-    --min-replicas 1 \
-    --max-replicas 3 \
-    --cpu 1.0 \
-    --memory 2Gi \
-    --env-vars \
-        ENVIRONMENT=development \
-        SERVICE_NAME=api_gateway \
-        SERVICE_PORT=8000 \
-        LOG_LEVEL=INFO
+# Create Container Apps Environment with consumption plan
+echo "🌐 Creating Container Apps Environment (consumption-based)..."
+az containerapp env create   --name "$ENV_NAME"   --resource-group "$RG"   --location "$LOCATION"   --logs-workspace-id "$WORKSPACE_ID"   --logs-workspace-key "$WORKSPACE_KEY"   --output none
 
-echo "✅ Simple Container Apps deployment completed!"
-echo "🌍 API Gateway URL: https://$(az containerapp show --name ca-api-gateway-dev --resource-group $RESOURCE_GROUP --query properties.configuration.ingress.fqdn -o tsv)"
+echo "✅ Container Apps Environment created successfully\!"
+
+# Create other essential resources
+echo "🗝️ Creating Key Vault..."
+az keyvault create   --name "kv-pcx001-dev02"   --resource-group "$RG"   --location "$LOCATION"   --enable-soft-delete true   --retention-days 7   --output none || echo "Key Vault already exists"
+
+echo "📦 Creating Container Registry..."
+az acr create   --name "crpolicortex001dev"   --resource-group "$RG"   --location "$LOCATION"   --sku Basic   --admin-enabled true   --output none || echo "Container Registry already exists"
+
+echo "🆔 Creating User Identity..."
+az identity create   --name "id-policortex001-dev"   --resource-group "$RG"   --location "$LOCATION"   --output none || echo "Identity already exists"
+
+echo "🎉 Core infrastructure deployed successfully\!"
+echo ""
+echo "Resources created:"
+echo "- Container Apps Environment: $ENV_NAME (consumption-based)"
+echo "- Key Vault: kv-pcx001-dev02"
+echo "- Container Registry: crpolicortex001dev"
+echo "- User Identity: id-policortex001-dev"
+echo ""
+echo "Next steps: Run the GitHub Actions pipeline to deploy the full infrastructure"

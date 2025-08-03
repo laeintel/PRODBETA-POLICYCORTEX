@@ -1,0 +1,16 @@
+{
+  "\": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": { "value": "dev" },
+    "location": { "value": "East US" },
+    "owner": { "value": "AeoliTech" },
+    "allowedIps": { "value": [] },
+    "createTerraformAccessPolicy": { "value": false },
+    "deployContainerApps": { "value": false },
+    "deploySqlServer": { "value": false },
+    "deployMLWorkspace": { "value": false },
+    "deployOpenAI": { "value": false },
+    "jwtSecretKey": { "value": "development-secret-key-change-in-production" }
+  }
+}
