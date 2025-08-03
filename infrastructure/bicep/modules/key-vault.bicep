@@ -28,76 +28,27 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
     }
-    accessPolicies: concat(
-      createTerraformAccessPolicy ? [
-        {
-          tenantId: tenant().tenantId
-          objectId: '178e2973-bb20-49da-ab80-0d1ddc7b0649' // Current client object ID
-          permissions: {
-            keys: [
-              'Get'
-              'List'
-              'Update'
-              'Create'
-              'Import'
-              'Delete'
-              'Recover'
-              'Backup'
-              'Restore'
-              'GetRotationPolicy'
-              'SetRotationPolicy'
-              'Rotate'
-            ]
-            secrets: [
-              'Get'
-              'List'
-              'Set'
-              'Delete'
-              'Recover'
-              'Backup'
-              'Restore'
-            ]
-            certificates: [
-              'Get'
-              'List'
-              'Update'
-              'Create'
-              'Import'
-              'Delete'
-              'Recover'
-              'Backup'
-              'Restore'
-              'ManageContacts'
-              'ManageIssuers'
-              'GetIssuers'
-              'ListIssuers'
-              'SetIssuers'
-              'DeleteIssuers'
-            ]
-          }
+    accessPolicies: managedIdentityPrincipalId != '' ? [
+      {
+        tenantId: tenant().tenantId
+        objectId: managedIdentityPrincipalId
+        permissions: {
+          secrets: [
+            'Get'
+            'List'
+            'Set'
+          ]
+          keys: [
+            'Get'
+            'List'
+          ]
+          certificates: [
+            'Get'
+            'List'
+          ]
         }
-      ] : [],
-      managedIdentityPrincipalId != '' ? [
-        {
-          tenantId: tenant().tenantId
-          objectId: managedIdentityPrincipalId
-          permissions: {
-            secrets: [
-              'Get'
-              'List'
-            ]
-            keys: [
-              'Get'
-              'List'
-            ]
-            certificates: [
-              'Get'
-              'List'
-            ]
-          }
-        }
-      ] : []
-    )
+      }
+    ] : []
   }
 }
 
