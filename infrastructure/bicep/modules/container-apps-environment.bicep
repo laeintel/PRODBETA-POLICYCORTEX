@@ -10,11 +10,7 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01'
   location: location
   tags: tags
   properties: {
-    // Simplified configuration without Log Analytics for now
-    vnetConfiguration: {
-      infrastructureSubnetId: subnetId
-      internal: false
-    }
+    // Simplified configuration for consumption tier - no VNet integration for now
     zoneRedundant: false
     // No workloadProfiles for consumption-based pricing
   }
