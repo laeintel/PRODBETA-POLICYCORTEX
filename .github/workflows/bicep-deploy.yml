@@ -135,29 +135,29 @@ jobs:
         run: |
           echo "Setting up deployment environment..."
           
-          # Ensure resource groups exist
-          az group create --name "rg-policortex001-network-dev" --location "East US" 2>/dev/null || echo "Network RG exists"
-          az group create --name "rg-policortex001-app-dev" --location "East US" 2>/dev/null || echo "App RG exists"
+          # Ensure resource groups exist with new naming convention
+          az group create --name "rg-pcx-network-dev" --location "East US" 2>/dev/null || echo "Network RG exists"
+          az group create --name "rg-pcx-app-dev" --location "East US" 2>/dev/null || echo "App RG exists"
           
           # Check for existing resources to avoid conflicts
           echo "Checking for existing resources..."
           
           # Get existing resource names if they exist
-          STORAGE_NAME=$(az storage account list --resource-group "rg-policortex001-app-dev" --query "[?contains(name, 'stpcx001dev')].name | [0]" -o tsv 2>/dev/null || echo "")
-          ACR_NAME=$(az acr list --resource-group "rg-policortex001-app-dev" --query "[?contains(name, 'crpcx001dev')].name | [0]" -o tsv 2>/dev/null || echo "")
-          REDIS_NAME=$(az redis list --resource-group "rg-policortex001-app-dev" --query "[?contains(name, 'pcx001redis')].name | [0]" -o tsv 2>/dev/null || echo "")
+          STORAGE_NAME=$(az storage account list --resource-group "rg-pcx-app-dev" --query "[?contains(name, 'stpcx')].name | [0]" -o tsv 2>/dev/null || echo "")
+          ACR_NAME=$(az acr list --resource-group "rg-pcx-app-dev" --query "[?contains(name, 'crpcx')].name | [0]" -o tsv 2>/dev/null || echo "")
+          REDIS_NAME=$(az redis list --resource-group "rg-pcx-app-dev" --query "[?contains(name, 'redis-pcx')].name | [0]" -o tsv 2>/dev/null || echo "")
           
           # Create resources if they don't exist
           if [ -z "$STORAGE_NAME" ]; then
             echo "Creating storage account..."
-            STORAGE_NAME="stpcx001dev$(date +%s | tail -c 5)"
-            az storage account create --name "$STORAGE_NAME" --resource-group "rg-policortex001-app-dev" --location "East US" --sku Standard_LRS || true
+            STORAGE_NAME="stpcxdev$(date +%s | tail -c 5)"
+            az storage account create --name "$STORAGE_NAME" --resource-group "rg-pcx-app-dev" --location "East US" --sku Standard_LRS || true
           fi
           
           if [ -z "$ACR_NAME" ]; then
             echo "Creating container registry..."
-            ACR_NAME="crpcx001dev$(date +%s | tail -c 5)"
-            az acr create --name "$ACR_NAME" --resource-group "rg-policortex001-app-dev" --location "East US" --sku Basic --admin-enabled || true
+            ACR_NAME="crpcxdev$(date +%s | tail -c 5)"
+            az acr create --name "$ACR_NAME" --resource-group "rg-pcx-app-dev" --location "East US" --sku Basic --admin-enabled || true
           fi
           
           # Export resource names
@@ -176,7 +176,7 @@ jobs:
           echo "Deploying Policortex infrastructure to dev environment..."
           
           # Deploy using Bicep
-          DEPLOYMENT_NAME="policortex001-dev-$(date +%Y%m%d-%H%M%S)"
+          DEPLOYMENT_NAME="pcx-dev-$(date +%Y%m%d-%H%M%S)"
           echo "Deployment name: $DEPLOYMENT_NAME"
           echo "DEPLOYMENT_NAME=$DEPLOYMENT_NAME" >> $GITHUB_ENV
           
@@ -186,9 +186,9 @@ jobs:
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/dev.bicepparam \
             --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}" \
-            --parameters storageAccountName="${STORAGE_NAME:-stpolicortex001dev}" \
-            --parameters containerRegistryName="${ACR_NAME:-crpolicortex001dev}" \
-            --parameters redisName="${REDIS_NAME:-pcx001redisdev}" \
+            --parameters storageAccountName="${STORAGE_NAME:-stpcxdev}" \
+            --parameters containerRegistryName="${ACR_NAME:-crpcxdev}" \
+            --parameters redisName="${REDIS_NAME:-redis-pcx-dev}" \
             --name "$DEPLOYMENT_NAME" \
             --only-show-errors || {
               echo "❌ Deployment failed. Checking error details..."
@@ -208,15 +208,15 @@ jobs:
           DEPLOYMENT_NAME="${{ env.DEPLOYMENT_NAME }}"
           if [ -z "$DEPLOYMENT_NAME" ]; then
             # Fallback to getting the latest successful deployment
-            DEPLOYMENT_NAME=$(az deployment sub list --query "[?properties.provisioningState=='Succeeded' && contains(name, 'policortex001-dev')] | [0].name" -o tsv)
+            DEPLOYMENT_NAME=$(az deployment sub list --query "[?properties.provisioningState=='Succeeded' && contains(name, 'pcx-dev')] | [0].name" -o tsv)
           fi
           
           echo "Using deployment: $DEPLOYMENT_NAME"
           
           # Get outputs with error handling (use actual resource names from environment)
-          RESOURCE_GROUP="rg-policortex001-app-dev"
-          CONTAINER_REGISTRY="${ACR_NAME:-crpolicortex001dev}"
-          KEY_VAULT="kv-pcx001-dev02"
+          RESOURCE_GROUP="rg-pcx-app-dev"
+          CONTAINER_REGISTRY="${ACR_NAME:-crpcxdev}"
+          KEY_VAULT="kv-pcx-dev"
           
           echo "resource_group=$RESOURCE_GROUP" >> $GITHUB_OUTPUT
           echo "container_registry=$CONTAINER_REGISTRY" >> $GITHUB_OUTPUT
@@ -264,8 +264,8 @@ jobs:
           EOF
             
             # Build and push
-            docker build -t ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policortex001-$service:latest /tmp/$service
-            docker push ${{ steps.outputs.outputs.container_registry }}.azurecr.io/policortex001-$service:latest
+            docker build -t ${{ steps.outputs.outputs.container_registry }}.azurecr.io/pcx-$service:latest /tmp/$service
+            docker push ${{ steps.outputs.outputs.container_registry }}.azurecr.io/pcx-$service:latest
           done
           
           echo "✅ Placeholder images built and pushed"
@@ -289,7 +289,7 @@ jobs:
               --template-file infrastructure/bicep/main.bicep \
               --parameters infrastructure/bicep/environments/dev.bicepparam \
               --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV }}" \
-              --name "policortex001-dev-apps-$(date +%Y%m%d-%H%M%S)" \
+              --name "pcx-dev-apps-$(date +%Y%m%d-%H%M%S)" \
               --verbose
             
             echo "✅ Container Apps deployed"
@@ -359,7 +359,7 @@ jobs:
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/staging.bicepparam \
             --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_STAGING }}" \
-            --name "policortex001-staging-$(date +%Y%m%d-%H%M%S)" \
+            --name "pcx-staging-$(date +%Y%m%d-%H%M%S)" \
             --verbose
         working-directory: .
 
@@ -390,7 +390,7 @@ jobs:
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/prod.bicepparam \
             --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_PROD }}" \
-            --name "policortex001-prod-$(date +%Y%m%d-%H%M%S)" \
+            --name "pcx-prod-$(date +%Y%m%d-%H%M%S)" \
             --verbose
         working-directory: .
 
@@ -413,8 +413,8 @@ jobs:
           echo "Destroying Policortex infrastructure in ${{ github.event.inputs.environment }} environment..."
           
           # Delete resource groups
-          NETWORK_RG="rg-policortex001-network-${{ github.event.inputs.environment }}"
-          APP_RG="rg-policortex001-app-${{ github.event.inputs.environment }}"
+          NETWORK_RG="rg-pcx-network-${{ github.event.inputs.environment }}"
+          APP_RG="rg-pcx-app-${{ github.event.inputs.environment }}"
           
           echo "Deleting network resource group: $NETWORK_RG"
           az group delete --name "$NETWORK_RG" --yes --no-wait || echo "Network RG not found"
