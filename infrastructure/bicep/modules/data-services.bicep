@@ -80,7 +80,7 @@ resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023
   name: 'pcxDB'
   properties: {
     resource: {
-      id: 'policortexDB'
+      id: 'pcxDB'
     }
     options: {
       autoscaleSettings: {
