@@ -135,9 +135,28 @@ jobs:
         run: |
           echo "Setting up deployment environment..."
           
-          # Ensure resource groups exist with new naming convention
-          az group create --name "rg-pcx-network-dev" --location "East US" 2>/dev/null || echo "Network RG exists"
-          az group create --name "rg-pcx-app-dev" --location "East US" 2>/dev/null || echo "App RG exists"
+          # Wait for any existing resource groups to finish deleting
+          echo "Checking if resource groups are being deleted..."
+          for rg in "rg-pcx-network-dev" "rg-pcx-app-dev"; do
+            while true; do
+              status=$(az group show --name "$rg" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "DELETED")
+              if [ "$status" = "DELETED" ] || [ "$status" = "NotFound" ]; then
+                echo "✅ $rg is ready for deployment"
+                break
+              elif [ "$status" = "Deleting" ]; then
+                echo "⏳ $rg is still being deleted. Waiting 30 seconds..."
+                sleep 30
+              else
+                echo "✅ $rg exists with status: $status"
+                break
+              fi
+            done
+          done
+          
+          # Create resource groups with new naming convention
+          echo "Creating resource groups..."
+          az group create --name "rg-pcx-network-dev" --location "East US" || echo "Network RG creation failed"
+          az group create --name "rg-pcx-app-dev" --location "East US" || echo "App RG creation failed"
           
           # Check for existing resources to avoid conflicts
           echo "Checking for existing resources..."
