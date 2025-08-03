@@ -282,8 +282,8 @@ module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   }
 }
 
-// Container Apps (conditional deployment)
-module containerApps 'modules/container-apps.bicep' = if (deployContainerApps) {
+// Container Apps (conditional deployment - using simplified version)
+module containerApps 'modules/container-apps-simple.bicep' = if (deployContainerApps) {
   scope: appResourceGroup
   name: 'containerApps'
   params: {
@@ -294,6 +294,7 @@ module containerApps 'modules/container-apps.bicep' = if (deployContainerApps) {
     containerRegistryLoginServer: containerRegistry.outputs.loginServer
     userAssignedIdentityId: userIdentity.outputs.identityId
     keyVaultName: keyVault.outputs.keyVaultName
+    jwtSecretKey: jwtSecretKey
     containerAppsEnvironmentDefaultDomain: containerAppsEnvironment.outputs.defaultDomain
   }
   dependsOn: [
