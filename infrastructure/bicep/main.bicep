@@ -159,7 +159,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
 // Key Vault
 module keyVault 'modules/key-vault.bicep' = {
   scope: appResourceGroup
-  name: 'keyVault'
+  name: 'keyVault-${uniqueString(deployment().name)}'
   params: {
     keyVaultName: 'kv-pcx001-${environment}02'
     location: location
@@ -221,7 +221,7 @@ module networking 'modules/networking.bicep' = {
 // Data Services module
 module dataServices 'modules/data-services.bicep' = {
   scope: appResourceGroup
-  name: 'dataServices'
+  name: 'dataServices-${uniqueString(deployment().name)}'
   params: {
     environment: environment
     location: location
@@ -272,7 +272,7 @@ module aiServices 'modules/ai-services.bicep' = {
 // Container Apps Environment
 module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   scope: appResourceGroup
-  name: 'containerAppsEnvironment'
+  name: 'containerAppsEnvironment-${uniqueString(deployment().name)}'
   params: {
     environmentName: 'cae-policortex001-${environment}'
     location: location
