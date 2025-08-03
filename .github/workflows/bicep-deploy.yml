@@ -202,15 +202,30 @@ jobs:
           echo "Deployment name: $DEPLOYMENT_NAME"
           echo "DEPLOYMENT_NAME=$DEPLOYMENT_NAME" >> $GITHUB_ENV
           
-          # Deploy with inline parameter overrides
+          # Create inline parameters to avoid parameter file conflicts
+          cat > /tmp/deployment-params.json << EOF
+          {
+            "environment": {"value": "dev"},
+            "location": {"value": "East US"},
+            "owner": {"value": "AeoliTech"},
+            "allowedIps": {"value": []},
+            "createTerraformAccessPolicy": {"value": false},
+            "deployContainerApps": {"value": true},
+            "deploySqlServer": {"value": false},
+            "deployMLWorkspace": {"value": false},
+            "deployOpenAI": {"value": false},
+            "jwtSecretKey": {"value": "${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}"},
+            "storageAccountName": {"value": "${STORAGE_NAME:-stpcxdev}"},
+            "containerRegistryName": {"value": "${ACR_NAME:-crpcxdev}"},
+            "redisName": {"value": "${REDIS_NAME:-redis-pcx-dev}"}
+          }
+          EOF
+          
+          # Deploy with JSON parameters only
           if ! az deployment sub create \
             --location "East US" \
             --template-file infrastructure/bicep/main.bicep \
-            --parameters infrastructure/bicep/environments/dev.bicepparam \
-            --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}" \
-            --parameters storageAccountName="${STORAGE_NAME:-stpcxdev}" \
-            --parameters containerRegistryName="${ACR_NAME:-crpcxdev}" \
-            --parameters redisName="${REDIS_NAME:-redis-pcx-dev}" \
+            --parameters @/tmp/deployment-params.json \
             --name "$DEPLOYMENT_NAME" \
             --only-show-errors; then
             
