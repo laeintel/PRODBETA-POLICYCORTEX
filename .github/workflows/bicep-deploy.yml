@@ -158,16 +158,8 @@ jobs:
           az group create --name "rg-pcx-network-dev" --location "East US" || echo "Network RG creation failed"
           az group create --name "rg-pcx-app-dev" --location "East US" || echo "App RG creation failed"
           
-          # Handle soft-deleted Key Vaults  
-          echo "Checking for soft-deleted Key Vaults..."
-          DELETED_VAULTS=$(az keyvault list-deleted --query "[?name=='kv-pcx-dev'].name" -o tsv)
-          if [ ! -z "$DELETED_VAULTS" ]; then
-            echo "✅ Found soft-deleted Key Vault 'kv-pcx-dev'"
-            echo "💡 Bicep deployment will automatically recover the Key Vault (createMode: 'recover')"
-            echo "This is the proper approach - preserves existing secrets and configurations"
-          else
-            echo "✅ No soft-deleted Key Vaults found - will create new Key Vault"
-          fi
+          # Key Vault is configured with soft delete disabled for simpler management
+          echo "✅ Key Vault configured for direct deployment (no soft delete complexity)"
           
           # Check for existing resources to avoid conflicts
           echo "Checking for existing resources..."
