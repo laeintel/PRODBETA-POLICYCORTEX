@@ -388,12 +388,22 @@ async def get_azure_policies() -> Dict[str, Any]:
     
     # Force live Azure CLI call instead of REST API for reliability
     try:
-        result = subprocess.run(
-            ["az", "policy", "assignment", "list", "--output", "json"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        # Use Windows cmd.exe to execute Azure CLI
+        if os.name == 'nt':
+            # Windows: Use cmd.exe to execute az commands
+            result = subprocess.run(
+                ["cmd.exe", "/c", "az", "policy", "assignment", "list", "--output", "json"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+        else:
+            result = subprocess.run(
+                ["az", "policy", "assignment", "list", "--output", "json"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
         
         assignments = json.loads(result.stdout)
         print(f"Successfully discovered {len(assignments)} policies using Azure CLI")
@@ -510,6 +520,98 @@ async def health_check():
         "environment": ENVIRONMENT,
         "version": "1.0.0"
     }
+
+@app.get("/debug/azure-cli")
+async def debug_azure_cli():
+    """Debug endpoint to test Azure CLI subprocess calls."""
+    debug_info = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "tests": {}
+    }
+    
+    # Test 1: Basic Azure CLI availability
+    try:
+        if os.name == 'nt':
+            result = subprocess.run(["cmd.exe", "/c", "az", "--version"], capture_output=True, text=True, timeout=10)
+        else:
+            result = subprocess.run(["az", "--version"], capture_output=True, text=True, timeout=10)
+        debug_info["tests"]["az_version"] = {
+            "success": result.returncode == 0,
+            "stdout": result.stdout[:500],  # Limit output
+            "stderr": result.stderr[:500],
+            "returncode": result.returncode
+        }
+    except Exception as e:
+        debug_info["tests"]["az_version"] = {
+            "success": False,
+            "error": str(e)
+        }
+    
+    # Test 2: Azure account authentication
+    try:
+        if os.name == 'nt':
+            result = subprocess.run(["cmd.exe", "/c", "az", "account", "show", "--output", "json"], 
+                                   capture_output=True, text=True, timeout=15)
+        else:
+            result = subprocess.run(["az", "account", "show", "--output", "json"], 
+                                   capture_output=True, text=True, timeout=15)
+        debug_info["tests"]["az_account"] = {
+            "success": result.returncode == 0,
+            "stdout": result.stdout[:500] if result.returncode == 0 else result.stdout,
+            "stderr": result.stderr[:500],
+            "returncode": result.returncode
+        }
+    except Exception as e:
+        debug_info["tests"]["az_account"] = {
+            "success": False,
+            "error": str(e)
+        }
+    
+    # Test 3: Policy assignment list
+    try:
+        if os.name == 'nt':
+            result = subprocess.run(["cmd.exe", "/c", "az", "policy", "assignment", "list", "--output", "json"], 
+                                   capture_output=True, text=True, timeout=30)
+        else:
+            result = subprocess.run(["az", "policy", "assignment", "list", "--output", "json"], 
+                                   capture_output=True, text=True, timeout=30)
+        policies_found = 0
+        if result.returncode == 0:
+            try:
+                policies = json.loads(result.stdout)
+                policies_found = len(policies)
+            except json.JSONDecodeError as je:
+                debug_info["tests"]["az_policy_list"] = {
+                    "success": False,
+                    "json_error": str(je),
+                    "stdout": result.stdout[:1000],
+                    "stderr": result.stderr[:500]
+                }
+                return debug_info
+        
+        debug_info["tests"]["az_policy_list"] = {
+            "success": result.returncode == 0,
+            "stdout": result.stdout[:1000] if result.returncode == 0 else result.stdout,
+            "stderr": result.stderr[:500],
+            "returncode": result.returncode,
+            "policies_found": policies_found
+        }
+    except Exception as e:
+        debug_info["tests"]["az_policy_list"] = {
+            "success": False,
+            "error": str(e)
+        }
+    
+    # Test 4: Environment variables
+    debug_info["environment"] = {
+        "PATH": os.environ.get("PATH", "")[:500],
+        "AZURE_CONFIG_DIR": os.environ.get("AZURE_CONFIG_DIR", "Not set"),
+        "AZURE_SUBSCRIPTION_ID": os.environ.get("AZURE_SUBSCRIPTION_ID", "Not set"),
+        "HOME": os.environ.get("HOME", "Not set"),
+        "USERPROFILE": os.environ.get("USERPROFILE", "Not set")
+    }
+    
+    return debug_info
 
 @app.get("/ready")
 async def readiness_check():
@@ -701,10 +803,10 @@ async def get_policies_list():
             "updatedOn": datetime.utcnow().isoformat(),
             "parameters": policy.get("parameters", {}),
             "metadata": {
-                "assignedBy": "Azure Administrator",
-                "source": "Azure Policy Portal",
+                "assignedBy": policy.get("metadata", {}).get("assignedBy", "Azure CLI"),
+                "source": "Live Azure CLI" if policies_data.get("data_source") == "live-azure-cli" else "Azure Policy Portal",
                 "nonCompliantPolicies": policy.get("metadata", {}).get("nonCompliantPolicies", 0),
-                "data_source": policies_data.get("data_source", "live-azure-subscription"),
+                "data_source": policies_data.get("data_source", "live-azure-cli"),
                 "enforcementMode": policy.get("enforcementMode", "Default")
             }
         }
