@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 # Simple configuration from environment variables
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 SERVICE_NAME = os.getenv("SERVICE_NAME", "api-gateway")
-SERVICE_PORT = int(os.getenv("SERVICE_PORT", "8014"))
+SERVICE_PORT = int(os.getenv("SERVICE_PORT", "8015"))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # FastAPI app
