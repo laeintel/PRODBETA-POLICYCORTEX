@@ -1,0 +1,35 @@
+properties:
+  configuration:
+    ingress:
+      external: true
+      targetPort: 8000
+      allowInsecure: false
+      traffic:
+        - weight: 100
+          latestRevision: true
+    registries:
+      - server: crpolicortex001dev.azurecr.io
+        username: crpolicortex001dev
+        passwordSecretRef: registry-password
+    secrets:
+      - name: registry-password
+        value: feafRaB8DLDBYLpsCF1aYFzq43hdgSKeukD2vwbiXq+ACRDfJiAG
+  template:
+    containers:
+      - image: crpolicortex001dev.azurecr.io/policortex001-api-gateway:latest
+        name: ca-api-gateway-dev
+        env:
+          - name: ENVIRONMENT
+            value: development
+          - name: SERVICE_NAME
+            value: api_gateway
+          - name: SERVICE_PORT
+            value: "8000"
+          - name: LOG_LEVEL
+            value: INFO
+        resources:
+          cpu: 1.0
+          memory: 2Gi
+    scale:
+      minReplicas: 1
+      maxReplicas: 3
