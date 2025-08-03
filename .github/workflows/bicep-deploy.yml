@@ -203,7 +203,7 @@ jobs:
           echo "DEPLOYMENT_NAME=$DEPLOYMENT_NAME" >> $GITHUB_ENV
           
           # Deploy with inline parameter overrides
-          az deployment sub create \
+          if ! az deployment sub create \
             --location "East US" \
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/dev.bicepparam \
@@ -212,11 +212,24 @@ jobs:
             --parameters containerRegistryName="${ACR_NAME:-crpcxdev}" \
             --parameters redisName="${REDIS_NAME:-redis-pcx-dev}" \
             --name "$DEPLOYMENT_NAME" \
-            --only-show-errors || {
-              echo "❌ Deployment failed. Checking error details..."
-              az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.error" -o json || true
-              exit 1
-            }
+            --only-show-errors; then
+            
+            echo "❌ Deployment failed. Attempting to get error details..."
+            
+            # Wait a moment for deployment to be registered
+            sleep 5
+            
+            # Try to get error details with better error handling
+            if az deployment sub show --name "$DEPLOYMENT_NAME" >/dev/null 2>&1; then
+              echo "Deployment exists, getting error details:"
+              az deployment sub show --name "$DEPLOYMENT_NAME" --query "properties.error" -o json 2>/dev/null || echo "Could not retrieve error details"
+            else
+              echo "Deployment not found or not yet registered. Check Azure portal for details."
+              echo "Deployment name: $DEPLOYMENT_NAME"
+            fi
+            
+            exit 1
+          fi
           
           echo "✅ Infrastructure deployment completed"
         working-directory: .
