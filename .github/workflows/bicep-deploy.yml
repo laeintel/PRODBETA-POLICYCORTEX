@@ -141,25 +141,12 @@ jobs:
           echo "Deployment name: $DEPLOYMENT_NAME"
           echo "DEPLOYMENT_NAME=$DEPLOYMENT_NAME" >> $GITHUB_ENV
           
-          # Create parameter file to avoid Azure CLI issues
-          cat > /tmp/deploy-params.json << EOF
-          {
-            "\$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-            "contentVersion": "1.0.0.0",
-            "parameters": {
-              "jwtSecretKey": {
-                "value": "${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}"
-              }
-            }
-          }
-          EOF
-          
-          # Deploy with parameter file
+          # Deploy directly with inline parameters
           az deployment sub create \
             --location "East US" \
             --template-file infrastructure/bicep/main.bicep \
             --parameters infrastructure/bicep/environments/dev.bicepparam \
-            --parameters @/tmp/deploy-params.json \
+            --parameters jwtSecretKey="${{ secrets.JWT_SECRET_KEY_DEV || 'dev-secret-key-123' }}" \
             --name "$DEPLOYMENT_NAME" \
             --only-show-errors || {
               echo "❌ Deployment failed. Checking error details..."
