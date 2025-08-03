@@ -26,6 +26,11 @@ param deployContainerApps bool = false
 @secure()
 param jwtSecretKey string
 
+// Override parameters for existing resources
+param storageAccountName string = ''
+param containerRegistryName string = ''
+param redisName string = ''
+
 // Data Services Parameters
 @description('Whether to deploy SQL Server')
 param deploySqlServer bool = true
@@ -134,7 +139,7 @@ module storageAccount 'modules/storage.bicep' = {
   scope: appResourceGroup
   name: 'storageAccount'
   params: {
-    storageAccountName: 'stpolicortex001${environment}'
+    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'stpolicortex001${environment}'
     location: location
     tags: commonTags
     allowedIps: allowedIps
@@ -146,7 +151,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
   scope: appResourceGroup
   name: 'containerRegistry'
   params: {
-    registryName: 'crpolicortex001${environment}'
+    registryName: !empty(containerRegistryName) ? containerRegistryName : 'crpolicortex001${environment}'
     location: location
     tags: commonTags
     managedIdentityPrincipalId: userIdentity.outputs.principalId
@@ -241,6 +246,7 @@ module dataServices 'modules/data-services.bicep' = {
     cosmosMaxThroughput: cosmosMaxThroughput
     redisCapacity: redisCapacity
     redisSKUName: redisSKUName
+    redisName: redisName
   }
 }
 

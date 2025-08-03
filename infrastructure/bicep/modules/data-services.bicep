@@ -17,11 +17,12 @@ param cosmosFailoverLocation string = 'West US 2'
 param cosmosMaxThroughput int = 4000
 param redisCapacity int = 2
 param redisSKUName string = 'Standard'
+param redisName string = ''
 
 
 // Cosmos DB Account
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: 'policortex001-cosmos-${environment}'
+  name: 'pcx001-cosmos-${environment}-${substring(uniqueString(resourceGroup().id), 0, 4)}'
   location: location
   tags: tags
   kind: 'GlobalDocumentDB'
@@ -130,7 +131,7 @@ resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/co
 
 // Redis Cache (with unique name to avoid conflicts)
 resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
-  name: 'pcx001-redis-${environment}-${substring(uniqueString(resourceGroup().id, subscription().id), 0, 6)}'
+  name: !empty(redisName) ? redisName : 'pcx001-redis-${environment}-${substring(uniqueString(resourceGroup().id, subscription().id), 0, 6)}'
   location: location
   tags: tags
   properties: {
@@ -215,7 +216,7 @@ resource sqlFirewallAzure 'Microsoft.Sql/servers/firewallRules@2023-05-01-previe
 
 // Private Endpoints
 resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policortex001-cosmos-pe-${environment}'
+  name: '${cosmosAccount.name}-pe'
   location: location
   tags: tags
   properties: {
@@ -239,7 +240,7 @@ resource cosmosPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' =
 }
 
 resource redisPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = {
-  name: 'policortex001-redis-pe-${environment}'
+  name: '${redisCache.name}-pe'
   location: location
   tags: tags
   properties: {
@@ -263,7 +264,7 @@ resource redisPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = 
 }
 
 resource sqlPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-05-01' = if (deploySqlServer) {
-  name: 'policortex001-sql-pe-${environment}'
+  name: '${sqlServer.name}-pe'
   location: location
   tags: tags
   properties: {

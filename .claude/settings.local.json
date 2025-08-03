@@ -255,7 +255,9 @@
       "Bash(where az)",
       "Bash(del debug-runner.yml kubernetes-deploy.yml test-runner.yml)",
       "Bash(./deploy-infrastructure-step-by-step.sh:*)",
-      "Bash(./deploy-simple.sh)"
+      "Bash(./deploy-simple.sh)",
+      "Bash(.\\venv\\Scripts\\pip.exe install aiohttp fastapi uvicorn python-jose[cryptography] python-multipart pydantic structlog httpx)",
+      "Bash(./deploy-missing-resources.sh:*)"
     ],
     "deny": []
   }
