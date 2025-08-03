@@ -312,7 +312,7 @@ module keyVaultSecrets 'modules/key-vault-secrets.bicep' = {
     managedIdentityClientId: userIdentity.outputs.clientId
     storageAccountName: storageAccount.outputs.storageAccountName
     applicationInsightsConnectionString: applicationInsights.outputs.connectionString
-    cognitiveServicesKey: aiServices.outputs.cognitiveServicesKey
+    cognitiveServicesKey: 'placeholder-key-retrieved-directly-from-cognitive-services'
     cognitiveServicesEndpoint: aiServices.outputs.cognitiveServicesEndpoint
     redisConnectionString: dataServices.outputs.redisConnectionString
     cosmosConnectionString: dataServices.outputs.cosmosConnectionString
