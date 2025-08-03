@@ -10,8 +10,8 @@ param allowedIps = []
 // Set to false if Key Vault access policy already exists
 param createTerraformAccessPolicy = false
 
-// Container Apps deployment (DISABLED - enable after Key Vault setup)
-param deployContainerApps = false
+// Container Apps deployment (ENABLED for simple infrastructure)
+param deployContainerApps = true
 
 // Data Services Configuration
 param deploySqlServer = false  // SQL Server provisioning restricted in East US
