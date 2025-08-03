@@ -8,16 +8,7 @@ permissions:
   pull-requests: write
 
 on:
-  push:
-    branches: [ main, develop ]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker-compose*.yml'
-      - '.github/workflows/ci-cd-complete.yml'
-      - 'Dockerfile*'
-  pull_request:
-    branches: [ main, develop ]
+  # Manual trigger only for application deployment
   workflow_dispatch:
     inputs:
       environment:

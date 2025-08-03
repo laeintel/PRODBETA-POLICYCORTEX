@@ -252,7 +252,8 @@
       "Bash(del nul)",
       "Bash(env SERVICE_PORT=8016 \"..\\..\\venv\\Scripts\\python.exe\" main_simple.py)",
       "Bash(env VITE_PORT=3000 npm run dev)",
-      "Bash(where az)"
+      "Bash(where az)",
+      "Bash(del debug-runner.yml kubernetes-deploy.yml test-runner.yml)"
     ],
     "deny": []
   }
