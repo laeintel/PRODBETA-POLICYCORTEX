@@ -836,15 +836,24 @@ jobs:
           
           echo "API Gateway FQDN: $API_GATEWAY_FQDN"
           
-          # Deploy each microservice using latest tags
-          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
+          # Deploy each microservice using latest tags with correct container app names
+          # Map service names to actual container app names and images
+          declare -A service_map=(
+            ["api-gateway"]="ca-pcx-gateway-dev"
+            ["azure-integration"]="ca-pcx-azureint-dev"
+            ["ai-engine"]="ca-pcx-ai-dev"
+            ["data-processing"]="ca-pcx-dataproc-dev"
+            ["conversation"]="ca-pcx-chat-dev"
+            ["notification"]="ca-pcx-notify-dev"
+          )
           
-          for service in "${services[@]}"; do
-            echo "📦 Deploying ca-pcx-$service-dev with new revision and Key Vault secrets..."
+          for service in "${!service_map[@]}"; do
+            container_app_name="${service_map[$service]}"
+            echo "📦 Deploying $container_app_name with new revision and Key Vault secrets..."
             
             # Backend services environment variables with Key Vault secrets
             az containerapp update \
-              --name ca-pcx-$service-dev \
+              --name "$container_app_name" \
               --resource-group $RESOURCE_GROUP \
               --image ${{ steps.get_acr.outputs.acr_login_server }}/pcx-$service:latest \
               --revision-suffix $REVISION_SUFFIX \
@@ -872,7 +881,7 @@ jobs:
                 "APPLICATION_INSIGHTS_CONNECTION_STRING=secretref:application-insights-connection-string" \
               --output table
               
-            echo "✅ Deployed ca-pcx-$service-dev with Key Vault secrets and revision suffix $REVISION_SUFFIX"
+            echo "✅ Deployed $container_app_name with Key Vault secrets and revision suffix $REVISION_SUFFIX"
           done
           
           # Deploy Frontend
