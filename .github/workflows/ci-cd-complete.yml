@@ -750,7 +750,7 @@ jobs:
       - name: Get ACR Details
         id: get_acr
         run: |
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpcxdev')].name" -o tsv)
           ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
@@ -767,36 +767,36 @@ jobs:
           services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
           
           for service in "${services[@]}"; do
-            echo "🏗️ Building policortex001-$service..."
+            echo "🏗️ Building pcx-$service..."
             
             service_dir=$(echo $service | sed 's/-/_/g')
             
-            docker build -t $ACR_LOGIN_SERVER/policortex001-$service:latest \
-              -t $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }} \
+            docker build -t $ACR_LOGIN_SERVER/pcx-$service:latest \
+              -t $ACR_LOGIN_SERVER/pcx-$service:${{ github.sha }} \
               -f backend/services/$service_dir/Dockerfile backend/
             
-            echo "📤 Pushing policortex001-$service..."
-            docker push $ACR_LOGIN_SERVER/policortex001-$service:latest
-            docker push $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }}
+            echo "📤 Pushing pcx-$service..."
+            docker push $ACR_LOGIN_SERVER/pcx-$service:latest
+            docker push $ACR_LOGIN_SERVER/pcx-$service:${{ github.sha }}
             
-            echo "✅ Completed policortex001-$service"
+            echo "✅ Completed pcx-$service"
           done
 
       - name: Build and Push Frontend Image
         run: |
           export ACR_LOGIN_SERVER=${{ steps.get_acr.outputs.acr_login_server }}
           
-          echo "🏗️ Building policortex001-frontend..."
+          echo "🏗️ Building pcx-frontend..."
           
-          docker build -t $ACR_LOGIN_SERVER/policortex001-frontend:latest \
-            -t $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }} \
-            frontend/
+          docker build -t $ACR_LOGIN_SERVER/pcx-frontend:latest \
+            -t $ACR_LOGIN_SERVER/pcx-frontend:${{ github.sha }} \
+            -f frontend/Dockerfile frontend/
           
-          echo "📤 Pushing policortex001-frontend..."
-          docker push $ACR_LOGIN_SERVER/policortex001-frontend:latest
-          docker push $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }}
+          echo "📤 Pushing pcx-frontend..."
+          docker push $ACR_LOGIN_SERVER/pcx-frontend:latest
+          docker push $ACR_LOGIN_SERVER/pcx-frontend:${{ github.sha }}
           
-          echo "✅ Completed policortex001-frontend"
+          echo "✅ Completed pcx-frontend"
 
       - name: Deploy to Azure Container Apps
         run: |
@@ -806,10 +806,10 @@ jobs:
           echo "Using revision suffix: $REVISION_SUFFIX"
           
           # Get resource group for dev environment
-          RESOURCE_GROUP=$(az group list --query "[?name=='rg-policortex001-app-dev'].name" -o tsv | head -n 1)
+          RESOURCE_GROUP=$(az group list --query "[?name=='rg-pcx-app-dev'].name" -o tsv | head -n 1)
           
           if [ -z "$RESOURCE_GROUP" ]; then
-            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-pcx-app-dev')].name" -o tsv | head -n 1)
           fi
           
           if [ -z "$RESOURCE_GROUP" ]; then
@@ -819,32 +819,76 @@ jobs:
           
           echo "✅ Using resource group: $RESOURCE_GROUP"
           
-          # Deploy services with latest images
-          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          # Get Container Apps Environment domain for dynamic URLs
+          API_GATEWAY_FQDN=$(az containerapp show --name ca-pcx-gateway-dev --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "API Gateway FQDN: $API_GATEWAY_FQDN"
+          
+          # Deploy each microservice using latest tags
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
           
           for service in "${services[@]}"; do
-            echo "📦 Deploying ca-$service-dev..."
+            echo "📦 Deploying ca-pcx-$service-dev with new revision and Key Vault secrets..."
             
+            # Backend services environment variables with Key Vault secrets
             az containerapp update \
-              --name ca-$service-dev \
+              --name ca-pcx-$service-dev \
               --resource-group $RESOURCE_GROUP \
-              --image ${{ steps.get_acr.outputs.acr_login_server }}/policortex001-$service:latest \
+              --image ${{ steps.get_acr.outputs.acr_login_server }}/pcx-$service:latest \
               --revision-suffix $REVISION_SUFFIX \
-              --output table || echo "Failed to deploy $service but continuing..."
+              --replace-env-vars \
+                "ENVIRONMENT=dev" \
+                "SERVICE_NAME=$service" \
+                "SERVICE_PORT=$(case $service in api-gateway) echo 8000;; azure-integration) echo 8001;; ai-engine) echo 8002;; data-processing) echo 8003;; conversation) echo 8004;; notification) echo 8005;; *) echo 8000;; esac)" \
+                "LOG_LEVEL=INFO" \
+                "API_GATEWAY_URL=http://ca-pcx-gateway-dev" \
+                "AZURE_INTEGRATION_URL=http://ca-pcx-azureint-dev" \
+                "AI_ENGINE_URL=http://ca-pcx-ai-dev" \
+                "DATA_PROCESSING_URL=http://ca-pcx-dataproc-dev" \
+                "CONVERSATION_URL=http://ca-pcx-chat-dev" \
+                "NOTIFICATION_URL=http://ca-pcx-notify-dev" \
+                "JWT_SECRET_KEY=secretref:jwt-secret" \
+                "ENCRYPTION_KEY=secretref:encryption-key" \
+                "AZURE_CLIENT_ID=secretref:azure-client-id" \
+                "AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                "AZURE_COSMOS_ENDPOINT=secretref:cosmos-endpoint" \
+                "AZURE_COSMOS_KEY=secretref:cosmos-key" \
+                "REDIS_CONNECTION_STRING=secretref:redis-connection-string" \
+                "AZURE_STORAGE_ACCOUNT_NAME=secretref:storage-account-name" \
+                "COGNITIVE_SERVICES_KEY=secretref:cognitive-services-key" \
+                "COGNITIVE_SERVICES_ENDPOINT=secretref:cognitive-services-endpoint" \
+                "APPLICATION_INSIGHTS_CONNECTION_STRING=secretref:application-insights-connection-string" \
+              --output table
               
-            echo "✅ Deployed ca-$service-dev"
+            echo "✅ Deployed ca-pcx-$service-dev with Key Vault secrets and revision suffix $REVISION_SUFFIX"
           done
+          
+          # Deploy Frontend
+          echo "📦 Deploying ca-pcx-web-dev (Frontend) with new revision..."
+          
+          az containerapp update \
+            --name ca-pcx-web-dev \
+            --resource-group $RESOURCE_GROUP \
+            --image ${{ steps.get_acr.outputs.acr_login_server }}/pcx-frontend:latest \
+            --revision-suffix $REVISION_SUFFIX \
+            --replace-env-vars \
+              "VITE_API_BASE_URL=https://$API_GATEWAY_FQDN/api" \
+              "VITE_APP_TITLE=PolicyCortex" \
+              "VITE_ENVIRONMENT=dev" \
+            --output table
+            
+          echo "✅ Deployed ca-pcx-web-dev (Frontend) with revision suffix $REVISION_SUFFIX"
 
       - name: Run Health Checks
         run: |
           echo "🩺 Running health checks..."
           
           # Get resource group
-          RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+          RESOURCE_GROUP="rg-pcx-app-dev"
           
           # Get Container App URLs
-          API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-dev --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
-          FRONTEND_URL=$(az containerapp show --name ca-frontend-dev --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
+          API_GATEWAY_URL=$(az containerapp show --name ca-pcx-gateway-dev --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show --name ca-pcx-web-dev --resource-group $RESOURCE_GROUP --query "properties.configuration.ingress.fqdn" -o tsv)
           
           echo "🌐 Application URLs:"
           echo "  API Gateway: https://${API_GATEWAY_URL}"
