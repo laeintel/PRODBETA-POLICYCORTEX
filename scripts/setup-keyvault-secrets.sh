@@ -6,8 +6,8 @@ set -e
 
 # Configuration
 ENVIRONMENT=${1:-"dev"}
-RESOURCE_GROUP="rg-policycortex001-app-${ENVIRONMENT}"
-KEY_VAULT_NAME="kvpolicortex001${ENVIRONMENT}"
+RESOURCE_GROUP="rg-pcx-app-${ENVIRONMENT}"
+KEY_VAULT_NAME="kv-pcx-${ENVIRONMENT}"
 
 echo "🔐 Setting up Key Vault secrets for PolicyCortex ${ENVIRONMENT} environment"
 echo "Resource Group: ${RESOURCE_GROUP}"

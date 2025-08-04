@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$ResourceGroup = "rg-policycortex001-app-$Environment"
+$ResourceGroup = "rg-pcx-app-$Environment"
 $KeyVaultName = "kvpolicortex001$Environment"
 
 Write-Host "🔐 Setting up Key Vault secrets for PolicyCortex $Environment environment" -ForegroundColor Green
