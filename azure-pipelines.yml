@@ -70,9 +70,19 @@ stages:
               python -m pip install --upgrade pip
               # Special handling for AI Engine service with PyTorch
               if [ "$(serviceName)" = "ai_engine" ]; then
-                pip install torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu
+                # Two-stage installation to handle torch-geometric dependencies
+                if [ -f "requirements-stage1.txt" ]; then
+                  echo "Installing stage 1 requirements (including PyTorch)..."
+                  pip install -r requirements-stage1.txt --index-url https://download.pytorch.org/whl/cpu
+                  echo "Installing stage 2 requirements (torch-geometric packages)..."
+                  pip install -r requirements-stage2.txt
+                else
+                  # Fallback to original requirements.txt
+                  pip install -r requirements.txt
+                fi
+              else
+                pip install -r requirements.txt
               fi
-              pip install -r requirements.txt
               pip install pytest pytest-cov pytest-azurepipelines
             displayName: 'Install dependencies'
 
