@@ -750,8 +750,21 @@ jobs:
       - name: Get ACR Details
         id: get_acr
         run: |
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpcxdev')].name" -o tsv)
-          ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
+          # Get ACR name with proper error handling
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpcxdev')].name" -o tsv | head -n 1)
+          
+          # If not found, try with different pattern
+          if [ -z "$ACR_NAME" ]; then
+            ACR_NAME=$(az acr list --query "[?contains(name, 'pcx') && contains(name, 'dev')].name" -o tsv | head -n 1)
+          fi
+          
+          # Final fallback
+          if [ -z "$ACR_NAME" ]; then
+            echo "Using default ACR name: crpcxdev"
+            ACR_NAME="crpcxdev"
+          fi
+          
+          ACR_LOGIN_SERVER="$ACR_NAME.azurecr.io"
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
           echo "Found ACR: $ACR_NAME at $ACR_LOGIN_SERVER"
@@ -805,15 +818,14 @@ jobs:
           REVISION_SUFFIX="r$(date +%s)"
           echo "Using revision suffix: $REVISION_SUFFIX"
           
-          # Get resource group for dev environment
-          RESOURCE_GROUP=$(az group list --query "[?name=='rg-pcx-app-dev'].name" -o tsv | head -n 1)
+          # Get resource group for dev environment - use fixed name
+          RESOURCE_GROUP="rg-pcx-app-dev"
           
-          if [ -z "$RESOURCE_GROUP" ]; then
-            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-pcx-app-dev')].name" -o tsv | head -n 1)
-          fi
-          
-          if [ -z "$RESOURCE_GROUP" ]; then
-            echo "❌ ERROR: No suitable resource group found for dev environment"
+          # Verify it exists
+          if ! az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+            echo "❌ ERROR: Resource group $RESOURCE_GROUP does not exist"
+            echo "Available resource groups:"
+            az group list --query "[?contains(name, 'pcx')].name" -o table
             exit 1
           fi
           
