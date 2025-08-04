@@ -811,6 +811,18 @@ jobs:
           
           echo "✅ Completed pcx-frontend"
 
+      - name: Sync Key Vault Secrets to Container Apps
+        run: |
+          echo "🔐 Syncing Key Vault secrets to Container Apps..."
+          
+          # Make the script executable
+          chmod +x scripts/sync-keyvault-to-containerapp.sh
+          
+          # Run the sync script
+          ./scripts/sync-keyvault-to-containerapp.sh dev
+          
+          echo "✅ Key Vault secrets synced to Container Apps"
+
       - name: Deploy to Azure Container Apps
         run: |
           echo "🚀 Deploying to Azure Container Apps..."
