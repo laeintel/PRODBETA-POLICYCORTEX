@@ -269,7 +269,8 @@
       "Bash(del test-params.json)",
       "Bash(while az group show --name \"rg-pcx-app-dev\")",
       "Bash(do:*)",
-      "Bash(while az group show --name \"rg-pcx-app-dev\" --query \"name\" -o tsv)"
+      "Bash(while az group show --name \"rg-pcx-app-dev\" --query \"name\" -o tsv)",
+      "Bash(git merge:*)"
     ],
     "deny": []
   }

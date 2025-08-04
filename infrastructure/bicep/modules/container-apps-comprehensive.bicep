@@ -19,6 +19,7 @@ var services = [
   {
     name: '${containerAppPrefix}-gateway-${environment}'
     displayName: 'API Gateway'
+    imageName: 'api-gateway'
     port: 8000
     cpu: '1.0'
     memory: '2Gi'
@@ -37,6 +38,7 @@ var services = [
   {
     name: '${containerAppPrefix}-azureint-${environment}'
     displayName: 'Azure Integration'
+    imageName: 'azure-integration'
     port: 8001
     cpu: '0.5'
     memory: '1Gi'
@@ -50,6 +52,7 @@ var services = [
   {
     name: '${containerAppPrefix}-ai-${environment}'
     displayName: 'AI Engine'
+    imageName: 'ai-engine'
     port: 8002
     cpu: '1.0'
     memory: '2Gi'
@@ -63,6 +66,7 @@ var services = [
   {
     name: '${containerAppPrefix}-dataproc-${environment}'
     displayName: 'Data Processing'
+    imageName: 'data-processing'
     port: 8003
     cpu: '0.5'
     memory: '1Gi'
@@ -76,6 +80,7 @@ var services = [
   {
     name: '${containerAppPrefix}-chat-${environment}'
     displayName: 'Conversation Service'
+    imageName: 'conversation'
     port: 8004
     cpu: '0.5'
     memory: '1Gi'
@@ -89,6 +94,7 @@ var services = [
   {
     name: '${containerAppPrefix}-notify-${environment}'
     displayName: 'Notification Service'
+    imageName: 'notification'
     port: 8005
     cpu: '0.5'
     memory: '1Gi'
@@ -163,8 +169,8 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
     template: {
       containers: [
         {
-          // Use actual service image from registry
-          image: '${containerRegistryLoginServer}/pcx-${replace(toLower(service.displayName), ' ', '-')}:latest'
+          // Use placeholder image - real images will be deployed by application pipeline
+          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           name: toLower(replace(service.displayName, ' ', '-'))  // DNS compliant container name
           resources: {
             cpu: json(service.cpu)
@@ -231,8 +237,8 @@ resource frontend 'Microsoft.App/containerApps@2023-05-01' = {
     template: {
       containers: [
         {
-          // Use actual frontend image from registry
-          image: '${containerRegistryLoginServer}/pcx-frontend:latest'
+          // Use placeholder image - real image will be deployed by application pipeline
+          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           name: 'frontend'
           resources: {
             cpu: json('0.5')
