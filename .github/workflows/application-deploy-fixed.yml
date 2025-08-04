@@ -18,7 +18,20 @@ defaults:
     shell: bash
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/application-deploy-fixed.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+  workflow_dispatch:  # Manual trigger
     inputs:
       environment:
         description: 'Environment to deploy to'
@@ -33,6 +46,11 @@ on:
         description: 'Skip tests to save minutes'
         required: false
         default: true
+        type: boolean
+      force_deploy:
+        description: 'Force deployment even on PR'
+        required: false
+        default: false
         type: boolean
 
 env:
@@ -212,7 +230,7 @@ jobs:
     name: Deploy to Development
     runs-on: ubuntu-latest
     needs: [build-and-push]
-    if: always() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+    if: always() && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.force_deploy == 'true' || github.ref == 'refs/heads/main')))
     environment: dev
     
     steps:
@@ -286,10 +304,20 @@ jobs:
             
             # Backend services environment variables with Key Vault secrets
             # First update the image and basic env vars
-            az containerapp update \
+            # Try to use commit-specific image first, fallback to latest
+            IMAGE_TAG="${{ github.sha }}"
+            if az acr repository show-tags --name ${{ needs.build-and-push.outputs.acr_name }} --repository pcx-$service --query "[?@=='$IMAGE_TAG']" -o tsv | grep -q "$IMAGE_TAG"; then
+              IMAGE_REF="${{ steps.get_resources.outputs.acr_login_server }}/pcx-$service:$IMAGE_TAG"
+              echo "Using commit-specific image: $IMAGE_REF"
+            else
+              IMAGE_REF="${{ steps.get_resources.outputs.acr_login_server }}/pcx-$service:latest"
+              echo "Using latest image: $IMAGE_REF"
+            fi
+            
+            if az containerapp update \
               --name "$container_app_name" \
               --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-              --image ${{ steps.get_resources.outputs.acr_login_server }}/pcx-$service:latest \
+              --image "$IMAGE_REF" \
               --revision-suffix $REVISION_SUFFIX \
               --replace-env-vars \
                 "ENVIRONMENT=dev" \
@@ -302,10 +330,15 @@ jobs:
                 "DATA_PROCESSING_URL=http://ca-pcx-dataproc-dev" \
                 "CONVERSATION_URL=http://ca-pcx-chat-dev" \
                 "NOTIFICATION_URL=http://ca-pcx-notify-dev" \
-              --output table
+              --output table; then
+              echo "✅ Successfully updated $container_app_name with new image"
+            else
+              echo "❌ Failed to update $container_app_name"
+              exit 1
+            fi
             
             # Then set the secret references using a separate command
-            az containerapp update \
+            if az containerapp update \
               --name "$container_app_name" \
               --resource-group ${{ steps.get_resources.outputs.resource_group }} \
               --set-env-vars \
@@ -320,7 +353,11 @@ jobs:
                 "COGNITIVE_SERVICES_KEY=secretref:cognitive-services-key" \
                 "COGNITIVE_SERVICES_ENDPOINT=secretref:cognitive-services-endpoint" \
                 "APPLICATION_INSIGHTS_CONNECTION_STRING=secretref:application-insights-connection-string" \
-              --output table
+              --output table; then
+              echo "✅ Successfully configured secrets for $container_app_name"
+            else
+              echo "⚠️ Failed to configure secrets for $container_app_name, but continuing..."
+            fi
               
             echo "✅ Deployed $container_app_name with Key Vault secrets and revision suffix $REVISION_SUFFIX"
           done
@@ -328,18 +365,31 @@ jobs:
           # Deploy Frontend
           echo "📦 Deploying ca-pcx-web-dev (Frontend) with new revision..."
           
-          az containerapp update \
+          # Try to use commit-specific frontend image first, fallback to latest
+          FRONTEND_TAG="${{ github.sha }}"
+          if az acr repository show-tags --name ${{ needs.build-and-push.outputs.acr_name }} --repository pcx-frontend --query "[?@=='$FRONTEND_TAG']" -o tsv | grep -q "$FRONTEND_TAG"; then
+            FRONTEND_IMAGE_REF="${{ steps.get_resources.outputs.acr_login_server }}/pcx-frontend:$FRONTEND_TAG"
+            echo "Using commit-specific frontend image: $FRONTEND_IMAGE_REF"
+          else
+            FRONTEND_IMAGE_REF="${{ steps.get_resources.outputs.acr_login_server }}/pcx-frontend:latest"
+            echo "Using latest frontend image: $FRONTEND_IMAGE_REF"
+          fi
+          
+          if az containerapp update \
             --name ca-pcx-web-dev \
             --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-            --image ${{ steps.get_resources.outputs.acr_login_server }}/pcx-frontend:latest \
+            --image "$FRONTEND_IMAGE_REF" \
             --revision-suffix $REVISION_SUFFIX \
             --replace-env-vars \
               "VITE_API_BASE_URL=https://$API_GATEWAY_FQDN/api" \
               "VITE_APP_TITLE=PolicyCortex" \
               "VITE_ENVIRONMENT=dev" \
-            --output table
-            
-          echo "✅ Deployed ca-pcx-web-dev (Frontend) with revision suffix $REVISION_SUFFIX"
+            --output table; then
+            echo "✅ Successfully deployed ca-pcx-web-dev (Frontend) with revision suffix $REVISION_SUFFIX"
+          else
+            echo "❌ Failed to deploy ca-pcx-web-dev (Frontend)"
+            exit 1
+          fi
 
       - name: Wait for deployments
         run: |
@@ -366,13 +416,24 @@ jobs:
       - name: Run health checks
         continue-on-error: true
         run: |
-          echo "🩺 Running health checks..."
+          echo "🩺 Running comprehensive health checks..."
           
           # Get Container App URLs
           API_GATEWAY_URL=$(az containerapp show --name ca-pcx-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show --name ca-pcx-web-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
           echo "🌐 Application URLs:"
+          echo "  Frontend: https://${FRONTEND_URL}"
           echo "  API Gateway: https://${API_GATEWAY_URL}"
+          
+          # Define all services to health check
+          declare -A health_checks=(
+            ["Frontend"]="https://${FRONTEND_URL}"
+            ["API Gateway"]="https://${API_GATEWAY_URL}/health"
+            ["API Status"]="https://${API_GATEWAY_URL}/api/v1/status"
+            ["Policies API"]="https://${API_GATEWAY_URL}/api/v1/policies"
+            ["Dashboard API"]="https://${API_GATEWAY_URL}/api/v1/dashboard/overview"
+          )
           
           # Health check function with retries
           check_health() {
@@ -398,18 +459,31 @@ jobs:
             return 1
           }
           
-          # Run health checks
+          # Run health checks for all services
           HEALTH_FAILED=false
+          PASSED_CHECKS=0
+          TOTAL_CHECKS=${#health_checks[@]}
           
-          if ! check_health "https://${API_GATEWAY_URL}/health" "API Gateway"; then
-            HEALTH_FAILED=true
-          fi
+          for service_name in "${!health_checks[@]}"; do
+            service_url="${health_checks[$service_name]}"
+            if check_health "$service_url" "$service_name"; then
+              ((PASSED_CHECKS++))
+            else
+              HEALTH_FAILED=true
+            fi
+          done
+          
+          echo ""
+          echo "📊 Health Check Summary:"
+          echo "  Passed: $PASSED_CHECKS/$TOTAL_CHECKS"
           
           if [ "$HEALTH_FAILED" = "true" ]; then
             echo "⚠️  Some health checks failed, but deployment was successful"
             echo "📋 Manual verification may be needed"
+            echo "🌐 Access your application at: https://${FRONTEND_URL}"
           else
             echo "🎉 All health checks passed!"
+            echo "🌐 Your application is ready at: https://${FRONTEND_URL}"
           fi
 
   # Deployment Summary
@@ -443,3 +517,62 @@ jobs:
           else
             echo "❌ Deployment encountered issues. Check logs above."
           fi
+          
+          echo ""
+          echo "🔧 Pipeline Configuration:"
+          echo "  - Trigger: ${{ github.event_name }}"
+          echo "  - Branch: ${{ github.ref_name }}"
+          echo "  - Commit: ${{ github.sha }}"
+          echo "  - Environment: dev"
+
+  # Optional: Cleanup old images to save ACR space
+  cleanup-images:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-dev]
+    if: always() && needs.deploy-dev.result == 'success'
+    continue-on-error: true
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Cleanup Old Images
+        run: |
+          echo "🧹 Cleaning up old images to save ACR space..."
+          
+          ACR_NAME="${{ needs.build-and-push.outputs.acr_name }}"
+          
+          if [ -z "$ACR_NAME" ]; then
+            echo "❌ ACR name not found, skipping cleanup"
+            exit 0
+          fi
+          
+          # Keep only the latest 5 tags for each repository
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          
+          for service in "${services[@]}"; do
+            repo_name="pcx-$service"
+            echo "🗂️ Cleaning up $repo_name..."
+            
+            # Get all tags sorted by creation time (newest first)
+            old_tags=$(az acr repository show-tags --name "$ACR_NAME" --repository "$repo_name" \
+              --query "[5:].name" -o tsv 2>/dev/null || echo "")
+            
+            if [ -n "$old_tags" ]; then
+              echo "Found old tags to delete: $old_tags"
+              for tag in $old_tags; do
+                # Skip 'latest' tag
+                if [ "$tag" != "latest" ]; then
+                  echo "🗑️ Deleting $repo_name:$tag"
+                  az acr repository delete --name "$ACR_NAME" --image "$repo_name:$tag" --yes || echo "Failed to delete $tag"
+                fi
+              done
+            else
+              echo "No old tags to clean up for $repo_name"
+            fi
+          done
+          
+          echo "✅ Cleanup completed"
