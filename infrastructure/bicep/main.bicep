@@ -143,7 +143,7 @@ module storageAccount 'modules/storage.bicep' = {
   scope: appResourceGroup
   name: 'storageAccount'
   params: {
-    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'st${resourcePrefix}${environment}${uniqueString(subscription().id, environment)}'
+    storageAccountName: !empty(storageAccountName) ? storageAccountName : 'stpcx${environment}'
     location: location
     tags: commonTags
     allowedIps: allowedIps
@@ -155,7 +155,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
   scope: appResourceGroup
   name: 'containerRegistry'
   params: {
-    registryName: !empty(containerRegistryName) ? containerRegistryName : 'cr${resourcePrefix}${environment}${uniqueString(subscription().id, environment)}'
+    registryName: !empty(containerRegistryName) ? containerRegistryName : 'crpcx${environment}'
     location: location
     tags: commonTags
     managedIdentityPrincipalId: userIdentity.outputs.principalId
@@ -170,7 +170,7 @@ module keyVault 'modules/key-vault.bicep' = {
   scope: appResourceGroup
   name: 'keyVault-${uniqueString(deployment().name)}'
   params: {
-    keyVaultName: 'kv-${resourcePrefix}-${environment}'
+    keyVaultName: 'kv-pcx-${environment}'
     location: location
     tags: commonTags
     createTerraformAccessPolicy: createTerraformAccessPolicy
@@ -187,7 +187,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
   scope: appResourceGroup
   name: 'logAnalytics'
   params: {
-    workspaceName: 'law-${resourcePrefix}-${environment}'
+    workspaceName: 'law-pcx-${environment}'
     location: location
     tags: commonTags
   }
@@ -198,7 +198,7 @@ module applicationInsights 'modules/application-insights.bicep' = {
   scope: appResourceGroup
   name: 'applicationInsights'
   params: {
-    appInsightsName: 'ai-${resourcePrefix}-${environment}'
+    appInsightsName: 'ai-pcx-${environment}'
     location: location
     tags: commonTags
     workspaceResourceId: logAnalytics.outputs.workspaceId
@@ -210,7 +210,7 @@ module userIdentity 'modules/user-identity.bicep' = {
   scope: appResourceGroup
   name: 'userIdentity'
   params: {
-    identityName: 'id-${resourcePrefix}-${environment}'
+    identityName: 'id-pcx-${environment}'
     location: location
     tags: commonTags
   }
@@ -284,7 +284,7 @@ module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   scope: appResourceGroup
   name: 'containerAppsEnvironment-${uniqueString(deployment().name)}'
   params: {
-    environmentName: 'cae-${resourcePrefix}-${environment}'
+    environmentName: 'cae-pcx-${environment}'
     location: location
     tags: commonTags
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId

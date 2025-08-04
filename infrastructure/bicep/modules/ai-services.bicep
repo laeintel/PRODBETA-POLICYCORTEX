@@ -17,9 +17,7 @@ param cognitiveServicesSku string = 'S0'
 param deployOpenAI bool = true
 param openAISku string = 'S0'
 
-// Generate a unique suffix to avoid conflicts with existing resources
-var uniqueSuffix = uniqueString(resourceGroup().id, 'v2')
-var shortUniqueSuffix = substring(uniqueSuffix, 0, 6)
+// Static naming for consistent resource management
 
 // Cognitive Services Account
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
@@ -40,6 +38,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     }
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
+    restore: true  // Handle soft-deleted resource
   }
 }
 
@@ -62,6 +61,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
     }
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
+    restore: true  // Handle soft-deleted resource
   }
 }
 
@@ -89,7 +89,7 @@ resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' =
 
 // ML Container Registry (conditional)
 resource mlContainerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = if (createMLContainerRegistry) {
-  name: 'crpcxml${environment}${substring(uniqueString(resourceGroup().id), 0, 4)}'
+  name: 'crpcxml${environment}'
   location: location
   tags: tags
   sku: {
@@ -138,7 +138,7 @@ resource mlComputeInstance 'Microsoft.MachineLearningServices/workspaces/compute
 
 // EventGrid Topic for ML Operations
 resource eventGridTopic 'Microsoft.EventGrid/topics@2023-12-15-preview' = {
-  name: 'eg-pcx-mlevents-${environment}'
+  name: 'eg-pcx-${environment}'
   location: location
   tags: tags
   properties: {
