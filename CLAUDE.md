@@ -54,50 +54,67 @@ isort . --profile black           # Sort imports
 
 ### Docker Development
 ```bash
-# Frontend development with Azure backend
+# Frontend development with Azure backend services
 docker-compose -f docker-compose.dev.yml up
 
-# Full local development stack
+# Full local development stack with all services
 docker-compose -f docker-compose.local.yml up
 
-# Simple development setup
+# Simple development setup for quick testing
 docker-compose -f docker-compose.simple.yml up
+
+# Hybrid development: frontend dev with backend services
+docker-compose -f docker-compose.hybrid.yml up
+
+# Test environment with realistic data simulation
+docker-compose -f docker-compose.test.yml up
 ```
 
 ### Infrastructure
 ```bash
-# Terraform deployment
+# Terraform deployment with environment-specific configurations
 cd infrastructure/terraform
 terraform init
 terraform plan -var-file="environments/dev/terraform.tfvars"
 terraform apply -var-file="environments/dev/terraform.tfvars"
 
+# Bicep deployment with parameter files
+cd infrastructure/bicep
+az deployment group create --resource-group rg-policycortex-dev --template-file main.bicep --parameters environments/dev.bicepparam
+
 # Kubernetes deployment
 cd infrastructure/kubernetes
 kubectl apply -f manifests/
+
+# Infrastructure automation scripts
+./scripts/setup-keyvault-secrets.sh          # Provision Key Vault secrets
+./scripts/sync-keyvault-to-containerapp.sh   # Sync secrets to Container Apps
 ```
 
 ### Testing
 ```bash
-# Run comprehensive test suite
+# Run comprehensive test suite with coverage and performance metrics
 powershell -File testing/scripts/run-complete-test-coverage.ps1
 
-# Quick test run
+# Quick test run for rapid feedback
 powershell -File testing/scripts/quick-test.ps1
 
-# Individual service tests
+# Individual service tests with isolated environments
 powershell -File testing/scripts/test-{service-name}.ps1
 
-# Run a single test file
+# Multi-stage test orchestration with result aggregation
+powershell -File testing/scripts/run-all-tests.ps1
+
+# Run a single test file with verbose output
 cd backend/services/{service_name}
-pytest tests/test_specific.py -v
+pytest tests/test_specific.py -v --tb=short
 
-# Run tests with specific pattern
-pytest -k "test_pattern" -v
+# Run tests with specific pattern and coverage
+pytest -k "test_pattern" -v --cov=.
 
-# Frontend test with watch mode
+# Frontend test with watch mode and coverage
 cd frontend
-npm run test -- --watch
+npm run test -- --watch --coverage
 ```
 
 ## Key Architectural Patterns
@@ -109,28 +126,38 @@ npm run test -- --watch
 - Circuit breaker pattern implemented for resilience
 
 ### Configuration Management
-- Environment-based configuration using Pydantic Settings
+- **Hierarchical Configuration System**: Layered configuration classes (`DatabaseConfig`, `AzureConfig`, `AIConfig`, `SecurityConfig`) with environment-specific composition
+- **Feature Flag Integration**: Built-in feature flags for controlled rollouts (`enable_cost_optimization`, `enable_policy_automation`)
+- **Configuration Validation**: Automatic URL generation and cross-field validation using Pydantic validators
 - Shared configuration in `backend/shared/config.py`
-- Azure Key Vault for secrets in production
-- Environment variables for local development
+- Azure Key Vault for secrets in production with managed identity authentication
+- Environment variables for local development with `.env` file cascading
 
 ### Database Architecture
+- **Dual Database Architecture**: Both sync and async SQLAlchemy engines for different use cases
+- **Audit Trail System**: Built-in `AuditLog` model with automatic change tracking for governance compliance
+- **Service Health Monitoring**: `ServiceHealth` model for distributed service monitoring with database-backed status tracking
+- **Transaction Management**: `async_db_transaction()` context manager for consistent transaction handling
 - Azure SQL Database for relational data
 - Azure Cosmos DB for real-time NoSQL data
-- Redis for caching and session management
-- SQLAlchemy ORM with async support
+- Redis for caching, session management, and rate limiting with sliding window algorithms
 
 ### AI/ML Pipeline
-- Models in `backend/services/ai_engine/ml_models/`
+- **Patent-Protected Implementations**: Unified AI Platform with hierarchical neural networks, Cross-Domain Correlation Engine using Graph Neural Networks, and Conversational Intelligence System
+- **Multi-Objective Optimization**: NSGA-II genetic algorithm integration for governance optimization
+- **Context-Aware Processing**: Conversation state management with policy synthesis and natural language query translation
+- Models in `backend/services/ai_engine/ml_models/` including specialized compliance predictors and correlation engines
 - Azure ML Workspace for training and deployment
-- PyTorch for deep learning models
-- Azure OpenAI for conversational AI
+- PyTorch for deep learning models with custom GNN architectures
+- Azure OpenAI for conversational AI with domain-specific fine-tuning
 
 ### Authentication & Security
-- Azure AD/Entra ID integration using MSAL
-- JWT tokens for API authentication
-- RBAC for fine-grained permissions
-- Rate limiting and circuit breakers
+- **Azure AD Integration**: MSAL-based authentication with automatic token refresh handling
+- **Multi-Layered Security**: JWT token management with configurable lifecycles, environment-specific CORS policies
+- **Circuit Breaker Pattern**: Three-state circuit breaker (CLOSED/OPEN/HALF_OPEN) with configurable failure thresholds
+- **Advanced Rate Limiting**: Redis-based sliding window algorithm with burst allowances and user/IP-based limits
+- RBAC for fine-grained permissions with Azure AD group integration
+- Input validation with Pydantic models and automatic sanitization
 
 ## Service Structure
 
@@ -258,6 +285,33 @@ npm run dev
 - Data Processing: http://localhost:8003
 - Conversation: http://localhost:8004
 - Notification: http://localhost:8005
+
+## Advanced Development Patterns
+
+### Resilience and Circuit Breaking
+- **Circuit Breaker Implementation**: `backend/services/api_gateway/circuit_breaker.py` with three-state management
+- **Health Check Integration**: Automatic service discovery and health monitoring with circuit breaker failover
+- **Retry Strategies**: Exponential backoff with jitter for external service calls
+
+### Configuration Patterns
+- **Environment Cascading**: `.env` files override environment variables which override defaults
+- **Feature Flag Management**: Runtime feature toggling without deployment for A/B testing and gradual rollouts
+- **Secret Management**: Azure Key Vault integration with automatic secret rotation and managed identity authentication
+
+### Service Communication Patterns
+- **Service Discovery**: Environment-based URL configuration with fallback mechanisms
+- **Request Context Propagation**: Distributed tracing context across microservice boundaries
+- **Error Boundary Patterns**: Centralized error handling with service-specific error translation
+
+### Testing Orchestration
+- **Multi-Stage Testing**: PowerShell orchestration scripts coordinate testing across all services with dependency management
+- **Test Environment Management**: Isolated test environments with realistic data simulation and cleanup automation
+- **Performance Benchmarking**: Integrated load testing with K6 and performance regression detection
+
+### Infrastructure Automation
+- **Resource Naming Conventions**: Environment-specific resource naming with automatic Azure resource discovery
+- **Secret Provisioning**: Automated Key Vault secret setup with service principal authentication
+- **Container Image Management**: Multi-stage Docker builds with base image optimization and security scanning
 
 ## Troubleshooting Common Issues
 
