@@ -38,7 +38,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
     }
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
-    restore: true  // Handle soft-deleted resource
+    // Remove restore property - handled automatically by Azure
   }
 }
 
@@ -61,7 +61,7 @@ resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (d
     }
     publicNetworkAccess: 'Enabled'
     disableLocalAuth: false
-    restore: true  // Handle soft-deleted resource
+    // Remove restore property - handled automatically by Azure
   }
 }
 

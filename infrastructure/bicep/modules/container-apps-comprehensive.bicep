@@ -165,7 +165,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
         {
           // Use placeholder image until real images are pushed
           image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
-          name: service.displayName
+          name: toLower(replace(service.displayName, ' ', '-'))  // DNS compliant container name
           resources: {
             cpu: json(service.cpu)
             memory: service.memory

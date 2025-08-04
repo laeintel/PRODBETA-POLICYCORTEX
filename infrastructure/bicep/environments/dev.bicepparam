@@ -23,8 +23,8 @@ param sqlDatabaseMaxSizeGB = 10      // Smaller for dev
 param cosmosConsistencyLevel = 'Session'
 param cosmosFailoverLocation = 'West US 2'
 param cosmosMaxThroughput = 1000       // Smaller for dev
-param redisCapacity = 1                 // Smaller for dev
-param redisSKUName = 'Basic'           // Basic for dev
+param redisCapacity = 2                 // Match existing Redis
+param redisSKUName = 'Standard'        // Match existing Redis (cannot downgrade)
 
 // AI Services Configuration
 param deployMLWorkspace = false  // ML workspace has soft-delete conflict
