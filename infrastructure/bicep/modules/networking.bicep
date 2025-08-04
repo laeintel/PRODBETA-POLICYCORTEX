@@ -3,7 +3,7 @@ param environment string
 param location string
 param tags object = {}
 
-var vnetName = 'policortex001-${environment}-vnet'
+var vnetName = 'vnet-pcx-${environment}'
 var vnetAddressSpace = '10.0.0.0/16'
 
 // Subnets configuration
