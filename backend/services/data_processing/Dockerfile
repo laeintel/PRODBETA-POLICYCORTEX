@@ -57,4 +57,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=40s --retries=5 \
 EXPOSE ${SERVICE_PORT}
 
 # Run the application from root directory
-CMD ["python", "-m", "uvicorn", "services.data_processing.main_simple:app", "--host", "0.0.0.0", "--port", "8003"]
+CMD ["python", "-m", "uvicorn", "services.data_processing.main:app", "--host", "0.0.0.0", "--port", "8003"]
