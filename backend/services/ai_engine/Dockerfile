@@ -23,8 +23,10 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire backend directory structure
 COPY . /app/
 
-# Install Python dependencies (use minimal for faster builds)
+# Install Python dependencies
+# First install PyTorch to avoid dependency issues
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r /app/services/ai_engine/requirements-minimal.txt
 
 # Create directories for models and logs

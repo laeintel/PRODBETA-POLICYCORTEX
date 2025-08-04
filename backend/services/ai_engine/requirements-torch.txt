@@ -1,0 +1,8 @@
+# PyTorch and related dependencies that need to be installed first
+torch==2.1.1
+# These packages require torch to be installed first
+torch-geometric==2.4.0
+torch-scatter==2.1.2
+torch-sparse==0.6.18
+torch-cluster==1.6.3
+torch-spline-conv==1.2.2

@@ -68,6 +68,10 @@ stages:
           - script: |
               cd backend/services/$(serviceName)
               python -m pip install --upgrade pip
+              # Special handling for AI Engine service with PyTorch
+              if [ "$(serviceName)" = "ai_engine" ]; then
+                pip install torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu
+              fi
               pip install -r requirements.txt
               pip install pytest pytest-cov pytest-azurepipelines
             displayName: 'Install dependencies'
