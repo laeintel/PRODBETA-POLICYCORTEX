@@ -125,7 +125,7 @@ jobs:
       - name: Get ACR Details
         id: get_acr
         run: |
-          ACR_NAME=$(az acr list --query "[?contains(name, 'crpolicortex001dev')].name" -o tsv)
+          ACR_NAME=$(az acr list --query "[?contains(name, 'crpcxdev')].name" -o tsv)
           ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query "loginServer" -o tsv)
           echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
           echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
@@ -144,42 +144,24 @@ jobs:
           services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
           
           for service in "${services[@]}"; do
-            echo "🏗️ Building policortex001-$service..."
+            echo "🏗️ Building pcx-$service..."
             
             # Convert service name for directory (replace hyphens with underscores)
             service_dir=$(echo $service | sed 's/-/_/g')
             
             # Build the image
-            docker build -t $ACR_LOGIN_SERVER/policortex001-$service:latest \
-              -t $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }} \
+            docker build -t $ACR_LOGIN_SERVER/pcx-$service:latest \
+              -t $ACR_LOGIN_SERVER/pcx-$service:${{ github.sha }} \
               -f backend/services/$service_dir/Dockerfile backend/
             
             # Push the images
-            echo "📤 Pushing policortex001-$service..."
-            docker push $ACR_LOGIN_SERVER/policortex001-$service:latest
-            docker push $ACR_LOGIN_SERVER/policortex001-$service:${{ github.sha }}
+            echo "📤 Pushing pcx-$service..."
+            docker push $ACR_LOGIN_SERVER/pcx-$service:latest
+            docker push $ACR_LOGIN_SERVER/pcx-$service:${{ github.sha }}
             
-            echo "✅ Completed policortex001-$service"
+            echo "✅ Completed pcx-$service"
           done
 
-      - name: Build and Push Frontend Image
-        run: |
-          export ACR_LOGIN_SERVER=${{ steps.get_acr.outputs.acr_login_server }}
-          
-          echo "🏗️ Building policortex001-frontend..."
-          
-          # Build the frontend image
-          # Environment variables will be injected at runtime by Container Apps
-          docker build -t $ACR_LOGIN_SERVER/policortex001-frontend:latest \
-            -t $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }} \
-            frontend/
-          
-          # Push the images
-          echo "📤 Pushing policortex001-frontend..."
-          docker push $ACR_LOGIN_SERVER/policortex001-frontend:latest
-          docker push $ACR_LOGIN_SERVER/policortex001-frontend:${{ github.sha }}
-          
-          echo "✅ Completed policortex001-frontend"
 
       - name: Verify Images
         run: |
@@ -187,10 +169,10 @@ jobs:
           az acr repository list --name ${{ steps.get_acr.outputs.acr_name }} --output table
           
           # Check each service image
-          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
           for service in "${services[@]}"; do
-            echo "🏷️ Tags for policortex001-$service:"
-            az acr repository show-tags --name ${{ steps.get_acr.outputs.acr_name }} --repository policortex001-$service --output table || echo "No tags found for $service"
+            echo "🏷️ Tags for pcx-$service:"
+            az acr repository show-tags --name ${{ steps.get_acr.outputs.acr_name }} --repository pcx-$service --output table || echo "No tags found for $service"
           done
 
   # Deploy to Development
@@ -214,16 +196,16 @@ jobs:
         id: get_resources
         run: |
           # Get resource group for dev environment - exact match first
-          RESOURCE_GROUP=$(az group list --query "[?name=='rg-policortex001-app-dev'].name" -o tsv | head -n 1)
+          RESOURCE_GROUP=$(az group list --query "[?name=='rg-pcx-app-dev'].name" -o tsv | head -n 1)
           
           # Fallback pattern if exact match not found
           if [ -z "$RESOURCE_GROUP" ]; then
-            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-policortex001-app-dev')].name" -o tsv | head -n 1)
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'rg-pcx-app-dev')].name" -o tsv | head -n 1)
           fi
           
-          # Final fallback to any policortex app dev resource group
+          # Final fallback to any pcx app dev resource group
           if [ -z "$RESOURCE_GROUP" ]; then
-            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'policortex') && contains(name, 'app') && contains(name, 'dev')].name" -o tsv | head -n 1)
+            RESOURCE_GROUP=$(az group list --query "[?contains(name, 'pcx') && contains(name, 'app') && contains(name, 'dev')].name" -o tsv | head -n 1)
           fi
           
           if [ -z "$RESOURCE_GROUP" ]; then
@@ -246,71 +228,47 @@ jobs:
           echo "Using revision suffix: $REVISION_SUFFIX"
           
           # Get Container Apps Environment domain for dynamic URLs
-          API_GATEWAY_FQDN=$(az containerapp show --name ca-api-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
-          FRONTEND_FQDN=$(az containerapp show --name ca-frontend-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          API_GATEWAY_FQDN=$(az containerapp show --name ca-pcx-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
           echo "API Gateway FQDN: $API_GATEWAY_FQDN"
-          echo "Frontend FQDN: $FRONTEND_FQDN"
           
           # Deploy each microservice using latest tags
-          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
           
           for service in "${services[@]}"; do
-            echo "📦 Deploying ca-$service-dev with new revision and Key Vault secrets..."
+            echo "📦 Deploying ca-pcx-$service-dev with new revision and Key Vault secrets..."
             
-            if [ "$service" = "frontend" ]; then
-              # Frontend environment variables with Key Vault secrets
-              # Note: --set-env-vars for regular values, --replace-env-vars for secret references
-              az containerapp update \
-                --name ca-$service-dev \
-                --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-                --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
-                --revision-suffix $REVISION_SUFFIX \
-                --replace-env-vars \
-                  "ENVIRONMENT=dev" \
-                  "SERVICE_NAME=frontend" \
-                  "PORT=8080" \
-                  "LOG_LEVEL=INFO" \
-                  "VITE_API_BASE_URL=https://$API_GATEWAY_FQDN/api" \
-                  "VITE_WS_URL=wss://$API_GATEWAY_FQDN/ws" \
-                  "VITE_AZURE_REDIRECT_URI=https://$FRONTEND_FQDN" \
-                  "VITE_APP_VERSION=1.0.0" \
-                  "VITE_AZURE_CLIENT_ID=secretref:azure-client-id" \
-                  "VITE_AZURE_TENANT_ID=secretref:azure-tenant-id" \
-                --output table
-            else
-              # Backend services environment variables with Key Vault secrets
-              az containerapp update \
-                --name ca-$service-dev \
-                --resource-group ${{ steps.get_resources.outputs.resource_group }} \
-                --image ${{ steps.get_resources.outputs.acr_login_server }}/policortex001-$service:latest \
-                --revision-suffix $REVISION_SUFFIX \
-                --replace-env-vars \
-                  "ENVIRONMENT=dev" \
-                  "SERVICE_NAME=$service" \
-                  "SERVICE_PORT=$(case $service in api-gateway) echo 8000;; azure-integration) echo 8001;; ai-engine) echo 8002;; data-processing) echo 8003;; conversation) echo 8004;; notification) echo 8005;; *) echo 8000;; esac)" \
-                  "LOG_LEVEL=INFO" \
-                  "API_GATEWAY_URL=http://ca-api-gateway-dev" \
-                  "AZURE_INTEGRATION_URL=http://ca-azure-integration-dev" \
-                  "AI_ENGINE_URL=http://ca-ai-engine-dev" \
-                  "DATA_PROCESSING_URL=http://ca-data-processing-dev" \
-                  "CONVERSATION_URL=http://ca-conversation-dev" \
-                  "NOTIFICATION_URL=http://ca-notification-dev" \
-                  "JWT_SECRET_KEY=secretref:jwt-secret" \
-                  "ENCRYPTION_KEY=secretref:encryption-key" \
-                  "AZURE_CLIENT_ID=secretref:azure-client-id" \
-                  "AZURE_TENANT_ID=secretref:azure-tenant-id" \
-                  "AZURE_COSMOS_ENDPOINT=secretref:cosmos-endpoint" \
-                  "AZURE_COSMOS_KEY=secretref:cosmos-key" \
-                  "REDIS_CONNECTION_STRING=secretref:redis-connection-string" \
-                  "AZURE_STORAGE_ACCOUNT_NAME=secretref:storage-account-name" \
-                  "COGNITIVE_SERVICES_KEY=secretref:cognitive-services-key" \
-                  "COGNITIVE_SERVICES_ENDPOINT=secretref:cognitive-services-endpoint" \
-                  "APPLICATION_INSIGHTS_CONNECTION_STRING=secretref:application-insights-connection-string" \
-                --output table
-            fi
+            # Backend services environment variables with Key Vault secrets
+            az containerapp update \
+              --name ca-pcx-$service-dev \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --image ${{ steps.get_resources.outputs.acr_login_server }}/pcx-$service:latest \
+              --revision-suffix $REVISION_SUFFIX \
+              --replace-env-vars \
+                "ENVIRONMENT=dev" \
+                "SERVICE_NAME=$service" \
+                "SERVICE_PORT=$(case $service in api-gateway) echo 8000;; azure-integration) echo 8001;; ai-engine) echo 8002;; data-processing) echo 8003;; conversation) echo 8004;; notification) echo 8005;; *) echo 8000;; esac)" \
+                "LOG_LEVEL=INFO" \
+                "API_GATEWAY_URL=http://ca-pcx-gateway-dev" \
+                "AZURE_INTEGRATION_URL=http://ca-pcx-azureint-dev" \
+                "AI_ENGINE_URL=http://ca-pcx-ai-dev" \
+                "DATA_PROCESSING_URL=http://ca-pcx-dataproc-dev" \
+                "CONVERSATION_URL=http://ca-pcx-chat-dev" \
+                "NOTIFICATION_URL=http://ca-pcx-notify-dev" \
+                "JWT_SECRET_KEY=secretref:jwt-secret" \
+                "ENCRYPTION_KEY=secretref:encryption-key" \
+                "AZURE_CLIENT_ID=secretref:azure-client-id" \
+                "AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                "AZURE_COSMOS_ENDPOINT=secretref:cosmos-endpoint" \
+                "AZURE_COSMOS_KEY=secretref:cosmos-key" \
+                "REDIS_CONNECTION_STRING=secretref:redis-connection-string" \
+                "AZURE_STORAGE_ACCOUNT_NAME=secretref:storage-account-name" \
+                "COGNITIVE_SERVICES_KEY=secretref:cognitive-services-key" \
+                "COGNITIVE_SERVICES_ENDPOINT=secretref:cognitive-services-endpoint" \
+                "APPLICATION_INSIGHTS_CONNECTION_STRING=secretref:application-insights-connection-string" \
+              --output table
               
-            echo "✅ Deployed ca-$service-dev with Key Vault secrets and revision suffix $REVISION_SUFFIX"
+            echo "✅ Deployed ca-pcx-$service-dev with Key Vault secrets and revision suffix $REVISION_SUFFIX"
           done
 
       - name: Wait for deployments
@@ -319,17 +277,17 @@ jobs:
           sleep 90
           
           echo "📊 Checking deployment status and new revisions..."
-          services=("api-gateway" "frontend")
+          services=("api-gateway")
           
           for service in "${services[@]}"; do
-            echo "=== ca-$service-dev ==="
-            status=$(az containerapp show --name ca-$service-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.provisioningState" -o tsv)
+            echo "=== ca-pcx-$service-dev ==="
+            status=$(az containerapp show --name ca-pcx-$service-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.provisioningState" -o tsv)
             echo "Provisioning State: $status"
             
             # Show latest revision
             echo "Latest revision:"
             az containerapp revision list \
-              --name ca-$service-dev \
+              --name ca-pcx-$service-dev \
               --resource-group ${{ steps.get_resources.outputs.resource_group }} \
               --query "[0].{Name:name, CreatedTime:properties.createdTime, Active:properties.active, TrafficWeight:properties.trafficWeight}" \
               --output table
@@ -342,12 +300,10 @@ jobs:
           echo "🩺 Running health checks..."
           
           # Get Container App URLs
-          API_GATEWAY_URL=$(az containerapp show --name ca-api-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
-          FRONTEND_URL=$(az containerapp show --name ca-frontend-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          API_GATEWAY_URL=$(az containerapp show --name ca-pcx-gateway-dev --resource-group ${{ steps.get_resources.outputs.resource_group }} --query "properties.configuration.ingress.fqdn" -o tsv)
           
           echo "🌐 Application URLs:"
           echo "  API Gateway: https://${API_GATEWAY_URL}"
-          echo "  Frontend: https://${FRONTEND_URL}"
           
           # Health check function with retries
           check_health() {
@@ -380,10 +336,6 @@ jobs:
             HEALTH_FAILED=true
           fi
           
-          if ! check_health "https://${FRONTEND_URL}/" "Frontend"; then
-            HEALTH_FAILED=true
-          fi
-          
           if [ "$HEALTH_FAILED" = "true" ]; then
             echo "⚠️  Some health checks failed, but deployment was successful"
             echo "📋 Manual verification may be needed"
@@ -408,13 +360,12 @@ jobs:
           echo "🚀 Deploy Status: ${{ needs.deploy-dev.result }}"
           echo ""
           echo "🏷️  Images Built:"
-          echo "  - policortex001-api-gateway:latest"
-          echo "  - policortex001-azure-integration:latest"
-          echo "  - policortex001-ai-engine:latest"
-          echo "  - policortex001-data-processing:latest"
-          echo "  - policortex001-conversation:latest"
-          echo "  - policortex001-notification:latest"
-          echo "  - policortex001-frontend:latest"
+          echo "  - pcx-api-gateway:latest"
+          echo "  - pcx-azure-integration:latest"
+          echo "  - pcx-ai-engine:latest"
+          echo "  - pcx-data-processing:latest"
+          echo "  - pcx-conversation:latest"
+          echo "  - pcx-notification:latest"
           echo ""
           echo "🌐 ACR: ${{ needs.build-and-push.outputs.acr_login_server }}"
           echo ""
