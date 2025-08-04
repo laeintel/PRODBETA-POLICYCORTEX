@@ -348,6 +348,24 @@ jobs:
           fi
         working-directory: .
 
+      - name: Setup Key Vault Permissions
+        run: |
+          echo "🔐 Setting up Key Vault permissions..."
+          
+          # Get the service principal object ID from Azure Client ID
+          SP_OBJECT_ID=$(az ad sp show --id "${{ secrets.AZURE_CLIENT_ID }}" --query "id" -o tsv)
+          echo "Service Principal Object ID: $SP_OBJECT_ID"
+          
+          # Set Key Vault access policy for the service principal
+          az keyvault set-policy \
+            --name kv-pcx-dev \
+            --resource-group rg-pcx-app-dev \
+            --object-id "$SP_OBJECT_ID" \
+            --secret-permissions get list set delete
+          
+          echo "✅ Key Vault permissions configured for service principal"
+        working-directory: .
+
       - name: Setup Key Vault Secrets
         run: |
           echo "🔐 Setting up Key Vault secrets..."
