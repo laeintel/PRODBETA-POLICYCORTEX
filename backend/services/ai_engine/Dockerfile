@@ -23,11 +23,14 @@ RUN apt-get update && apt-get install -y \
 # Copy the entire backend directory structure
 COPY . /app/
 
-# Install Python dependencies
-# First install PyTorch to avoid dependency issues
+# Install Python dependencies in stages to handle torch-geometric
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r /app/services/ai_engine/requirements-minimal.txt
+    if [ -f "/app/services/ai_engine/requirements-stage1.txt" ]; then \
+        pip install --no-cache-dir -r /app/services/ai_engine/requirements-stage1.txt --index-url https://download.pytorch.org/whl/cpu && \
+        pip install --no-cache-dir -r /app/services/ai_engine/requirements-stage2.txt; \
+    else \
+        pip install --no-cache-dir -r /app/services/ai_engine/requirements-minimal.txt; \
+    fi
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs
