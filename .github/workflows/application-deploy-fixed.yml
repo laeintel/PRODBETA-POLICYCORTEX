@@ -285,6 +285,7 @@ jobs:
             echo "📦 Deploying $container_app_name with new revision and Key Vault secrets..."
             
             # Backend services environment variables with Key Vault secrets
+            # First update the image and basic env vars
             az containerapp update \
               --name "$container_app_name" \
               --resource-group ${{ steps.get_resources.outputs.resource_group }} \
@@ -301,6 +302,13 @@ jobs:
                 "DATA_PROCESSING_URL=http://ca-pcx-dataproc-dev" \
                 "CONVERSATION_URL=http://ca-pcx-chat-dev" \
                 "NOTIFICATION_URL=http://ca-pcx-notify-dev" \
+              --output table
+            
+            # Then set the secret references using a separate command
+            az containerapp update \
+              --name "$container_app_name" \
+              --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+              --set-env-vars \
                 "JWT_SECRET_KEY=secretref:jwt-secret" \
                 "ENCRYPTION_KEY=secretref:encryption-key" \
                 "AZURE_CLIENT_ID=secretref:azure-client-id" \
