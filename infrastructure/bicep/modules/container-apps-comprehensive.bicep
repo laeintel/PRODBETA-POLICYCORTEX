@@ -163,8 +163,8 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
     template: {
       containers: [
         {
-          // Use placeholder image until real images are pushed
-          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+          // Use actual service image from registry
+          image: '${containerRegistryLoginServer}/pcx-${replace(toLower(service.displayName), ' ', '-')}:latest'
           name: toLower(replace(service.displayName, ' ', '-'))  // DNS compliant container name
           resources: {
             cpu: json(service.cpu)
@@ -231,8 +231,8 @@ resource frontend 'Microsoft.App/containerApps@2023-05-01' = {
     template: {
       containers: [
         {
-          // Use placeholder image until real image is pushed
-          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+          // Use actual frontend image from registry
+          image: '${containerRegistryLoginServer}/pcx-frontend:latest'
           name: 'frontend'
           resources: {
             cpu: json('0.5')
