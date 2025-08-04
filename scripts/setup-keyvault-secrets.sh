@@ -148,13 +148,23 @@ fi
 
 echo "📊 Setting up monitoring secrets..."
 
-# Get Application Insights connection string
-app_insights=$(az monitor app-insights component list --resource-group "${RESOURCE_GROUP}" --query "[].{name:name}" -o tsv)
-if [ -n "${app_insights}" ]; then
-    app_insights_name=$(echo "${app_insights}" | head -n 1)
-    app_insights_connection_string=$(az monitor app-insights component show --app "${app_insights_name}" --resource-group "${RESOURCE_GROUP}" --query "connectionString" -o tsv)
+# Get Application Insights connection string using generic resource command
+echo "Retrieving Application Insights details..."
+app_insights_resources=$(az resource list --resource-group "${RESOURCE_GROUP}" --resource-type "Microsoft.Insights/components" --query "[].name" -o tsv 2>/dev/null)
+
+if [ -n "${app_insights_resources}" ]; then
+    app_insights_name=$(echo "${app_insights_resources}" | head -n 1)
+    echo "Found Application Insights: ${app_insights_name}"
     
-    set_secret "application-insights-connection-string" "${app_insights_connection_string}" "Application Insights connection string"
+    # Get connection string using generic resource show command
+    app_insights_connection_string=$(az resource show --resource-group "${RESOURCE_GROUP}" --name "${app_insights_name}" --resource-type "Microsoft.Insights/components" --query "properties.ConnectionString" -o tsv 2>/dev/null)
+    
+    if [ -n "${app_insights_connection_string}" ] && [ "${app_insights_connection_string}" != "null" ]; then
+        set_secret "application-insights-connection-string" "${app_insights_connection_string}" "Application Insights connection string"
+    else
+        echo "⚠️  Could not retrieve Application Insights connection string, using placeholder"
+        set_secret "application-insights-connection-string" "InstrumentationKey=placeholder-key" "Application Insights connection string (placeholder)"
+    fi
 else
     echo "⚠️  No Application Insights found, using placeholder value"
     set_secret "application-insights-connection-string" "InstrumentationKey=placeholder-key" "Application Insights connection string (placeholder)"
