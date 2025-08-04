@@ -22,7 +22,7 @@ param redisName string = ''
 
 // Cosmos DB Account
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: 'cosmos-pcx-${environment}-${substring(uniqueString(resourceGroup().id), 0, 4)}'
+  name: 'cosmos-pcx-${environment}'
   location: location
   tags: tags
   kind: 'GlobalDocumentDB'
@@ -131,7 +131,7 @@ resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/co
 
 // Redis Cache (with unique name to avoid conflicts)
 resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
-  name: !empty(redisName) ? redisName : 'redis-pcx-${environment}-${substring(uniqueString(resourceGroup().id), 0, 6)}'
+  name: !empty(redisName) ? redisName : 'redis-pcx-${environment}'
   location: location
   tags: tags
   properties: {

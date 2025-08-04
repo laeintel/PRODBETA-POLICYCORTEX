@@ -265,7 +265,11 @@
       "Bash(..\\..\\venv\\Scripts\\python.exe main_simple.py)",
       "Bash(set VITE_PORT=3000)",
       "Bash(set PORT=3000)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(del test-params.json)",
+      "Bash(while az group show --name \"rg-pcx-app-dev\")",
+      "Bash(do:*)",
+      "Bash(while az group show --name \"rg-pcx-app-dev\" --query \"name\" -o tsv)"
     ],
     "deny": []
   }
