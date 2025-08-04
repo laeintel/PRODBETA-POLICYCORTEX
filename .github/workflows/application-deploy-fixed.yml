@@ -244,6 +244,18 @@ jobs:
           # Use ACR details from build-and-push job
           echo "acr_login_server=${{ needs.build-and-push.outputs.acr_login_server }}" >> $GITHUB_OUTPUT
 
+      - name: Sync Key Vault Secrets to Container Apps
+        run: |
+          echo "🔐 Syncing Key Vault secrets to Container Apps..."
+          
+          # Make the script executable
+          chmod +x scripts/sync-keyvault-to-containerapp.sh
+          
+          # Run the sync script
+          ./scripts/sync-keyvault-to-containerapp.sh dev
+          
+          echo "✅ Key Vault secrets synced to Container Apps"
+
       - name: Deploy to Container Apps
         run: |
           echo "🚀 Deploying to Container Apps with latest images and Key Vault environment variables..."
