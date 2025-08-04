@@ -162,6 +162,25 @@ jobs:
             echo "✅ Completed pcx-$service"
           done
 
+      - name: Build and Push Frontend Image
+        run: |
+          # Set environment variables
+          export ACR_LOGIN_SERVER=${{ steps.get_acr.outputs.acr_login_server }}
+          
+          echo "🏗️ Building pcx-frontend..."
+          
+          # Build the frontend image
+          docker build -t $ACR_LOGIN_SERVER/pcx-frontend:latest \
+            -t $ACR_LOGIN_SERVER/pcx-frontend:${{ github.sha }} \
+            -f frontend/Dockerfile frontend/
+          
+          # Push the images
+          echo "📤 Pushing pcx-frontend..."
+          docker push $ACR_LOGIN_SERVER/pcx-frontend:latest
+          docker push $ACR_LOGIN_SERVER/pcx-frontend:${{ github.sha }}
+          
+          echo "✅ Completed pcx-frontend"
+
 
       - name: Verify Images
         run: |
@@ -169,7 +188,7 @@ jobs:
           az acr repository list --name ${{ steps.get_acr.outputs.acr_name }} --output table
           
           # Check each service image
-          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
+          services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "frontend")
           for service in "${services[@]}"; do
             echo "🏷️ Tags for pcx-$service:"
             az acr repository show-tags --name ${{ steps.get_acr.outputs.acr_name }} --repository pcx-$service --output table || echo "No tags found for $service"
@@ -270,6 +289,22 @@ jobs:
               
             echo "✅ Deployed ca-pcx-$service-dev with Key Vault secrets and revision suffix $REVISION_SUFFIX"
           done
+          
+          # Deploy Frontend
+          echo "📦 Deploying ca-pcx-web-dev (Frontend) with new revision..."
+          
+          az containerapp update \
+            --name ca-pcx-web-dev \
+            --resource-group ${{ steps.get_resources.outputs.resource_group }} \
+            --image ${{ steps.get_resources.outputs.acr_login_server }}/pcx-frontend:latest \
+            --revision-suffix $REVISION_SUFFIX \
+            --replace-env-vars \
+              "VITE_API_BASE_URL=https://$API_GATEWAY_FQDN/api" \
+              "VITE_APP_TITLE=PolicyCortex" \
+              "VITE_ENVIRONMENT=dev" \
+            --output table
+            
+          echo "✅ Deployed ca-pcx-web-dev (Frontend) with revision suffix $REVISION_SUFFIX"
 
       - name: Wait for deployments
         run: |
