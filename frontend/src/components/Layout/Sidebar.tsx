@@ -177,6 +177,12 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    id: 'rbac',
+    label: 'RBAC',
+    icon: SecurityOutlined,
+    path: '/rbac',
+  },
+  {
     id: 'notifications',
     label: 'Notifications',
     icon: NotificationsOutlined,
