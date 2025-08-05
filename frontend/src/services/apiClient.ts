@@ -52,9 +52,16 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     const { response, config } = error
     
-    // Log error in development
+    // Log error in development (less verbose for expected 404s)
     if (env.NODE_ENV === 'development') {
-      console.error(`[API] ${response?.status} ${config?.url}`, error)
+      const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details']
+      const isDevEndpoint = developmentEndpoints.some(endpoint => config?.url?.includes(endpoint))
+      
+      if (response?.status === 404 && isDevEndpoint) {
+        console.log(`[API] ${response.status} ${config?.url} (expected - using fallback data)`)
+      } else {
+        console.error(`[API] ${response?.status} ${config?.url}`, error)
+      }
     }
     
     // Handle different error types
@@ -130,8 +137,14 @@ const handleForbiddenError = () => {
 }
 
 const handleNotFoundError = (url: string) => {
-  toast.error('The requested resource was not found.')
-  console.warn(`[API] Not found: ${url}`)
+  // Suppress toast notifications and console warnings for known development endpoints
+  const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details']
+  const isDevEndpoint = developmentEndpoints.some(endpoint => url?.includes(endpoint))
+  
+  if (!isDevEndpoint) {
+    toast.error('The requested resource was not found.')
+    console.warn(`[API] Not found: ${url}`)
+  }
 }
 
 const handleValidationError = (data: any) => {

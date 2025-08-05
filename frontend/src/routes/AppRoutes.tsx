@@ -21,6 +21,7 @@ const AnalyticsPage = lazy(() => import('@/pages/Analytics/AnalyticsPage'))
 const AnalyticsReportsPage = lazy(() => import('@/pages/Analytics/AnalyticsReportsPage'))
 const SecurityPage = lazy(() => import('@/pages/Security/SecurityPage'))
 const CompliancePage = lazy(() => import('@/pages/Security/CompliancePage'))
+const RBACPage = lazy(() => import('@/pages/RBAC/RBACPage'))
 const NotificationsPage = lazy(() => import('@/pages/Notifications/NotificationsPage'))
 const SettingsPage = lazy(() => import('@/pages/Settings/SettingsPage'))
 const ProfilePage = lazy(() => import('@/pages/Profile/ProfilePage'))
@@ -179,6 +180,16 @@ export const AppRoutes = () => {
           element={
             <ProtectedRoute permission="security:view">
               <CompliancePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* RBAC */}
+        <Route
+          path="/rbac"
+          element={
+            <ProtectedRoute permission="rbac:view">
+              <RBACPage />
             </ProtectedRoute>
           }
         />
