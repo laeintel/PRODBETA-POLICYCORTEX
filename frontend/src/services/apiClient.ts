@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
     
     // Log error in development (less verbose for expected 404s)
     if (env.NODE_ENV === 'development') {
-      const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details']
+      const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details', '/api/v1/rbac/assignments']
       const isDevEndpoint = developmentEndpoints.some(endpoint => config?.url?.includes(endpoint))
       
       if (response?.status === 404 && isDevEndpoint) {
@@ -138,7 +138,7 @@ const handleForbiddenError = () => {
 
 const handleNotFoundError = (url: string) => {
   // Suppress toast notifications and console warnings for known development endpoints
-  const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details']
+  const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details', '/api/v1/rbac/assignments']
   const isDevEndpoint = developmentEndpoints.some(endpoint => url?.includes(endpoint))
   
   if (!isDevEndpoint) {
