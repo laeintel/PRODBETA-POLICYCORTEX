@@ -72,6 +72,11 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
     location?: string; 
     tags?: Record<string, string> 
   }>(items: T[]): T[] => {
+    // Handle undefined or null items gracefully
+    if (!items || !Array.isArray(items)) {
+      return []
+    }
+    
     return items.filter(item => {
       // Filter by subscription
       if (filters.subscriptions.length > 0) {
