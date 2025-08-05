@@ -306,6 +306,7 @@ module containerApps 'modules/container-apps-comprehensive.bicep' = if (deployCo
     keyVaultName: keyVault.outputs.keyVaultName
     keyVaultUri: keyVault.outputs.keyVaultUri
     jwtSecretKey: jwtSecretKey
+    applicationInsightsConnectionString: applicationInsights.outputs.connectionString
   }
   dependsOn: [
     keyVaultSecrets
