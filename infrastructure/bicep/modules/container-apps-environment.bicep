@@ -10,7 +10,14 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01'
   location: location
   tags: tags
   properties: {
-    // Simplified configuration for consumption tier - no VNet integration for now
+    // Configure Log Analytics for container logs
+    appLogsConfiguration: {
+      destination: 'log-analytics'
+      logAnalyticsConfiguration: {
+        customerId: reference(logAnalyticsWorkspaceId, '2022-10-01').customerId
+        sharedKey: listKeys(logAnalyticsWorkspaceId, '2022-10-01').primarySharedKey
+      }
+    }
     zoneRedundant: false
     // No workloadProfiles for consumption-based pricing
   }

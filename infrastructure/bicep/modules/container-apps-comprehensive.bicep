@@ -112,6 +112,7 @@ var commonEnv = [
   { name: 'ENVIRONMENT', value: environment }
   { name: 'LOG_LEVEL', value: environment == 'prod' ? 'INFO' : 'DEBUG' }
   { name: 'AZURE_KEY_VAULT_URL', value: keyVaultUri }
+  { name: 'APPLICATIONINSIGHTS_SAMPLING_PERCENTAGE', value: '10' }
 ]
 
 // Common secrets
@@ -119,6 +120,11 @@ var commonSecrets = [
   {
     name: 'jwt-secret'
     value: jwtSecretKey
+  }
+  {
+    name: 'appinsights-connection-string'
+    keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/application-insights-connection-string'
+    identity: userAssignedIdentityId
   }
 ]
 
@@ -169,8 +175,8 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
     template: {
       containers: [
         {
-          // Use placeholder image - real images will be deployed by application pipeline
-          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+          // Initial deployment uses placeholder, pipeline will update with real images
+          image: '${containerRegistryLoginServer}/policortex001-${service.imageName}:latest'
           name: toLower(replace(service.displayName, ' ', '-'))  // DNS compliant container name
           resources: {
             cpu: json(service.cpu)
@@ -180,6 +186,10 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
             {
               name: 'JWT_SECRET_KEY'
               secretRef: 'jwt-secret'
+            }
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              secretRef: 'appinsights-connection-string'
             }
           ])
         }
@@ -237,8 +247,8 @@ resource frontend 'Microsoft.App/containerApps@2023-05-01' = {
     template: {
       containers: [
         {
-          // Use placeholder image - real image will be deployed by application pipeline
-          image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+          // Initial deployment uses placeholder, pipeline will update with real image
+          image: '${containerRegistryLoginServer}/policortex001-frontend:latest'
           name: 'frontend'
           resources: {
             cpu: json('0.5')
