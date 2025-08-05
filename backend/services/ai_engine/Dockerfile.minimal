@@ -1,4 +1,4 @@
-# AI Engine Service Dockerfile
+# AI Engine Service Dockerfile - Minimal Version for Fast Container Builds
 FROM python:3.11-slim
 
 # Set environment variables
@@ -11,28 +11,26 @@ ENV PYTHONPATH=/app
 # Set work directory
 WORKDIR /app
 
-# Install system dependencies
+# Install only essential system dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
     curl \
-    unixodbc \
-    unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the entire backend directory structure
 COPY . /app/
 
-# Install Python dependencies using minimal requirements for container builds
-# Use minimal requirements by default, with fallback to basic requirements if needed
+# Install only essential Python dependencies for basic functionality
 RUN pip install --no-cache-dir --upgrade pip && \
-    if [ -f "/app/services/ai_engine/requirements-minimal.txt" ]; then \
-        echo "Installing minimal requirements..." && \
-        pip install --no-cache-dir -r /app/services/ai_engine/requirements-minimal.txt; \
-    else \
-        echo "Minimal requirements not found, installing basic FastAPI..." && \
-        pip install --no-cache-dir fastapi==0.104.1 uvicorn[standard]==0.24.0 pydantic==2.4.2; \
-    fi
+    pip install --no-cache-dir \
+        fastapi==0.104.1 \
+        uvicorn[standard]==0.24.0 \
+        pydantic==2.4.2 \
+        pydantic-settings==2.0.3 \
+        httpx==0.25.2 \
+        requests==2.31.0 \
+        numpy==1.24.3 \
+        python-dotenv==1.0.0 \
+        structlog==23.2.0
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs
@@ -41,7 +39,6 @@ RUN mkdir -p /app/models /app/logs
 RUN useradd --create-home --shell /bin/bash aiengine
 RUN chown -R aiengine:aiengine /app
 USER aiengine
-
 
 # Expose port
 EXPOSE $SERVICE_PORT
