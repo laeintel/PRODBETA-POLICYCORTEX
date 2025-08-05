@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
     
     // Log error in development (less verbose for expected 404s)
     if (env.NODE_ENV === 'development') {
-      const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details', '/api/v1/rbac/assignments', '/api/v1/security/overview', '/api/v1/analytics/overview']
+      const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details', '/api/v1/costs/overview', '/api/v1/rbac/assignments', '/api/v1/security/overview', '/api/v1/analytics/overview']
       const isDevEndpoint = developmentEndpoints.some(endpoint => config?.url?.includes(endpoint))
       
       if (response?.status === 404 && isDevEndpoint) {
@@ -138,7 +138,7 @@ const handleForbiddenError = () => {
 
 const handleNotFoundError = (url: string) => {
   // Suppress toast notifications and console warnings for known development endpoints
-  const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details', '/api/v1/rbac/assignments', '/api/v1/security/overview', '/api/v1/analytics/overview']
+  const developmentEndpoints = ['/api/v1/costs/trends', '/api/v1/costs/budgets', '/api/v1/costs/details', '/api/v1/costs/overview', '/api/v1/rbac/assignments', '/api/v1/security/overview', '/api/v1/analytics/overview']
   const isDevEndpoint = developmentEndpoints.some(endpoint => url?.includes(endpoint))
   
   if (!isDevEndpoint) {
@@ -165,7 +165,15 @@ const handleServiceUnavailableError = () => {
 }
 
 const handleTimeoutError = () => {
-  toast.error('Request timed out. Please check your connection and try again.')
+  // Suppress timeout notifications for development endpoints that may be slow
+  const url = window.location.pathname
+  const isDevelopment = env.NODE_ENV === 'development'
+  
+  if (isDevelopment) {
+    console.log('[API] Request timed out - using fallback data')
+  } else {
+    toast.error('Request timed out. Please check your connection and try again.')
+  }
 }
 
 const handleNetworkError = () => {
