@@ -9,6 +9,7 @@ param keyVaultName string
 param keyVaultUri string
 @secure()
 param jwtSecretKey string
+param applicationInsightsConnectionString string = ''
 
 // Naming convention variables
 var resourcePrefix = 'pcx'
@@ -108,23 +109,20 @@ var services = [
 ]
 
 // Common environment variables for all services
-var commonEnv = [
+var commonEnv = concat([
   { name: 'ENVIRONMENT', value: environment }
   { name: 'LOG_LEVEL', value: environment == 'prod' ? 'INFO' : 'DEBUG' }
   { name: 'AZURE_KEY_VAULT_URL', value: keyVaultUri }
   { name: 'APPLICATIONINSIGHTS_SAMPLING_PERCENTAGE', value: '10' }
-]
+], !empty(applicationInsightsConnectionString) ? [
+  { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: applicationInsightsConnectionString }
+] : [])
 
 // Common secrets
 var commonSecrets = [
   {
     name: 'jwt-secret'
     value: jwtSecretKey
-  }
-  {
-    name: 'appinsights-connection-string'
-    keyVaultUrl: 'https://${keyVaultName}.vault.azure.net/secrets/application-insights-connection-string'
-    identity: userAssignedIdentityId
   }
 ]
 
@@ -186,10 +184,6 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
             {
               name: 'JWT_SECRET_KEY'
               secretRef: 'jwt-secret'
-            }
-            {
-              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-              secretRef: 'appinsights-connection-string'
             }
           ])
         }
