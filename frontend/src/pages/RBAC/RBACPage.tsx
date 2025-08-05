@@ -265,7 +265,7 @@ const RBACPage = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <AssignmentIndOutlined color="primary" />
                       <Box>
-                        <Typography variant="h4">{rbacData.summary.totalAssignments}</Typography>
+                        <Typography variant="h4">{rbacData?.summary?.totalAssignments || 0}</Typography>
                         <Typography variant="body2" color="text.secondary">
                           Total Assignments
                         </Typography>
@@ -281,7 +281,7 @@ const RBACPage = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <PersonOutlined color="info" />
                       <Box>
-                        <Typography variant="h4">{rbacData.summary.uniqueUsers}</Typography>
+                        <Typography variant="h4">{rbacData?.summary?.uniqueUsers || 0}</Typography>
                         <Typography variant="body2" color="text.secondary">
                           Unique Users
                         </Typography>
@@ -297,7 +297,7 @@ const RBACPage = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <KeyOutlined color="secondary" />
                       <Box>
-                        <Typography variant="h4">{rbacData.summary.uniqueRoles}</Typography>
+                        <Typography variant="h4">{rbacData?.summary?.uniqueRoles || 0}</Typography>
                         <Typography variant="body2" color="text.secondary">
                           Unique Roles
                         </Typography>
@@ -313,7 +313,7 @@ const RBACPage = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <SupervisorAccountOutlined color="warning" />
                       <Box>
-                        <Typography variant="h4">{rbacData.summary.privilegedRoles}</Typography>
+                        <Typography variant="h4">{rbacData?.summary?.privilegedRoles || 0}</Typography>
                         <Typography variant="body2" color="text.secondary">
                           Privileged Roles
                         </Typography>
@@ -345,7 +345,7 @@ const RBACPage = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {rbacData.roleAssignments.map((assignment) => (
+                        {(rbacData?.roleAssignments || []).map((assignment) => (
                           <TableRow key={assignment.id} hover>
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -414,7 +414,7 @@ const RBACPage = () => {
                   <Paper sx={{ p: 2 }}>
                     <Typography variant="h6" gutterBottom>Top Roles</Typography>
                     <List dense>
-                      {rbacData.topRoles.map((role, index) => (
+                      {(rbacData?.topRoles || []).map((role, index) => (
                         <ListItem key={index}>
                           <ListItemAvatar>
                             <Avatar sx={{ bgcolor: 'secondary.main', width: 32, height: 32 }}>
@@ -434,7 +434,7 @@ const RBACPage = () => {
                   <Paper sx={{ p: 2 }}>
                     <Typography variant="h6" gutterBottom>Recent Activity</Typography>
                     <List dense>
-                      {rbacData.recentActivity.map((activity, index) => (
+                      {(rbacData?.recentActivity || []).map((activity, index) => (
                         <ListItem key={index}>
                           <ListItemAvatar>
                             <Avatar sx={{ bgcolor: 'info.main', width: 32, height: 32 }}>
@@ -456,7 +456,7 @@ const RBACPage = () => {
             {/* Data Source Info */}
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <Typography variant="caption" color="text.secondary">
-                Data source: {rbacData.data_source} • Last updated: {new Date().toLocaleString()}
+                Data source: {rbacData?.data_source || 'rbac-management'} • Last updated: {new Date().toLocaleString()}
               </Typography>
             </Box>
           </>
