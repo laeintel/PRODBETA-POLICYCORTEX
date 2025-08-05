@@ -39,7 +39,7 @@ import {
   VisibilityOutlined,
   BugReportOutlined,
   PolicyOutlined,
-  NetworkSecurityOutlined
+  SecurityOutlined as NetworkSecurityOutlined
 } from '@mui/icons-material'
 import { Helmet } from 'react-helmet-async'
 import { apiClient } from '../../services/apiClient'
