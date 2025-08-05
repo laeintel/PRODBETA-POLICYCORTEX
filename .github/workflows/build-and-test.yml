@@ -129,6 +129,7 @@ jobs:
               print(f'⚠️ Import check failed: {e}')
               exit(0)  # Don't fail the build for import issues
             "
+          fi
 
   # Docker Build Test
   docker-build-test:
