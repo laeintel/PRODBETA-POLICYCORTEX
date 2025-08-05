@@ -98,6 +98,7 @@ const SecurityPage = () => {
     
     return applyFilters(securityData.issues.map(issue => ({
       ...issue,
+      name: issue.title || issue.resourceName || issue.id, // Add required name property
       subscription: '/subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595', // Mock subscription
       resourceGroup: issue.resourceName?.includes('dev') ? 'rg-policycortex-dev' : 'rg-policycortex-prod',
       type: issue.resourceType || '',

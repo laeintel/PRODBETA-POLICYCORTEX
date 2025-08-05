@@ -86,17 +86,17 @@ export default defineConfig({
     ]
   },
   server: {
-    port: 3000,
+    port: parseInt(process.env.PORT || '3000'),
     strictPort: true,
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8010',
+        target: 'http://localhost:8012',
         changeOrigin: true,
         secure: false
       },
       '/ws': {
-        target: 'ws://localhost:8010',
+        target: 'ws://localhost:8012',
         ws: true,
         changeOrigin: true
       }

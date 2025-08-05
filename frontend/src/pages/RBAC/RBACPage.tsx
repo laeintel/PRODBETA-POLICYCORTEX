@@ -93,6 +93,7 @@ const RBACPage = () => {
     
     return applyFilters(rbacData.roleAssignments.map(assignment => ({
       ...assignment,
+      name: assignment.displayName || assignment.principalName || assignment.id, // Add required name property
       subscription: assignment.scope?.split('/')[2] || '',
       resourceGroup: assignment.scope?.includes('/resourceGroups/') ? 
         assignment.scope.split('/resourceGroups/')[1]?.split('/')[0] || '' : '',
