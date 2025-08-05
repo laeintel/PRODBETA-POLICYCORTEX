@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFilter } from '../../contexts/FilterContext'
+import GlobalFilterPanel from '../../components/Filters/GlobalFilterPanel'
 import {
   Box,
   Typography,
@@ -80,9 +82,24 @@ interface RBACData {
 
 const RBACPage = () => {
   const navigate = useNavigate()
+  const { applyFilters } = useFilter()
   const [rbacData, setRbacData] = useState<RBACData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Apply filters to role assignments
+  const filteredAssignments = useMemo(() => {
+    if (!rbacData?.roleAssignments?.length) return []
+    
+    return applyFilters(rbacData.roleAssignments.map(assignment => ({
+      ...assignment,
+      subscription: assignment.scope?.split('/')[2] || '',
+      resourceGroup: assignment.scope?.includes('/resourceGroups/') ? 
+        assignment.scope.split('/resourceGroups/')[1]?.split('/')[0] || '' : '',
+      type: assignment.principalType || '',
+      location: 'Global' // RBAC assignments are typically global
+    })))
+  }, [rbacData?.roleAssignments, applyFilters])
 
   const fetchRBACData = async () => {
     try {
@@ -255,6 +272,13 @@ const RBACPage = () => {
           </Alert>
         )}
 
+        {/* Global Filter Panel */}
+        <GlobalFilterPanel
+          availableResourceGroups={rbacData?.roleAssignments?.map(a => a.scope?.includes('/resourceGroups/') ? 
+            a.scope.split('/resourceGroups/')[1]?.split('/')[0] || '' : '').filter(Boolean) || []}
+          availableResourceTypes={rbacData?.roleAssignments?.map(a => a.principalType).filter(Boolean) || []}
+        />
+
         {rbacData && (
           <>
             {/* Summary Cards */}
@@ -345,7 +369,7 @@ const RBACPage = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {(rbacData?.roleAssignments || []).map((assignment) => (
+                        {filteredAssignments.map((assignment) => (
                           <TableRow key={assignment.id} hover>
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

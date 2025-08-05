@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFilter } from '../../contexts/FilterContext'
+import GlobalFilterPanel from '../../components/Filters/GlobalFilterPanel'
 import {
   Box,
   Typography,
@@ -78,9 +80,21 @@ interface ResourceData {
 
 const ResourcesPage = () => {
   const navigate = useNavigate()
+  const { applyFilters } = useFilter()
   const [resourceData, setResourceData] = useState<ResourceData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Apply filters to resources
+  const filteredResources = useMemo(() => {
+    if (!resourceData?.resources) return []
+    
+    return applyFilters(resourceData.resources.map(resource => ({
+      ...resource,
+      subscription: resource.id.split('/')[2], // Extract subscription from ID
+      type: resource.type
+    })))
+  }, [resourceData?.resources, applyFilters])
 
   const fetchResourceData = async () => {
     try {
@@ -196,6 +210,12 @@ const ResourcesPage = () => {
           </Alert>
         )}
 
+        {/* Global Filter Panel */}
+        <GlobalFilterPanel
+          availableResourceGroups={resourceData?.resourceGroups || []}
+          availableResourceTypes={resourceData?.resources?.map(r => r.type) || []}
+        />
+
         {resourceData && (
           <>
             {/* Summary Cards */}
@@ -206,7 +226,7 @@ const ResourcesPage = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <CloudOutlined color="primary" />
                       <Box>
-                        <Typography variant="h4">{resourceData.summary.total}</Typography>
+                        <Typography variant="h4">{filteredResources.length}</Typography>
                         <Typography variant="body2" color="text.secondary">
                           Total Resources
                         </Typography>
@@ -290,7 +310,7 @@ const ResourcesPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {resourceData.resources.map((resource) => (
+                    {filteredResources.map((resource) => (
                       <TableRow 
                         key={resource.id} 
                         hover 

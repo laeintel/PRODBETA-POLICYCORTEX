@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFilter } from '../../contexts/FilterContext'
+import GlobalFilterPanel from '../../components/Filters/GlobalFilterPanel'
 import {
   Box,
   Typography,
@@ -69,10 +71,25 @@ interface PoliciesSummary {
 
 const PoliciesPage = () => {
   const navigate = useNavigate()
+  const { applyFilters } = useFilter()
   const [policies, setPolicies] = useState<Policy[]>([])
   const [summary, setSummary] = useState<PoliciesSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Apply filters to policies
+  const filteredPolicies = useMemo(() => {
+    if (!policies?.length) return []
+    
+    return applyFilters(policies.map(policy => ({
+      ...policy,
+      subscription: policy.scope?.split('/')[2] || '',
+      resourceGroup: policy.scope?.includes('/resourceGroups/') ? 
+        policy.scope.split('/resourceGroups/')[1]?.split('/')[0] || '' : '',
+      type: policy.type || '',
+      location: 'Global' // Policies are typically global
+    })))
+  }, [policies, applyFilters])
 
   const fetchPolicies = async () => {
     try {
@@ -145,6 +162,13 @@ const PoliciesPage = () => {
             {error}
           </Alert>
         )}
+
+        {/* Global Filter Panel */}
+        <GlobalFilterPanel
+          availableResourceGroups={policies.map(p => p.scope?.includes('/resourceGroups/') ? 
+            p.scope.split('/resourceGroups/')[1]?.split('/')[0] || '' : '').filter(Boolean)}
+          availableResourceTypes={policies.map(p => p.type).filter(Boolean)}
+        />
 
         {/* Summary Cards */}
         {summary && (
@@ -238,7 +262,7 @@ const PoliciesPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {policies.length === 0 ? (
+                {filteredPolicies.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} align="center">
                       <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
@@ -247,9 +271,9 @@ const PoliciesPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  policies.map((policy) => (
+                  filteredPolicies.map((policy, index) => (
                     <TableRow 
-                      key={policy.id} 
+                      key={`${policy.name}-${index}-${policy.displayName}`} 
                       hover 
                       sx={{ 
                         cursor: 'pointer',
@@ -257,7 +281,7 @@ const PoliciesPage = () => {
                           backgroundColor: 'action.hover'
                         }
                       }}
-                      onClick={() => navigate(`/policies/${policy.id}`)}
+                      onClick={() => navigate(`/policies/${policy.name}`)}
                     >
                       <TableCell>
                         <Box>
@@ -344,7 +368,7 @@ const PoliciesPage = () => {
                             size="small" 
                             onClick={(e) => {
                               e.stopPropagation()
-                              navigate(`/policies/${policy.id}`)
+                              navigate(`/policies/${policy.name}`)
                             }}
                           >
                             <VisibilityOutlined />
