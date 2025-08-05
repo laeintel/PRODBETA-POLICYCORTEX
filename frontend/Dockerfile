@@ -16,9 +16,9 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Create or copy production environment file
-RUN echo "# Runtime configuration will be used" > .env.production
-COPY .env.production .env.production 2>/dev/null || true
+# Create production environment file if it doesn't exist
+# Note: If .env.production exists in the build context, it will be copied with COPY . .
+RUN touch .env.production
 
 # Build arguments for environment variables
 ARG NODE_ENV=production
