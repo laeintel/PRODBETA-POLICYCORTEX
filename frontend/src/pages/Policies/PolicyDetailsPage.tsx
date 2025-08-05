@@ -58,6 +58,17 @@ interface PolicyResource {
   subscriptionId: string
 }
 
+interface UnderlyingPolicy {
+  id: string
+  name: string
+  displayName: string
+  description: string
+  effect: string
+  category: string
+  complianceState: string
+  policyDefinitionId: string
+}
+
 interface PolicyDetails {
   id: string
   name: string
@@ -78,6 +89,7 @@ interface PolicyDetails {
     lastEvaluated: string
   }
   resources: PolicyResource[]
+  underlyingPolicies: UnderlyingPolicy[]
   parameters: Record<string, any>
   metadata: {
     assignedBy: string
@@ -85,6 +97,11 @@ interface PolicyDetails {
     createdOn: string
     updatedOn: string
     data_source?: string
+  }
+  summary: {
+    compliantByType: Record<string, any>
+    nonCompliantByType: Record<string, any>
+    complianceByResourceGroup: Record<string, any>
   }
 }
 
@@ -322,6 +339,7 @@ const PolicyDetailsPage = () => {
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
             <Tab label="Resource Compliance" />
+            <Tab label="Underlying Policies" />
             <Tab label="Policy Definition" />
             <Tab label="Parameters & Metadata" />
           </Tabs>
@@ -465,6 +483,90 @@ const PolicyDetailsPage = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
+            {/* Underlying Policies Tab */}
+            {policy.underlyingPolicies && policy.underlyingPolicies.length > 0 ? (
+              <TableContainer component={Paper} variant="outlined">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Policy Name</TableCell>
+                      <TableCell>Display Name</TableCell>
+                      <TableCell>Category</TableCell>
+                      <TableCell>Effect</TableCell>
+                      <TableCell>Compliance State</TableCell>
+                      <TableCell>Description</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {policy.underlyingPolicies.map((underlyingPolicy) => (
+                      <TableRow key={underlyingPolicy.id} hover>
+                        <TableCell>
+                          <Typography variant="subtitle2">
+                            {underlyingPolicy.name}
+                          </Typography>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <Typography variant="body2">
+                            {underlyingPolicy.displayName}
+                          </Typography>
+                        </TableCell>
+                        
+                        <TableCell>
+                          <Chip
+                            label={underlyingPolicy.category}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        
+                        <TableCell>
+                          <Chip
+                            label={underlyingPolicy.effect}
+                            size="small"
+                            color={underlyingPolicy.effect === 'Audit' ? 'info' : 'default'}
+                          />
+                        </TableCell>
+                        
+                        <TableCell>
+                          <Chip
+                            label={underlyingPolicy.complianceState}
+                            size="small"
+                            color={getComplianceColor(underlyingPolicy.complianceState) as any}
+                            icon={underlyingPolicy.complianceState === 'Compliant' ? <CheckCircleOutlined /> : <WarningOutlined />}
+                          />
+                        </TableCell>
+                        
+                        <TableCell>
+                          <Tooltip title={underlyingPolicy.description}>
+                            <Typography variant="body2" sx={{ 
+                              maxWidth: 300, 
+                              overflow: 'hidden', 
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {underlyingPolicy.description}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No Underlying Policies
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  This policy does not have any underlying policy definitions.
+                </Typography>
+              </Box>
+            )}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
             {/* Policy Definition Tab */}
             <Grid container spacing={3}>
               <Grid item xs={12} md={8}>
@@ -547,7 +649,7 @@ const PolicyDetailsPage = () => {
             </Grid>
           </TabPanel>
 
-          <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={3}>
             {/* Parameters & Metadata Tab */}
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>

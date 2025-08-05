@@ -15,6 +15,7 @@ import { WebSocketProvider } from '@/providers/WebSocketProvider'
 import { NotificationProvider } from '@/providers/NotificationProvider'
 import { AppRoutes } from '@/routes/AppRoutes'
 import { useAuthStatus } from '@/hooks/useAuthStatus'
+import { FilterProvider } from './contexts/FilterContext'
 
 function App() {
   const isAuthenticated = useIsAuthenticated()
@@ -48,13 +49,15 @@ function App() {
         }}
       >
         <AuthenticatedTemplate>
-          <WebSocketProvider>
-            <NotificationProvider>
-              <Layout>
-                <AppRoutes />
-              </Layout>
-            </NotificationProvider>
-          </WebSocketProvider>
+          <FilterProvider>
+            <WebSocketProvider>
+              <NotificationProvider>
+                <Layout>
+                  <AppRoutes />
+                </Layout>
+              </NotificationProvider>
+            </WebSocketProvider>
+          </FilterProvider>
         </AuthenticatedTemplate>
 
         <UnauthenticatedTemplate>

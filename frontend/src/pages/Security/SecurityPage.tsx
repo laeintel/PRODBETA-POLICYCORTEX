@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFilter } from '../../contexts/FilterContext'
+import GlobalFilterPanel from '../../components/Filters/GlobalFilterPanel'
 import {
   Box,
   Typography,
@@ -85,9 +87,23 @@ interface SecurityData {
 
 const SecurityPage = () => {
   const navigate = useNavigate()
+  const { applyFilters } = useFilter()
   const [securityData, setSecurityData] = useState<SecurityData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Apply filters to security issues
+  const filteredIssues = useMemo(() => {
+    if (!securityData?.issues?.length) return []
+    
+    return applyFilters(securityData.issues.map(issue => ({
+      ...issue,
+      subscription: '/subscriptions/9f16cc88-89ce-49ba-a96d-308ed3169595', // Mock subscription
+      resourceGroup: issue.resourceName?.includes('dev') ? 'rg-policycortex-dev' : 'rg-policycortex-prod',
+      type: issue.resourceType || '',
+      location: 'East US' // Mock location
+    })))
+  }, [securityData?.issues, applyFilters])
 
   const fetchSecurityData = async () => {
     try {
@@ -313,6 +329,12 @@ const SecurityPage = () => {
           </Alert>
         )}
 
+        {/* Global Filter Panel */}
+        <GlobalFilterPanel
+          availableResourceGroups={securityData?.issues?.map(i => i.resourceName?.includes('dev') ? 'rg-policycortex-dev' : 'rg-policycortex-prod').filter(Boolean) || []}
+          availableResourceTypes={securityData?.issues?.map(i => i.resourceType).filter(Boolean) || []}
+        />
+
         {securityData && (
           <>
             {/* Security Score Cards */}
@@ -428,7 +450,7 @@ const SecurityPage = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {(securityData?.issues || []).map((issue) => (
+                        {filteredIssues.map((issue) => (
                           <TableRow key={issue.id} hover>
                             <TableCell>
                               <Box>

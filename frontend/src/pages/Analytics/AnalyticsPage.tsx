@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useFilter } from '../../contexts/FilterContext'
+import GlobalFilterPanel from '../../components/Filters/GlobalFilterPanel'
 import {
   Box,
   Typography,
@@ -91,7 +93,8 @@ interface AnalyticsData {
 }
 
 const AnalyticsPage = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate()  
+  const { applyFilters } = useFilter()
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -310,6 +313,12 @@ const AnalyticsPage = () => {
             {error}
           </Alert>
         )}
+
+        {/* Global Filter Panel */}
+        <GlobalFilterPanel
+          availableResourceGroups={['rg-policycortex-dev', 'rg-policycortex-prod', 'rg-policycortex-shared']}
+          availableResourceTypes={['Analytics', 'Metrics', 'Reports', 'Insights']}
+        />
 
         {analyticsData && (
           <>

@@ -153,6 +153,22 @@ const CostAnalysisPage = () => {
         currency: 'USD',
         billingPeriod: 'August 2025'
       },
+      breakdown: {
+        byService: [
+          { service: 'Virtual Machines', cost: 1234.56, percentage: 28.4 },
+          { service: 'Storage Accounts', cost: 876.43, percentage: 20.2 },
+          { service: 'App Service', cost: 654.32, percentage: 15.1 },
+          { service: 'SQL Database', cost: 543.21, percentage: 12.5 },
+          { service: 'Container Registry', cost: 432.10, percentage: 9.9 },
+          { service: 'Key Vault', cost: 321.09, percentage: 7.4 },
+          { service: 'Networking', cost: 283.64, percentage: 6.5 }
+        ],
+        byResourceGroup: [
+          { resourceGroup: 'rg-policycortex-prod', cost: 2134.56, percentage: 49.1 },
+          { resourceGroup: 'rg-policycortex-dev', cost: 1456.78, percentage: 33.5 },
+          { resourceGroup: 'rg-policycortex-shared', cost: 754.01, percentage: 17.4 }
+        ]
+      },
       data_source: 'mock-overview-data'
     }
   }
@@ -209,10 +225,10 @@ const CostAnalysisPage = () => {
   }
 
   const getFilteredData = () => {
-    if (!overviewData) return null
+    if (!overviewData?.breakdown) return null
 
-    let filteredServices = overviewData.breakdown.byService
-    let filteredResourceGroups = overviewData.breakdown.byResourceGroup
+    let filteredServices = overviewData.breakdown.byService || []
+    let filteredResourceGroups = overviewData.breakdown.byResourceGroup || []
 
     if (serviceFilter) {
       filteredServices = filteredServices.filter(s => 
@@ -465,7 +481,7 @@ const CostAnalysisPage = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {filteredData.filteredServices.map((service, index) => (
+                      {(filteredData?.filteredServices || []).map((service, index) => (
                         <TableRow key={index} hover>
                           <TableCell>{service.service}</TableCell>
                           <TableCell align="right">
@@ -515,7 +531,7 @@ const CostAnalysisPage = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {filteredData.filteredResourceGroups.map((rg, index) => (
+                      {(filteredData?.filteredResourceGroups || []).map((rg, index) => (
                         <TableRow key={index} hover>
                           <TableCell>
                             <Typography variant="body2" noWrap>
