@@ -17,6 +17,8 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
     IngestionMode: 'LogAnalytics'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
+    // Set sampling percentage to 10% as requested
+    SamplingPercentage: 10
   }
 }
 
