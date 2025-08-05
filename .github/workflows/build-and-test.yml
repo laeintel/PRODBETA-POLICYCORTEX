@@ -109,26 +109,34 @@ jobs:
             python -m pytest tests/ -v --tb=short --cov=. || echo "Tests completed"
           else
             echo "No tests found, running basic import check"
-            python -c "import sys; sys.path.append('.'); 
-            try:
-              if '${{ matrix.service }}' == 'api_gateway':
-                import main_simple; print('✅ API Gateway imports successfully')
-              elif '${{ matrix.service }}' == 'azure_integration':
-                import main_simple; print('✅ Azure Integration imports successfully')
-              elif '${{ matrix.service }}' == 'ai_engine':
-                import main_simple; print('✅ AI Engine imports successfully')
-              elif '${{ matrix.service }}' == 'data_processing':
-                import main_simple; print('✅ Data Processing imports successfully')
-              elif '${{ matrix.service }}' == 'conversation':
-                import main_simple; print('✅ Conversation imports successfully')
-              elif '${{ matrix.service }}' == 'notification':
-                import main_simple; print('✅ Notification imports successfully')
-              else:
-                print('✅ Service structure validated')
-            except Exception as e:
-              print(f'⚠️ Import check failed: {e}')
-              exit(0)  # Don't fail the build for import issues
-            "
+            python -c "
+import sys
+sys.path.append('.')
+try:
+    if '${{ matrix.service }}' == 'api_gateway':
+        import main_simple
+        print('✅ API Gateway imports successfully')
+    elif '${{ matrix.service }}' == 'azure_integration':
+        import main_simple
+        print('✅ Azure Integration imports successfully')
+    elif '${{ matrix.service }}' == 'ai_engine':
+        import main_simple
+        print('✅ AI Engine imports successfully')
+    elif '${{ matrix.service }}' == 'data_processing':
+        import main_simple
+        print('✅ Data Processing imports successfully')
+    elif '${{ matrix.service }}' == 'conversation':
+        import main_simple
+        print('✅ Conversation imports successfully')
+    elif '${{ matrix.service }}' == 'notification':
+        import main_simple
+        print('✅ Notification imports successfully')
+    else:
+        print('✅ Service structure validated')
+except Exception as e:
+    print(f'⚠️ Import check failed: {e}')
+    exit(0)  # Don't fail the build for import issues
+"
           fi
 
   # Docker Build Test
