@@ -484,8 +484,7 @@ jobs:
       - name: Install configuration dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install azure-identity azure-keyvault-secrets azure-mgmt-resource azure-mgmt-storage
-          pip install azure-mgmt-sql azure-mgmt-cosmosdb structlog pydantic pydantic-settings
+          pip install -r scripts/requirements.txt
 
       - name: Azure Login
         uses: azure/login@v1
