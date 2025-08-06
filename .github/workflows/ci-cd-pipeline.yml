@@ -693,30 +693,30 @@ jobs:
           # Source environment configuration
           source .env.${{ steps.env.outputs.environment }}
           
-          # Get service configuration
-          SERVICE_CONFIG=$(python3 -c "
-          import json, sys
-          sys.path.append('scripts')
-          from config_manager import ConfigurationManager
-          
-          config_manager = ConfigurationManager('${{ secrets.AZURE_SUBSCRIPTION_ID }}', '${{ steps.env.outputs.environment }}')
-          services = config_manager.get_service_configurations()
-          service = services.get('${{ matrix.service }}')
-          if service:
-              print(json.dumps({
-                  'cpu': service.cpu,
-                  'memory': service.memory,
-                  'min_replicas': service.min_replicas,
-                  'max_replicas': service.max_replicas,
-                  'port': service.port
-              }))
-          ")
-          
-          CPU=$(echo $SERVICE_CONFIG | jq -r '.cpu')
-          MEMORY=$(echo $SERVICE_CONFIG | jq -r '.memory')
-          MIN_REPLICAS=$(echo $SERVICE_CONFIG | jq -r '.min_replicas')
-          MAX_REPLICAS=$(echo $SERVICE_CONFIG | jq -r '.max_replicas')
-          PORT=$(echo $SERVICE_CONFIG | jq -r '.port')
+          # Set default service configuration based on service type
+          case "${{ matrix.service }}" in
+            "api_gateway"|"frontend")
+              CPU="1.0"
+              MEMORY="2Gi"
+              MIN_REPLICAS="2"
+              MAX_REPLICAS="10"
+              PORT="8000"
+              ;;
+            "ai_engine"|"data_processing")
+              CPU="2.0"
+              MEMORY="4Gi"
+              MIN_REPLICAS="1"
+              MAX_REPLICAS="5"
+              PORT="8000"
+              ;;
+            *)
+              CPU="0.5"
+              MEMORY="1Gi"
+              MIN_REPLICAS="1"
+              MAX_REPLICAS="3"
+              PORT="8000"
+              ;;
+          esac
           
           # Check if container app exists
           if az containerapp show \
