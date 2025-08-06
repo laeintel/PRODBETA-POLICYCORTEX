@@ -28,7 +28,7 @@ COPY shared /app/shared/
 COPY services/notification /app/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r /app/services/notification/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Create non-root user
 RUN groupadd -r notification && useradd -r -g notification notification
@@ -47,4 +47,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Run the application
-CMD ["python", "-m", "uvicorn", "services.notification.main:app", "--host", "0.0.0.0", "--port", "8005"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8005"]
