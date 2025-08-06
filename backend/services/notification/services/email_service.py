@@ -3,25 +3,29 @@ Email service for sending email notifications with template support.
 """
 
 import asyncio
+import base64
+import json
 import smtplib
 import ssl
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-from typing import Dict, Any, Optional, List
+import uuid
 from datetime import datetime
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from pathlib import Path
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import aiofiles
 import aiosmtplib
 import jinja2
-import structlog
-from pathlib import Path
-import uuid
-import json
 import redis.asyncio as redis
-import aiofiles
-import base64
-
+import structlog
 from shared.config import get_settings
+
     EmailRequest,
     NotificationResponse,
     NotificationTemplate,

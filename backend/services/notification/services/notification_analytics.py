@@ -3,12 +3,17 @@ Notification analytics service for tracking delivery metrics and performance.
 """
 
 import json
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import redis.asyncio as redis
 import structlog
-
 from shared.config import get_settings
+
     NotificationStats,
     DeliveryStatus,
     DeliveryStatusEnum,

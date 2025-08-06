@@ -3,14 +3,18 @@ Azure Communication Services integration for email and SMS notifications.
 """
 
 import json
-from typing import Dict, Any, Optional, List
-from datetime import datetime
-import redis.asyncio as redis
-import httpx
-import structlog
 import uuid
+from datetime import datetime
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
+import httpx
+import redis.asyncio as redis
+import structlog
 from shared.config import get_settings
+
     EmailRequest,
     SMSRequest,
     NotificationResponse,

@@ -3,16 +3,22 @@ Data validation and quality service for PolicyCortex.
 """
 
 import json
+import re
 import uuid
 from datetime import datetime
-from typing import Dict, Any, List, Union, Optional
-import pandas as pd
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+
 import numpy as np
+import pandas as pd
 import structlog
-import re
 
 from ....shared.config import get_settings
-from ..models import ValidationRule, ValidationResult
+from ..models import ValidationResult
+from ..models import ValidationRule
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -25,11 +31,14 @@ class DataValidatorService:
         self.settings = settings
         self.validation_history = {}
 
-    async def validate_data(self, data: Union[Dict[str, Any], List[Dict[str, Any]]],
-                          validation_rules: List[ValidationRule],
-                          quality_threshold: float = 0.8,
-                          fail_on_error: bool = False,
-                          user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def validate_data(
+        self,
+        data: Union[Dict[str, Any], List[Dict[str, Any]]],
+        validation_rules: List[ValidationRule],
+        quality_threshold: float = 0.8,
+        fail_on_error: bool = False,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Validate data using specified rules."""
         try:
             validation_id = str(uuid.uuid4())
@@ -47,7 +56,7 @@ class DataValidatorService:
                 "data_validation_started",
                 validation_id=validation_id,
                 input_rows=len(df),
-                rule_count=len(validation_rules)
+                rule_count=len(validation_rules),
             )
 
             # Apply validation rules
@@ -62,14 +71,15 @@ class DataValidatorService:
                 total_warnings += result.warning_count
 
                 if fail_on_error and result.error_count > 0:
-                    raise ValueError(f"Validation failed for rule {rule.rule_type}: {result.message}")
+                    raise ValueError(
+                        f"Validation failed for rule {rule.rule_type}: {result.message}"
+                    )
 
             # Calculate quality score
             total_records = len(df)
-            quality_score = max(
-                0.0,
-                1.0 - (total_errors / total_records)
-            ) if total_records > 0 else 0.0
+            quality_score = (
+                max(0.0, 1.0 - (total_errors / total_records)) if total_records > 0 else 0.0
+            )
 
             # Record validation history
             processing_time = (datetime.utcnow() - start_time).total_seconds()
@@ -81,7 +91,7 @@ class DataValidatorService:
                 "quality_score": quality_score,
                 "processing_time": processing_time,
                 "user_id": user_id,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             logger.info(
@@ -89,7 +99,7 @@ class DataValidatorService:
                 validation_id=validation_id,
                 quality_score=quality_score,
                 total_errors=total_errors,
-                processing_time=processing_time
+                processing_time=processing_time,
             )
 
             return {
@@ -98,7 +108,7 @@ class DataValidatorService:
                 "quality_score": quality_score,
                 "total_records": total_records,
                 "valid_records": total_records - total_errors,
-                "invalid_records": total_errors
+                "invalid_records": total_errors,
             }
 
         except Exception as e:
@@ -106,9 +116,7 @@ class DataValidatorService:
             raise
 
     async def _apply_validation_rule(
-        self,
-        df: pd.DataFrame,
-        rule: ValidationRule
+        self, df: pd.DataFrame, rule: ValidationRule
     ) -> ValidationResult:
         """Apply a single validation rule."""
         try:
@@ -158,7 +166,7 @@ class DataValidatorService:
 
             elif rule_type == "length_check":
                 min_length = parameters.get("min_length", 0)
-                max_length = parameters.get("max_length", float('inf'))
+                max_length = parameters.get("max_length", float("inf"))
 
                 lengths = df[field].astype(str).str.len()
                 invalid_count = (~lengths.between(min_length, max_length)).sum()
@@ -173,18 +181,15 @@ class DataValidatorService:
                 invalid_count = 0
 
                 if expected_type == "int":
-                    invalid_count = (~pd.to_numeric(df[field], errors='coerce').notna()).sum()
+                    invalid_count = (~pd.to_numeric(df[field], errors="coerce").notna()).sum()
                 elif expected_type == "float":
-                    invalid_count = (~pd.to_numeric(df[field], errors='coerce').notna()).sum()
+                    invalid_count = (~pd.to_numeric(df[field], errors="coerce").notna()).sum()
                 elif expected_type == "datetime":
-                    invalid_count = (~pd.to_datetime(df[field], errors='coerce').notna()).sum()
+                    invalid_count = (~pd.to_datetime(df[field], errors="coerce").notna()).sum()
                 elif expected_type == "bool":
                     invalid_count = (
-                        ~df[field].astype(str).str.lower().isin(['true',
-                        'false',
-                        '1',
-                        '0'])).sum(
-                    )
+                        ~df[field].astype(str).str.lower().isin(["true", "false", "1", "0"])
+                    ).sum()
 
                 error_count = invalid_count
                 message = f"Found {invalid_count} values with invalid type in {field}"
@@ -218,7 +223,7 @@ class DataValidatorService:
                 method = parameters.get("method", "iqr")
                 multiplier = parameters.get("multiplier", 1.5)
 
-                numeric_values = pd.to_numeric(df[field], errors='coerce').dropna()
+                numeric_values = pd.to_numeric(df[field], errors="coerce").dropna()
 
                 if method == "iqr":
                     Q1 = numeric_values.quantile(0.25)
@@ -229,8 +234,8 @@ class DataValidatorService:
                     outlier_count = (~numeric_values.between(lower_bound, upper_bound)).sum()
 
                 elif method == "zscore":
-                    z_scores = (
-                        np.abs((numeric_values - numeric_values.mean()) / numeric_values.std())
+                    z_scores = np.abs(
+                        (numeric_values - numeric_values.mean()) / numeric_values.std()
                     )
                     outlier_count = (z_scores > multiplier).sum()
 
@@ -254,7 +259,7 @@ class DataValidatorService:
                 error_count=error_count,
                 warning_count=warning_count,
                 message=message,
-                details=details
+                details=details,
             )
 
         except Exception as e:
@@ -265,7 +270,7 @@ class DataValidatorService:
                 status="error",
                 error_count=1,
                 warning_count=0,
-                message=f"Validation rule failed: {str(e)}"
+                message=f"Validation rule failed: {str(e)}",
             )
 
     async def get_validation_history(self, validation_id: str) -> Dict[str, Any]:

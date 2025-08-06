@@ -2,13 +2,19 @@
 Unit tests for API Gateway main module.
 """
 
-import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
-from fastapi.testclient import TestClient
-from fastapi import HTTPException
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-from backend.services.api_gateway.main import app, proxy_request, verify_authentication, check_rate_limit
+import pytest
+from fastapi import HTTPException
+from fastapi.testclient import TestClient
+
+from backend.services.api_gateway.main import app
+from backend.services.api_gateway.main import check_rate_limit
+from backend.services.api_gateway.main import proxy_request
+from backend.services.api_gateway.main import verify_authentication
 
 
 class TestHealthEndpoints:
@@ -133,8 +139,9 @@ class TestProxyRequest:
     @pytest.mark.asyncio
     async def test_proxy_request_success(self, mock_service_registry, mock_httpx_response):
         """Test successful request proxying."""
-        with patch("backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry), \
-             patch("backend.services.api_gateway.main.httpx.AsyncClient") as mock_client:
+        with patch(
+            "backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry
+        ), patch("backend.services.api_gateway.main.httpx.AsyncClient") as mock_client:
 
             mock_client_instance = AsyncMock()
             mock_client_instance.request.return_value = mock_httpx_response
@@ -168,9 +175,9 @@ class TestProxyRequest:
     async def test_proxy_request_circuit_breaker_open(self, mock_service_registry):
         """Test proxy request when circuit breaker is open."""
         # Mock circuit breaker in open state
-        mock_service_registry["azure-integration"]["circuit_breaker"].can_execute.return_value = (
-            False
-        )
+        mock_service_registry["azure-integration"][
+            "circuit_breaker"
+        ].can_execute.return_value = False
 
         with patch("backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry):
             mock_request = MagicMock()
@@ -184,8 +191,9 @@ class TestProxyRequest:
     @pytest.mark.asyncio
     async def test_proxy_request_network_error(self, mock_service_registry):
         """Test proxy request with network error."""
-        with patch("backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry), \
-             patch("backend.services.api_gateway.main.httpx.AsyncClient") as mock_client:
+        with patch(
+            "backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry
+        ), patch("backend.services.api_gateway.main.httpx.AsyncClient") as mock_client:
 
             mock_client_instance = AsyncMock()
             mock_client_instance.request.side_effect = Exception("Network error")
@@ -204,7 +212,9 @@ class TestProxyRequest:
             assert "request failed" in str(exc_info.value.detail)
 
             # Verify circuit breaker recorded failure
-            mock_service_registry["azure-integration"]["circuit_breaker"].record_failure.assert_called_once()
+            mock_service_registry["azure-integration"][
+                "circuit_breaker"
+            ].record_failure.assert_called_once()
 
 
 class TestServiceRoutes:
@@ -212,16 +222,18 @@ class TestServiceRoutes:
 
     def test_azure_proxy_route(self, client, auth_headers):
         """Test Azure integration proxy route."""
-        with patch("backend.services.api_gateway.main.proxy_request") as mock_proxy, \
-             patch("backend.services.api_gateway.main.verify_authentication") as mock_auth, \
-             patch("backend.services.api_gateway.main.check_rate_limit") as mock_rate_limit:
+        with patch("backend.services.api_gateway.main.proxy_request") as mock_proxy, patch(
+            "backend.services.api_gateway.main.verify_authentication"
+        ) as mock_auth, patch(
+            "backend.services.api_gateway.main.check_rate_limit"
+        ) as mock_rate_limit:
 
             mock_auth.return_value = {"id": "test-user"}
             mock_rate_limit.return_value = None
             mock_proxy.return_value = {
                 "status_code": 200,
                 "content": b'{"success": true}',
-                "headers": {"content-type": "application/json"}
+                "headers": {"content-type": "application/json"},
             }
 
             response = client.get("/api/v1/azure/resources", headers=auth_headers)
@@ -230,16 +242,18 @@ class TestServiceRoutes:
 
     def test_ai_proxy_route(self, client, auth_headers):
         """Test AI engine proxy route."""
-        with patch("backend.services.api_gateway.main.proxy_request") as mock_proxy, \
-             patch("backend.services.api_gateway.main.verify_authentication") as mock_auth, \
-             patch("backend.services.api_gateway.main.check_rate_limit") as mock_rate_limit:
+        with patch("backend.services.api_gateway.main.proxy_request") as mock_proxy, patch(
+            "backend.services.api_gateway.main.verify_authentication"
+        ) as mock_auth, patch(
+            "backend.services.api_gateway.main.check_rate_limit"
+        ) as mock_rate_limit:
 
             mock_auth.return_value = {"id": "test-user"}
             mock_rate_limit.return_value = None
             mock_proxy.return_value = {
                 "status_code": 200,
                 "content": b'{"success": true}',
-                "headers": {"content-type": "application/json"}
+                "headers": {"content-type": "application/json"},
             }
 
             response = client.get("/api/v1/ai/models", headers=auth_headers)
@@ -248,16 +262,18 @@ class TestServiceRoutes:
 
     def test_conversation_proxy_route(self, client, auth_headers):
         """Test conversation proxy route."""
-        with patch("backend.services.api_gateway.main.proxy_request") as mock_proxy, \
-             patch("backend.services.api_gateway.main.verify_authentication") as mock_auth, \
-             patch("backend.services.api_gateway.main.check_rate_limit") as mock_rate_limit:
+        with patch("backend.services.api_gateway.main.proxy_request") as mock_proxy, patch(
+            "backend.services.api_gateway.main.verify_authentication"
+        ) as mock_auth, patch(
+            "backend.services.api_gateway.main.check_rate_limit"
+        ) as mock_rate_limit:
 
             mock_auth.return_value = {"id": "test-user"}
             mock_rate_limit.return_value = None
             mock_proxy.return_value = {
                 "status_code": 200,
                 "content": b'{"success": true}',
-                "headers": {"content-type": "application/json"}
+                "headers": {"content-type": "application/json"},
             }
 
             response = client.get("/api/v1/chat/conversations", headers=auth_headers)
@@ -270,8 +286,9 @@ class TestManagementEndpoints:
 
     def test_get_service_registry(self, client, auth_headers, mock_service_registry):
         """Test get service registry endpoint."""
-        with patch("backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry), \
-             patch("backend.services.api_gateway.main.verify_authentication") as mock_auth:
+        with patch(
+            "backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry
+        ), patch("backend.services.api_gateway.main.verify_authentication") as mock_auth:
 
             mock_auth.return_value = {"id": "test-user"}
 
@@ -285,8 +302,9 @@ class TestManagementEndpoints:
 
     def test_get_gateway_metrics(self, client, auth_headers, mock_prometheus_metrics):
         """Test get gateway metrics endpoint."""
-        with patch("backend.services.api_gateway.main.verify_authentication") as mock_auth, \
-             patch("backend.services.api_gateway.main.SERVICE_REGISTRY", {}) as mock_registry:
+        with patch("backend.services.api_gateway.main.verify_authentication") as mock_auth, patch(
+            "backend.services.api_gateway.main.SERVICE_REGISTRY", {}
+        ) as mock_registry:
 
             mock_auth.return_value = {"id": "test-user"}
 
@@ -321,7 +339,7 @@ class TestMiddleware:
             # This would cause an error in the handler
             with patch(
                 "backend.services.api_gateway.main.health_check",
-                side_effect=Exception("Test error")
+                side_effect=Exception("Test error"),
             ):
                 response = client.get("/health")
                 assert response.status_code == 500
@@ -336,8 +354,7 @@ class TestErrorHandling:
     def test_global_exception_handler(self, client):
         """Test global exception handler."""
         with patch(
-            "backend.services.api_gateway.main.health_check",
-            side_effect=Exception("Test error")
+            "backend.services.api_gateway.main.health_check", side_effect=Exception("Test error")
         ):
             response = client.get("/health")
             assert response.status_code == 500

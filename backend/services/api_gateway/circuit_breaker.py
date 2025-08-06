@@ -3,11 +3,15 @@ Circuit breaker pattern implementation for API Gateway.
 Provides resilience and fault tolerance for downstream service calls.
 """
 
-import time
 import asyncio
-from datetime import datetime, timedelta
-from typing import Optional, Callable, Any
+import time
+from datetime import datetime
+from datetime import timedelta
 from enum import Enum
+from typing import Any
+from typing import Callable
+from typing import Optional
+
 import structlog
 
 from .models import CircuitBreakerState

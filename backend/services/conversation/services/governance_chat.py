@@ -6,13 +6,20 @@ Implements Patent 3: Natural Language Processing for Conversational Cloud Govern
 import asyncio
 import json
 import re
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
 from dataclasses import dataclass
-import structlog
+from datetime import datetime
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+
 import openai
-from transformers import pipeline, AutoTokenizer, AutoModel
+import structlog
 import torch
+from transformers import AutoModel
+from transformers import AutoTokenizer
+from transformers import pipeline
 
 logger = structlog.get_logger(__name__)
 

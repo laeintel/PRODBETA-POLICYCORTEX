@@ -4,9 +4,15 @@ Handles feature extraction, transformation, and engineering for ML models.
 """
 
 import json
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+
 import numpy as np
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
 import structlog
 
 from ....shared.config import get_settings
@@ -33,87 +39,81 @@ class FeatureEngineer:
                     "type": "numerical",
                     "min_value": 0.0,
                     "max_value": 1.0,
-                    "transformations": ["normalize", "smooth"]
+                    "transformations": ["normalize", "smooth"],
                 },
                 "memory_utilization": {
                     "type": "numerical",
                     "min_value": 0.0,
                     "max_value": 1.0,
-                    "transformations": ["normalize", "smooth"]
+                    "transformations": ["normalize", "smooth"],
                 },
                 "disk_io": {
                     "type": "numerical",
                     "min_value": 0.0,
                     "max_value": None,
-                    "transformations": ["log_transform", "normalize"]
+                    "transformations": ["log_transform", "normalize"],
                 },
                 "network_io": {
                     "type": "numerical",
                     "min_value": 0.0,
                     "max_value": None,
-                    "transformations": ["log_transform", "normalize"]
-                }
+                    "transformations": ["log_transform", "normalize"],
+                },
             },
             "cost_data": {
                 "daily_cost": {
                     "type": "numerical",
                     "min_value": 0.0,
                     "max_value": None,
-                    "transformations": ["smooth", "normalize"]
+                    "transformations": ["smooth", "normalize"],
                 },
                 "resource_count": {
                     "type": "numerical",
                     "min_value": 0,
                     "max_value": None,
-                    "transformations": ["normalize"]
+                    "transformations": ["normalize"],
                 },
                 "service_category": {
                     "type": "categorical",
                     "categories": ["compute", "storage", "networking", "database", "ai"],
-                    "transformations": ["one_hot_encode"]
-                }
+                    "transformations": ["one_hot_encode"],
+                },
             },
             "security_events": {
                 "login_attempts": {
                     "type": "numerical",
                     "min_value": 0,
                     "max_value": None,
-                    "transformations": ["clip_outliers", "normalize"]
+                    "transformations": ["clip_outliers", "normalize"],
                 },
                 "failed_logins": {
                     "type": "numerical",
                     "min_value": 0,
                     "max_value": None,
-                    "transformations": ["clip_outliers", "normalize"]
+                    "transformations": ["clip_outliers", "normalize"],
                 },
-                "ip_address": {
-                    "type": "categorical",
-                    "transformations": ["ip_to_features"]
-                },
-                "user_agent": {
-                    "type": "text",
-                    "transformations": ["text_to_features"]
-                }
+                "ip_address": {"type": "categorical", "transformations": ["ip_to_features"]},
+                "user_agent": {"type": "text", "transformations": ["text_to_features"]},
             },
             "compliance_data": {
                 "policy_violations": {
                     "type": "numerical",
                     "min_value": 0,
                     "max_value": None,
-                    "transformations": ["smooth", "normalize"]
+                    "transformations": ["smooth", "normalize"],
                 },
                 "compliance_score": {
                     "type": "numerical",
                     "min_value": 0.0,
                     "max_value": 1.0,
-                    "transformations": ["smooth"]
+                    "transformations": ["smooth"],
                 },
                 "policy_type": {
                     "type": "categorical",
                     "categories": ["security", "cost", "governance", "compliance"],
-                    "transformations": ["one_hot_encode"]
-                }
-            }
+                    "transformations": ["one_hot_encode"],
+                },
+            },
         }
 
     def _load_preprocessing_pipelines(self) -> Dict[str, List[str]]:
@@ -124,28 +124,28 @@ class FeatureEngineer:
                 "remove_outliers",
                 "normalize_features",
                 "create_time_features",
-                "create_aggregate_features"
+                "create_aggregate_features",
             ],
             "cost_optimization": [
                 "handle_missing_values",
                 "create_cost_features",
                 "create_usage_features",
                 "create_time_features",
-                "normalize_features"
+                "normalize_features",
             ],
             "predictive_analytics": [
                 "handle_missing_values",
                 "create_time_features",
                 "create_lag_features",
                 "create_rolling_features",
-                "normalize_features"
+                "normalize_features",
             ],
             "sentiment_analysis": [
                 "clean_text",
                 "create_text_features",
                 "create_sentiment_features",
-                "normalize_features"
-            ]
+                "normalize_features",
+            ],
         }
 
     async def initialize(self) -> None:
@@ -176,7 +176,7 @@ class FeatureEngineer:
                 "text_features": self._extract_text_features,
                 "ip_features": self._extract_ip_features,
                 "cost_features": self._extract_cost_features,
-                "usage_features": self._extract_usage_features
+                "usage_features": self._extract_usage_features,
             }
 
             logger.info("Feature extractors initialized")
@@ -194,7 +194,7 @@ class FeatureEngineer:
                 "clip_outliers": self._clip_outliers,
                 "one_hot_encode": self._one_hot_encode,
                 "handle_missing_values": self._handle_missing_values,
-                "remove_outliers": self._remove_outliers
+                "remove_outliers": self._remove_outliers,
             }
 
             logger.info("Feature transformers initialized")
@@ -202,15 +202,20 @@ class FeatureEngineer:
         except Exception as e:
             logger.error("Feature transformer initialization failed", error=str(e))
 
-    async def engineer_features(self, raw_data: Dict[str, Any],
-                              feature_types: List[str],
-                              preprocessing_steps: Optional[List[str]] = None,
-                              target_variable: Optional[str] = None) -> Dict[str, Any]:
+    async def engineer_features(
+        self,
+        raw_data: Dict[str, Any],
+        feature_types: List[str],
+        preprocessing_steps: Optional[List[str]] = None,
+        target_variable: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Engineer features from raw data."""
         try:
-            logger.info("Starting feature engineering",
-                       feature_types=feature_types,
-                       preprocessing_steps=preprocessing_steps)
+            logger.info(
+                "Starting feature engineering",
+                feature_types=feature_types,
+                preprocessing_steps=preprocessing_steps,
+            )
 
             # Initialize results
             results = {
@@ -222,8 +227,8 @@ class FeatureEngineer:
                     "timestamp": datetime.utcnow().isoformat(),
                     "feature_types": feature_types,
                     "preprocessing_steps": preprocessing_steps or [],
-                    "target_variable": target_variable
-                }
+                    "target_variable": target_variable,
+                },
             }
 
             # Extract features based on types
@@ -254,9 +259,11 @@ class FeatureEngineer:
                     results["engineered_features"], target_variable
                 )
 
-            logger.info("Feature engineering completed",
-                       features_count=len(results["engineered_features"]),
-                       preprocessing_steps_applied=len(results["preprocessing_summary"]))
+            logger.info(
+                "Feature engineering completed",
+                features_count=len(results["engineered_features"]),
+                preprocessing_steps_applied=len(results["preprocessing_summary"]),
+            )
 
             return results
 
@@ -274,7 +281,7 @@ class FeatureEngineer:
                 if "timestamp" in key.lower() or "time" in key.lower():
                     if isinstance(value, str):
                         try:
-                            dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
                         except:
                             continue
                     elif isinstance(value, datetime):
@@ -339,7 +346,7 @@ class FeatureEngineer:
                         # Create lag features
                         for lag in [1, 2, 3, 6, 12, 24]:
                             if len(value) > lag:
-                                features[f"{key}_lag_{lag}"] = value[-lag-1]
+                                features[f"{key}_lag_{lag}"] = value[-lag - 1]
 
             return features
 
@@ -383,23 +390,24 @@ class FeatureEngineer:
                     features[f"{key}_length"] = len(value)
                     features[f"{key}_word_count"] = len(value.split())
                     features[f"{key}_char_count"] = len(value)
-                    features[f"{key}_uppercase_ratio"] = (
-                        sum(c.isupper() for c in value) / len(value)
+                    features[f"{key}_uppercase_ratio"] = sum(c.isupper() for c in value) / len(
+                        value
                     )
                     features[f"{key}_digit_ratio"] = sum(c.isdigit() for c in value) / len(value)
-                    features[f"{key}_special_char_ratio"] = sum(not c.isalnum() and
-                        not c.isspace() for c in value) / len(value)
+                    features[f"{key}_special_char_ratio"] = sum(
+                        not c.isalnum() and not c.isspace() for c in value
+                    ) / len(value)
 
                     # Sentiment indicators
                     positive_words = ["good", "great", "excellent", "secure", "compliant"]
                     negative_words = ["bad", "poor", "insecure", "violation", "failed"]
 
                     value_lower = value.lower()
-                    features[f"{key}_positive_words"] = (
-                        sum(word in value_lower for word in positive_words)
+                    features[f"{key}_positive_words"] = sum(
+                        word in value_lower for word in positive_words
                     )
-                    features[f"{key}_negative_words"] = (
-                        sum(word in value_lower for word in negative_words)
+                    features[f"{key}_negative_words"] = sum(
+                        word in value_lower for word in negative_words
                     )
 
             return features
@@ -417,7 +425,7 @@ class FeatureEngineer:
             for key, value in data.items():
                 if isinstance(value, str) and "ip" in key.lower():
                     # Basic IP features
-                    ip_parts = value.split('.')
+                    ip_parts = value.split(".")
                     if len(ip_parts) == 4:
                         try:
                             features[f"{key}_first_octet"] = int(ip_parts[0])
@@ -438,9 +446,9 @@ class FeatureEngineer:
 
                             # Private IP
                             is_private = (
-                                (first_octet == 10) or
-                                (first_octet == 172 and 16 <= int(ip_parts[1]) <= 31) or
-                                (first_octet == 192 and int(ip_parts[1]) == 168)
+                                (first_octet == 10)
+                                or (first_octet == 172 and 16 <= int(ip_parts[1]) <= 31)
+                                or (first_octet == 192 and int(ip_parts[1]) == 168)
                             )
                             features[f"{key}_is_private"] = 1 if is_private else 0
 
@@ -490,10 +498,8 @@ class FeatureEngineer:
             usage_fields = []
             for key, value in data.items():
                 if any(
-                    term in key.lower() for term in ["usage",
-                    "utilization",
-                    "consumption",
-                    "activity"]
+                    term in key.lower()
+                    for term in ["usage", "utilization", "consumption", "activity"]
                 ):
                     if isinstance(value, (int, float)):
                         usage_fields.append(value)
@@ -666,7 +672,7 @@ class FeatureEngineer:
                 "numerical_features": 0,
                 "categorical_features": 0,
                 "text_features": 0,
-                "missing_values": 0
+                "missing_values": 0,
             }
 
             for key, value in features.items():
@@ -687,8 +693,9 @@ class FeatureEngineer:
             logger.error("Feature statistics calculation failed", error=str(e))
             return {}
 
-    async def _calculate_feature_importance(self, features: Dict[str, Any],
-                                          target_variable: str) -> Dict[str, float]:
+    async def _calculate_feature_importance(
+        self, features: Dict[str, Any], target_variable: str
+    ) -> Dict[str, float]:
         """Calculate feature importance scores."""
         try:
             importance_scores = {}

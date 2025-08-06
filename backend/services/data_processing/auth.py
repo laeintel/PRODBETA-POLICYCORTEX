@@ -3,18 +3,24 @@ Authentication manager for Data Processing service.
 Handles JWT token validation and user session management.
 """
 
-import jwt
 import json
 import uuid
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import jwt
 import redis.asyncio as redis
 import structlog
-from jose import JWTError, jwt as jose_jwt
 from azure.identity.aio import DefaultAzureCredential
 from azure.keyvault.secrets.aio import SecretClient
-
+from jose import JWTError
+from jose import jwt as jose_jwt
 from shared.config import get_settings
+
 from .models import DataConnectorHealth
 
 settings = get_settings()

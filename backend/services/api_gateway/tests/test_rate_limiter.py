@@ -2,12 +2,17 @@
 Unit tests for RateLimiter functionality.
 """
 
-import pytest
 import time
-from unittest.mock import MagicMock, AsyncMock, patch
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-from backend.services.api_gateway.rate_limiter import RateLimiter, RateLimitExceeded
+import pytest
+
+from backend.services.api_gateway.rate_limiter import RateLimiter
+from backend.services.api_gateway.rate_limiter import RateLimitExceeded
 
 
 class TestRateLimiter:
@@ -18,7 +23,7 @@ class TestRateLimiter:
         rl = RateLimiter()
 
         assert rl.redis_client is not None
-        assert hasattr(rl, 'logger')
+        assert hasattr(rl, "logger")
 
     @pytest.mark.asyncio
     async def test_is_allowed_within_limit(self, mock_redis):
@@ -99,7 +104,7 @@ class TestRateLimiter:
         # Mock Redis error
         mock_redis.get.side_effect = Exception("Redis connection error")
 
-        with patch.object(rl, 'logger') as mock_logger:
+        with patch.object(rl, "logger") as mock_logger:
             allowed, reset_time = await rl.is_allowed("test_key", limit=10, window=60)
 
             # Should allow request on Redis error (fail open)
@@ -184,7 +189,7 @@ class TestRateLimiter:
         # Mock Redis error
         mock_redis.delete.side_effect = Exception("Redis error")
 
-        with patch.object(rl, 'logger') as mock_logger:
+        with patch.object(rl, "logger") as mock_logger:
             success = await rl.reset_limit("test_key")
 
             assert success is False
@@ -222,9 +227,7 @@ class TestRateLimiter:
         mock_redis.zadd.return_value = 1  # Added 1 new entry
         mock_redis.expire.return_value = True
 
-        allowed, reset_time = await rl.is_allowed_sliding_window(
-            "test_key", limit=10, window=60
-        )
+        allowed, reset_time = await rl.is_allowed_sliding_window("test_key", limit=10, window=60)
 
         assert allowed is True
         assert reset_time is None
@@ -242,9 +245,7 @@ class TestRateLimiter:
         mock_redis.zremrangebyscore.return_value = 0  # No old entries
         mock_redis.zcard.return_value = 10  # Already at limit
 
-        allowed, reset_time = await rl.is_allowed_sliding_window(
-            "test_key", limit=10, window=60
-        )
+        allowed, reset_time = await rl.is_allowed_sliding_window("test_key", limit=10, window=60)
 
         assert allowed is False
         assert reset_time is not None
@@ -260,9 +261,7 @@ class TestRateLimiter:
         # Mock Redis responses for distributed limiting
         mock_redis.eval.return_value = [1, 30]  # Allowed, 30 seconds to reset
 
-        allowed, reset_time = await rl.is_allowed_distributed(
-            "test_key", limit=10, window=60
-        )
+        allowed, reset_time = await rl.is_allowed_distributed("test_key", limit=10, window=60)
 
         assert allowed is True
         assert reset_time is not None
@@ -298,11 +297,7 @@ class TestRateLimiter:
         mock_redis.expire.return_value = True
 
         allowed, reset_time = await rl.is_allowed_hierarchical(
-            user_key="user:123",
-            global_key="global",
-            user_limit=10,
-            global_limit=100,
-            window=60
+            user_key="user:123", global_key="global", user_limit=10, global_limit=100, window=60
         )
 
         assert allowed is True
@@ -328,12 +323,7 @@ class TestRateLimiter:
         """Test RateLimitExceeded exception."""
         reset_time = datetime.now() + timedelta(seconds=30)
 
-        exc = RateLimitExceeded(
-            key="test_key",
-            limit=10,
-            window=60,
-            reset_time=reset_time
-        )
+        exc = RateLimitExceeded(key="test_key", limit=10, window=60, reset_time=reset_time)
 
         assert exc.key == "test_key"
         assert exc.limit == 10

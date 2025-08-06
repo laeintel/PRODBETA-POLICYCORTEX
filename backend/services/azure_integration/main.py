@@ -5,35 +5,46 @@ Provides Azure SDK integrations for policy, RBAC, cost, network, and resource ma
 
 import time
 import uuid
-from typing import Dict, Any, Optional, List
 from datetime import datetime
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 import structlog
-from fastapi import FastAPI, Request, HTTPException, Depends, status, Query
+from fastapi import Depends
+from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi import Query
+from fastapi import Request
+from fastapi import status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Histogram, generate_latest
+from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
+from prometheus_client import Counter
+from prometheus_client import Histogram
+from prometheus_client import generate_latest
+from shared.config import get_settings
+from shared.database import DatabaseUtils
+from shared.database import get_async_db
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
-from shared.config import get_settings
-from shared.database import get_async_db, DatabaseUtils
-from .models import (
-    HealthResponse,
-    APIResponse,
-    ErrorResponse,
-    PolicyResponse,
-    PolicyRequest,
-    RBACResponse,
-    RBACRequest,
-    CostResponse,
-    NetworkResponse,
-    ResourceResponse,
-    AzureAuthRequest,
-    AzureAuthResponse
-)
+from .models import APIResponse
+from .models import AzureAuthRequest
+from .models import AzureAuthResponse
+from .models import CostResponse
+from .models import ErrorResponse
+from .models import HealthResponse
+from .models import NetworkResponse
+from .models import PolicyRequest
+from .models import PolicyResponse
+from .models import RBACRequest
+from .models import RBACResponse
+from .models import ResourceResponse
+
     PolicyManagementService,
     RBACManagementService,
     CostManagementService,
@@ -41,8 +52,8 @@ from .models import (
     ResourceManagementService,
     AzureAuthService
 )
+from services.azure_integration.middleware import AzureAuthMiddleware
 from services.azure_integration.services.event_collector import AzureEventCollector
-    from services.azure_integration.middleware import AzureAuthMiddleware
 
 # Configuration
 settings = get_settings()

@@ -2,8 +2,11 @@
 Unit tests for Azure Integration service main module.
 """
 
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from fastapi.testclient import TestClient
 
 from backend.services.azure_integration.main import app

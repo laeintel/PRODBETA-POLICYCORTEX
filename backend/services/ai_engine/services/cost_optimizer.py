@@ -3,15 +3,21 @@ Cost Optimization Service for AI Engine.
 Provides AI-driven cost optimization recommendations for Azure resources.
 """
 
-import json
 import asyncio
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
+import json
 from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+
 import structlog
+from azure.identity.aio import DefaultAzureCredential
 from azure.mgmt.consumption.aio import ConsumptionManagementClient
 from azure.mgmt.resource.aio import ResourceManagementClient
-from azure.identity.aio import DefaultAzureCredential
 
 from ....shared.config import get_settings
 from ..models import OptimizationGoal

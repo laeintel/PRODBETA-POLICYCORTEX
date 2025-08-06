@@ -2,12 +2,18 @@
 Unit tests for AuthManager functionality.
 """
 
-import pytest
-import jwt
-from unittest.mock import MagicMock, AsyncMock, patch
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-from backend.services.api_gateway.auth import AuthManager, AuthenticationError, AuthorizationError
+import jwt
+import pytest
+
+from backend.services.api_gateway.auth import AuthenticationError
+from backend.services.api_gateway.auth import AuthManager
+from backend.services.api_gateway.auth import AuthorizationError
 
 
 class TestAuthManager:
@@ -18,7 +24,7 @@ class TestAuthManager:
         auth_manager = AuthManager()
 
         assert auth_manager.redis_client is not None
-        assert hasattr(auth_manager, 'logger')
+        assert hasattr(auth_manager, "logger")
 
     @pytest.mark.asyncio
     async def test_verify_token_valid_jwt(self, mock_redis):
@@ -32,7 +38,7 @@ class TestAuthManager:
             "email": "test@example.com",
             "name": "Test User",
             "roles": ["user"],
-            "exp": datetime.utcnow() + timedelta(hours=1)
+            "exp": datetime.utcnow() + timedelta(hours=1),
         }
 
         secret_key = "test-secret-key"
@@ -41,7 +47,7 @@ class TestAuthManager:
         # Mock Redis responses
         mock_redis.get.return_value = None  # Token not blacklisted
 
-        with patch.object(auth_manager, '_decode_jwt_token') as mock_decode:
+        with patch.object(auth_manager, "_decode_jwt_token") as mock_decode:
             mock_decode.return_value = payload
 
             user_info = await auth_manager.verify_token(token)
@@ -62,10 +68,10 @@ class TestAuthManager:
         payload = {
             "user_id": "test-user-id",
             "email": "test@example.com",
-            "exp": datetime.utcnow() - timedelta(hours=1)  # Expired
+            "exp": datetime.utcnow() - timedelta(hours=1),  # Expired
         }
 
-        with patch.object(auth_manager, '_decode_jwt_token') as mock_decode:
+        with patch.object(auth_manager, "_decode_jwt_token") as mock_decode:
             mock_decode.side_effect = jwt.ExpiredSignatureError("Token expired")
 
             with pytest.raises(AuthenticationError) as exc_info:
@@ -79,7 +85,7 @@ class TestAuthManager:
         auth_manager = AuthManager()
         auth_manager.redis_client = mock_redis
 
-        with patch.object(auth_manager, '_decode_jwt_token') as mock_decode:
+        with patch.object(auth_manager, "_decode_jwt_token") as mock_decode:
             mock_decode.side_effect = jwt.InvalidSignatureError("Invalid signature")
 
             with pytest.raises(AuthenticationError) as exc_info:
@@ -107,7 +113,7 @@ class TestAuthManager:
         auth_manager = AuthManager()
         auth_manager.redis_client = mock_redis
 
-        with patch.object(auth_manager, '_decode_jwt_token') as mock_decode:
+        with patch.object(auth_manager, "_decode_jwt_token") as mock_decode:
             mock_decode.side_effect = jwt.DecodeError("Invalid token format")
 
             with pytest.raises(AuthenticationError) as exc_info:
@@ -125,10 +131,8 @@ class TestAuthManager:
         mock_redis.setex.return_value = True
 
         # Mock JWT decoding to get expiry
-        with patch.object(auth_manager, '_decode_jwt_token') as mock_decode:
-            mock_decode.return_value = {
-                "exp": datetime.utcnow() + timedelta(hours=1)
-            }
+        with patch.object(auth_manager, "_decode_jwt_token") as mock_decode:
+            mock_decode.return_value = {"exp": datetime.utcnow() + timedelta(hours=1)}
 
             success = await auth_manager.blacklist_token("test-token")
 
@@ -145,7 +149,7 @@ class TestAuthManager:
         mock_redis.set.return_value = True
 
         # Mock JWT decoding without expiry
-        with patch.object(auth_manager, '_decode_jwt_token') as mock_decode:
+        with patch.object(auth_manager, "_decode_jwt_token") as mock_decode:
             mock_decode.return_value = {"user_id": "test-user"}
 
             success = await auth_manager.blacklist_token("test-token")
@@ -325,7 +329,7 @@ class TestAuthManager:
             "id": "test-user-id",
             "email": "test@example.com",
             "name": "Test User",
-            "roles": ["user"]
+            "roles": ["user"],
         }
         mock_redis.get.return_value = '{"id": "test-user-id", "email": "test@example.com", "name": "Test User", "roles": ["user"]}'
 
@@ -345,11 +349,7 @@ class TestAuthManager:
         # Mock Redis response
         mock_redis.setex.return_value = True
 
-        user_data = {
-            "id": "test-user-id",
-            "email": "test@example.com",
-            "name": "Test User"
-        }
+        user_data = {"id": "test-user-id", "email": "test@example.com", "name": "Test User"}
 
         success = await auth_manager.cache_user_info("test-user-id", user_data, ttl=3600)
 
@@ -380,7 +380,7 @@ class TestAuthManager:
         old_token = "old-token"
         new_token = "new-token"
 
-        with patch.object(auth_manager, '_generate_new_token') as mock_generate:
+        with patch.object(auth_manager, "_generate_new_token") as mock_generate:
             mock_generate.return_value = new_token
             mock_redis.setex.return_value = True
 
@@ -413,7 +413,7 @@ class TestAuthManager:
         # Mock Redis connection error
         mock_redis.get.side_effect = Exception("Redis connection error")
 
-        with patch.object(auth_manager, 'logger') as mock_logger:
+        with patch.object(auth_manager, "logger") as mock_logger:
             # Should return empty permissions on Redis error
             permissions = await auth_manager.get_user_permissions("test-user-id")
 
@@ -426,9 +426,7 @@ class TestAuthManager:
         auth_manager = AuthManager()
 
         # Test valid token format
-        valid_token = (
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-        )
+        valid_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
         assert auth_manager._validate_token_format(valid_token) is True
 
         # Test invalid token formats
@@ -438,7 +436,7 @@ class TestAuthManager:
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",  # Only header
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ",  # Missing signature
             "",
-            None
+            None,
         ]
 
         for token in invalid_tokens:

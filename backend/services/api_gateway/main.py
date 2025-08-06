@@ -3,40 +3,51 @@ API Gateway Service for PolicyCortex.
 Central entry point for all microservices with authentication, routing, and monitoring.
 """
 
+import os
+import sys
 import time
 import uuid
-import sys
-import os
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 import httpx
 import structlog
-from fastapi import FastAPI, Request, Response, HTTPException, Depends, status
+from fastapi import Depends
+from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
+from fastapi import status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Histogram, generate_latest
+from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
+from prometheus_client import Counter
+from prometheus_client import Histogram
+from prometheus_client import generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
 # Add the backend directory to Python path for shared modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 try:
     from shared.config import get_settings
-    from shared.database import get_async_db, DatabaseUtils
+    from shared.database import DatabaseUtils
+    from shared.database import get_async_db
+
     from .auth import AuthManager
-    from .rate_limiter import RateLimiter
     from .circuit_breaker import CircuitBreaker
-    from .models import (
-        HealthResponse,
-        APIResponse,
-        ErrorResponse,
-        ServiceRoute,
-        GatewayMetrics
-    )
+    from .models import APIResponse
+    from .models import ErrorResponse
+    from .models import GatewayMetrics
+    from .models import HealthResponse
+    from .models import ServiceRoute
+    from .rate_limiter import RateLimiter
 except ImportError as e:
     print(f"Failed to import modules: {e}")
     print(f"Current working directory: {os.getcwd()}")
@@ -54,18 +65,11 @@ except Exception as e:
 
 # Metrics
 REQUEST_COUNT = Counter(
-    'api_gateway_requests_total',
-    'Total API requests',
-    ['method',
-    'endpoint',
-    'status']
+    "api_gateway_requests_total", "Total API requests", ["method", "endpoint", "status"]
 )
-REQUEST_DURATION = Histogram('api_gateway_request_duration_seconds', 'Request duration')
+REQUEST_DURATION = Histogram("api_gateway_request_duration_seconds", "Request duration")
 SERVICE_REQUESTS = Counter(
-    'api_gateway_service_requests_total',
-    'Service requests',
-    ['service',
-    'status']
+    "api_gateway_service_requests_total", "Service requests", ["service", "status"]
 )
 
 # FastAPI app
@@ -75,7 +79,7 @@ app = FastAPI(
     version=settings.service.service_version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
-        )
+)
 
 # Security
 security = HTTPBearer(auto_error=False)
@@ -87,11 +91,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=settings.security.cors_methods,
     allow_headers=settings.security.cors_headers,
-        )
+)
 
 app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*"] if settings.debug else ["localhost", "127.0.0.1"]
+    TrustedHostMiddleware, allowed_hosts=["*"] if settings.debug else ["localhost", "127.0.0.1"]
 )
 
 # Service Registry
@@ -100,32 +103,32 @@ SERVICE_REGISTRY = {
         "url": settings.azure_integration_url,
         "health_path": "/health",
         "timeout": 30,
-        "circuit_breaker": CircuitBreaker(failure_threshold=5, timeout=60)
+        "circuit_breaker": CircuitBreaker(failure_threshold=5, timeout=60),
     },
     "ai-engine": {
         "url": settings.ai_engine_url,
         "health_path": "/health",
         "timeout": 60,
-        "circuit_breaker": CircuitBreaker(failure_threshold=3, timeout=120)
+        "circuit_breaker": CircuitBreaker(failure_threshold=3, timeout=120),
     },
     "data-processing": {
         "url": settings.data_processing_url,
         "health_path": "/health",
         "timeout": 45,
-        "circuit_breaker": CircuitBreaker(failure_threshold=5, timeout=60)
+        "circuit_breaker": CircuitBreaker(failure_threshold=5, timeout=60),
     },
     "conversation": {
         "url": settings.conversation_url,
         "health_path": "/health",
         "timeout": 30,
-        "circuit_breaker": CircuitBreaker(failure_threshold=3, timeout=60)
+        "circuit_breaker": CircuitBreaker(failure_threshold=3, timeout=60),
     },
     "notification": {
         "url": settings.notification_url,
         "health_path": "/health",
         "timeout": 15,
-        "circuit_breaker": CircuitBreaker(failure_threshold=5, timeout=30)
-    }
+        "circuit_breaker": CircuitBreaker(failure_threshold=5, timeout=30),
+    },
 }
 
 # Global components
@@ -150,7 +153,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             method=request.method,
             url=str(request.url),
             user_agent=request.headers.get("user-agent"),
-            client_ip=request.client.host if request.client else None
+            client_ip=request.client.host if request.client else None,
         )
 
         try:
@@ -161,9 +164,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
             # Update metrics
             REQUEST_COUNT.labels(
-                method=request.method,
-                endpoint=request.url.path,
-                status=response.status_code
+                method=request.method, endpoint=request.url.path, status=response.status_code
             ).inc()
             REQUEST_DURATION.observe(duration)
 
@@ -172,7 +173,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "request_completed",
                 request_id=request_id,
                 status_code=response.status_code,
-                duration_ms=round(duration * 1000, 2)
+                duration_ms=round(duration * 1000, 2),
             )
 
             # Add request ID to response headers
@@ -188,15 +189,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "request_failed",
                 request_id=request_id,
                 error=str(e),
-                duration_ms=round(duration * 1000, 2)
+                duration_ms=round(duration * 1000, 2),
             )
 
             # Update error metrics
-            REQUEST_COUNT.labels(
-                method=request.method,
-                endpoint=request.url.path,
-                status=500
-            ).inc()
+            REQUEST_COUNT.labels(method=request.method, endpoint=request.url.path, status=500).inc()
 
             raise
 
@@ -206,8 +203,7 @@ app.add_middleware(RequestLoggingMiddleware)
 
 
 async def verify_authentication(
-    request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+    request: Request, credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Optional[Dict[str, Any]]:
     """Verify authentication for protected endpoints."""
 
@@ -217,8 +213,7 @@ async def verify_authentication(
 
     if not credentials:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
         )
 
     try:
@@ -228,8 +223,7 @@ async def verify_authentication(
     except Exception as e:
         logger.error("authentication_failed", error=str(e))
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials"
         )
 
 
@@ -239,15 +233,13 @@ async def check_rate_limit(request: Request) -> None:
     user_id = getattr(request.state, "user", {}).get("id", client_ip)
 
     is_allowed, reset_time = await rate_limiter.is_allowed(
-        key=f"user:{user_id}",
-        limit=settings.security.rate_limit_per_minute,
-        window=60
+        key=f"user:{user_id}", limit=settings.security.rate_limit_per_minute, window=60
     )
 
     if not is_allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Rate limit exceeded. Reset at {reset_time}"
+            detail=f"Rate limit exceeded. Reset at {reset_time}",
         )
 
 
@@ -256,14 +248,13 @@ async def proxy_request(
     path: str,
     request: Request,
     method: str = "GET",
-    timeout: Optional[int] = None
+    timeout: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Proxy request to downstream service."""
 
     if service_name not in SERVICE_REGISTRY:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Service '{service_name}' not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Service '{service_name}' not found"
         )
 
     service_config = SERVICE_REGISTRY[service_name]
@@ -274,7 +265,7 @@ async def proxy_request(
     if not circuit_breaker.can_execute():
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Service '{service_name}' is currently unavailable"
+            detail=f"Service '{service_name}' is currently unavailable",
         )
 
     try:
@@ -293,11 +284,7 @@ async def proxy_request(
 
         async with httpx.AsyncClient(timeout=service_timeout) as client:
             response = await client.request(
-                method=method,
-                url=url,
-                headers=headers,
-                content=body,
-                params=request.query_params
+                method=method, url=url, headers=headers, content=body, params=request.query_params
             )
 
         # Record success
@@ -309,7 +296,7 @@ async def proxy_request(
             "status_code": response.status_code,
             "headers": dict(response.headers),
             "content": response.content,
-            "text": response.text if response.status_code != 204 else None
+            "text": response.text if response.status_code != 204 else None,
         }
 
     except Exception as e:
@@ -321,12 +308,12 @@ async def proxy_request(
             "service_request_failed",
             service=service_name,
             error=str(e),
-            request_id=request.state.request_id
+            request_id=request.state.request_id,
         )
 
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Service '{service_name}' request failed: {str(e)}"
+            detail=f"Service '{service_name}' request failed: {str(e)}",
         )
 
 
@@ -338,7 +325,7 @@ async def health_check():
         status="healthy",
         timestamp=datetime.utcnow(),
         service="api-gateway",
-        version=settings.service.service_version
+        version=settings.service.service_version,
     )
 
 
@@ -364,12 +351,12 @@ async def readiness_check():
             timestamp=datetime.utcnow(),
             service="api-gateway",
             version=settings.service.service_version,
-            details={"healthy_services": f"{healthy_services}/{total_services}"}
+            details={"healthy_services": f"{healthy_services}/{total_services}"},
         )
     else:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Only {healthy_services}/{total_services} services are healthy"
+            detail=f"Only {healthy_services}/{total_services} services are healthy",
         )
 
 
@@ -381,19 +368,13 @@ async def get_metrics():
 
 # Authentication endpoints
 @app.post("/auth/login")
-async def login(
-    request: Request,
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
-):
+async def login(request: Request, user: Optional[Dict[str, Any]] = Depends(verify_authentication)):
     """Login endpoint."""
     return await proxy_request("azure-integration", "/auth/login", request, "POST")
 
 
 @app.post("/auth/logout")
-async def logout(
-    request: Request,
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
-):
+async def logout(request: Request, user: Optional[Dict[str, Any]] = Depends(verify_authentication)):
     """Logout endpoint."""
     return await proxy_request("azure-integration", "/auth/logout", request, "POST")
 
@@ -407,54 +388,41 @@ async def refresh_token(request: Request):
 # Azure Integration routes
 @app.api_route("/api/v1/azure/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def azure_proxy(
-    path: str,
-    request: Request,
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+    path: str, request: Request, user: Optional[Dict[str, Any]] = Depends(verify_authentication)
 ):
     """Proxy requests to Azure Integration service."""
     await check_rate_limit(request)
     response_data = await proxy_request(
-        "azure-integration",
-        f"/api/v1/{path}",
-        request,
-        request.method
+        "azure-integration", f"/api/v1/{path}", request, request.method
     )
     return Response(
         content=response_data["content"],
         status_code=response_data["status_code"],
-        headers=response_data["headers"]
+        headers=response_data["headers"],
     )
 
 
 # AI Engine routes
 @app.api_route("/api/v1/ai/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def ai_proxy(
-    path: str,
-    request: Request,
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+    path: str, request: Request, user: Optional[Dict[str, Any]] = Depends(verify_authentication)
 ):
     """Proxy requests to AI Engine service."""
     await check_rate_limit(request)
     response_data = await proxy_request(
-        "ai-engine",
-        f"/api/v1/{path}",
-        request,
-        request.method,
-        timeout=120
+        "ai-engine", f"/api/v1/{path}", request, request.method, timeout=120
     )
     return Response(
         content=response_data["content"],
         status_code=response_data["status_code"],
-        headers=response_data["headers"]
+        headers=response_data["headers"],
     )
 
 
 # Conversation routes
 @app.api_route("/api/v1/chat/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def conversation_proxy(
-    path: str,
-    request: Request,
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+    path: str, request: Request, user: Optional[Dict[str, Any]] = Depends(verify_authentication)
 ):
     """Proxy requests to Conversation service."""
     await check_rate_limit(request)
@@ -462,45 +430,33 @@ async def conversation_proxy(
     return Response(
         content=response_data["content"],
         status_code=response_data["status_code"],
-        headers=response_data["headers"]
+        headers=response_data["headers"],
     )
 
 
 # Data Processing routes
 @app.api_route("/api/v1/data/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def data_proxy(
-    path: str,
-    request: Request,
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+    path: str, request: Request, user: Optional[Dict[str, Any]] = Depends(verify_authentication)
 ):
     """Proxy requests to Data Processing service."""
     await check_rate_limit(request)
     response_data = await proxy_request(
-        "data-processing",
-        f"/api/v1/{path}",
-        request,
-        request.method
+        "data-processing", f"/api/v1/{path}", request, request.method
     )
     return Response(
         content=response_data["content"],
         status_code=response_data["status_code"],
-        headers=response_data["headers"]
+        headers=response_data["headers"],
     )
 
 
 # Notification routes
 @app.api_route(
-    "/api/v1/notifications/{path:path}",
-    methods=["GET",
-    "POST",
-    "PUT",
-    "DELETE",
-    "PATCH"]
+    "/api/v1/notifications/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"]
 )
 async def notification_proxy(
-    path: str,
-    request: Request,
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
+    path: str, request: Request, user: Optional[Dict[str, Any]] = Depends(verify_authentication)
 ):
     """Proxy requests to Notification service."""
     await check_rate_limit(request)
@@ -508,15 +464,13 @@ async def notification_proxy(
     return Response(
         content=response_data["content"],
         status_code=response_data["status_code"],
-        headers=response_data["headers"]
+        headers=response_data["headers"],
     )
 
 
 # Gateway management endpoints
 @app.get("/api/v1/gateway/services", response_model=Dict[str, ServiceRoute])
-async def get_service_registry(
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
-):
+async def get_service_registry(user: Optional[Dict[str, Any]] = Depends(verify_authentication)):
     """Get service registry information."""
     services = {}
     for name, config in SERVICE_REGISTRY.items():
@@ -527,16 +481,14 @@ async def get_service_registry(
             health_path=config["health_path"],
             timeout=config["timeout"],
             status="healthy" if circuit_breaker.can_execute() else "unhealthy",
-            circuit_breaker_state=circuit_breaker.state
+            circuit_breaker_state=circuit_breaker.state,
         )
 
     return services
 
 
 @app.get("/api/v1/gateway/metrics", response_model=GatewayMetrics)
-async def get_gateway_metrics(
-    user: Optional[Dict[str, Any]] = Depends(verify_authentication)
-):
+async def get_gateway_metrics(user: Optional[Dict[str, Any]] = Depends(verify_authentication)):
     """Get gateway metrics."""
     return GatewayMetrics(
         total_requests=REQUEST_COUNT._value.sum(),
@@ -545,9 +497,8 @@ async def get_gateway_metrics(
             for service in SERVICE_REGISTRY.keys()
         },
         circuit_breaker_states={
-            service: config["circuit_breaker"].state
-            for service, config in SERVICE_REGISTRY.items()
-        }
+            service: config["circuit_breaker"].state for service, config in SERVICE_REGISTRY.items()
+        },
     )
 
 
@@ -558,7 +509,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(
         "unhandled_exception",
         error=str(exc),
-        request_id=getattr(request.state, "request_id", "unknown")
+        request_id=getattr(request.state, "request_id", "unknown"),
     )
 
     return JSONResponse(
@@ -566,8 +517,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         content=ErrorResponse(
             error="Internal server error",
             message=str(exc) if settings.debug else "An unexpected error occurred",
-            request_id=getattr(request.state, "request_id", "unknown")
-        ).dict()
+            request_id=getattr(request.state, "request_id", "unknown"),
+        ).dict(),
     )
 
 
@@ -580,5 +531,5 @@ if __name__ == "__main__":
         port=settings.service.service_port,
         workers=1,  # Single worker for development
         reload=settings.debug,
-        log_level=settings.monitoring.log_level.lower()
+        log_level=settings.monitoring.log_level.lower(),
     )

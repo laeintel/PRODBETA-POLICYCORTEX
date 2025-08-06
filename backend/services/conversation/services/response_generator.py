@@ -3,13 +3,18 @@ Response Generator Service.
 Generates intelligent responses using Azure OpenAI based on intent, context, and service data.
 """
 
+import asyncio
 import json
-from typing import Dict, Any, List, Optional
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import structlog
 from openai import AsyncAzureOpenAI
-import asyncio
 
 from ....shared.config import get_settings
+
     ConversationIntent,
     Entity,
     ResponseGenerationContext,

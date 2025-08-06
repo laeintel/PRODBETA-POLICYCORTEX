@@ -2,18 +2,21 @@
 Test configuration and fixtures for API Gateway service.
 """
 
+import os
+import sys
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from fastapi.testclient import TestClient
 
-import sys
-import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from main import app
-from circuit_breaker import CircuitBreaker
-from rate_limiter import RateLimiter
 from auth import AuthManager
+from circuit_breaker import CircuitBreaker
+from main import app
+from rate_limiter import RateLimiter
 
 
 @pytest.fixture
@@ -27,11 +30,9 @@ def client():
 def mock_auth_manager():
     """Mock AuthManager for testing."""
     with patch("main.auth_manager") as mock_auth:
-        mock_auth.verify_token = AsyncMock(return_value={
-            "id": "test-user-id",
-            "email": "test@example.com",
-            "name": "Test User"
-        })
+        mock_auth.verify_token = AsyncMock(
+            return_value={"id": "test-user-id", "email": "test@example.com", "name": "Test User"}
+        )
         yield mock_auth
 
 
@@ -62,14 +63,14 @@ def mock_service_registry(mock_circuit_breaker):
             "url": "http://localhost:8001",
             "health_path": "/health",
             "timeout": 30,
-            "circuit_breaker": mock_circuit_breaker
+            "circuit_breaker": mock_circuit_breaker,
         },
         "ai-engine": {
             "url": "http://localhost:8002",
             "health_path": "/health",
             "timeout": 60,
-            "circuit_breaker": mock_circuit_breaker
-        }
+            "circuit_breaker": mock_circuit_breaker,
+        },
     }
 
 
@@ -99,9 +100,9 @@ def invalid_auth_headers():
 @pytest.fixture
 def mock_prometheus_metrics():
     """Mock Prometheus metrics for testing."""
-    with patch("main.REQUEST_COUNT") as mock_counter, \
-         patch("main.REQUEST_DURATION") as mock_histogram, \
-         patch("main.SERVICE_REQUESTS") as mock_service_counter:
+    with patch("main.REQUEST_COUNT") as mock_counter, patch(
+        "main.REQUEST_DURATION"
+    ) as mock_histogram, patch("main.SERVICE_REQUESTS") as mock_service_counter:
 
         # Mock counter methods
         mock_counter.labels.return_value.inc = MagicMock()
@@ -111,5 +112,5 @@ def mock_prometheus_metrics():
         yield {
             "request_count": mock_counter,
             "request_duration": mock_histogram,
-            "service_requests": mock_service_counter
+            "service_requests": mock_service_counter,
         }

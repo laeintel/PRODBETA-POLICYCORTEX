@@ -5,30 +5,40 @@ Patent 3: Advanced governance-specific conversational AI with context awareness,
 """
 
 import asyncio
-import uuid
 import json
-import re
-from typing import Dict, List, Any, Optional, Tuple, Union, Set
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
-from collections import defaultdict, deque
+import re
+import uuid
+from collections import defaultdict
+from collections import deque
+from dataclasses import dataclass
+from dataclasses import field
+from datetime import datetime
+from datetime import timedelta
+from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import Union
+
 import numpy as np
 import torch
 import torch.nn as nn
+
     AutoTokenizer, AutoModel, AutoModelForSequenceClassification,
     pipeline, BertTokenizer, BertModel
 )
-from sentence_transformers import SentenceTransformer
 import networkx as nx
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import DBSCAN
 import spacy
-
 from backend.core.config import settings
-from backend.core.redis_client import redis_client
 from backend.core.exceptions import APIError
+from backend.core.redis_client import redis_client
+from sentence_transformers import SentenceTransformer
+from sklearn.cluster import DBSCAN
+from sklearn.metrics.pairwise import cosine_similarity
 
 logger = logging.getLogger(__name__)
 

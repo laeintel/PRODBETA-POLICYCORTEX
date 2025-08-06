@@ -4,12 +4,18 @@ Manages conversation context, history, and state for better response generation.
 """
 
 import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import redis.asyncio as redis
 import structlog
 
 from ....shared.config import get_settings
+
     ConversationIntent,
     Entity,
     ConversationMessage,

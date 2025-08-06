@@ -4,25 +4,35 @@ Handles connections to Azure SQL, Cosmos DB, Blob Storage, Event Hub, and other 
 """
 
 import asyncio
+import io
 import json
 import uuid
-import io
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List, Union
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+
 import pandas as pd
 import structlog
-from azure.identity.aio import DefaultAzureCredential
-from azure.storage.blob.aio import BlobServiceClient
 from azure.cosmos.aio import CosmosClient
-from azure.eventhub.aio import EventHubProducerClient, EventHubConsumerClient
-from azure.servicebus.aio import ServiceBusClient
 from azure.data.tables.aio import TableServiceClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from azure.eventhub.aio import EventHubConsumerClient
+from azure.eventhub.aio import EventHubProducerClient
+from azure.identity.aio import DefaultAzureCredential
+from azure.servicebus.aio import ServiceBusClient
+from azure.storage.blob.aio import BlobServiceClient
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 from ....shared.config import get_settings
-from ..models import DataSourceConfig, DataConnectorHealth, DataSourceType
+from ..models import DataConnectorHealth
+from ..models import DataSourceConfig
+from ..models import DataSourceType
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -59,7 +69,7 @@ class AzureConnectorService:
                 pool_size=self.settings.database.sql_pool_size,
                 max_overflow=self.settings.database.sql_max_overflow,
                 pool_pre_ping=True,
-                pool_recycle=3600
+                pool_recycle=3600,
             )
         return self.sql_engine
 
@@ -68,7 +78,7 @@ class AzureConnectorService:
         if self.cosmos_client is None:
             self.cosmos_client = CosmosClient(
                 url=self.settings.database.cosmos_endpoint,
-                credential=self.settings.database.cosmos_key
+                credential=self.settings.database.cosmos_key,
             )
         return self.cosmos_client
 
@@ -80,22 +90,18 @@ class AzureConnectorService:
                 f"https://{self.settings.azure.storage_account_name}.blob.core.windows.net"
             )
             self.blob_service_client = BlobServiceClient(
-                account_url=account_url,
-                credential=credential
+                account_url=account_url, credential=credential
             )
         return self.blob_service_client
 
     async def _get_eventhub_client(
-        self,
-        eventhub_name: str,
-        connection_string: str
+        self, eventhub_name: str, connection_string: str
     ) -> EventHubProducerClient:
         """Get Event Hub client."""
         client_key = f"{eventhub_name}_{hash(connection_string)}"
         if client_key not in self.eventhub_clients:
             self.eventhub_clients[client_key] = EventHubProducerClient.from_connection_string(
-                conn_str=connection_string,
-                eventhub_name=eventhub_name
+                conn_str=connection_string, eventhub_name=eventhub_name
             )
         return self.eventhub_clients[client_key]
 
@@ -115,8 +121,7 @@ class AzureConnectorService:
                 f"https://{self.settings.azure.storage_account_name}.table.core.windows.net"
             )
             self.table_service_client = TableServiceClient(
-                endpoint=account_url,
-                credential=credential
+                endpoint=account_url, credential=credential
             )
         return self.table_service_client
 
@@ -141,11 +146,7 @@ class AzureConnectorService:
                 raise ValueError(f"Unsupported source type: {source_type}")
 
         except Exception as e:
-            logger.error(
-                "connect_to_source_failed",
-                source_type=source_type,
-                error=str(e)
-            )
+            logger.error("connect_to_source_failed", source_type=source_type, error=str(e))
             raise
 
     async def _connect_to_azure_sql(self, source_config: DataSourceConfig) -> AsyncSession:
@@ -179,9 +180,7 @@ class AzureConnectorService:
             await container.read()
 
             logger.info(
-                "cosmos_db_connection_established",
-                database=database_name,
-                container=container_name
+                "cosmos_db_connection_established", database=database_name, container=container_name
             )
             return container
 
@@ -200,10 +199,7 @@ class AzureConnectorService:
             # Test connection
             await container_client.get_container_properties()
 
-            logger.info(
-                "blob_storage_connection_established",
-                container=container_name
-            )
+            logger.info("blob_storage_connection_established", container=container_name)
             return container_client
 
         except Exception as e:
@@ -221,10 +217,7 @@ class AzureConnectorService:
 
             client = await self._get_eventhub_client(eventhub_name, connection_string)
 
-            logger.info(
-                "event_hub_connection_established",
-                eventhub_name=eventhub_name
-            )
+            logger.info("event_hub_connection_established", eventhub_name=eventhub_name)
             return client
 
         except Exception as e:
@@ -254,19 +247,19 @@ class AzureConnectorService:
             # Test connection
             await table_client.get_entity("test", "test")
 
-            logger.info(
-                "table_storage_connection_established",
-                table=table_name
-            )
+            logger.info("table_storage_connection_established", table=table_name)
             return table_client
 
         except Exception as e:
             logger.error("table_storage_connection_failed", error=str(e))
             raise
 
-    async def read_data(self, source_config: DataSourceConfig,
-                       limit: Optional[int] = None,
-                       offset: Optional[int] = None) -> pd.DataFrame:
+    async def read_data(
+        self,
+        source_config: DataSourceConfig,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> pd.DataFrame:
         """Read data from source."""
         try:
             source_type = source_config.source_type
@@ -283,16 +276,15 @@ class AzureConnectorService:
                 raise ValueError(f"Unsupported source type for reading: {source_type}")
 
         except Exception as e:
-            logger.error(
-                "read_data_failed",
-                source_type=source_type,
-                error=str(e)
-            )
+            logger.error("read_data_failed", source_type=source_type, error=str(e))
             raise
 
-    async def _read_from_azure_sql(self, source_config: DataSourceConfig,
-                                  limit: Optional[int] = None,
-                                  offset: Optional[int] = None) -> pd.DataFrame:
+    async def _read_from_azure_sql(
+        self,
+        source_config: DataSourceConfig,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> pd.DataFrame:
         """Read data from Azure SQL Database."""
         try:
             session = await self._connect_to_azure_sql(source_config)
@@ -317,20 +309,19 @@ class AzureConnectorService:
 
             await session.close()
 
-            logger.info(
-                "azure_sql_data_read",
-                rows_count=len(df),
-                columns_count=len(df.columns)
-            )
+            logger.info("azure_sql_data_read", rows_count=len(df), columns_count=len(df.columns))
             return df
 
         except Exception as e:
             logger.error("azure_sql_data_read_failed", error=str(e))
             raise
 
-    async def _read_from_cosmos_db(self, source_config: DataSourceConfig,
-                                  limit: Optional[int] = None,
-                                  offset: Optional[int] = None) -> pd.DataFrame:
+    async def _read_from_cosmos_db(
+        self,
+        source_config: DataSourceConfig,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> pd.DataFrame:
         """Read data from Cosmos DB."""
         try:
             container = await self._connect_to_cosmos_db(source_config)
@@ -353,7 +344,7 @@ class AzureConnectorService:
             logger.info(
                 "cosmos_db_data_read",
                 rows_count=len(df),
-                columns_count=len(df.columns) if not df.empty else 0
+                columns_count=len(df.columns) if not df.empty else 0,
             )
             return df
 
@@ -361,9 +352,12 @@ class AzureConnectorService:
             logger.error("cosmos_db_data_read_failed", error=str(e))
             raise
 
-    async def _read_from_blob_storage(self, source_config: DataSourceConfig,
-                                     limit: Optional[int] = None,
-                                     offset: Optional[int] = None) -> pd.DataFrame:
+    async def _read_from_blob_storage(
+        self,
+        source_config: DataSourceConfig,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> pd.DataFrame:
         """Read data from Blob Storage."""
         try:
             container_client = await self._connect_to_blob_storage(source_config)
@@ -400,7 +394,7 @@ class AzureConnectorService:
                 "blob_storage_data_read",
                 blob_name=blob_name,
                 rows_count=len(df),
-                columns_count=len(df.columns)
+                columns_count=len(df.columns),
             )
             return df
 
@@ -408,9 +402,12 @@ class AzureConnectorService:
             logger.error("blob_storage_data_read_failed", error=str(e))
             raise
 
-    async def _read_from_table_storage(self, source_config: DataSourceConfig,
-                                      limit: Optional[int] = None,
-                                      offset: Optional[int] = None) -> pd.DataFrame:
+    async def _read_from_table_storage(
+        self,
+        source_config: DataSourceConfig,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+    ) -> pd.DataFrame:
         """Read data from Table Storage."""
         try:
             table_client = await self._connect_to_table_storage(source_config)
@@ -436,7 +433,7 @@ class AzureConnectorService:
                 "table_storage_data_read",
                 table_name=source_config.table,
                 rows_count=len(df),
-                columns_count=len(df.columns) if not df.empty else 0
+                columns_count=len(df.columns) if not df.empty else 0,
             )
             return df
 
@@ -444,9 +441,9 @@ class AzureConnectorService:
             logger.error("table_storage_data_read_failed", error=str(e))
             raise
 
-    async def write_data(self, target_config: DataSourceConfig,
-                        data: pd.DataFrame,
-                        write_mode: str = "append") -> Dict[str, Any]:
+    async def write_data(
+        self, target_config: DataSourceConfig, data: pd.DataFrame, write_mode: str = "append"
+    ) -> Dict[str, Any]:
         """Write data to target."""
         try:
             target_type = target_config.target_type
@@ -463,16 +460,12 @@ class AzureConnectorService:
                 raise ValueError(f"Unsupported target type for writing: {target_type}")
 
         except Exception as e:
-            logger.error(
-                "write_data_failed",
-                target_type=target_type,
-                error=str(e)
-            )
+            logger.error("write_data_failed", target_type=target_type, error=str(e))
             raise
 
-    async def _write_to_azure_sql(self, target_config: DataSourceConfig,
-                                 data: pd.DataFrame,
-                                 write_mode: str) -> Dict[str, Any]:
+    async def _write_to_azure_sql(
+        self, target_config: DataSourceConfig, data: pd.DataFrame, write_mode: str
+    ) -> Dict[str, Any]:
         """Write data to Azure SQL Database."""
         try:
             engine = await self._get_sql_engine()
@@ -487,32 +480,21 @@ class AzureConnectorService:
 
             # Write data
             await data.to_sql(
-                name=table_name,
-                con=engine,
-                if_exists=if_exists,
-                index=False,
-                method="multi"
+                name=table_name, con=engine, if_exists=if_exists, index=False, method="multi"
             )
 
-            result = {
-                "rows_written": len(data),
-                "table_name": table_name,
-                "write_mode": write_mode
-            }
+            result = {"rows_written": len(data), "table_name": table_name, "write_mode": write_mode}
 
-            logger.info(
-                "azure_sql_data_written",
-                **result
-            )
+            logger.info("azure_sql_data_written", **result)
             return result
 
         except Exception as e:
             logger.error("azure_sql_data_write_failed", error=str(e))
             raise
 
-    async def _write_to_cosmos_db(self, target_config: DataSourceConfig,
-                                 data: pd.DataFrame,
-                                 write_mode: str) -> Dict[str, Any]:
+    async def _write_to_cosmos_db(
+        self, target_config: DataSourceConfig, data: pd.DataFrame, write_mode: str
+    ) -> Dict[str, Any]:
         """Write data to Cosmos DB."""
         try:
             container = await self._connect_to_cosmos_db(target_config)
@@ -537,22 +519,19 @@ class AzureConnectorService:
             result = {
                 "rows_written": written_count,
                 "container_name": target_config.container,
-                "write_mode": write_mode
+                "write_mode": write_mode,
             }
 
-            logger.info(
-                "cosmos_db_data_written",
-                **result
-            )
+            logger.info("cosmos_db_data_written", **result)
             return result
 
         except Exception as e:
             logger.error("cosmos_db_data_write_failed", error=str(e))
             raise
 
-    async def _write_to_blob_storage(self, target_config: DataSourceConfig,
-                                    data: pd.DataFrame,
-                                    write_mode: str) -> Dict[str, Any]:
+    async def _write_to_blob_storage(
+        self, target_config: DataSourceConfig, data: pd.DataFrame, write_mode: str
+    ) -> Dict[str, Any]:
         """Write data to Blob Storage."""
         try:
             container_client = await self._connect_to_blob_storage(target_config)
@@ -566,11 +545,12 @@ class AzureConnectorService:
 
             # Convert DataFrame to bytes
             if file_format.lower() == "csv":
-                content = data.to_csv(index=False).encode('utf-8')
+                content = data.to_csv(index=False).encode("utf-8")
             elif file_format.lower() == "json":
-                content = data.to_json(orient="records").encode('utf-8')
+                content = data.to_json(orient="records").encode("utf-8")
             elif file_format.lower() == "parquet":
                 import io
+
                 buffer = io.BytesIO()
                 data.to_parquet(buffer, index=False)
                 content = buffer.getvalue()
@@ -585,22 +565,19 @@ class AzureConnectorService:
                 "rows_written": len(data),
                 "blob_name": blob_name,
                 "file_size": len(content),
-                "write_mode": write_mode
+                "write_mode": write_mode,
             }
 
-            logger.info(
-                "blob_storage_data_written",
-                **result
-            )
+            logger.info("blob_storage_data_written", **result)
             return result
 
         except Exception as e:
             logger.error("blob_storage_data_write_failed", error=str(e))
             raise
 
-    async def _write_to_table_storage(self, target_config: DataSourceConfig,
-                                     data: pd.DataFrame,
-                                     write_mode: str) -> Dict[str, Any]:
+    async def _write_to_table_storage(
+        self, target_config: DataSourceConfig, data: pd.DataFrame, write_mode: str
+    ) -> Dict[str, Any]:
         """Write data to Table Storage."""
         try:
             table_client = await self._connect_to_table_storage(target_config)
@@ -627,13 +604,10 @@ class AzureConnectorService:
             result = {
                 "rows_written": written_count,
                 "table_name": target_config.table,
-                "write_mode": write_mode
+                "write_mode": write_mode,
             }
 
-            logger.info(
-                "table_storage_data_written",
-                **result
-            )
+            logger.info("table_storage_data_written", **result)
             return result
 
         except Exception as e:
@@ -645,15 +619,12 @@ class AzureConnectorService:
         try:
             # Check if we have recent health data
             current_time = datetime.utcnow()
-            if (self._last_health_check.get("timestamp") and
-                current_time - self._last_health_check["timestamp"] < timedelta(minutes=5)):
+            if self._last_health_check.get("timestamp") and current_time - self._last_health_check[
+                "timestamp"
+            ] < timedelta(minutes=5):
                 return self._health_cache
 
-            health_status = {
-                "status": "healthy",
-                "connectors": [],
-                "timestamp": current_time
-            }
+            health_status = {"status": "healthy", "connectors": [], "timestamp": current_time}
 
             # Check Azure SQL
             sql_health = await self._check_azure_sql_health()
@@ -672,12 +643,14 @@ class AzureConnectorService:
             health_status["connectors"].append(table_health)
 
             # Determine overall status
-            unhealthy_connectors = (
-                [c for c in health_status["connectors"] if c["status"] != "healthy"]
-            )
+            unhealthy_connectors = [
+                c for c in health_status["connectors"] if c["status"] != "healthy"
+            ]
             if unhealthy_connectors:
                 health_status["status"] = (
-                    "degraded" if len(unhealthy_connectors) < len(health_status["connectors"]) else "unhealthy"
+                    "degraded"
+                    if len(unhealthy_connectors) < len(health_status["connectors"])
+                    else "unhealthy"
                 )
 
             # Cache results
@@ -692,7 +665,7 @@ class AzureConnectorService:
                 "status": "unhealthy",
                 "connectors": [],
                 "timestamp": datetime.utcnow(),
-                "error": str(e)
+                "error": str(e),
             }
 
     async def _check_azure_sql_health(self) -> DataConnectorHealth:
@@ -711,7 +684,7 @@ class AzureConnectorService:
                 connector_type="azure_sql",
                 status="healthy",
                 last_check=datetime.utcnow(),
-                response_time_ms=int(response_time)
+                response_time_ms=int(response_time),
             )
 
         except Exception as e:
@@ -719,7 +692,7 @@ class AzureConnectorService:
                 connector_type="azure_sql",
                 status="unhealthy",
                 last_check=datetime.utcnow(),
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _check_cosmos_db_health(self) -> DataConnectorHealth:
@@ -737,7 +710,7 @@ class AzureConnectorService:
                 connector_type="cosmos_db",
                 status="healthy",
                 last_check=datetime.utcnow(),
-                response_time_ms=int(response_time)
+                response_time_ms=int(response_time),
             )
 
         except Exception as e:
@@ -745,7 +718,7 @@ class AzureConnectorService:
                 connector_type="cosmos_db",
                 status="unhealthy",
                 last_check=datetime.utcnow(),
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _check_blob_storage_health(self) -> DataConnectorHealth:
@@ -764,7 +737,7 @@ class AzureConnectorService:
                 connector_type="blob_storage",
                 status="healthy",
                 last_check=datetime.utcnow(),
-                response_time_ms=int(response_time)
+                response_time_ms=int(response_time),
             )
 
         except Exception as e:
@@ -772,7 +745,7 @@ class AzureConnectorService:
                 connector_type="blob_storage",
                 status="unhealthy",
                 last_check=datetime.utcnow(),
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _check_table_storage_health(self) -> DataConnectorHealth:
@@ -791,7 +764,7 @@ class AzureConnectorService:
                 connector_type="table_storage",
                 status="healthy",
                 last_check=datetime.utcnow(),
-                response_time_ms=int(response_time)
+                response_time_ms=int(response_time),
             )
 
         except Exception as e:
@@ -799,7 +772,7 @@ class AzureConnectorService:
                 connector_type="table_storage",
                 status="unhealthy",
                 last_check=datetime.utcnow(),
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def close_connections(self) -> None:

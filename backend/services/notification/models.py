@@ -2,15 +2,24 @@
 Pydantic models for Notification service.
 """
 
-from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
-from pydantic import BaseModel, Field, validator, EmailStr
-from enum import Enum
 import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+
+from pydantic import BaseModel
+from pydantic import EmailStr
+from pydantic import Field
+from pydantic import validator
 
 
 class NotificationType(str, Enum):
     """Notification type enumeration."""
+
     EMAIL = "email"
     SMS = "sms"
     PUSH = "push"
@@ -20,6 +29,7 @@ class NotificationType(str, Enum):
 
 class NotificationPriority(str, Enum):
     """Notification priority enumeration."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -28,6 +38,7 @@ class NotificationPriority(str, Enum):
 
 class DeliveryStatusEnum(str, Enum):
     """Delivery status enumeration."""
+
     PENDING = "pending"
     SENT = "sent"
     DELIVERED = "delivered"
@@ -38,6 +49,7 @@ class DeliveryStatusEnum(str, Enum):
 
 class AlertSeverity(str, Enum):
     """Alert severity enumeration."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -46,6 +58,7 @@ class AlertSeverity(str, Enum):
 
 class WebhookMethod(str, Enum):
     """Webhook HTTP method enumeration."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -55,6 +68,7 @@ class WebhookMethod(str, Enum):
 
 class TemplateType(str, Enum):
     """Template type enumeration."""
+
     EMAIL = "email"
     SMS = "sms"
     PUSH = "push"
@@ -62,6 +76,7 @@ class TemplateType(str, Enum):
 
 class SubscriptionStatus(str, Enum):
     """Subscription status enumeration."""
+
     ACTIVE = "active"
     PAUSED = "paused"
     CANCELLED = "cancelled"
@@ -70,6 +85,7 @@ class SubscriptionStatus(str, Enum):
 # Base models
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str = Field(..., description="Health status")
     timestamp: datetime = Field(..., description="Timestamp of health check")
     service: str = Field(..., description="Service name")
@@ -79,6 +95,7 @@ class HealthResponse(BaseModel):
 
 class APIResponse(BaseModel):
     """Generic API response model."""
+
     success: bool = Field(..., description="Request success status")
     data: Optional[Dict[str, Any]] = Field(None, description="Response data")
     message: Optional[str] = Field(None, description="Response message")
@@ -87,6 +104,7 @@ class APIResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model."""
+
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Error details")
@@ -97,6 +115,7 @@ class ErrorResponse(BaseModel):
 # Notification models
 class NotificationRecipient(BaseModel):
     """Notification recipient model."""
+
     id: Optional[str] = Field(None, description="Recipient identifier")
     email: Optional[EmailStr] = Field(None, description="Email address")
     phone: Optional[str] = Field(None, description="Phone number")
@@ -108,6 +127,7 @@ class NotificationRecipient(BaseModel):
 
 class NotificationContent(BaseModel):
     """Notification content model."""
+
     title: Optional[str] = Field(None, description="Notification title")
     body: str = Field(..., description="Notification body/message")
     html_body: Optional[str] = Field(None, description="HTML version of body")
@@ -118,14 +138,13 @@ class NotificationContent(BaseModel):
 
 class NotificationRequest(BaseModel):
     """Base notification request model."""
+
     id: Optional[str] = Field(
-        default_factory=lambda: str(uuid.uuid4()),
-        description="Notification ID"
+        default_factory=lambda: str(uuid.uuid4()), description="Notification ID"
     )
     type: NotificationType = Field(..., description="Notification type")
     priority: NotificationPriority = Field(
-        NotificationPriority.MEDIUM,
-        description="Notification priority"
+        NotificationPriority.MEDIUM, description="Notification priority"
     )
     recipients: List[NotificationRecipient] = Field(..., description="Recipients list")
     content: NotificationContent = Field(..., description="Notification content")
@@ -146,6 +165,7 @@ class NotificationRequest(BaseModel):
 
 class NotificationResponse(BaseModel):
     """Notification response model."""
+
     notification_id: str = Field(..., description="Notification identifier")
     status: DeliveryStatusEnum = Field(..., description="Delivery status")
     message: str = Field(..., description="Response message")
@@ -153,8 +173,7 @@ class NotificationResponse(BaseModel):
     delivered_count: int = Field(0, description="Number of successful deliveries")
     failed_count: int = Field(0, description="Number of failed deliveries")
     delivery_details: Optional[List[Dict[str, Any]]] = Field(
-        None,
-        description="Detailed delivery information"
+        None, description="Detailed delivery information"
     )
     tracking_id: Optional[str] = Field(None, description="External tracking identifier")
 
@@ -162,6 +181,7 @@ class NotificationResponse(BaseModel):
 # Email-specific models
 class EmailRequest(NotificationRequest):
     """Email notification request model."""
+
     type: NotificationType = Field(NotificationType.EMAIL, description="Notification type")
     from_email: Optional[EmailStr] = Field(None, description="Sender email address")
     from_name: Optional[str] = Field(None, description="Sender name")
@@ -176,6 +196,7 @@ class EmailRequest(NotificationRequest):
 
 class EmailTemplate(BaseModel):
     """Email template model."""
+
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="Template ID")
     name: str = Field(..., description="Template name")
     subject: str = Field(..., description="Email subject template")
@@ -185,14 +206,14 @@ class EmailTemplate(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(None, description="Template metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Last update timestamp"
+        default_factory=datetime.utcnow, description="Last update timestamp"
     )
 
 
 # SMS-specific models
 class SMSRequest(NotificationRequest):
     """SMS notification request model."""
+
     type: NotificationType = Field(NotificationType.SMS, description="Notification type")
     from_number: Optional[str] = Field(None, description="Sender phone number")
     provider: Optional[str] = Field(None, description="SMS provider to use")
@@ -203,6 +224,7 @@ class SMSRequest(NotificationRequest):
 # Push notification models
 class PushNotificationRequest(NotificationRequest):
     """Push notification request model."""
+
     type: NotificationType = Field(NotificationType.PUSH, description="Notification type")
     platform: Optional[str] = Field(None, description="Target platform (ios, android, web)")
     badge: Optional[int] = Field(None, description="Badge number")
@@ -217,6 +239,7 @@ class PushNotificationRequest(NotificationRequest):
 # Webhook models
 class WebhookRequest(NotificationRequest):
     """Webhook notification request model."""
+
     type: NotificationType = Field(NotificationType.WEBHOOK, description="Notification type")
     url: str = Field(..., description="Webhook URL")
     method: WebhookMethod = Field(WebhookMethod.POST, description="HTTP method")
@@ -229,6 +252,7 @@ class WebhookRequest(NotificationRequest):
 # Alert models
 class EscalationRule(BaseModel):
     """Alert escalation rule model."""
+
     level: int = Field(..., description="Escalation level")
     delay_minutes: int = Field(..., description="Delay before escalation")
     recipients: List[NotificationRecipient] = Field(..., description="Escalation recipients")
@@ -238,6 +262,7 @@ class EscalationRule(BaseModel):
 
 class AlertRequest(BaseModel):
     """Alert request model."""
+
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="Alert ID")
     title: str = Field(..., description="Alert title")
     description: str = Field(..., description="Alert description")
@@ -248,8 +273,7 @@ class AlertRequest(BaseModel):
     escalation_rules: Optional[List[EscalationRule]] = Field(None, description="Escalation rules")
     auto_resolve: bool = Field(False, description="Auto-resolve when conditions are met")
     resolve_conditions: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Auto-resolve conditions"
+        None, description="Auto-resolve conditions"
     )
     metadata: Optional[Dict[str, Any]] = Field(None, description="Alert metadata")
     tags: Optional[List[str]] = Field(None, description="Alert tags")
@@ -257,6 +281,7 @@ class AlertRequest(BaseModel):
 
 class AlertStatus(BaseModel):
     """Alert status model."""
+
     alert_id: str = Field(..., description="Alert identifier")
     status: str = Field(..., description="Alert status")
     created_at: datetime = Field(..., description="Creation timestamp")
@@ -269,6 +294,7 @@ class AlertStatus(BaseModel):
 # Subscription models
 class NotificationPreferences(BaseModel):
     """User notification preferences model."""
+
     email_enabled: bool = Field(True, description="Enable email notifications")
     sms_enabled: bool = Field(True, description="Enable SMS notifications")
     push_enabled: bool = Field(True, description="Enable push notifications")
@@ -282,9 +308,9 @@ class NotificationPreferences(BaseModel):
 
 class SubscriptionRequest(BaseModel):
     """Subscription request model."""
+
     id: Optional[str] = Field(
-        default_factory=lambda: str(uuid.uuid4()),
-        description="Subscription ID"
+        default_factory=lambda: str(uuid.uuid4()), description="Subscription ID"
     )
     user_id: str = Field(..., description="User identifier")
     channel: NotificationType = Field(..., description="Notification channel")
@@ -299,6 +325,7 @@ class SubscriptionRequest(BaseModel):
 
 class Subscription(BaseModel):
     """Subscription model."""
+
     id: str = Field(..., description="Subscription identifier")
     user_id: str = Field(..., description="User identifier")
     channel: NotificationType = Field(..., description="Notification channel")
@@ -315,6 +342,7 @@ class Subscription(BaseModel):
 # Template models
 class NotificationTemplate(BaseModel):
     """Notification template model."""
+
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), description="Template ID")
     name: str = Field(..., description="Template name")
     type: TemplateType = Field(..., description="Template type")
@@ -326,8 +354,7 @@ class NotificationTemplate(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(None, description="Template metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="Last update timestamp"
+        default_factory=datetime.utcnow, description="Last update timestamp"
     )
     version: int = Field(1, description="Template version")
     is_active: bool = Field(True, description="Template active status")
@@ -336,6 +363,7 @@ class NotificationTemplate(BaseModel):
 # Bulk and scheduled notification models
 class BulkNotificationRequest(BaseModel):
     """Bulk notification request model."""
+
     notifications: List[NotificationRequest] = Field(..., description="List of notifications")
     batch_size: Optional[int] = Field(100, description="Batch processing size")
     parallel_processing: bool = Field(True, description="Enable parallel processing")
@@ -344,6 +372,7 @@ class BulkNotificationRequest(BaseModel):
 
 class ScheduledNotificationRequest(NotificationRequest):
     """Scheduled notification request model."""
+
     scheduled_time: datetime = Field(..., description="Scheduled delivery time")
     recurrence: Optional[str] = Field(None, description="Recurrence pattern")
     end_date: Optional[datetime] = Field(None, description="Recurrence end date")
@@ -353,6 +382,7 @@ class ScheduledNotificationRequest(NotificationRequest):
 # Analytics and tracking models
 class DeliveryStatus(BaseModel):
     """Delivery status model."""
+
     notification_id: str = Field(..., description="Notification identifier")
     status: DeliveryStatusEnum = Field(..., description="Delivery status")
     sent_at: datetime = Field(..., description="Sent timestamp")
@@ -365,14 +395,14 @@ class DeliveryStatus(BaseModel):
 
 class NotificationStats(BaseModel):
     """Notification statistics model."""
+
     total_sent: int = Field(..., description="Total notifications sent")
     total_delivered: int = Field(..., description="Total notifications delivered")
     total_failed: int = Field(..., description="Total notifications failed")
     delivery_rate: float = Field(..., description="Delivery rate percentage")
     avg_delivery_time: float = Field(..., description="Average delivery time in seconds")
     stats_by_type: Dict[str, Dict[str, int]] = Field(
-        ...,
-        description="Statistics by notification type"
+        ..., description="Statistics by notification type"
     )
     stats_by_priority: Dict[str, Dict[str, int]] = Field(..., description="Statistics by priority")
     time_series: Optional[List[Dict[str, Any]]] = Field(None, description="Time series data")
@@ -381,6 +411,7 @@ class NotificationStats(BaseModel):
 
 class AnalyticsEvent(BaseModel):
     """Analytics event model."""
+
     event_id: str = Field(..., description="Event identifier")
     notification_id: str = Field(..., description="Notification identifier")
     event_type: str = Field(..., description="Event type")
@@ -392,6 +423,7 @@ class AnalyticsEvent(BaseModel):
 # Provider configuration models
 class SMSProviderConfig(BaseModel):
     """SMS provider configuration model."""
+
     provider: str = Field(..., description="Provider name")
     api_key: str = Field(..., description="API key")
     api_secret: Optional[str] = Field(None, description="API secret")
@@ -402,6 +434,7 @@ class SMSProviderConfig(BaseModel):
 
 class EmailProviderConfig(BaseModel):
     """Email provider configuration model."""
+
     provider: str = Field(..., description="Provider name")
     smtp_host: Optional[str] = Field(None, description="SMTP host")
     smtp_port: Optional[int] = Field(None, description="SMTP port")
@@ -415,6 +448,7 @@ class EmailProviderConfig(BaseModel):
 
 class PushProviderConfig(BaseModel):
     """Push notification provider configuration model."""
+
     provider: str = Field(..., description="Provider name")
     api_key: str = Field(..., description="API key")
     app_id: Optional[str] = Field(None, description="Application ID")
@@ -427,6 +461,7 @@ class PushProviderConfig(BaseModel):
 # Azure Communication Services models
 class AzureCommunicationConfig(BaseModel):
     """Azure Communication Services configuration model."""
+
     connection_string: str = Field(..., description="ACS connection string")
     email_domain: Optional[str] = Field(None, description="Email domain")
     sms_number: Optional[str] = Field(None, description="SMS number")
@@ -436,6 +471,7 @@ class AzureCommunicationConfig(BaseModel):
 
 class AzureEmailRequest(BaseModel):
     """Azure Communication Services email request model."""
+
     sender: str = Field(..., description="Sender email address")
     recipients: List[str] = Field(..., description="Recipient email addresses")
     subject: str = Field(..., description="Email subject")
@@ -447,6 +483,7 @@ class AzureEmailRequest(BaseModel):
 
 class AzureSMSRequest(BaseModel):
     """Azure Communication Services SMS request model."""
+
     from_number: str = Field(..., description="Sender phone number")
     to_numbers: List[str] = Field(..., description="Recipient phone numbers")
     message: str = Field(..., description="SMS message")

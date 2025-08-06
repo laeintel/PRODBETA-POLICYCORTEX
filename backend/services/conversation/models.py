@@ -3,13 +3,20 @@ Pydantic models for Conversation service.
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+
+from pydantic import BaseModel
+from pydantic import Field
 
 
 class ConversationIntent(str, Enum):
     """Conversation intent enumeration."""
+
     COST_ANALYSIS = "cost_analysis"
     POLICY_QUERY = "policy_query"
     RESOURCE_MANAGEMENT = "resource_management"
@@ -26,6 +33,7 @@ class ConversationIntent(str, Enum):
 
 class EntityType(str, Enum):
     """Entity type enumeration."""
+
     RESOURCE_GROUP = "resource_group"
     SUBSCRIPTION = "subscription"
     RESOURCE_TYPE = "resource_type"
@@ -42,6 +50,7 @@ class EntityType(str, Enum):
 
 class ConversationStatus(str, Enum):
     """Conversation status enumeration."""
+
     ACTIVE = "active"
     COMPLETED = "completed"
     EXPIRED = "expired"
@@ -50,6 +59,7 @@ class ConversationStatus(str, Enum):
 
 class MessageType(str, Enum):
     """Message type enumeration."""
+
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
@@ -57,6 +67,7 @@ class MessageType(str, Enum):
 
 class WebSocketMessageType(str, Enum):
     """WebSocket message type enumeration."""
+
     CONVERSATION = "conversation"
     TYPING = "typing"
     CONNECTION_STATUS = "connection_status"
@@ -65,6 +76,7 @@ class WebSocketMessageType(str, Enum):
 
 class Entity(BaseModel):
     """Entity extraction model."""
+
     type: EntityType = Field(..., description="Entity type")
     value: str = Field(..., description="Entity value")
     confidence: float = Field(..., description="Confidence score")
@@ -75,6 +87,7 @@ class Entity(BaseModel):
 
 class ConversationMessage(BaseModel):
     """Conversation message model."""
+
     id: str = Field(..., description="Message ID")
     session_id: str = Field(..., description="Session ID")
     type: MessageType = Field(..., description="Message type")
@@ -89,6 +102,7 @@ class ConversationMessage(BaseModel):
 
 class ConversationRequest(BaseModel):
     """Conversation request model."""
+
     message: str = Field(..., description="User message")
     session_id: Optional[str] = Field(None, description="Session ID")
     intent: Optional[ConversationIntent] = Field(None, description="Hint for intent")
@@ -98,6 +112,7 @@ class ConversationRequest(BaseModel):
 
 class ConversationResponse(BaseModel):
     """Conversation response model."""
+
     session_id: str = Field(..., description="Session ID")
     message: str = Field(..., description="Assistant response")
     intent: ConversationIntent = Field(..., description="Detected intent")
@@ -111,6 +126,7 @@ class ConversationResponse(BaseModel):
 
 class ConversationSession(BaseModel):
     """Conversation session model."""
+
     session_id: str = Field(..., description="Session ID")
     user_id: str = Field(..., description="User ID")
     title: str = Field(..., description="Session title")
@@ -125,6 +141,7 @@ class ConversationSession(BaseModel):
 
 class ConversationSessionResponse(BaseModel):
     """Conversation session response model."""
+
     session_id: str = Field(..., description="Session ID")
     title: str = Field(..., description="Session title")
     created_at: datetime = Field(..., description="Session creation time")
@@ -135,6 +152,7 @@ class ConversationSessionResponse(BaseModel):
 
 class ConversationHistory(BaseModel):
     """Conversation history model."""
+
     messages: List[ConversationMessage] = Field(..., description="Conversation messages")
     total_count: int = Field(..., description="Total message count")
     has_more: bool = Field(..., description="Whether there are more messages")
@@ -142,6 +160,7 @@ class ConversationHistory(BaseModel):
 
 class ConversationHistoryResponse(BaseModel):
     """Conversation history response model."""
+
     session_id: str = Field(..., description="Session ID")
     messages: List[ConversationMessage] = Field(..., description="Conversation messages")
     total_count: int = Field(..., description="Total message count")
@@ -150,6 +169,7 @@ class ConversationHistoryResponse(BaseModel):
 
 class IntentClassificationResult(BaseModel):
     """Intent classification result model."""
+
     intent: ConversationIntent = Field(..., description="Detected intent")
     confidence: float = Field(..., description="Confidence score")
     entities: List[Entity] = Field(..., description="Extracted entities")
@@ -158,6 +178,7 @@ class IntentClassificationResult(BaseModel):
 
 class IntentClassificationResponse(BaseModel):
     """Intent classification response model."""
+
     intent: ConversationIntent = Field(..., description="Detected intent")
     confidence: float = Field(..., description="Confidence score")
     entities: List[Entity] = Field(..., description="Extracted entities")
@@ -166,12 +187,14 @@ class IntentClassificationResponse(BaseModel):
 
 class EntityExtractionResponse(BaseModel):
     """Entity extraction response model."""
+
     entities: List[Entity] = Field(..., description="Extracted entities")
     message: str = Field(..., description="Original message")
 
 
 class WebSocketMessage(BaseModel):
     """WebSocket message model."""
+
     type: WebSocketMessageType = Field(..., description="Message type")
     content: Union[str, Dict[str, Any]] = Field(..., description="Message content")
     session_id: Optional[str] = Field(None, description="Session ID")
@@ -180,6 +203,7 @@ class WebSocketMessage(BaseModel):
 
 class ResponseGenerationContext(BaseModel):
     """Response generation context model."""
+
     session_id: str = Field(..., description="Session ID")
     conversation_history: List[ConversationMessage] = Field(..., description="Conversation history")
     user_preferences: Dict[str, Any] = Field(..., description="User preferences")
@@ -189,6 +213,7 @@ class ResponseGenerationContext(BaseModel):
 
 class ResponseGenerationResult(BaseModel):
     """Response generation result model."""
+
     message: str = Field(..., description="Generated response message")
     suggestions: List[str] = Field(..., description="Follow-up suggestions")
     follow_up_questions: List[str] = Field(..., description="Follow-up questions")
@@ -198,12 +223,12 @@ class ResponseGenerationResult(BaseModel):
 
 class ConversationAnalytics(BaseModel):
     """Conversation analytics model."""
+
     total_conversations: int = Field(..., description="Total number of conversations")
     total_messages: int = Field(..., description="Total number of messages")
     average_conversation_length: float = Field(..., description="Average conversation length")
     intent_distribution: Dict[ConversationIntent, int] = Field(
-        ...,
-        description="Intent distribution"
+        ..., description="Intent distribution"
     )
     common_entities: List[Dict[str, Any]] = Field(..., description="Common entities")
     user_satisfaction: Optional[float] = Field(None, description="User satisfaction score")
@@ -216,6 +241,7 @@ class ConversationAnalytics(BaseModel):
 
 class QueryRouterResult(BaseModel):
     """Query router result model."""
+
     service: str = Field(..., description="Target service")
     endpoint: str = Field(..., description="Service endpoint")
     parameters: Dict[str, Any] = Field(..., description="Service parameters")
@@ -225,6 +251,7 @@ class QueryRouterResult(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str = Field(..., description="Health status")
     timestamp: datetime = Field(..., description="Timestamp of health check")
     service: str = Field(..., description="Service name")
@@ -234,6 +261,7 @@ class HealthResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model."""
+
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Error details")
@@ -243,6 +271,7 @@ class ErrorResponse(BaseModel):
 
 class ConversationContextUpdate(BaseModel):
     """Conversation context update model."""
+
     session_id: str = Field(..., description="Session ID")
     updates: Dict[str, Any] = Field(..., description="Context updates")
     merge_strategy: str = Field("merge", description="Update strategy: merge, replace, append")
@@ -250,6 +279,7 @@ class ConversationContextUpdate(BaseModel):
 
 class ConversationMetrics(BaseModel):
     """Conversation metrics model."""
+
     session_id: str = Field(..., description="Session ID")
     user_id: str = Field(..., description="User ID")
     message_count: int = Field(..., description="Number of messages")
@@ -264,6 +294,7 @@ class ConversationMetrics(BaseModel):
 
 class ConversationSummary(BaseModel):
     """Conversation summary model."""
+
     session_id: str = Field(..., description="Session ID")
     title: str = Field(..., description="Conversation title")
     summary: str = Field(..., description="Conversation summary")
@@ -276,6 +307,7 @@ class ConversationSummary(BaseModel):
 
 class ConversationFeedback(BaseModel):
     """Conversation feedback model."""
+
     session_id: str = Field(..., description="Session ID")
     user_id: str = Field(..., description="User ID")
     rating: int = Field(..., ge=1, le=5, description="Rating (1-5)")
@@ -288,6 +320,7 @@ class ConversationFeedback(BaseModel):
 
 class ConversationExport(BaseModel):
     """Conversation export model."""
+
     session_id: str = Field(..., description="Session ID")
     user_id: str = Field(..., description="User ID")
     title: str = Field(..., description="Conversation title")
@@ -300,6 +333,7 @@ class ConversationExport(BaseModel):
 
 class ConversationSettings(BaseModel):
     """Conversation settings model."""
+
     user_id: str = Field(..., description="User ID")
     language: str = Field("en", description="Preferred language")
     response_style: str = Field("professional", description="Response style")

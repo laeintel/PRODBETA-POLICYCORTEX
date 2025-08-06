@@ -5,22 +5,29 @@ Implements real-time ETL for Azure governance data ingestion and transformation.
 
 import asyncio
 import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
 from enum import Enum
-import structlog
-import pandas as pd
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import numpy as np
-from azure.storage.blob.aio import BlobServiceClient
+import pandas as pd
+import structlog
 from azure.eventhub.aio import EventHubConsumerClient
 from azure.servicebus.aio import ServiceBusClient
+from azure.storage.blob.aio import BlobServiceClient
 
 logger = structlog.get_logger(__name__)
 
 
 class DataSourceType(Enum):
     """Types of data sources."""
+
     AZURE_EVENTS = "azure_events"
     POLICY_DATA = "policy_data"
     RBAC_DATA = "rbac_data"
@@ -32,6 +39,7 @@ class DataSourceType(Enum):
 @dataclass
 class DataQualityMetrics:
     """Data quality metrics for processed data."""
+
     total_records: int
     valid_records: int
     invalid_records: int
@@ -45,6 +53,7 @@ class DataQualityMetrics:
 @dataclass
 class ProcessingResult:
     """Result of data processing operation."""
+
     source_type: DataSourceType
     records_processed: int
     records_transformed: int
@@ -66,11 +75,12 @@ class DataTransformer:
             DataSourceType.RBAC_DATA: self._transform_rbac_data,
             DataSourceType.COST_DATA: self._transform_cost_data,
             DataSourceType.NETWORK_DATA: self._transform_network_data,
-            DataSourceType.RESOURCE_DATA: self._transform_resource_data
+            DataSourceType.RESOURCE_DATA: self._transform_resource_data,
         }
 
-    async def transform(self, data: List[Dict[str, Any]],
-                       source_type: DataSourceType) -> List[Dict[str, Any]]:
+    async def transform(
+        self, data: List[Dict[str, Any]], source_type: DataSourceType
+    ) -> List[Dict[str, Any]]:
         """Transform data based on source type."""
         try:
             transformer = self.transformation_rules.get(source_type)
@@ -84,16 +94,14 @@ class DataTransformer:
                     if transformed_record:
                         transformed_data.append(transformed_record)
                 except Exception as e:
-                    logger.warning("record_transformation_failed",
-                                 source_type=source_type.value,
-                                 error=str(e))
+                    logger.warning(
+                        "record_transformation_failed", source_type=source_type.value, error=str(e)
+                    )
 
             return transformed_data
 
         except Exception as e:
-            logger.error("data_transformation_failed",
-                        source_type=source_type.value,
-                        error=str(e))
+            logger.error("data_transformation_failed", source_type=source_type.value, error=str(e))
             raise
 
     async def _transform_azure_events(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -112,7 +120,7 @@ class DataTransformer:
             "correlation_id": record.get("correlation_id"),
             "properties": record.get("properties", {}),
             "severity": record.get("severity", "medium"),
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
     async def _transform_policy_data(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -130,7 +138,7 @@ class DataTransformer:
             "resource_count": record.get("resource_count", 0),
             "violation_count": record.get("violation_count", 0),
             "last_evaluated": self._parse_timestamp(record.get("last_evaluated")),
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
     async def _transform_rbac_data(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -147,7 +155,7 @@ class DataTransformer:
             "created_on": self._parse_timestamp(record.get("created_on")),
             "updated_on": self._parse_timestamp(record.get("updated_on")),
             "permissions": record.get("permissions", []),
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
     async def _transform_cost_data(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -167,7 +175,7 @@ class DataTransformer:
             "unit_price": float(record.get("unit_price", 0)),
             "currency": record.get("currency", "USD"),
             "billing_period": record.get("billing_period"),
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
     async def _transform_network_data(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -187,7 +195,7 @@ class DataTransformer:
             "rule_name": record.get("rule_name"),
             "bytes_sent": int(record.get("bytes_sent", 0)),
             "packets_sent": int(record.get("packets_sent", 0)),
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
     async def _transform_resource_data(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -207,7 +215,7 @@ class DataTransformer:
             "provisioning_state": record.get("provisioning_state"),
             "created_time": self._parse_timestamp(record.get("created_time")),
             "changed_time": self._parse_timestamp(record.get("changed_time")),
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
     def _parse_timestamp(self, timestamp_str: Any) -> Optional[str]:
@@ -241,12 +249,13 @@ class DataQualityEngine:
                 "policy": ["policy_name", "compliance_state"],
                 "rbac": ["principal_id", "role_name"],
                 "network": ["source_ip", "destination_ip"],
-                "resource": ["resource_name", "resource_type"]
-            }
+                "resource": ["resource_name", "resource_type"],
+            },
         }
 
-    async def validate_data(self, data: List[Dict[str, Any]],
-                           source_type: DataSourceType) -> DataQualityMetrics:
+    async def validate_data(
+        self, data: List[Dict[str, Any]], source_type: DataSourceType
+    ) -> DataQualityMetrics:
         """Validate data quality and return metrics."""
         total_records = len(data)
         valid_records = 0
@@ -300,7 +309,7 @@ class DataQualityEngine:
             completeness_score=completeness_score,
             accuracy_score=accuracy_score,
             consistency_score=consistency_score,
-            processing_timestamp=datetime.utcnow()
+            processing_timestamp=datetime.utcnow(),
         )
 
     def _calculate_accuracy_score(self, data: List[Dict[str, Any]]) -> float:
@@ -385,17 +394,17 @@ class DataPipeline:
 
         try:
             # Initialize Azure clients
-            if hasattr(self.settings.azure, 'storage_connection_string'):
+            if hasattr(self.settings.azure, "storage_connection_string"):
                 self.blob_client = BlobServiceClient.from_connection_string(
                     self.settings.azure.storage_connection_string
                 )
 
-            if hasattr(self.settings.azure, 'event_hub_connection_string'):
+            if hasattr(self.settings.azure, "event_hub_connection_string"):
                 self.event_hub_client = EventHubConsumerClient.from_connection_string(
                     self.settings.azure.event_hub_connection_string
                 )
 
-            if hasattr(self.settings.azure, 'service_bus_connection_string'):
+            if hasattr(self.settings.azure, "service_bus_connection_string"):
                 self.service_bus_client = ServiceBusClient.from_connection_string(
                     self.settings.azure.service_bus_connection_string
                 )
@@ -418,7 +427,7 @@ class DataPipeline:
         # Start processing tasks for different data sources
         self.processing_tasks = {
             "azure_events": asyncio.create_task(self._process_azure_events()),
-            "batch_processor": asyncio.create_task(self._run_batch_processor())
+            "batch_processor": asyncio.create_task(self._run_batch_processor()),
         }
 
         logger.info("data_pipeline_started")
@@ -439,29 +448,26 @@ class DataPipeline:
         self.processing_tasks.clear()
         logger.info("data_pipeline_stopped")
 
-    async def process_data(self, data: List[Dict[str, Any]],
-                          source_type: DataSourceType) -> ProcessingResult:
+    async def process_data(
+        self, data: List[Dict[str, Any]], source_type: DataSourceType
+    ) -> ProcessingResult:
         """Process a batch of data."""
         start_time = datetime.utcnow()
         errors = []
 
         try:
-            logger.info("processing_data_batch",
-                       source_type=source_type.value,
-                       record_count=len(data))
+            logger.info(
+                "processing_data_batch", source_type=source_type.value, record_count=len(data)
+            )
 
             # Transform data
             transformed_data = await self.transformer.transform(data, source_type)
 
             # Validate data quality
-            quality_metrics = await self.quality_engine.validate_data(
-                transformed_data, source_type
-            )
+            quality_metrics = await self.quality_engine.validate_data(transformed_data, source_type)
 
             # Store processed data
-            stored_count = await self._store_processed_data(
-                transformed_data, source_type
-            )
+            stored_count = await self._store_processed_data(transformed_data, source_type)
 
             # Calculate processing time
             processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
@@ -473,25 +479,25 @@ class DataPipeline:
                 records_stored=stored_count,
                 processing_time_ms=processing_time,
                 quality_metrics=quality_metrics,
-                errors=errors
+                errors=errors,
             )
 
             # Store quality metrics
             self.quality_metrics_store[source_type] = quality_metrics
 
-            logger.info("data_processing_completed",
-                       source_type=source_type.value,
-                       processing_time_ms=processing_time,
-                       quality_score=quality_metrics.completeness_score)
+            logger.info(
+                "data_processing_completed",
+                source_type=source_type.value,
+                processing_time_ms=processing_time,
+                quality_score=quality_metrics.completeness_score,
+            )
 
             return result
 
         except Exception as e:
             error_msg = f"Data processing failed: {str(e)}"
             errors.append(error_msg)
-            logger.error("data_processing_failed",
-                        source_type=source_type.value,
-                        error=str(e))
+            logger.error("data_processing_failed", source_type=source_type.value, error=str(e))
 
             processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
 
@@ -509,9 +515,9 @@ class DataPipeline:
                     completeness_score=0.0,
                     accuracy_score=0.0,
                     consistency_score=0.0,
-                    processing_timestamp=datetime.utcnow()
+                    processing_timestamp=datetime.utcnow(),
                 ),
-                errors=errors
+                errors=errors,
             )
 
     async def _process_azure_events(self):
@@ -555,8 +561,9 @@ class DataPipeline:
                 logger.error("batch_processing_failed", error=str(e))
                 await asyncio.sleep(300)
 
-    async def _store_processed_data(self, data: List[Dict[str, Any]],
-                                   source_type: DataSourceType) -> int:
+    async def _store_processed_data(
+        self, data: List[Dict[str, Any]], source_type: DataSourceType
+    ) -> int:
         """Store processed data."""
         try:
             # Store in memory for development
@@ -568,8 +575,9 @@ class DataPipeline:
             # Limit memory usage - keep only recent data
             max_records = 10000
             if len(self.processed_data_store[source_type]) > max_records:
-                self.processed_data_store[source_type] = \
-                    self.processed_data_store[source_type][-max_records:]
+                self.processed_data_store[source_type] = self.processed_data_store[source_type][
+                    -max_records:
+                ]
 
             # In production, store to Azure Blob Storage or database
             if self.blob_client:
@@ -578,13 +586,10 @@ class DataPipeline:
             return len(data)
 
         except Exception as e:
-            logger.error("data_storage_failed",
-                        source_type=source_type.value,
-                        error=str(e))
+            logger.error("data_storage_failed", source_type=source_type.value, error=str(e))
             return 0
 
-    async def _store_to_blob_storage(self, data: List[Dict[str, Any]],
-                                    source_type: DataSourceType):
+    async def _store_to_blob_storage(self, data: List[Dict[str, Any]], source_type: DataSourceType):
         """Store data to Azure Blob Storage."""
         try:
             container_name = "processed-data"
@@ -594,21 +599,14 @@ class DataPipeline:
             json_data = json.dumps(data, default=str)
 
             # Upload to blob storage
-            blob_client = self.blob_client.get_blob_client(
-                container=container_name,
-                blob=blob_name
-            )
+            blob_client = self.blob_client.get_blob_client(container=container_name, blob=blob_name)
 
             await blob_client.upload_blob(json_data, overwrite=True)
 
-            logger.debug("data_stored_to_blob",
-                        source_type=source_type.value,
-                        blob_name=blob_name)
+            logger.debug("data_stored_to_blob", source_type=source_type.value, blob_name=blob_name)
 
         except Exception as e:
-            logger.error("blob_storage_failed",
-                        source_type=source_type.value,
-                        error=str(e))
+            logger.error("blob_storage_failed", source_type=source_type.value, error=str(e))
 
     async def _process_queued_data(self):
         """Process any queued data."""
@@ -628,7 +626,7 @@ class DataPipeline:
                     if processed_at:
                         try:
                             processed_time = datetime.fromisoformat(
-                                processed_at.replace('Z', '+00:00')
+                                processed_at.replace("Z", "+00:00")
                             )
                             if processed_time > cutoff_time:
                                 filtered_data.append(record)
@@ -648,13 +646,13 @@ class DataPipeline:
         stats = {
             "is_running": self.is_running,
             "active_tasks": len([t for t in self.processing_tasks.values() if not t.done()]),
-            "data_sources": {}
+            "data_sources": {},
         }
 
         for source_type, data_list in self.processed_data_store.items():
             stats["data_sources"][source_type.value] = {
                 "record_count": len(data_list),
-                "latest_timestamp": self._get_latest_timestamp(data_list)
+                "latest_timestamp": self._get_latest_timestamp(data_list),
             }
 
         # Add quality metrics
@@ -664,7 +662,7 @@ class DataPipeline:
                 "completeness_score": metrics.completeness_score,
                 "accuracy_score": metrics.accuracy_score,
                 "consistency_score": metrics.consistency_score,
-                "last_updated": metrics.processing_timestamp.isoformat()
+                "last_updated": metrics.processing_timestamp.isoformat(),
             }
 
         return stats

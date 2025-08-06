@@ -5,20 +5,29 @@ Collects governance events from Azure services for AI analysis.
 
 import asyncio
 import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import structlog
 from azure.identity.aio import DefaultAzureCredential
+
 try:
     from azure.monitor.query.aio import LogsQueryClient
+
     AZURE_MONITOR_AVAILABLE = True
 except ImportError:
     LogsQueryClient = None
     AZURE_MONITOR_AVAILABLE = False
 
 try:
-    from azure.eventgrid.aio import EventGridPublisherClient
     from azure.eventgrid import EventGridEvent
+    from azure.eventgrid.aio import EventGridPublisherClient
+
     AZURE_EVENTGRID_AVAILABLE = True
 except ImportError:
     EventGridPublisherClient = None
@@ -61,10 +70,9 @@ class AzureEventCollector:
             self.logs_client = LogsQueryClient(self.credential)
 
             # Initialize Event Grid client for publishing
-            if hasattr(self.settings.azure, 'event_grid_endpoint'):
+            if hasattr(self.settings.azure, "event_grid_endpoint"):
                 self.event_grid_client = EventGridPublisherClient(
-                    self.settings.azure.event_grid_endpoint,
-                    self.credential
+                    self.settings.azure.event_grid_endpoint, self.credential
                 )
 
             logger.info("azure_event_collector_initialized")
@@ -84,11 +92,11 @@ class AzureEventCollector:
 
         # Start collection tasks for different event types
         self.collection_tasks = {
-            'policy_events': asyncio.create_task(self._collect_policy_events()),
-            'rbac_events': asyncio.create_task(self._collect_rbac_events()),
-            'network_events': asyncio.create_task(self._collect_network_events()),
-            'cost_events': asyncio.create_task(self._collect_cost_events()),
-            'resource_events': asyncio.create_task(self._collect_resource_events())
+            "policy_events": asyncio.create_task(self._collect_policy_events()),
+            "rbac_events": asyncio.create_task(self._collect_rbac_events()),
+            "network_events": asyncio.create_task(self._collect_network_events()),
+            "cost_events": asyncio.create_task(self._collect_cost_events()),
+            "resource_events": asyncio.create_task(self._collect_resource_events()),
         }
 
         logger.info("event_collection_started", tasks=list(self.collection_tasks.keys()))
@@ -112,9 +120,9 @@ class AzureEventCollector:
     def subscribe(self, callback: Callable[[Dict[str, Any]], None], event_types: List[str] = None):
         """Subscribe to governance events."""
         subscriber = {
-            'callback': callback,
-            'event_types': event_types or ['all'],
-            'subscribed_at': datetime.utcnow()
+            "callback": callback,
+            "event_types": event_types or ["all"],
+            "subscribed_at": datetime.utcnow(),
         }
         self.subscribers.append(subscriber)
         logger.info("event_subscriber_added", event_types=event_types)
@@ -301,15 +309,13 @@ class AzureEventCollector:
                 return []
 
             # Use the default workspace (subscription level)
-            workspace_id = getattr(self.settings.azure, 'log_analytics_workspace_id', None)
+            workspace_id = getattr(self.settings.azure, "log_analytics_workspace_id", None)
             if not workspace_id:
                 logger.warning("no_log_analytics_workspace_configured")
                 return []
 
             response = await self.logs_client.query_workspace(
-                workspace_id=workspace_id,
-                query=query,
-                timespan=timedelta(minutes=5)
+                workspace_id=workspace_id, query=query, timespan=timedelta(minutes=5)
             )
 
             events = []
@@ -319,16 +325,12 @@ class AzureEventCollector:
                     event = dict(zip([col.name for col in table.columns], row))
                     events.append(event)
 
-            logger.debug("logs_query_executed",
-                        event_type=event_type,
-                        events_found=len(events))
+            logger.debug("logs_query_executed", event_type=event_type, events_found=len(events))
 
             return events
 
         except Exception as e:
-            logger.error("logs_query_failed",
-                        event_type=event_type,
-                        error=str(e))
+            logger.error("logs_query_failed", event_type=event_type, error=str(e))
             return []
 
     async def _process_policy_event(self, raw_event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -341,22 +343,22 @@ class AzureEventCollector:
                 return None
 
             processed_event = {
-                'id': event_id,
-                'type': 'policy',
-                'timestamp': raw_event.get('TimeGenerated'),
-                'correlation_id': raw_event.get('CorrelationId'),
-                'operation': raw_event.get('OperationNameValue'),
-                'status': raw_event.get('ActivityStatusValue'),
-                'caller': raw_event.get('Caller'),
-                'resource_group': raw_event.get('ResourceGroup'),
-                'subscription_id': raw_event.get('SubscriptionId'),
-                'properties': raw_event.get('Properties', {}),
-                'domain': 'policy',
-                'severity': self._calculate_event_severity(raw_event),
-                'metadata': {
-                    'collected_at': datetime.utcnow().isoformat(),
-                    'source': 'azure_activity_log'
-                }
+                "id": event_id,
+                "type": "policy",
+                "timestamp": raw_event.get("TimeGenerated"),
+                "correlation_id": raw_event.get("CorrelationId"),
+                "operation": raw_event.get("OperationNameValue"),
+                "status": raw_event.get("ActivityStatusValue"),
+                "caller": raw_event.get("Caller"),
+                "resource_group": raw_event.get("ResourceGroup"),
+                "subscription_id": raw_event.get("SubscriptionId"),
+                "properties": raw_event.get("Properties", {}),
+                "domain": "policy",
+                "severity": self._calculate_event_severity(raw_event),
+                "metadata": {
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "source": "azure_activity_log",
+                },
             }
 
             return processed_event
@@ -374,20 +376,20 @@ class AzureEventCollector:
                 return None
 
             processed_event = {
-                'id': event_id,
-                'type': 'rbac',
-                'timestamp': raw_event.get('TimeGenerated'),
-                'correlation_id': raw_event.get('CorrelationId'),
-                'operation': raw_event.get('OperationName') or raw_event.get('OperationNameValue'),
-                'result': raw_event.get('Result') or raw_event.get('ActivityStatusValue'),
-                'initiated_by': raw_event.get('InitiatedBy') or raw_event.get('Caller'),
-                'target_resources': raw_event.get('TargetResources', []),
-                'domain': 'rbac',
-                'severity': self._calculate_event_severity(raw_event),
-                'metadata': {
-                    'collected_at': datetime.utcnow().isoformat(),
-                    'source': 'azure_audit_log'
-                }
+                "id": event_id,
+                "type": "rbac",
+                "timestamp": raw_event.get("TimeGenerated"),
+                "correlation_id": raw_event.get("CorrelationId"),
+                "operation": raw_event.get("OperationName") or raw_event.get("OperationNameValue"),
+                "result": raw_event.get("Result") or raw_event.get("ActivityStatusValue"),
+                "initiated_by": raw_event.get("InitiatedBy") or raw_event.get("Caller"),
+                "target_resources": raw_event.get("TargetResources", []),
+                "domain": "rbac",
+                "severity": self._calculate_event_severity(raw_event),
+                "metadata": {
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "source": "azure_audit_log",
+                },
             }
 
             return processed_event
@@ -405,20 +407,20 @@ class AzureEventCollector:
                 return None
 
             processed_event = {
-                'id': event_id,
-                'type': 'network',
-                'timestamp': raw_event.get('TimeGenerated'),
-                'correlation_id': raw_event.get('CorrelationId'),
-                'operation': raw_event.get('OperationNameValue'),
-                'category': raw_event.get('Category'),
-                'resource_id': raw_event.get('ResourceId'),
-                'properties': raw_event.get('Properties', {}),
-                'domain': 'network',
-                'severity': self._calculate_event_severity(raw_event),
-                'metadata': {
-                    'collected_at': datetime.utcnow().isoformat(),
-                    'source': 'azure_diagnostics'
-                }
+                "id": event_id,
+                "type": "network",
+                "timestamp": raw_event.get("TimeGenerated"),
+                "correlation_id": raw_event.get("CorrelationId"),
+                "operation": raw_event.get("OperationNameValue"),
+                "category": raw_event.get("Category"),
+                "resource_id": raw_event.get("ResourceId"),
+                "properties": raw_event.get("Properties", {}),
+                "domain": "network",
+                "severity": self._calculate_event_severity(raw_event),
+                "metadata": {
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "source": "azure_diagnostics",
+                },
             }
 
             return processed_event
@@ -436,20 +438,20 @@ class AzureEventCollector:
                 return None
 
             processed_event = {
-                'id': event_id,
-                'type': 'cost',
-                'timestamp': raw_event.get('TimeGenerated'),
-                'correlation_id': raw_event.get('CorrelationId'),
-                'operation': raw_event.get('OperationNameValue'),
-                'status': raw_event.get('ActivityStatusValue'),
-                'resource_group': raw_event.get('ResourceGroup'),
-                'subscription_id': raw_event.get('SubscriptionId'),
-                'domain': 'cost',
-                'severity': self._calculate_event_severity(raw_event),
-                'metadata': {
-                    'collected_at': datetime.utcnow().isoformat(),
-                    'source': 'azure_activity_log'
-                }
+                "id": event_id,
+                "type": "cost",
+                "timestamp": raw_event.get("TimeGenerated"),
+                "correlation_id": raw_event.get("CorrelationId"),
+                "operation": raw_event.get("OperationNameValue"),
+                "status": raw_event.get("ActivityStatusValue"),
+                "resource_group": raw_event.get("ResourceGroup"),
+                "subscription_id": raw_event.get("SubscriptionId"),
+                "domain": "cost",
+                "severity": self._calculate_event_severity(raw_event),
+                "metadata": {
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "source": "azure_activity_log",
+                },
             }
 
             return processed_event
@@ -467,22 +469,22 @@ class AzureEventCollector:
                 return None
 
             processed_event = {
-                'id': event_id,
-                'type': 'resource',
-                'timestamp': raw_event.get('TimeGenerated'),
-                'correlation_id': raw_event.get('CorrelationId'),
-                'operation': raw_event.get('OperationNameValue'),
-                'status': raw_event.get('ActivityStatusValue'),
-                'caller': raw_event.get('Caller'),
-                'resource_group': raw_event.get('ResourceGroup'),
-                'resource_id': raw_event.get('ResourceId'),
-                'subscription_id': raw_event.get('SubscriptionId'),
-                'domain': 'resource',
-                'severity': self._calculate_event_severity(raw_event),
-                'metadata': {
-                    'collected_at': datetime.utcnow().isoformat(),
-                    'source': 'azure_activity_log'
-                }
+                "id": event_id,
+                "type": "resource",
+                "timestamp": raw_event.get("TimeGenerated"),
+                "correlation_id": raw_event.get("CorrelationId"),
+                "operation": raw_event.get("OperationNameValue"),
+                "status": raw_event.get("ActivityStatusValue"),
+                "caller": raw_event.get("Caller"),
+                "resource_group": raw_event.get("ResourceGroup"),
+                "resource_id": raw_event.get("ResourceId"),
+                "subscription_id": raw_event.get("SubscriptionId"),
+                "domain": "resource",
+                "severity": self._calculate_event_severity(raw_event),
+                "metadata": {
+                    "collected_at": datetime.utcnow().isoformat(),
+                    "source": "azure_activity_log",
+                },
             }
 
             return processed_event
@@ -495,14 +497,15 @@ class AzureEventCollector:
         """Generate a unique event ID for deduplication."""
         # Create hash from key event attributes
         key_attrs = [
-            str(event.get('TimeGenerated', '')),
-            str(event.get('CorrelationId', '')),
-            str(event.get('OperationNameValue', '')),
-            str(event.get('Caller', ''))
+            str(event.get("TimeGenerated", "")),
+            str(event.get("CorrelationId", "")),
+            str(event.get("OperationNameValue", "")),
+            str(event.get("Caller", "")),
         ]
 
-        event_key = '|'.join(key_attrs)
+        event_key = "|".join(key_attrs)
         import hashlib
+
         return hashlib.md5(event_key.encode()).hexdigest()
 
     async def _is_duplicate_event(self, event_id: str) -> bool:
@@ -525,39 +528,35 @@ class AzureEventCollector:
 
     def _calculate_event_severity(self, event: Dict[str, Any]) -> str:
         """Calculate event severity based on operation and status."""
-        operation = event.get('OperationNameValue', '').lower()
-        status = event.get('ActivityStatusValue', '').lower()
+        operation = event.get("OperationNameValue", "").lower()
+        status = event.get("ActivityStatusValue", "").lower()
 
         # High severity operations
-        high_severity_ops = [
-            'delete', 'remove', 'disable', 'deny', 'block', 'fail'
-        ]
+        high_severity_ops = ["delete", "remove", "disable", "deny", "block", "fail"]
 
         # Medium severity operations
-        medium_severity_ops = [
-            'create', 'add', 'enable', 'modify', 'update', 'change'
-        ]
+        medium_severity_ops = ["create", "add", "enable", "modify", "update", "change"]
 
-        if any(op in operation for op in high_severity_ops) or status == 'failed':
-            return 'high'
+        if any(op in operation for op in high_severity_ops) or status == "failed":
+            return "high"
         elif any(op in operation for op in medium_severity_ops):
-            return 'medium'
+            return "medium"
         else:
-            return 'low'
+            return "low"
 
     async def _publish_event(self, event: Dict[str, Any], event_type: str):
         """Publish processed event to subscribers."""
         try:
             # Notify local subscribers
             for subscriber in self.subscribers:
-                event_types = subscriber.get('event_types', ['all'])
-                if 'all' in event_types or event_type in event_types:
+                event_types = subscriber.get("event_types", ["all"])
+                if "all" in event_types or event_type in event_types:
                     try:
-                        await subscriber['callback'](event)
+                        await subscriber["callback"](event)
                     except Exception as e:
-                        logger.error("subscriber_callback_failed",
-                                   event_type=event_type,
-                                   error=str(e))
+                        logger.error(
+                            "subscriber_callback_failed", event_type=event_type, error=str(e)
+                        )
 
             # Publish to Event Grid if configured
             if self.event_grid_client:
@@ -566,33 +565,27 @@ class AzureEventCollector:
                         subject=f"governance/{event_type}",
                         event_type=f"PolicyCortex.Governance.{event_type.capitalize()}",
                         data=event,
-                        data_version="1.0"
+                        data_version="1.0",
                     )
 
                     await self.event_grid_client.send([event_grid_event])
 
                 except Exception as e:
-                    logger.error("event_grid_publish_failed",
-                               event_type=event_type,
-                               error=str(e))
+                    logger.error("event_grid_publish_failed", event_type=event_type, error=str(e))
 
-            logger.debug("event_published",
-                        event_type=event_type,
-                        event_id=event.get('id'))
+            logger.debug("event_published", event_type=event_type, event_id=event.get("id"))
 
         except Exception as e:
-            logger.error("event_publish_failed",
-                        event_type=event_type,
-                        error=str(e))
+            logger.error("event_publish_failed", event_type=event_type, error=str(e))
 
     async def get_event_statistics(self) -> Dict[str, Any]:
         """Get event collection statistics."""
         return {
-            'is_running': self.is_running,
-            'active_tasks': len([t for t in self.collection_tasks.values() if not t.done()]),
-            'subscribers': len(self.subscribers),
-            'bloom_filter_size': len(self.bloom_filter),
-            'collection_tasks': list(self.collection_tasks.keys())
+            "is_running": self.is_running,
+            "active_tasks": len([t for t in self.collection_tasks.values() if not t.done()]),
+            "subscribers": len(self.subscribers),
+            "bloom_filter_size": len(self.bloom_filter),
+            "collection_tasks": list(self.collection_tasks.keys()),
         }
 
     async def cleanup(self):

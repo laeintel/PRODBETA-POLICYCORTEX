@@ -5,32 +5,48 @@ Advanced machine learning model for Azure cost forecasting, optimization opportu
 identification, and resource right-sizing recommendations.
 """
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any, Union
-from datetime import datetime, timedelta
-import logging
-from dataclasses import dataclass, asdict
 import asyncio
 import json
+import logging
+import warnings
+from dataclasses import asdict
+from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
-# ML and Statistical Libraries
-from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
-    from sklearn.linear_model import ElasticNet, Ridge
-from sklearn.preprocessing import StandardScaler, RobustScaler
-from sklearn.model_selection import train_test_split, TimeSeriesSplit
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.cluster import KMeans
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
 
 # Time Series and Forecasting
 from prophet import Prophet
+from sklearn.cluster import KMeans
+
+# ML and Statistical Libraries
+from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import StandardScaler
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import adfuller
-import warnings
+from torch.utils.data import DataLoader
+from torch.utils.data import TensorDataset
+
 warnings.filterwarnings('ignore')
 
 @dataclass

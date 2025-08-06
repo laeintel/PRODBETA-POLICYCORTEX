@@ -3,46 +3,60 @@ Conversation Service for PolicyCortex.
 Natural language interface for Azure governance with multi-turn conversation management.
 """
 
+import asyncio
+import json
 import time
 import uuid
-import json
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 import structlog
-from fastapi import FastAPI, Request, Response, HTTPException, Depends, status, WebSocket, WebSocketDisconnect
+from fastapi import Depends
+from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
+from fastapi import WebSocket
+from fastapi import WebSocketDisconnect
+from fastapi import status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Histogram, generate_latest
+from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
+from prometheus_client import Counter
+from prometheus_client import Histogram
+from prometheus_client import generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 from starlette.websockets import WebSocketState
-import asyncio
 
-from backend.shared.config import get_settings
-from backend.shared.database import get_async_db, DatabaseUtils
 from backend.services.conversation.auth import AuthManager
-from .models import (
-    HealthResponse,
-    ConversationRequest,
-    ConversationResponse,
-    ConversationHistoryResponse,
-    ConversationSessionResponse,
-    IntentClassificationResponse,
-    EntityExtractionResponse,
-    WebSocketMessage,
-    ConversationAnalytics,
-    ErrorResponse
-)
-from backend.services.conversation.services.conversation_manager import ConversationManager
-from backend.services.conversation.services.intent_classifier import IntentClassifier
-from backend.services.conversation.services.context_manager import ContextManager
-from backend.services.conversation.services.response_generator import ResponseGenerator
-    from backend.services.conversation.services.query_router import QueryRouter
 from backend.services.conversation.services.analytics_service import AnalyticsService
+from backend.services.conversation.services.context_manager import ContextManager
+from backend.services.conversation.services.conversation_manager import ConversationManager
 from backend.services.conversation.services.governance_chat import GovernanceChatService
+from backend.services.conversation.services.intent_classifier import IntentClassifier
+from backend.services.conversation.services.query_router import QueryRouter
+from backend.services.conversation.services.response_generator import ResponseGenerator
+from backend.shared.config import get_settings
+from backend.shared.database import DatabaseUtils
+from backend.shared.database import get_async_db
+
+from .models import ConversationAnalytics
+from .models import ConversationHistoryResponse
+from .models import ConversationRequest
+from .models import ConversationResponse
+from .models import ConversationSessionResponse
+from .models import EntityExtractionResponse
+from .models import ErrorResponse
+from .models import HealthResponse
+from .models import IntentClassificationResponse
+from .models import WebSocketMessage
 
 # Configuration
 settings = get_settings()

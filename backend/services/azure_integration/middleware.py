@@ -4,11 +4,14 @@ Azure authentication middleware for the Azure Integration service.
 
 import time
 from typing import Optional
-from fastapi import Request, Response, HTTPException, status
-from starlette.middleware.base import BaseHTTPMiddleware
-import structlog
 
+import structlog
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import Response
+from fastapi import status
 from shared.config import get_settings
+from starlette.middleware.base import BaseHTTPMiddleware
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -27,7 +30,7 @@ class AzureAuthMiddleware(BaseHTTPMiddleware):
             "/redoc",
             "/openapi.json",
             "/auth/login",
-            "/auth/refresh"
+            "/auth/refresh",
         ]
 
     async def dispatch(self, request: Request, call_next):
@@ -48,7 +51,9 @@ class AzureAuthMiddleware(BaseHTTPMiddleware):
                     user_info = {
                         "id": user_id,
                         "tenant_id": request.headers.get("X-Tenant-ID"),
-                        "subscription_ids": request.headers.get("X-Subscription-IDs", "").split(",")
+                        "subscription_ids": request.headers.get("X-Subscription-IDs", "").split(
+                            ","
+                        ),
                     }
                     request.state.user = user_info
 
@@ -58,7 +63,7 @@ class AzureAuthMiddleware(BaseHTTPMiddleware):
                     "tenant_id": user_info.get("tenant_id") or settings.azure.tenant_id,
                     "subscription_ids": user_info.get("subscription_ids", []),
                     "user_id": user_info.get("id"),
-                    "request_id": getattr(request.state, "request_id", None)
+                    "request_id": getattr(request.state, "request_id", None),
                 }
                 request.state.azure_context = azure_context
 
@@ -66,7 +71,7 @@ class AzureAuthMiddleware(BaseHTTPMiddleware):
                     "azure_context_set",
                     user_id=azure_context["user_id"],
                     tenant_id=azure_context["tenant_id"],
-                    subscription_count=len(azure_context["subscription_ids"])
+                    subscription_count=len(azure_context["subscription_ids"]),
                 )
 
             # Process request
@@ -82,11 +87,11 @@ class AzureAuthMiddleware(BaseHTTPMiddleware):
             logger.error(
                 "azure_auth_middleware_error",
                 error=str(e),
-                request_id=getattr(request.state, "request_id", "unknown")
+                request_id=getattr(request.state, "request_id", "unknown"),
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Azure authentication error"
+                detail="Azure authentication error",
             )
 
 
@@ -116,10 +121,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         user_key = f"user:{user_id}"
 
         if user_key not in self.rate_limits:
-            self.rate_limits[user_key] = {
-                "requests": 0,
-                "window_start": current_time
-            }
+            self.rate_limits[user_key] = {"requests": 0, "window_start": current_time}
 
         user_limit = self.rate_limits[user_key]
 
@@ -135,11 +137,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 "rate_limit_exceeded",
                 user_id=user_id,
                 requests=user_limit["requests"],
-                remaining_seconds=remaining_time
+                remaining_seconds=remaining_time,
             )
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Rate limit exceeded. Try again in {int(remaining_time)} seconds."
+                detail=f"Rate limit exceeded. Try again in {int(remaining_time)} seconds.",
             )
 
         # Increment request count
@@ -151,8 +153,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Add rate limit headers
         response.headers["X-RateLimit-Limit"] = str(self.max_requests)
         response.headers["X-RateLimit-Remaining"] = str(self.max_requests - user_limit["requests"])
-        response.headers["X-RateLimit-Reset"] = (
-            str(int(user_limit["window_start"] + self.window_seconds))
+        response.headers["X-RateLimit-Reset"] = str(
+            int(user_limit["window_start"] + self.window_seconds)
         )
 
         return response
@@ -169,7 +171,7 @@ class AzureResourceCacheMiddleware(BaseHTTPMiddleware):
             "/api/v1/policies",
             "/api/v1/rbac/roles",
             "/api/v1/resources/groups",
-            "/api/v1/networks"
+            "/api/v1/networks",
         ]
 
     async def dispatch(self, request: Request, call_next):
@@ -194,18 +196,14 @@ class AzureResourceCacheMiddleware(BaseHTTPMiddleware):
         if cached_data:
             cache_age = time.time() - cached_data["timestamp"]
             if cache_age < self.cache_ttl:
-                logger.info(
-                    "cache_hit",
-                    path=request.url.path,
-                    cache_age=cache_age
-                )
+                logger.info("cache_hit", path=request.url.path, cache_age=cache_age)
 
                 # Return cached response
                 return Response(
                     content=cached_data["content"],
                     status_code=cached_data["status_code"],
                     headers=cached_data["headers"],
-                    media_type=cached_data["media_type"]
+                    media_type=cached_data["media_type"],
                 )
 
         # Process request
@@ -224,7 +222,7 @@ class AzureResourceCacheMiddleware(BaseHTTPMiddleware):
                 "status_code": response.status_code,
                 "headers": dict(response.headers),
                 "media_type": response.media_type,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
             # Return new response with cached body
@@ -232,7 +230,7 @@ class AzureResourceCacheMiddleware(BaseHTTPMiddleware):
                 content=body,
                 status_code=response.status_code,
                 headers=dict(response.headers),
-                media_type=response.media_type
+                media_type=response.media_type,
             )
 
         return response

@@ -3,10 +3,14 @@ Sentiment Analysis Service for AI Engine.
 Provides sentiment analysis for compliance reports and text content.
 """
 
-import re
 import json
-from typing import Dict, Any, List, Optional
+import re
 from datetime import datetime
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import structlog
 from azure.ai.textanalytics.aio import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
@@ -34,94 +38,183 @@ class SentimentAnalyzer:
         """Load sentiment lexicon with word scores."""
         return {
             "positive": {
-                "excellent": 0.9, "outstanding": 0.9, "exceptional": 0.9,
-                "great": 0.8, "good": 0.7, "satisfactory": 0.6,
-                "adequate": 0.5, "acceptable": 0.5, "compliant": 0.7,
-                "secure": 0.8, "reliable": 0.7, "stable": 0.6,
-                "efficient": 0.8, "optimized": 0.8, "improved": 0.7,
-                "success": 0.8, "achieved": 0.7, "resolved": 0.7,
-                "approved": 0.7, "authorized": 0.7, "validated": 0.7,
-                "verified": 0.7, "certified": 0.8, "complies": 0.8
+                "excellent": 0.9,
+                "outstanding": 0.9,
+                "exceptional": 0.9,
+                "great": 0.8,
+                "good": 0.7,
+                "satisfactory": 0.6,
+                "adequate": 0.5,
+                "acceptable": 0.5,
+                "compliant": 0.7,
+                "secure": 0.8,
+                "reliable": 0.7,
+                "stable": 0.6,
+                "efficient": 0.8,
+                "optimized": 0.8,
+                "improved": 0.7,
+                "success": 0.8,
+                "achieved": 0.7,
+                "resolved": 0.7,
+                "approved": 0.7,
+                "authorized": 0.7,
+                "validated": 0.7,
+                "verified": 0.7,
+                "certified": 0.8,
+                "complies": 0.8,
             },
             "negative": {
-                "terrible": -0.9, "awful": -0.9, "horrible": -0.9,
-                "bad": -0.7, "poor": -0.7, "inadequate": -0.6,
-                "unsatisfactory": -0.8, "unacceptable": -0.8,
-                "non-compliant": -0.9, "violation": -0.9, "breach": -0.9,
-                "insecure": -0.8, "vulnerable": -0.8, "exposed": -0.8,
-                "failed": -0.8, "error": -0.6, "issue": -0.5,
-                "problem": -0.6, "risk": -0.5, "threat": -0.7,
-                "unauthorized": -0.8, "denied": -0.7, "rejected": -0.7,
-                "outdated": -0.6, "deprecated": -0.6, "critical": -0.8
+                "terrible": -0.9,
+                "awful": -0.9,
+                "horrible": -0.9,
+                "bad": -0.7,
+                "poor": -0.7,
+                "inadequate": -0.6,
+                "unsatisfactory": -0.8,
+                "unacceptable": -0.8,
+                "non-compliant": -0.9,
+                "violation": -0.9,
+                "breach": -0.9,
+                "insecure": -0.8,
+                "vulnerable": -0.8,
+                "exposed": -0.8,
+                "failed": -0.8,
+                "error": -0.6,
+                "issue": -0.5,
+                "problem": -0.6,
+                "risk": -0.5,
+                "threat": -0.7,
+                "unauthorized": -0.8,
+                "denied": -0.7,
+                "rejected": -0.7,
+                "outdated": -0.6,
+                "deprecated": -0.6,
+                "critical": -0.8,
             },
             "neutral": {
-                "policy": 0.0, "procedure": 0.0, "standard": 0.0,
-                "guideline": 0.0, "requirement": 0.0, "control": 0.0,
-                "framework": 0.0, "process": 0.0, "system": 0.0,
-                "resource": 0.0, "configuration": 0.0, "setting": 0.0,
-                "monitor": 0.0, "review": 0.0, "assessment": 0.0,
-                "analysis": 0.0, "evaluation": 0.0, "report": 0.0
-            }
+                "policy": 0.0,
+                "procedure": 0.0,
+                "standard": 0.0,
+                "guideline": 0.0,
+                "requirement": 0.0,
+                "control": 0.0,
+                "framework": 0.0,
+                "process": 0.0,
+                "system": 0.0,
+                "resource": 0.0,
+                "configuration": 0.0,
+                "setting": 0.0,
+                "monitor": 0.0,
+                "review": 0.0,
+                "assessment": 0.0,
+                "analysis": 0.0,
+                "evaluation": 0.0,
+                "report": 0.0,
+            },
         }
 
     def _load_emotion_patterns(self) -> Dict[str, List[str]]:
         """Load emotion detection patterns."""
         return {
             "concern": [
-                r"concerned about", r"worried about", r"anxious about",
-                r"concerned that", r"concern is", r"major concern"
+                r"concerned about",
+                r"worried about",
+                r"anxious about",
+                r"concerned that",
+                r"concern is",
+                r"major concern",
             ],
             "confidence": [
-                r"confident that", r"confident in", r"assurance that",
-                r"certain that", r"trust that", r"believe that"
+                r"confident that",
+                r"confident in",
+                r"assurance that",
+                r"certain that",
+                r"trust that",
+                r"believe that",
             ],
             "frustration": [
-                r"frustrated with", r"annoyed by", r"irritated by",
-                r"disappointed with", r"upset about", r"dissatisfied with"
+                r"frustrated with",
+                r"annoyed by",
+                r"irritated by",
+                r"disappointed with",
+                r"upset about",
+                r"dissatisfied with",
             ],
             "satisfaction": [
-                r"satisfied with", r"pleased with", r"happy with",
-                r"content with", r"delighted with", r"impressed with"
+                r"satisfied with",
+                r"pleased with",
+                r"happy with",
+                r"content with",
+                r"delighted with",
+                r"impressed with",
             ],
             "urgency": [
-                r"urgent", r"immediate", r"critical", r"emergency",
-                r"asap", r"priority", r"time-sensitive"
+                r"urgent",
+                r"immediate",
+                r"critical",
+                r"emergency",
+                r"asap",
+                r"priority",
+                r"time-sensitive",
             ],
             "uncertainty": [
-                r"uncertain", r"unclear", r"ambiguous", r"confused",
-                r"not sure", r"unsure", r"questionable"
-            ]
+                r"uncertain",
+                r"unclear",
+                r"ambiguous",
+                r"confused",
+                r"not sure",
+                r"unsure",
+                r"questionable",
+            ],
         }
 
     def _load_domain_terms(self) -> Dict[str, Dict[str, float]]:
         """Load domain-specific terms and their sentiment weights."""
         return {
             "compliance": {
-                "audit_passed": 0.8, "audit_failed": -0.8,
-                "compliant": 0.7, "non_compliant": -0.9,
-                "violation": -0.9, "adherence": 0.7,
-                "breach": -0.9, "conformance": 0.7
+                "audit_passed": 0.8,
+                "audit_failed": -0.8,
+                "compliant": 0.7,
+                "non_compliant": -0.9,
+                "violation": -0.9,
+                "adherence": 0.7,
+                "breach": -0.9,
+                "conformance": 0.7,
             },
             "security": {
-                "secure": 0.8, "insecure": -0.8,
-                "encrypted": 0.7, "unencrypted": -0.7,
-                "protected": 0.7, "exposed": -0.8,
-                "authorized": 0.6, "unauthorized": -0.8,
-                "safe": 0.7, "unsafe": -0.7
+                "secure": 0.8,
+                "insecure": -0.8,
+                "encrypted": 0.7,
+                "unencrypted": -0.7,
+                "protected": 0.7,
+                "exposed": -0.8,
+                "authorized": 0.6,
+                "unauthorized": -0.8,
+                "safe": 0.7,
+                "unsafe": -0.7,
             },
             "performance": {
-                "fast": 0.7, "slow": -0.6,
-                "efficient": 0.8, "inefficient": -0.7,
-                "responsive": 0.7, "unresponsive": -0.8,
-                "optimized": 0.8, "degraded": -0.7,
-                "stable": 0.6, "unstable": -0.7
+                "fast": 0.7,
+                "slow": -0.6,
+                "efficient": 0.8,
+                "inefficient": -0.7,
+                "responsive": 0.7,
+                "unresponsive": -0.8,
+                "optimized": 0.8,
+                "degraded": -0.7,
+                "stable": 0.6,
+                "unstable": -0.7,
             },
             "cost": {
-                "cost_effective": 0.8, "expensive": -0.6,
-                "savings": 0.7, "waste": -0.7,
-                "budget": 0.0, "over_budget": -0.8,
-                "affordable": 0.6, "costly": -0.6
-            }
+                "cost_effective": 0.8,
+                "expensive": -0.6,
+                "savings": 0.7,
+                "waste": -0.7,
+                "budget": 0.0,
+                "over_budget": -0.8,
+                "affordable": 0.6,
+                "costly": -0.6,
+            },
         }
 
     async def initialize(self) -> None:
@@ -145,15 +238,14 @@ class SentimentAnalyzer:
             # For production, use Azure Text Analytics
             endpoint = "https://your-text-analytics-resource.cognitiveservices.azure.com/"
 
-            if hasattr(self.settings, 'azure_text_analytics_key'):
+            if hasattr(self.settings, "azure_text_analytics_key"):
                 credential = AzureKeyCredential(self.settings.azure_text_analytics_key)
             else:
                 self.azure_credential = DefaultAzureCredential()
                 credential = self.azure_credential
 
             self.text_analytics_client = TextAnalyticsClient(
-                endpoint=endpoint,
-                credential=credential
+                endpoint=endpoint, credential=credential
             )
 
             logger.info("Azure Text Analytics client initialized")
@@ -161,13 +253,17 @@ class SentimentAnalyzer:
         except Exception as e:
             logger.warning("Failed to initialize Azure Text Analytics", error=str(e))
 
-    async def analyze_sentiment(self, text: str, analysis_type: Optional[str] = None,
-                              options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def analyze_sentiment(
+        self,
+        text: str,
+        analysis_type: Optional[str] = None,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Analyze sentiment of text."""
         try:
-            logger.info("Starting sentiment analysis",
-                       text_length=len(text),
-                       analysis_type=analysis_type)
+            logger.info(
+                "Starting sentiment analysis", text_length=len(text), analysis_type=analysis_type
+            )
 
             # Initialize results
             results = {
@@ -179,7 +275,7 @@ class SentimentAnalyzer:
                 "emotions": {},
                 "key_phrases": [],
                 "sentiment_scores": {},
-                "domain_analysis": {}
+                "domain_analysis": {},
             }
 
             # Use Azure Text Analytics if available
@@ -206,9 +302,11 @@ class SentimentAnalyzer:
             # Adjust sentiment based on domain analysis
             results = await self._adjust_sentiment_for_domain(results, domain_analysis)
 
-            logger.info("Sentiment analysis completed",
-                       sentiment=results["sentiment"],
-                       confidence=results["confidence"])
+            logger.info(
+                "Sentiment analysis completed",
+                sentiment=results["sentiment"],
+                confidence=results["confidence"],
+            )
 
             return results
 
@@ -225,8 +323,7 @@ class SentimentAnalyzer:
             all_results = []
             for chunk in chunks:
                 response = await self.text_analytics_client.analyze_sentiment(
-                    documents=[chunk],
-                    show_opinion_mining=True
+                    documents=[chunk], show_opinion_mining=True
                 )
                 all_results.extend(response)
 
@@ -257,8 +354,8 @@ class SentimentAnalyzer:
                     "sentiment_scores": {
                         "positive": total_confidence["positive"] / len(all_results),
                         "negative": total_confidence["negative"] / len(all_results),
-                        "neutral": total_confidence["neutral"] / len(all_results)
-                    }
+                        "neutral": total_confidence["neutral"] / len(all_results),
+                    },
                 }
 
             return {"sentiment": "neutral", "confidence": 0.0}
@@ -320,8 +417,8 @@ class SentimentAnalyzer:
                 "sentiment_scores": {
                     "positive": positive_score,
                     "negative": negative_score,
-                    "neutral": neutral_score
-                }
+                    "neutral": neutral_score,
+                },
             }
 
         except Exception as e:
@@ -337,7 +434,7 @@ class SentimentAnalyzer:
                 "frustration": 0.0,
                 "satisfaction": 0.0,
                 "urgency": 0.0,
-                "uncertainty": 0.0
+                "uncertainty": 0.0,
             }
 
             text_lower = text.lower()
@@ -370,8 +467,17 @@ class SentimentAnalyzer:
             important_words = []
             for word in words:
                 word_lower = word.lower()
-                if (len(word) > 3 and
-                    word_lower not in ["the", "and", "or", "but", "with", "for", "from", "that", "this"]):
+                if len(word) > 3 and word_lower not in [
+                    "the",
+                    "and",
+                    "or",
+                    "but",
+                    "with",
+                    "for",
+                    "from",
+                    "that",
+                    "this",
+                ]:
                     important_words.append(word)
 
             # Create phrases from consecutive important words
@@ -396,8 +502,9 @@ class SentimentAnalyzer:
             logger.error("Key phrase extraction failed", error=str(e))
             return []
 
-    async def _analyze_domain_sentiment(self, text: str,
-                                      analysis_type: Optional[str]) -> Dict[str, Any]:
+    async def _analyze_domain_sentiment(
+        self, text: str, analysis_type: Optional[str]
+    ) -> Dict[str, Any]:
         """Analyze sentiment for specific domains."""
         try:
             domain_analysis = {}
@@ -419,7 +526,11 @@ class SentimentAnalyzer:
                     domain_analysis[domain] = {
                         "score": domain_score / domain_mentions,
                         "mentions": domain_mentions,
-                        "sentiment": "positive" if domain_score > 0 else "negative" if domain_score < 0 else "neutral"
+                        "sentiment": (
+                            "positive"
+                            if domain_score > 0
+                            else "negative" if domain_score < 0 else "neutral"
+                        ),
                     }
 
             return domain_analysis
@@ -428,8 +539,9 @@ class SentimentAnalyzer:
             logger.error("Domain sentiment analysis failed", error=str(e))
             return {}
 
-    async def _adjust_sentiment_for_domain(self, results: Dict[str, Any],
-                                         domain_analysis: Dict[str, Any]) -> Dict[str, Any]:
+    async def _adjust_sentiment_for_domain(
+        self, results: Dict[str, Any], domain_analysis: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Adjust sentiment based on domain-specific analysis."""
         try:
             if not domain_analysis:
@@ -481,7 +593,7 @@ class SentimentAnalyzer:
         chunks = []
         current_chunk = ""
 
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
 
         for sentence in sentences:
             if len(current_chunk) + len(sentence) <= max_chars:
@@ -499,7 +611,7 @@ class SentimentAnalyzer:
     def _tokenize_text(self, text: str) -> List[str]:
         """Tokenize text into words."""
         # Simple tokenization
-        text = re.sub(r'[^\w\s]', ' ', text)
+        text = re.sub(r"[^\w\s]", " ", text)
         words = text.split()
         return [word for word in words if len(word) > 1]
 

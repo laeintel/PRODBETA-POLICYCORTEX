@@ -3,13 +3,20 @@ Pydantic models for AI Engine service.
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+
+from pydantic import BaseModel
+from pydantic import Field
 
 
 class ModelStatus(str, Enum):
     """Model status enumeration."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     TRAINING = "training"
@@ -19,6 +26,7 @@ class ModelStatus(str, Enum):
 
 class AnalysisType(str, Enum):
     """Analysis type enumeration."""
+
     COMPLIANCE = "compliance"
     SECURITY = "security"
     COST = "cost"
@@ -28,6 +36,7 @@ class AnalysisType(str, Enum):
 
 class DetectionType(str, Enum):
     """Anomaly detection type enumeration."""
+
     RESOURCE_USAGE = "resource_usage"
     COST_ANOMALY = "cost_anomaly"
     SECURITY_ANOMALY = "security_anomaly"
@@ -37,6 +46,7 @@ class DetectionType(str, Enum):
 
 class OptimizationGoal(str, Enum):
     """Cost optimization goal enumeration."""
+
     MINIMIZE_COST = "minimize_cost"
     MAXIMIZE_PERFORMANCE = "maximize_performance"
     BALANCE_COST_PERFORMANCE = "balance_cost_performance"
@@ -45,6 +55,7 @@ class OptimizationGoal(str, Enum):
 
 class SentimentType(str, Enum):
     """Sentiment analysis type enumeration."""
+
     POSITIVE = "positive"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
@@ -53,6 +64,7 @@ class SentimentType(str, Enum):
 
 class ModelType(str, Enum):
     """Model type enumeration."""
+
     NLP = "nlp"
     ANOMALY_DETECTION = "anomaly_detection"
     COST_OPTIMIZATION = "cost_optimization"
@@ -62,6 +74,7 @@ class ModelType(str, Enum):
 
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str = Field(..., description="Health status")
     timestamp: datetime = Field(..., description="Timestamp of health check")
     service: str = Field(..., description="Service name")
@@ -71,6 +84,7 @@ class HealthResponse(BaseModel):
 
 class APIResponse(BaseModel):
     """Generic API response model."""
+
     success: bool = Field(..., description="Request success status")
     data: Optional[Dict[str, Any]] = Field(None, description="Response data")
     message: Optional[str] = Field(None, description="Response message")
@@ -79,6 +93,7 @@ class APIResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model."""
+
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Error details")
@@ -88,6 +103,7 @@ class ErrorResponse(BaseModel):
 
 class ModelInfo(BaseModel):
     """Model information model."""
+
     name: str = Field(..., description="Model name")
     version: str = Field(..., description="Model version")
     type: ModelType = Field(..., description="Model type")
@@ -100,13 +116,13 @@ class ModelInfo(BaseModel):
     metrics: Optional[Dict[str, float]] = Field(None, description="Model performance metrics")
     parameters: Optional[Dict[str, Any]] = Field(None, description="Model parameters")
     training_data_info: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Training data information"
+        None, description="Training data information"
     )
 
 
 class ModelTrainingRequest(BaseModel):
     """Model training request model."""
+
     training_data: Dict[str, Any] = Field(..., description="Training data configuration")
     parameters: Optional[Dict[str, Any]] = Field(None, description="Training parameters")
     validation_split: float = Field(0.2, description="Validation data split ratio")
@@ -118,6 +134,7 @@ class ModelTrainingRequest(BaseModel):
 
 class ModelTrainingResponse(BaseModel):
     """Model training response model."""
+
     task_id: str = Field(..., description="Training task identifier")
     model_name: str = Field(..., description="Model name")
     status: str = Field(..., description="Training status")
@@ -128,6 +145,7 @@ class ModelTrainingResponse(BaseModel):
 
 class ModelMetrics(BaseModel):
     """Model performance metrics model."""
+
     model_name: str = Field(..., description="Model name")
     accuracy: float = Field(..., description="Model accuracy")
     precision: float = Field(..., description="Model precision")
@@ -142,6 +160,7 @@ class ModelMetrics(BaseModel):
 
 class PolicyAnalysisRequest(BaseModel):
     """Policy analysis request model."""
+
     request_id: str = Field(..., description="Request identifier")
     policy_text: str = Field(..., description="Policy document text")
     analysis_type: AnalysisType = Field(..., description="Type of analysis to perform")
@@ -151,6 +170,7 @@ class PolicyAnalysisRequest(BaseModel):
 
 class PolicyAnalysisResponse(BaseModel):
     """Policy analysis response model."""
+
     request_id: str = Field(..., description="Request identifier")
     analysis_results: Dict[str, Any] = Field(..., description="Analysis results")
     confidence_score: float = Field(..., description="Confidence score")
@@ -162,33 +182,34 @@ class PolicyAnalysisResponse(BaseModel):
 
 class AnomalyDetectionRequest(BaseModel):
     """Anomaly detection request model."""
+
     request_id: str = Field(..., description="Request identifier")
     resource_data: Dict[str, Any] = Field(..., description="Resource data for analysis")
     detection_type: DetectionType = Field(..., description="Type of anomaly detection")
     threshold: float = Field(0.95, description="Anomaly detection threshold")
     time_window: Optional[str] = Field(None, description="Time window for analysis")
     baseline_data: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Baseline data for comparison"
+        None, description="Baseline data for comparison"
     )
 
 
 class AnomalyDetectionResponse(BaseModel):
     """Anomaly detection response model."""
+
     request_id: str = Field(..., description="Request identifier")
     anomalies: List[Dict[str, Any]] = Field(..., description="Detected anomalies")
     analysis_summary: Dict[str, Any] = Field(..., description="Analysis summary")
     confidence_score: float = Field(..., description="Overall confidence score")
     severity_levels: Optional[Dict[str, int]] = Field(None, description="Anomaly severity counts")
     recommendations: Optional[List[Dict[str, Any]]] = Field(
-        None,
-        description="Remediation recommendations"
+        None, description="Remediation recommendations"
     )
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 
 
 class CostOptimizationRequest(BaseModel):
     """Cost optimization request model."""
+
     request_id: str = Field(..., description="Request identifier")
     resource_data: Dict[str, Any] = Field(..., description="Resource data for optimization")
     optimization_goals: List[OptimizationGoal] = Field(..., description="Optimization goals")
@@ -199,10 +220,10 @@ class CostOptimizationRequest(BaseModel):
 
 class CostOptimizationResponse(BaseModel):
     """Cost optimization response model."""
+
     request_id: str = Field(..., description="Request identifier")
     recommendations: List[Dict[str, Any]] = Field(
-        ...,
-        description="Cost optimization recommendations"
+        ..., description="Cost optimization recommendations"
     )
     projected_savings: Dict[str, float] = Field(..., description="Projected cost savings")
     implementation_plan: Dict[str, Any] = Field(..., description="Implementation plan")
@@ -213,26 +234,26 @@ class CostOptimizationResponse(BaseModel):
 
 class PredictiveAnalyticsRequest(BaseModel):
     """Predictive analytics request model."""
+
     request_id: str = Field(..., description="Request identifier")
     historical_data: Dict[str, Any] = Field(..., description="Historical data for analysis")
     prediction_horizon: str = Field(..., description="Prediction time horizon")
     metrics: List[str] = Field(..., description="Metrics to predict")
     seasonality: Optional[bool] = Field(None, description="Consider seasonality patterns")
     external_factors: Optional[Dict[str, Any]] = Field(
-        None,
-        description="External factors to consider"
+        None, description="External factors to consider"
     )
 
 
 class PredictiveAnalyticsResponse(BaseModel):
     """Predictive analytics response model."""
+
     request_id: str = Field(..., description="Request identifier")
     predictions: List[Dict[str, Any]] = Field(..., description="Prediction results")
     trends: Dict[str, Any] = Field(..., description="Trend analysis")
     forecast_accuracy: Dict[str, float] = Field(..., description="Forecast accuracy metrics")
     confidence_intervals: Dict[str, Dict[str, float]] = Field(
-        ...,
-        description="Confidence intervals"
+        ..., description="Confidence intervals"
     )
     risk_factors: Optional[List[Dict[str, Any]]] = Field(None, description="Risk factors")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
@@ -240,6 +261,7 @@ class PredictiveAnalyticsResponse(BaseModel):
 
 class SentimentAnalysisRequest(BaseModel):
     """Sentiment analysis request model."""
+
     request_id: str = Field(..., description="Request identifier")
     text: str = Field(..., description="Text to analyze")
     analysis_type: Optional[str] = Field(None, description="Type of sentiment analysis")
@@ -249,37 +271,37 @@ class SentimentAnalysisRequest(BaseModel):
 
 class SentimentAnalysisResponse(BaseModel):
     """Sentiment analysis response model."""
+
     request_id: str = Field(..., description="Request identifier")
     sentiment: SentimentType = Field(..., description="Overall sentiment")
     confidence_score: float = Field(..., description="Confidence score")
     emotions: Dict[str, float] = Field(..., description="Emotion scores")
     key_phrases: List[str] = Field(..., description="Key phrases")
     sentiment_scores: Optional[Dict[str, float]] = Field(
-        None,
-        description="Detailed sentiment scores"
+        None, description="Detailed sentiment scores"
     )
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 
 
 class FeatureEngineeringRequest(BaseModel):
     """Feature engineering request model."""
+
     request_id: str = Field(..., description="Request identifier")
     raw_data: Dict[str, Any] = Field(..., description="Raw data for feature engineering")
     feature_types: List[str] = Field(..., description="Types of features to generate")
     preprocessing_steps: Optional[List[str]] = Field(None, description="Preprocessing steps")
     target_variable: Optional[str] = Field(
-        None,
-        description="Target variable for supervised learning"
+        None, description="Target variable for supervised learning"
     )
 
 
 class FeatureEngineeringResponse(BaseModel):
     """Feature engineering response model."""
+
     request_id: str = Field(..., description="Request identifier")
     engineered_features: Dict[str, Any] = Field(..., description="Engineered features")
     feature_importance: Optional[Dict[str, float]] = Field(
-        None,
-        description="Feature importance scores"
+        None, description="Feature importance scores"
     )
     preprocessing_summary: Dict[str, Any] = Field(..., description="Preprocessing summary")
     feature_statistics: Dict[str, Any] = Field(..., description="Feature statistics")
@@ -288,6 +310,7 @@ class FeatureEngineeringResponse(BaseModel):
 
 class ModelDriftRequest(BaseModel):
     """Model drift detection request model."""
+
     request_id: str = Field(..., description="Request identifier")
     model_name: str = Field(..., description="Model name")
     reference_data: Dict[str, Any] = Field(..., description="Reference data for comparison")
@@ -297,6 +320,7 @@ class ModelDriftRequest(BaseModel):
 
 class ModelDriftResponse(BaseModel):
     """Model drift detection response model."""
+
     request_id: str = Field(..., description="Request identifier")
     model_name: str = Field(..., description="Model name")
     drift_detected: bool = Field(..., description="Whether drift was detected")
@@ -308,6 +332,7 @@ class ModelDriftResponse(BaseModel):
 
 class BatchPredictionRequest(BaseModel):
     """Batch prediction request model."""
+
     request_id: str = Field(..., description="Request identifier")
     model_name: str = Field(..., description="Model name")
     input_data: List[Dict[str, Any]] = Field(..., description="Input data for predictions")
@@ -317,6 +342,7 @@ class BatchPredictionRequest(BaseModel):
 
 class BatchPredictionResponse(BaseModel):
     """Batch prediction response model."""
+
     request_id: str = Field(..., description="Request identifier")
     model_name: str = Field(..., description="Model name")
     predictions: List[Dict[str, Any]] = Field(..., description="Prediction results")
@@ -328,6 +354,7 @@ class BatchPredictionResponse(BaseModel):
 
 class ModelExplainabilityRequest(BaseModel):
     """Model explainability request model."""
+
     request_id: str = Field(..., description="Request identifier")
     model_name: str = Field(..., description="Model name")
     input_data: Dict[str, Any] = Field(..., description="Input data for explanation")
@@ -337,6 +364,7 @@ class ModelExplainabilityRequest(BaseModel):
 
 class ModelExplainabilityResponse(BaseModel):
     """Model explainability response model."""
+
     request_id: str = Field(..., description="Request identifier")
     model_name: str = Field(..., description="Model name")
     prediction: Dict[str, Any] = Field(..., description="Model prediction")
@@ -348,6 +376,7 @@ class ModelExplainabilityResponse(BaseModel):
 
 class DataQualityRequest(BaseModel):
     """Data quality assessment request model."""
+
     request_id: str = Field(..., description="Request identifier")
     data: Dict[str, Any] = Field(..., description="Data for quality assessment")
     quality_checks: List[str] = Field(..., description="Quality checks to perform")
@@ -356,6 +385,7 @@ class DataQualityRequest(BaseModel):
 
 class DataQualityResponse(BaseModel):
     """Data quality assessment response model."""
+
     request_id: str = Field(..., description="Request identifier")
     quality_score: float = Field(..., description="Overall quality score")
     quality_report: Dict[str, Any] = Field(..., description="Detailed quality report")
@@ -366,6 +396,7 @@ class DataQualityResponse(BaseModel):
 
 class AutoMLRequest(BaseModel):
     """AutoML request model."""
+
     request_id: str = Field(..., description="Request identifier")
     dataset: Dict[str, Any] = Field(..., description="Dataset for AutoML")
     problem_type: str = Field(..., description="Problem type (classification, regression, etc.)")
@@ -377,6 +408,7 @@ class AutoMLRequest(BaseModel):
 
 class AutoMLResponse(BaseModel):
     """AutoML response model."""
+
     request_id: str = Field(..., description="Request identifier")
     task_id: str = Field(..., description="AutoML task identifier")
     status: str = Field(..., description="AutoML task status")
@@ -388,6 +420,7 @@ class AutoMLResponse(BaseModel):
 
 class ModelVersionRequest(BaseModel):
     """Model version request model."""
+
     model_name: str = Field(..., description="Model name")
     version: str = Field(..., description="Model version")
     description: Optional[str] = Field(None, description="Version description")
@@ -396,6 +429,7 @@ class ModelVersionRequest(BaseModel):
 
 class ModelVersionResponse(BaseModel):
     """Model version response model."""
+
     model_name: str = Field(..., description="Model name")
     version: str = Field(..., description="Model version")
     status: str = Field(..., description="Version status")
@@ -407,16 +441,21 @@ class ModelVersionResponse(BaseModel):
 
 # Patent Implementation Models
 
+
 class UnifiedAIAnalysisRequest(BaseModel):
     """Unified AI Platform analysis request model (Patent 2)."""
+
     request_id: str = Field(..., description="Request identifier")
     governance_data: Dict[str, Any] = Field(..., description="Multi-domain governance data")
     analysis_scope: List[str] = Field(..., description="Domains to analyze")
-    optimization_preferences: Optional[Dict[str, float]] = Field(None, description="Optimization preferences")
+    optimization_preferences: Optional[Dict[str, float]] = Field(
+        None, description="Optimization preferences"
+    )
 
 
 class UnifiedAIAnalysisResponse(BaseModel):
     """Unified AI Platform analysis response model (Patent 2)."""
+
     request_id: str = Field(..., description="Request identifier")
     optimization_scores: List[float] = Field(..., description="Multi-objective optimization scores")
     domain_correlations: Dict[str, float] = Field(..., description="Cross-domain correlations")
@@ -428,6 +467,7 @@ class UnifiedAIAnalysisResponse(BaseModel):
 
 class GovernanceOptimizationRequest(BaseModel):
     """Governance optimization request model (Patent 2)."""
+
     request_id: str = Field(..., description="Request identifier")
     governance_data: Dict[str, Any] = Field(..., description="Current governance state")
     preferences: Dict[str, float] = Field(..., description="Optimization preferences")
@@ -437,6 +477,7 @@ class GovernanceOptimizationRequest(BaseModel):
 
 class GovernanceOptimizationResponse(BaseModel):
     """Governance optimization response model (Patent 2)."""
+
     request_id: str = Field(..., description="Request identifier")
     best_solution: Dict[str, Any] = Field(..., description="Best optimization solution")
     pareto_front_size: int = Field(..., description="Size of Pareto front")
@@ -448,6 +489,7 @@ class GovernanceOptimizationResponse(BaseModel):
 
 class ConversationRequest(BaseModel):
     """Conversational governance intelligence request model (Patent 3)."""
+
     user_input: str = Field(..., description="Natural language user input")
     session_id: str = Field(..., description="Conversation session identifier")
     user_id: str = Field(..., description="User identifier")
@@ -456,6 +498,7 @@ class ConversationRequest(BaseModel):
 
 class ConversationResponse(BaseModel):
     """Conversational governance intelligence response model (Patent 3)."""
+
     response: str = Field(..., description="Natural language response")
     intent: str = Field(..., description="Detected user intent")
     entities: Dict[str, List[str]] = Field(..., description="Extracted entities")
@@ -468,6 +511,7 @@ class ConversationResponse(BaseModel):
 
 class PolicySynthesisRequest(BaseModel):
     """Policy synthesis request model (Patent 3)."""
+
     request_id: str = Field(..., description="Request identifier")
     description: str = Field(..., description="Natural language policy description")
     domain: str = Field(..., description="Governance domain")
@@ -477,23 +521,28 @@ class PolicySynthesisRequest(BaseModel):
 
 class PolicySynthesisResponse(BaseModel):
     """Policy synthesis response model (Patent 3)."""
+
     request_id: str = Field(..., description="Request identifier")
     policy_text: str = Field(..., description="Generated policy text")
     structured_policy: Dict[str, Any] = Field(..., description="Structured policy components")
     domain: str = Field(..., description="Policy domain")
     confidence_score: float = Field(..., description="Generation confidence")
-    validation_results: Optional[Dict[str, Any]] = Field(None, description="Policy validation results")
+    validation_results: Optional[Dict[str, Any]] = Field(
+        None, description="Policy validation results"
+    )
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 
 
 class ConversationHistoryRequest(BaseModel):
     """Conversation history request model."""
+
     session_id: str = Field(..., description="Session identifier")
     include_metadata: bool = Field(True, description="Include conversation metadata")
 
 
 class ConversationHistoryResponse(BaseModel):
     """Conversation history response model."""
+
     session_id: str = Field(..., description="Session identifier")
     user_id: str = Field(..., description="User identifier")
     history: List[Dict[str, Any]] = Field(..., description="Conversation history")

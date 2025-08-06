@@ -3,16 +3,23 @@ Azure authentication service for managing Azure AD authentication and credential
 """
 
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
-import structlog
-from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
-from azure.mgmt.subscription.aio import SubscriptionClient
-from azure.core.exceptions import AzureError
-    import jwt
-from jose import JWTError, jwt as jose_jwt
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
+import jwt
+import structlog
+from azure.core.exceptions import AzureError
+from azure.identity.aio import ClientSecretCredential
+from azure.identity.aio import DefaultAzureCredential
+from azure.mgmt.subscription.aio import SubscriptionClient
+from jose import JWTError
+from jose import jwt as jose_jwt
 from shared.config import get_settings
+
 from ..models import AzureAuthResponse
 
 settings = get_settings()
