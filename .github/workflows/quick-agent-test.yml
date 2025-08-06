@@ -1,0 +1,98 @@
+name: Quick Agent Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Test message'
+        required: false
+        default: 'Hello from aeolitech-runner1!'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  quick-test:
+    name: Quick Windows Agent Test
+    runs-on: [self-hosted, Windows, X64, aeolitech-runner1]
+    timeout-minutes: 5
+    
+    steps:
+      - name: Agent Quick Test
+        run: |
+          Write-Host "🚀 QUICK AGENT TEST STARTED" -ForegroundColor Green
+          Write-Host "Time: $(Get-Date)" -ForegroundColor Cyan
+          Write-Host "Agent: aeolitech-runner1" -ForegroundColor Cyan
+          Write-Host "Message: ${{ github.event.inputs.message }}" -ForegroundColor Yellow
+          
+          Write-Host "`n✅ Agent is responding!" -ForegroundColor Green
+          Write-Host "✅ PowerShell is working!" -ForegroundColor Green
+          Write-Host "✅ Job assignment successful!" -ForegroundColor Green
+          
+          # Quick system check
+          Write-Host "`nSystem Info:" -ForegroundColor Cyan
+          Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor White
+          Write-Host "User: $env:USERNAME" -ForegroundColor White
+          Write-Host "Runner: $env:RUNNER_NAME" -ForegroundColor White
+          
+          Write-Host "`n🎉 QUICK TEST COMPLETED SUCCESSFULLY!" -ForegroundColor Green
+        shell: powershell
+        
+      - name: Test Basic Commands
+        run: |
+          echo === Basic Commands Test ===
+          echo Date: %DATE%
+          echo Time: %TIME%
+          echo Computer: %COMPUTERNAME%
+          echo User: %USERNAME%
+          echo ✅ CMD working correctly!
+        shell: cmd
+        
+      - name: Test Environment Variables
+        run: |
+          Write-Host "=== Environment Variables Test ===" -ForegroundColor Green
+          Write-Host "GITHUB_WORKSPACE: ${{ github.workspace }}" -ForegroundColor Cyan
+          Write-Host "GITHUB_REPOSITORY: ${{ github.repository }}" -ForegroundColor Cyan
+          Write-Host "GITHUB_RUN_NUMBER: ${{ github.run_number }}" -ForegroundColor Cyan
+          Write-Host "RUNNER_OS: $env:RUNNER_OS" -ForegroundColor Cyan
+          Write-Host "RUNNER_ARCH: $env:RUNNER_ARCH" -ForegroundColor Cyan
+          Write-Host "RUNNER_TEMP: $env:RUNNER_TEMP" -ForegroundColor Cyan
+          Write-Host "✅ Environment variables accessible!" -ForegroundColor Green
+        shell: powershell
+
+  success-notification:
+    name: Success Notification
+    runs-on: ubuntu-latest
+    needs: quick-test
+    if: success()
+    
+    steps:
+      - name: Success Message
+        run: |
+          echo "🎉 SUCCESS: Windows self-hosted agent 'aeolitech-runner1' is working!"
+          echo "✅ Agent can take jobs"
+          echo "✅ Agent can run PowerShell tasks"  
+          echo "✅ Agent can run CMD tasks"
+          echo "✅ Agent can access environment variables"
+          echo ""
+          echo "Your Windows self-hosted agent is ready for workloads!"
+          
+  failure-notification:
+    name: Failure Notification  
+    runs-on: ubuntu-latest
+    needs: quick-test
+    if: failure()
+    
+    steps:
+      - name: Failure Message
+        run: |
+          echo "❌ FAILURE: Windows self-hosted agent 'aeolitech-runner1' has issues!"
+          echo ""
+          echo "Common troubleshooting steps:"
+          echo "1. Check if the agent service is running"
+          echo "2. Verify the agent is online in GitHub Settings"
+          echo "3. Check agent logs for errors" 
+          echo "4. Ensure the agent has proper permissions"
+          echo ""
+          echo "Agent status should show as 'Idle' when ready for jobs."
