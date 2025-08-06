@@ -22,17 +22,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY services/conversation/requirements.txt /app/requirements.txt
+COPY backend/services/conversation/requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy shared modules
-COPY shared /app/shared/
+COPY backend/shared /app/shared/
 
 # Copy the service application
-COPY services/conversation /app/
+COPY backend/services/conversation /app/
 
 # Skip spaCy model download for minimal build
 # RUN python -m spacy download en_core_web_sm || echo "SpaCy model download failed, continuing..."
