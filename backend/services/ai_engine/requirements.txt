@@ -20,8 +20,11 @@ sqlalchemy==2.0.23
 aioodbc==0.5.0
 pyodbc==5.0.1
 
-# AI/ML dependencies
-# NOTE: torch must be installed first before torch-geometric packages
+# AI/ML dependencies - FULL SET
+# NOTE: This file contains ALL dependencies for development
+# For container builds, use requirements-minimal.txt to avoid PyTorch dependency issues
+# 
+# torch must be installed first before torch-geometric packages
 # In CI/CD pipelines, install torch separately with:
 # pip install torch==2.1.1 --index-url https://download.pytorch.org/whl/cpu
 torch==2.1.1

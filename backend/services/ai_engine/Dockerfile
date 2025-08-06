@@ -23,10 +23,10 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY services/ai_engine/requirements.txt /app/requirements.txt
+# Copy minimal requirements for container builds
+COPY services/ai_engine/requirements-minimal.txt /app/requirements.txt
 
-# Install Python dependencies
+# Install Python dependencies (minimal set for container startup)
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt
 
