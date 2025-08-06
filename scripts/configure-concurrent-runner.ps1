@@ -14,11 +14,30 @@ param(
 
 Write-Host "Configuring GitHub Runner for Concurrent Jobs..." -ForegroundColor Green
 
+# Clean up the runner directory path (remove quotes if present)
+$RunnerDirectory = $RunnerDirectory.Trim('"').Trim("'")
+
+# Verify runner directory exists
+if (-not (Test-Path $RunnerDirectory)) {
+    Write-Host "Error: Runner directory not found at: $RunnerDirectory" -ForegroundColor Red
+    Write-Host "Please provide a valid path to your GitHub Actions runner directory" -ForegroundColor Yellow
+    exit 1
+}
+
+# Verify svc.cmd exists in the runner directory
+$svcPath = Join-Path $RunnerDirectory "svc.cmd"
+if (-not (Test-Path $svcPath)) {
+    Write-Host "Error: svc.cmd not found in: $RunnerDirectory" -ForegroundColor Red
+    Write-Host "This doesn't appear to be a valid GitHub Actions runner directory" -ForegroundColor Yellow
+    exit 1
+}
+
 # Stop the existing runner service
 Write-Host "Stopping runner service..." -ForegroundColor Yellow
 Stop-Service -Name $ServiceName -ErrorAction SilentlyContinue
 
 # Navigate to runner directory
+Write-Host "Navigating to: $RunnerDirectory" -ForegroundColor Cyan
 Set-Location $RunnerDirectory
 
 # Remove existing service
