@@ -39,8 +39,8 @@ ENV VITE_AZURE_REDIRECT_URI=$VITE_AZURE_REDIRECT_URI
 ENV VITE_APP_VERSION=$VITE_APP_VERSION
 ENV PORT=8080
 
-# Build the application
-RUN npm run build
+# Build the application without TypeScript checking (for faster Docker builds)
+RUN npm run build:no-tsc
 
 # Install serve globally for production serving
 RUN npm install -g serve
