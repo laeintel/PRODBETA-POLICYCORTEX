@@ -1,6 +1,9 @@
 # Use Python 3.11 slim image as base
 FROM python:3.11-slim
 
+# Cache bust argument to force fresh builds
+ARG CACHEBUST=1
+
 # Set work directory
 WORKDIR /app
 
