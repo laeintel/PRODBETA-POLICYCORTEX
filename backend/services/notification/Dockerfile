@@ -20,15 +20,17 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the entire backend directory structure
+# Copy requirements first for better caching
+COPY services/notification/requirements.txt /app/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
 # Copy shared modules
 COPY shared /app/shared/
 
 # Copy the service application
 COPY services/notification /app/
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Create non-root user
 RUN groupadd -r notification && useradd -r -g notification notification

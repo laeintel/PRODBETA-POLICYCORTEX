@@ -317,7 +317,12 @@
       "Bash(....venvScriptspython.exe main_simple.py)",
       "Bash(.venvScriptspip.exe install torch --index-url https://download.pytorch.org/whl/cpu)",
       "Bash(for f in *.yml)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(for service in api_gateway azure_integration ai_engine data_processing conversation notification)",
+      "Bash(if [ -f \"$dockerfile_path\" ])",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)"
     ],
     "deny": []
   }

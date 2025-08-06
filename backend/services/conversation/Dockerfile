@@ -18,16 +18,18 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the entire backend directory structure
+# Copy requirements first for better caching
+COPY services/conversation/requirements.txt /app/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/requirements.txt
+
 # Copy shared modules
 COPY shared /app/shared/
 
 # Copy the service application
 COPY services/conversation /app/
-
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/services/conversation/requirements-minimal.txt
 
 # Skip spaCy model download for minimal build
 # RUN python -m spacy download en_core_web_sm || echo "SpaCy model download failed, continuing..."

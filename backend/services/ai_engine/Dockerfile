@@ -20,23 +20,18 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the entire backend directory structure
+# Copy requirements first for better caching
+COPY services/ai_engine/requirements.txt /app/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/requirements.txt
+
 # Copy shared modules
 COPY shared /app/shared/
 
 # Copy the service application
 COPY services/ai_engine /app/
-
-# Install Python dependencies using minimal requirements for container builds
-# Use minimal requirements by default, with fallback to basic requirements if needed
-RUN pip install --no-cache-dir --upgrade pip && \
-    if [ -f "/app/services/ai_engine/requirements-minimal.txt" ]; then \
-        echo "Installing minimal requirements..." && \
-        pip install --no-cache-dir -r /app/services/ai_engine/requirements-minimal.txt; \
-    else \
-        echo "Minimal requirements not found, installing basic FastAPI..." && \
-        pip install --no-cache-dir fastapi==0.104.1 uvicorn[standard]==0.24.0 pydantic==2.4.2; \
-    fi
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs
