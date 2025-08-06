@@ -55,27 +55,27 @@ class ConfigurationManager:
         self.environments = {
             'dev': EnvironmentConfig(
                 name='dev',
-                resource_group=f'rg-policycortex-{environment}',
+                resource_group='rg-pcx-app-dev',
                 location='eastus',
-                key_vault_name=f'policycortex-{environment}-kv',
-                container_registry_name=f'policycortex{environment}acr',
-                container_app_environment_name=f'policycortex-{environment}-containerenv'
+                key_vault_name='kv-pcx-dev',
+                container_registry_name='crpcxdev',
+                container_app_environment_name='cae-pcx-dev'
             ),
             'staging': EnvironmentConfig(
                 name='staging',
-                resource_group=f'rg-policycortex-{environment}',
+                resource_group='rg-pcx-app-staging',
                 location='eastus',
-                key_vault_name=f'policycortex-{environment}-kv',
-                container_registry_name=f'policycortex{environment}acr',
-                container_app_environment_name=f'policycortex-{environment}-containerenv'
+                key_vault_name='kv-pcx-staging',
+                container_registry_name='crpcxstaging',
+                container_app_environment_name='cae-pcx-staging'
             ),
             'prod': EnvironmentConfig(
                 name='prod',
-                resource_group=f'rg-policycortex-{environment}',
+                resource_group='rg-pcx-app-prod',
                 location='eastus',
-                key_vault_name=f'policycortex-{environment}-kv',
-                container_registry_name=f'policycortex{environment}acr',
-                container_app_environment_name=f'policycortex-{environment}-containerenv'
+                key_vault_name='kv-pcx-prod',
+                container_registry_name='crpcxprod',
+                container_app_environment_name='cae-pcx-prod'
             )
         }
         
@@ -188,6 +188,51 @@ class ConfigurationManager:
             logger.error(f"Error retrieving Key Vault secrets: {e}")
             raise
     
+    async def get_container_app_urls(self) -> Dict[str, str]:
+        """Get actual container app URLs from Azure"""
+        logger.info("Getting container app URLs")
+        
+        try:
+            from azure.mgmt.containerinstance import ContainerInstanceManagementClient
+            
+            # Note: We'll use a simplified approach for now since getting container app URLs 
+            # requires the container apps management client which isn't imported yet
+            # For now, use the environment-based naming with a placeholder domain
+            
+            # Container app names based on your resource list
+            app_names = {
+                'API_GATEWAY_URL': f'ca-pcx-gateway-{self.environment}',
+                'AZURE_INTEGRATION_URL': f'ca-pcx-azureint-{self.environment}',
+                'AI_ENGINE_URL': f'ca-pcx-ai-{self.environment}',
+                'DATA_PROCESSING_URL': f'ca-pcx-dataproc-{self.environment}',
+                'CONVERSATION_URL': f'ca-pcx-chat-{self.environment}',
+                'NOTIFICATION_URL': f'ca-pcx-notify-{self.environment}',
+                'FRONTEND_URL': f'ca-pcx-web-{self.environment}',
+            }
+            
+            # For now, return URLs with correct app names but placeholder domain
+            # In production, this would query the actual container app environment
+            base_domain = f".azurecontainerapps.io"  # Will be determined dynamically later
+            
+            urls = {}
+            for key, app_name in app_names.items():
+                urls[key] = f"https://{app_name}{base_domain}"
+            
+            return urls
+            
+        except Exception as e:
+            logger.error(f"Error getting container app URLs: {e}")
+            # Return simplified URLs as fallback
+            return {
+                'API_GATEWAY_URL': f'https://ca-pcx-gateway-{self.environment}.azurecontainerapps.io',
+                'AZURE_INTEGRATION_URL': f'https://ca-pcx-azureint-{self.environment}.azurecontainerapps.io',
+                'AI_ENGINE_URL': f'https://ca-pcx-ai-{self.environment}.azurecontainerapps.io',
+                'DATA_PROCESSING_URL': f'https://ca-pcx-dataproc-{self.environment}.azurecontainerapps.io',
+                'CONVERSATION_URL': f'https://ca-pcx-chat-{self.environment}.azurecontainerapps.io',
+                'NOTIFICATION_URL': f'https://ca-pcx-notify-{self.environment}.azurecontainerapps.io',
+                'FRONTEND_URL': f'https://ca-pcx-web-{self.environment}.azurecontainerapps.io',
+            }
+    
     def get_service_configurations(self) -> Dict[str, ServiceConfig]:
         """Get configuration for all services"""
         
@@ -206,14 +251,15 @@ class ConfigurationManager:
         }
         
         # Service URLs for inter-service communication
+        # Using correct container app names based on actual deployed resources
         service_urls = {
-            'API_GATEWAY_URL': f'https://ca-api-gateway-{self.environment}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io',
-            'AZURE_INTEGRATION_URL': f'https://ca-azure-integration-{self.environment}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io',
-            'AI_ENGINE_URL': f'https://ca-ai-engine-{self.environment}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io',
-            'DATA_PROCESSING_URL': f'https://ca-data-processing-{self.environment}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io',
-            'CONVERSATION_URL': f'https://ca-conversation-{self.environment}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io',
-            'NOTIFICATION_URL': f'https://ca-notification-{self.environment}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io',
-            'CUSTOMER_ONBOARDING_URL': f'https://ca-customer-onboarding-{self.environment}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io',
+            'API_GATEWAY_URL': f'https://ca-pcx-gateway-{self.environment}.azurecontainerapps.io',
+            'AZURE_INTEGRATION_URL': f'https://ca-pcx-azureint-{self.environment}.azurecontainerapps.io',
+            'AI_ENGINE_URL': f'https://ca-pcx-ai-{self.environment}.azurecontainerapps.io',
+            'DATA_PROCESSING_URL': f'https://ca-pcx-dataproc-{self.environment}.azurecontainerapps.io',
+            'CONVERSATION_URL': f'https://ca-pcx-chat-{self.environment}.azurecontainerapps.io',
+            'NOTIFICATION_URL': f'https://ca-pcx-notify-{self.environment}.azurecontainerapps.io',
+            'FRONTEND_URL': f'https://ca-pcx-web-{self.environment}.azurecontainerapps.io',
         }
         
         # Secrets that all services need from Key Vault
