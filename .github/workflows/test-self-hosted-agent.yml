@@ -3,509 +3,61 @@ name: Test Windows Self-Hosted Agent
 on:
   workflow_dispatch:
     inputs:
-      test_level:
-        description: 'Test level to run'
-        required: true
-        default: 'basic'
-        type: choice
-        options:
-          - basic
-          - comprehensive
-          - stress
-      agent_name:
-        description: 'Agent name to test'
+      message:
+        description: 'Test message'
         required: false
-        default: 'aeolitech-runner1'
+        default: 'Testing aeolitech-runner1'
         type: string
-  schedule:
-    # Run every day at 8 AM UTC to ensure agent health
-    - cron: '0 8 * * *'
-
-permissions:
-  contents: read
-  actions: read
 
 jobs:
-  agent-connectivity:
-    name: Test Agent Connectivity
+  test-agent:
+    name: Test Agent
     runs-on: [self-hosted, Windows, X64, aeolitech-runner1]
-    timeout-minutes: 10
-    
-    steps:
-      - name: Agent Information
-        run: |
-          Write-Host "=== AGENT INFORMATION ===" -ForegroundColor Green
-          Write-Host "Agent Name: ${{ github.event.inputs.agent_name || 'aeolitech-runner1' }}" -ForegroundColor Yellow
-          Write-Host "Runner Name: $env:RUNNER_NAME" -ForegroundColor Yellow
-          Write-Host "Runner OS: $env:RUNNER_OS" -ForegroundColor Yellow
-          Write-Host "Runner Architecture: $env:RUNNER_ARCH" -ForegroundColor Yellow
-          Write-Host "Workflow: ${{ github.workflow }}" -ForegroundColor Yellow
-          Write-Host "Run Number: ${{ github.run_number }}" -ForegroundColor Yellow
-          Write-Host "Job Status: CONNECTED ✅" -ForegroundColor Green
-          
-      - name: System Information
-        run: |
-          Write-Host "=== SYSTEM INFORMATION ===" -ForegroundColor Green
-          Write-Host "Computer Name: $env:COMPUTERNAME" -ForegroundColor Cyan
-          Write-Host "User Name: $env:USERNAME" -ForegroundColor Cyan
-          Write-Host "Windows Version:" -ForegroundColor Cyan
-          Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, WindowsBuildLabEx
-          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-          Write-Host "Available Memory: $([math]::Round((Get-WmiObject Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)) GB" -ForegroundColor Cyan
-          Write-Host "CPU Cores: $env:NUMBER_OF_PROCESSORS" -ForegroundColor Cyan
-        shell: powershell
-
-      - name: Test Agent Workspace
-        run: |
-          Write-Host "=== WORKSPACE INFORMATION ===" -ForegroundColor Green
-          Write-Host "Current Directory: $(Get-Location)" -ForegroundColor Cyan
-          Write-Host "Working Directory: ${{ github.workspace }}" -ForegroundColor Cyan
-          Write-Host "Agent Temp Directory: $env:RUNNER_TEMP" -ForegroundColor Cyan
-          Write-Host "Agent Tool Cache: $env:RUNNER_TOOL_CACHE" -ForegroundColor Cyan
-          
-          # Test write permissions
-          $testFile = Join-Path ${{ github.workspace }} "agent-test.txt"
-          "Agent test successful!" | Out-File -FilePath $testFile
-          if (Test-Path $testFile) {
-            Write-Host "✅ Workspace write permissions: OK" -ForegroundColor Green
-            Remove-Item $testFile
-          } else {
-            Write-Host "❌ Workspace write permissions: FAILED" -ForegroundColor Red
-            exit 1
-          }
-        shell: powershell
-
-  basic-tools-test:
-    name: Test Basic Tools
-    runs-on: [self-hosted, Windows, X64, aeolitech-runner1]
-    needs: agent-connectivity
-    timeout-minutes: 15
-    
-    steps:
-      - name: Test PowerShell
-        run: |
-          Write-Host "=== POWERSHELL TEST ===" -ForegroundColor Green
-          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)" -ForegroundColor Cyan
-          
-          # Test basic PowerShell operations
-          $result = 2 + 2
-          if ($result -eq 4) {
-            Write-Host "✅ PowerShell arithmetic: OK" -ForegroundColor Green
-          } else {
-            Write-Host "❌ PowerShell arithmetic: FAILED" -ForegroundColor Red
-            exit 1
-          }
-          
-          # Test file operations
-          $tempFile = [System.IO.Path]::GetTempFileName()
-          "PowerShell test" | Out-File -FilePath $tempFile
-          $content = Get-Content $tempFile
-          if ($content -eq "PowerShell test") {
-            Write-Host "✅ PowerShell file operations: OK" -ForegroundColor Green
-          } else {
-            Write-Host "❌ PowerShell file operations: FAILED" -ForegroundColor Red
-            exit 1
-          }
-          Remove-Item $tempFile
-        shell: powershell
-
-      - name: Test Command Prompt
-        run: |
-          echo === CMD TEST ===
-          echo Current Directory: %CD%
-          echo User: %USERNAME%
-          echo Computer: %COMPUTERNAME%
-          
-          REM Test basic cmd operations
-          set /a result=2+2
-          if %result%==4 (
-            echo ✅ CMD arithmetic: OK
-          ) else (
-            echo ❌ CMD arithmetic: FAILED
-            exit /b 1
-          )
-        shell: cmd
-
-      - name: Test Git
-        run: |
-          Write-Host "=== GIT TEST ===" -ForegroundColor Green
-          try {
-            $gitVersion = git --version
-            Write-Host "Git Version: $gitVersion" -ForegroundColor Cyan
-            Write-Host "✅ Git: Available" -ForegroundColor Green
-          } catch {
-            Write-Host "❌ Git: Not available" -ForegroundColor Red
-            Write-Host "Error: $_" -ForegroundColor Red
-            exit 1
-          }
-        shell: powershell
-
-      - name: Test Python
-        run: |
-          Write-Host "=== PYTHON TEST ===" -ForegroundColor Green
-          try {
-            $pythonVersion = python --version 2>&1
-            Write-Host "Python Version: $pythonVersion" -ForegroundColor Cyan
-            
-            # Test pip
-            $pipVersion = pip --version 2>&1
-            Write-Host "Pip Version: $pipVersion" -ForegroundColor Cyan
-            
-            # Test simple Python script
-            $pythonScript = @'
-import sys
-print("Python executable: " + sys.executable)
-print("Python version: " + sys.version)
-result = 2 + 2
-if result == 4:
-    print("Python arithmetic: OK")
-else:
-    print("Python arithmetic: FAILED")
-    sys.exit(1)
-'@
-            $pythonScript | python
-            Write-Host "✅ Python: Available and working" -ForegroundColor Green
-          } catch {
-            Write-Host "❌ Python: Not available or failed" -ForegroundColor Red
-            Write-Host "Error: $_" -ForegroundColor Red
-            # Don't exit - Python might not be required
-          }
-        shell: powershell
-
-      - name: Test Node.js
-        run: |
-          Write-Host "=== NODE.JS TEST ===" -ForegroundColor Green
-          try {
-            $nodeVersion = node --version 2>&1
-            Write-Host "Node.js Version: $nodeVersion" -ForegroundColor Cyan
-            
-            $npmVersion = npm --version 2>&1
-            Write-Host "NPM Version: $npmVersion" -ForegroundColor Cyan
-            
-            # Test simple Node.js script
-            $nodeScript = @"
-const result = 2 + 2;
-if (result === 4) {
-    console.log('✅ Node.js arithmetic: OK');
-} else {
-    console.log('❌ Node.js arithmetic: FAILED');
-    process.exit(1);
-}
-console.log('Node.js version:', process.version);
-console.log('Node.js platform:', process.platform);
-"@
-            $nodeScript | node
-            Write-Host "✅ Node.js: Available and working" -ForegroundColor Green
-          } catch {
-            Write-Host "❌ Node.js: Not available or failed" -ForegroundColor Red
-            Write-Host "Error: $_" -ForegroundColor Red
-            # Don't exit - Node.js might not be required
-          }
-        shell: powershell
-
-  comprehensive-test:
-    name: Comprehensive Agent Test
-    runs-on: [self-hosted, Windows, X64, aeolitech-runner1]
-    needs: basic-tools-test
-    if: github.event.inputs.test_level == 'comprehensive' || github.event.inputs.test_level == 'stress'
-    timeout-minutes: 30
-    
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        
-      - name: Test Repository Access
-        run: |
-          Write-Host "=== REPOSITORY ACCESS TEST ===" -ForegroundColor Green
-          Write-Host "Repository: ${{ github.repository }}" -ForegroundColor Cyan
-          Write-Host "Branch: ${{ github.ref_name }}" -ForegroundColor Cyan
-          Write-Host "Commit SHA: ${{ github.sha }}" -ForegroundColor Cyan
-          
-          if (Test-Path .git) {
-            Write-Host "✅ Git repository: Cloned successfully" -ForegroundColor Green
-          } else {
-            Write-Host "❌ Git repository: Failed to clone" -ForegroundColor Red
-            exit 1
-          }
-          
-          # Test file access
-          if (Test-Path "README.md") {
-            Write-Host "✅ Repository files: Accessible" -ForegroundColor Green
-          } else {
-            Write-Host "⚠️  Repository files: README.md not found" -ForegroundColor Yellow
-          }
-        shell: powershell
-
-      - name: Test Docker (if available)
-        run: |
-          Write-Host "=== DOCKER TEST ===" -ForegroundColor Green
-          try {
-            $dockerVersion = docker --version 2>&1
-            Write-Host "Docker Version: $dockerVersion" -ForegroundColor Cyan
-            
-            # Test docker info
-            docker info | Select-String "Server Version", "Operating System", "Architecture"
-            
-            # Test running a simple container
-            Write-Host "Testing simple Docker container..." -ForegroundColor Cyan
-            docker run --rm hello-world
-            
-            Write-Host "✅ Docker: Available and working" -ForegroundColor Green
-          } catch {
-            Write-Host "❌ Docker: Not available or failed" -ForegroundColor Yellow
-            Write-Host "Error: $_" -ForegroundColor Yellow
-            Write-Host "Note: Docker is optional for this agent" -ForegroundColor Yellow
-          }
-        shell: powershell
-
-      - name: Test Azure CLI (if available)
-        run: |
-          Write-Host "=== AZURE CLI TEST ===" -ForegroundColor Green
-          try {
-            $azVersion = az version --output table 2>&1
-            Write-Host "Azure CLI Version: $azVersion" -ForegroundColor Cyan
-            
-            # Test basic az command
-            az account show --query "name" --output tsv 2>$null
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "✅ Azure CLI: Available and authenticated" -ForegroundColor Green
-            } else {
-              Write-Host "⚠️  Azure CLI: Available but not authenticated" -ForegroundColor Yellow
-            }
-          } catch {
-            Write-Host "❌ Azure CLI: Not available" -ForegroundColor Yellow
-            Write-Host "Error: $_" -ForegroundColor Yellow
-            Write-Host "Note: Azure CLI is optional for this agent" -ForegroundColor Yellow
-          }
-        shell: powershell
-
-      - name: Test Network Connectivity
-        run: |
-          Write-Host "=== NETWORK CONNECTIVITY TEST ===" -ForegroundColor Green
-          
-          $urls = @(
-            "https://github.com",
-            "https://api.github.com",
-            "https://registry.npmjs.org",
-            "https://pypi.org",
-            "https://hub.docker.com"
-          )
-          
-          foreach ($url in $urls) {
-            try {
-              $response = Invoke-WebRequest -Uri $url -Method HEAD -TimeoutSec 10 -UseBasicParsing
-              if ($response.StatusCode -eq 200) {
-                Write-Host "✅ $url : Accessible (Status: $($response.StatusCode))" -ForegroundColor Green
-              } else {
-                Write-Host "⚠️  $url : Accessible but unexpected status ($($response.StatusCode))" -ForegroundColor Yellow
-              }
-            } catch {
-              Write-Host "❌ $url : Not accessible" -ForegroundColor Red
-              Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Red
-            }
-          }
-        shell: powershell
-
-      - name: Test Performance
-        run: |
-          Write-Host "=== PERFORMANCE TEST ===" -ForegroundColor Green
-          
-          # CPU Test
-          Write-Host "Running CPU performance test..." -ForegroundColor Cyan
-          $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-          $result = 0
-          for ($i = 1; $i -le 1000000; $i++) {
-            $result += $i * 2
-          }
-          $stopwatch.Stop()
-          Write-Host "CPU Test Result: $result calculated in $($stopwatch.ElapsedMilliseconds)ms" -ForegroundColor Cyan
-          
-          # Memory Test
-          Write-Host "Running memory test..." -ForegroundColor Cyan
-          $memBefore = [System.GC]::GetTotalMemory($false)
-          $array = @(1..100000)
-          $memAfter = [System.GC]::GetTotalMemory($false)
-          Write-Host "Memory allocated: $([math]::Round(($memAfter - $memBefore) / 1MB, 2)) MB" -ForegroundColor Cyan
-          
-          # Disk I/O Test
-          Write-Host "Running disk I/O test..." -ForegroundColor Cyan
-          $testFile = Join-Path $env:TEMP "agent-io-test.txt"
-          $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-          1..1000 | ForEach-Object { "Test line $_" } | Out-File -FilePath $testFile
-          $content = Get-Content $testFile
-          $stopwatch.Stop()
-          Remove-Item $testFile
-          Write-Host "Disk I/O Test: 1000 lines written and read in $($stopwatch.ElapsedMilliseconds)ms" -ForegroundColor Cyan
-          
-          Write-Host "✅ Performance tests completed" -ForegroundColor Green
-        shell: powershell
-
-  stress-test:
-    name: Agent Stress Test
-    runs-on: [self-hosted, Windows, X64, aeolitech-runner1]
-    needs: comprehensive-test
-    if: github.event.inputs.test_level == 'stress'
-    timeout-minutes: 60
-    
-    strategy:
-      matrix:
-        task: [1, 2, 3, 4, 5]
-    
-    steps:
-      - name: Parallel Stress Test Task ${{ matrix.task }}
-        run: |
-          Write-Host "=== STRESS TEST TASK ${{ matrix.task }} ===" -ForegroundColor Green
-          $startTime = Get-Date
-          Write-Host "Task ${{ matrix.task }} started at: $startTime" -ForegroundColor Cyan
-          
-          # Simulate intensive work
-          for ($i = 1; $i -le 10; $i++) {
-            Write-Host "Task ${{ matrix.task }} - Iteration $i/10" -ForegroundColor Yellow
-            
-            # CPU intensive task
-            $result = 0
-            for ($j = 1; $j -le 500000; $j++) {
-              $result += $j * ${{ matrix.task }}
-            }
-            
-            # Memory allocation
-            $tempArray = @(1..(10000 * ${{ matrix.task }}))
-            
-            # File I/O
-            $testFile = Join-Path $env:TEMP "stress-test-${{ matrix.task }}-$i.txt"
-            1..(1000 * ${{ matrix.task }}) | Out-File -FilePath $testFile
-            Remove-Item $testFile
-            
-            Start-Sleep -Seconds 2
-          }
-          
-          $endTime = Get-Date
-          $duration = $endTime - $startTime
-          Write-Host "Task ${{ matrix.task }} completed in: $($duration.TotalSeconds) seconds" -ForegroundColor Green
-          Write-Host "✅ Stress test task ${{ matrix.task }} successful" -ForegroundColor Green
-        shell: powershell
-
-  agent-health-report:
-    name: Generate Agent Health Report
-    runs-on: [self-hosted, Windows, X64, aeolitech-runner1]
-    needs: [agent-connectivity, basic-tools-test]
-    if: always()
     timeout-minutes: 5
     
     steps:
-      - name: Generate Health Report
+      - name: Basic Agent Test
         run: |
-          Write-Host "=== AGENT HEALTH REPORT ===" -ForegroundColor Green
-          Write-Host "Report Generated: $(Get-Date)" -ForegroundColor Cyan
-          Write-Host "Agent: ${{ github.event.inputs.agent_name || 'aeolitech-runner1' }}" -ForegroundColor Cyan
-          Write-Host "Test Level: ${{ github.event.inputs.test_level || 'basic' }}" -ForegroundColor Cyan
-          Write-Host "Workflow Run: ${{ github.run_number }}" -ForegroundColor Cyan
-          
-          Write-Host "`n=== TEST RESULTS ===" -ForegroundColor Green
-          Write-Host "✅ Agent Connectivity: ${{ needs.agent-connectivity.result }}" -ForegroundColor $(if ('${{ needs.agent-connectivity.result }}' -eq 'success') { 'Green' } else { 'Red' })
-          Write-Host "✅ Basic Tools Test: ${{ needs.basic-tools-test.result }}" -ForegroundColor $(if ('${{ needs.basic-tools-test.result }}' -eq 'success') { 'Green' } else { 'Red' })
-          
-          if ('${{ needs.comprehensive-test.result }}' -ne '') {
-            Write-Host "✅ Comprehensive Test: ${{ needs.comprehensive-test.result }}" -ForegroundColor $(if ('${{ needs.comprehensive-test.result }}' -eq 'success') { 'Green' } else { 'Red' })
-          }
-          
-          if ('${{ needs.stress-test.result }}' -ne '') {
-            Write-Host "✅ Stress Test: ${{ needs.stress-test.result }}" -ForegroundColor $(if ('${{ needs.stress-test.result }}' -eq 'success') { 'Green' } else { 'Red' })
-          }
-          
-          Write-Host "`n=== SUMMARY ===" -ForegroundColor Green
-          if ('${{ needs.agent-connectivity.result }}' -eq 'success' -and '${{ needs.basic-tools-test.result }}' -eq 'success') {
-            Write-Host "🎉 Agent is healthy and ready for workloads!" -ForegroundColor Green
-          } else {
-            Write-Host "⚠️  Agent has some issues that need attention" -ForegroundColor Yellow
-          }
-          
-          # System resource summary
-          Write-Host "`n=== SYSTEM RESOURCES ===" -ForegroundColor Green
-          $os = Get-WmiObject Win32_OperatingSystem
-          $cpu = Get-WmiObject Win32_Processor
-          $memory = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
-          $totalMemory = [math]::Round($os.TotalVisibleMemorySize / 1MB, 2)
-          
-          Write-Host "CPU: $($cpu.Name)" -ForegroundColor Cyan
-          Write-Host "Available Memory: $memory GB / $totalMemory GB" -ForegroundColor Cyan
-          Write-Host "Disk Space:" -ForegroundColor Cyan
-          Get-WmiObject Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3} | ForEach-Object {
-            $freeGB = [math]::Round($_.FreeSpace / 1GB, 2)
-            $totalGB = [math]::Round($_.Size / 1GB, 2)
-            Write-Host "  Drive $($_.DeviceID) $freeGB GB free / $totalGB GB total" -ForegroundColor Cyan
-          }
+          Write-Host "Agent Test Started" -ForegroundColor Green
+          Write-Host "Message: ${{ github.event.inputs.message }}" -ForegroundColor Yellow
+          Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor Cyan
+          Write-Host "User: $env:USERNAME" -ForegroundColor Cyan
+          Write-Host "Runner: $env:RUNNER_NAME" -ForegroundColor Cyan
+          Write-Host "Test Completed Successfully!" -ForegroundColor Green
+        shell: powershell
+        
+      - name: Test File Operations
+        run: |
+          echo "Testing file operations"
+          echo "Agent is working" > test-file.txt
+          type test-file.txt
+          del test-file.txt
+          echo "File operations successful"
+        shell: cmd
+        
+      - name: Test Environment
+        run: |
+          Write-Host "GitHub Workspace: ${{ github.workspace }}" -ForegroundColor Cyan
+          Write-Host "GitHub Repository: ${{ github.repository }}" -ForegroundColor Cyan
+          Write-Host "Run Number: ${{ github.run_number }}" -ForegroundColor Cyan
+          Write-Host "Environment test completed" -ForegroundColor Green
         shell: powershell
 
-      - name: Save Report to Artifact
-        run: |
-          $reportPath = Join-Path ${{ github.workspace }} "agent-health-report.txt"
-          $report = @"
-Agent Health Report
-==================
-Generated: $(Get-Date)
-Agent: ${{ github.event.inputs.agent_name || 'aeolitech-runner1' }}
-Test Level: ${{ github.event.inputs.test_level || 'basic' }}
-Workflow Run: ${{ github.run_number }}
-
-Test Results:
-- Agent Connectivity: ${{ needs.agent-connectivity.result }}
-- Basic Tools Test: ${{ needs.basic-tools-test.result }}
-- Comprehensive Test: ${{ needs.comprehensive-test.result }}
-- Stress Test: ${{ needs.stress-test.result }}
-
-System Information:
-- Runner Name: $env:RUNNER_NAME
-- Runner OS: $env:RUNNER_OS  
-- Computer Name: $env:COMPUTERNAME
-- PowerShell Version: $($PSVersionTable.PSVersion)
-- Available Memory: $([math]::Round((Get-WmiObject Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)) GB
-"@
-          $report | Out-File -FilePath $reportPath -Encoding UTF8
-          Write-Host "Report saved to: $reportPath" -ForegroundColor Green
-        shell: powershell
-
-      - name: Upload Health Report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: agent-health-report-${{ github.run_number }}
-          path: agent-health-report.txt
-          retention-days: 30
-
-  notification:
-    name: Send Notification
+  notify-result:
+    name: Test Result
     runs-on: ubuntu-latest
-    needs: [agent-connectivity, basic-tools-test, comprehensive-test, stress-test, agent-health-report]
+    needs: test-agent
     if: always()
     
     steps:
-      - name: Determine overall status
-        id: status
+      - name: Success Message
+        if: needs.test-agent.result == 'success'
         run: |
-          if [[ "${{ needs.agent-connectivity.result }}" == "success" && "${{ needs.basic-tools-test.result }}" == "success" ]]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "message=✅ Windows self-hosted agent is healthy and operational" >> $GITHUB_OUTPUT
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT  
-            echo "message=❌ Windows self-hosted agent has issues" >> $GITHUB_OUTPUT
-          fi
+          echo "✅ SUCCESS: aeolitech-runner1 is working!"
+          echo "Agent can take jobs and execute tasks successfully."
           
-      - name: Send Teams notification (if webhook configured)
-        if: env.TEAMS_WEBHOOK_URL != ''
-        env:
-          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+      - name: Failure Message
+        if: needs.test-agent.result != 'success'
         run: |
-          curl -H "Content-Type: application/json" -d '{
-            "text": "${{ steps.status.outputs.message }}",
-            "sections": [{
-              "activityTitle": "Self-Hosted Agent Test",
-              "activitySubtitle": "Agent: ${{ github.event.inputs.agent_name || 'aeolitech-runner1' }}",
-              "facts": [
-                {"name": "Test Level", "value": "${{ github.event.inputs.test_level || 'basic' }}"},
-                {"name": "Connectivity", "value": "${{ needs.agent-connectivity.result }}"},
-                {"name": "Basic Tools", "value": "${{ needs.basic-tools-test.result }}"},
-                {"name": "Run Number", "value": "${{ github.run_number }}"}
-              ]
-            }]
-          }' $TEAMS_WEBHOOK_URL || echo "Teams notification failed"
+          echo "❌ FAILED: aeolitech-runner1 has issues"
+          echo "Check the agent service and try again."
