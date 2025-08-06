@@ -693,6 +693,15 @@ jobs:
           # Source environment configuration
           source .env.${{ steps.env.outputs.environment }}
           
+          # Sanitize service name for Azure Container App naming requirements
+          # Replace underscores with hyphens and ensure lowercase
+          SERVICE_NAME=$(echo "${{ matrix.service }}" | tr '_' '-' | tr '[:upper:]' '[:lower:]')
+          CONTAINER_APP_NAME="ca-pcx-${SERVICE_NAME}-${{ steps.env.outputs.environment }}"
+          
+          echo "Service: ${{ matrix.service }}"
+          echo "Sanitized service name: ${SERVICE_NAME}"
+          echo "Container app name: ${CONTAINER_APP_NAME}"
+          
           # Set default service configuration based on service type
           case "${{ matrix.service }}" in
             "api_gateway"|"frontend")
@@ -720,13 +729,13 @@ jobs:
           
           # Check if container app exists
           if az containerapp show \
-            --name "ca-pcx-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+            --name "${CONTAINER_APP_NAME}" \
             --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
             --query "name" -o tsv 2>/dev/null; then
             
             echo "Updating existing container app..."
             az containerapp update \
-              --name "ca-pcx-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+              --name "${CONTAINER_APP_NAME}" \
               --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
               --image "${{ steps.acr.outputs.acr_login_server }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
               --cpu "$CPU" \
@@ -750,7 +759,7 @@ jobs:
           else
             echo "Creating new container app..."
             az containerapp create \
-              --name "ca-pcx-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+              --name "${CONTAINER_APP_NAME}" \
               --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
               --environment "cae-pcx-${{ steps.env.outputs.environment }}" \
               --image "${{ steps.acr.outputs.acr_login_server }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
@@ -780,9 +789,13 @@ jobs:
         run: |
           echo "Waiting for container app to be ready..."
           for i in {1..60}; do
+            # Use the same sanitized name as deployment
+            SANITIZED_SERVICE=$(echo "${{ matrix.service }}" | tr '_' '-' | tr '[:upper:]' '[:lower:]')
+            APP_NAME="ca-pcx-${SANITIZED_SERVICE}-${{ steps.env.outputs.environment }}"
+            
             STATUS=$(az containerapp show \
-              --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
-              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+              --name "${APP_NAME}" \
+              --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
               --query "properties.runningStatus" -o tsv)
             
             if [[ "$STATUS" == "Running" ]]; then
@@ -841,13 +854,13 @@ jobs:
         id: urls
         run: |
           $frontendUrl = az containerapp show `
-            --name "ca-frontend-${{ steps.env.outputs.environment }}" `
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --name "ca-pcx-frontend-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" `
             --query "properties.configuration.ingress.fqdn" -o tsv
           
           $apiUrl = az containerapp show `
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --name "ca-pcx-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" `
             --query "properties.configuration.ingress.fqdn" -o tsv
           
           Write-Output "frontend_url=https://$frontendUrl" >> $env:GITHUB_OUTPUT
@@ -915,8 +928,8 @@ jobs:
         id: url
         run: |
           $apiUrl = az containerapp show `
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --name "ca-pcx-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" `
             --query "properties.configuration.ingress.fqdn" -o tsv
           
           Write-Output "api_url=https://$apiUrl" >> $env:GITHUB_OUTPUT
@@ -969,7 +982,7 @@ jobs:
             
             $url = az containerapp show `
               --name "ca-$service-${{ steps.env.outputs.environment }}" `
-              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+              --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" `
               --query "properties.configuration.ingress.fqdn" -o tsv
             
             if ($service -eq "frontend") {
@@ -1008,8 +1021,8 @@ jobs:
         run: |
           # Test database connectivity through API Gateway
           $apiUrl = az containerapp show `
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --name "ca-pcx-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" `
             --query "properties.configuration.ingress.fqdn" -o tsv
           
           try {
@@ -1031,8 +1044,8 @@ jobs:
       - name: Smoke test critical workflows
         run: |
           $apiUrl = az containerapp show `
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --name "ca-pcx-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" `
             --query "properties.configuration.ingress.fqdn" -o tsv
           
           # Test policy endpoint
