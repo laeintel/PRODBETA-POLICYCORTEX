@@ -322,7 +322,12 @@
       "Bash(if [ -f \"$dockerfile_path\" ])",
       "Bash(then)",
       "Bash(else)",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(if [ -d \"backend/venv\" ])",
+      "Bash(__NEW_LINE__ if [ -f \"backend/services/api_gateway/main_simple.py\" ])",
+      "Bash(if [ -d \"frontend/node_modules\" ])",
+      "Bash(__NEW_LINE__ if [ -f \"frontend/package.json\" ])"
     ],
     "deny": []
   }
