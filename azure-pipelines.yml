@@ -126,6 +126,7 @@ stages:
               command: 'buildAndPush'
               Dockerfile: 'backend/services/$(serviceName)/Dockerfile'
               buildContext: 'backend'
+              arguments: '--build-arg CACHEBUST=$(Build.BuildId) --no-cache'
               tags: |
                 $(Build.BuildId)
                 latest
@@ -177,6 +178,7 @@ stages:
               command: 'buildAndPush'
               Dockerfile: 'frontend/Dockerfile'
               buildContext: 'frontend'
+              arguments: '--no-cache'
               tags: |
                 $(Build.BuildId)
                 latest
