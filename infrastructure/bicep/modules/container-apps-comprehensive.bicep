@@ -174,7 +174,7 @@ resource containerApps 'Microsoft.App/containerApps@2023-05-01' = [for service i
       containers: [
         {
           // Initial deployment uses placeholder, pipeline will update with real images
-          image: '${containerRegistryLoginServer}/policortex001-${service.imageName}:latest'
+          image: '${containerRegistryLoginServer}/pcx-${service.imageName}:latest'
           name: toLower(replace(service.displayName, ' ', '-'))  // DNS compliant container name
           resources: {
             cpu: json(service.cpu)
@@ -242,7 +242,7 @@ resource frontend 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [
         {
           // Initial deployment uses placeholder, pipeline will update with real image
-          image: '${containerRegistryLoginServer}/policortex001-frontend:latest'
+          image: '${containerRegistryLoginServer}/pcx-frontend:latest'
           name: 'frontend'
           resources: {
             cpu: json('0.5')

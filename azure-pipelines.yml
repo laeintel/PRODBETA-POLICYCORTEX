@@ -122,7 +122,7 @@ stages:
           - task: Docker@2
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: 'policortex001-$(serviceName)'
+              repository: 'pcx-$(serviceName)'
               command: 'buildAndPush'
               Dockerfile: 'backend/services/$(serviceName)/Dockerfile'
               buildContext: 'backend'
@@ -173,7 +173,7 @@ stages:
           - task: Docker@2
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: 'policortex001-frontend'
+              repository: 'pcx-frontend'
               command: 'buildAndPush'
               Dockerfile: 'frontend/Dockerfile'
               buildContext: 'frontend'
