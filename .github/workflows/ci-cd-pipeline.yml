@@ -565,10 +565,10 @@ jobs:
 
       - name: Generate environment configuration
         run: |
-          python scripts/config-manager.py \
-            --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
-            --environment ${{ steps.env.outputs.environment }} \
-            --action generate-env \
+          python scripts/config-manager.py `
+            --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }} `
+            --environment ${{ steps.env.outputs.environment }} `
+            --action generate-env `
             --output .env.${{ steps.env.outputs.environment }}
         shell: powershell
 

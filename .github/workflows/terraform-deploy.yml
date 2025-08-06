@@ -2,7 +2,7 @@ name: Terraform Infrastructure Deployment
 
 defaults:
   run:
-    shell: bash
+    shell: powershell
 
 permissions:
   contents: read
@@ -48,7 +48,7 @@ env:
 jobs:
   terraform-plan:
     name: Terraform Plan
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
     steps:
@@ -73,42 +73,45 @@ jobs:
       - name: Terraform Init
         id: tf-init
         run: |
-          cd infrastructure/terraform
-          terraform init \
-            -backend-config="resource_group_name=rg-policycortex-tfstate" \
-            -backend-config="storage_account_name=stpolicycortextfstate" \
-            -backend-config="container_name=tfstate" \
+          Set-Location infrastructure/terraform
+          terraform init `
+            -backend-config="resource_group_name=rg-policycortex-tfstate" `
+            -backend-config="storage_account_name=stpolicycortextfstate" `
+            -backend-config="container_name=tfstate" `
             -backend-config="key=terraform.tfstate"
 
       - name: Terraform Validate
         id: tf-validate
         run: |
-          cd infrastructure/terraform
+          Set-Location infrastructure/terraform
           terraform validate
 
       - name: Terraform Plan
         id: tf-plan
         run: |
-          cd infrastructure/terraform
-          export exitcode=0
-          terraform plan -detailed-exitcode -no-color -out tfplan \
-            -var="deploy_kubernetes=true" \
-            -var="deploy_container_apps=false" \
-            -var="kubernetes_enable_auto_scaling=true" \
-            -var="kubernetes_node_count=3" \
-            -var="kubernetes_min_node_count=2" \
-            -var="kubernetes_max_node_count=10" \
-            -var="kubernetes_enable_ai_node_pool=true" \
-            || export exitcode=$?
+          Set-Location infrastructure/terraform
+          $exitcode = 0
+          try {
+            terraform plan -detailed-exitcode -no-color -out tfplan `
+              -var="deploy_kubernetes=true" `
+              -var="deploy_container_apps=false" `
+              -var="kubernetes_enable_auto_scaling=true" `
+              -var="kubernetes_node_count=3" `
+              -var="kubernetes_min_node_count=2" `
+              -var="kubernetes_max_node_count=10" `
+              -var="kubernetes_enable_ai_node_pool=true"
+          } catch {
+            $exitcode = $LASTEXITCODE
+          }
           
-          echo "exitcode=$exitcode" >> $GITHUB_OUTPUT
+          Write-Output "exitcode=$exitcode" >> $env:GITHUB_OUTPUT
           
-          if [ $exitcode -eq 1 ]; then
-            echo Terraform Plan Failed!
+          if ($exitcode -eq 1) {
+            Write-Host "Terraform Plan Failed!"
             exit 1
-          else 
+          } else {
             exit 0
-          fi
+          }
 
       - name: Publish Terraform Plan
         uses: actions/upload-artifact@v4
@@ -119,19 +122,19 @@ jobs:
       - name: Create String Output
         id: tf-plan-string
         run: |
-          cd infrastructure/terraform
-          TERRAFORM_PLAN=$(terraform show -no-color tfplan)
+          Set-Location infrastructure/terraform
+          $terraformPlan = terraform show -no-color tfplan
           
-          delimiter="$(openssl rand -hex 8)"
-          echo "summary<<${delimiter}" >> $GITHUB_OUTPUT
-          echo "## Terraform Plan Output" >> $GITHUB_OUTPUT
-          echo "<details><summary>Click to expand</summary>" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo '```terraform' >> $GITHUB_OUTPUT
-          echo "$TERRAFORM_PLAN" >> $GITHUB_OUTPUT
-          echo '```' >> $GITHUB_OUTPUT
-          echo "</details>" >> $GITHUB_OUTPUT
-          echo "${delimiter}" >> $GITHUB_OUTPUT
+          $delimiter = [System.Web.Security.Membership]::GeneratePassword(16, 0)
+          Write-Output "summary<<$delimiter" >> $env:GITHUB_OUTPUT
+          Write-Output "## Terraform Plan Output" >> $env:GITHUB_OUTPUT
+          Write-Output "<details><summary>Click to expand</summary>" >> $env:GITHUB_OUTPUT
+          Write-Output "" >> $env:GITHUB_OUTPUT
+          Write-Output '```terraform' >> $env:GITHUB_OUTPUT
+          Write-Output "$terraformPlan" >> $env:GITHUB_OUTPUT
+          Write-Output '```' >> $env:GITHUB_OUTPUT
+          Write-Output "</details>" >> $env:GITHUB_OUTPUT
+          Write-Output "$delimiter" >> $env:GITHUB_OUTPUT
 
       - name: Comment PR
         uses: actions/github-script@v7
@@ -178,7 +181,7 @@ jobs:
 
   terraform-apply:
     name: Terraform Apply
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [terraform-plan]
     if: github.ref == 'refs/heads/main' && needs.terraform-plan.outputs.tfplanExitCode == 2
     environment: ${{ github.event.inputs.environment || 'dev' }}
@@ -204,11 +207,11 @@ jobs:
       - name: Terraform Init
         id: tf-init
         run: |
-          cd infrastructure/terraform
-          terraform init \
-            -backend-config="resource_group_name=rg-policycortex-tfstate" \
-            -backend-config="storage_account_name=stpolicycortextfstate" \
-            -backend-config="container_name=tfstate" \
+          Set-Location infrastructure/terraform
+          terraform init `
+            -backend-config="resource_group_name=rg-policycortex-tfstate" `
+            -backend-config="storage_account_name=stpolicycortextfstate" `
+            -backend-config="container_name=tfstate" `
             -backend-config="key=terraform.tfstate"
 
       - name: Download Terraform Plan
@@ -219,55 +222,60 @@ jobs:
 
       - name: Terraform Apply
         run: |
-          cd infrastructure/terraform
-          echo "Applying Terraform changes to deploy AKS cluster and infrastructure..."
+          Set-Location infrastructure/terraform
+          Write-Host "Applying Terraform changes to deploy AKS cluster and infrastructure..."
           terraform apply -auto-approve tfplan
-          echo "✅ Terraform apply completed - AKS cluster and Kubernetes infrastructure deployed"
+          Write-Host "✅ Terraform apply completed - AKS cluster and Kubernetes infrastructure deployed"
 
       - name: Display Deployment Summary
         run: |
-          echo "=================================="
-          echo "🎉 Kubernetes Infrastructure Deployment Complete!"
-          echo "=================================="
-          echo "✅ AKS cluster deployed with:"
-          echo "   • Auto-scaling enabled (2-10 nodes)"
-          echo "   • AI node pool with GPU support"
-          echo "   • Integration with ACR and Key Vault"
-          echo "   • Log Analytics monitoring"
-          echo ""
-          echo "📝 Next Steps:"
-          echo "   1. Configure kubectl: az aks get-credentials --resource-group <rg> --name <cluster>"
-          echo "   2. Deploy applications: cd infrastructure/kubernetes && ./deploy.sh"
-          echo "   3. Set environment variables: export ACR_NAME=<your-acr>"
-          echo ""
-          echo "🔗 Infrastructure Ready For:"
-          echo "   • API Gateway deployment"
-          echo "   • Azure Integration service" 
-          echo "   • AI Engine with GPU support"
-          echo "   • Data Processing pipelines"
-          echo "   • Conversation service"
-          echo "   • Notification service"
-          echo "=================================="
+          Write-Host "=================================="
+          Write-Host "🎉 Kubernetes Infrastructure Deployment Complete!"
+          Write-Host "=================================="
+          Write-Host "✅ AKS cluster deployed with:"
+          Write-Host "   • Auto-scaling enabled (2-10 nodes)"
+          Write-Host "   • AI node pool with GPU support"
+          Write-Host "   • Integration with ACR and Key Vault"
+          Write-Host "   • Log Analytics monitoring"
+          Write-Host ""
+          Write-Host "📝 Next Steps:"
+          Write-Host "   1. Configure kubectl: az aks get-credentials --resource-group <rg> --name <cluster>"
+          Write-Host "   2. Deploy applications: Set-Location infrastructure/kubernetes; ./deploy.ps1"
+          Write-Host "   3. Set environment variables: `$env:ACR_NAME='<your-acr>'"
+          Write-Host ""
+          Write-Host "🔗 Infrastructure Ready For:"
+          Write-Host "   • API Gateway deployment"
+          Write-Host "   • Azure Integration service" 
+          Write-Host "   • AI Engine with GPU support"
+          Write-Host "   • Data Processing pipelines"
+          Write-Host "   • Conversation service"
+          Write-Host "   • Notification service"
+          Write-Host "=================================="
 
       - name: Get AKS Credentials
         run: |
-          echo "Getting AKS cluster credentials..."
-          cd infrastructure/terraform
-          CLUSTER_NAME=$(terraform output -raw kubernetes_cluster_name 2>/dev/null || echo "")
-          RESOURCE_GROUP=$(terraform output -raw resource_group_name 2>/dev/null || echo "")
+          Write-Host "Getting AKS cluster credentials..."
+          Set-Location infrastructure/terraform
           
-          if [ -n "$CLUSTER_NAME" ] && [ -n "$RESOURCE_GROUP" ]; then
-            echo "Configuring kubectl for cluster: $CLUSTER_NAME in RG: $RESOURCE_GROUP"
-            az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --overwrite-existing
-            kubectl cluster-info
-            kubectl get nodes
-          else
-            echo "Unable to retrieve cluster information from Terraform outputs"
-          fi
+          try {
+            $clusterName = terraform output -raw kubernetes_cluster_name
+            $resourceGroup = terraform output -raw resource_group_name
+            
+            if ($clusterName -and $resourceGroup) {
+              Write-Host "Configuring kubectl for cluster: $clusterName in RG: $resourceGroup"
+              az aks get-credentials --resource-group "$resourceGroup" --name "$clusterName" --overwrite-existing
+              kubectl cluster-info
+              kubectl get nodes
+            } else {
+              Write-Host "Unable to retrieve cluster information from Terraform outputs"
+            }
+          } catch {
+            Write-Host "Error retrieving cluster information: $_"
+          }
 
   terraform-destroy:
     name: Terraform Destroy
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
     environment: ${{ github.event.inputs.environment }}
     steps:
@@ -291,14 +299,14 @@ jobs:
 
       - name: Terraform Init
         run: |
-          cd infrastructure/terraform
-          terraform init \
-            -backend-config="resource_group_name=rg-policycortex-tfstate" \
-            -backend-config="storage_account_name=stpolicycortextfstate" \
-            -backend-config="container_name=tfstate" \
+          Set-Location infrastructure/terraform
+          terraform init `
+            -backend-config="resource_group_name=rg-policycortex-tfstate" `
+            -backend-config="storage_account_name=stpolicycortextfstate" `
+            -backend-config="container_name=tfstate" `
             -backend-config="key=terraform.tfstate"
 
       - name: Terraform Destroy
         run: |
-          cd infrastructure/terraform
+          Set-Location infrastructure/terraform
           terraform destroy -auto-approve

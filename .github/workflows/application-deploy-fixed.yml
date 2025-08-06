@@ -66,7 +66,7 @@ jobs:
   # Combined tests to save minutes
   test-all:
     name: Run Tests (Optional)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event.inputs.skip_tests != 'true'
     continue-on-error: true
     steps:
@@ -100,7 +100,7 @@ jobs:
   # Security scanning
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     continue-on-error: true
     
     steps:
@@ -125,7 +125,7 @@ jobs:
   # Build and push all images
   build-and-push:
     name: Build and Push Images
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [test-all]
     if: always()  # Run even if tests fail
     outputs:
@@ -229,7 +229,7 @@ jobs:
   # Deploy to Development
   deploy-dev:
     name: Deploy to Development
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-and-push]
     if: always() && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.force_deploy == 'true' || github.ref == 'refs/heads/main')))
     environment: dev
@@ -490,7 +490,7 @@ jobs:
   # Deployment Summary
   deployment-summary:
     name: Deployment Summary
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-and-push, deploy-dev]
     if: always()
     
@@ -529,7 +529,7 @@ jobs:
   # Optional: Cleanup old images to save ACR space
   cleanup-images:
     name: Cleanup Old Images
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-and-push, deploy-dev]
     if: always() && needs.deploy-dev.result == 'success'
     continue-on-error: true
