@@ -509,13 +509,9 @@ jobs:
         with:
           scope: resourcegroup
           resourceGroupName: rg-policycortex-${{ steps.env.outputs.environment }}
-          template: infrastructure/bicep/complete-infrastructure.bicep
+          template: infrastructure/bicep/simple-infrastructure.bicep
           parameters: |
             environment=${{ steps.env.outputs.environment }}
-            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
-            aadTenantId=${{ secrets.AZURE_TENANT_ID }}
-            aadClientId=${{ secrets.AZURE_CLIENT_ID }}
-            aadClientSecret=${{ secrets.AZURE_CLIENT_SECRET }}
           deploymentMode: Incremental
           deploymentName: policycortex-infrastructure-${{ github.run_number }}
 
