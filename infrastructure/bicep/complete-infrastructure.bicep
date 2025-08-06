@@ -17,11 +17,11 @@ param sqlAdminLogin string = 'sqladmin'
 
 @description('SQL Server admin password')
 @secure()
-param sqlAdminPassword string
+param sqlAdminPassword string = 'DefaultPassword123!'
 
 @description('Azure AD client secret')
 @secure()
-param aadClientSecret string
+param aadClientSecret string = 'default-client-secret'
 
 @description('JWT secret key')
 @secure()
