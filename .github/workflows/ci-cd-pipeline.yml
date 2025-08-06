@@ -627,8 +627,16 @@ jobs:
 
       - name: Download environment configuration
         uses: actions/download-artifact@v4
+        if: needs.configure-environment.result == 'success'
         with:
           name: environment-config-${{ steps.env.outputs.environment }}
+          
+      - name: Create default environment configuration
+        if: needs.configure-environment.result != 'success'
+        run: |
+          echo "# Default environment configuration" > .env.${{ steps.env.outputs.environment }}
+          echo "ENVIRONMENT=${{ steps.env.outputs.environment }}" >> .env.${{ steps.env.outputs.environment }}
+          echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> .env.${{ steps.env.outputs.environment }}
 
       - name: Deploy container app
         run: |

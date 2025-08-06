@@ -42,9 +42,8 @@ pydantic>=2.0.0
 python-dateutil>=2.8.0
 pytz>=2023.3
 
-# File and Path Testing
-pathlib2>=2.3.7
-tempfile-fast>=0.1.0
+# File and Path Testing (using built-in pathlib for Python 3.4+)
+# pathlib2 not needed for Python 3.4+
 
 # Environment and Config Testing
 python-dotenv>=1.0.0
