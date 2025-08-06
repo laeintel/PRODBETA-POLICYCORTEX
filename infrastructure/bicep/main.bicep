@@ -23,6 +23,10 @@ param createTerraformAccessPolicy bool = true
 @description('Whether to deploy Container Apps')
 param deployContainerApps bool = false
 
+@description('Mode for deployment - incremental avoids recreating existing resources')
+@allowed(['Incremental', 'Complete'])
+param deploymentMode string = 'Incremental'
+
 @description('Secret key for JWT token signing')
 @secure()
 param jwtSecretKey string
