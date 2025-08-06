@@ -10,8 +10,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from pydantic import Field
-from pydantic import validator
+from pydantic import Field, field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -67,9 +66,10 @@ class DatabaseConfig(BaseSettings):
             f"?driver={self.sql_driver.replace(' ', '+')}&TrustServerCertificate=yes"
         )
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
 
 
 class AzureConfig(BaseSettings):
@@ -107,21 +107,26 @@ class AzureConfig(BaseSettings):
     ml_workspace_name: str = Field(default="test-ml-workspace", env="AZURE_ML_WORKSPACE_NAME")
     ml_resource_group: Optional[str] = Field(None, env="AZURE_ML_RESOURCE_GROUP")
 
-    @validator("key_vault_url", always=True)
-    def generate_key_vault_url(cls, v, values):
+    @field_validator("key_vault_url")
+    @classmethod
+    def generate_key_vault_url(cls, v, info):
         """Generate Key Vault URL if not provided."""
-        if v is None and "key_vault_name" in values:
-            return f"https://{values['key_vault_name']}.vault.azure.net/"
+        if v is None and hasattr(info, 'data') and "key_vault_name" in info.data:
+            return f"https://{info.data['key_vault_name']}.vault.azure.net/"
         return v
 
-    @validator("ml_resource_group", always=True)
-    def default_ml_resource_group(cls, v, values):
+    @field_validator("ml_resource_group")
+    @classmethod
+    def default_ml_resource_group(cls, v, info):
         """Use main resource group if ML resource group not specified."""
-        return v or values.get("resource_group")
+        if hasattr(info, 'data') and info.data:
+            return v or info.data.get("resource_group")
+        return v
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
 
 
 class AIConfig(BaseSettings):
@@ -177,16 +182,18 @@ class SecurityConfig(BaseSettings):
     azure_ad_client_id: Optional[str] = Field(None, env="AZURE_AD_CLIENT_ID")
     azure_ad_client_secret: Optional[str] = Field(None, env="AZURE_AD_CLIENT_SECRET")
 
-    @validator("cors_origins", pre=True)
+    @field_validator("cors_origins", mode="before")
+    @classmethod
     def parse_cors_origins(cls, v):
         """Parse CORS origins from string."""
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
 
 
 class ServiceConfig(BaseSettings):
@@ -208,9 +215,10 @@ class ServiceConfig(BaseSettings):
     health_check_path: str = Field("/health", env="HEALTH_CHECK_PATH")
     readiness_check_path: str = Field("/ready", env="READINESS_CHECK_PATH")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
 
 
 class MonitoringConfig(BaseSettings):
@@ -235,9 +243,10 @@ class MonitoringConfig(BaseSettings):
     slow_query_threshold: float = Field(1.0, env="SLOW_QUERY_THRESHOLD")
     enable_sql_tracing: bool = Field(True, env="ENABLE_SQL_TRACING")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
 
 
 class Settings(BaseSettings):
@@ -271,16 +280,18 @@ class Settings(BaseSettings):
     conversation_url: str = Field("http://localhost:8004", env="CONVERSATION_URL")
     notification_url: str = Field("http://localhost:8005", env="NOTIFICATION_URL")
 
-    @validator("debug", always=True)
-    def set_debug_from_environment(cls, v, values):
+    @field_validator("debug")
+    @classmethod
+    def set_debug_from_environment(cls, v, info):
         """Set debug mode based on environment."""
-        if values.get("environment") == Environment.DEVELOPMENT:
+        if hasattr(info, 'data') and info.data and info.data.get("environment") == Environment.DEVELOPMENT:
             return True
         return v
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
 
     def is_production(self) -> bool:
         """Check if running in production environment."""

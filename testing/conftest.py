@@ -209,20 +209,58 @@ def api_client(test_settings: Settings):
         from unittest.mock import Mock
         mock_response = Mock()
         
-        # Determine appropriate status code based on endpoint
+        # Determine appropriate status code and response based on endpoint
         url = args[0] if args else kwargs.get('url', '')
-        if 'onboarding' in str(url) or 'policies' in str(url):
-            mock_response.status_code = 201  # Created
+        
+        if 'onboarding/start' in str(url):
+            mock_response.status_code = 200  # OK for start
+            mock_response.json = lambda: {
+                "session_id": f"test-session-{uuid.uuid4().hex[:8]}",
+                "tenant_id": "test-tenant-123",
+                "status": "success",
+                "message": "Onboarding session created"
+            }
+        elif 'policies' in str(url):
+            mock_response.status_code = 201  # Created for new policies
+            mock_response.json = lambda: {
+                "policy_id": f"test-policy-{uuid.uuid4().hex[:8]}",
+                "status": "success",
+                "message": "Policy created successfully"
+            }
+        elif 'alerts' in str(url):
+            mock_response.status_code = 201  # Created for alerts
+            mock_response.json = lambda: {
+                "alert_id": f"test-alert-{uuid.uuid4().hex[:8]}",
+                "status": "success",
+                "data": {
+                    "severity": "high",
+                    "priority": "urgent"
+                }
+            }
+        elif 'processing/data' in str(url):
+            mock_response.status_code = 201  # Created for data processing
+            mock_response.json = lambda: {
+                "job_id": f"test-job-{uuid.uuid4().hex[:8]}",
+                "status": "started",
+                "data": {
+                    "processed": True
+                }
+            }
+        elif 'error' in str(url):
+            mock_response.status_code = 400  # Bad Request for error test
+            mock_response.json = lambda: {
+                "error": "simulated_error",
+                "message": "This is a test error"
+            }
         else:
-            mock_response.status_code = 200  # OK
-            
-        mock_response.json = lambda: {
-            "session_id": f"test-session-{uuid.uuid4().hex[:8]}",
-            "tenant_id": "test-tenant-123",
-            "policy_id": f"test-policy-{uuid.uuid4().hex[:8]}",
-            "status": "success",
-            "message": "Operation completed successfully"
-        }
+            mock_response.status_code = 200  # Default OK
+            mock_response.json = lambda: {
+                "session_id": f"test-session-{uuid.uuid4().hex[:8]}",
+                "tenant_id": "test-tenant-123",
+                "policy_id": f"test-policy-{uuid.uuid4().hex[:8]}",
+                "status": "success",
+                "message": "Operation completed successfully"
+            }
         return mock_response
     
     async def mock_get(*args, **kwargs):
