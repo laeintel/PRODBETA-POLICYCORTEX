@@ -21,7 +21,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the entire backend directory structure
-COPY . /app/
+# Copy shared modules
+COPY shared /app/shared/
+
+# Copy the service application
+COPY services/notification /app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/services/notification/requirements.txt

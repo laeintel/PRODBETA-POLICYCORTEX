@@ -21,13 +21,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt /app/requirements.txt
+COPY services/api_gateway/requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy the rest of the application
-COPY . /app/
+# Copy shared modules
+COPY shared /app/shared/
+
+# Copy the service application
+COPY services/api_gateway /app/
 
 # Create non-root user
 RUN groupadd -r apigateway && useradd -r -g apigateway apigateway

@@ -21,7 +21,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the entire backend directory structure
-COPY . /app/
+# Copy shared modules
+COPY shared /app/shared/
+
+# Copy the service application
+COPY services/ai_engine /app/
 
 # Install Python dependencies using minimal requirements for container builds
 # Use minimal requirements by default, with fallback to basic requirements if needed
