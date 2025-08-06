@@ -10,7 +10,7 @@ param(
     [int]$BackendPort = 8000,
     
     [Parameter(Mandatory=$false)]
-    [int]$FrontendPort = 5173
+    [int]$FrontendPort = 3000
 )
 
 Write-Host "PolicyCortex Local Development Environment" -ForegroundColor Cyan
@@ -46,6 +46,8 @@ $env:SERVICE_PORT = $BackendPort
 $env:JWT_SECRET_KEY = "dev-secret-key-change-in-production"
 $env:LOG_LEVEL = "DEBUG"
 $env:VITE_API_BASE_URL = "http://localhost:$BackendPort"
+$env:VITE_PORT = $FrontendPort
+$env:PORT = $FrontendPort
 
 Write-Host ""
 Write-Host "Configuration:" -ForegroundColor Yellow

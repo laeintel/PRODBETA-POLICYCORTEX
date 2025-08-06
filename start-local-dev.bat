@@ -11,12 +11,12 @@ set JWT_SECRET_KEY=dev-secret-key-change-in-production
 set LOG_LEVEL=DEBUG
 
 echo Backend will run on: http://localhost:8000
-echo Frontend will run on: http://localhost:5173
+echo Frontend will run on: http://localhost:3000
 
 echo.
 echo Starting backend services...
 echo 1. API Gateway (Port 8000)
-echo 2. Frontend (Port 5173)
+echo 2. Frontend (Port 3000)
 
 echo.
 echo Press any key to start both services...
@@ -32,12 +32,12 @@ timeout /t 3 /nobreak >nul
 
 echo.
 echo Starting Frontend development server...
-start "PolicyCortex Frontend" cmd /k "cd /d frontend && npm run dev"
+start "PolicyCortex Frontend" cmd /k "cd /d frontend && set PORT=3000 && set VITE_PORT=3000 && npm run dev"
 
 echo.
 echo Both services are starting...
 echo - API Gateway: http://localhost:8000
-echo - Frontend: http://localhost:5173
+echo - Frontend: http://localhost:3000
 echo - API Docs: http://localhost:8000/docs
 
 echo.
