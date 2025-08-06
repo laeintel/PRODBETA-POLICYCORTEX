@@ -1,13 +1,138 @@
 #!/bin/bash
-# Script to deploy container apps with proper images and logging configuration
+
+# PolicyCortex Container Apps Deployment Script
+# Automated deployment with proper environment variable configuration
 
 set -e
 
-# Parameters
-ENVIRONMENT=${1:-dev}
-RESOURCE_GROUP=${2:-rg-pcx-app-$ENVIRONMENT}
-BUILD_ID=${3:-latest}
-REGISTRY_NAME=${4:-crpcx$ENVIRONMENT}
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Default values
+ENVIRONMENT="dev"
+SUBSCRIPTION_ID=""
+RESOURCE_GROUP=""
+CONTAINER_REGISTRY=""
+IMAGE_TAG="latest"
+SKIP_BUILD=false
+SKIP_TESTS=false
+DRY_RUN=false
+
+# Usage function
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Deploy PolicyCortex container applications with proper configuration
+
+OPTIONS:
+    -e, --environment ENVIRONMENT    Target environment (dev|staging|prod) [default: dev]
+    -s, --subscription-id ID         Azure subscription ID [required]
+    -r, --resource-group GROUP       Azure resource group [required]
+    -c, --container-registry REGISTRY Container registry URL [required]
+    -t, --image-tag TAG              Container image tag [default: latest]
+    --skip-build                     Skip container image building
+    --skip-tests                     Skip health checks
+    --dry-run                        Show what would be deployed without executing
+    -h, --help                       Show this help message
+
+EXAMPLES:
+    $0 -e dev -s sub-123 -r rg-policycortex-dev -c myregistry.azurecr.io
+    $0 --environment prod --subscription-id sub-456 --resource-group rg-prod --container-registry prod.azurecr.io --image-tag v1.2.3
+
+PREREQUISITES:
+    - Azure CLI installed and authenticated
+    - Python 3.11+ with required packages
+    - Docker (if not using --skip-build)
+    - Proper Azure permissions for Container Apps and Key Vault
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -e|--environment)
+            ENVIRONMENT="$2"
+            shift 2
+            ;;
+        -s|--subscription-id)
+            SUBSCRIPTION_ID="$2"
+            shift 2
+            ;;
+        -r|--resource-group)
+            RESOURCE_GROUP="$2"
+            shift 2
+            ;;
+        -c|--container-registry)
+            CONTAINER_REGISTRY="$2"
+            shift 2
+            ;;
+        -t|--image-tag)
+            IMAGE_TAG="$2"
+            shift 2
+            ;;
+        --skip-build)
+            SKIP_BUILD=true
+            shift
+            ;;
+        --skip-tests)
+            SKIP_TESTS=true
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            # For backward compatibility with old script
+            if [[ -z "$ENVIRONMENT" ]]; then
+                ENVIRONMENT="$1"
+            elif [[ -z "$RESOURCE_GROUP" ]]; then
+                RESOURCE_GROUP="$1"
+            elif [[ -z "$IMAGE_TAG" ]]; then
+                IMAGE_TAG="$1"
+            elif [[ -z "$CONTAINER_REGISTRY" ]]; then
+                CONTAINER_REGISTRY="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Set defaults for backward compatibility
+if [[ -z "$RESOURCE_GROUP" ]]; then
+    RESOURCE_GROUP="rg-policycortex-$ENVIRONMENT"
+fi
+
+# Configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+CONTAINER_APP_ENV="policycortex-${ENVIRONMENT}-containerenv"
 
 echo "PolicyCortex Container Apps Deployment"
 echo "======================================="

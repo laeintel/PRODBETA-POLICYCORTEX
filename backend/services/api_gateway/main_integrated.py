@@ -23,6 +23,9 @@ from enterprise_auth import EnterpriseAuthManager, AuthenticationMethod, Organiz
 from tenant_manager import TenantManager, DataClassification
 from audit_logger import ComprehensiveAuditLogger, AuditEventType, AuditSeverity
 
+# Import Phase 2 compliance components
+from compliance_proxy import ComplianceEngineProxy
+
 # Configure structured logging
 structlog.configure(
     processors=[
@@ -48,6 +51,11 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # Initialize authentication components
 auth_manager = EnterpriseAuthManager()
+
+# Initialize compliance engine proxy
+compliance_proxy = ComplianceEngineProxy(
+    compliance_engine_url=os.getenv("COMPLIANCE_ENGINE_URL", "http://localhost:8006")
+)
 tenant_manager = TenantManager()
 audit_logger = ComprehensiveAuditLogger()
 
@@ -718,6 +726,209 @@ async def get_audit_logs(
         logger.error("audit_logs_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
+# Phase 2: Compliance Engine Endpoints
+@app.post("/api/v1/compliance/documents/upload")
+async def upload_compliance_document(
+    file: bytes,
+    filename: str,
+    current_user: UserInfo = Depends(require_permission("compliance:write"))
+):
+    """Upload document for policy extraction and compliance analysis"""
+    try:
+        result = await compliance_proxy.upload_document(
+            file_content=file,
+            filename=filename,
+            tenant_id=current_user.tenant_id,
+            metadata={"uploaded_by": current_user.id}
+        )
+        
+        await audit_logger.log_event(
+            event_type=AuditEventType.DATA_ACCESS,
+            tenant_id=current_user.tenant_id,
+            user_id=current_user.id,
+            entity_type="document",
+            entity_id=result.get("document_id"),
+            action="upload",
+            metadata={"filename": filename}
+        )
+        
+        return result
+    except Exception as e:
+        logger.error("document_upload_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/compliance/analyze")
+async def analyze_compliance(
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Analyze compliance for tenant resources"""
+    try:
+        # Get resources from Azure
+        resources = await get_azure_resources_internal(current_user.tenant_id)
+        
+        # Get active policies
+        policies = await get_azure_policies_internal(current_user.tenant_id)
+        
+        # Analyze compliance
+        report = await compliance_proxy.analyze_compliance(
+            resources=resources,
+            policies=policies,
+            tenant_id=current_user.tenant_id
+        )
+        
+        return report
+    except Exception as e:
+        logger.error("compliance_analysis_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/compliance/metrics")
+async def get_compliance_metrics(
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Get compliance metrics for dashboard"""
+    try:
+        return await compliance_proxy.get_compliance_metrics(current_user.tenant_id)
+    except Exception as e:
+        logger.error("compliance_metrics_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/compliance/resources")
+async def get_compliance_resources(
+    status: Optional[str] = None,
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Get resource compliance details"""
+    try:
+        return await compliance_proxy.get_compliance_resources(
+            tenant_id=current_user.tenant_id,
+            status=status
+        )
+    except Exception as e:
+        logger.error("compliance_resources_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/compliance/coverage")
+async def get_policy_coverage(
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Get policy coverage analysis"""
+    try:
+        return await compliance_proxy.get_compliance_coverage(current_user.tenant_id)
+    except Exception as e:
+        logger.error("policy_coverage_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/compliance/trends")
+async def get_compliance_trends(
+    range: str = "7d",
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Get compliance trend data"""
+    try:
+        return await compliance_proxy.get_compliance_trends(
+            tenant_id=current_user.tenant_id,
+            range=range
+        )
+    except Exception as e:
+        logger.error("compliance_trends_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/compliance/export")
+async def export_compliance_report(
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Export compliance report as PDF"""
+    try:
+        pdf_content = await compliance_proxy.export_compliance_report(current_user.tenant_id)
+        
+        await audit_logger.log_event(
+            event_type=AuditEventType.REPORT_GENERATION,
+            tenant_id=current_user.tenant_id,
+            user_id=current_user.id,
+            entity_type="compliance_report",
+            entity_id=f"report_{datetime.utcnow().isoformat()}",
+            action="export"
+        )
+        
+        return JSONResponse(
+            content={"pdf": pdf_content.hex()},
+            headers={"Content-Type": "application/pdf"}
+        )
+    except Exception as e:
+        logger.error("report_export_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Rule Builder Endpoints
+@app.post("/api/v1/rule-builder/sessions")
+async def create_rule_builder_session(
+    current_user: UserInfo = Depends(require_permission("compliance:write"))
+):
+    """Create a new rule builder session"""
+    try:
+        session_id = await compliance_proxy.create_rule_builder_session()
+        return {"session_id": session_id}
+    except Exception as e:
+        logger.error("rule_builder_session_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/rule-builder/templates")
+async def get_rule_templates(
+    category: Optional[str] = None,
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Get available rule templates"""
+    try:
+        return await compliance_proxy.get_rule_templates(category)
+    except Exception as e:
+        logger.error("rule_templates_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/rule-builder/components")
+async def get_rule_components(
+    current_user: UserInfo = Depends(require_permission("compliance:read"))
+):
+    """Get component library for rule builder"""
+    try:
+        return await compliance_proxy.get_rule_components()
+    except Exception as e:
+        logger.error("rule_components_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Helper functions for internal use
+async def get_azure_resources_internal(tenant_id: str) -> List[Dict[str, Any]]:
+    """Get Azure resources for internal compliance analysis"""
+    # This would fetch from Azure API - using mock for now
+    return [
+        {
+            "id": "/subscriptions/xxx/resourceGroups/rg1/providers/Microsoft.Storage/storageAccounts/storage1",
+            "name": "storage1",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "eastus",
+            "tags": {"Environment": "Production"},
+            "properties": {
+                "encryption": {"enabled": True},
+                "networkAcls": {"defaultAction": "Deny"}
+            }
+        }
+    ]
+
+async def get_azure_policies_internal(tenant_id: str) -> List[Dict[str, Any]]:
+    """Get Azure policies for internal compliance analysis"""
+    # This would fetch from Azure API - using mock for now
+    return [
+        {
+            "id": "policy1",
+            "name": "Require Encryption",
+            "severity": "high",
+            "evaluation_criteria": {
+                "type": "property",
+                "property": "properties.encryption.enabled",
+                "operator": "equals",
+                "value": True
+            }
+        }
+    ]
+
 # Development and debug endpoints
 @app.get("/debug/auth-test")
 async def debug_auth_test():
@@ -726,6 +937,7 @@ async def debug_auth_test():
         "auth_manager": "initialized",
         "tenant_manager": "initialized", 
         "audit_logger": "initialized",
+        "compliance_proxy": "initialized",
         "test_email": "test@microsoft.com"
     }
 

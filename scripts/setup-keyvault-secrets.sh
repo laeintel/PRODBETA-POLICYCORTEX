@@ -1,13 +1,112 @@
 #!/bin/bash
-# Script to populate Azure Key Vault with PolicyCortex secrets
-# This script creates/updates all secrets needed by the Container Apps
+
+# PolicyCortex Key Vault Secrets Setup Script
+# Configures all required secrets for the application
 
 set -e
 
-# Configuration
-ENVIRONMENT=${1:-"dev"}
-RESOURCE_GROUP="rg-pcx-app-${ENVIRONMENT}"
-KEY_VAULT_NAME="kv-pcx-${ENVIRONMENT}"
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Default values
+ENVIRONMENT="dev"
+SUBSCRIPTION_ID=""
+RESOURCE_GROUP=""
+KEY_VAULT_NAME=""
+DRY_RUN=false
+
+# Usage function
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Setup Key Vault secrets for PolicyCortex application
+
+OPTIONS:
+    -e, --environment ENVIRONMENT    Target environment (dev|staging|prod) [default: dev]
+    -s, --subscription-id ID         Azure subscription ID [required]
+    -r, --resource-group GROUP       Azure resource group [required]
+    -k, --key-vault-name NAME        Key Vault name [default: policycortex-{env}-kv]
+    --dry-run                        Show what secrets would be created
+    -h, --help                       Show this help message
+
+EXAMPLES:
+    $0 -e dev -s sub-123 -r rg-policycortex-dev
+    $0 --environment prod --subscription-id sub-456 --resource-group rg-prod --key-vault-name prod-kv
+
+PREREQUISITES:
+    - Azure CLI installed and authenticated
+    - Key Vault Secrets Officer role on the Key Vault
+    - Access to infrastructure outputs or existing Azure resources
+EOF
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -e|--environment)
+            ENVIRONMENT="$2"
+            shift 2
+            ;;
+        -s|--subscription-id)
+            SUBSCRIPTION_ID="$2"
+            shift 2
+            ;;
+        -r|--resource-group)
+            RESOURCE_GROUP="$2"
+            shift 2
+            ;;
+        -k|--key-vault-name)
+            KEY_VAULT_NAME="$2"
+            shift 2
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            # Backward compatibility with old positional arguments
+            if [[ "$1" =~ ^(dev|staging|prod)$ ]]; then
+                ENVIRONMENT="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Set defaults for backward compatibility
+if [[ -z "$RESOURCE_GROUP" ]]; then
+    RESOURCE_GROUP="rg-policycortex-$ENVIRONMENT"
+fi
+
+if [[ -z "$KEY_VAULT_NAME" ]]; then
+    KEY_VAULT_NAME="policycortex-${ENVIRONMENT}-kv"
+fi
 
 echo "🔐 Setting up Key Vault secrets for PolicyCortex ${ENVIRONMENT} environment"
 echo "Resource Group: ${RESOURCE_GROUP}"
