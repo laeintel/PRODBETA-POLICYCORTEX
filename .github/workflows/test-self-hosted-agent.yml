@@ -154,8 +154,8 @@ jobs:
             # Test simple Python script
             $pythonScript = @"
 import sys
-print(f'Python executable: {sys.executable}')
-print(f'Python version: {sys.version}')
+print('Python executable: ' + sys.executable)  
+print('Python version: ' + sys.version)
 result = 2 + 2
 if result == 4:
     print('✅ Python arithmetic: OK')
