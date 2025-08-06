@@ -1,0 +1,1048 @@
+name: PolicyCortex CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, staging]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      skip_tests:
+        description: 'Skip tests'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  CONTAINER_REGISTRY: ${{ secrets.CONTAINER_REGISTRY }}
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      infrastructure: ${{ steps.changes.outputs.infrastructure }}
+      tests: ${{ steps.changes.outputs.tests }}
+      config: ${{ steps.changes.outputs.config }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'requirements*.txt'
+            frontend:
+              - 'frontend/**'
+              - 'package*.json'
+            infrastructure:
+              - 'infrastructure/**'
+              - 'scripts/**'
+            tests:
+              - 'testing/**'
+            config:
+              - 'scripts/config-manager.py'
+              - '.github/workflows/**'
+
+  lint-and-format:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        if: needs.detect-changes.outputs.backend == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8 isort mypy bandit safety
+          pip install -r backend/requirements.txt
+
+      - name: Run Python linting
+        if: needs.detect-changes.outputs.backend == 'true'
+        run: |
+          # Black formatting check
+          black --check --line-length 100 backend/
+          
+          # Import sorting check
+          isort --check-only --profile black --line-length 100 backend/
+          
+          # Flake8 linting
+          flake8 backend/ --max-line-length=100 --extend-ignore=E203,W503
+          
+          # Type checking with MyPy
+          mypy backend/ --ignore-missing-imports
+          
+          # Security scanning with Bandit
+          bandit -r backend/ -x backend/tests/
+          
+          # Dependency vulnerability scanning
+          safety check --json
+
+      - name: Set up Node.js
+        if: needs.detect-changes.outputs.frontend == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Node.js dependencies
+        if: needs.detect-changes.outputs.frontend == 'true'
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run frontend linting
+        if: needs.detect-changes.outputs.frontend == 'true'
+        run: |
+          cd frontend
+          
+          # ESLint
+          npm run lint
+          
+          # Prettier formatting check
+          npm run format:check
+          
+          # TypeScript type checking
+          npm run type-check
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [detect-changes, lint-and-format]
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: policycortex_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Python dependencies
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        if: needs.detect-changes.outputs.backend == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov pytest-mock pytest-html
+
+      - name: Run backend unit tests
+        if: needs.detect-changes.outputs.backend == 'true'
+        env:
+          ENVIRONMENT: testing
+          TESTING: true
+          AZURE_SQL_SERVER: localhost
+          AZURE_SQL_DATABASE: policycortex_test
+          AZURE_SQL_USERNAME: test
+          AZURE_SQL_PASSWORD: test
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: test-secret-key
+        run: |
+          cd backend
+          python -m pytest \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=html \
+            --junitxml=../testing/reports/junit-backend.xml \
+            --html=../testing/reports/backend-report.html \
+            --maxfail=5 \
+            -v
+
+      - name: Set up Node.js
+        if: needs.detect-changes.outputs.frontend == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Node.js dependencies
+        if: needs.detect-changes.outputs.frontend == 'true'
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run frontend unit tests
+        if: needs.detect-changes.outputs.frontend == 'true'
+        run: |
+          cd frontend
+          npm run test:ci
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            testing/reports/
+            backend/htmlcov/
+            frontend/coverage/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          files: ./backend/coverage.xml,./frontend/coverage/lcov.info
+          flags: backend,frontend
+          name: codecov-umbrella
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [detect-changes, unit-tests]
+    if: needs.detect-changes.outputs.backend == 'true' && github.event.inputs.skip_tests != 'true'
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: policycortex_integration
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-mock httpx
+
+      - name: Run integration tests
+        env:
+          ENVIRONMENT: testing
+          TESTING: true
+          TEST_USE_REAL_AZURE: false
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_SQL_SERVER: localhost
+          AZURE_SQL_DATABASE: policycortex_integration
+          AZURE_SQL_USERNAME: test
+          AZURE_SQL_PASSWORD: test
+          REDIS_URL: redis://localhost:6379/1
+          JWT_SECRET_KEY: test-secret-key
+        run: |
+          python -m pytest testing/integration/ \
+            --junitxml=testing/reports/junit-integration.xml \
+            --html=testing/reports/integration-report.html \
+            -v
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: integration-test-results
+          path: testing/reports/
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          languages: python, javascript
+
+  build-images:
+    name: Build Container Images
+    runs-on: ubuntu-latest
+    needs: [detect-changes, unit-tests]
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
+    
+    strategy:
+      matrix:
+        service: 
+          - api-gateway
+          - azure-integration
+          - ai-engine
+          - data-processing
+          - conversation
+          - notification
+          - customer-onboarding
+          - frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.CONTAINER_REGISTRY }}
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.CONTAINER_REGISTRY }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: |
+            ${{ matrix.service == 'frontend' && 'frontend/Dockerfile' || format('backend/services/{0}/Dockerfile', matrix.service) }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [detect-changes, security-scan]
+    if: needs.detect-changes.outputs.infrastructure == 'true' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create resource group
+        run: |
+          az group create \
+            --name "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --location "eastus" \
+            --tags Environment=${{ steps.env.outputs.environment }} Project=PolicyCortex
+
+      - name: Deploy infrastructure
+        uses: azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          resourceGroupName: rg-policycortex-${{ steps.env.outputs.environment }}
+          template: infrastructure/bicep/complete-infrastructure.bicep
+          parameters: |
+            environment=${{ steps.env.outputs.environment }}
+            sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
+            aadTenantId=${{ secrets.AZURE_TENANT_ID }}
+            aadClientId=${{ secrets.AZURE_CLIENT_ID }}
+            aadClientSecret=${{ secrets.AZURE_CLIENT_SECRET }}
+          deploymentMode: Incremental
+          deploymentName: policycortex-infrastructure-${{ github.run_number }}
+
+      - name: Get deployment outputs
+        id: deployment
+        run: |
+          # Get deployment outputs and store as environment variables
+          DEPLOYMENT_OUTPUTS=$(az deployment group show \
+            --resource-group rg-policycortex-${{ steps.env.outputs.environment }} \
+            --name policycortex-infrastructure-${{ github.run_number }} \
+            --query 'properties.outputs' -o json)
+          
+          echo "deployment_outputs<<EOF" >> $GITHUB_OUTPUT
+          echo "$DEPLOYMENT_OUTPUTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  configure-environment:
+    name: Configure Environment
+    runs-on: ubuntu-latest
+    needs: [deploy-infrastructure, build-images]
+    if: always() && (needs.deploy-infrastructure.result == 'success' || needs.deploy-infrastructure.result == 'skipped')
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install configuration dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install azure-identity azure-keyvault-secrets azure-mgmt-resource azure-mgmt-storage
+          pip install azure-mgmt-sql azure-mgmt-cosmosdb structlog pydantic pydantic-settings
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate environment configuration
+        run: |
+          python scripts/config-manager.py \
+            --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+            --environment ${{ steps.env.outputs.environment }} \
+            --action generate-env \
+            --output .env.${{ steps.env.outputs.environment }}
+
+      - name: Upload environment configuration
+        uses: actions/upload-artifact@v3
+        with:
+          name: environment-config-${{ steps.env.outputs.environment }}
+          path: .env.${{ steps.env.outputs.environment }}
+
+  deploy-services:
+    name: Deploy Services
+    runs-on: ubuntu-latest
+    needs: [build-images, configure-environment]
+    if: always() && needs.build-images.result == 'success' && needs.configure-environment.result == 'success'
+    
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - azure-integration
+          - ai-engine
+          - data-processing
+          - conversation
+          - notification
+          - customer-onboarding
+          - frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download environment configuration
+        uses: actions/download-artifact@v3
+        with:
+          name: environment-config-${{ steps.env.outputs.environment }}
+
+      - name: Deploy container app
+        run: |
+          # Source environment configuration
+          source .env.${{ steps.env.outputs.environment }}
+          
+          # Get service configuration
+          SERVICE_CONFIG=$(python3 -c "
+          import json, sys
+          sys.path.append('scripts')
+          from config_manager import ConfigurationManager
+          
+          config_manager = ConfigurationManager('${{ secrets.AZURE_SUBSCRIPTION_ID }}', '${{ steps.env.outputs.environment }}')
+          services = config_manager.get_service_configurations()
+          service = services.get('${{ matrix.service }}')
+          if service:
+              print(json.dumps({
+                  'cpu': service.cpu,
+                  'memory': service.memory,
+                  'min_replicas': service.min_replicas,
+                  'max_replicas': service.max_replicas,
+                  'port': service.port
+              }))
+          ")
+          
+          CPU=$(echo $SERVICE_CONFIG | jq -r '.cpu')
+          MEMORY=$(echo $SERVICE_CONFIG | jq -r '.memory')
+          MIN_REPLICAS=$(echo $SERVICE_CONFIG | jq -r '.min_replicas')
+          MAX_REPLICAS=$(echo $SERVICE_CONFIG | jq -r '.max_replicas')
+          PORT=$(echo $SERVICE_CONFIG | jq -r '.port')
+          
+          # Check if container app exists
+          if az containerapp show \
+            --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --query "name" -o tsv 2>/dev/null; then
+            
+            echo "Updating existing container app..."
+            az containerapp update \
+              --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+              --image "${{ secrets.CONTAINER_REGISTRY }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
+              --cpu "$CPU" \
+              --memory "$MEMORY" \
+              --min-replicas "$MIN_REPLICAS" \
+              --max-replicas "$MAX_REPLICAS" \
+              --env-vars \
+                ENVIRONMENT="${{ steps.env.outputs.environment }}" \
+                SERVICE_NAME="${{ matrix.service }}" \
+                SERVICE_PORT="$PORT" \
+                AZURE_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" \
+                AZURE_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP" \
+                AZURE_LOCATION="$AZURE_LOCATION" \
+              --secrets \
+                azure-sql-password="$AZURE_SQL_PASSWORD" \
+                azure-cosmos-key="$AZURE_COSMOS_KEY" \
+                redis-password="$REDIS_PASSWORD" \
+                jwt-secret-key="$JWT_SECRET_KEY" \
+                azure-openai-key="$AZURE_OPENAI_KEY" \
+                application-insights-connection-string="$APPLICATION_INSIGHTS_CONNECTION_STRING"
+          else
+            echo "Creating new container app..."
+            az containerapp create \
+              --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+              --environment "policycortex-${{ steps.env.outputs.environment }}-containerenv" \
+              --image "${{ secrets.CONTAINER_REGISTRY }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
+              --cpu "$CPU" \
+              --memory "$MEMORY" \
+              --min-replicas "$MIN_REPLICAS" \
+              --max-replicas "$MAX_REPLICAS" \
+              --target-port "$PORT" \
+              --ingress external \
+              --env-vars \
+                ENVIRONMENT="${{ steps.env.outputs.environment }}" \
+                SERVICE_NAME="${{ matrix.service }}" \
+                SERVICE_PORT="$PORT" \
+                AZURE_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" \
+                AZURE_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP" \
+                AZURE_LOCATION="$AZURE_LOCATION" \
+              --secrets \
+                azure-sql-password="$AZURE_SQL_PASSWORD" \
+                azure-cosmos-key="$AZURE_COSMOS_KEY" \
+                redis-password="$REDIS_PASSWORD" \
+                jwt-secret-key="$JWT_SECRET_KEY" \
+                azure-openai-key="$AZURE_OPENAI_KEY" \
+                application-insights-connection-string="$APPLICATION_INSIGHTS_CONNECTION_STRING"
+          fi
+
+      - name: Wait for deployment
+        run: |
+          echo "Waiting for container app to be ready..."
+          for i in {1..60}; do
+            STATUS=$(az containerapp show \
+              --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+              --query "properties.runningStatus" -o tsv)
+            
+            if [[ "$STATUS" == "Running" ]]; then
+              echo "Container app is running!"
+              break
+            fi
+            
+            echo "Status: $STATUS, waiting..."
+            sleep 10
+          done
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: deploy-services
+    if: always() && needs.deploy-services.result == 'success' && github.event.inputs.skip_tests != 'true'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio playwright
+          
+          cd testing
+          npm install playwright
+          npx playwright install
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get application URLs
+        id: urls
+        run: |
+          FRONTEND_URL=$(az containerapp show \
+            --name "ca-frontend-${{ steps.env.outputs.environment }}" \
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          API_URL=$(az containerapp show \
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "frontend_url=https://$FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Run E2E tests
+        env:
+          FRONTEND_URL: ${{ steps.urls.outputs.frontend_url }}
+          API_BASE_URL: ${{ steps.urls.outputs.api_url }}
+          E2E_BROWSER: chromium
+          E2E_HEADLESS: true
+          TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
+          RECORD_VIDEOS: true
+        run: |
+          python -m pytest testing/e2e/ \
+            --junitxml=testing/reports/junit-e2e.xml \
+            --html=testing/reports/e2e-report.html \
+            -v
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            testing/reports/
+            testing/reports/videos/
+            testing/reports/screenshots/
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: deploy-services
+    if: always() && needs.deploy-services.result == 'success' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up k6
+        run: |
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Get API URL
+        id: url
+        run: |
+          API_URL=$(az containerapp show \
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Run performance tests
+        env:
+          API_BASE_URL: ${{ steps.url.outputs.api_url }}
+        run: |
+          k6 run testing/performance/load-test.js \
+            --out json=testing/reports/performance-results.json
+
+      - name: Upload performance test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-results
+          path: testing/reports/performance-results.json
+
+  deployment-validation:
+    name: Deployment Validation
+    runs-on: ubuntu-latest
+    needs: [deploy-services, e2e-tests]
+    if: always() && needs.deploy-services.result == 'success'
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate service health
+        run: |
+          SERVICES=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "customer-onboarding" "frontend")
+          
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "Checking health of $SERVICE..."
+            
+            URL=$(az containerapp show \
+              --name "ca-$SERVICE-${{ steps.env.outputs.environment }}" \
+              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+              --query "properties.configuration.ingress.fqdn" -o tsv)
+            
+            if [[ "$SERVICE" == "frontend" ]]; then
+              HEALTH_URL="https://$URL"
+              EXPECTED_STATUS=200
+            else
+              HEALTH_URL="https://$URL/health"
+              EXPECTED_STATUS=200
+            fi
+            
+            echo "Checking: $HEALTH_URL"
+            
+            for i in {1..10}; do
+              STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+              
+              if [[ "$STATUS_CODE" == "$EXPECTED_STATUS" ]]; then
+                echo "✅ $SERVICE is healthy (HTTP $STATUS_CODE)"
+                break
+              elif [[ $i -eq 10 ]]; then
+                echo "❌ $SERVICE health check failed after 10 attempts (HTTP $STATUS_CODE)"
+                exit 1
+              else
+                echo "⏳ $SERVICE not ready yet (HTTP $STATUS_CODE), retrying in 30s..."
+                sleep 30
+              fi
+            done
+          done
+
+      - name: Validate database connectivity
+        run: |
+          # Test database connectivity through API Gateway
+          API_URL=$(az containerapp show \
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          RESPONSE=$(curl -s "https://$API_URL/ready")
+          
+          if echo "$RESPONSE" | grep -q "ready"; then
+            echo "✅ Database connectivity validated"
+          else
+            echo "❌ Database connectivity check failed"
+            echo "Response: $RESPONSE"
+            exit 1
+          fi
+
+      - name: Smoke test critical workflows
+        run: |
+          API_URL=$(az containerapp show \
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          # Test policy endpoint
+          POLICIES_RESPONSE=$(curl -s "https://$API_URL/api/v1/policies/health" || echo "failed")
+          if [[ "$POLICIES_RESPONSE" != "failed" ]]; then
+            echo "✅ Policies API responding"
+          else
+            echo "❌ Policies API not responding"
+            exit 1
+          fi
+          
+          # Test AI endpoint
+          AI_RESPONSE=$(curl -s "https://$API_URL/api/v1/ai/health" || echo "failed")
+          if [[ "$AI_RESPONSE" != "failed" ]]; then
+            echo "✅ AI API responding"
+          else
+            echo "❌ AI API not responding"
+            exit 1
+          fi
+
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [deployment-validation]
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Get previous successful deployment
+        id: previous
+        run: |
+          # Get the previous successful deployment tag
+          PREVIOUS_TAG=$(az containerapp revision list \
+            --name "ca-api-gateway-prod" \
+            --resource-group "rg-policycortex-prod" \
+            --query "[?properties.active==\`true\`] | [1].properties.template.containers[0].image" \
+            -o tsv | cut -d':' -f2)
+          
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+
+      - name: Rollback all services
+        run: |
+          SERVICES=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "customer-onboarding" "frontend")
+          
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "Rolling back $SERVICE to previous version..."
+            
+            az containerapp update \
+              --name "ca-$SERVICE-prod" \
+              --resource-group "rg-policycortex-prod" \
+              --image "${{ secrets.CONTAINER_REGISTRY }}/$SERVICE:${{ steps.previous.outputs.previous_tag }}"
+          done
+
+      - name: Verify rollback
+        run: |
+          echo "Waiting for rollback to complete..."
+          sleep 60
+          
+          # Verify all services are healthy after rollback
+          SERVICES=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "customer-onboarding" "frontend")
+          
+          for SERVICE in "${SERVICES[@]}"; do
+            URL=$(az containerapp show \
+              --name "ca-$SERVICE-prod" \
+              --resource-group "rg-policycortex-prod" \
+              --query "properties.configuration.ingress.fqdn" -o tsv)
+            
+            if [[ "$SERVICE" == "frontend" ]]; then
+              HEALTH_URL="https://$URL"
+            else
+              HEALTH_URL="https://$URL/health"
+            fi
+            
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+            
+            if [[ "$STATUS_CODE" == "200" ]]; then
+              echo "✅ $SERVICE rollback successful"
+            else
+              echo "❌ $SERVICE rollback failed (HTTP $STATUS_CODE)"
+            fi
+          done
+
+  notify:
+    name: Notify Teams
+    runs-on: ubuntu-latest
+    needs: [deployment-validation, rollback]
+    if: always()
+    
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send success notification
+        if: needs.deployment-validation.result == 'success'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            🚀 PolicyCortex deployment to ${{ steps.env.outputs.environment }} successful!
+            
+            📊 **Deployment Summary:**
+            - Environment: ${{ steps.env.outputs.environment }}
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Tests: ${{ needs.e2e-tests.result == 'success' && '✅ Passed' || '⚠️ Skipped' }}
+            
+            🔗 **Links:**
+            - [Pipeline Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [Application](https://ca-frontend-${{ steps.env.outputs.environment }}.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io)
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send failure notification
+        if: needs.deployment-validation.result == 'failure' || needs.rollback.result != 'skipped'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            🚨 PolicyCortex deployment to ${{ steps.env.outputs.environment }} failed!
+            
+            📊 **Deployment Summary:**
+            - Environment: ${{ steps.env.outputs.environment }}
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Validation: ${{ needs.deployment-validation.result }}
+            - Rollback: ${{ needs.rollback.result == 'success' && '✅ Completed' || needs.rollback.result == 'skipped' && 'N/A' || '❌ Failed' }}
+            
+            🔗 **Links:**
+            - [Pipeline Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
