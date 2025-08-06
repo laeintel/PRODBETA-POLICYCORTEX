@@ -439,6 +439,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
+          build-args: |
+            NODE_ENV=production
+            VITE_API_BASE_URL=https://api.policycortex.com
+            VITE_APP_VERSION=${{ github.sha }}
 
   deploy-infrastructure:
     name: Deploy Infrastructure

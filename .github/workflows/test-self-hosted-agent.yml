@@ -152,17 +152,17 @@ jobs:
             Write-Host "Pip Version: $pipVersion" -ForegroundColor Cyan
             
             # Test simple Python script
-            $pythonScript = @"
+            $pythonScript = @'
 import sys
-print('Python executable: ' + sys.executable)  
-print('Python version: ' + sys.version)
+print("Python executable: " + sys.executable)
+print("Python version: " + sys.version)
 result = 2 + 2
 if result == 4:
-    print('✅ Python arithmetic: OK')
+    print("Python arithmetic: OK")
 else:
-    print('❌ Python arithmetic: FAILED')
+    print("Python arithmetic: FAILED")
     sys.exit(1)
-"@
+'@
             $pythonScript | python
             Write-Host "✅ Python: Available and working" -ForegroundColor Green
           } catch {
