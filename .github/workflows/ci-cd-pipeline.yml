@@ -1,7 +1,7 @@
 name: PolicyCortex CI/CD Pipeline
 
 permissions:
-  contents: read
+  contents: write  # Changed from read to write for auto-formatting commits
   actions: read
   security-events: write
   checks: write
@@ -109,17 +109,28 @@ jobs:
         if: needs.detect-changes.outputs.backend == 'true'
         run: |
           Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          
+          # Configure git with token authentication
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Set up authentication
+          $remoteUrl = "https://x-access-token:$env:GITHUB_TOKEN@github.com/$env:GITHUB_REPOSITORY.git"
+          git remote set-url origin $remoteUrl
           
           # Check if there are changes to commit
           $gitStatus = git status --porcelain
           if ($gitStatus) {
             git add -A
             git commit -m "style: Auto-format code with Black and isort [skip ci]"
-            git push
+            git push origin HEAD:${{ github.ref_name }}
+          } else {
+            Write-Host "No formatting changes to commit"
           }
         shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
       
       - name: Run Python linting
         if: needs.detect-changes.outputs.backend == 'true'
@@ -365,11 +376,13 @@ jobs:
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true  # Continue if Code Security not enabled
         with:
           sarif_file: 'trivy-results.sarif'
 
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        continue-on-error: true  # Continue if Code Security not enabled
         with:
           languages: python, javascript
 
