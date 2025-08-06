@@ -45,7 +45,7 @@ env:
 jobs:
   detect-changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       backend: ${{ steps.changes.outputs.backend }}
       frontend: ${{ steps.changes.outputs.frontend }}
@@ -75,7 +75,7 @@ jobs:
 
   lint-and-format:
     name: Lint and Format
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.config == 'true'
     steps:
@@ -93,6 +93,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install black flake8 isort mypy bandit safety
           pip install -r backend/requirements.txt
+        shell: powershell
 
       - name: Run Python formatting (auto-fix)
         if: needs.detect-changes.outputs.backend == 'true'
@@ -102,18 +103,23 @@ jobs:
           
           # Auto-sort imports
           isort --profile black --line-length 100 backend/
+        shell: powershell
         
       - name: Commit formatting changes
         if: needs.detect-changes.outputs.backend == 'true'
         run: |
+          Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          if ! git diff --exit-code; then
+          # Check if there are changes to commit
+          $gitStatus = git status --porcelain
+          if ($gitStatus) {
             git add -A
             git commit -m "style: Auto-format code with Black and isort [skip ci]"
             git push
-          fi
+          }
+        shell: powershell
       
       - name: Run Python linting
         if: needs.detect-changes.outputs.backend == 'true'
@@ -122,13 +128,14 @@ jobs:
           flake8 backend/ --max-line-length=100 --extend-ignore=E203,W503
           
           # Type checking with MyPy
-          mypy backend/ --ignore-missing-imports || true
+          try { mypy backend/ --ignore-missing-imports } catch { Write-Host "MyPy check completed with warnings" }
           
           # Security scanning with Bandit
-          bandit -r backend/ -x backend/tests/ || true
+          try { bandit -r backend/ -x backend/tests/ } catch { Write-Host "Bandit scan completed with warnings" }
           
           # Dependency vulnerability scanning
-          safety check --json || true
+          try { safety check --json } catch { Write-Host "Safety check completed with warnings" }
+        shell: powershell
 
       - name: Set up Node.js
         if: needs.detect-changes.outputs.frontend == 'true'
@@ -160,7 +167,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [detect-changes, lint-and-format]
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.config == 'true'
     
@@ -276,7 +283,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [detect-changes, unit-tests]
     if: (needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.config == 'true') && github.event.inputs.skip_tests != 'true'
     
@@ -341,7 +348,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
     steps:
@@ -368,7 +375,7 @@ jobs:
 
   build-images:
     name: Build Container Images
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [detect-changes, unit-tests]
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.config == 'true'
     
@@ -446,7 +453,7 @@ jobs:
 
   deploy-infrastructure:
     name: Deploy Infrastructure
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [detect-changes, security-scan]
     if: needs.detect-changes.outputs.infrastructure == 'true' || github.event_name == 'workflow_dispatch'
     
@@ -514,7 +521,7 @@ jobs:
 
   configure-environment:
     name: Configure Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [deploy-infrastructure, build-images]
     if: always() && (needs.deploy-infrastructure.result == 'success' || needs.deploy-infrastructure.result == 'skipped')
     
@@ -571,7 +578,7 @@ jobs:
 
   deploy-services:
     name: Deploy Services
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-images, configure-environment]
     if: always() && needs.build-images.result == 'success' && needs.configure-environment.result == 'success'
     
@@ -746,7 +753,7 @@ jobs:
 
   e2e-tests:
     name: End-to-End Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: deploy-services
     if: always() && needs.deploy-services.result == 'success' && github.event.inputs.skip_tests != 'true'
     
@@ -828,7 +835,7 @@ jobs:
 
   performance-tests:
     name: Performance Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: deploy-services
     if: always() && needs.deploy-services.result == 'success' && github.ref == 'refs/heads/main'
     
@@ -876,7 +883,7 @@ jobs:
 
   deployment-validation:
     name: Deployment Validation
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [deploy-services, e2e-tests]
     if: always() && needs.deploy-services.result == 'success'
     
@@ -979,7 +986,7 @@ jobs:
 
   rollback:
     name: Rollback Deployment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [deployment-validation]
     if: failure() && github.ref == 'refs/heads/main'
     
@@ -1051,7 +1058,7 @@ jobs:
 
   notify:
     name: Notify Teams
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [deployment-validation, rollback]
     if: always()
     
