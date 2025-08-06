@@ -484,6 +484,20 @@ jobs:
               "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
             }
 
+      - name: Register Azure Resource Providers
+        run: |
+          echo "Registering required Azure resource providers..."
+          az provider register --namespace Microsoft.App --wait || echo "Microsoft.App registration failed, continuing..."
+          az provider register --namespace Microsoft.ContainerService --wait || echo "Microsoft.ContainerService registration failed, continuing..."
+          az provider register --namespace Microsoft.OperationalInsights --wait || echo "Microsoft.OperationalInsights registration failed, continuing..."
+          az provider register --namespace Microsoft.ContainerRegistry --wait || echo "Microsoft.ContainerRegistry registration failed, continuing..."
+          az provider register --namespace Microsoft.ManagedIdentity --wait || echo "Microsoft.ManagedIdentity registration failed, continuing..."
+          az provider register --namespace Microsoft.KeyVault --wait || echo "Microsoft.KeyVault registration failed, continuing..."
+          az provider register --namespace Microsoft.Cache --wait || echo "Microsoft.Cache registration failed, continuing..."
+          az provider register --namespace Microsoft.Storage --wait || echo "Microsoft.Storage registration failed, continuing..."
+          az provider register --namespace Microsoft.Network --wait || echo "Microsoft.Network registration failed, continuing..."
+          echo "Resource provider registration completed"
+
       - name: Determine environment
         id: env
         run: |

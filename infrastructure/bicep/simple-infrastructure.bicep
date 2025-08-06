@@ -20,15 +20,16 @@ var tags = {
   Project: 'PolicyCortex'
 }
 
-// Resource names
-var vnetName = 'vnet-${resourcePrefix}'
-var keyVaultName = 'kv-${resourcePrefix}'
-var logWorkspaceName = 'log-${resourcePrefix}'
-var appInsightsName = 'appi-${resourcePrefix}'
-var containerRegistryName = 'cr${replace(resourcePrefix, '-', '')}${uniqueString(resourceGroup().id)}'
-var storageAccountName = 'st${replace(resourcePrefix, '-', '')}${uniqueString(resourceGroup().id)}'
-var redisCacheName = 'redis-${resourcePrefix}'
-var containerAppsEnvName = 'cae-${resourcePrefix}'
+// Resource names with unique suffixes
+var uniqueSuffix = uniqueString(resourceGroup().id, subscription().subscriptionId)
+var vnetName = 'vnet-${resourcePrefix}-${uniqueSuffix}'
+var keyVaultName = 'kv-${resourcePrefix}-${uniqueSuffix}'
+var logWorkspaceName = 'log-${resourcePrefix}-${uniqueSuffix}'
+var appInsightsName = 'appi-${resourcePrefix}-${uniqueSuffix}'
+var containerRegistryName = 'cr${replace(resourcePrefix, '-', '')}${uniqueSuffix}'
+var storageAccountName = 'st${replace(resourcePrefix, '-', '')}${uniqueSuffix}'
+var redisCacheName = 'redis-${resourcePrefix}-${uniqueSuffix}'
+var containerAppsEnvName = 'cae-${resourcePrefix}-${uniqueSuffix}'
 
 // User-assigned managed identity
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
