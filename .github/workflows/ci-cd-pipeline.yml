@@ -353,13 +353,13 @@ jobs:
     strategy:
       matrix:
         service: 
-          - api-gateway
-          - azure-integration
-          - ai-engine
-          - data-processing
+          - api_gateway
+          - azure_integration
+          - ai_engine
+          - data_processing
           - conversation
           - notification
-          - customer-onboarding
+          - compliance_engine
           - frontend
 
     steps:
@@ -554,13 +554,13 @@ jobs:
     strategy:
       matrix:
         service:
-          - api-gateway
-          - azure-integration
-          - ai-engine
-          - data-processing
+          - api_gateway
+          - azure_integration
+          - ai_engine
+          - data_processing
           - conversation
           - notification
-          - customer-onboarding
+          - compliance_engine
           - frontend
 
     steps:
