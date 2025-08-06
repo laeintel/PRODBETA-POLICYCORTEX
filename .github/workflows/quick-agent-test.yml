@@ -21,22 +21,22 @@ jobs:
     steps:
       - name: Agent Quick Test
         run: |
-          Write-Host "🚀 QUICK AGENT TEST STARTED" -ForegroundColor Green
+          Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+          Write-Host "QUICK AGENT TEST STARTED" -ForegroundColor Green
           Write-Host "Time: $(Get-Date)" -ForegroundColor Cyan
           Write-Host "Agent: aeolitech-runner1" -ForegroundColor Cyan
           Write-Host "Message: ${{ github.event.inputs.message }}" -ForegroundColor Yellow
           
-          Write-Host "`n✅ Agent is responding!" -ForegroundColor Green
-          Write-Host "✅ PowerShell is working!" -ForegroundColor Green
-          Write-Host "✅ Job assignment successful!" -ForegroundColor Green
+          Write-Host "Agent is responding!" -ForegroundColor Green
+          Write-Host "PowerShell is working!" -ForegroundColor Green
+          Write-Host "Job assignment successful!" -ForegroundColor Green
           
-          # Quick system check
-          Write-Host "`nSystem Info:" -ForegroundColor Cyan
+          Write-Host "System Info:" -ForegroundColor Cyan
           Write-Host "Computer: $env:COMPUTERNAME" -ForegroundColor White
           Write-Host "User: $env:USERNAME" -ForegroundColor White
           Write-Host "Runner: $env:RUNNER_NAME" -ForegroundColor White
           
-          Write-Host "`n🎉 QUICK TEST COMPLETED SUCCESSFULLY!" -ForegroundColor Green
+          Write-Host "QUICK TEST COMPLETED SUCCESSFULLY!" -ForegroundColor Green
         shell: powershell
         
       - name: Test Basic Commands
@@ -46,19 +46,20 @@ jobs:
           echo Time: %TIME%
           echo Computer: %COMPUTERNAME%
           echo User: %USERNAME%
-          echo ✅ CMD working correctly!
+          echo CMD working correctly!
         shell: cmd
         
       - name: Test Environment Variables
         run: |
-          Write-Host "=== Environment Variables Test ===" -ForegroundColor Green
+          Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+          Write-Host "Environment Variables Test" -ForegroundColor Green
           Write-Host "GITHUB_WORKSPACE: ${{ github.workspace }}" -ForegroundColor Cyan
           Write-Host "GITHUB_REPOSITORY: ${{ github.repository }}" -ForegroundColor Cyan
           Write-Host "GITHUB_RUN_NUMBER: ${{ github.run_number }}" -ForegroundColor Cyan
           Write-Host "RUNNER_OS: $env:RUNNER_OS" -ForegroundColor Cyan
           Write-Host "RUNNER_ARCH: $env:RUNNER_ARCH" -ForegroundColor Cyan
           Write-Host "RUNNER_TEMP: $env:RUNNER_TEMP" -ForegroundColor Cyan
-          Write-Host "✅ Environment variables accessible!" -ForegroundColor Green
+          Write-Host "Environment variables accessible!" -ForegroundColor Green
         shell: powershell
 
   success-notification:
