@@ -3,13 +3,19 @@ Pydantic models for Azure Integration service.
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+from pydantic import BaseModel
+from pydantic import Field
 
 
 class ServiceStatus(str, Enum):
     """Service status enumeration."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -17,6 +23,7 @@ class ServiceStatus(str, Enum):
 
 class PolicyType(str, Enum):
     """Azure Policy type enumeration."""
+
     BUILTIN = "BuiltIn"
     CUSTOM = "Custom"
     STATIC = "Static"
@@ -24,6 +31,7 @@ class PolicyType(str, Enum):
 
 class PolicyEffect(str, Enum):
     """Azure Policy effect enumeration."""
+
     DENY = "deny"
     AUDIT = "audit"
     APPEND = "append"
@@ -35,6 +43,7 @@ class PolicyEffect(str, Enum):
 
 class CostGranularity(str, Enum):
     """Cost data granularity enumeration."""
+
     DAILY = "Daily"
     MONTHLY = "Monthly"
     BILLING_MONTH = "BillingMonth"
@@ -42,6 +51,7 @@ class CostGranularity(str, Enum):
 
 class ResourceStatus(str, Enum):
     """Resource status enumeration."""
+
     RUNNING = "Running"
     STOPPED = "Stopped"
     DELETED = "Deleted"
@@ -54,6 +64,7 @@ class ResourceStatus(str, Enum):
 
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str = Field(..., description="Health status")
     timestamp: datetime = Field(..., description="Timestamp of health check")
     service: str = Field(..., description="Service name")
@@ -63,6 +74,7 @@ class HealthResponse(BaseModel):
 
 class APIResponse(BaseModel):
     """Generic API response model."""
+
     success: bool = Field(..., description="Request success status")
     data: Optional[Dict[str, Any]] = Field(None, description="Response data")
     message: Optional[str] = Field(None, description="Response message")
@@ -71,6 +83,7 @@ class APIResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model."""
+
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Error details")
@@ -81,17 +94,18 @@ class ErrorResponse(BaseModel):
 # Authentication Models
 class AzureAuthRequest(BaseModel):
     """Azure authentication request model."""
+
     tenant_id: str = Field(..., description="Azure AD tenant ID")
     client_id: str = Field(..., description="Azure AD application client ID")
     client_secret: str = Field(..., description="Azure AD application client secret")
     subscription_ids: Optional[List[str]] = Field(
-        None,
-        description="List of subscription IDs to access"
+        None, description="List of subscription IDs to access"
     )
 
 
 class AzureAuthResponse(BaseModel):
     """Azure authentication response model."""
+
     access_token: str = Field(..., description="Azure access token")
     refresh_token: str = Field(..., description="Refresh token")
     token_type: str = Field("Bearer", description="Token type")
@@ -104,6 +118,7 @@ class AzureAuthResponse(BaseModel):
 # Policy Management Models
 class PolicyRequest(BaseModel):
     """Policy creation/update request model."""
+
     name: str = Field(..., description="Policy name")
     display_name: str = Field(..., description="Policy display name")
     description: Optional[str] = Field(None, description="Policy description")
@@ -116,6 +131,7 @@ class PolicyRequest(BaseModel):
 
 class PolicyResponse(BaseModel):
     """Policy response model."""
+
     id: str = Field(..., description="Policy ID")
     name: str = Field(..., description="Policy name")
     type: str = Field(..., description="Resource type")
@@ -132,6 +148,7 @@ class PolicyResponse(BaseModel):
 
 class PolicyComplianceState(str, Enum):
     """Policy compliance state enumeration."""
+
     COMPLIANT = "Compliant"
     NON_COMPLIANT = "NonCompliant"
     CONFLICT = "Conflict"
@@ -141,6 +158,7 @@ class PolicyComplianceState(str, Enum):
 
 class PolicyComplianceResponse(BaseModel):
     """Policy compliance response model."""
+
     policy_id: str = Field(..., description="Policy ID")
     policy_name: str = Field(..., description="Policy name")
     compliance_state: PolicyComplianceState = Field(..., description="Overall compliance state")
@@ -152,14 +170,14 @@ class PolicyComplianceResponse(BaseModel):
     compliance_percentage: float = Field(..., description="Compliance percentage")
     last_evaluated: datetime = Field(..., description="Last evaluation timestamp")
     details: Optional[List[Dict[str, Any]]] = Field(
-        None,
-        description="Compliance details by resource"
+        None, description="Compliance details by resource"
     )
 
 
 # RBAC Management Models
 class RBACRequest(BaseModel):
     """RBAC role assignment request model."""
+
     principal_id: str = Field(..., description="Principal ID (user, group, or service principal)")
     role_definition_id: str = Field(..., description="Role definition ID")
     scope: str = Field(..., description="Assignment scope")
@@ -169,6 +187,7 @@ class RBACRequest(BaseModel):
 
 class RBACResponse(BaseModel):
     """RBAC role response model."""
+
     id: str = Field(..., description="Role definition ID")
     name: str = Field(..., description="Role name")
     type: str = Field(..., description="Resource type")
@@ -183,6 +202,7 @@ class RBACResponse(BaseModel):
 
 class RoleAssignmentResponse(BaseModel):
     """Role assignment response model."""
+
     id: str = Field(..., description="Assignment ID")
     name: str = Field(..., description="Assignment name")
     type: str = Field(..., description="Resource type")
@@ -199,24 +219,24 @@ class RoleAssignmentResponse(BaseModel):
 # Cost Management Models
 class CostResponse(BaseModel):
     """Cost management response model."""
+
     subscription_id: str = Field(..., description="Subscription ID")
     time_period: Dict[str, str] = Field(..., description="Time period for cost data")
     currency: str = Field(..., description="Currency code")
     total_cost: float = Field(..., description="Total cost for the period")
     cost_breakdown: Optional[List[Dict[str, Any]]] = Field(
-        None,
-        description="Cost breakdown by service/resource"
+        None, description="Cost breakdown by service/resource"
     )
     forecast: Optional[Dict[str, Any]] = Field(None, description="Cost forecast data")
     recommendations: Optional[List[Dict[str, Any]]] = Field(
-        None,
-        description="Cost optimization recommendations"
+        None, description="Cost optimization recommendations"
     )
     budget_status: Optional[Dict[str, Any]] = Field(None, description="Budget status information")
 
 
 class BudgetRequest(BaseModel):
     """Budget creation/update request model."""
+
     name: str = Field(..., description="Budget name")
     amount: float = Field(..., description="Budget amount")
     time_grain: str = Field("Monthly", description="Budget time grain")
@@ -229,6 +249,7 @@ class BudgetRequest(BaseModel):
 
 class BudgetResponse(BaseModel):
     """Budget response model."""
+
     id: str = Field(..., description="Budget ID")
     name: str = Field(..., description="Budget name")
     type: str = Field(..., description="Resource type")
@@ -245,6 +266,7 @@ class BudgetResponse(BaseModel):
 # Network Management Models
 class NetworkResponse(BaseModel):
     """Virtual network response model."""
+
     id: str = Field(..., description="Network ID")
     name: str = Field(..., description="Network name")
     type: str = Field(..., description="Resource type")
@@ -259,6 +281,7 @@ class NetworkResponse(BaseModel):
 
 class NetworkSecurityGroupResponse(BaseModel):
     """Network security group response model."""
+
     id: str = Field(..., description="NSG ID")
     name: str = Field(..., description="NSG name")
     type: str = Field(..., description="Resource type")
@@ -267,8 +290,7 @@ class NetworkSecurityGroupResponse(BaseModel):
     security_rules: List[Dict[str, Any]] = Field(..., description="Security rules")
     default_security_rules: List[Dict[str, Any]] = Field(..., description="Default security rules")
     network_interfaces: Optional[List[str]] = Field(
-        None,
-        description="Associated network interfaces"
+        None, description="Associated network interfaces"
     )
     subnets: Optional[List[str]] = Field(None, description="Associated subnets")
     tags: Optional[Dict[str, str]] = Field(None, description="Resource tags")
@@ -276,13 +298,13 @@ class NetworkSecurityGroupResponse(BaseModel):
 
 class NetworkSecurityAnalysis(BaseModel):
     """Network security analysis response model."""
+
     total_networks: int = Field(..., description="Total number of networks analyzed")
     total_nsgs: int = Field(..., description="Total number of NSGs analyzed")
     security_issues: List[Dict[str, Any]] = Field(..., description="Identified security issues")
     open_ports: List[Dict[str, Any]] = Field(..., description="Open ports to internet")
     overly_permissive_rules: List[Dict[str, Any]] = Field(
-        ...,
-        description="Overly permissive rules"
+        ..., description="Overly permissive rules"
     )
     missing_nsgs: List[Dict[str, Any]] = Field(..., description="Subnets without NSGs")
     recommendations: List[Dict[str, Any]] = Field(..., description="Security recommendations")
@@ -293,6 +315,7 @@ class NetworkSecurityAnalysis(BaseModel):
 # Resource Management Models
 class ResourceResponse(BaseModel):
     """Azure resource response model."""
+
     id: str = Field(..., description="Resource ID")
     name: str = Field(..., description="Resource name")
     type: str = Field(..., description="Resource type")
@@ -310,6 +333,7 @@ class ResourceResponse(BaseModel):
 
 class ResourceGroupResponse(BaseModel):
     """Resource group response model."""
+
     id: str = Field(..., description="Resource group ID")
     name: str = Field(..., description="Resource group name")
     type: str = Field(..., description="Resource type")
@@ -322,12 +346,14 @@ class ResourceGroupResponse(BaseModel):
 
 class ResourceTagUpdate(BaseModel):
     """Resource tag update request model."""
+
     operation: str = Field("merge", description="Tag operation: merge, replace, delete")
     tags: Dict[str, str] = Field(..., description="Tags to apply")
 
 
 class ResourceMetrics(BaseModel):
     """Resource metrics response model."""
+
     resource_id: str = Field(..., description="Resource ID")
     metric_name: str = Field(..., description="Metric name")
     time_grain: str = Field(..., description="Metric time grain")

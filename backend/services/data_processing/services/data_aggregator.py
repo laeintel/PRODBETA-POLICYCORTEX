@@ -5,9 +5,14 @@ Data aggregation service for PolicyCortex.
 import json
 import uuid
 from datetime import datetime
-from typing import Dict, Any, List, Union, Optional
-import pandas as pd
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+
 import numpy as np
+import pandas as pd
 import structlog
 
 from ....shared.config import get_settings
@@ -24,11 +29,14 @@ class DataAggregatorService:
         self.settings = settings
         self.aggregation_history = {}
 
-    async def aggregate_data(self, data: Union[Dict[str, Any], List[Dict[str, Any]]],
-                           aggregation_rules: List[AggregationRule],
-                           group_by_fields: List[str] = None,
-                           filters: Optional[Dict[str, Any]] = None,
-                           user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def aggregate_data(
+        self,
+        data: Union[Dict[str, Any], List[Dict[str, Any]]],
+        aggregation_rules: List[AggregationRule],
+        group_by_fields: List[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Aggregate data using specified rules."""
         try:
             aggregation_id = str(uuid.uuid4())
@@ -46,7 +54,7 @@ class DataAggregatorService:
                 "data_aggregation_started",
                 aggregation_id=aggregation_id,
                 input_rows=len(df),
-                rule_count=len(aggregation_rules)
+                rule_count=len(aggregation_rules),
             )
 
             # Apply filters
@@ -67,21 +75,21 @@ class DataAggregatorService:
                 "output_rows": len(aggregated_df),
                 "processing_time": processing_time,
                 "user_id": user_id,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             logger.info(
                 "data_aggregation_completed",
                 aggregation_id=aggregation_id,
                 output_rows=len(aggregated_df),
-                processing_time=processing_time
+                processing_time=processing_time,
             )
 
             return {
                 "aggregation_id": aggregation_id,
                 "aggregated_data": aggregated_data,
                 "record_count": len(aggregated_df),
-                "processing_time_ms": int(processing_time * 1000)
+                "processing_time_ms": int(processing_time * 1000),
             }
 
         except Exception as e:
@@ -117,10 +125,9 @@ class DataAggregatorService:
                     elif operator == "contains":
                         filtered_df = filtered_df[filtered_df[field].str.contains(value, na=False)]
                     elif operator == "startswith":
-                        filtered_df = filtered_df[filtered_df[field].str.startswith(
-                            value,
-                            na=False
-                        )]
+                        filtered_df = filtered_df[
+                            filtered_df[field].str.startswith(value, na=False)
+                        ]
                     elif operator == "endswith":
                         filtered_df = filtered_df[filtered_df[field].str.endswith(value, na=False)]
                 else:
@@ -133,8 +140,9 @@ class DataAggregatorService:
             logger.error("apply_filters_failed", error=str(e))
             raise
 
-    async def _perform_aggregation(self, df: pd.DataFrame, rules: List[AggregationRule],
-                                 group_by_fields: List[str] = None) -> pd.DataFrame:
+    async def _perform_aggregation(
+        self, df: pd.DataFrame, rules: List[AggregationRule], group_by_fields: List[str] = None
+    ) -> pd.DataFrame:
         """Perform aggregation based on rules."""
         try:
             # Build aggregation dictionary

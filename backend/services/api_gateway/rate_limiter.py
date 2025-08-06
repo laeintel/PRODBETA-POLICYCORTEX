@@ -3,13 +3,17 @@ Rate limiter for API Gateway using Redis-based sliding window algorithm.
 Provides flexible rate limiting with different strategies and user/IP-based limits.
 """
 
-import time
 import json
-from datetime import datetime, timedelta
-from typing import Tuple, Optional, Dict, Any
+import time
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import Optional
+from typing import Tuple
+
 import redis.asyncio as redis
 import structlog
-
 from shared.config import get_settings
 
 settings = get_settings()
@@ -30,16 +34,12 @@ class RateLimiter:
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,
-                decode_responses=True
+                decode_responses=True,
             )
         return self.redis_client
 
     async def is_allowed(
-        self,
-        key: str,
-        limit: int,
-        window: int,
-        burst: Optional[int] = None
+        self, key: str, limit: int, window: int, burst: Optional[int] = None
     ) -> Tuple[bool, Optional[datetime]]:
         """
         Check if request is allowed based on rate limits.
@@ -90,13 +90,7 @@ class RateLimiter:
             """
 
             result = await redis_client.eval(
-                lua_script,
-                1,
-                rate_limit_key,
-                window_start,
-                current_time,
-                limit,
-                window
+                lua_script, 1, rate_limit_key, window_start, current_time, limit, window
             )
 
             is_allowed = bool(result[0])
@@ -113,7 +107,7 @@ class RateLimiter:
                 limit=limit,
                 window=window,
                 allowed=is_allowed,
-                reset_time=reset_time.isoformat() if reset_time else None
+                reset_time=reset_time.isoformat() if reset_time else None,
             )
 
             return is_allowed, reset_time
@@ -143,7 +137,7 @@ class RateLimiter:
             return {
                 "current_count": current_count,
                 "window_seconds": window,
-                "reset_time": reset_time.isoformat() if reset_time else None
+                "reset_time": reset_time.isoformat() if reset_time else None,
             }
 
         except Exception as e:
@@ -166,21 +160,18 @@ class RateLimiter:
             return False
 
     async def check_user_rate_limit(
-        self,
-        user_id: str,
-        endpoint: str,
-        method: str = "GET"
+        self, user_id: str, endpoint: str, method: str = "GET"
     ) -> Tuple[bool, Optional[datetime]]:
         """Check rate limit for a specific user and endpoint."""
 
         # Different limits for different types of operations
         limits = {
-            "GET": {"limit": 1000, "window": 3600},      # 1000 GET requests per hour
-            "POST": {"limit": 100, "window": 3600},      # 100 POST requests per hour
-            "PUT": {"limit": 50, "window": 3600},        # 50 PUT requests per hour
-            "DELETE": {"limit": 20, "window": 3600},     # 20 DELETE requests per hour
-            "ai": {"limit": 50, "window": 3600},         # 50 AI requests per hour
-            "chat": {"limit": 200, "window": 3600},      # 200 chat messages per hour
+            "GET": {"limit": 1000, "window": 3600},  # 1000 GET requests per hour
+            "POST": {"limit": 100, "window": 3600},  # 100 POST requests per hour
+            "PUT": {"limit": 50, "window": 3600},  # 50 PUT requests per hour
+            "DELETE": {"limit": 20, "window": 3600},  # 20 DELETE requests per hour
+            "ai": {"limit": 50, "window": 3600},  # 50 AI requests per hour
+            "chat": {"limit": 200, "window": 3600},  # 200 chat messages per hour
         }
 
         # Determine rate limit based on endpoint and method
@@ -194,15 +185,11 @@ class RateLimiter:
         key = f"user:{user_id}:{method.upper()}:{endpoint}"
 
         return await self.is_allowed(
-            key=key,
-            limit=limit_config["limit"],
-            window=limit_config["window"]
+            key=key, limit=limit_config["limit"], window=limit_config["window"]
         )
 
     async def check_ip_rate_limit(
-        self,
-        ip_address: str,
-        endpoint: str = None
+        self, ip_address: str, endpoint: str = None
     ) -> Tuple[bool, Optional[datetime]]:
         """Check rate limit for IP address."""
 
@@ -216,16 +203,10 @@ class RateLimiter:
 
         key = f"ip:{ip_address}"
 
-        return await self.is_allowed(
-            key=key,
-            limit=global_limit,
-            window=global_window
-        )
+        return await self.is_allowed(key=key, limit=global_limit, window=global_window)
 
     async def check_service_rate_limit(
-        self,
-        service_name: str,
-        user_id: Optional[str] = None
+        self, service_name: str, user_id: Optional[str] = None
     ) -> Tuple[bool, Optional[datetime]]:
         """Check rate limit for service-specific operations."""
 
@@ -234,7 +215,7 @@ class RateLimiter:
             "ai-engine": {"limit": 100, "window": 3600},
             "conversation": {"limit": 500, "window": 3600},
             "data-processing": {"limit": 200, "window": 3600},
-            "notification": {"limit": 1000, "window": 3600}
+            "notification": {"limit": 1000, "window": 3600},
         }
 
         limit_config = service_limits.get(service_name, {"limit": 100, "window": 3600})
@@ -245,26 +226,17 @@ class RateLimiter:
             key = f"service:{service_name}:global"
 
         return await self.is_allowed(
-            key=key,
-            limit=limit_config["limit"],
-            window=limit_config["window"]
+            key=key, limit=limit_config["limit"], window=limit_config["window"]
         )
 
     async def check_burst_limit(
-        self,
-        key: str,
-        burst_limit: int = 10,
-        burst_window: int = 60
+        self, key: str, burst_limit: int = 10, burst_window: int = 60
     ) -> Tuple[bool, Optional[datetime]]:
         """Check burst rate limit for preventing rapid successive requests."""
 
         burst_key = f"burst:{key}"
 
-        return await self.is_allowed(
-            key=burst_key,
-            limit=burst_limit,
-            window=burst_window
-        )
+        return await self.is_allowed(key=burst_key, limit=burst_limit, window=burst_window)
 
     async def get_user_quota_info(self, user_id: str) -> Dict[str, Any]:
         """Get comprehensive quota information for a user."""
@@ -272,12 +244,7 @@ class RateLimiter:
             quota_info = {}
 
             # Check different types of limits
-            limit_types = [
-                ("GET", 3600),
-                ("POST", 3600),
-                ("ai", 3600),
-                ("chat", 3600)
-            ]
+            limit_types = [("GET", 3600), ("POST", 3600), ("ai", 3600), ("chat", 3600)]
 
             for limit_type, window in limit_types:
                 key = f"user:{user_id}:{limit_type}"

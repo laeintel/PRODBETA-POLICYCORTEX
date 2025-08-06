@@ -5,8 +5,12 @@ Basic health checks and AI service endpoints without heavy dependencies.
 
 import os
 from datetime import datetime
-from typing import Dict, Any
-from fastapi import FastAPI, Request, HTTPException
+from typing import Any
+from typing import Dict
+
+from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -20,7 +24,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 app = FastAPI(
     title="PolicyCortex AI Engine Service",
     description="AI/ML Engine for Policy Analysis and Predictions",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # CORS middleware
@@ -30,7 +34,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-        )
+)
+
 
 @app.get("/health")
 async def health_check():
@@ -40,8 +45,9 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "service": SERVICE_NAME,
         "environment": ENVIRONMENT,
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
+
 
 @app.get("/ready")
 async def readiness_check():
@@ -50,8 +56,9 @@ async def readiness_check():
         "status": "ready",
         "timestamp": datetime.utcnow().isoformat(),
         "service": SERVICE_NAME,
-        "environment": ENVIRONMENT
+        "environment": ENVIRONMENT,
     }
+
 
 @app.get("/")
 async def root():
@@ -60,8 +67,9 @@ async def root():
         "message": "PolicyCortex AI Engine Service",
         "status": "running",
         "environment": ENVIRONMENT,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
 
 @app.get("/api/v1/status")
 async def api_status():
@@ -71,8 +79,9 @@ async def api_status():
         "status": "operational",
         "service": "ai_engine",
         "environment": ENVIRONMENT,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
 
 @app.get("/api/v1/models/status")
 async def models_status():
@@ -82,17 +91,14 @@ async def models_status():
             "compliance_predictor": "loaded",
             "cost_optimizer": "loaded",
             "anomaly_detector": "loaded",
-            "nlp_service": "loaded"
+            "nlp_service": "loaded",
         },
         "inference_ready": True,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main_simple:app",
-        host="0.0.0.0",
-        port=SERVICE_PORT,
-        log_level=LOG_LEVEL.lower()
-    )
+
+    uvicorn.run("main_simple:app", host="0.0.0.0", port=SERVICE_PORT, log_level=LOG_LEVEL.lower())

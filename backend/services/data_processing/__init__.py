@@ -7,12 +7,9 @@ __version__ = "1.0.0"
 __author__ = "PolicyCortex Team"
 __email__ = "team@policycortex.com"
 
+from .auth import AuthManager
 from .main import app
 from .models import *
-from .auth import AuthManager
 from .services import *
 
-__all__ = [
-    "app",
-    "AuthManager"
-]
+__all__ = ["app", "AuthManager"]

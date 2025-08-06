@@ -10,9 +10,16 @@ import asyncio
 import json
 import logging
 import pickle
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, Set
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import Union
 
 import networkx as nx
 import numpy as np
@@ -21,17 +28,24 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch_geometric
+from azure.identity import DefaultAzureCredential
+from azure.monitor.query import LogsQueryClient
 from scipy import sparse
-from sklearn.cluster import DBSCAN, KMeans
+from sklearn.cluster import DBSCAN
+from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import classification_report, silhouette_score
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-import torch_geometric
-from torch_geometric.data import Data, DataLoader
-from torch_geometric.nn import GCNConv, GATConv, global_mean_pool, global_max_pool
-from azure.monitor.query import LogsQueryClient
-from azure.identity import DefaultAzureCredential
+from sklearn.metrics import classification_report
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from torch_geometric.data import Data
+from torch_geometric.data import DataLoader
+from torch_geometric.nn import GATConv
+from torch_geometric.nn import GCNConv
+from torch_geometric.nn import global_max_pool
+from torch_geometric.nn import global_mean_pool
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +55,15 @@ class RBACGraphAttentionNetwork(nn.Module):
     Graph Attention Network for RBAC analysis with multi-head attention.
     """
 
-    def __init__(self, node_features: int, hidden_dim: int = 128, num_heads: int = 8,
-                 num_layers: int = 3, num_classes: int = 2, dropout: float = 0.2):
+    def __init__(
+        self,
+        node_features: int,
+        hidden_dim: int = 128,
+        num_heads: int = 8,
+        num_layers: int = 3,
+        num_classes: int = 2,
+        dropout: float = 0.2,
+    ):
         super().__init__()
 
         self.node_features = node_features
@@ -62,7 +83,7 @@ class RBACGraphAttentionNetwork(nn.Module):
                 hidden_dim // num_heads,
                 heads=num_heads,
                 dropout=dropout,
-                concat=True
+                concat=True,
             )
         )
 
@@ -74,18 +95,14 @@ class RBACGraphAttentionNetwork(nn.Module):
                     hidden_dim // num_heads,
                     heads=num_heads,
                     dropout=dropout,
-                    concat=True
+                    concat=True,
                 )
             )
 
         # Output layer
         self.gat_layers.append(
             GATConv(
-                hidden_dim,
-                hidden_dim // num_heads,
-                heads=num_heads,
-                dropout=dropout,
-                concat=False
+                hidden_dim, hidden_dim // num_heads, heads=num_heads, dropout=dropout, concat=False
             )
         )
 
@@ -94,7 +111,7 @@ class RBACGraphAttentionNetwork(nn.Module):
             nn.Linear(hidden_dim // num_heads, hidden_dim // 2),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim // 2, num_classes)
+            nn.Linear(hidden_dim // 2, num_classes),
         )
 
         # Global pooling
@@ -106,11 +123,12 @@ class RBACGraphAttentionNetwork(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim // 4, 1),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
-    def forward(self, x: torch.Tensor, edge_index: torch.Tensor,
-                batch: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, edge_index: torch.Tensor, batch: Optional[torch.Tensor] = None
+    ) -> Dict[str, torch.Tensor]:
         """
         Forward pass through the graph attention network.
 
@@ -150,11 +168,11 @@ class RBACGraphAttentionNetwork(nn.Module):
             graph_predictions = self.classifier(graph_embedding)
 
         return {
-            'node_embeddings': x,
-            'node_anomaly_scores': node_anomaly_scores,
-            'graph_embedding': graph_embedding,
-            'graph_predictions': graph_predictions,
-            'intermediate_embeddings': node_embeddings
+            "node_embeddings": x,
+            "node_anomaly_scores": node_anomaly_scores,
+            "graph_embedding": graph_embedding,
+            "graph_predictions": graph_predictions,
+            "intermediate_embeddings": node_embeddings,
         }
 
 
@@ -163,8 +181,14 @@ class RBACHierarchyGNN(nn.Module):
     Specialized Graph Neural Network for RBAC hierarchy analysis.
     """
 
-    def __init__(self, node_features: int, edge_features: int = 0, hidden_dim: int = 128,
-                 num_layers: int = 3, dropout: float = 0.2):
+    def __init__(
+        self,
+        node_features: int,
+        edge_features: int = 0,
+        hidden_dim: int = 128,
+        num_layers: int = 3,
+        dropout: float = 0.2,
+    ):
         super().__init__()
 
         self.node_features = node_features
@@ -185,7 +209,7 @@ class RBACHierarchyGNN(nn.Module):
             nn.Linear(hidden_dim * 2, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, 3)  # parent, child, sibling
+            nn.Linear(hidden_dim, 3),  # parent, child, sibling
         )
 
         # Permission propagation predictor
@@ -194,7 +218,7 @@ class RBACHierarchyGNN(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim // 2, 1),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> Dict[str, torch.Tensor]:
@@ -211,10 +235,9 @@ class RBACHierarchyGNN(nn.Module):
             embeddings.append(x)
 
         # Predict hierarchy relationships
-        edge_embeddings = torch.cat([
-            x[edge_index[0]],  # Source nodes
-            x[edge_index[1]]   # Target nodes
-        ], dim=1)
+        edge_embeddings = torch.cat(
+            [x[edge_index[0]], x[edge_index[1]]], dim=1  # Source nodes  # Target nodes
+        )
 
         hierarchy_predictions = self.hierarchy_predictor(edge_embeddings)
 
@@ -222,10 +245,10 @@ class RBACHierarchyGNN(nn.Module):
         permission_scores = self.permission_predictor(x)
 
         return {
-            'node_embeddings': x,
-            'hierarchy_predictions': hierarchy_predictions,
-            'permission_scores': permission_scores,
-            'intermediate_embeddings': embeddings
+            "node_embeddings": x,
+            "hierarchy_predictions": hierarchy_predictions,
+            "permission_scores": permission_scores,
+            "intermediate_embeddings": embeddings,
         }
 
 
@@ -260,57 +283,53 @@ class RBACAnalyzer:
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration for the RBAC analyzer."""
         return {
-            'graph_config': {
-                'node_features': 64,
-                'hidden_dim': 128,
-                'num_heads': 8,
-                'num_layers': 3,
-                'dropout': 0.2
+            "graph_config": {
+                "node_features": 64,
+                "hidden_dim": 128,
+                "num_heads": 8,
+                "num_layers": 3,
+                "dropout": 0.2,
             },
-            'anomaly_detection': {
-                'isolation_forest_contamination': 0.1,
-                'dbscan_eps': 0.5,
-                'dbscan_min_samples': 5
+            "anomaly_detection": {
+                "isolation_forest_contamination": 0.1,
+                "dbscan_eps": 0.5,
+                "dbscan_min_samples": 5,
             },
-            'clustering': {
-                'n_clusters': 10,
-                'similarity_threshold': 0.8
+            "clustering": {"n_clusters": 10, "similarity_threshold": 0.8},
+            "training": {
+                "epochs": 200,
+                "learning_rate": 0.001,
+                "batch_size": 32,
+                "validation_split": 0.2,
             },
-            'training': {
-                'epochs': 200,
-                'learning_rate': 0.001,
-                'batch_size': 32,
-                'validation_split': 0.2
-            }
         }
 
     def _initialize_models(self):
         """Initialize all models and components."""
         # Anomaly detection models
-        self.models['isolation_forest'] = IsolationForest(
-            contamination=self.config['anomaly_detection']['isolation_forest_contamination'],
-            random_state=42
+        self.models["isolation_forest"] = IsolationForest(
+            contamination=self.config["anomaly_detection"]["isolation_forest_contamination"],
+            random_state=42,
         )
 
-        self.models['dbscan'] = DBSCAN(
-            eps=self.config['anomaly_detection']['dbscan_eps'],
-            min_samples=self.config['anomaly_detection']['dbscan_min_samples']
+        self.models["dbscan"] = DBSCAN(
+            eps=self.config["anomaly_detection"]["dbscan_eps"],
+            min_samples=self.config["anomaly_detection"]["dbscan_min_samples"],
         )
 
         # Clustering for role optimization
-        self.models['kmeans'] = KMeans(
-            n_clusters=self.config['clustering']['n_clusters'],
-            random_state=42
+        self.models["kmeans"] = KMeans(
+            n_clusters=self.config["clustering"]["n_clusters"], random_state=42
         )
 
         # Scalers
-        self.scalers['standard'] = StandardScaler()
-        self.scalers['pca'] = PCA(n_components=0.95)  # Keep 95% variance
+        self.scalers["standard"] = StandardScaler()
+        self.scalers["pca"] = PCA(n_components=0.95)  # Keep 95% variance
 
         # Encoders
-        self.encoders['role'] = LabelEncoder()
-        self.encoders['permission'] = LabelEncoder()
-        self.encoders['user'] = LabelEncoder()
+        self.encoders["role"] = LabelEncoder()
+        self.encoders["permission"] = LabelEncoder()
+        self.encoders["user"] = LabelEncoder()
 
     async def prepare_rbac_data(self, workspace_id: str, days_back: int = 30) -> Dict[str, Any]:
         """
@@ -347,9 +366,7 @@ class RBACAnalyzer:
 
         try:
             response = await self.logs_client.query_workspace(
-                workspace_id=workspace_id,
-                query=rbac_query,
-                timespan=timedelta(days=days_back)
+                workspace_id=workspace_id, query=rbac_query, timespan=timedelta(days=days_back)
             )
 
             # Convert to DataFrame
@@ -382,29 +399,46 @@ class RBACAnalyzer:
         n_samples = days_back * 500  # 500 events per day
 
         # Define sample entities
-        users = [f'user_{i}@company.com' for i in range(1, 201)]  # 200 users
+        users = [f"user_{i}@company.com" for i in range(1, 201)]  # 200 users
         roles = [
-            'Global Administrator', 'User Administrator', 'Security Administrator',
-            'Application Administrator', 'Cloud Application Administrator',
-            'Privileged Role Administrator', 'Exchange Administrator',
-            'SharePoint Administrator', 'Teams Administrator', 'Intune Administrator',
-            'Security Reader', 'Global Reader', 'Helpdesk Administrator',
-            'Password Administrator', 'License Administrator'
+            "Global Administrator",
+            "User Administrator",
+            "Security Administrator",
+            "Application Administrator",
+            "Cloud Application Administrator",
+            "Privileged Role Administrator",
+            "Exchange Administrator",
+            "SharePoint Administrator",
+            "Teams Administrator",
+            "Intune Administrator",
+            "Security Reader",
+            "Global Reader",
+            "Helpdesk Administrator",
+            "Password Administrator",
+            "License Administrator",
         ]
         permissions = [
-            'microsoft.directory/users/create', 'microsoft.directory/users/read',
-            'microsoft.directory/users/update', 'microsoft.directory/users/delete',
-            'microsoft.directory/groups/create', 'microsoft.directory/groups/read',
-            'microsoft.directory/groups/update', 'microsoft.directory/groups/delete',
-            'microsoft.directory/applications/create', 'microsoft.directory/applications/read',
-            'microsoft.directory/applications/update', 'microsoft.directory/applications/delete',
-            'microsoft.security/policies/read', 'microsoft.security/policies/write',
-            'microsoft.azure/resourceGroups/read', 'microsoft.azure/resourceGroups/write'
+            "microsoft.directory/users/create",
+            "microsoft.directory/users/read",
+            "microsoft.directory/users/update",
+            "microsoft.directory/users/delete",
+            "microsoft.directory/groups/create",
+            "microsoft.directory/groups/read",
+            "microsoft.directory/groups/update",
+            "microsoft.directory/groups/delete",
+            "microsoft.directory/applications/create",
+            "microsoft.directory/applications/read",
+            "microsoft.directory/applications/update",
+            "microsoft.directory/applications/delete",
+            "microsoft.security/policies/read",
+            "microsoft.security/policies/write",
+            "microsoft.azure/resourceGroups/read",
+            "microsoft.azure/resourceGroups/write",
         ]
-        resources = [f'resource_{i}' for i in range(1, 101)]  # 100 resources
+        resources = [f"resource_{i}" for i in range(1, 101)]  # 100 resources
 
         data = []
-        dates = pd.date_range(end=datetime.now(), periods=n_samples, freq='5min')
+        dates = pd.date_range(end=datetime.now(), periods=n_samples, freq="5min")
 
         for date in dates:
             user = np.random.choice(users)
@@ -413,17 +447,19 @@ class RBACAnalyzer:
             resource = np.random.choice(resources)
 
             # Create realistic access patterns
-            action_types = ['Sign-in', 'Role Assignment', 'Permission Grant', 'Resource Access']
+            action_types = ["Sign-in", "Role Assignment", "Permission Grant", "Resource Access"]
             action_type = np.random.choice(action_types)
 
-            data.append({
-                'TimeGenerated': date,
-                'UserId': user,
-                'RoleName': role,
-                'Permission': permission,
-                'ResourceId': resource,
-                'ActionType': action_type
-            })
+            data.append(
+                {
+                    "TimeGenerated": date,
+                    "UserId": user,
+                    "RoleName": role,
+                    "Permission": permission,
+                    "ResourceId": resource,
+                    "ActionType": action_type,
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -440,17 +476,17 @@ class RBACAnalyzer:
         logger.info("Processing RBAC data into graph structures")
 
         if df.empty:
-            return {'graphs': {}, 'matrices': {}, 'metadata': {}}
+            return {"graphs": {}, "matrices": {}, "metadata": {}}
 
         # Clean and encode data
-        df['TimeGenerated'] = pd.to_datetime(df['TimeGenerated'])
-        df = df.sort_values('TimeGenerated')
+        df["TimeGenerated"] = pd.to_datetime(df["TimeGenerated"])
+        df = df.sort_values("TimeGenerated")
 
         # Encode categorical variables
-        df['user_id'] = self.encoders['user'].fit_transform(df['UserId'].fillna('unknown'))
-        df['role_id'] = self.encoders['role'].fit_transform(df['RoleName'].fillna('unknown'))
-        df['permission_id'] = (
-            self.encoders['permission'].fit_transform(df['Permission'].fillna('unknown'))
+        df["user_id"] = self.encoders["user"].fit_transform(df["UserId"].fillna("unknown"))
+        df["role_id"] = self.encoders["role"].fit_transform(df["RoleName"].fillna("unknown"))
+        df["permission_id"] = self.encoders["permission"].fit_transform(
+            df["Permission"].fillna("unknown")
         )
 
         # Create various graph representations
@@ -469,17 +505,17 @@ class RBACAnalyzer:
         access_patterns = self._detect_access_patterns(df)
 
         return {
-            'graphs': graphs,
-            'matrices': matrices,
-            'user_features': user_features,
-            'role_hierarchy': role_hierarchy,
-            'access_patterns': access_patterns,
-            'metadata': {
-                'n_users': len(df['UserId'].unique()),
-                'n_roles': len(df['RoleName'].unique()),
-                'n_permissions': len(df['Permission'].unique()),
-                'date_range': (df['TimeGenerated'].min(), df['TimeGenerated'].max())
-            }
+            "graphs": graphs,
+            "matrices": matrices,
+            "user_features": user_features,
+            "role_hierarchy": role_hierarchy,
+            "access_patterns": access_patterns,
+            "metadata": {
+                "n_users": len(df["UserId"].unique()),
+                "n_roles": len(df["RoleName"].unique()),
+                "n_permissions": len(df["Permission"].unique()),
+                "date_range": (df["TimeGenerated"].min(), df["TimeGenerated"].max()),
+            },
         }
 
     def _create_rbac_graphs(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -487,90 +523,92 @@ class RBACAnalyzer:
         graphs = {}
 
         # User-Role Graph
-        user_role_edges = df[['user_id', 'role_id']].drop_duplicates()
+        user_role_edges = df[["user_id", "role_id"]].drop_duplicates()
         user_role_graph = nx.Graph()
         for _, row in user_role_edges.iterrows():
             user_role_graph.add_edge(f"user_{row['user_id']}", f"role_{row['role_id']}")
-        graphs['user_role'] = user_role_graph
+        graphs["user_role"] = user_role_graph
 
         # Role-Permission Graph
-        role_perm_edges = df[['role_id', 'permission_id']].drop_duplicates()
+        role_perm_edges = df[["role_id", "permission_id"]].drop_duplicates()
         role_perm_graph = nx.Graph()
         for _, row in role_perm_edges.iterrows():
             role_perm_graph.add_edge(f"role_{row['role_id']}", f"perm_{row['permission_id']}")
-        graphs['role_permission'] = role_perm_graph
+        graphs["role_permission"] = role_perm_graph
 
         # User-Permission Graph (transitive)
-        user_perm_edges = df[['user_id', 'permission_id']].drop_duplicates()
+        user_perm_edges = df[["user_id", "permission_id"]].drop_duplicates()
         user_perm_graph = nx.Graph()
         for _, row in user_perm_edges.iterrows():
             user_perm_graph.add_edge(f"user_{row['user_id']}", f"perm_{row['permission_id']}")
-        graphs['user_permission'] = user_perm_graph
+        graphs["user_permission"] = user_perm_graph
 
         # Full RBAC Graph (tripartite)
         full_graph = nx.Graph()
         full_graph.add_edges_from(user_role_graph.edges())
         full_graph.add_edges_from(role_perm_graph.edges())
-        graphs['full_rbac'] = full_graph
+        graphs["full_rbac"] = full_graph
 
         # Convert to PyTorch Geometric format
         torch_graphs = {}
         for graph_name, graph in graphs.items():
             torch_graphs[graph_name] = self._networkx_to_torch_geometric(graph)
 
-        graphs['torch_geometric'] = torch_graphs
+        graphs["torch_geometric"] = torch_graphs
 
         return graphs
 
     def _create_rbac_matrices(self, df: pd.DataFrame) -> Dict[str, np.ndarray]:
         """Create various matrix representations of RBAC data."""
-        n_users = len(df['user_id'].unique())
-        n_roles = len(df['role_id'].unique())
-        n_permissions = len(df['permission_id'].unique())
+        n_users = len(df["user_id"].unique())
+        n_roles = len(df["role_id"].unique())
+        n_permissions = len(df["permission_id"].unique())
 
         # User-Role Assignment Matrix
         user_role_matrix = np.zeros((n_users, n_roles))
-        user_role_pairs = df[['user_id', 'role_id']].drop_duplicates()
+        user_role_pairs = df[["user_id", "role_id"]].drop_duplicates()
         for _, row in user_role_pairs.iterrows():
-            user_role_matrix[row['user_id'], row['role_id']] = 1
+            user_role_matrix[row["user_id"], row["role_id"]] = 1
 
         # Role-Permission Assignment Matrix
         role_perm_matrix = np.zeros((n_roles, n_permissions))
-        role_perm_pairs = df[['role_id', 'permission_id']].drop_duplicates()
+        role_perm_pairs = df[["role_id", "permission_id"]].drop_duplicates()
         for _, row in role_perm_pairs.iterrows():
-            role_perm_matrix[row['role_id'], row['permission_id']] = 1
+            role_perm_matrix[row["role_id"], row["permission_id"]] = 1
 
         # User-Permission Matrix (transitive)
         user_perm_matrix = user_role_matrix @ role_perm_matrix
 
         return {
-            'user_role': user_role_matrix,
-            'role_permission': role_perm_matrix,
-            'user_permission': user_perm_matrix
+            "user_role": user_role_matrix,
+            "role_permission": role_perm_matrix,
+            "user_permission": user_perm_matrix,
         }
 
     def _extract_user_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Extract behavioral features for each user."""
         user_features = []
 
-        for user_id in df['user_id'].unique():
-            user_data = df[df['user_id'] == user_id]
+        for user_id in df["user_id"].unique():
+            user_data = df[df["user_id"] == user_id]
 
             # Time-based features
-            user_data['hour'] = user_data['TimeGenerated'].dt.hour
-            user_data['day_of_week'] = user_data['TimeGenerated'].dt.dayofweek
+            user_data["hour"] = user_data["TimeGenerated"].dt.hour
+            user_data["day_of_week"] = user_data["TimeGenerated"].dt.dayofweek
 
             features = {
-                'user_id': user_id,
-                'total_actions': len(user_data),
-                'unique_roles': user_data['role_id'].nunique(),
-                'unique_permissions': user_data['permission_id'].nunique(),
-                'unique_resources': user_data['ResourceId'].nunique(),
-                'avg_actions_per_day': len(user_data) / 30,  # Assuming 30 days
-                'weekend_activity': len(user_data[user_data['day_of_week'] >= 5]) / len(user_data),
-                'night_activity': len(user_data[(user_data['hour'] < 6) | (user_data['hour'] > 22)]) / len(user_data),
-                'role_diversity': user_data['role_id'].nunique() / df['role_id'].nunique(),
-                'permission_diversity': user_data['permission_id'].nunique() / df['permission_id'].nunique()
+                "user_id": user_id,
+                "total_actions": len(user_data),
+                "unique_roles": user_data["role_id"].nunique(),
+                "unique_permissions": user_data["permission_id"].nunique(),
+                "unique_resources": user_data["ResourceId"].nunique(),
+                "avg_actions_per_day": len(user_data) / 30,  # Assuming 30 days
+                "weekend_activity": len(user_data[user_data["day_of_week"] >= 5]) / len(user_data),
+                "night_activity": len(user_data[(user_data["hour"] < 6) | (user_data["hour"] > 22)])
+                / len(user_data),
+                "role_diversity": user_data["role_id"].nunique() / df["role_id"].nunique(),
+                "permission_diversity": user_data["permission_id"].nunique()
+                / df["permission_id"].nunique(),
             }
 
             user_features.append(features)
@@ -579,7 +617,7 @@ class RBACAnalyzer:
 
     def _infer_role_hierarchy(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Infer role hierarchy from permission overlap."""
-        role_perm_matrix = self._create_rbac_matrices(df)['role_permission']
+        role_perm_matrix = self._create_rbac_matrices(df)["role_permission"]
 
         hierarchy = {}
         n_roles = role_perm_matrix.shape[0]
@@ -605,9 +643,9 @@ class RBACAnalyzer:
                         hierarchy_matrix[i, j] = 1  # i is parent of j
 
         return {
-            'similarity_matrix': role_similarity,
-            'hierarchy_matrix': hierarchy_matrix,
-            'role_levels': self._calculate_role_levels(hierarchy_matrix)
+            "similarity_matrix": role_similarity,
+            "hierarchy_matrix": hierarchy_matrix,
+            "role_levels": self._calculate_role_levels(hierarchy_matrix),
         }
 
     def _calculate_role_levels(self, hierarchy_matrix: np.ndarray) -> Dict[int, int]:
@@ -624,6 +662,7 @@ class RBACAnalyzer:
 
         # BFS to assign levels
         from collections import deque
+
         queue = deque([(role, 0) for role in root_roles])
 
         while queue:
@@ -643,32 +682,36 @@ class RBACAnalyzer:
         patterns = {}
 
         # Time-based patterns
-        df['hour'] = df['TimeGenerated'].dt.hour
-        df['day_of_week'] = df['TimeGenerated'].dt.dayofweek
+        df["hour"] = df["TimeGenerated"].dt.hour
+        df["day_of_week"] = df["TimeGenerated"].dt.dayofweek
 
-        patterns['hourly_distribution'] = df['hour'].value_counts().sort_index().to_dict()
-        patterns['daily_distribution'] = df['day_of_week'].value_counts().sort_index().to_dict()
+        patterns["hourly_distribution"] = df["hour"].value_counts().sort_index().to_dict()
+        patterns["daily_distribution"] = df["day_of_week"].value_counts().sort_index().to_dict()
 
         # Role usage patterns
-        patterns['role_popularity'] = df['RoleName'].value_counts().to_dict()
-        patterns['permission_popularity'] = df['Permission'].value_counts().to_dict()
+        patterns["role_popularity"] = df["RoleName"].value_counts().to_dict()
+        patterns["permission_popularity"] = df["Permission"].value_counts().to_dict()
 
         # User behavior clusters
         user_features = self._extract_user_features(df)
         if len(user_features) > 1:
-            feature_cols = ['total_actions', 'unique_roles', 'unique_permissions',
-                          'weekend_activity', 'night_activity']
+            feature_cols = [
+                "total_actions",
+                "unique_roles",
+                "unique_permissions",
+                "weekend_activity",
+                "night_activity",
+            ]
             X = user_features[feature_cols].fillna(0)
-            X_scaled = self.scalers['standard'].fit_transform(X)
+            X_scaled = self.scalers["standard"].fit_transform(X)
 
-            clusters = self.models['kmeans'].fit_predict(X_scaled)
-            patterns['user_clusters'] = {
-                'cluster_labels': clusters.tolist(),
-                'cluster_centers': self.models['kmeans'].cluster_centers_.tolist(),
-                'silhouette_score': silhouette_score(
-                    X_scaled,
-                    clusters) if len(set(clusters)
-                ) > 1 else 0
+            clusters = self.models["kmeans"].fit_predict(X_scaled)
+            patterns["user_clusters"] = {
+                "cluster_labels": clusters.tolist(),
+                "cluster_centers": self.models["kmeans"].cluster_centers_.tolist(),
+                "silhouette_score": (
+                    silhouette_score(X_scaled, clusters) if len(set(clusters)) > 1 else 0
+                ),
             }
 
         return patterns
@@ -681,14 +724,19 @@ class RBACAnalyzer:
 
         # Create edge index
         edges = list(graph.edges())
-        edge_index = torch.tensor([
-            [node_mapping[edge[0]] for edge in edges] + [node_mapping[edge[1]] for edge in edges],
-            [node_mapping[edge[1]] for edge in edges] + [node_mapping[edge[0]] for edge in edges]
-        ], dtype=torch.long)
+        edge_index = torch.tensor(
+            [
+                [node_mapping[edge[0]] for edge in edges]
+                + [node_mapping[edge[1]] for edge in edges],
+                [node_mapping[edge[1]] for edge in edges]
+                + [node_mapping[edge[0]] for edge in edges],
+            ],
+            dtype=torch.long,
+        )
 
         # Create dummy node features
         num_nodes = len(nodes)
-        node_features = torch.randn(num_nodes, self.config['graph_config']['node_features'])
+        node_features = torch.randn(num_nodes, self.config["graph_config"]["node_features"])
 
         return Data(x=node_features, edge_index=edge_index, num_nodes=num_nodes)
 
@@ -704,22 +752,22 @@ class RBACAnalyzer:
         """
         logger.info("Training GNN models for RBAC analysis")
 
-        if not rbac_data['graphs']:
+        if not rbac_data["graphs"]:
             raise ValueError("No graph data available for training")
 
         training_results = {}
 
         # Train GAT model for anomaly detection
         gat_results = await self._train_gat_model(rbac_data)
-        training_results['gat'] = gat_results
+        training_results["gat"] = gat_results
 
         # Train hierarchy analysis model
         hierarchy_results = await self._train_hierarchy_model(rbac_data)
-        training_results['hierarchy'] = hierarchy_results
+        training_results["hierarchy"] = hierarchy_results
 
         # Train traditional anomaly detection models
         anomaly_results = self._train_anomaly_detection(rbac_data)
-        training_results['anomaly_detection'] = anomaly_results
+        training_results["anomaly_detection"] = anomaly_results
 
         return training_results
 
@@ -728,18 +776,17 @@ class RBACAnalyzer:
         logger.info("Training Graph Attention Network")
 
         # Get the full RBAC graph
-        graph_data = rbac_data['graphs']['torch_geometric']['full_rbac']
+        graph_data = rbac_data["graphs"]["torch_geometric"]["full_rbac"]
 
         # Initialize GAT model
-        self.models['gat'] = RBACGraphAttentionNetwork(
-            node_features=self.config['graph_config']['node_features'],
-            **self.config['graph_config']
+        self.models["gat"] = RBACGraphAttentionNetwork(
+            node_features=self.config["graph_config"]["node_features"],
+            **self.config["graph_config"],
         )
 
         # Training setup
         optimizer = optim.Adam(
-            self.models['gat'].parameters(),
-            lr=self.config['training']['learning_rate']
+            self.models["gat"].parameters(), lr=self.config["training"]["learning_rate"]
         )
         criterion = nn.CrossEntropyLoss()
 
@@ -748,25 +795,21 @@ class RBACAnalyzer:
         pseudo_labels = torch.randint(0, 2, (num_nodes,))
 
         # Training loop
-        self.models['gat'].train()
+        self.models["gat"].train()
         epoch_losses = []
 
-        for epoch in range(self.config['training']['epochs']):
+        for epoch in range(self.config["training"]["epochs"]):
             optimizer.zero_grad()
 
-            outputs = self.models['gat'](graph_data.x, graph_data.edge_index)
+            outputs = self.models["gat"](graph_data.x, graph_data.edge_index)
 
             # Node-level loss (anomaly detection)
             node_loss = F.binary_cross_entropy(
-                outputs['node_anomaly_scores'].squeeze(),
-                pseudo_labels.float()
+                outputs["node_anomaly_scores"].squeeze(), pseudo_labels.float()
             )
 
             # Graph-level loss (placeholder)
-            graph_loss = criterion(
-                outputs['graph_predictions'],
-                torch.tensor([0])  # Dummy label
-            )
+            graph_loss = criterion(outputs["graph_predictions"], torch.tensor([0]))  # Dummy label
 
             total_loss = node_loss + 0.1 * graph_loss
             total_loss.backward()
@@ -777,11 +820,11 @@ class RBACAnalyzer:
             if epoch % 50 == 0:
                 logger.info(f"GAT Epoch {epoch}: Loss = {total_loss.item():.4f}")
 
-        self.models['gat'].eval()
+        self.models["gat"].eval()
 
         return {
-            'final_loss': epoch_losses[-1] if epoch_losses else float('inf'),
-            'training_losses': epoch_losses
+            "final_loss": epoch_losses[-1] if epoch_losses else float("inf"),
+            "training_losses": epoch_losses,
         }
 
     async def _train_hierarchy_model(self, rbac_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -789,41 +832,36 @@ class RBACAnalyzer:
         logger.info("Training RBAC hierarchy model")
 
         # Get role-permission graph
-        graph_data = rbac_data['graphs']['torch_geometric']['role_permission']
+        graph_data = rbac_data["graphs"]["torch_geometric"]["role_permission"]
 
         # Initialize hierarchy model
-        self.models['hierarchy'] = RBACHierarchyGNN(
-            node_features=self.config['graph_config']['node_features'],
-            **self.config['graph_config']
+        self.models["hierarchy"] = RBACHierarchyGNN(
+            node_features=self.config["graph_config"]["node_features"],
+            **self.config["graph_config"],
         )
 
         # Training setup
         optimizer = optim.Adam(
-            self.models['hierarchy'].parameters(),
-            lr=self.config['training']['learning_rate']
+            self.models["hierarchy"].parameters(), lr=self.config["training"]["learning_rate"]
         )
 
         # Training loop
-        self.models['hierarchy'].train()
+        self.models["hierarchy"].train()
         epoch_losses = []
 
-        for epoch in range(self.config['training']['epochs'] // 2):  # Fewer epochs
+        for epoch in range(self.config["training"]["epochs"] // 2):  # Fewer epochs
             optimizer.zero_grad()
 
-            outputs = self.models['hierarchy'](graph_data.x, graph_data.edge_index)
+            outputs = self.models["hierarchy"](graph_data.x, graph_data.edge_index)
 
             # Generate pseudo-labels for hierarchy relationships
             num_edges = graph_data.edge_index.shape[1]
             hierarchy_labels = torch.randint(0, 3, (num_edges,))
 
-            hierarchy_loss = F.cross_entropy(
-                outputs['hierarchy_predictions'],
-                hierarchy_labels
-            )
+            hierarchy_loss = F.cross_entropy(outputs["hierarchy_predictions"], hierarchy_labels)
 
             permission_loss = F.binary_cross_entropy(
-                outputs['permission_scores'].squeeze(),
-                torch.rand(graph_data.x.shape[0])
+                outputs["permission_scores"].squeeze(), torch.rand(graph_data.x.shape[0])
             )
 
             total_loss = hierarchy_loss + 0.5 * permission_loss
@@ -835,47 +873,53 @@ class RBACAnalyzer:
             if epoch % 25 == 0:
                 logger.info(f"Hierarchy Epoch {epoch}: Loss = {total_loss.item():.4f}")
 
-        self.models['hierarchy'].eval()
+        self.models["hierarchy"].eval()
 
         return {
-            'final_loss': epoch_losses[-1] if epoch_losses else float('inf'),
-            'training_losses': epoch_losses
+            "final_loss": epoch_losses[-1] if epoch_losses else float("inf"),
+            "training_losses": epoch_losses,
         }
 
     def _train_anomaly_detection(self, rbac_data: Dict[str, Any]) -> Dict[str, Any]:
         """Train traditional anomaly detection models."""
         logger.info("Training anomaly detection models")
 
-        user_features = rbac_data['user_features']
+        user_features = rbac_data["user_features"]
 
         if user_features.empty:
-            return {'error': 'No user features available'}
+            return {"error": "No user features available"}
 
         # Prepare features
-        feature_cols = ['total_actions', 'unique_roles', 'unique_permissions',
-                       'weekend_activity', 'night_activity', 'role_diversity']
+        feature_cols = [
+            "total_actions",
+            "unique_roles",
+            "unique_permissions",
+            "weekend_activity",
+            "night_activity",
+            "role_diversity",
+        ]
         X = user_features[feature_cols].fillna(0)
-        X_scaled = self.scalers['standard'].fit_transform(X)
+        X_scaled = self.scalers["standard"].fit_transform(X)
 
         # Train Isolation Forest
-        self.models['isolation_forest'].fit(X_scaled)
-        anomaly_scores = self.models['isolation_forest'].decision_function(X_scaled)
-        anomaly_labels = self.models['isolation_forest'].predict(X_scaled)
+        self.models["isolation_forest"].fit(X_scaled)
+        anomaly_scores = self.models["isolation_forest"].decision_function(X_scaled)
+        anomaly_labels = self.models["isolation_forest"].predict(X_scaled)
 
         # Train DBSCAN
-        cluster_labels = self.models['dbscan'].fit_predict(X_scaled)
+        cluster_labels = self.models["dbscan"].fit_predict(X_scaled)
 
         return {
-            'isolation_forest': {
-                'anomaly_scores': anomaly_scores.tolist(),
-                'anomaly_labels': anomaly_labels.tolist(),
-                'n_anomalies': np.sum(anomaly_labels == -1)
+            "isolation_forest": {
+                "anomaly_scores": anomaly_scores.tolist(),
+                "anomaly_labels": anomaly_labels.tolist(),
+                "n_anomalies": np.sum(anomaly_labels == -1),
             },
-            'dbscan': {
-                'cluster_labels': cluster_labels.tolist(),
-                'n_clusters': len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0),
-                'n_noise': np.sum(cluster_labels == -1)
-            }
+            "dbscan": {
+                "cluster_labels": cluster_labels.tolist(),
+                "n_clusters": len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0),
+                "n_noise": np.sum(cluster_labels == -1),
+            },
         }
 
     async def analyze_user_access(self, user_id: str, rbac_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -893,27 +937,33 @@ class RBACAnalyzer:
 
         try:
             # Get user features
-            user_features = rbac_data['user_features']
-            user_data = user_features[user_features['user_id'] == user_id]
+            user_features = rbac_data["user_features"]
+            user_data = user_features[user_features["user_id"] == user_id]
 
             if user_data.empty:
                 return {
-                    'user_id': user_id,
-                    'error': 'User not found in dataset',
-                    'recommendations': ['User not found in recent activity logs']
+                    "user_id": user_id,
+                    "error": "User not found in dataset",
+                    "recommendations": ["User not found in recent activity logs"],
                 }
 
             user_row = user_data.iloc[0]
 
             # Anomaly detection
-            feature_cols = ['total_actions', 'unique_roles', 'unique_permissions',
-                           'weekend_activity', 'night_activity', 'role_diversity']
+            feature_cols = [
+                "total_actions",
+                "unique_roles",
+                "unique_permissions",
+                "weekend_activity",
+                "night_activity",
+                "role_diversity",
+            ]
             X = user_row[feature_cols].values.reshape(1, -1)
-            X_scaled = self.scalers['standard'].transform(X)
+            X_scaled = self.scalers["standard"].transform(X)
 
             # Get anomaly scores
-            anomaly_score = self.models['isolation_forest'].decision_function(X_scaled)[0]
-            is_anomaly = self.models['isolation_forest'].predict(X_scaled)[0] == -1
+            anomaly_score = self.models["isolation_forest"].decision_function(X_scaled)[0]
+            is_anomaly = self.models["isolation_forest"].predict(X_scaled)[0] == -1
 
             # Role analysis
             role_analysis = self._analyze_user_roles(user_row, rbac_data)
@@ -927,67 +977,58 @@ class RBACAnalyzer:
             )
 
             return {
-                'user_id': user_id,
-                'anomaly_score': float(anomaly_score),
-                'is_anomaly': bool(is_anomaly),
-                'role_analysis': role_analysis,
-                'permission_analysis': permission_analysis,
-                'risk_level': self._calculate_risk_level(anomaly_score, role_analysis),
-                'recommendations': recommendations
+                "user_id": user_id,
+                "anomaly_score": float(anomaly_score),
+                "is_anomaly": bool(is_anomaly),
+                "role_analysis": role_analysis,
+                "permission_analysis": permission_analysis,
+                "risk_level": self._calculate_risk_level(anomaly_score, role_analysis),
+                "recommendations": recommendations,
             }
 
         except Exception as e:
             logger.error(f"Error analyzing user access: {str(e)}")
             return {
-                'user_id': user_id,
-                'error': str(e),
-                'recommendations': ['Error in analysis - manual review recommended']
+                "user_id": user_id,
+                "error": str(e),
+                "recommendations": ["Error in analysis - manual review recommended"],
             }
 
     def _analyze_user_roles(
-        self,
-        user_data: pd.Series,
-        rbac_data: Dict[str,
-        Any]
+        self, user_data: pd.Series, rbac_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Analyze user's role assignments."""
-        role_hierarchy = rbac_data['role_hierarchy']
+        role_hierarchy = rbac_data["role_hierarchy"]
 
         return {
-            'unique_roles': int(user_data['unique_roles']),
-            'role_diversity': float(user_data['role_diversity']),
-            'is_over_privileged': user_data['role_diversity'] > 0.2,  # Threshold
-            'role_conflicts': self._detect_role_conflicts(user_data, role_hierarchy)
+            "unique_roles": int(user_data["unique_roles"]),
+            "role_diversity": float(user_data["role_diversity"]),
+            "is_over_privileged": user_data["role_diversity"] > 0.2,  # Threshold
+            "role_conflicts": self._detect_role_conflicts(user_data, role_hierarchy),
         }
 
     def _analyze_user_permissions(
-        self,
-        user_data: pd.Series,
-        rbac_data: Dict[str,
-        Any]
+        self, user_data: pd.Series, rbac_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Analyze user's permission assignments."""
         return {
-            'unique_permissions': int(user_data['unique_permissions']),
-            'permission_diversity': float(user_data['permission_diversity']),
-            'excessive_permissions': user_data['permission_diversity'] > 0.3,  # Threshold
-            'unused_permissions': self._detect_unused_permissions(user_data)
+            "unique_permissions": int(user_data["unique_permissions"]),
+            "permission_diversity": float(user_data["permission_diversity"]),
+            "excessive_permissions": user_data["permission_diversity"] > 0.3,  # Threshold
+            "unused_permissions": self._detect_unused_permissions(user_data),
         }
 
     def _detect_role_conflicts(
-        self,
-        user_data: pd.Series,
-        role_hierarchy: Dict[str,
-        Any]
+        self, user_data: pd.Series, role_hierarchy: Dict[str, Any]
     ) -> List[str]:
         """Detect potential conflicts in user's role assignments."""
         conflicts = []
 
         # This would contain more sophisticated conflict detection logic
-        if user_data['unique_roles'] > 5:
+        if user_data["unique_roles"] > 5:
             conflicts.append("User has unusually high number of roles")
 
-        if user_data['role_diversity'] > 0.4:
+        if user_data["role_diversity"] > 0.4:
             conflicts.append("User roles span multiple organizational areas")
 
         return conflicts
@@ -998,7 +1039,7 @@ class RBACAnalyzer:
 
         # This would contain logic to detect unused permissions
         # based on activity patterns
-        if user_data['total_actions'] < 10:
+        if user_data["total_actions"] < 10:
             unused.append("Low activity suggests unused permissions")
 
         return unused
@@ -1012,42 +1053,47 @@ class RBACAnalyzer:
         elif anomaly_score < 0:
             risk_factors += 1
 
-        if role_analysis['is_over_privileged']:
+        if role_analysis["is_over_privileged"]:
             risk_factors += 2
 
-        if len(role_analysis['role_conflicts']) > 0:
+        if len(role_analysis["role_conflicts"]) > 0:
             risk_factors += 1
 
         if risk_factors >= 4:
-            return 'High'
+            return "High"
         elif risk_factors >= 2:
-            return 'Medium'
+            return "Medium"
         else:
-            return 'Low'
+            return "Low"
 
-    def _generate_user_recommendations(self, user_data: pd.Series, anomaly_score: float,
-                                     is_anomaly: bool, role_analysis: Dict[str, Any],
-                                     permission_analysis: Dict[str, Any]) -> List[str]:
+    def _generate_user_recommendations(
+        self,
+        user_data: pd.Series,
+        anomaly_score: float,
+        is_anomaly: bool,
+        role_analysis: Dict[str, Any],
+        permission_analysis: Dict[str, Any],
+    ) -> List[str]:
         """Generate actionable recommendations for the user."""
         recommendations = []
 
         if is_anomaly:
             recommendations.append("User shows anomalous access patterns - conduct security review")
 
-        if role_analysis['is_over_privileged']:
+        if role_analysis["is_over_privileged"]:
             recommendations.append("Review user's role assignments - may be over-privileged")
 
-        if permission_analysis['excessive_permissions']:
+        if permission_analysis["excessive_permissions"]:
             recommendations.append("Audit user's permissions - some may be unnecessary")
 
-        if user_data['night_activity'] > 0.3:
+        if user_data["night_activity"] > 0.3:
             recommendations.append("High off-hours activity detected - verify legitimacy")
 
-        if user_data['weekend_activity'] > 0.4:
+        if user_data["weekend_activity"] > 0.4:
             recommendations.append("High weekend activity detected - review business justification")
 
-        if len(role_analysis['role_conflicts']) > 0:
-            recommendations.extend(role_analysis['role_conflicts'])
+        if len(role_analysis["role_conflicts"]) > 0:
+            recommendations.extend(role_analysis["role_conflicts"])
 
         if not recommendations:
             recommendations.append("User access patterns appear normal")
@@ -1067,8 +1113,8 @@ class RBACAnalyzer:
         logger.info("Optimizing role structure")
 
         try:
-            matrices = rbac_data['matrices']
-            user_features = rbac_data['user_features']
+            matrices = rbac_data["matrices"]
+            user_features = rbac_data["user_features"]
 
             # Analyze role usage
             role_usage = self._analyze_role_usage(matrices, user_features)
@@ -1083,29 +1129,29 @@ class RBACAnalyzer:
             missing_roles = self._detect_missing_roles(matrices, user_features)
 
             return {
-                'role_usage_analysis': role_usage,
-                'redundant_roles': redundant_roles,
-                'consolidation_suggestions': consolidation_suggestions,
-                'missing_roles': missing_roles,
-                'optimization_score': self._calculate_optimization_score(
-                    role_usage,
-                    redundant_roles
-                )
+                "role_usage_analysis": role_usage,
+                "redundant_roles": redundant_roles,
+                "consolidation_suggestions": consolidation_suggestions,
+                "missing_roles": missing_roles,
+                "optimization_score": self._calculate_optimization_score(
+                    role_usage, redundant_roles
+                ),
             }
 
         except Exception as e:
             logger.error(f"Error optimizing role structure: {str(e)}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
-    def _analyze_role_usage(self, matrices: Dict[str, np.ndarray],
-                           user_features: pd.DataFrame) -> Dict[str, Any]:
+    def _analyze_role_usage(
+        self, matrices: Dict[str, np.ndarray], user_features: pd.DataFrame
+    ) -> Dict[str, Any]:
         """Analyze how roles are being used."""
-        user_role_matrix = matrices['user_role']
+        user_role_matrix = matrices["user_role"]
 
         role_stats = {
-            'role_popularity': np.sum(user_role_matrix, axis=0).tolist(),
-            'role_exclusivity': [],
-            'role_coverage': []
+            "role_popularity": np.sum(user_role_matrix, axis=0).tolist(),
+            "role_exclusivity": [],
+            "role_coverage": [],
         }
 
         # Calculate role exclusivity (how often roles are assigned alone)
@@ -1120,13 +1166,13 @@ class RBACAnalyzer:
                         exclusive_users += 1
 
             exclusivity = exclusive_users / np.sum(role_users) if np.sum(role_users) > 0 else 0
-            role_stats['role_exclusivity'].append(exclusivity)
+            role_stats["role_exclusivity"].append(exclusivity)
 
         return role_stats
 
     def _detect_redundant_roles(self, matrices: Dict[str, np.ndarray]) -> List[Dict[str, Any]]:
         """Detect redundant roles based on permission overlap."""
-        role_perm_matrix = matrices['role_permission']
+        role_perm_matrix = matrices["role_permission"]
         redundant_roles = []
 
         for i in range(role_perm_matrix.shape[0]):
@@ -1136,48 +1182,53 @@ class RBACAnalyzer:
                 union = np.sum(role_perm_matrix[i] | role_perm_matrix[j])
                 similarity = intersection / union if union > 0 else 0
 
-                if similarity > self.config['clustering']['similarity_threshold']:
-                    redundant_roles.append({
-                        'role_1': int(i),
-                        'role_2': int(j),
-                        'similarity': float(similarity),
-                        'recommendation': 'Consider consolidating these roles'
-                    })
+                if similarity > self.config["clustering"]["similarity_threshold"]:
+                    redundant_roles.append(
+                        {
+                            "role_1": int(i),
+                            "role_2": int(j),
+                            "similarity": float(similarity),
+                            "recommendation": "Consider consolidating these roles",
+                        }
+                    )
 
         return redundant_roles
 
-    def _suggest_role_consolidation(self, matrices: Dict[str, np.ndarray],
-                                   user_features: pd.DataFrame) -> List[Dict[str, Any]]:
+    def _suggest_role_consolidation(
+        self, matrices: Dict[str, np.ndarray], user_features: pd.DataFrame
+    ) -> List[Dict[str, Any]]:
         """Suggest role consolidation opportunities."""
         # This would contain sophisticated logic for role consolidation
         # For now, return placeholder suggestions
         return [
             {
-                'consolidation_type': 'merge_similar_roles',
-                'roles_to_merge': [1, 2, 3],
-                'new_role_name': 'Consolidated Role A',
-                'expected_benefit': 'Reduced complexity, easier management'
+                "consolidation_type": "merge_similar_roles",
+                "roles_to_merge": [1, 2, 3],
+                "new_role_name": "Consolidated Role A",
+                "expected_benefit": "Reduced complexity, easier management",
             }
         ]
 
-    def _detect_missing_roles(self, matrices: Dict[str, np.ndarray],
-                             user_features: pd.DataFrame) -> List[Dict[str, Any]]:
+    def _detect_missing_roles(
+        self, matrices: Dict[str, np.ndarray], user_features: pd.DataFrame
+    ) -> List[Dict[str, Any]]:
         """Detect missing role opportunities."""
         # This would analyze permission patterns to suggest new roles
         return [
             {
-                'suggested_role': 'Junior Administrator',
-                'permissions': ['read_only_access', 'basic_operations'],
-                'rationale': 'Common permission pattern not covered by existing roles'
+                "suggested_role": "Junior Administrator",
+                "permissions": ["read_only_access", "basic_operations"],
+                "rationale": "Common permission pattern not covered by existing roles",
             }
         ]
 
-    def _calculate_optimization_score(self, role_usage: Dict[str, Any],
-                                     redundant_roles: List[Dict[str, Any]]) -> float:
+    def _calculate_optimization_score(
+        self, role_usage: Dict[str, Any], redundant_roles: List[Dict[str, Any]]
+    ) -> float:
         """Calculate a score representing how well-optimized the role structure is."""
         # Simple scoring based on redundancy and usage
         redundancy_penalty = len(redundant_roles) * 0.1
-        usage_score = np.mean(role_usage['role_popularity']) / 100  # Normalize
+        usage_score = np.mean(role_usage["role_popularity"]) / 100  # Normalize
 
         optimization_score = max(0, 1.0 - redundancy_penalty + usage_score)
         return float(optimization_score)
@@ -1189,29 +1240,28 @@ class RBACAnalyzer:
             model_path.mkdir(parents=True, exist_ok=True)
 
             # Save PyTorch models
-            for model_name in ['gat', 'hierarchy']:
+            for model_name in ["gat", "hierarchy"]:
                 if model_name in self.models and self.models[model_name]:
                     torch.save(
-                        self.models[model_name].state_dict(),
-                        model_path / f'{model_name}_model.pth'
+                        self.models[model_name].state_dict(), model_path / f"{model_name}_model.pth"
                     )
 
             # Save sklearn models
-            sklearn_models = ['isolation_forest', 'dbscan', 'kmeans']
+            sklearn_models = ["isolation_forest", "dbscan", "kmeans"]
             for model_name in sklearn_models:
                 if model_name in self.models:
-                    with open(model_path / f'{model_name}_model.pkl', 'wb') as f:
+                    with open(model_path / f"{model_name}_model.pkl", "wb") as f:
                         pickle.dump(self.models[model_name], f)
 
             # Save scalers and encoders
-            with open(model_path / 'scalers.pkl', 'wb') as f:
+            with open(model_path / "scalers.pkl", "wb") as f:
                 pickle.dump(self.scalers, f)
 
-            with open(model_path / 'encoders.pkl', 'wb') as f:
+            with open(model_path / "encoders.pkl", "wb") as f:
                 pickle.dump(self.encoders, f)
 
             # Save configuration
-            with open(model_path / 'config.json', 'w') as f:
+            with open(model_path / "config.json", "w") as f:
                 json.dump(self.config, f, indent=2)
 
             logger.info(f"RBAC models saved to {model_path}")
@@ -1224,6 +1274,7 @@ class RBACAnalyzer:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         # Initialize analyzer
         analyzer = RBACAnalyzer()
@@ -1231,14 +1282,14 @@ if __name__ == "__main__":
         # Prepare RBAC data
         rbac_data = await analyzer.prepare_rbac_data("sample_workspace", days_back=30)
 
-        if rbac_data['graphs']:
+        if rbac_data["graphs"]:
             # Train models
             training_results = await analyzer.train_gnn_models(rbac_data)
             print("Training Results:", training_results)
 
             # Analyze a user
-            if rbac_data['user_features'] is not None and not rbac_data['user_features'].empty:
-                sample_user = rbac_data['user_features']['user_id'].iloc[0]
+            if rbac_data["user_features"] is not None and not rbac_data["user_features"].empty:
+                sample_user = rbac_data["user_features"]["user_id"].iloc[0]
                 user_analysis = await analyzer.analyze_user_access(sample_user, rbac_data)
                 print("User Analysis:", user_analysis)
 
@@ -1247,7 +1298,7 @@ if __name__ == "__main__":
             print("Role Optimization:", optimization)
 
             # Save models
-            await analyzer.save_models('./models/rbac_analysis')
+            await analyzer.save_models("./models/rbac_analysis")
 
         else:
             print("No RBAC data available")

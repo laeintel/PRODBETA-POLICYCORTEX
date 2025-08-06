@@ -4,14 +4,20 @@ Provides environment-based configuration management using Pydantic Settings.
 """
 
 import os
-from typing import List, Optional, Dict, Any
-from pydantic import Field, validator
-from pydantic_settings import BaseSettings
 from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+from pydantic import Field
+from pydantic import validator
+from pydantic_settings import BaseSettings
 
 
 class Environment(str, Enum):
     """Environment enumeration."""
+
     DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"
@@ -20,6 +26,7 @@ class Environment(str, Enum):
 
 class LogLevel(str, Enum):
     """Log level enumeration."""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -87,15 +94,13 @@ class AzureConfig(BaseSettings):
     # Service Bus
     service_bus_namespace: str = Field(..., env="AZURE_SERVICE_BUS_NAMESPACE")
     service_bus_connection_string: Optional[str] = Field(
-        None,
-        env="AZURE_SERVICE_BUS_CONNECTION_STRING"
+        None, env="AZURE_SERVICE_BUS_CONNECTION_STRING"
     )
 
     # Application Insights
     application_insights_key: Optional[str] = Field(None, env="APPLICATION_INSIGHTS_KEY")
     application_insights_connection_string: Optional[str] = Field(
-        None,
-        env="APPLICATION_INSIGHTS_CONNECTION_STRING"
+        None, env="APPLICATION_INSIGHTS_CONNECTION_STRING"
     )
 
     # Machine Learning
@@ -145,7 +150,7 @@ class AIConfig(BaseSettings):
     model_config = {
         "env_file": ".env",
         "case_sensitive": False,
-        "protected_namespaces": ('settings_',)
+        "protected_namespaces": ("settings_",),
     }
 
 

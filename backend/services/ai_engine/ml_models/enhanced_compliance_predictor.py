@@ -11,28 +11,43 @@ This implementation provides:
 """
 
 import asyncio
+import json
+import pickle
+from datetime import datetime
+from datetime import timedelta
+from pathlib import Path
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+
+import mlflow
+import mlflow.pytorch
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime, timedelta
+import skfuzzy as fuzz
 import structlog
-from sklearn.ensemble import IsolationForest, RandomForestClassifier, VotingClassifier
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
-from xgboost import XGBClassifier
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from statsmodels.tsa.seasonal import STL
+from prometheus_client import Counter
+from prometheus_client import Gauge
+from prometheus_client import Histogram
 from scipy import stats
-import skfuzzy as fuzz
 from skfuzzy import control as ctrl
-import mlflow
-import mlflow.pytorch
-from prometheus_client import Counter, Histogram, Gauge
-import json
-import pickle
-from pathlib import Path
+from sklearn.ensemble import IsolationForest
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import VotingClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+from statsmodels.tsa.seasonal import STL
+from xgboost import XGBClassifier
 
 try:
     from prophet import Prophet

@@ -4,28 +4,44 @@ Implements Patent 4: AI-Driven Cross-Domain Correlation Analysis with Real-Time 
 """
 
 import asyncio
+import warnings
+from collections import defaultdict
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+
+import joblib
+import networkx as nx
 import numpy as np
 import pandas as pd
-import networkx as nx
-from typing import Dict, List, Optional, Tuple, Any, Set
-from datetime import datetime, timedelta
-from collections import defaultdict, deque
 import structlog
-from scipy import stats
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, IsolationForest
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import mutual_info_score
-from sklearn.cluster import DBSCAN
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool, GATConv
-from torch_geometric.data import Data, Batch
-import joblib
-from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy import stats
+from scipy.cluster.hierarchy import dendrogram
+from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
-from concurrent.futures import ThreadPoolExecutor
-    import warnings
+from sklearn.cluster import DBSCAN
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import IsolationForest
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mutual_info_score
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+from torch_geometric.data import Batch
+from torch_geometric.data import Data
+from torch_geometric.nn import GATConv
+from torch_geometric.nn import GCNConv
+from torch_geometric.nn import global_mean_pool
+
 warnings.filterwarnings('ignore')
 
 logger = structlog.get_logger(__name__)

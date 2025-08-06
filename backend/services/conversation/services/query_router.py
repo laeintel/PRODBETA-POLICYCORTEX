@@ -3,13 +3,18 @@ Query Router Service.
 Routes queries to appropriate backend services based on intent and entities.
 """
 
-import json
-from typing import Dict, Any, List, Optional
-import structlog
-import httpx
 import asyncio
+import json
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import httpx
+import structlog
 
 from ....shared.config import get_settings
+
     ConversationIntent,
     Entity,
     QueryRouterResult

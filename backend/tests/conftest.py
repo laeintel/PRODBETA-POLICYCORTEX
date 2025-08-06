@@ -3,22 +3,28 @@ Shared test configuration and fixtures for all backend services.
 """
 
 import asyncio
-import pytest
-import pytest_asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any, Generator, AsyncGenerator
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import AsyncGenerator
+from typing import Dict
+from typing import Generator
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import httpx
+import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend.shared.config import get_settings
-from backend.shared.database import Base, get_async_db
-
+from backend.shared.database import Base
+from backend.shared.database import get_async_db
 
 # Test database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -26,7 +32,7 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
-        )
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -53,11 +59,13 @@ def db_session():
 @pytest.fixture
 def override_get_db(db_session):
     """Override database dependency for testing."""
+
     def _override_get_db():
         try:
             yield db_session
         finally:
             db_session.close()
+
     return _override_get_db
 
 
@@ -91,7 +99,7 @@ def mock_user():
         "email": "test@example.com",
         "name": "Test User",
         "roles": ["user"],
-        "tenant_id": "test-tenant"
+        "tenant_id": "test-tenant",
     }
 
 
@@ -103,7 +111,7 @@ def mock_admin_user():
         "email": "admin@example.com",
         "name": "Test Admin",
         "roles": ["admin"],
-        "tenant_id": "test-tenant"
+        "tenant_id": "test-tenant",
     }
 
 
@@ -120,7 +128,7 @@ def mock_azure_credentials():
         "tenant_id": "test-tenant-id",
         "client_id": "test-client-id",
         "client_secret": "test-client-secret",
-        "subscription_id": "test-subscription-id"
+        "subscription_id": "test-subscription-id",
     }
 
 
@@ -145,15 +153,12 @@ def sample_policy_data():
             {
                 "field": "resourceType",
                 "operator": "equals",
-                "value": "Microsoft.Compute/virtualMachines"
+                "value": "Microsoft.Compute/virtualMachines",
             }
         ],
         "effects": ["deny"],
         "parameters": {},
-        "metadata": {
-            "created_by": "test-user",
-            "created_at": "2023-01-01T00:00:00Z"
-        }
+        "metadata": {"created_by": "test-user", "created_at": "2023-01-01T00:00:00Z"},
     }
 
 
@@ -170,32 +175,20 @@ def sample_resource_data():
         "properties": {
             "provisioningState": "Succeeded",
             "vmId": "test-vm-id",
-            "hardwareProfile": {
-                "vmSize": "Standard_B2s"
-            },
+            "hardwareProfile": {"vmSize": "Standard_B2s"},
             "storageProfile": {
-                "osDisk": {
-                    "osType": "Linux",
-                    "name": "test-vm-disk",
-                    "createOption": "FromImage"
-                }
+                "osDisk": {"osType": "Linux", "name": "test-vm-disk", "createOption": "FromImage"}
             },
-            "osProfile": {
-                "computerName": "test-vm",
-                "adminUsername": "azureuser"
-            },
+            "osProfile": {"computerName": "test-vm", "adminUsername": "azureuser"},
             "networkProfile": {
                 "networkInterfaces": [
                     {
                         "id": "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Network/networkInterfaces/test-vm-nic"
                     }
                 ]
-            }
+            },
         },
-        "tags": {
-            "environment": "test",
-            "project": "policycortex"
-        }
+        "tags": {"environment": "test", "project": "policycortex"},
     }
 
 
@@ -205,22 +198,13 @@ def sample_cost_data():
     return {
         "timeframe": "Monthly",
         "granularity": "Daily",
-        "aggregation": {
-            "totalCost": {
-                "name": "PreTaxCost",
-                "function": "Sum"
-            }
-        },
-        "rows": [
-            [20230101, 150.75, "USD"],
-            [20230102, 165.25, "USD"],
-            [20230103, 142.50, "USD"]
-        ],
+        "aggregation": {"totalCost": {"name": "PreTaxCost", "function": "Sum"}},
+        "rows": [[20230101, 150.75, "USD"], [20230102, 165.25, "USD"], [20230103, 142.50, "USD"]],
         "columns": [
             {"name": "Date", "type": "Number"},
             {"name": "PreTaxCost", "type": "Number"},
-            {"name": "Currency", "type": "String"}
-        ]
+            {"name": "Currency", "type": "String"},
+        ],
     }
 
 
@@ -232,17 +216,8 @@ def sample_conversation_data():
         "user_id": "test-user-id",
         "message": "Show me my Azure virtual machines",
         "intent": "list_resources",
-        "entities": [
-            {
-                "entity": "resource_type",
-                "value": "virtual_machines",
-                "confidence": 0.95
-            }
-        ],
-        "context": {
-            "previous_messages": [],
-            "current_subscription": "test-subscription-id"
-        }
+        "entities": [{"entity": "resource_type", "value": "virtual_machines", "confidence": 0.95}],
+        "context": {"previous_messages": [], "current_subscription": "test-subscription-id"},
     }
 
 
@@ -256,10 +231,7 @@ def sample_notification_data():
         "message": "This is a test notification",
         "recipients": ["test@example.com"],
         "priority": "normal",
-        "metadata": {
-            "source": "test",
-            "category": "alert"
-        }
+        "metadata": {"source": "test", "category": "alert"},
     }
 
 
@@ -287,11 +259,15 @@ def mock_redis():
 @pytest.fixture
 def mock_azure_sdk():
     """Mock Azure SDK clients."""
-    with patch("azure.identity.DefaultAzureCredential") as mock_credential, \
-        patch("azure.mgmt.resource.ResourceManagementClient") as mock_resource_client, \
-        patch("azure.mgmt.authorization.AuthorizationManagementClient") as mock_auth_client, \
-        patch("azure.mgmt.consumption.ConsumptionManagementClient") as mock_consumption_client, \
-        patch("azure.mgmt.network.NetworkManagementClient") as mock_network_client:
+    with patch("azure.identity.DefaultAzureCredential") as mock_credential, patch(
+        "azure.mgmt.resource.ResourceManagementClient"
+    ) as mock_resource_client, patch(
+        "azure.mgmt.authorization.AuthorizationManagementClient"
+    ) as mock_auth_client, patch(
+        "azure.mgmt.consumption.ConsumptionManagementClient"
+    ) as mock_consumption_client, patch(
+        "azure.mgmt.network.NetworkManagementClient"
+    ) as mock_network_client:
 
         # Mock credential
         mock_credential.return_value = MagicMock()
@@ -317,14 +293,16 @@ def mock_azure_sdk():
             "resource_client": mock_resource_instance,
             "auth_client": mock_auth_instance,
             "consumption_client": mock_consumption_instance,
-            "network_client": mock_network_instance
+            "network_client": mock_network_instance,
         }
 
 
 @pytest.fixture
 def mock_ai_models():
     """Mock AI models for testing."""
-    with patch("backend.services.ai_engine.services.model_manager.ModelManager") as mock_model_manager:
+    with patch(
+        "backend.services.ai_engine.services.model_manager.ModelManager"
+    ) as mock_model_manager:
         mock_instance = MagicMock()
         mock_model_manager.return_value = mock_instance
 
@@ -333,8 +311,7 @@ def mock_ai_models():
         mock_instance.predict = AsyncMock(return_value={"prediction": "test", "confidence": 0.95})
         mock_instance.train_model = AsyncMock(return_value={"task_id": "test-task-id"})
         mock_instance.get_model_info = AsyncMock(
-            return_value={"name": "test-model",
-            "version": "1.0"}
+            return_value={"name": "test-model", "version": "1.0"}
         )
 
         yield mock_instance
@@ -395,9 +372,7 @@ class MockResponse:
     def raise_for_status(self):
         if 400 <= self.status_code < 600:
             raise httpx.HTTPStatusError(
-                f"HTTP {self.status_code}",
-                request=MagicMock(),
-                response=self
+                f"HTTP {self.status_code}", request=MagicMock(), response=self
             )
 
 
@@ -443,11 +418,7 @@ def assert_response_error(response, expected_status=400):
 def create_mock_auth_token(user_data=None):
     """Create a mock authentication token."""
     if user_data is None:
-        user_data = {
-            "id": "test-user-id",
-            "email": "test@example.com",
-            "name": "Test User"
-        }
+        user_data = {"id": "test-user-id", "email": "test@example.com", "name": "Test User"}
 
     # In a real implementation, this would be a JWT token
     # For testing, we'll just return a simple string
@@ -458,7 +429,7 @@ def create_mock_auth_token(user_data=None):
 async def async_assert_response_success(response, expected_status=200):
     """Assert that an async response is successful."""
     assert response.status_code == expected_status
-    if hasattr(response, 'json'):
+    if hasattr(response, "json"):
         data = await response.json() if asyncio.iscoroutine(response.json()) else response.json()
         assert "error" not in data or data.get("success", True)
 
@@ -466,6 +437,6 @@ async def async_assert_response_success(response, expected_status=200):
 async def async_assert_response_error(response, expected_status=400):
     """Assert that an async response is an error."""
     assert response.status_code == expected_status
-    if hasattr(response, 'json'):
+    if hasattr(response, "json"):
         data = await response.json() if asyncio.iscoroutine(response.json()) else response.json()
         assert "error" in data or "detail" in data

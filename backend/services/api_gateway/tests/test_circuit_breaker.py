@@ -2,11 +2,14 @@
 Unit tests for CircuitBreaker functionality.
 """
 
-import pytest
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-from backend.services.api_gateway.circuit_breaker import CircuitBreaker, CircuitBreakerState
+import pytest
+
+from backend.services.api_gateway.circuit_breaker import CircuitBreaker
+from backend.services.api_gateway.circuit_breaker import CircuitBreakerState
 
 
 class TestCircuitBreaker:
@@ -215,7 +218,11 @@ class TestCircuitBreaker:
             cb.record_success()
 
         # Should still be in a valid state
-        assert cb.state in [CircuitBreakerState.CLOSED, CircuitBreakerState.OPEN, CircuitBreakerState.HALF_OPEN]
+        assert cb.state in [
+            CircuitBreakerState.CLOSED,
+            CircuitBreakerState.OPEN,
+            CircuitBreakerState.HALF_OPEN,
+        ]
 
     def test_circuit_breaker_string_representation(self):
         """Test circuit breaker string representation."""

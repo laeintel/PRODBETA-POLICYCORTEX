@@ -6,16 +6,36 @@ Handles data transformations using Pandas and Spark.
 import json
 import uuid
 from datetime import datetime
-from typing import Dict, Any, List, Union, Optional
-import pandas as pd
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+
 import numpy as np
+import pandas as pd
 import structlog
-from pyspark.sql import SparkSession, DataFrame as SparkDataFrame
-from pyspark.sql.functions import col, expr, lit, when, regexp_replace, upper, lower, trim
-from pyspark.sql.types import StringType, IntegerType, FloatType, BooleanType, DateType, TimestampType
+from pyspark.sql import DataFrame as SparkDataFrame
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
+from pyspark.sql.functions import expr
+from pyspark.sql.functions import lit
+from pyspark.sql.functions import lower
+from pyspark.sql.functions import regexp_replace
+from pyspark.sql.functions import trim
+from pyspark.sql.functions import upper
+from pyspark.sql.functions import when
+from pyspark.sql.types import BooleanType
+from pyspark.sql.types import DateType
+from pyspark.sql.types import FloatType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.types import StringType
+from pyspark.sql.types import TimestampType
 
 from ....shared.config import get_settings
-from ..models import TransformationRule, DataFormat, ProcessingEngineType
+from ..models import DataFormat
+from ..models import ProcessingEngineType
+from ..models import TransformationRule
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -28,11 +48,14 @@ class DataTransformerService:
         self.settings = settings
         self.transformation_history = {}
 
-    async def transform_data(self, data: Union[Dict[str, Any], List[Dict[str, Any]]],
-                           transformation_rules: List[TransformationRule],
-                           output_format: str = "json",
-                           processing_engine: ProcessingEngineType = ProcessingEngineType.PANDAS,
-                           user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def transform_data(
+        self,
+        data: Union[Dict[str, Any], List[Dict[str, Any]]],
+        transformation_rules: List[TransformationRule],
+        output_format: str = "json",
+        processing_engine: ProcessingEngineType = ProcessingEngineType.PANDAS,
+        user_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Transform data using specified rules."""
         try:
             transformation_id = str(uuid.uuid4())
@@ -50,7 +73,7 @@ class DataTransformerService:
                 "data_transformation_started",
                 transformation_id=transformation_id,
                 input_rows=len(df),
-                rule_count=len(transformation_rules)
+                rule_count=len(transformation_rules),
             )
 
             # Apply transformations
@@ -74,18 +97,18 @@ class DataTransformerService:
             self.transformation_history[transformation_id] = {
                 "transformation_id": transformation_id,
                 "input_rows": len(df),
-                "output_rows": len(transformed_df) if hasattr(transformed_df, '__len__') else 0,
+                "output_rows": len(transformed_df) if hasattr(transformed_df, "__len__") else 0,
                 "processing_time": processing_time,
                 "rules_applied": len(transformation_rules),
                 "user_id": user_id,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             logger.info(
                 "data_transformation_completed",
                 transformation_id=transformation_id,
-                output_rows=len(transformed_df) if hasattr(transformed_df, '__len__') else 0,
-                processing_time=processing_time
+                output_rows=len(transformed_df) if hasattr(transformed_df, "__len__") else 0,
+                processing_time=processing_time,
             )
 
             return {
@@ -93,7 +116,7 @@ class DataTransformerService:
                 "transformed_data": transformed_data,
                 "processing_time_ms": int(processing_time * 1000),
                 "input_rows": len(df),
-                "output_rows": len(transformed_df) if hasattr(transformed_df, '__len__') else 0
+                "output_rows": len(transformed_df) if hasattr(transformed_df, "__len__") else 0,
             }
 
         except Exception as e:
@@ -101,9 +124,7 @@ class DataTransformerService:
             raise
 
     async def _apply_pandas_transformations(
-        self,
-        df: pd.DataFrame,
-        rules: List[TransformationRule]
+        self, df: pd.DataFrame, rules: List[TransformationRule]
     ) -> pd.DataFrame:
         """Apply transformations using Pandas."""
         try:
@@ -116,7 +137,7 @@ class DataTransformerService:
 
                 elif rule.rule_type == "drop_columns":
                     columns = rule.parameters.get("columns", [])
-                    result_df = result_df.drop(columns=columns, errors='ignore')
+                    result_df = result_df.drop(columns=columns, errors="ignore")
 
                 elif rule.rule_type == "rename_column":
                     old_name = rule.source_field
@@ -141,23 +162,20 @@ class DataTransformerService:
 
                     if data_type == "int":
                         result_df[column_name] = pd.to_numeric(
-                            result_df[column_name],
-                            errors='coerce').astype('Int64'
-                        )
+                            result_df[column_name], errors="coerce"
+                        ).astype("Int64")
                     elif data_type == "float":
                         result_df[column_name] = pd.to_numeric(
-                            result_df[column_name],
-                            errors='coerce'
+                            result_df[column_name], errors="coerce"
                         )
                     elif data_type == "datetime":
                         result_df[column_name] = pd.to_datetime(
-                            result_df[column_name],
-                            errors='coerce'
+                            result_df[column_name], errors="coerce"
                         )
                     elif data_type == "bool":
-                        result_df[column_name] = result_df[column_name].astype('bool')
+                        result_df[column_name] = result_df[column_name].astype("bool")
                     else:
-                        result_df[column_name] = result_df[column_name].astype('str')
+                        result_df[column_name] = result_df[column_name].astype("str")
 
                 elif rule.rule_type == "string_operations":
                     column_name = rule.source_field
@@ -173,8 +191,7 @@ class DataTransformerService:
                         old_value = rule.parameters.get("old_value", "")
                         new_value = rule.parameters.get("new_value", "")
                         result_df[column_name] = result_df[column_name].str.replace(
-                            old_value,
-                            new_value
+                            old_value, new_value
                         )
 
                 elif rule.rule_type == "aggregate":
@@ -208,9 +225,7 @@ class DataTransformerService:
             raise
 
     async def _apply_spark_transformations(
-        self,
-        df: pd.DataFrame,
-        rules: List[TransformationRule]
+        self, df: pd.DataFrame, rules: List[TransformationRule]
     ) -> pd.DataFrame:
         """Apply transformations using Spark."""
         try:

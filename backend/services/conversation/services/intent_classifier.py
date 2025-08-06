@@ -3,15 +3,20 @@ Intent Classifier and Entity Extractor Service.
 Uses Azure OpenAI for intent classification and entity extraction.
 """
 
-import re
 import json
-from typing import Dict, Any, List, Optional
+import re
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import spacy
 import structlog
 from openai import AsyncAzureOpenAI
-import spacy
 from spacy.matcher import Matcher
 
 from ....shared.config import get_settings
+
     ConversationIntent,
     EntityType,
     Entity,

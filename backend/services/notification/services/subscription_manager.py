@@ -3,13 +3,17 @@ Subscription manager for handling user notification preferences and subscription
 """
 
 import json
-from typing import Dict, Any, Optional, List
+import uuid
 from datetime import datetime
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import redis.asyncio as redis
 import structlog
-import uuid
-
 from shared.config import get_settings
+
     SubscriptionRequest,
     Subscription,
     NotificationPreferences,

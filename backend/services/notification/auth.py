@@ -3,17 +3,23 @@ Authentication manager for Notification service.
 Handles JWT token validation, Azure AD integration, and user session management.
 """
 
-import jwt
 import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import jwt
 import redis.asyncio as redis
 import structlog
-from jose import JWTError, jwt as jose_jwt
 from azure.identity.aio import DefaultAzureCredential
 from azure.keyvault.secrets.aio import SecretClient
-
+from jose import JWTError
+from jose import jwt as jose_jwt
 from shared.config import get_settings
+
 from .models import NotificationPreferences
 
 settings = get_settings()
@@ -36,7 +42,7 @@ class AuthManager:
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,
-                decode_responses=True
+                decode_responses=True,
             )
         return self.redis_client
 
@@ -46,8 +52,7 @@ class AuthManager:
             if self.azure_credential is None:
                 self.azure_credential = DefaultAzureCredential()
             self.key_vault_client = SecretClient(
-                vault_url=self.settings.azure.key_vault_url,
-                credential=self.azure_credential
+                vault_url=self.settings.azure.key_vault_url, credential=self.azure_credential
             )
         return self.key_vault_client
 
@@ -63,10 +68,7 @@ class AuthManager:
                 # In development, use configuration
                 return self.settings.security.jwt_secret_key
         except Exception as e:
-            logger.warning(
-                "failed_to_get_jwt_secret_from_keyvault",
-                error=str(e)
-            )
+            logger.warning("failed_to_get_jwt_secret_from_keyvault", error=str(e))
             return self.settings.security.jwt_secret_key
 
     async def verify_token(self, token: str) -> Dict[str, Any]:
@@ -77,9 +79,7 @@ class AuthManager:
 
             # Decode and verify token
             payload = jose_jwt.decode(
-                token,
-                jwt_secret,
-                algorithms=[self.settings.security.jwt_algorithm]
+                token, jwt_secret, algorithms=[self.settings.security.jwt_algorithm]
             )
 
             # Check token expiration
@@ -95,7 +95,7 @@ class AuthManager:
                 "roles": payload.get("roles", []),
                 "permissions": payload.get("permissions", []),
                 "tenant_id": payload.get("tenant_id"),
-                "subscription_ids": payload.get("subscription_ids", [])
+                "subscription_ids": payload.get("subscription_ids", []),
             }
 
             # Validate session if session ID is present
@@ -104,15 +104,11 @@ class AuthManager:
                 await self._validate_session(session_id, user_info["id"])
 
             # Get user notification preferences
-            user_info["notification_preferences"] = (
-                await self.get_user_notification_preferences(user_info["id"])
+            user_info["notification_preferences"] = await self.get_user_notification_preferences(
+                user_info["id"]
             )
 
-            logger.info(
-                "token_verified",
-                user_id=user_info["id"],
-                email=user_info["email"]
-            )
+            logger.info("token_verified", user_id=user_info["id"], email=user_info["email"])
 
             return user_info
 
@@ -149,7 +145,7 @@ class AuthManager:
             await redis_client.set(
                 session_key,
                 json.dumps(session_info),
-                ex=self.settings.security.jwt_expiration_minutes * 60
+                ex=self.settings.security.jwt_expiration_minutes * 60,
             )
 
         except Exception as e:
@@ -172,11 +168,7 @@ class AuthManager:
             default_preferences = NotificationPreferences()
 
             # Cache preferences for 1 hour
-            await redis_client.set(
-                preferences_key,
-                json.dumps(default_preferences.dict()),
-                ex=3600
-            )
+            await redis_client.set(preferences_key, json.dumps(default_preferences.dict()), ex=3600)
 
             return default_preferences
 
@@ -186,9 +178,7 @@ class AuthManager:
             return NotificationPreferences()
 
     async def update_user_notification_preferences(
-        self,
-        user_id: str,
-        preferences: NotificationPreferences
+        self, user_id: str, preferences: NotificationPreferences
     ) -> None:
         """Update user notification preferences in cache and database."""
         try:
@@ -196,17 +186,13 @@ class AuthManager:
             preferences_key = f"user_notification_preferences:{user_id}"
 
             # Update cache
-            await redis_client.set(
-                preferences_key,
-                json.dumps(preferences.dict()),
-                ex=3600
-            )
+            await redis_client.set(preferences_key, json.dumps(preferences.dict()), ex=3600)
 
             # Log the update
             logger.info(
                 "user_notification_preferences_updated",
                 user_id=user_id,
-                preferences=preferences.dict()
+                preferences=preferences.dict(),
             )
 
         except Exception as e:
@@ -214,10 +200,7 @@ class AuthManager:
             raise Exception(f"Failed to update notification preferences: {str(e)}")
 
     async def check_notification_permission(
-        self,
-        user_info: Dict[str, Any],
-        notification_type: str,
-        operation: str = "send"
+        self, user_info: Dict[str, Any], notification_type: str, operation: str = "send"
     ) -> bool:
         """Check if user has permission for specific notification operations."""
         try:
@@ -230,7 +213,7 @@ class AuthManager:
                 "sms": f"notification:sms:{operation}",
                 "push": f"notification:push:{operation}",
                 "webhook": f"notification:webhook:{operation}",
-                "alert": f"notification:alert:{operation}"
+                "alert": f"notification:alert:{operation}",
             }
 
             required_permission = required_permissions.get(notification_type)
@@ -248,7 +231,7 @@ class AuthManager:
                 "sms": ["sms_admin", "communication_admin"],
                 "push": ["push_admin", "communication_admin"],
                 "webhook": ["webhook_admin", "integration_admin"],
-                "alert": ["alert_admin", "monitoring_admin"]
+                "alert": ["alert_admin", "monitoring_admin"],
             }
 
             allowed_roles = notification_roles.get(notification_type, [])
@@ -269,10 +252,10 @@ class AuthManager:
             # Define rate limits per notification type
             rate_limits = {
                 "email": {"limit": 100, "window": 3600},  # 100 emails per hour
-                "sms": {"limit": 50, "window": 3600},     # 50 SMS per hour
-                "push": {"limit": 200, "window": 3600},   # 200 push notifications per hour
-                "webhook": {"limit": 150, "window": 3600}, # 150 webhooks per hour
-                "alert": {"limit": 500, "window": 3600}   # 500 alerts per hour
+                "sms": {"limit": 50, "window": 3600},  # 50 SMS per hour
+                "push": {"limit": 200, "window": 3600},  # 200 push notifications per hour
+                "webhook": {"limit": 150, "window": 3600},  # 150 webhooks per hour
+                "alert": {"limit": 500, "window": 3600},  # 500 alerts per hour
             }
 
             rate_limit = rate_limits.get(notification_type, {"limit": 100, "window": 3600})
@@ -300,11 +283,7 @@ class AuthManager:
             return True
 
     async def log_notification_activity(
-        self,
-        user_id: str,
-        notification_type: str,
-        action: str,
-        details: Dict[str, Any]
+        self, user_id: str, notification_type: str, action: str, details: Dict[str, Any]
     ) -> None:
         """Log notification activity for audit purposes."""
         try:
@@ -315,7 +294,7 @@ class AuthManager:
                 "notification_type": notification_type,
                 "action": action,
                 "details": details,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             # Store in Redis with TTL
@@ -327,7 +306,7 @@ class AuthManager:
                 "notification_activity_logged",
                 user_id=user_id,
                 notification_type=notification_type,
-                action=action
+                action=action,
             )
 
         except Exception as e:
@@ -341,7 +320,7 @@ class AuthManager:
 
             # Get logs for the specified number of days
             for i in range(days):
-                date = (datetime.utcnow() - timedelta(days=i)).strftime('%Y%m%d')
+                date = (datetime.utcnow() - timedelta(days=i)).strftime("%Y%m%d")
                 activity_key = f"activity_log:{user_id}:{date}"
 
                 daily_activities = await redis_client.lrange(activity_key, 0, -1)
@@ -361,14 +340,12 @@ class AuthManager:
     async def validate_webhook_signature(self, payload: str, signature: str, secret: str) -> bool:
         """Validate webhook signature for security."""
         try:
-            import hmac
             import hashlib
+            import hmac
 
             # Create expected signature
             expected_signature = hmac.new(
-                secret.encode('utf-8'),
-                payload.encode('utf-8'),
-                hashlib.sha256
+                secret.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256
             ).hexdigest()
 
             # Compare signatures

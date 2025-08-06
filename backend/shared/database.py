@@ -4,15 +4,25 @@ Provides SQLAlchemy configuration, base models, and database utilities.
 """
 
 import uuid
-from datetime import datetime
-from typing import AsyncGenerator, Optional
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import AsyncGenerator
+from typing import Optional
 
-from sqlalchemy import create_engine, Column, String, DateTime, Boolean, Text, Integer
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Boolean
+from sqlalchemy import Column
+from sqlalchemy import DateTime
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import Text
+from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from .config import get_settings
@@ -29,11 +39,7 @@ class BaseModel(Base):
     __abstract__ = True
 
     id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        unique=True,
-        nullable=False
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False
     )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -43,10 +49,7 @@ class BaseModel(Base):
 
     def to_dict(self) -> dict:
         """Convert model instance to dictionary."""
-        return {
-            column.name: getattr(self, column.name)
-            for column in self.__table__.columns
-        }
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
     def __repr__(self) -> str:
         """String representation of the model."""
@@ -126,27 +129,15 @@ def create_database_engine(connection_string: str, is_async: bool = False):
 
 # Create engines
 async_engine = create_database_engine(
-    settings.database.sql_connection_string.replace("mssql+pyodbc", "mssql+aioodbc"),
-    is_async=True
+    settings.database.sql_connection_string.replace("mssql+pyodbc", "mssql+aioodbc"), is_async=True
 )
 
-sync_engine = create_database_engine(
-    settings.database.sql_connection_string,
-    is_async=False
-)
+sync_engine = create_database_engine(settings.database.sql_connection_string, is_async=False)
 
 # Session factories
-AsyncSessionLocal = async_sessionmaker(
-    async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+AsyncSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=sync_engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
 
 class DatabaseManager:
@@ -171,15 +162,9 @@ class DatabaseManager:
         try:
             async with AsyncSessionLocal() as session:
                 await session.execute("SELECT 1")
-                return {
-                    "status": "healthy",
-                    "message": "Database connection successful"
-                }
+                return {"status": "healthy", "message": "Database connection successful"}
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "message": f"Database connection failed: {str(e)}"
-            }
+            return {"status": "unhealthy", "message": f"Database connection failed: {str(e)}"}
 
 
 # Dependency for getting async database session
@@ -236,7 +221,7 @@ class DatabaseUtils:
         user_id: Optional[str] = None,
         old_values: Optional[dict] = None,
         new_values: Optional[dict] = None,
-        details: Optional[str] = None
+        details: Optional[str] = None,
     ):
         """Log an audit event."""
         import json
@@ -248,7 +233,7 @@ class DatabaseUtils:
             user_id=user_id,
             old_values=json.dumps(old_values) if old_values else None,
             new_values=json.dumps(new_values) if new_values else None,
-            details=details
+            details=details,
         )
 
         session.add(audit_log)
@@ -261,10 +246,11 @@ class DatabaseUtils:
         status: str,
         response_time_ms: Optional[int] = None,
         error_count: int = 0,
-        details: Optional[str] = None
+        details: Optional[str] = None,
     ):
         """Update service health status."""
-        from sqlalchemy import select, update
+        from sqlalchemy import select
+        from sqlalchemy import update
 
         # Check if record exists
         stmt = select(ServiceHealth).where(ServiceHealth.service_name == service_name)
@@ -273,15 +259,17 @@ class DatabaseUtils:
 
         if existing:
             # Update existing record
-            update_stmt = update(ServiceHealth).where(
-                ServiceHealth.service_name == service_name
-            ).values(
-                status=status,
-                last_check=datetime.utcnow(),
-                response_time_ms=response_time_ms,
-                error_count=error_count,
-                details=details,
-                updated_at=datetime.utcnow()
+            update_stmt = (
+                update(ServiceHealth)
+                .where(ServiceHealth.service_name == service_name)
+                .values(
+                    status=status,
+                    last_check=datetime.utcnow(),
+                    response_time_ms=response_time_ms,
+                    error_count=error_count,
+                    details=details,
+                    updated_at=datetime.utcnow(),
+                )
             )
             await session.execute(update_stmt)
         else:
@@ -291,7 +279,7 @@ class DatabaseUtils:
                 status=status,
                 response_time_ms=response_time_ms,
                 error_count=error_count,
-                details=details
+                details=details,
             )
             session.add(health_record)
 
@@ -317,6 +305,7 @@ class CosmosDBManager:
         """Get Cosmos DB client."""
         if self._client is None:
             from azure.cosmos.aio import CosmosClient
+
             self._client = CosmosClient(self.endpoint, self.key)
         return self._client
 
@@ -337,15 +326,9 @@ class CosmosDBManager:
         try:
             client = await self.get_client()
             await client.get_database_account()
-            return {
-                "status": "healthy",
-                "message": "Cosmos DB connection successful"
-            }
+            return {"status": "healthy", "message": "Cosmos DB connection successful"}
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "message": f"Cosmos DB connection failed: {str(e)}"
-            }
+            return {"status": "unhealthy", "message": f"Cosmos DB connection failed: {str(e)}"}
 
 
 # Global Cosmos DB manager instance

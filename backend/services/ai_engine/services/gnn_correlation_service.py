@@ -6,17 +6,24 @@ Provides REST API endpoints and real-time processing capabilities for the GNN sy
 import asyncio
 import json
 import logging
-from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
 from dataclasses import asdict
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
-from fastapi import HTTPException
 import numpy as np
 import redis.asyncio as redis
+from fastapi import HTTPException
 
-from ..ml_models.cross_domain_gnn import CorrelationEngine, CorrelationConfig
-from .gnn_training_service import GNNTrainingService, TrainingConfig
 from backend.shared.config import get_settings
+
+from ..ml_models.cross_domain_gnn import CorrelationConfig
+from ..ml_models.cross_domain_gnn import CorrelationEngine
+from .gnn_training_service import GNNTrainingService
+from .gnn_training_service import TrainingConfig
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

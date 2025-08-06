@@ -3,17 +3,23 @@ Authentication manager for API Gateway.
 Handles JWT token validation, Azure AD integration, and user session management.
 """
 
-import jwt
 import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import jwt
 import redis.asyncio as redis
 import structlog
-from jose import JWTError, jwt as jose_jwt
 from azure.identity.aio import DefaultAzureCredential
 from azure.keyvault.secrets.aio import SecretClient
-
+from jose import JWTError
+from jose import jwt as jose_jwt
 from shared.config import get_settings
+
 from .models import UserInfo
 
 settings = get_settings()
@@ -36,7 +42,7 @@ class AuthManager:
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,
-                decode_responses=True
+                decode_responses=True,
             )
         return self.redis_client
 
@@ -46,8 +52,7 @@ class AuthManager:
             if self.azure_credential is None:
                 self.azure_credential = DefaultAzureCredential()
             self.key_vault_client = SecretClient(
-                vault_url=self.settings.azure.key_vault_url,
-                credential=self.azure_credential
+                vault_url=self.settings.azure.key_vault_url, credential=self.azure_credential
             )
         return self.key_vault_client
 
@@ -63,10 +68,7 @@ class AuthManager:
                 # In development, use configuration
                 return self.settings.security.jwt_secret_key
         except Exception as e:
-            logger.warning(
-                "failed_to_get_jwt_secret_from_keyvault",
-                error=str(e)
-            )
+            logger.warning("failed_to_get_jwt_secret_from_keyvault", error=str(e))
             return self.settings.security.jwt_secret_key
 
     async def verify_token(self, token: str) -> Dict[str, Any]:
@@ -77,9 +79,7 @@ class AuthManager:
 
             # Decode and verify token
             payload = jose_jwt.decode(
-                token,
-                jwt_secret,
-                algorithms=[self.settings.security.jwt_algorithm]
+                token, jwt_secret, algorithms=[self.settings.security.jwt_algorithm]
             )
 
             # Check token expiration
@@ -95,7 +95,7 @@ class AuthManager:
                 "roles": payload.get("roles", []),
                 "permissions": payload.get("permissions", []),
                 "tenant_id": payload.get("tenant_id"),
-                "subscription_ids": payload.get("subscription_ids", [])
+                "subscription_ids": payload.get("subscription_ids", []),
             }
 
             # Validate session if session ID is present
@@ -103,11 +103,7 @@ class AuthManager:
             if session_id:
                 await self._validate_session(session_id, user_info["id"])
 
-            logger.info(
-                "token_verified",
-                user_id=user_info["id"],
-                email=user_info["email"]
-            )
+            logger.info("token_verified", user_id=user_info["id"], email=user_info["email"])
 
             return user_info
 
@@ -144,7 +140,7 @@ class AuthManager:
             await redis_client.set(
                 session_key,
                 json.dumps(session_info),
-                ex=self.settings.security.jwt_expiration_minutes * 60
+                ex=self.settings.security.jwt_expiration_minutes * 60,
             )
 
         except Exception as e:
@@ -163,29 +159,24 @@ class AuthManager:
                 "created_at": datetime.utcnow().isoformat(),
                 "last_activity": datetime.utcnow().isoformat(),
                 "token": token,
-                "revoked": False
+                "revoked": False,
             }
 
             # Store session with expiration
             await redis_client.set(
                 f"session:{session_id}",
                 json.dumps(session_data),
-                ex=self.settings.security.jwt_expiration_minutes * 60
+                ex=self.settings.security.jwt_expiration_minutes * 60,
             )
 
             # Store user sessions list
             user_sessions_key = f"user_sessions:{user_info['id']}"
             await redis_client.sadd(user_sessions_key, session_id)
             await redis_client.expire(
-                user_sessions_key,
-                self.settings.security.jwt_expiration_minutes * 60
+                user_sessions_key, self.settings.security.jwt_expiration_minutes * 60
             )
 
-            logger.info(
-                "session_created",
-                session_id=session_id,
-                user_id=user_info["id"]
-            )
+            logger.info("session_created", session_id=session_id, user_id=user_info["id"])
 
             return session_id
 
@@ -210,7 +201,7 @@ class AuthManager:
                 await redis_client.set(
                     session_key,
                     json.dumps(session_info),
-                    ex=300  # Keep revoked session for 5 minutes
+                    ex=300,  # Keep revoked session for 5 minutes
                 )
 
                 logger.info("session_revoked", session_id=session_id)
@@ -235,11 +226,7 @@ class AuthManager:
             # Clean up sessions list
             await redis_client.delete(user_sessions_key)
 
-            logger.info(
-                "user_sessions_revoked",
-                user_id=user_id,
-                session_count=len(session_ids)
-            )
+            logger.info("user_sessions_revoked", user_id=user_id, session_count=len(session_ids))
 
         except Exception as e:
             logger.error("user_sessions_revocation_failed", error=str(e))
@@ -261,11 +248,7 @@ class AuthManager:
             permissions = []
 
             # Cache permissions for 1 hour
-            await redis_client.set(
-                permissions_key,
-                json.dumps(permissions),
-                ex=3600
-            )
+            await redis_client.set(permissions_key, json.dumps(permissions), ex=3600)
 
             return permissions
 
@@ -312,14 +295,12 @@ class AuthManager:
                 "tenant_id": user_info.get("tenant_id"),
                 "subscription_ids": user_info.get("subscription_ids", []),
                 "iat": now,
-                "exp": exp
+                "exp": exp,
             }
 
             # Generate token
             token = jose_jwt.encode(
-                payload,
-                jwt_secret,
-                algorithm=self.settings.security.jwt_algorithm
+                payload, jwt_secret, algorithm=self.settings.security.jwt_algorithm
             )
 
             # Create session
@@ -333,9 +314,7 @@ class AuthManager:
             )
 
             refresh_token = jose_jwt.encode(
-                refresh_payload,
-                jwt_secret,
-                algorithm=self.settings.security.jwt_algorithm
+                refresh_payload, jwt_secret, algorithm=self.settings.security.jwt_algorithm
             )
 
             return {
@@ -343,7 +322,7 @@ class AuthManager:
                 "refresh_token": refresh_token,
                 "token_type": "bearer",
                 "expires_in": self.settings.security.jwt_expiration_minutes * 60,
-                "session_id": session_id
+                "session_id": session_id,
             }
 
         except Exception as e:

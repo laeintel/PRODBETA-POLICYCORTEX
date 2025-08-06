@@ -7,26 +7,34 @@ Advanced natural language interface for governance operations with context aware
 import asyncio
 import json
 import logging
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
 import re
 import uuid
+from dataclasses import asdict
+from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
+from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
-from fastapi import HTTPException
 import torch
+from fastapi import HTTPException
+
     AutoTokenizer, AutoModelForSequenceClassification,
     AutoModelForCausalLM, pipeline
 )
-import spacy
-from sentence_transformers import SentenceTransformer
 import numpy as np
 import redis.asyncio as redis
+import spacy
+from sentence_transformers import SentenceTransformer
+
+from backend.shared.config import get_settings
 
 from ..ml_models.cross_domain_gnn import CorrelationEngine
 from .gnn_correlation_service import GNNCorrelationService
-from backend.shared.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

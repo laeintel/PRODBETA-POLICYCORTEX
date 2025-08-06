@@ -5,13 +5,19 @@ Data export service for PolicyCortex.
 import json
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any
+from typing import Dict
+from typing import Optional
+
 import structlog
 from sqlalchemy import text
 
 from ....shared.config import get_settings
 from ....shared.database import get_async_db
-from ..models import DataSourceConfig, DataTargetConfig, DataFormat, PipelineStatus
+from ..models import DataFormat
+from ..models import DataSourceConfig
+from ..models import DataTargetConfig
+from ..models import PipelineStatus
 from .azure_connectors import AzureConnectorService
 
 settings = get_settings()
@@ -26,9 +32,14 @@ class DataExporterService:
         self.azure_connector = AzureConnectorService()
         self.export_jobs = {}
 
-    async def create_export_job(self, source_config: DataSourceConfig, destination_config: DataTargetConfig,
-                              export_format: DataFormat, filters: Optional[Dict[str, Any]] = None,
-                              user_id: Optional[str] = None) -> str:
+    async def create_export_job(
+        self,
+        source_config: DataSourceConfig,
+        destination_config: DataTargetConfig,
+        export_format: DataFormat,
+        filters: Optional[Dict[str, Any]] = None,
+        user_id: Optional[str] = None,
+    ) -> str:
         """Create a new export job."""
         try:
             export_id = str(uuid.uuid4())
@@ -42,13 +53,14 @@ class DataExporterService:
                 "filters": filters or {},
                 "status": PipelineStatus.CREATED.value,
                 "created_at": datetime.utcnow().isoformat(),
-                "created_by": user_id
+                "created_by": user_id,
             }
 
             # Save to database
             db = await get_async_db()
             await db.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO data_exports (
                         export_id, source_config, destination_config, export_format,
                         filters, status, created_at, created_by
@@ -56,7 +68,8 @@ class DataExporterService:
                         :export_id, :source_config, :destination_config, :export_format,
                         :filters, :status, :created_at, :created_by
                     )
-                """),
+                """
+                ),
                 {
                     "export_id": export_id,
                     "source_config": json.dumps(export_config["source_config"]),
@@ -65,8 +78,8 @@ class DataExporterService:
                     "filters": json.dumps(export_config["filters"]),
                     "status": export_config["status"],
                     "created_at": export_config["created_at"],
-                    "created_by": export_config["created_by"]
-                }
+                    "created_by": export_config["created_by"],
+                },
             )
             await db.commit()
 
@@ -125,21 +138,21 @@ class DataExporterService:
                 PipelineStatus.COMPLETED,
                 len(data),
                 result.get("file_size", 0),
-                processing_time
+                processing_time,
             )
 
             logger.info(
                 "export_job_completed",
                 export_id=export_id,
                 records_exported=len(data),
-                processing_time=processing_time
+                processing_time=processing_time,
             )
 
             return {
                 "export_id": export_id,
                 "status": "completed",
                 "records_exported": len(data),
-                "processing_time_seconds": processing_time
+                "processing_time_seconds": processing_time,
             }
 
         except Exception as e:
@@ -186,7 +199,7 @@ class DataExporterService:
             db = await get_async_db()
             result = await db.execute(
                 text("SELECT * FROM data_exports WHERE export_id = :export_id"),
-                {"export_id": export_id}
+                {"export_id": export_id},
             )
             row = result.fetchone()
 
@@ -199,7 +212,7 @@ class DataExporterService:
                     "filters": json.loads(row.filters),
                     "status": row.status,
                     "created_at": row.created_at,
-                    "created_by": row.created_by
+                    "created_by": row.created_by,
                 }
 
             return None
@@ -213,34 +226,44 @@ class DataExporterService:
         try:
             db = await get_async_db()
             await db.execute(
-                text("""
+                text(
+                    """
                     UPDATE data_exports
                     SET status = :status, updated_at = :updated_at
                     WHERE export_id = :export_id
-                """),
+                """
+                ),
                 {
                     "export_id": export_id,
                     "status": status.value,
-                    "updated_at": datetime.utcnow().isoformat()
-                }
+                    "updated_at": datetime.utcnow().isoformat(),
+                },
             )
             await db.commit()
 
         except Exception as e:
             logger.error("update_export_status_failed", error=str(e))
 
-    async def _update_export_completion(self, export_id: str, status: PipelineStatus,
-                                      record_count: int, file_size: int, processing_time: float) -> None:
+    async def _update_export_completion(
+        self,
+        export_id: str,
+        status: PipelineStatus,
+        record_count: int,
+        file_size: int,
+        processing_time: float,
+    ) -> None:
         """Update export completion details."""
         try:
             db = await get_async_db()
             await db.execute(
-                text("""
+                text(
+                    """
                     UPDATE data_exports
                     SET status = :status, record_count = :record_count, file_size = :file_size,
                         processing_time = :processing_time, completed_at = :completed_at, updated_at = :updated_at
                     WHERE export_id = :export_id
-                """),
+                """
+                ),
                 {
                     "export_id": export_id,
                     "status": status.value,
@@ -248,8 +271,8 @@ class DataExporterService:
                     "file_size": file_size,
                     "processing_time": processing_time,
                     "completed_at": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat()
-                }
+                    "updated_at": datetime.utcnow().isoformat(),
+                },
             )
             await db.commit()
 
@@ -267,7 +290,7 @@ class DataExporterService:
                 "export_id": export_id,
                 "status": export_config["status"],
                 "created_at": export_config["created_at"],
-                "message": f"Export job {export_id} information retrieved successfully"
+                "message": f"Export job {export_id} information retrieved successfully",
             }
 
         except Exception as e:

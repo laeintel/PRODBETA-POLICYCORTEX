@@ -3,22 +3,30 @@ Model Manager Service for AI Engine.
 Handles model lifecycle management, versioning, and deployment.
 """
 
-import os
-import json
-import hashlib
 import asyncio
+import hashlib
+import json
+import os
 import pickle
 from datetime import datetime
-from typing import Dict, Any, Optional, List
 from pathlib import Path
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
 import aiofiles
 import structlog
-from azure.storage.blob.aio import BlobServiceClient
+
 # from azure.ml.aio import MLClient  # Not available yet, using direct blob storage
 from azure.identity.aio import DefaultAzureCredential
+from azure.storage.blob.aio import BlobServiceClient
 
 from backend.shared.config import get_settings
-from ..models import ModelInfo, ModelStatus, ModelType
+
+from ..models import ModelInfo
+from ..models import ModelStatus
+from ..models import ModelType
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)

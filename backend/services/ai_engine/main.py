@@ -3,84 +3,103 @@ AI Engine Service for PolicyCortex.
 Provides AI/ML capabilities for policy analysis, anomaly detection, and predictive analytics.
 """
 
-import time
-import uuid
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
 import asyncio
 import json
+import time
+import uuid
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
 import structlog
-from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks
+from fastapi import BackgroundTasks
+from fastapi import Depends
+from fastapi import FastAPI
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
-from prometheus_client import Counter, Histogram, Gauge, generate_latest
+from fastapi.security import HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
+from prometheus_client import Counter
+from prometheus_client import Gauge
+from prometheus_client import Histogram
+from prometheus_client import generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
 from backend.shared.config import get_settings
-from backend.shared.database import get_async_db, DatabaseUtils
+from backend.shared.database import DatabaseUtils
+from backend.shared.database import get_async_db
+
 from .auth import AuthManager
-from .models import (
-    HealthResponse,
-    APIResponse,
-    ErrorResponse,
-    PolicyAnalysisRequest,
-    PolicyAnalysisResponse,
-    AnomalyDetectionRequest,
-    AnomalyDetectionResponse,
-    CostOptimizationRequest,
-    CostOptimizationResponse,
-    PredictiveAnalyticsRequest,
-    PredictiveAnalyticsResponse,
-    SentimentAnalysisRequest,
-    SentimentAnalysisResponse,
-    ModelInfo,
-    ModelTrainingRequest,
-    ModelTrainingResponse,
-    ModelMetrics,
-    UnifiedAIAnalysisRequest,
-    UnifiedAIAnalysisResponse,
-    GovernanceOptimizationRequest,
-    GovernanceOptimizationResponse,
-    ConversationRequest,
-    ConversationResponse,
-    PolicySynthesisRequest,
-    PolicySynthesisResponse,
-    ConversationHistoryRequest,
-    ConversationHistoryResponse
-)
-from .services.model_manager import ModelManager
-from .services.nlp_service import NLPService
-from .services.anomaly_detector import AnomalyDetector
-from .services.cost_optimizer import CostOptimizer
-from .services.predictive_analytics import PredictiveAnalyticsService
-from .services.sentiment_analyzer import SentimentAnalyzer
-from .services.feature_engineer import FeatureEngineer
-from .services.model_monitor import ModelMonitor
 from .ml_models.compliance_predictor import CompliancePredictor
 from .ml_models.correlation_engine import CrossDomainCorrelationEngine
+from .models import AnomalyDetectionRequest
+from .models import AnomalyDetectionResponse
+from .models import APIResponse
+from .models import ConversationHistoryRequest
+from .models import ConversationHistoryResponse
+from .models import ConversationRequest
+from .models import ConversationResponse
+from .models import CostOptimizationRequest
+from .models import CostOptimizationResponse
+from .models import ErrorResponse
+from .models import GovernanceOptimizationRequest
+from .models import GovernanceOptimizationResponse
+from .models import HealthResponse
+from .models import ModelInfo
+from .models import ModelMetrics
+from .models import ModelTrainingRequest
+from .models import ModelTrainingResponse
+from .models import PolicyAnalysisRequest
+from .models import PolicyAnalysisResponse
+from .models import PolicySynthesisRequest
+from .models import PolicySynthesisResponse
+from .models import PredictiveAnalyticsRequest
+from .models import PredictiveAnalyticsResponse
+from .models import SentimentAnalysisRequest
+from .models import SentimentAnalysisResponse
+from .models import UnifiedAIAnalysisRequest
+from .models import UnifiedAIAnalysisResponse
+from .services.anomaly_detector import AnomalyDetector
+from .services.automation_engine import AutomationStatus
+from .services.automation_engine import AutomationTrigger
 from .services.automation_orchestrator import WorkflowEngine
-from .services.automation_engine import AutomationTrigger, AutomationStatus
-from .services.gnn_correlation_service import gnn_service
-from .services.conversational_ai_service import conversational_ai_service
-from .services.multi_objective_optimizer import multi_objective_optimizer
 from .services.automation_orchestrator import automation_orchestrator
-from .services.governance_intelligence import governance_intelligence
 from .services.conversation_analytics import conversation_analytics
+from .services.conversational_ai_service import conversational_ai_service
+from .services.cost_optimizer import CostOptimizer
 from .services.cross_domain_correlator import cross_domain_correlator
+from .services.feature_engineer import FeatureEngineer
+from .services.gnn_correlation_service import gnn_service
+from .services.governance_intelligence import governance_intelligence
+from .services.model_manager import ModelManager
+from .services.model_monitor import ModelMonitor
+from .services.multi_objective_optimizer import multi_objective_optimizer
+from .services.nlp_service import NLPService
+from .services.predictive_analytics import PredictiveAnalyticsService
+from .services.sentiment_analyzer import SentimentAnalyzer
+
 # Try to import real models, fall back to mock models for testing
 try:
-    from .ml_models.unified_ai_platform import unified_ai_platform, UnifiedAIConfig
-    from .ml_models.conversational_governance_intelligence import conversational_intelligence, ConversationConfig
+    from .ml_models.conversational_governance_intelligence import ConversationConfig
+    from .ml_models.conversational_governance_intelligence import conversational_intelligence
+    from .ml_models.unified_ai_platform import UnifiedAIConfig
+    from .ml_models.unified_ai_platform import unified_ai_platform
     USE_MOCK_MODELS = False
     logger.info("Using production AI models")
 except ImportError as e:
     logger.warning(f"ML dependencies not available ({e}), using mock models for testing")
+    from .ml_models.mock_models import (
+        mock_conversational_intelligence as conversational_intelligence,
+    )
     from .ml_models.mock_models import mock_unified_ai_platform as unified_ai_platform
-    from .ml_models.mock_models import mock_conversational_intelligence as conversational_intelligence
     USE_MOCK_MODELS = True
 
 # Configuration
@@ -1994,7 +2013,8 @@ async def run_multi_objective_optimization(
         # Extract parameters
         objectives = []
         for obj_data in request.get('objectives', []):
-            from .services.multi_objective_optimizer import Objective, ObjectiveType
+            from .services.multi_objective_optimizer import Objective
+            from .services.multi_objective_optimizer import ObjectiveType
             objectives.append(Objective(
                 name=obj_data['name'],
                 type=ObjectiveType(obj_data['type']),
@@ -2005,7 +2025,8 @@ async def run_multi_objective_optimization(
 
         constraints = []
         for constr_data in request.get('constraints', []):
-            from .services.multi_objective_optimizer import Constraint, ConstraintType
+            from .services.multi_objective_optimizer import Constraint
+            from .services.multi_objective_optimizer import ConstraintType
             constraints.append(Constraint(
                 name=constr_data['name'],
                 type=ConstraintType(constr_data['type']),
@@ -2124,7 +2145,8 @@ async def create_automation_workflow(
 ):
     """Create an automation workflow."""
     try:
-        from .services.automation_orchestrator import AutomationWorkflow, TriggerType
+        from .services.automation_orchestrator import AutomationWorkflow
+        from .services.automation_orchestrator import TriggerType
 
         # Parse workflow data
         workflow = AutomationWorkflow(
@@ -2599,7 +2621,9 @@ async def analyze_cross_domain_correlations(
         correlation_types = request.get('correlation_types', [])
 
         # Convert events data to CorrelationEvent objects
-        from .services.cross_domain_correlator import CorrelationEvent, DomainType, CorrelationType
+        from .services.cross_domain_correlator import CorrelationEvent
+        from .services.cross_domain_correlator import CorrelationType
+        from .services.cross_domain_correlator import DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(
@@ -2791,7 +2815,8 @@ async def analyze_temporal_correlations(
         events_data = request.get('events', [])
         window_size = request.get('window_size', 3600)  # 1 hour default
 
-        from .services.cross_domain_correlator import CorrelationEvent, DomainType
+        from .services.cross_domain_correlator import CorrelationEvent
+        from .services.cross_domain_correlator import DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(
@@ -2854,7 +2879,8 @@ async def analyze_causal_relationships(
         # Extract events
         events_data = request.get('events', [])
 
-        from .services.cross_domain_correlator import CorrelationEvent, DomainType
+        from .services.cross_domain_correlator import CorrelationEvent
+        from .services.cross_domain_correlator import DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(
@@ -2916,7 +2942,8 @@ async def detect_anomaly_correlations(
         # Extract events
         events_data = request.get('events', [])
 
-        from .services.cross_domain_correlator import CorrelationEvent, DomainType
+        from .services.cross_domain_correlator import CorrelationEvent
+        from .services.cross_domain_correlator import DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(

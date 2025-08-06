@@ -4,23 +4,34 @@ Provides AI-driven predictive analytics for Azure resource usage and trends.
 Enhanced with advanced ML models for governance prediction and forecasting.
 """
 
+import asyncio
 import json
+import pickle
+from dataclasses import dataclass
+from datetime import datetime
+from datetime import timedelta
+from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+
+import joblib
 import numpy as np
 import pandas as pd
-import asyncio
-import pickle
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-from enum import Enum
 import structlog
-from azure.monitor.query.aio import LogsQueryClient
 from azure.identity.aio import DefaultAzureCredential
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingClassifier
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import mean_squared_error, classification_report, confusion_matrix
-import joblib
+from azure.monitor.query.aio import LogsQueryClient
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 
 from ....shared.config import get_settings
 
@@ -1344,7 +1355,10 @@ class PredictiveAnalyticsService:
 
             # Calculate metrics
             if hasattr(model, 'predict_proba'):  # Classification
-                from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+                from sklearn.metrics import accuracy_score
+                from sklearn.metrics import f1_score
+                from sklearn.metrics import precision_score
+                from sklearn.metrics import recall_score
                 accuracy = accuracy_score(y_test, y_pred)
                 precision = precision_score(y_test, y_pred, average='weighted', zero_division=0)
                 recall = recall_score(y_test, y_pred, average='weighted', zero_division=0)

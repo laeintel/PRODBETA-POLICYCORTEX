@@ -3,13 +3,19 @@ Pydantic models for API Gateway service.
 """
 
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+from pydantic import BaseModel
+from pydantic import Field
 
 
 class ServiceStatus(str, Enum):
     """Service status enumeration."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -17,6 +23,7 @@ class ServiceStatus(str, Enum):
 
 class CircuitBreakerState(str, Enum):
     """Circuit breaker state enumeration."""
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -24,6 +31,7 @@ class CircuitBreakerState(str, Enum):
 
 class HealthResponse(BaseModel):
     """Health check response model."""
+
     status: str = Field(..., description="Health status")
     timestamp: datetime = Field(..., description="Timestamp of health check")
     service: str = Field(..., description="Service name")
@@ -33,6 +41,7 @@ class HealthResponse(BaseModel):
 
 class APIResponse(BaseModel):
     """Generic API response model."""
+
     success: bool = Field(..., description="Request success status")
     data: Optional[Dict[str, Any]] = Field(None, description="Response data")
     message: Optional[str] = Field(None, description="Response message")
@@ -41,6 +50,7 @@ class APIResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response model."""
+
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
     details: Optional[Dict[str, Any]] = Field(None, description="Error details")
@@ -50,6 +60,7 @@ class ErrorResponse(BaseModel):
 
 class ServiceRoute(BaseModel):
     """Service route configuration model."""
+
     name: str = Field(..., description="Service name")
     url: str = Field(..., description="Service URL")
     health_path: str = Field(..., description="Health check path")
@@ -60,17 +71,18 @@ class ServiceRoute(BaseModel):
 
 class GatewayMetrics(BaseModel):
     """Gateway metrics model."""
+
     total_requests: int = Field(..., description="Total number of requests")
     service_requests: Dict[str, int] = Field(..., description="Requests per service")
     circuit_breaker_states: Dict[str, CircuitBreakerState] = Field(
-        ...,
-        description="Circuit breaker states"
+        ..., description="Circuit breaker states"
     )
     uptime_seconds: Optional[int] = Field(None, description="Gateway uptime in seconds")
 
 
 class AuthRequest(BaseModel):
     """Authentication request model."""
+
     username: Optional[str] = Field(None, description="Username")
     email: Optional[str] = Field(None, description="Email address")
     password: str = Field(..., description="Password")
@@ -79,6 +91,7 @@ class AuthRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     """Authentication response model."""
+
     access_token: str = Field(..., description="JWT access token")
     refresh_token: str = Field(..., description="JWT refresh token")
     token_type: str = Field("bearer", description="Token type")
@@ -88,11 +101,13 @@ class AuthResponse(BaseModel):
 
 class TokenRefreshRequest(BaseModel):
     """Token refresh request model."""
+
     refresh_token: str = Field(..., description="Refresh token")
 
 
 class UserInfo(BaseModel):
     """User information model."""
+
     id: str = Field(..., description="User ID")
     email: str = Field(..., description="Email address")
     name: str = Field(..., description="Full name")
@@ -104,6 +119,7 @@ class UserInfo(BaseModel):
 
 class RateLimitInfo(BaseModel):
     """Rate limit information model."""
+
     limit: int = Field(..., description="Rate limit threshold")
     remaining: int = Field(..., description="Remaining requests")
     reset_time: datetime = Field(..., description="Rate limit reset time")
@@ -112,6 +128,7 @@ class RateLimitInfo(BaseModel):
 
 class ProxyRequest(BaseModel):
     """Proxy request model."""
+
     service: str = Field(..., description="Target service name")
     path: str = Field(..., description="Request path")
     method: str = Field("GET", description="HTTP method")
@@ -123,6 +140,7 @@ class ProxyRequest(BaseModel):
 
 class ProxyResponse(BaseModel):
     """Proxy response model."""
+
     status_code: int = Field(..., description="HTTP status code")
     headers: Dict[str, str] = Field(..., description="Response headers")
     body: Optional[Dict[str, Any]] = Field(None, description="Response body")

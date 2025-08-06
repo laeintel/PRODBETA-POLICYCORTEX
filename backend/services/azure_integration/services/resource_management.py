@@ -2,15 +2,22 @@
 Azure Resource Management service for handling Azure resources and resource groups.
 """
 
-from typing import Dict, Any, Optional, List
 from datetime import datetime
-import structlog
-from azure.mgmt.resource import ResourceManagementClient
-from azure.mgmt.monitor import MonitorManagementClient
-from azure.core.exceptions import AzureError, ResourceNotFoundError
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
+import structlog
+from azure.core.exceptions import AzureError
+from azure.core.exceptions import ResourceNotFoundError
+from azure.mgmt.monitor import MonitorManagementClient
+from azure.mgmt.resource import ResourceManagementClient
 from shared.config import get_settings
-from ..models import ResourceResponse, ResourceGroupResponse, ResourceMetrics
+
+from ..models import ResourceGroupResponse
+from ..models import ResourceMetrics
+from ..models import ResourceResponse
 from .azure_auth import AzureAuthService
 
 settings = get_settings()

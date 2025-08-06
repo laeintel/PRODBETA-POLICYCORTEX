@@ -3,16 +3,24 @@ Authentication manager for AI Engine.
 Handles JWT token validation and user authorization for AI/ML operations.
 """
 
-import jwt
 import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from datetime import datetime
+from datetime import timedelta
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import jwt
 import redis.asyncio as redis
 import structlog
-from jose import JWTError, jwt as jose_jwt
+from jose import JWTError
+from jose import jwt as jose_jwt
+
 try:
     from azure.identity.aio import DefaultAzureCredential
     from azure.keyvault.secrets.aio import SecretClient
+
     AZURE_KEYVAULT_AVAILABLE = True
 except ImportError:
     AZURE_KEYVAULT_AVAILABLE = False
@@ -20,6 +28,7 @@ except ImportError:
     SecretClient = None
 
 from shared.config import get_settings
+
 from .models import ModelInfo
 
 settings = get_settings()
@@ -42,7 +51,7 @@ class AuthManager:
                 self.settings.database.redis_url,
                 password=self.settings.database.redis_password,
                 ssl=self.settings.database.redis_ssl,
-                decode_responses=True
+                decode_responses=True,
             )
         return self.redis_client
 
@@ -55,8 +64,7 @@ class AuthManager:
             if self.azure_credential is None:
                 self.azure_credential = DefaultAzureCredential()
             self.key_vault_client = SecretClient(
-                vault_url=self.settings.azure.key_vault_url,
-                credential=self.azure_credential
+                vault_url=self.settings.azure.key_vault_url, credential=self.azure_credential
             )
         return self.key_vault_client
 
@@ -72,10 +80,7 @@ class AuthManager:
                 # In development or if KeyVault unavailable, use configuration
                 return self.settings.security.jwt_secret_key
         except Exception as e:
-            logger.warning(
-                "failed_to_get_jwt_secret_from_keyvault",
-                error=str(e)
-            )
+            logger.warning("failed_to_get_jwt_secret_from_keyvault", error=str(e))
             return self.settings.security.jwt_secret_key
 
     async def verify_token(self, token: str) -> Dict[str, Any]:
@@ -86,9 +91,7 @@ class AuthManager:
 
             # Decode and verify token
             payload = jose_jwt.decode(
-                token,
-                jwt_secret,
-                algorithms=[self.settings.security.jwt_algorithm]
+                token, jwt_secret, algorithms=[self.settings.security.jwt_algorithm]
             )
 
             # Check token expiration
@@ -104,7 +107,7 @@ class AuthManager:
                 "roles": payload.get("roles", []),
                 "permissions": payload.get("permissions", []),
                 "tenant_id": payload.get("tenant_id"),
-                "subscription_ids": payload.get("subscription_ids", [])
+                "subscription_ids": payload.get("subscription_ids", []),
             }
 
             # Validate session if session ID is present
@@ -116,7 +119,7 @@ class AuthManager:
                 "token_verified",
                 user_id=user_info["id"],
                 email=user_info["email"],
-                service="ai_engine"
+                service="ai_engine",
             )
 
             return user_info
@@ -154,7 +157,7 @@ class AuthManager:
             await redis_client.set(
                 session_key,
                 json.dumps(session_info),
-                ex=self.settings.security.jwt_expiration_minutes * 60
+                ex=self.settings.security.jwt_expiration_minutes * 60,
             )
 
         except Exception as e:
@@ -178,7 +181,7 @@ class AuthManager:
                 "model_training": ["ai.model.train", "ai.admin.access"],
                 "feature_engineering": ["ai.feature.engineer", "ai.data.access"],
                 "batch_prediction": ["ai.batch.predict", "ai.inference.access"],
-                "model_monitoring": ["ai.model.monitor", "ai.admin.access"]
+                "model_monitoring": ["ai.model.monitor", "ai.admin.access"],
             }
 
             required_permissions = ai_permissions.get(operation, [])
@@ -203,7 +206,7 @@ class AuthManager:
                 "model_training": ["ml_engineer", "data_scientist"],
                 "feature_engineering": ["data_engineer", "ml_engineer"],
                 "batch_prediction": ["data_scientist", "ml_engineer"],
-                "model_monitoring": ["ml_engineer", "monitoring_engineer"]
+                "model_monitoring": ["ml_engineer", "monitoring_engineer"],
             }
 
             allowed_roles = ai_roles.get(operation, [])
@@ -215,7 +218,7 @@ class AuthManager:
                 user_id=user_info["id"],
                 operation=operation,
                 user_roles=user_roles,
-                user_permissions=user_permissions
+                user_permissions=user_permissions,
             )
 
             return False
@@ -225,11 +228,7 @@ class AuthManager:
             return False
 
     async def check_model_access(
-        self,
-        user_info: Dict[str,
-        Any],
-        model_name: str,
-        operation: str
+        self, user_info: Dict[str, Any], model_name: str, operation: str
     ) -> bool:
         """Check if user has access to specific model operations."""
         try:
@@ -255,7 +254,7 @@ class AuthManager:
             general_model_permissions = [
                 f"ai.model.{operation}",
                 f"ai.model.*.{operation}",
-                "ai.model.access.all"
+                "ai.model.access.all",
             ]
 
             if any(perm in user_permissions for perm in general_model_permissions):
@@ -268,11 +267,7 @@ class AuthManager:
             return False
 
     async def check_data_access(
-        self,
-        user_info: Dict[str,
-        Any],
-        data_type: str,
-        tenant_id: str = None
+        self, user_info: Dict[str, Any], data_type: str, tenant_id: str = None
     ) -> bool:
         """Check if user has access to specific data types."""
         try:
@@ -294,7 +289,7 @@ class AuthManager:
                 "compliance_data": ["data.compliance.access", "compliance.read"],
                 "performance_data": ["data.performance.access", "monitoring.read"],
                 "user_data": ["data.user.access", "user.read"],
-                "audit_data": ["data.audit.access", "audit.read"]
+                "audit_data": ["data.audit.access", "audit.read"],
             }
 
             required_permissions = data_permissions.get(data_type, [])
@@ -316,7 +311,7 @@ class AuthManager:
                 "compliance_data": ["compliance_officer", "audit_manager"],
                 "performance_data": ["monitoring_engineer", "performance_analyst"],
                 "user_data": ["user_admin", "hr_manager"],
-                "audit_data": ["audit_manager", "compliance_officer"]
+                "audit_data": ["audit_manager", "compliance_officer"],
             }
 
             allowed_roles = data_roles.get(data_type, [])
@@ -329,8 +324,9 @@ class AuthManager:
             logger.error("data_access_check_failed", error=str(e))
             return False
 
-    async def log_ai_operation(self, user_info: Dict[str, Any], operation: str,
-                              details: Dict[str, Any] = None) -> None:
+    async def log_ai_operation(
+        self, user_info: Dict[str, Any], operation: str, details: Dict[str, Any] = None
+    ) -> None:
         """Log AI/ML operation for audit purposes."""
         try:
             redis_client = await self._get_redis_client()
@@ -343,7 +339,7 @@ class AuthManager:
                 "service": "ai_engine",
                 "details": details or {},
                 "tenant_id": user_info.get("tenant_id"),
-                "session_id": user_info.get("session_id")
+                "session_id": user_info.get("session_id"),
             }
 
             # Store audit log
@@ -352,10 +348,7 @@ class AuthManager:
             await redis_client.expire(audit_key, 86400 * 90)  # Keep for 90 days
 
             logger.info(
-                "ai_operation_logged",
-                user_id=user_info["id"],
-                operation=operation,
-                details=details
+                "ai_operation_logged", user_id=user_info["id"], operation=operation, details=details
             )
 
         except Exception as e:
@@ -373,7 +366,7 @@ class AuthManager:
                 "failed_requests": 0,
                 "operations": {},
                 "models_used": {},
-                "period_days": days
+                "period_days": days,
             }
 
             # This would typically aggregate from audit logs
@@ -398,7 +391,7 @@ class AuthManager:
                 "predictive_analytics": {"requests": 30, "window": 3600},  # 30 per hour
                 "sentiment_analysis": {"requests": 200, "window": 3600},  # 200 per hour
                 "model_training": {"requests": 5, "window": 86400},  # 5 per day
-                "batch_prediction": {"requests": 10, "window": 3600}  # 10 per hour
+                "batch_prediction": {"requests": 10, "window": 3600},  # 10 per hour
             }
 
             limit_config = rate_limits.get(operation, {"requests": 100, "window": 3600})
@@ -422,7 +415,7 @@ class AuthManager:
                     user_id=user_info["id"],
                     operation=operation,
                     current_count=current_count,
-                    limit=limit_config["requests"]
+                    limit=limit_config["requests"],
                 )
                 return False
 

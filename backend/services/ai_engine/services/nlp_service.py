@@ -3,11 +3,16 @@ Natural Language Processing Service for AI Engine.
 Handles policy analysis, text classification, and NLP operations.
 """
 
-import re
-import json
 import asyncio
-from typing import Dict, Any, List, Optional, Tuple
+import json
+import re
 from datetime import datetime
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+
 import structlog
 from azure.ai.textanalytics.aio import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
@@ -35,68 +40,159 @@ class NLPService:
         """Load policy-related keywords for analysis."""
         return {
             "security": [
-                "access control", "authentication", "authorization", "encryption",
-                "firewall", "security group", "network security", "vulnerability",
-                "threat", "malware", "intrusion", "breach", "compliance", "audit"
+                "access control",
+                "authentication",
+                "authorization",
+                "encryption",
+                "firewall",
+                "security group",
+                "network security",
+                "vulnerability",
+                "threat",
+                "malware",
+                "intrusion",
+                "breach",
+                "compliance",
+                "audit",
             ],
             "compliance": [
-                "gdpr", "hipaa", "sox", "pci", "iso27001", "nist", "regulation",
-                "standard", "policy", "procedure", "requirement", "obligation",
-                "mandate", "governance", "framework", "control"
+                "gdpr",
+                "hipaa",
+                "sox",
+                "pci",
+                "iso27001",
+                "nist",
+                "regulation",
+                "standard",
+                "policy",
+                "procedure",
+                "requirement",
+                "obligation",
+                "mandate",
+                "governance",
+                "framework",
+                "control",
             ],
             "cost": [
-                "budget", "cost", "expense", "billing", "charge", "pricing",
-                "optimization", "saving", "reduction", "allocation", "usage",
-                "consumption", "spending", "financial", "economic"
+                "budget",
+                "cost",
+                "expense",
+                "billing",
+                "charge",
+                "pricing",
+                "optimization",
+                "saving",
+                "reduction",
+                "allocation",
+                "usage",
+                "consumption",
+                "spending",
+                "financial",
+                "economic",
             ],
             "performance": [
-                "performance", "latency", "throughput", "scalability", "availability",
-                "reliability", "uptime", "downtime", "response time", "cpu",
-                "memory", "storage", "network", "bandwidth", "capacity"
+                "performance",
+                "latency",
+                "throughput",
+                "scalability",
+                "availability",
+                "reliability",
+                "uptime",
+                "downtime",
+                "response time",
+                "cpu",
+                "memory",
+                "storage",
+                "network",
+                "bandwidth",
+                "capacity",
             ],
             "governance": [
-                "governance", "management", "oversight", "control", "monitoring",
-                "reporting", "accountability", "responsibility", "delegation",
-                "approval", "review", "assessment", "evaluation", "audit"
-            ]
+                "governance",
+                "management",
+                "oversight",
+                "control",
+                "monitoring",
+                "reporting",
+                "accountability",
+                "responsibility",
+                "delegation",
+                "approval",
+                "review",
+                "assessment",
+                "evaluation",
+                "audit",
+            ],
         }
 
     def _load_compliance_patterns(self) -> Dict[str, List[str]]:
         """Load compliance-related patterns for analysis."""
         return {
             "data_protection": [
-                r"personal\s+data", r"sensitive\s+information", r"privacy\s+policy",
-                r"data\s+retention", r"data\s+classification", r"data\s+loss\s+prevention"
+                r"personal\s+data",
+                r"sensitive\s+information",
+                r"privacy\s+policy",
+                r"data\s+retention",
+                r"data\s+classification",
+                r"data\s+loss\s+prevention",
             ],
             "access_control": [
-                r"role\s+based\s+access", r"least\s+privilege", r"multi\s+factor\s+authentication",
-                r"privileged\s+access", r"identity\s+management", r"access\s+review"
+                r"role\s+based\s+access",
+                r"least\s+privilege",
+                r"multi\s+factor\s+authentication",
+                r"privileged\s+access",
+                r"identity\s+management",
+                r"access\s+review",
             ],
             "monitoring": [
-                r"audit\s+log", r"security\s+monitoring", r"continuous\s+monitoring",
-                r"threat\s+detection", r"incident\s+response", r"compliance\s+reporting"
+                r"audit\s+log",
+                r"security\s+monitoring",
+                r"continuous\s+monitoring",
+                r"threat\s+detection",
+                r"incident\s+response",
+                r"compliance\s+reporting",
             ],
             "risk_management": [
-                r"risk\s+assessment", r"vulnerability\s+management", r"business\s+continuity",
-                r"disaster\s+recovery", r"risk\s+mitigation", r"security\s+controls"
-            ]
+                r"risk\s+assessment",
+                r"vulnerability\s+management",
+                r"business\s+continuity",
+                r"disaster\s+recovery",
+                r"risk\s+mitigation",
+                r"security\s+controls",
+            ],
         }
 
     def _load_risk_indicators(self) -> Dict[str, List[str]]:
         """Load risk indicator patterns."""
         return {
             "high_risk": [
-                "public access", "no encryption", "weak password", "admin access",
-                "unrestricted", "open firewall", "no monitoring", "deprecated"
+                "public access",
+                "no encryption",
+                "weak password",
+                "admin access",
+                "unrestricted",
+                "open firewall",
+                "no monitoring",
+                "deprecated",
             ],
             "medium_risk": [
-                "limited access", "basic encryption", "standard password",
-                "user access", "restricted", "filtered access", "basic monitoring"
+                "limited access",
+                "basic encryption",
+                "standard password",
+                "user access",
+                "restricted",
+                "filtered access",
+                "basic monitoring",
             ],
             "low_risk": [
-                "private access", "strong encryption", "complex password",
-                "restricted access", "secure", "monitored", "updated"
-            ]
+                "private access",
+                "strong encryption",
+                "complex password",
+                "restricted access",
+                "secure",
+                "monitored",
+                "updated",
+            ],
         }
 
     async def initialize(self) -> None:
@@ -120,15 +216,14 @@ class NLPService:
             # For production, use Azure Text Analytics
             endpoint = "https://your-text-analytics-resource.cognitiveservices.azure.com/"
 
-            if hasattr(self.settings, 'azure_text_analytics_key'):
+            if hasattr(self.settings, "azure_text_analytics_key"):
                 credential = AzureKeyCredential(self.settings.azure_text_analytics_key)
             else:
                 self.azure_credential = DefaultAzureCredential()
                 credential = self.azure_credential
 
             self.text_analytics_client = TextAnalyticsClient(
-                endpoint=endpoint,
-                credential=credential
+                endpoint=endpoint, credential=credential
             )
 
             logger.info("Azure Text Analytics client initialized")
@@ -136,13 +231,16 @@ class NLPService:
         except Exception as e:
             logger.warning("Failed to initialize Azure Text Analytics", error=str(e))
 
-    async def analyze_policy(self, policy_text: str, analysis_type: str,
-                           options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def analyze_policy(
+        self, policy_text: str, analysis_type: str, options: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze policy document using NLP techniques."""
         try:
-            logger.info("Starting policy analysis",
-                       text_length=len(policy_text),
-                       analysis_type=analysis_type)
+            logger.info(
+                "Starting policy analysis",
+                text_length=len(policy_text),
+                analysis_type=analysis_type,
+            )
 
             # Initialize results
             results = {
@@ -153,7 +251,7 @@ class NLPService:
                 "key_insights": [],
                 "recommendations": [],
                 "compliance_status": {},
-                "risk_assessment": {}
+                "risk_assessment": {},
             }
 
             # Perform different types of analysis
@@ -176,9 +274,11 @@ class NLPService:
             results.update(await self._analyze_sentiment(policy_text))
             results.update(await self._extract_requirements(policy_text))
 
-            logger.info("Policy analysis completed",
-                       confidence=results["confidence"],
-                       insights_count=len(results["key_insights"]))
+            logger.info(
+                "Policy analysis completed",
+                confidence=results["confidence"],
+                insights_count=len(results["key_insights"]),
+            )
 
             return results
 
@@ -187,10 +287,7 @@ class NLPService:
             raise
 
     async def _analyze_compliance(
-        self,
-        text: str,
-        options: Optional[Dict[str,
-        Any]]
+        self, text: str, options: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Analyze compliance aspects of the policy."""
         try:
@@ -198,7 +295,7 @@ class NLPService:
                 "compliance_status": {},
                 "violations": [],
                 "recommendations": [],
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
             # Check for compliance framework mentions
@@ -226,7 +323,7 @@ class NLPService:
                     compliance_score += category_matches
                     results["compliance_status"][category] = {
                         "matches": category_matches,
-                        "coverage": min(category_matches / len(patterns), 1.0)
+                        "coverage": min(category_matches / len(patterns), 1.0),
                     }
 
                 total_patterns += len(patterns)
@@ -236,12 +333,14 @@ class NLPService:
 
             # Generate recommendations
             if results["confidence"] < 0.5:
-                results["recommendations"].append({
-                    "type": "compliance_improvement",
-                    "priority": "high",
-                    "description": "Policy lacks comprehensive compliance coverage",
-                    "action": "Review and enhance compliance requirements"
-                })
+                results["recommendations"].append(
+                    {
+                        "type": "compliance_improvement",
+                        "priority": "high",
+                        "description": "Policy lacks comprehensive compliance coverage",
+                        "action": "Review and enhance compliance requirements",
+                    }
+                )
 
             return results
 
@@ -250,10 +349,7 @@ class NLPService:
             return {"compliance_status": {}, "confidence": 0.0}
 
     async def _analyze_security(
-        self,
-        text: str,
-        options: Optional[Dict[str,
-        Any]]
+        self, text: str, options: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Analyze security aspects of the policy."""
         try:
@@ -261,7 +357,7 @@ class NLPService:
                 "security_controls": [],
                 "vulnerabilities": [],
                 "recommendations": [],
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
             # Check for security keywords
@@ -281,11 +377,13 @@ class NLPService:
                     if indicator.lower() in text.lower():
                         if risk_level == "high_risk":
                             risk_score += 3
-                            results["vulnerabilities"].append({
-                                "type": "high_risk_indicator",
-                                "description": f"Found high-risk indicator: {indicator}",
-                                "severity": "high"
-                            })
+                            results["vulnerabilities"].append(
+                                {
+                                    "type": "high_risk_indicator",
+                                    "description": f"Found high-risk indicator: {indicator}",
+                                    "severity": "high",
+                                }
+                            )
                         elif risk_level == "medium_risk":
                             risk_score += 1
                         else:
@@ -296,12 +394,14 @@ class NLPService:
 
             # Generate security recommendations
             if len(security_mentions) < 5:
-                results["recommendations"].append({
-                    "type": "security_enhancement",
-                    "priority": "high",
-                    "description": "Policy lacks comprehensive security controls",
-                    "action": "Add detailed security requirements and controls"
-                })
+                results["recommendations"].append(
+                    {
+                        "type": "security_enhancement",
+                        "priority": "high",
+                        "description": "Policy lacks comprehensive security controls",
+                        "action": "Add detailed security requirements and controls",
+                    }
+                )
 
             return results
 
@@ -317,7 +417,7 @@ class NLPService:
                 "budget_mentions": [],
                 "optimization_opportunities": [],
                 "recommendations": [],
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
             # Check for cost-related keywords
@@ -332,8 +432,11 @@ class NLPService:
 
             # Look for budget patterns
             budget_patterns = [
-                r'\$[\d,]+', r'budget\s+of\s+\$?[\d,]+', r'cost\s+limit\s+\$?[\d,]+',
-                r'spending\s+cap\s+\$?[\d,]+', r'maximum\s+cost\s+\$?[\d,]+'
+                r"\$[\d,]+",
+                r"budget\s+of\s+\$?[\d,]+",
+                r"cost\s+limit\s+\$?[\d,]+",
+                r"spending\s+cap\s+\$?[\d,]+",
+                r"maximum\s+cost\s+\$?[\d,]+",
             ]
 
             for pattern in budget_patterns:
@@ -345,12 +448,14 @@ class NLPService:
 
             # Generate cost optimization recommendations
             if len(cost_mentions) < 3:
-                results["recommendations"].append({
-                    "type": "cost_optimization",
-                    "priority": "medium",
-                    "description": "Policy lacks cost management controls",
-                    "action": "Add budget limits and cost optimization requirements"
-                })
+                results["recommendations"].append(
+                    {
+                        "type": "cost_optimization",
+                        "priority": "medium",
+                        "description": "Policy lacks cost management controls",
+                        "action": "Add budget limits and cost optimization requirements",
+                    }
+                )
 
             return results
 
@@ -359,10 +464,7 @@ class NLPService:
             return {"cost_controls": [], "confidence": 0.0}
 
     async def _analyze_performance(
-        self,
-        text: str,
-        options: Optional[Dict[str,
-        Any]]
+        self, text: str, options: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Analyze performance aspects of the policy."""
         try:
@@ -371,7 +473,7 @@ class NLPService:
                 "sla_requirements": [],
                 "optimization_areas": [],
                 "recommendations": [],
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
             # Check for performance keywords
@@ -386,8 +488,10 @@ class NLPService:
 
             # Look for SLA patterns
             sla_patterns = [
-                r'(\d+)%\s+uptime', r'(\d+)\s+seconds?\s+response\s+time',
-                r'(\d+)\s+ms\s+latency', r'(\d+)\s+minutes?\s+downtime'
+                r"(\d+)%\s+uptime",
+                r"(\d+)\s+seconds?\s+response\s+time",
+                r"(\d+)\s+ms\s+latency",
+                r"(\d+)\s+minutes?\s+downtime",
             ]
 
             for pattern in sla_patterns:
@@ -404,10 +508,7 @@ class NLPService:
             return {"performance_metrics": [], "confidence": 0.0}
 
     async def _analyze_governance(
-        self,
-        text: str,
-        options: Optional[Dict[str,
-        Any]]
+        self, text: str, options: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Analyze governance aspects of the policy."""
         try:
@@ -416,7 +517,7 @@ class NLPService:
                 "approval_processes": [],
                 "monitoring_requirements": [],
                 "recommendations": [],
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
             # Check for governance keywords
@@ -431,8 +532,11 @@ class NLPService:
 
             # Look for approval patterns
             approval_patterns = [
-                r'approval\s+required', r'manager\s+approval', r'review\s+process',
-                r'oversight\s+committee', r'governance\s+board'
+                r"approval\s+required",
+                r"manager\s+approval",
+                r"review\s+process",
+                r"oversight\s+committee",
+                r"governance\s+board",
             ]
 
             for pattern in approval_patterns:
@@ -449,10 +553,7 @@ class NLPService:
             return {"governance_controls": [], "confidence": 0.0}
 
     async def _analyze_general(
-        self,
-        text: str,
-        options: Optional[Dict[str,
-        Any]]
+        self, text: str, options: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Perform general analysis of the policy."""
         try:
@@ -461,15 +562,15 @@ class NLPService:
                 "key_topics": [],
                 "complexity_score": 0.0,
                 "readability_score": 0.0,
-                "confidence": 0.0
+                "confidence": 0.0,
             }
 
             # Analyze document structure
             results["document_structure"] = {
-                "paragraphs": len(text.split('\n\n')),
-                "sentences": len(re.findall(r'[.!?]+', text)),
+                "paragraphs": len(text.split("\n\n")),
+                "sentences": len(re.findall(r"[.!?]+", text)),
                 "words": len(text.split()),
-                "characters": len(text)
+                "characters": len(text),
             }
 
             # Calculate complexity score (simplified)
@@ -479,7 +580,7 @@ class NLPService:
             results["complexity_score"] = complexity_score
 
             # Calculate readability score (simplified)
-            sentences = len(re.findall(r'[.!?]+', text))
+            sentences = len(re.findall(r"[.!?]+", text))
             words_per_sentence = len(words) / sentences if sentences > 0 else 0
             readability_score = max(0, 1.0 - (words_per_sentence / 30))
             results["readability_score"] = readability_score
@@ -507,30 +608,31 @@ class NLPService:
     async def _extract_key_entities(self, text: str) -> Dict[str, Any]:
         """Extract key entities from the text."""
         try:
-            entities = {
-                "organizations": [],
-                "technologies": [],
-                "standards": [],
-                "roles": []
-            }
+            entities = {"organizations": [], "technologies": [], "standards": [], "roles": []}
 
             # Simple entity extraction (would use NER in production)
-            org_patterns = [
-                r'Microsoft', r'Amazon', r'Google', r'Azure', r'AWS', r'GCP'
-            ]
+            org_patterns = [r"Microsoft", r"Amazon", r"Google", r"Azure", r"AWS", r"GCP"]
 
             tech_patterns = [
-                r'Active Directory', r'Kubernetes', r'Docker', r'SQL Server',
-                r'Virtual Machine', r'Storage Account', r'Key Vault'
+                r"Active Directory",
+                r"Kubernetes",
+                r"Docker",
+                r"SQL Server",
+                r"Virtual Machine",
+                r"Storage Account",
+                r"Key Vault",
             ]
 
-            standard_patterns = [
-                r'ISO\s+\d+', r'NIST\s+\d+', r'RFC\s+\d+'
-            ]
+            standard_patterns = [r"ISO\s+\d+", r"NIST\s+\d+", r"RFC\s+\d+"]
 
             role_patterns = [
-                r'administrator', r'manager', r'analyst', r'engineer',
-                r'architect', r'developer', r'operator'
+                r"administrator",
+                r"manager",
+                r"analyst",
+                r"engineer",
+                r"architect",
+                r"developer",
+                r"operator",
             ]
 
             for pattern in org_patterns:
@@ -564,13 +666,28 @@ class NLPService:
         try:
             # Simple sentiment analysis (would use Azure Text Analytics in production)
             positive_words = [
-                'secure', 'compliant', 'efficient', 'optimized', 'protected',
-                'approved', 'authorized', 'verified', 'validated', 'certified'
+                "secure",
+                "compliant",
+                "efficient",
+                "optimized",
+                "protected",
+                "approved",
+                "authorized",
+                "verified",
+                "validated",
+                "certified",
             ]
 
             negative_words = [
-                'vulnerable', 'insecure', 'non-compliant', 'unauthorized',
-                'deprecated', 'outdated', 'risky', 'exposed', 'blocked'
+                "vulnerable",
+                "insecure",
+                "non-compliant",
+                "unauthorized",
+                "deprecated",
+                "outdated",
+                "risky",
+                "exposed",
+                "blocked",
             ]
 
             text_lower = text.lower()
@@ -594,7 +711,7 @@ class NLPService:
                     "overall": sentiment,
                     "positive_score": positive_score,
                     "negative_score": negative_score,
-                    "confidence": abs(positive_score - negative_score)
+                    "confidence": abs(positive_score - negative_score),
                 }
             }
 
@@ -605,27 +722,30 @@ class NLPService:
     async def _extract_requirements(self, text: str) -> Dict[str, Any]:
         """Extract requirements from the policy text."""
         try:
-            requirements = {
-                "mandatory": [],
-                "recommended": [],
-                "prohibited": []
-            }
+            requirements = {"mandatory": [], "recommended": [], "prohibited": []}
 
             # Patterns for different requirement types
             mandatory_patterns = [
-                r'must\s+([^.!?]+)', r'shall\s+([^.!?]+)', r'required\s+to\s+([^.!?]+)',
-                r'mandatory\s+([^.!?]+)', r'obligated\s+to\s+([^.!?]+)'
+                r"must\s+([^.!?]+)",
+                r"shall\s+([^.!?]+)",
+                r"required\s+to\s+([^.!?]+)",
+                r"mandatory\s+([^.!?]+)",
+                r"obligated\s+to\s+([^.!?]+)",
             ]
 
             recommended_patterns = [
-                r'should\s+([^.!?]+)', r'recommended\s+to\s+([^.!?]+)',
-                r'advisable\s+to\s+([^.!?]+)', r'suggested\s+([^.!?]+)'
+                r"should\s+([^.!?]+)",
+                r"recommended\s+to\s+([^.!?]+)",
+                r"advisable\s+to\s+([^.!?]+)",
+                r"suggested\s+([^.!?]+)",
             ]
 
             prohibited_patterns = [
-                r'must\s+not\s+([^.!?]+)', r'shall\s+not\s+([^.!?]+)',
-                r'prohibited\s+([^.!?]+)', r'forbidden\s+([^.!?]+)',
-                r'not\s+allowed\s+([^.!?]+)'
+                r"must\s+not\s+([^.!?]+)",
+                r"shall\s+not\s+([^.!?]+)",
+                r"prohibited\s+([^.!?]+)",
+                r"forbidden\s+([^.!?]+)",
+                r"not\s+allowed\s+([^.!?]+)",
             ]
 
             for pattern in mandatory_patterns:
