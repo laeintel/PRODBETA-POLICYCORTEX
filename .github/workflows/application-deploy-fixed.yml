@@ -18,13 +18,14 @@ defaults:
     shell: bash
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/application-deploy-fixed.yml'
+  # Disabled auto-trigger to avoid conflicts with ci-cd-pipeline.yml
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'backend/**'
+  #     - 'frontend/**'
+  #     - '.github/workflows/application-deploy-fixed.yml'
   pull_request:
     branches:
       - main
