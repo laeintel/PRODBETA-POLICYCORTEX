@@ -24,17 +24,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy minimal requirements for container builds
-COPY services/ai_engine/requirements-minimal.txt /app/requirements.txt
+COPY backend/services/ai_engine/requirements-minimal.txt /app/requirements.txt
 
 # Install Python dependencies (minimal set for container startup)
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy shared modules
-COPY shared /app/shared/
+COPY backend/shared /app/shared/
 
 # Copy the service application
-COPY services/ai_engine /app/
+COPY backend/services/ai_engine /app/
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs

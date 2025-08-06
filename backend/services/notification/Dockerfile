@@ -24,16 +24,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY services/notification/requirements.txt /app/requirements.txt
+COPY backend/services/notification/requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy shared modules
-COPY shared /app/shared/
+COPY backend/shared /app/shared/
 
 # Copy the service application
-COPY services/notification /app/
+COPY backend/services/notification /app/
 
 # Create non-root user
 RUN groupadd -r notification && useradd -r -g notification notification

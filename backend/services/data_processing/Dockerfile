@@ -36,17 +36,17 @@ RUN apt-get update && \
 # ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 # Copy requirements first for better caching
-COPY services/data_processing/requirements.txt /app/requirements.txt
+COPY backend/services/data_processing/requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy shared modules
-COPY shared /app/shared/
+COPY backend/shared /app/shared/
 
 # Copy the service application
-COPY services/data_processing /app/
+COPY backend/services/data_processing /app/
 
 # Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
