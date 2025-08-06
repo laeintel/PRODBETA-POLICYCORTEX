@@ -2,7 +2,7 @@ name: Bicep Infrastructure Deployment
 
 defaults:
   run:
-    shell: bash
+    shell: powershell
 
 permissions:
   contents: read
@@ -48,7 +48,7 @@ env:
 jobs:
   validate:
     name: Validate Bicep Templates
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
 
   deploy-dev:
     name: Deploy Dev Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: validate
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pipeline-manual-trigger-keyvault-setup' || github.event_name == 'workflow_dispatch') && success()
     environment: dev
@@ -402,7 +402,7 @@ jobs:
 
   deploy-staging:
     name: Deploy Staging Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: validate
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
     environment: staging
@@ -433,7 +433,7 @@ jobs:
 
   deploy-prod:
     name: Deploy Production Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: validate
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
     environment: prod
@@ -464,7 +464,7 @@ jobs:
 
   destroy:
     name: Destroy Environment
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
     environment: ${{ github.event.inputs.environment }}
     steps:
