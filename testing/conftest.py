@@ -206,9 +206,17 @@ def api_client(test_settings: Settings):
     
     # Configure dynamic successful responses
     async def mock_post(*args, **kwargs):
-        mock_response = AsyncMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
+        from unittest.mock import Mock
+        mock_response = Mock()
+        
+        # Determine appropriate status code based on endpoint
+        url = args[0] if args else kwargs.get('url', '')
+        if 'onboarding' in str(url) or 'policies' in str(url):
+            mock_response.status_code = 201  # Created
+        else:
+            mock_response.status_code = 200  # OK
+            
+        mock_response.json = lambda: {
             "session_id": f"test-session-{uuid.uuid4().hex[:8]}",
             "tenant_id": "test-tenant-123",
             "policy_id": f"test-policy-{uuid.uuid4().hex[:8]}",
@@ -218,20 +226,38 @@ def api_client(test_settings: Settings):
         return mock_response
     
     async def mock_get(*args, **kwargs):
-        mock_response = AsyncMock()
+        from unittest.mock import Mock
+        mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
+        mock_response.json = lambda: {
             "policies": [{"id": f"policy-{i}", "name": f"Policy {i}"} for i in range(20)],
             "total": 20,
             "status": "success"
         }
         return mock_response
     
+    async def mock_put(*args, **kwargs):
+        from unittest.mock import Mock
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json = lambda: {
+            "status": "success",
+            "message": "Updated successfully"
+        }
+        return mock_response
+    
+    async def mock_delete(*args, **kwargs):
+        from unittest.mock import Mock
+        mock_response = Mock()
+        mock_response.status_code = 204  # No Content for delete
+        mock_response.json = lambda: {}
+        return mock_response
+
     # Configure the mock client with async functions
     mock_client.post.side_effect = mock_post
     mock_client.get.side_effect = mock_get
-    mock_client.put.side_effect = mock_post
-    mock_client.delete.side_effect = mock_post
+    mock_client.put.side_effect = mock_put
+    mock_client.delete.side_effect = mock_delete
     
     return mock_client
 
