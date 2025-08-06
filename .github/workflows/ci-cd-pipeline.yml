@@ -235,7 +235,7 @@ jobs:
           npm run test:ci
 
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
@@ -311,7 +311,7 @@ jobs:
             -v
 
       - name: Upload integration test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: integration-test-results
@@ -520,7 +520,7 @@ jobs:
             --output .env.${{ steps.env.outputs.environment }}
 
       - name: Upload environment configuration
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: environment-config-${{ steps.env.outputs.environment }}
           path: .env.${{ steps.env.outputs.environment }}
@@ -571,7 +571,7 @@ jobs:
           fi
 
       - name: Download environment configuration
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: environment-config-${{ steps.env.outputs.environment }}
 
@@ -754,7 +754,7 @@ jobs:
             -v
 
       - name: Upload E2E test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-test-results
@@ -806,7 +806,7 @@ jobs:
             --out json=testing/reports/performance-results.json
 
       - name: Upload performance test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-test-results
           path: testing/reports/performance-results.json
