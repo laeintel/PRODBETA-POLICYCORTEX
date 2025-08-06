@@ -579,14 +579,13 @@ jobs:
             Write-Host "Creating basic fallback configuration..."
             
             # Create a basic fallback configuration file
-            @"
-ENVIRONMENT=${{ steps.env.outputs.environment }}
-AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}
-AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
-AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
-AZURE_RESOURCE_GROUP=rg-pcx-app-${{ steps.env.outputs.environment }}
-AZURE_LOCATION=eastus
-"@ | Out-File -FilePath ".env.${{ steps.env.outputs.environment }}" -Encoding UTF8
+            $configContent = "ENVIRONMENT=${{ steps.env.outputs.environment }}`n"
+            $configContent += "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}`n"
+            $configContent += "AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}`n"
+            $configContent += "AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}`n"
+            $configContent += "AZURE_RESOURCE_GROUP=rg-pcx-app-${{ steps.env.outputs.environment }}`n"
+            $configContent += "AZURE_LOCATION=eastus`n"
+            $configContent | Out-File -FilePath ".env.${{ steps.env.outputs.environment }}" -Encoding UTF8
             
             Write-Host "✅ Fallback configuration created"
           }
@@ -600,11 +599,10 @@ AZURE_LOCATION=eastus
             Get-Content $configFile | Write-Host
           } else {
             Write-Host "❌ Configuration file missing, creating emergency fallback..."
-            @"
-ENVIRONMENT=${{ steps.env.outputs.environment }}
-AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}
-AZURE_RESOURCE_GROUP=rg-pcx-app-${{ steps.env.outputs.environment }}
-"@ | Out-File -FilePath $configFile -Encoding UTF8
+            $emergencyConfig = "ENVIRONMENT=${{ steps.env.outputs.environment }}`n"
+            $emergencyConfig += "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}`n"
+            $emergencyConfig += "AZURE_RESOURCE_GROUP=rg-pcx-app-${{ steps.env.outputs.environment }}`n"
+            $emergencyConfig | Out-File -FilePath $configFile -Encoding UTF8
           }
         shell: powershell
 
