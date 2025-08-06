@@ -365,13 +365,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Get Container Registry Details
+        id: acr
+        run: |
+          # Get the ACR details for dev environment
+          ACR_NAME=$(az acr list --resource-group "rg-pcx-app-dev" --query "[0].name" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "rg-pcx-app-dev" --query "loginServer" -o tsv)
+          
+          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          
+          echo "Using ACR: $ACR_LOGIN_SERVER"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v1
         with:
-          login-server: ${{ secrets.CONTAINER_REGISTRY }}
+          login-server: ${{ steps.acr.outputs.acr_login_server }}
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
@@ -379,7 +402,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.CONTAINER_REGISTRY }}/${{ matrix.service }}
+          images: ${{ steps.acr.outputs.acr_login_server }}/${{ matrix.service }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -569,6 +592,18 @@ jobs:
             echo "environment=dev" >> $GITHUB_OUTPUT
           fi
 
+      - name: Get Container Registry Details
+        id: acr
+        run: |
+          ENV=$(echo "${{ steps.env.outputs.environment }}" | head -1)
+          ACR_NAME=$(az acr list --resource-group "rg-pcx-app-$ENV" --query "[0].name" -o tsv)
+          ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --resource-group "rg-pcx-app-$ENV" --query "loginServer" -o tsv)
+          
+          echo "acr_name=$ACR_NAME" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          
+          echo "Using ACR: $ACR_LOGIN_SERVER"
+
       - name: Download environment configuration
         uses: actions/download-artifact@v4
         with:
@@ -606,15 +641,15 @@ jobs:
           
           # Check if container app exists
           if az containerapp show \
-            --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
+            --name "ca-pcx-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+            --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
             --query "name" -o tsv 2>/dev/null; then
             
             echo "Updating existing container app..."
             az containerapp update \
-              --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
-              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-              --image "${{ secrets.CONTAINER_REGISTRY }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
+              --name "ca-pcx-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+              --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
+              --image "${{ steps.acr.outputs.acr_login_server }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
               --cpu "$CPU" \
               --memory "$MEMORY" \
               --min-replicas "$MIN_REPLICAS" \
@@ -636,10 +671,10 @@ jobs:
           else
             echo "Creating new container app..."
             az containerapp create \
-              --name "ca-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
-              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-              --environment "policycortex-${{ steps.env.outputs.environment }}-containerenv" \
-              --image "${{ secrets.CONTAINER_REGISTRY }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
+              --name "ca-pcx-${{ matrix.service }}-${{ steps.env.outputs.environment }}" \
+              --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
+              --environment "cae-pcx-${{ steps.env.outputs.environment }}" \
+              --image "${{ steps.acr.outputs.acr_login_server }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
               --cpu "$CPU" \
               --memory "$MEMORY" \
               --min-replicas "$MIN_REPLICAS" \
