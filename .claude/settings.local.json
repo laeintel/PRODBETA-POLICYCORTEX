@@ -327,7 +327,11 @@
       "Bash(if [ -d \"backend/venv\" ])",
       "Bash(__NEW_LINE__ if [ -f \"backend/services/api_gateway/main_simple.py\" ])",
       "Bash(if [ -d \"frontend/node_modules\" ])",
-      "Bash(__NEW_LINE__ if [ -f \"frontend/package.json\" ])"
+      "Bash(__NEW_LINE__ if [ -f \"frontend/package.json\" ])",
+      "Bash(set VITE_API_BASE_URL=http://localhost:8000)",
+      "Bash(....venvScriptspip.exe install -r requirements_integrated.txt)",
+      "Bash(\"..\\..\\venv\\Scripts\\pip.exe\" install -r requirements_integrated.txt)",
+      "Bash(backend/venv/Scripts/pip.exe install redis fastapi uvicorn python-jose[cryptography] aiohttp structlog azure-identity pydantic)"
     ],
     "deny": []
   }

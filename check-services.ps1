@@ -18,13 +18,13 @@ try {
 # Check frontend
 Write-Host "`nChecking Frontend..." -ForegroundColor Yellow
 try {
-    $frontendResponse = Invoke-WebRequest -Uri "http://localhost:5173" -TimeoutSec 5 -UseBasicParsing
+    $frontendResponse = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 5 -UseBasicParsing
     if ($frontendResponse.StatusCode -eq 200) {
-        Write-Host "✅ Frontend is running on http://localhost:5173" -ForegroundColor Green
+        Write-Host "✅ Frontend is running on http://localhost:3000" -ForegroundColor Green
         Write-Host "   Status: $($frontendResponse.StatusCode)" -ForegroundColor Gray
     }
 } catch {
-    Write-Host "❌ Frontend is not responding on http://localhost:5173" -ForegroundColor Red
+    Write-Host "❌ Frontend is not responding on http://localhost:3000" -ForegroundColor Red
     Write-Host "   Error: $($_.Exception.Message)" -ForegroundColor Gray
 }
 
@@ -32,7 +32,7 @@ Write-Host "`n==================================" -ForegroundColor Cyan
 Write-Host "Health check completed!" -ForegroundColor Green
 
 Write-Host "`nQuick Links:" -ForegroundColor Yellow
-Write-Host "🌐 Frontend App: http://localhost:5173" -ForegroundColor Cyan
+Write-Host "🌐 Frontend App: http://localhost:3000" -ForegroundColor Cyan
 Write-Host "🔧 Backend API: http://localhost:8000" -ForegroundColor Cyan  
 Write-Host "📚 API Docs: http://localhost:8000/docs" -ForegroundColor Cyan
 Write-Host "💾 ReDoc: http://localhost:8000/redoc" -ForegroundColor Cyan
