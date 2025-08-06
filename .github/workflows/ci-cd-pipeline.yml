@@ -167,7 +167,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [detect-changes, lint-and-format]
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.config == 'true'
     
@@ -283,7 +283,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [detect-changes, unit-tests]
     if: (needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.config == 'true') && github.event.inputs.skip_tests != 'true'
     
@@ -348,7 +348,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
     steps:
@@ -375,7 +375,7 @@ jobs:
 
   build-images:
     name: Build Container Images
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [detect-changes, unit-tests]
     if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.config == 'true'
     
@@ -453,7 +453,7 @@ jobs:
 
   deploy-infrastructure:
     name: Deploy Infrastructure
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [detect-changes, security-scan]
     if: needs.detect-changes.outputs.infrastructure == 'true' || github.event_name == 'workflow_dispatch'
     
@@ -552,15 +552,16 @@ jobs:
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            Write-Output "environment=${{ github.event.inputs.environment }}" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/main") {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/staging") {
+            Write-Output "environment=staging" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          }
+        shell: powershell
 
       - name: Generate environment configuration
         run: |
@@ -569,6 +570,7 @@ jobs:
             --environment ${{ steps.env.outputs.environment }} \
             --action generate-env \
             --output .env.${{ steps.env.outputs.environment }}
+        shell: powershell
 
       - name: Upload environment configuration
         uses: actions/upload-artifact@v4
@@ -578,7 +580,7 @@ jobs:
 
   deploy-services:
     name: Deploy Services
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [build-images, configure-environment]
     if: always() && needs.build-images.result == 'success' && needs.configure-environment.result == 'success'
     
@@ -778,35 +780,38 @@ jobs:
           cd testing
           npm install playwright
           npx playwright install
+        shell: powershell
 
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            Write-Output "environment=${{ github.event.inputs.environment }}" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/main") {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/staging") {
+            Write-Output "environment=staging" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          }
+        shell: powershell
 
       - name: Get application URLs
         id: urls
         run: |
-          FRONTEND_URL=$(az containerapp show \
-            --name "ca-frontend-${{ steps.env.outputs.environment }}" \
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
+          $frontendUrl = az containerapp show `
+            --name "ca-frontend-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --query "properties.configuration.ingress.fqdn" -o tsv
           
-          API_URL=$(az containerapp show \
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
+          $apiUrl = az containerapp show `
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --query "properties.configuration.ingress.fqdn" -o tsv
           
-          echo "frontend_url=https://$FRONTEND_URL" >> $GITHUB_OUTPUT
-          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+          Write-Output "frontend_url=https://$frontendUrl" >> $env:GITHUB_OUTPUT
+          Write-Output "api_url=https://$apiUrl" >> $env:GITHUB_OUTPUT
+        shell: powershell
 
       - name: Run E2E tests
         env:
@@ -818,10 +823,11 @@ jobs:
           TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
           RECORD_VIDEOS: true
         run: |
-          python -m pytest testing/e2e/ \
-            --junitxml=testing/reports/junit-e2e.xml \
-            --html=testing/reports/e2e-report.html \
+          python -m pytest testing/e2e/ `
+            --junitxml=testing/reports/junit-e2e.xml `
+            --html=testing/reports/e2e-report.html `
             -v
+        shell: powershell
 
       - name: Upload E2E test results
         uses: actions/upload-artifact@v4
@@ -842,38 +848,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up k6
+      - name: Install k6 for Windows
         run: |
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
+          if (!(Get-Command k6 -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing k6..."
+            $k6Url = "https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-windows-amd64.zip"
+            Invoke-WebRequest -Uri $k6Url -OutFile "k6.zip"
+            Expand-Archive -Path "k6.zip" -DestinationPath "."
+            $env:PATH = "$PWD\k6-v0.47.0-windows-amd64;" + $env:PATH
+          }
+          k6 version
+        shell: powershell
 
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          else
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          fi
+          if ("${{ github.ref }}" -eq "refs/heads/main") {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "environment=staging" >> $env:GITHUB_OUTPUT
+          }
+        shell: powershell
 
       - name: Get API URL
         id: url
         run: |
-          API_URL=$(az containerapp show \
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
+          $apiUrl = az containerapp show `
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --query "properties.configuration.ingress.fqdn" -o tsv
           
-          echo "api_url=https://$API_URL" >> $GITHUB_OUTPUT
+          Write-Output "api_url=https://$apiUrl" >> $env:GITHUB_OUTPUT
+        shell: powershell
 
       - name: Run performance tests
         env:
           API_BASE_URL: ${{ steps.url.outputs.api_url }}
         run: |
-          k6 run testing/performance/load-test.js \
+          $env:PATH = "$PWD\k6-v0.47.0-windows-amd64;" + $env:PATH
+          k6 run testing/performance/load-test.js `
             --out json=testing/reports/performance-results.json
+        shell: powershell
 
       - name: Upload performance test results
         uses: actions/upload-artifact@v4
@@ -893,96 +908,110 @@ jobs:
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            Write-Output "environment=${{ github.event.inputs.environment }}" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/main") {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/staging") {
+            Write-Output "environment=staging" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          }
+        shell: powershell
 
       - name: Validate service health
         run: |
-          SERVICES=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "customer-onboarding" "frontend")
+          $services = @("api-gateway", "azure-integration", "ai-engine", "data-processing", "conversation", "notification", "customer-onboarding", "frontend")
           
-          for SERVICE in "${SERVICES[@]}"; do
-            echo "Checking health of $SERVICE..."
+          foreach ($service in $services) {
+            Write-Host "Checking health of $service..."
             
-            URL=$(az containerapp show \
-              --name "ca-$SERVICE-${{ steps.env.outputs.environment }}" \
-              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-              --query "properties.configuration.ingress.fqdn" -o tsv)
+            $url = az containerapp show `
+              --name "ca-$service-${{ steps.env.outputs.environment }}" `
+              --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+              --query "properties.configuration.ingress.fqdn" -o tsv
             
-            if [[ "$SERVICE" == "frontend" ]]; then
-              HEALTH_URL="https://$URL"
-              EXPECTED_STATUS=200
-            else
-              HEALTH_URL="https://$URL/health"
-              EXPECTED_STATUS=200
-            fi
+            if ($service -eq "frontend") {
+              $healthUrl = "https://$url"
+              $expectedStatus = 200
+            } else {
+              $healthUrl = "https://$url/health"
+              $expectedStatus = 200
+            }
             
-            echo "Checking: $HEALTH_URL"
+            Write-Host "Checking: $healthUrl"
             
-            for i in {1..10}; do
-              STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+            for ($i = 1; $i -le 10; $i++) {
+              try {
+                $response = Invoke-WebRequest -Uri $healthUrl -UseBasicParsing -TimeoutSec 30
+                $statusCode = $response.StatusCode
+              } catch {
+                $statusCode = 0
+              }
               
-              if [[ "$STATUS_CODE" == "$EXPECTED_STATUS" ]]; then
-                echo "✅ $SERVICE is healthy (HTTP $STATUS_CODE)"
+              if ($statusCode -eq $expectedStatus) {
+                Write-Host "✅ $service is healthy (HTTP $statusCode)"
                 break
-              elif [[ $i -eq 10 ]]; then
-                echo "❌ $SERVICE health check failed after 10 attempts (HTTP $STATUS_CODE)"
+              } elseif ($i -eq 10) {
+                Write-Host "❌ $service health check failed after 10 attempts (HTTP $statusCode)"
                 exit 1
-              else
-                echo "⏳ $SERVICE not ready yet (HTTP $STATUS_CODE), retrying in 30s..."
-                sleep 30
-              fi
-            done
-          done
+              } else {
+                Write-Host "⏳ $service not ready yet (HTTP $statusCode), retrying in 30s..."
+                Start-Sleep -Seconds 30
+              }
+            }
+          }
+        shell: powershell
 
       - name: Validate database connectivity
         run: |
           # Test database connectivity through API Gateway
-          API_URL=$(az containerapp show \
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
+          $apiUrl = az containerapp show `
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --query "properties.configuration.ingress.fqdn" -o tsv
           
-          RESPONSE=$(curl -s "https://$API_URL/ready")
-          
-          if echo "$RESPONSE" | grep -q "ready"; then
-            echo "✅ Database connectivity validated"
-          else
-            echo "❌ Database connectivity check failed"
-            echo "Response: $RESPONSE"
+          try {
+            $response = Invoke-RestMethod -Uri "https://$apiUrl/ready" -UseBasicParsing -TimeoutSec 30
+            if ($response -like "*ready*") {
+              Write-Host "✅ Database connectivity validated"
+            } else {
+              Write-Host "❌ Database connectivity check failed"
+              Write-Host "Response: $response"
+              exit 1
+            }
+          } catch {
+            Write-Host "❌ Database connectivity check failed"
+            Write-Host "Error: $_"
             exit 1
-          fi
+          }
+        shell: powershell
 
       - name: Smoke test critical workflows
         run: |
-          API_URL=$(az containerapp show \
-            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" \
-            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
+          $apiUrl = az containerapp show `
+            --name "ca-api-gateway-${{ steps.env.outputs.environment }}" `
+            --resource-group "rg-policycortex-${{ steps.env.outputs.environment }}" `
+            --query "properties.configuration.ingress.fqdn" -o tsv
           
           # Test policy endpoint
-          POLICIES_RESPONSE=$(curl -s "https://$API_URL/api/v1/policies/health" || echo "failed")
-          if [[ "$POLICIES_RESPONSE" != "failed" ]]; then
-            echo "✅ Policies API responding"
-          else
-            echo "❌ Policies API not responding"
+          try {
+            $policiesResponse = Invoke-RestMethod -Uri "https://$apiUrl/api/v1/policies/health" -UseBasicParsing -TimeoutSec 30
+            Write-Host "✅ Policies API responding"
+          } catch {
+            Write-Host "❌ Policies API not responding"
             exit 1
-          fi
+          }
           
           # Test AI endpoint
-          AI_RESPONSE=$(curl -s "https://$API_URL/api/v1/ai/health" || echo "failed")
-          if [[ "$AI_RESPONSE" != "failed" ]]; then
-            echo "✅ AI API responding"
-          else
-            echo "❌ AI API not responding"
+          try {
+            $aiResponse = Invoke-RestMethod -Uri "https://$apiUrl/api/v1/ai/health" -UseBasicParsing -TimeoutSec 30
+            Write-Host "✅ AI API responding"
+          } catch {
+            Write-Host "❌ AI API not responding"
             exit 1
-          fi
+          }
+        shell: powershell
 
   rollback:
     name: Rollback Deployment
@@ -1006,55 +1035,63 @@ jobs:
         id: previous
         run: |
           # Get the previous successful deployment tag
-          PREVIOUS_TAG=$(az containerapp revision list \
-            --name "ca-api-gateway-prod" \
-            --resource-group "rg-policycortex-prod" \
-            --query "[?properties.active==\`true\`] | [1].properties.template.containers[0].image" \
-            -o tsv | cut -d':' -f2)
+          $previousTag = az containerapp revision list `
+            --name "ca-api-gateway-prod" `
+            --resource-group "rg-policycortex-prod" `
+            --query "[?properties.active==``true``] | [1].properties.template.containers[0].image" `
+            -o tsv | ForEach-Object { $_.Split(':')[1] }
           
-          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          Write-Output "previous_tag=$previousTag" >> $env:GITHUB_OUTPUT
+        shell: powershell
 
       - name: Rollback all services
         run: |
-          SERVICES=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "customer-onboarding" "frontend")
+          $services = @("api-gateway", "azure-integration", "ai-engine", "data-processing", "conversation", "notification", "customer-onboarding", "frontend")
           
-          for SERVICE in "${SERVICES[@]}"; do
-            echo "Rolling back $SERVICE to previous version..."
+          foreach ($service in $services) {
+            Write-Host "Rolling back $service to previous version..."
             
-            az containerapp update \
-              --name "ca-$SERVICE-prod" \
-              --resource-group "rg-policycortex-prod" \
-              --image "${{ secrets.CONTAINER_REGISTRY }}/$SERVICE:${{ steps.previous.outputs.previous_tag }}"
-          done
+            az containerapp update `
+              --name "ca-$service-prod" `
+              --resource-group "rg-policycortex-prod" `
+              --image "${{ secrets.CONTAINER_REGISTRY }}/$service:${{ steps.previous.outputs.previous_tag }}"
+          }
+        shell: powershell
 
       - name: Verify rollback
         run: |
-          echo "Waiting for rollback to complete..."
-          sleep 60
+          Write-Host "Waiting for rollback to complete..."
+          Start-Sleep -Seconds 60
           
           # Verify all services are healthy after rollback
-          SERVICES=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification" "customer-onboarding" "frontend")
+          $services = @("api-gateway", "azure-integration", "ai-engine", "data-processing", "conversation", "notification", "customer-onboarding", "frontend")
           
-          for SERVICE in "${SERVICES[@]}"; do
-            URL=$(az containerapp show \
-              --name "ca-$SERVICE-prod" \
-              --resource-group "rg-policycortex-prod" \
-              --query "properties.configuration.ingress.fqdn" -o tsv)
+          foreach ($service in $services) {
+            $url = az containerapp show `
+              --name "ca-$service-prod" `
+              --resource-group "rg-policycortex-prod" `
+              --query "properties.configuration.ingress.fqdn" -o tsv
             
-            if [[ "$SERVICE" == "frontend" ]]; then
-              HEALTH_URL="https://$URL"
-            else
-              HEALTH_URL="https://$URL/health"
-            fi
+            if ($service -eq "frontend") {
+              $healthUrl = "https://$url"
+            } else {
+              $healthUrl = "https://$url/health"
+            }
             
-            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+            try {
+              $response = Invoke-WebRequest -Uri $healthUrl -UseBasicParsing -TimeoutSec 30
+              $statusCode = $response.StatusCode
+            } catch {
+              $statusCode = 0
+            }
             
-            if [[ "$STATUS_CODE" == "200" ]]; then
-              echo "✅ $SERVICE rollback successful"
-            else
-              echo "❌ $SERVICE rollback failed (HTTP $STATUS_CODE)"
-            fi
-          done
+            if ($statusCode -eq 200) {
+              Write-Host "✅ $service rollback successful"
+            } else {
+              Write-Host "❌ $service rollback failed (HTTP $statusCode)"
+            }
+          }
+        shell: powershell
 
   notify:
     name: Notify Teams
@@ -1066,15 +1103,16 @@ jobs:
       - name: Determine environment
         id: env
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            Write-Output "environment=${{ github.event.inputs.environment }}" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/main") {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          } elseif ("${{ github.ref }}" -eq "refs/heads/staging") {
+            Write-Output "environment=staging" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "environment=dev" >> $env:GITHUB_OUTPUT
+          }
+        shell: powershell
 
       - name: Send success notification
         if: needs.deployment-validation.result == 'success'
