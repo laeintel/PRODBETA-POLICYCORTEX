@@ -95,7 +95,7 @@ output resourceOutputs object = {
   serviceBus: {
     name: serviceBus.name
     id: serviceBus.id
-    connectionString: serviceBus.listKeys('RootManageSharedAccessKey', serviceBus.apiVersion).primaryConnectionString
+    connectionString: listKeys('${serviceBus.id}/AuthorizationRules/RootManageSharedAccessKey', '2022-10-01-preview').primaryConnectionString
   }
   
   // Container Registry
@@ -135,7 +135,7 @@ output resourceOutputs object = {
   eventHubNamespace: {
     name: eventHubNamespace.name
     id: eventHubNamespace.id
-    connectionString: eventHubNamespace.listKeys('RootManageSharedAccessKey', eventHubNamespace.apiVersion).primaryConnectionString
+    connectionString: listKeys('${eventHubNamespace.id}/AuthorizationRules/RootManageSharedAccessKey', '2022-10-01-preview').primaryConnectionString
   }
   
   // Monitoring
