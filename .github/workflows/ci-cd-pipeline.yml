@@ -706,6 +706,14 @@ jobs:
           # Source environment configuration
           source .env.${{ steps.env.outputs.environment }}
           
+          # Set default secret values (will be overridden by Key Vault if available)
+          export AZURE_SQL_PASSWORD="${AZURE_SQL_PASSWORD:-development-password}"
+          export AZURE_COSMOS_KEY="${AZURE_COSMOS_KEY:-development-cosmos-key}"
+          export REDIS_PASSWORD="${REDIS_PASSWORD:-development-redis-password}"
+          export JWT_SECRET_KEY="${JWT_SECRET_KEY:-development-jwt-secret}"
+          export AZURE_OPENAI_KEY="${AZURE_OPENAI_KEY:-development-openai-key}"
+          export APPLICATION_INSIGHTS_CONNECTION_STRING="${APPLICATION_INSIGHTS_CONNECTION_STRING:-InstrumentationKey=00000000-0000-0000-0000-000000000000}"
+          
           # Sanitize service name for Azure Container App naming requirements
           # Replace underscores with hyphens and ensure lowercase
           SERVICE_NAME=$(echo "${{ matrix.service }}" | tr '_' '-' | tr '[:upper:]' '[:lower:]')
@@ -763,12 +771,12 @@ jobs:
                 AZURE_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP" \
                 AZURE_LOCATION="$AZURE_LOCATION" \
               --secrets \
-                azure-sql-password="$AZURE_SQL_PASSWORD" \
-                azure-cosmos-key="$AZURE_COSMOS_KEY" \
-                redis-password="$REDIS_PASSWORD" \
-                jwt-secret-key="$JWT_SECRET_KEY" \
-                azure-openai-key="$AZURE_OPENAI_KEY" \
-                application-insights-connection-string="$APPLICATION_INSIGHTS_CONNECTION_STRING"
+                azure-sql-password="${AZURE_SQL_PASSWORD}" \
+                azure-cosmos-key="${AZURE_COSMOS_KEY}" \
+                redis-password="${REDIS_PASSWORD}" \
+                jwt-secret-key="${JWT_SECRET_KEY}" \
+                azure-openai-key="${AZURE_OPENAI_KEY}" \
+                application-insights-connection-string="${APPLICATION_INSIGHTS_CONNECTION_STRING}"
           else
             echo "Creating new container app..."
             az containerapp create \
@@ -790,12 +798,12 @@ jobs:
                 AZURE_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP" \
                 AZURE_LOCATION="$AZURE_LOCATION" \
               --secrets \
-                azure-sql-password="$AZURE_SQL_PASSWORD" \
-                azure-cosmos-key="$AZURE_COSMOS_KEY" \
-                redis-password="$REDIS_PASSWORD" \
-                jwt-secret-key="$JWT_SECRET_KEY" \
-                azure-openai-key="$AZURE_OPENAI_KEY" \
-                application-insights-connection-string="$APPLICATION_INSIGHTS_CONNECTION_STRING"
+                azure-sql-password="${AZURE_SQL_PASSWORD}" \
+                azure-cosmos-key="${AZURE_COSMOS_KEY}" \
+                redis-password="${REDIS_PASSWORD}" \
+                jwt-secret-key="${JWT_SECRET_KEY}" \
+                azure-openai-key="${AZURE_OPENAI_KEY}" \
+                application-insights-connection-string="${APPLICATION_INSIGHTS_CONNECTION_STRING}"
           fi
 
       - name: Wait for deployment

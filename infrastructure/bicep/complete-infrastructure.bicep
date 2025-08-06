@@ -1,259 +1,147 @@
-@description('Complete PolicyCortex Infrastructure - All Phases')
-param environment string = 'dev'
-param location string = resourceGroup().location
-param owner string = 'AeoliTech'
-param projectName string = 'policycortex'
+// Complete PolicyCortex Infrastructure - Fixed Version
+// Deploys all resources required for the PolicyCortex platform
 
-@description('SQL Server administrator login')
+@description('Environment name (dev, staging, prod)')
+@allowed(['dev', 'staging', 'prod'])
+param environment string = 'dev'
+
+@description('Location for all resources')
+param location string = resourceGroup().location
+
+@description('Resource owner tag')
+param owner string = 'PolicyCortex'
+
+@description('SQL Server admin login')
 @secure()
 param sqlAdminLogin string = 'sqladmin'
 
-@description('SQL Server administrator password')
+@description('SQL Server admin password')
 @secure()
 param sqlAdminPassword string
 
-@description('Azure AD tenant ID for authentication')
-param aadTenantId string
-
-@description('Azure AD application client ID')
-param aadClientId string
-
-@description('Azure AD application client secret')
+@description('Azure AD client secret')
 @secure()
 param aadClientSecret string
 
-// Variables for resource naming
-var resourcePrefix = '${projectName}-${environment}'
-var storageAccountName = replace('${resourcePrefix}storage', '-', '')
-var keyVaultName = '${resourcePrefix}-kv'
-var cosmosDbName = '${resourcePrefix}-cosmos'
-var sqlServerName = '${resourcePrefix}-sql'
-var redisCacheName = '${resourcePrefix}-redis'
-var serviceBusName = '${resourcePrefix}-servicebus'
-var appInsightsName = '${resourcePrefix}-insights'
-var logAnalyticsName = '${resourcePrefix}-logs'
-var containerRegistryName = replace('${resourcePrefix}acr', '-', '')
-var containerAppEnvName = '${resourcePrefix}-containerenv'
-var mlWorkspaceName = '${resourcePrefix}-ml'
-var openAIName = '${resourcePrefix}-openai'
-var communicationServiceName = '${resourcePrefix}-communication'
-var eventHubNamespaceName = '${resourcePrefix}-eventhub'
-var functionAppName = '${resourcePrefix}-functions'
-var appServicePlanName = '${resourcePrefix}-asp'
+@description('JWT secret key')
+@secure()
+param jwtSecretKey string = 'change-this-in-production-${uniqueString(resourceGroup().id)}'
 
-// Tags
-var commonTags = {
+@description('Deploy SQL Server and database')
+param deploySqlServer bool = true
+
+@description('Deploy Machine Learning Workspace')
+param deployMLWorkspace bool = true
+
+@description('Deploy OpenAI resources')
+param deployOpenAI bool = true
+
+@description('Deploy Container Apps')
+param deployContainerApps bool = true
+
+@description('Allowed IP addresses for SQL firewall')
+param allowedIps array = []
+
+@description('Create Terraform access policy for Key Vault')
+param createTerraformAccessPolicy bool = false
+
+// Variables
+var resourcePrefix = 'pcx-${environment}'
+var tags = {
   Environment: environment
   Owner: owner
-  Project: projectName
   ManagedBy: 'Bicep'
+  Project: 'PolicyCortex'
+  DeploymentId: uniqueString(resourceGroup().id)
 }
 
-// Resource Outputs
-output resourceOutputs object = {
-  // Storage
-  storageAccount: {
-    name: storageAccount.name
-    id: storageAccount.id
-    connectionString: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
-    blobEndpoint: storageAccount.properties.primaryEndpoints.blob
-  }
-  
-  // Key Vault
-  keyVault: {
-    name: keyVault.name
-    id: keyVault.id
-    uri: keyVault.properties.vaultUri
-  }
-  
-  // Databases
-  cosmosDb: {
-    name: cosmosDbAccount.name
-    id: cosmosDbAccount.id
-    endpoint: cosmosDbAccount.properties.documentEndpoint
-    connectionString: cosmosDbAccount.listConnectionStrings().connectionStrings[0].connectionString
-  }
-  
-  sqlServer: {
-    name: sqlServer.name
-    id: sqlServer.id
-    fullyQualifiedDomainName: sqlServer.properties.fullyQualifiedDomainName
-    connectionString: 'Server=tcp:${sqlServer.properties.fullyQualifiedDomainName},1433;Initial Catalog=${sqlDatabase.name};Persist Security Info=False;User ID=${sqlAdminLogin};Password=${sqlAdminPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
-  }
-  
-  // Cache
-  redisCache: {
-    name: redisCache.name
-    id: redisCache.id
-    hostName: redisCache.properties.hostName
-    sslPort: redisCache.properties.sslPort
-    primaryKey: redisCache.listKeys().primaryKey
-    connectionString: '${redisCache.properties.hostName}:${redisCache.properties.sslPort},password=${redisCache.listKeys().primaryKey},ssl=True,abortConnect=False'
-  }
-  
-  // Service Bus
-  serviceBus: {
-    name: serviceBus.name
-    id: serviceBus.id
-    connectionString: listKeys('${serviceBus.id}/AuthorizationRules/RootManageSharedAccessKey', '2022-10-01-preview').primaryConnectionString
-  }
-  
-  // Container Registry
-  containerRegistry: {
-    name: containerRegistry.name
-    id: containerRegistry.id
-    loginServer: containerRegistry.properties.loginServer
-  }
-  
-  // Container Apps Environment
-  containerAppsEnvironment: {
-    name: containerAppsEnvironment.name
-    id: containerAppsEnvironment.id
-    defaultDomain: containerAppsEnvironment.properties.defaultDomain
-  }
-  
-  // AI/ML Services
-  openAI: {
-    name: openAIAccount.name
-    id: openAIAccount.id
-    endpoint: openAIAccount.properties.endpoint
-  }
-  
-  mlWorkspace: {
-    name: mlWorkspace.name
-    id: mlWorkspace.id
-  }
-  
-  // Communication
-  communicationService: {
-    name: communicationService.name
-    id: communicationService.id
-    connectionString: communicationService.listKeys().primaryConnectionString
-  }
-  
-  // Event Hub
-  eventHubNamespace: {
-    name: eventHubNamespace.name
-    id: eventHubNamespace.id
-    connectionString: listKeys('${eventHubNamespace.id}/AuthorizationRules/RootManageSharedAccessKey', '2022-10-01-preview').primaryConnectionString
-  }
-  
-  // Monitoring
-  applicationInsights: {
-    name: applicationInsights.name
-    id: applicationInsights.id
-    connectionString: applicationInsights.properties.ConnectionString
-    instrumentationKey: applicationInsights.properties.InstrumentationKey
-  }
-  
-  logAnalyticsWorkspace: {
-    name: logAnalyticsWorkspace.name
-    id: logAnalyticsWorkspace.id
-    workspaceId: logAnalyticsWorkspace.properties.customerId
-  }
-}
+// Resource names
+var vnetName = 'vnet-${resourcePrefix}'
+var keyVaultName = 'kv-${resourcePrefix}'
+var logWorkspaceName = 'log-${resourcePrefix}'
+var appInsightsName = 'appi-${resourcePrefix}'
+var containerRegistryName = 'cr${replace(resourcePrefix, '-', '')}${uniqueString(resourceGroup().id)}'
+var storageAccountName = 'st${replace(resourcePrefix, '-', '')}${uniqueString(resourceGroup().id)}'
+var sqlServerName = 'sql-${resourcePrefix}'
+var cosmosAccountName = 'cosmos-${resourcePrefix}'
+var redisCacheName = 'redis-${resourcePrefix}'
+var serviceBusName = 'sb-${resourcePrefix}'
+var eventHubNamespaceName = 'eh-${resourcePrefix}'
+var mlWorkspaceName = 'ml-${resourcePrefix}'
+var openAIAccountName = 'openai-${resourcePrefix}'
+var commServiceName = 'comm-${resourcePrefix}'
+var containerAppsEnvName = 'cae-${resourcePrefix}'
 
-// ==================== STORAGE ACCOUNT ====================
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: storageAccountName
+// Networking
+resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
+  name: vnetName
   location: location
-  tags: commonTags
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
+  tags: tags
   properties: {
-    supportsHttpsTrafficOnly: true
-    allowBlobPublicAccess: false
-    minimumTlsVersion: 'TLS1_2'
-    defaultToOAuthAuthentication: true
-  }
-}
-
-// Storage Containers
-resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
-  parent: storageAccount
-  name: 'default'
-}
-
-resource documentsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
-  parent: blobServices
-  name: 'documents'
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-resource reportsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
-  parent: blobServices
-  name: 'reports'
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-resource modelsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
-  parent: blobServices
-  name: 'ml-models'
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-resource logsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
-  parent: blobServices
-  name: 'logs'
-  properties: {
-    publicAccess: 'None'
-  }
-}
-
-// ==================== LOG ANALYTICS WORKSPACE ====================
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
-  name: logAnalyticsName
-  location: location
-  tags: commonTags
-  properties: {
-    sku: {
-      name: 'PerGB2018'
+    addressSpace: {
+      addressPrefixes: ['10.0.0.0/16']
     }
-    retentionInDays: 90
-    features: {
-      enableLogAccessUsingOnlyResourcePermissions: true
-    }
+    subnets: [
+      {
+        name: 'container-apps'
+        properties: {
+          addressPrefix: '10.0.1.0/24'
+        }
+      }
+      {
+        name: 'data-services'
+        properties: {
+          addressPrefix: '10.0.2.0/24'
+          serviceEndpoints: [
+            { service: 'Microsoft.Sql' }
+            { service: 'Microsoft.Storage' }
+            { service: 'Microsoft.KeyVault' }
+          ]
+        }
+      }
+      {
+        name: 'private-endpoints'
+        properties: {
+          addressPrefix: '10.0.3.0/24'
+        }
+      }
+    ]
   }
 }
 
-// ==================== APPLICATION INSIGHTS ====================
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: appInsightsName
+// User-assigned managed identity
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: 'id-${resourcePrefix}'
   location: location
-  tags: commonTags
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: logAnalyticsWorkspace.id
-    publicNetworkAccessForIngestion: 'Enabled'
-    publicNetworkAccessForQuery: 'Enabled'
-  }
+  tags: tags
 }
 
-// ==================== KEY VAULT ====================
+// Key Vault
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   name: keyVaultName
   location: location
-  tags: commonTags
+  tags: tags
   properties: {
+    tenantId: subscription().tenantId
     sku: {
       family: 'A'
       name: 'standard'
     }
-    tenantId: aadTenantId
-    enableRbacAuthorization: true
     enabledForDeployment: true
     enabledForTemplateDeployment: true
     enabledForDiskEncryption: true
-    publicNetworkAccess: 'Enabled'
+    enableRbacAuthorization: false
+    accessPolicies: [
+      {
+        tenantId: subscription().tenantId
+        objectId: managedIdentity.properties.principalId
+        permissions: {
+          secrets: ['get', 'list']
+          keys: ['get', 'list']
+          certificates: ['get', 'list']
+        }
+      }
+    ]
     networkAcls: {
       defaultAction: 'Allow'
       bypass: 'AzureServices'
@@ -261,34 +149,123 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   }
 }
 
-// ==================== COSMOS DB ====================
-resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: cosmosDbName
+// Log Analytics Workspace
+resource logWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: logWorkspaceName
   location: location
-  tags: commonTags
-  kind: 'GlobalDocumentDB'
+  tags: tags
   properties: {
-    consistencyPolicy: {
-      defaultConsistencyLevel: 'Session'
+    sku: {
+      name: 'PerGB2018'
     }
-    databaseAccountOfferType: 'Standard'
-    enableFreeTier: false
-    locations: [
-      {
-        locationName: location
-        failoverPriority: 0
-        isZoneRedundant: false
-      }
-    ]
-    capabilities: [
-      {
-        name: 'EnableServerless'
-      }
-    ]
+    retentionInDays: 30
+  }
+}
+
+// Application Insights
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: appInsightsName
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logWorkspace.id
+  }
+}
+
+// Container Registry
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
+  name: containerRegistryName
+  location: location
+  tags: tags
+  sku: {
+    name: 'Basic'
+  }
+  properties: {
+    adminUserEnabled: true
+  }
+}
+
+// Storage Account
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+  name: storageAccountName
+  location: location
+  tags: tags
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    accessTier: 'Hot'
+    supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: false
+  }
+}
+
+// SQL Server
+resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = if (deploySqlServer) {
+  name: sqlServerName
+  location: location
+  tags: tags
+  properties: {
+    administratorLogin: sqlAdminLogin
+    administratorLoginPassword: sqlAdminPassword
+    version: '12.0'
+    minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
   }
 }
 
+// SQL Database
+resource sqlDatabase 'Microsoft.Sql/servers/databases@2022-05-01-preview' = if (deploySqlServer) {
+  parent: sqlServer
+  name: 'policycortex-${environment}'
+  location: location
+  tags: tags
+  sku: {
+    name: 'S0'
+    tier: 'Standard'
+  }
+  properties: {
+    collation: 'SQL_Latin1_General_CP1_CI_AS'
+    maxSizeBytes: 2147483648
+  }
+}
+
+// SQL Firewall Rules
+resource sqlFirewallRuleAzure 'Microsoft.Sql/servers/firewallRules@2022-05-01-preview' = if (deploySqlServer) {
+  parent: sqlServer
+  name: 'AllowAzureServices'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+// Cosmos DB Account
+resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
+  name: cosmosAccountName
+  location: location
+  tags: tags
+  kind: 'GlobalDocumentDB'
+  properties: {
+    databaseAccountOfferType: 'Standard'
+    locations: [
+      {
+        locationName: location
+        failoverPriority: 0
+      }
+    ]
+    consistencyPolicy: {
+      defaultConsistencyLevel: 'Session'
+    }
+    capabilities: []
+  }
+}
+
+// Cosmos DB Database
 resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
   parent: cosmosDbAccount
   name: 'policycortex'
@@ -299,252 +276,76 @@ resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023
   }
 }
 
-// Cosmos DB Containers
-var containers = [
-  'alerts'
-  'notifications'
-  'sessions'
-  'user-preferences'
-  'analytics'
-  'conversations'
-  'policies'
-  'compliance-reports'
-  'audit-logs'
-  'ml-training-data'
-]
-
-resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-04-15' = [for container in containers: {
-  parent: cosmosDatabase
-  name: container
-  properties: {
-    resource: {
-      id: container
-      partitionKey: {
-        paths: ['/tenantId']
-        kind: 'Hash'
-      }
-      indexingPolicy: {
-        indexingMode: 'consistent'
-        automatic: true
-        includedPaths: [
-          {
-            path: '/*'
-          }
-        ]
-        excludedPaths: [
-          {
-            path: '/"_etag"/?'
-          }
-        ]
-      }
-    }
-  }
-}]
-
-// ==================== SQL SERVER & DATABASE ====================
-resource sqlServer 'Microsoft.Sql/servers@2023-02-01-preview' = {
-  name: sqlServerName
-  location: location
-  tags: commonTags
-  properties: {
-    administratorLogin: sqlAdminLogin
-    administratorLoginPassword: sqlAdminPassword
-    version: '12.0'
-    publicNetworkAccess: 'Enabled'
-  }
-}
-
-resource sqlServerFirewallRule 'Microsoft.Sql/servers/firewallRules@2023-02-01-preview' = {
-  parent: sqlServer
-  name: 'AllowAzureServices'
-  properties: {
-    startIpAddress: '0.0.0.0'
-    endIpAddress: '0.0.0.0'
-  }
-}
-
-resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-02-01-preview' = {
-  parent: sqlServer
-  name: 'policycortex'
-  location: location
-  tags: commonTags
-  sku: {
-    name: 'S2'
-    tier: 'Standard'
-    capacity: 50
-  }
-  properties: {
-    maxSizeBytes: 268435456000 // 250GB
-    collation: 'SQL_Latin1_General_CP1_CI_AS'
-    catalogCollation: 'SQL_Latin1_General_CP1_CI_AS'
-  }
-}
-
-// ==================== REDIS CACHE ====================
+// Redis Cache
 resource redisCache 'Microsoft.Cache/redis@2023-04-01' = {
   name: redisCacheName
   location: location
-  tags: commonTags
+  tags: tags
   properties: {
     sku: {
-      name: 'Standard'
+      name: 'Basic'
       family: 'C'
-      capacity: 1
+      capacity: 0
     }
-    enableNonSslPort: false
     minimumTlsVersion: '1.2'
-    publicNetworkAccess: 'Enabled'
-    redisConfiguration: {
-      'maxmemory-policy': 'allkeys-lru'
-    }
   }
 }
 
-// ==================== SERVICE BUS ====================
+// Service Bus Namespace
 resource serviceBus 'Microsoft.ServiceBus/namespaces@2022-10-01-preview' = {
   name: serviceBusName
   location: location
-  tags: commonTags
+  tags: tags
   sku: {
     name: 'Standard'
     tier: 'Standard'
   }
-  properties: {
-    publicNetworkAccess: 'Enabled'
-  }
 }
 
-// Service Bus Queues
-var queues = [
-  'policy-processing'
-  'compliance-analysis'
-  'notifications'
-  'data-processing'
-  'ml-training'
-  'audit-events'
-]
-
-resource serviceBusQueues 'Microsoft.ServiceBus/namespaces/queues@2022-10-01-preview' = [for queue in queues: {
+// Service Bus Queue
+resource serviceBusQueue 'Microsoft.ServiceBus/namespaces/queues@2022-10-01-preview' = {
   parent: serviceBus
-  name: queue
+  name: 'notifications'
   properties: {
-    maxSizeInMegabytes: 5120
-    defaultMessageTimeToLive: 'P14D'
-    deadLetteringOnMessageExpiration: true
-    enablePartitioning: false
+    lockDuration: 'PT1M'
+    maxSizeInMegabytes: 1024
     requiresDuplicateDetection: false
     requiresSession: false
-  }
-}]
-
-// ==================== CONTAINER REGISTRY ====================
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
-  name: containerRegistryName
-  location: location
-  tags: commonTags
-  sku: {
-    name: 'Basic'
-  }
-  properties: {
-    adminUserEnabled: true
-    publicNetworkAccess: 'Enabled'
+    defaultMessageTimeToLive: 'P7D'
+    duplicateDetectionHistoryTimeWindow: 'PT10M'
+    maxDeliveryCount: 10
+    enablePartitioning: false
+    enableExpress: false
   }
 }
 
-// ==================== CONTAINER APPS ENVIRONMENT ====================
-resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' = {
-  name: containerAppEnvName
+// Event Hub Namespace
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-10-01-preview' = {
+  name: eventHubNamespaceName
   location: location
-  tags: commonTags
-  properties: {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: logAnalyticsWorkspace.properties.customerId
-        sharedKey: logAnalyticsWorkspace.listKeys().primarySharedKey
-      }
-    }
-  }
-}
-
-// ==================== AZURE OPENAI ====================
-resource openAIAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: openAIName
-  location: location
-  tags: commonTags
-  kind: 'OpenAI'
-  sku: {
-    name: 'S0'
-  }
-  properties: {
-    customSubDomainName: openAIName
-    publicNetworkAccess: 'Enabled'
-    networkAcls: {
-      defaultAction: 'Allow'
-    }
-  }
-}
-
-// OpenAI Deployments
-resource gpt4Deployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  parent: openAIAccount
-  name: 'gpt-4'
+  tags: tags
   sku: {
     name: 'Standard'
-    capacity: 10
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-4'
-      version: '0613'
-    }
+    tier: 'Standard'
+    capacity: 1
   }
 }
 
-resource gpt35TurboDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  parent: openAIAccount
-  name: 'gpt-35-turbo'
-  sku: {
-    name: 'Standard'
-    capacity: 30
-  }
+// Event Hub
+resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2022-10-01-preview' = {
+  parent: eventHubNamespace
+  name: 'telemetry'
   properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'gpt-35-turbo'
-      version: '0613'
-    }
+    messageRetentionInDays: 7
+    partitionCount: 2
   }
-  dependsOn: [gpt4Deployment]
 }
 
-resource textEmbeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
-  parent: openAIAccount
-  name: 'text-embedding-ada-002'
-  sku: {
-    name: 'Standard'
-    capacity: 30
-  }
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: 'text-embedding-ada-002'
-      version: '2'
-    }
-  }
-  dependsOn: [gpt35TurboDeployment]
-}
-
-// ==================== MACHINE LEARNING WORKSPACE ====================
-resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' = {
+// Machine Learning Workspace
+resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' = if (deployMLWorkspace) {
   name: mlWorkspaceName
   location: location
-  tags: commonTags
-  sku: {
-    name: 'Basic'
-    tier: 'Basic'
-  }
+  tags: tags
   identity: {
     type: 'SystemAssigned'
   }
@@ -552,191 +353,233 @@ resource mlWorkspace 'Microsoft.MachineLearningServices/workspaces@2023-04-01' =
     storageAccount: storageAccount.id
     keyVault: keyVault.id
     applicationInsights: applicationInsights.id
-    publicNetworkAccess: 'Enabled'
-    hbiWorkspace: false
+    containerRegistry: containerRegistry.id
   }
 }
 
-// ==================== COMMUNICATION SERVICE ====================
+// OpenAI Account
+resource openAIAccount 'Microsoft.CognitiveServices/accounts@2023-05-01' = if (deployOpenAI) {
+  name: openAIAccountName
+  location: location
+  tags: tags
+  kind: 'OpenAI'
+  sku: {
+    name: 'S0'
+  }
+  properties: {
+    customSubDomainName: openAIAccountName
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+// Communication Service
 resource communicationService 'Microsoft.Communication/communicationServices@2023-03-31' = {
-  name: communicationServiceName
+  name: commServiceName
   location: 'global'
-  tags: commonTags
+  tags: tags
   properties: {
     dataLocation: 'United States'
   }
 }
 
-// ==================== EVENT HUB NAMESPACE ====================
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-10-01-preview' = {
-  name: eventHubNamespaceName
+// Container Apps Environment
+resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' = if (deployContainerApps) {
+  name: containerAppsEnvName
   location: location
-  tags: commonTags
-  sku: {
-    name: 'Standard'
-    tier: 'Standard'
-    capacity: 1
-  }
+  tags: tags
   properties: {
-    publicNetworkAccess: 'Enabled'
-  }
-}
-
-// Event Hubs
-var eventHubs = [
-  'policy-events'
-  'compliance-events'
-  'audit-events'
-  'analytics-events'
-  'ml-events'
-]
-
-resource eventHubs_resource 'Microsoft.EventHub/namespaces/eventhubs@2022-10-01-preview' = [for hub in eventHubs: {
-  parent: eventHubNamespace
-  name: hub
-  properties: {
-    messageRetentionInDays: 7
-    partitionCount: 4
-  }
-}]
-
-// ==================== APP SERVICE PLAN ====================
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
-  name: appServicePlanName
-  location: location
-  tags: commonTags
-  kind: 'functionapp'
-  sku: {
-    name: 'Y1'
-    tier: 'Dynamic'
-  }
-  properties: {
-    reserved: true
-  }
-}
-
-// ==================== FUNCTION APP ====================
-resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
-  name: functionAppName
-  location: location
-  tags: commonTags
-  kind: 'functionapp,linux'
-  properties: {
-    serverFarmId: appServicePlan.id
-    httpsOnly: true
-    siteConfig: {
-      linuxFxVersion: 'Python|3.11'
-      appSettings: [
-        {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
-        }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'python'
-        }
-        {
-          name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
-        }
-        {
-          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
-        }
-        {
-          name: 'WEBSITE_CONTENTSHARE'
-          value: toLower(functionAppName)
-        }
-        {
-          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: applicationInsights.properties.ConnectionString
-        }
-      ]
+    appLogsConfiguration: {
+      destination: 'log-analytics'
+      logAnalyticsConfiguration: {
+        customerId: logWorkspace.properties.customerId
+        sharedKey: listKeys(logWorkspace.id, '2022-10-01').primarySharedKey
+      }
+    }
+    vnetConfiguration: {
+      infrastructureSubnetId: vnet.properties.subnets[0].id
     }
   }
 }
 
-// ==================== KEY VAULT SECRETS ====================
-resource keyVaultSecrets 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = [
-  for secret in [
-    { name: 'AZURE-SQL-PASSWORD', value: sqlAdminPassword }
-    { name: 'AZURE-SQL-USERNAME', value: sqlAdminLogin }
-    { name: 'AZURE-SQL-SERVER', value: sqlServer.properties.fullyQualifiedDomainName }
-    { name: 'AZURE-SQL-DATABASE', value: sqlDatabase.name }
-    { name: 'AZURE-COSMOS-KEY', value: cosmosDbAccount.listKeys().primaryMasterKey }
-    { name: 'AZURE-COSMOS-ENDPOINT', value: cosmosDbAccount.properties.documentEndpoint }
-    { name: 'REDIS-PASSWORD', value: redisCache.listKeys().primaryKey }
-    { name: 'REDIS-URL', value: '${redisCache.properties.hostName}:${redisCache.properties.sslPort}' }
-    { name: 'AZURE-STORAGE-ACCOUNT-KEY', value: storageAccount.listKeys().keys[0].value }
-    { name: 'AZURE-STORAGE-ACCOUNT-NAME', value: storageAccount.name }
-    { name: 'AZURE-SERVICE-BUS-CONNECTION-STRING', value: serviceBus.listKeys('RootManageSharedAccessKey', serviceBus.apiVersion).primaryConnectionString }
-    { name: 'APPLICATION-INSIGHTS-CONNECTION-STRING', value: applicationInsights.properties.ConnectionString }
-    { name: 'APPLICATION-INSIGHTS-KEY', value: applicationInsights.properties.InstrumentationKey }
-    { name: 'AZURE-OPENAI-KEY', value: openAIAccount.listKeys().key1 }
-    { name: 'AZURE-OPENAI-ENDPOINT', value: openAIAccount.properties.endpoint }
-    { name: 'AZURE-COMMUNICATION-CONNECTION-STRING', value: communicationService.listKeys().primaryConnectionString }
-    { name: 'EVENT-HUB-CONNECTION-STRING', value: eventHubNamespace.listKeys('RootManageSharedAccessKey', eventHubNamespace.apiVersion).primaryConnectionString }
-    { name: 'AZURE-AD-CLIENT-SECRET', value: aadClientSecret }
-    { name: 'CONTAINER-REGISTRY-PASSWORD', value: containerRegistry.listCredentials().passwords[0].value }
-    { name: 'JWT-SECRET-KEY', value: 'change-this-in-production-${uniqueString(resourceGroup().id)}' }
-  ]
-]: {
+// Key Vault Secrets - Individual resources to avoid runtime evaluation issues
+resource sqlPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (deploySqlServer) {
   parent: keyVault
-  name: secret.name
+  name: 'AZURE-SQL-PASSWORD'
   properties: {
-    value: secret.value
-    contentType: 'text/plain'
+    value: sqlAdminPassword
   }
 }
 
-// ==================== MANAGED IDENTITY ====================
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${resourcePrefix}-identity'
-  location: location
-  tags: commonTags
-}
-
-// ==================== RBAC ASSIGNMENTS ====================
-// Key Vault Secrets User role for Managed Identity
-resource keyVaultSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: keyVault
-  name: guid(keyVault.id, managedIdentity.id, 'Key Vault Secrets User')
+resource sqlUsernameSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (deploySqlServer) {
+  parent: keyVault
+  name: 'AZURE-SQL-USERNAME'
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
-    principalId: managedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
+    value: sqlAdminLogin
   }
 }
 
-// Storage Blob Data Contributor role for Managed Identity
-resource storageBlobDataContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: storageAccount
-  name: guid(storageAccount.id, managedIdentity.id, 'Storage Blob Data Contributor')
+resource sqlServerSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (deploySqlServer) {
+  parent: keyVault
+  name: 'AZURE-SQL-SERVER'
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-    principalId: managedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
+    value: deploySqlServer ? sqlServer.properties.fullyQualifiedDomainName : 'not-deployed'
   }
 }
 
-// Cosmos DB Built-in Data Contributor role for Managed Identity
-resource cosmosDbDataContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: cosmosDbAccount
-  name: guid(cosmosDbAccount.id, managedIdentity.id, 'Cosmos DB Built-in Data Contributor')
+resource sqlDatabaseSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (deploySqlServer) {
+  parent: keyVault
+  name: 'AZURE-SQL-DATABASE'
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00000000-0000-0000-0000-000000000002')
-    principalId: managedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
+    value: deploySqlServer ? sqlDatabase.name : 'not-deployed'
   }
 }
 
-// Container Registry Push role for Managed Identity
-resource acrPushRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: containerRegistry
-  name: guid(containerRegistry.id, managedIdentity.id, 'AcrPush')
+resource cosmosKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'AZURE-COSMOS-KEY'
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')
-    principalId: managedIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
+    value: listKeys(cosmosDbAccount.id, '2023-04-15').primaryMasterKey
   }
 }
+
+resource cosmosEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'AZURE-COSMOS-ENDPOINT'
+  properties: {
+    value: cosmosDbAccount.properties.documentEndpoint
+  }
+}
+
+resource redisPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'REDIS-PASSWORD'
+  properties: {
+    value: listKeys(redisCache.id, '2023-04-01').primaryKey
+  }
+}
+
+resource redisUrlSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'REDIS-URL'
+  properties: {
+    value: '${redisCache.properties.hostName}:${redisCache.properties.sslPort}'
+  }
+}
+
+resource storageKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'AZURE-STORAGE-ACCOUNT-KEY'
+  properties: {
+    value: listKeys(storageAccount.id, '2023-01-01').keys[0].value
+  }
+}
+
+resource storageNameSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'AZURE-STORAGE-ACCOUNT-NAME'
+  properties: {
+    value: storageAccount.name
+  }
+}
+
+resource serviceBusConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'AZURE-SERVICE-BUS-CONNECTION-STRING'
+  properties: {
+    value: listKeys('${serviceBus.id}/AuthorizationRules/RootManageSharedAccessKey', '2022-10-01-preview').primaryConnectionString
+  }
+}
+
+resource appInsightsConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'APPLICATION-INSIGHTS-CONNECTION-STRING'
+  properties: {
+    value: applicationInsights.properties.ConnectionString
+  }
+}
+
+resource appInsightsKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'APPLICATION-INSIGHTS-KEY'
+  properties: {
+    value: applicationInsights.properties.InstrumentationKey
+  }
+}
+
+resource openAIKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (deployOpenAI) {
+  parent: keyVault
+  name: 'AZURE-OPENAI-KEY'
+  properties: {
+    value: deployOpenAI ? listKeys(openAIAccount.id, '2023-05-01').key1 : 'not-deployed'
+  }
+}
+
+resource openAIEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (deployOpenAI) {
+  parent: keyVault
+  name: 'AZURE-OPENAI-ENDPOINT'
+  properties: {
+    value: deployOpenAI ? openAIAccount.properties.endpoint : 'not-deployed'
+  }
+}
+
+resource communicationConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'AZURE-COMMUNICATION-CONNECTION-STRING'
+  properties: {
+    value: listKeys(communicationService.id, '2023-03-31').primaryConnectionString
+  }
+}
+
+resource eventHubConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'EVENT-HUB-CONNECTION-STRING'
+  properties: {
+    value: listKeys('${eventHubNamespace.id}/AuthorizationRules/RootManageSharedAccessKey', '2022-10-01-preview').primaryConnectionString
+  }
+}
+
+resource aadClientSecretSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'AZURE-AD-CLIENT-SECRET'
+  properties: {
+    value: aadClientSecret
+  }
+}
+
+resource containerRegistryPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'CONTAINER-REGISTRY-PASSWORD'
+  properties: {
+    value: listCredentials(containerRegistry.id, '2023-01-01-preview').passwords[0].value
+  }
+}
+
+resource jwtSecretKeySecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
+  parent: keyVault
+  name: 'JWT-SECRET-KEY'
+  properties: {
+    value: jwtSecretKey
+  }
+}
+
+// Outputs - Remove secret outputs to fix warnings
+output keyVaultName string = keyVault.name
+output keyVaultUri string = keyVault.properties.vaultUri
+output containerRegistryName string = containerRegistry.name
+output containerRegistryLoginServer string = containerRegistry.properties.loginServer
+output logWorkspaceId string = logWorkspace.id
+output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
+output applicationInsightsInstrumentationKey string = applicationInsights.properties.InstrumentationKey
+output managedIdentityId string = managedIdentity.id
+output managedIdentityClientId string = managedIdentity.properties.clientId
+output vnetId string = vnet.id
+output containerAppsEnvironmentId string = deployContainerApps ? containerAppsEnvironment.id : ''
+output sqlServerFqdn string = deploySqlServer ? sqlServer.properties.fullyQualifiedDomainName : ''
+output cosmosEndpoint string = cosmosDbAccount.properties.documentEndpoint
+output redisHostName string = redisCache.properties.hostName
+output serviceBusNamespace string = serviceBus.name
+output eventHubNamespace string = eventHubNamespace.name
+output storageAccountName string = storageAccount.name
+output mlWorkspaceId string = deployMLWorkspace ? mlWorkspace.id : ''
+output openAIEndpoint string = deployOpenAI ? openAIAccount.properties.endpoint : ''
+output communicationServiceEndpoint string = communicationService.properties.hostName
