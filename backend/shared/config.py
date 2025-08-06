@@ -38,18 +38,18 @@ class DatabaseConfig(BaseSettings):
     """Database configuration."""
 
     # SQL Database (Azure SQL Database)
-    sql_server: str = Field(..., env="AZURE_SQL_SERVER")
+    sql_server: str = Field(default="localhost", env="AZURE_SQL_SERVER")
     sql_database: str = Field("policycortex", env="AZURE_SQL_DATABASE")
-    sql_username: str = Field(..., env="AZURE_SQL_USERNAME")
-    sql_password: str = Field(..., env="AZURE_SQL_PASSWORD")
+    sql_username: str = Field(default="test", env="AZURE_SQL_USERNAME")
+    sql_password: str = Field(default="test", env="AZURE_SQL_PASSWORD")
     sql_driver: str = Field("ODBC Driver 18 for SQL Server", env="AZURE_SQL_DRIVER")
     sql_port: int = Field(1433, env="AZURE_SQL_PORT")
     sql_pool_size: int = Field(20, env="SQL_POOL_SIZE")
     sql_max_overflow: int = Field(30, env="SQL_MAX_OVERFLOW")
 
     # Cosmos DB (NoSQL)
-    cosmos_endpoint: str = Field(..., env="AZURE_COSMOS_ENDPOINT")
-    cosmos_key: str = Field(..., env="AZURE_COSMOS_KEY")
+    cosmos_endpoint: str = Field(default="https://test.documents.azure.com:443/", env="AZURE_COSMOS_ENDPOINT")
+    cosmos_key: str = Field(default="test-cosmos-key", env="AZURE_COSMOS_KEY")
     cosmos_database: str = Field("policycortex", env="AZURE_COSMOS_DATABASE")
 
     # Redis Cache
@@ -76,23 +76,23 @@ class AzureConfig(BaseSettings):
     """Azure services configuration."""
 
     # Core Azure Configuration
-    subscription_id: str = Field(..., env="AZURE_SUBSCRIPTION_ID")
-    tenant_id: str = Field(..., env="AZURE_TENANT_ID")
-    client_id: str = Field(..., env="AZURE_CLIENT_ID")
-    client_secret: str = Field(..., env="AZURE_CLIENT_SECRET")
-    resource_group: str = Field(..., env="AZURE_RESOURCE_GROUP")
+    subscription_id: str = Field(default="test-subscription-id", env="AZURE_SUBSCRIPTION_ID")
+    tenant_id: str = Field(default="test-tenant-id", env="AZURE_TENANT_ID")
+    client_id: str = Field(default="test-client-id", env="AZURE_CLIENT_ID")
+    client_secret: str = Field(default="test-client-secret", env="AZURE_CLIENT_SECRET")
+    resource_group: str = Field(default="rg-test", env="AZURE_RESOURCE_GROUP")
     location: str = Field("eastus", env="AZURE_LOCATION")
 
     # Key Vault
-    key_vault_name: str = Field(..., env="AZURE_KEY_VAULT_NAME")
+    key_vault_name: str = Field(default="kv-test", env="AZURE_KEY_VAULT_NAME")
     key_vault_url: Optional[str] = Field(None, env="AZURE_KEY_VAULT_URL")
 
     # Storage Account
-    storage_account_name: str = Field(..., env="AZURE_STORAGE_ACCOUNT_NAME")
+    storage_account_name: str = Field(default="teststore", env="AZURE_STORAGE_ACCOUNT_NAME")
     storage_account_key: Optional[str] = Field(None, env="AZURE_STORAGE_ACCOUNT_KEY")
 
     # Service Bus
-    service_bus_namespace: str = Field(..., env="AZURE_SERVICE_BUS_NAMESPACE")
+    service_bus_namespace: str = Field(default="test-servicebus", env="AZURE_SERVICE_BUS_NAMESPACE")
     service_bus_connection_string: Optional[str] = Field(
         None, env="AZURE_SERVICE_BUS_CONNECTION_STRING"
     )
@@ -104,7 +104,7 @@ class AzureConfig(BaseSettings):
     )
 
     # Machine Learning
-    ml_workspace_name: str = Field(..., env="AZURE_ML_WORKSPACE_NAME")
+    ml_workspace_name: str = Field(default="test-ml-workspace", env="AZURE_ML_WORKSPACE_NAME")
     ml_resource_group: Optional[str] = Field(None, env="AZURE_ML_RESOURCE_GROUP")
 
     @validator("key_vault_url", always=True)
@@ -158,7 +158,7 @@ class SecurityConfig(BaseSettings):
     """Security and authentication configuration."""
 
     # JWT Configuration
-    jwt_secret_key: str = Field(..., env="JWT_SECRET_KEY")
+    jwt_secret_key: str = Field(default="test-secret-key", env="JWT_SECRET_KEY")
     jwt_algorithm: str = Field("HS256", env="JWT_ALGORITHM")
     jwt_expiration_minutes: int = Field(30, env="JWT_EXPIRATION_MINUTES")
     jwt_refresh_expiration_days: int = Field(7, env="JWT_REFRESH_EXPIRATION_DAYS")
@@ -193,7 +193,7 @@ class ServiceConfig(BaseSettings):
     """Individual service configuration."""
 
     # Service Identity
-    service_name: str = Field(..., env="SERVICE_NAME")
+    service_name: str = Field(default="test-service", env="SERVICE_NAME")
     service_version: str = Field("1.0.0", env="SERVICE_VERSION")
     service_port: int = Field(8000, env="SERVICE_PORT")
     service_host: str = Field("0.0.0.0", env="SERVICE_HOST")
