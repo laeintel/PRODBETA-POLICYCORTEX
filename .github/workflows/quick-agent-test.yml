@@ -15,7 +15,7 @@ permissions:
 jobs:
   quick-test:
     name: Quick Windows Agent Test
-    runs-on: [self-hosted, Windows, X64, aeolitech-runner1]
+    runs-on: self-hosted
     timeout-minutes: 5
     
     steps:
