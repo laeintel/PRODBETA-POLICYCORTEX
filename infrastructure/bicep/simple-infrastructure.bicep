@@ -51,7 +51,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-05-01' = {
       {
         name: 'container-apps'
         properties: {
-          addressPrefix: '10.0.1.0/24'
+          addressPrefix: '10.0.0.0/23'
         }
       }
     ]

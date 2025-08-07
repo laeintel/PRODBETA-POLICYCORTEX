@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEOLITECH Logo: The Quantum Core</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .logo-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            max-width: 500px;
+            width: 100%;
+        }
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c; /* Dark charcoal */
+            text-align: center;
+        }
+        .tagline {
+            font-size: 1rem;
+            color: #4a5568; /* Medium grey */
+            text-align: center;
+        }
+        svg {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="logo-text">AEOLITECH</div>
+        <div class="tagline">Pioneering AI-Driven Solutions</div>
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background for visual clarity -->
+            <rect x="0" y="0" width="200" height="200" fill="none"/>
+
+            <!-- The Quantum Core: A central glowing core with orbiting or radiating data particles/lines -->
+            <defs>
+                <radialGradient id="coreGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                    <stop offset="0%" style="stop-color:#00BFFF;stop-opacity:1" /> <!-- Deep Sky Blue -->
+                    <stop offset="100%" style="stop-color:#007ACC;stop-opacity:0" /> <!-- Medium Blue, fading out -->
+                </radialGradient>
+                <linearGradient id="orbitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" /> <!-- Gold -->
+                    <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" /> <!-- Dark Orange -->
+                </linearGradient>
+            </defs>
+
+            <!-- Central AI Core -->
+            <circle cx="100" cy="100" r="30" fill="#003366"/> <!-- Dark Blue -->
+            <circle cx="100" cy="100" r="20" fill="url(#coreGradient)" opacity="0.9"/> <!-- Glowing inner core -->
+
+            <!-- Orbiting or radiating elements -->
+            <path d="M 100 100 L 160 60 C 170 70, 170 130, 160 140 L 100 100" fill="url(#orbitGradient)" opacity="0.6"/>
+            <path d="M 100 100 L 40 60 C 30 70, 30 130, 40 140 L 100 100" fill="url(#orbitGradient)" opacity="0.6"/>
+
+            <!-- Subtle connecting lines for data flow -->
+            <line x1="100" y1="100" x2="160" y2="60" stroke="#E0E7ED" stroke-width="1.5" opacity="0.4"/>
+            <line x1="100" y1="100" x2="40" y2="60" stroke="#E0E7ED" stroke-width="1.5" opacity="0.4"/>
+            <line x1="100" y1="100" x2="160" y2="140" stroke="#E0E7ED" stroke-width="1.5" opacity="0.4"/>
+            <line x1="100" y1="100" x2="40" y2="140" stroke="#E0E7ED" stroke-width="1.5" opacity="0.4"/>
+        </svg>
+    </div>
+</body>
+</html>
