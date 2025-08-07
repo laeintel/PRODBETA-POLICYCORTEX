@@ -7,71 +7,57 @@ import asyncio
 import json
 import time
 import uuid
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import BackgroundTasks
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from prometheus_client import Counter
-from prometheus_client import Gauge
-from prometheus_client import Histogram
-from prometheus_client import generate_latest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from prometheus_client import Counter, Gauge, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
 from backend.shared.config import get_settings
-from backend.shared.database import DatabaseUtils
-from backend.shared.database import get_async_db
+from backend.shared.database import DatabaseUtils, get_async_db
 
 from .auth import AuthManager
 from .ml_models.compliance_predictor import CompliancePredictor
 from .ml_models.correlation_engine import CrossDomainCorrelationEngine
-from .models import AnomalyDetectionRequest
-from .models import AnomalyDetectionResponse
-from .models import APIResponse
-from .models import ConversationHistoryRequest
-from .models import ConversationHistoryResponse
-from .models import ConversationRequest
-from .models import ConversationResponse
-from .models import CostOptimizationRequest
-from .models import CostOptimizationResponse
-from .models import ErrorResponse
-from .models import GovernanceOptimizationRequest
-from .models import GovernanceOptimizationResponse
-from .models import HealthResponse
-from .models import ModelInfo
-from .models import ModelMetrics
-from .models import ModelTrainingRequest
-from .models import ModelTrainingResponse
-from .models import PolicyAnalysisRequest
-from .models import PolicyAnalysisResponse
-from .models import PolicySynthesisRequest
-from .models import PolicySynthesisResponse
-from .models import PredictiveAnalyticsRequest
-from .models import PredictiveAnalyticsResponse
-from .models import SentimentAnalysisRequest
-from .models import SentimentAnalysisResponse
-from .models import UnifiedAIAnalysisRequest
-from .models import UnifiedAIAnalysisResponse
+from .models import (
+    AnomalyDetectionRequest,
+    AnomalyDetectionResponse,
+    APIResponse,
+    ConversationHistoryRequest,
+    ConversationHistoryResponse,
+    ConversationRequest,
+    ConversationResponse,
+    CostOptimizationRequest,
+    CostOptimizationResponse,
+    ErrorResponse,
+    GovernanceOptimizationRequest,
+    GovernanceOptimizationResponse,
+    HealthResponse,
+    ModelInfo,
+    ModelMetrics,
+    ModelTrainingRequest,
+    ModelTrainingResponse,
+    PolicyAnalysisRequest,
+    PolicyAnalysisResponse,
+    PolicySynthesisRequest,
+    PolicySynthesisResponse,
+    PredictiveAnalyticsRequest,
+    PredictiveAnalyticsResponse,
+    SentimentAnalysisRequest,
+    SentimentAnalysisResponse,
+    UnifiedAIAnalysisRequest,
+    UnifiedAIAnalysisResponse,
+)
 from .services.anomaly_detector import AnomalyDetector
-from .services.automation_engine import AutomationStatus
-from .services.automation_engine import AutomationTrigger
-from .services.automation_orchestrator import WorkflowEngine
-from .services.automation_orchestrator import automation_orchestrator
+from .services.automation_engine import AutomationStatus, AutomationTrigger
+from .services.automation_orchestrator import WorkflowEngine, automation_orchestrator
 from .services.conversation_analytics import conversation_analytics
 from .services.conversational_ai_service import conversational_ai_service
 from .services.cost_optimizer import CostOptimizer
@@ -88,10 +74,11 @@ from .services.sentiment_analyzer import SentimentAnalyzer
 
 # Try to import real models, fall back to mock models for testing
 try:
-    from .ml_models.conversational_governance_intelligence import ConversationConfig
-    from .ml_models.conversational_governance_intelligence import conversational_intelligence
-    from .ml_models.unified_ai_platform import UnifiedAIConfig
-    from .ml_models.unified_ai_platform import unified_ai_platform
+    from .ml_models.conversational_governance_intelligence import (
+        ConversationConfig,
+        conversational_intelligence,
+    )
+    from .ml_models.unified_ai_platform import UnifiedAIConfig, unified_ai_platform
     USE_MOCK_MODELS = False
     logger.info("Using production AI models")
 except ImportError as e:
@@ -2013,8 +2000,7 @@ async def run_multi_objective_optimization(
         # Extract parameters
         objectives = []
         for obj_data in request.get('objectives', []):
-            from .services.multi_objective_optimizer import Objective
-            from .services.multi_objective_optimizer import ObjectiveType
+            from .services.multi_objective_optimizer import Objective, ObjectiveType
             objectives.append(Objective(
                 name=obj_data['name'],
                 type=ObjectiveType(obj_data['type']),
@@ -2025,8 +2011,7 @@ async def run_multi_objective_optimization(
 
         constraints = []
         for constr_data in request.get('constraints', []):
-            from .services.multi_objective_optimizer import Constraint
-            from .services.multi_objective_optimizer import ConstraintType
+            from .services.multi_objective_optimizer import Constraint, ConstraintType
             constraints.append(Constraint(
                 name=constr_data['name'],
                 type=ConstraintType(constr_data['type']),
@@ -2145,8 +2130,7 @@ async def create_automation_workflow(
 ):
     """Create an automation workflow."""
     try:
-        from .services.automation_orchestrator import AutomationWorkflow
-        from .services.automation_orchestrator import TriggerType
+        from .services.automation_orchestrator import AutomationWorkflow, TriggerType
 
         # Parse workflow data
         workflow = AutomationWorkflow(
@@ -2621,9 +2605,7 @@ async def analyze_cross_domain_correlations(
         correlation_types = request.get('correlation_types', [])
 
         # Convert events data to CorrelationEvent objects
-        from .services.cross_domain_correlator import CorrelationEvent
-        from .services.cross_domain_correlator import CorrelationType
-        from .services.cross_domain_correlator import DomainType
+        from .services.cross_domain_correlator import CorrelationEvent, CorrelationType, DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(
@@ -2815,8 +2797,7 @@ async def analyze_temporal_correlations(
         events_data = request.get('events', [])
         window_size = request.get('window_size', 3600)  # 1 hour default
 
-        from .services.cross_domain_correlator import CorrelationEvent
-        from .services.cross_domain_correlator import DomainType
+        from .services.cross_domain_correlator import CorrelationEvent, DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(
@@ -2879,8 +2860,7 @@ async def analyze_causal_relationships(
         # Extract events
         events_data = request.get('events', [])
 
-        from .services.cross_domain_correlator import CorrelationEvent
-        from .services.cross_domain_correlator import DomainType
+        from .services.cross_domain_correlator import CorrelationEvent, DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(
@@ -2942,8 +2922,7 @@ async def detect_anomaly_correlations(
         # Extract events
         events_data = request.get('events', [])
 
-        from .services.cross_domain_correlator import CorrelationEvent
-        from .services.cross_domain_correlator import DomainType
+        from .services.cross_domain_correlator import CorrelationEvent, DomainType
         events = []
         for event_data in events_data:
             event = CorrelationEvent(

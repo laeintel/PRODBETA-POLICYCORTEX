@@ -18,20 +18,12 @@ import asyncio
 import json
 import re
 import warnings
-from abc import ABC
-from abc import abstractmethod
-from dataclasses import dataclass
-from dataclasses import field
-from datetime import datetime
-from datetime import timedelta
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mlflow
 import mlflow.pytorch
@@ -41,19 +33,19 @@ import structlog
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from prometheus_client import Counter
-from prometheus_client import Gauge
-from prometheus_client import Histogram
+from prometheus_client import Counter, Gauge, Histogram
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import AutoConfig
-from transformers import AutoModel
-from transformers import AutoTokenizer
-from transformers import BertForSequenceClassification
-from transformers import BertModel
-from transformers import BertTokenizer
-from transformers import T5ForConditionalGeneration
-from transformers import T5Tokenizer
-from transformers import pipeline
+from transformers import (
+    AutoConfig,
+    AutoModel,
+    AutoTokenizer,
+    BertForSequenceClassification,
+    BertModel,
+    BertTokenizer,
+    T5ForConditionalGeneration,
+    T5Tokenizer,
+    pipeline,
+)
 
 logger = structlog.get_logger(__name__)
 

@@ -6,21 +6,15 @@ Implements automatic organization detection, multi-tenant support, and enterpris
 import hashlib
 import json
 import re
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 import jwt
 import redis.asyncio as redis
 import structlog
-from azure.identity.aio import ClientSecretCredential
-from azure.identity.aio import DefaultAzureCredential
+from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
 from azure.keyvault.secrets.aio import SecretClient
 from azure.monitor.opentelemetry import configure_azure_monitor
 from jose import JWTError
@@ -28,9 +22,7 @@ from jose import jwt as jose_jwt
 from msal import ConfidentialClientApplication
 from opentelemetry import trace
 from shared.config import get_settings
-from shared.database import AuditLog
-from shared.database import DatabaseUtils
-from shared.database import async_db_transaction
+from shared.database import AuditLog, DatabaseUtils, async_db_transaction
 
 from .models import UserInfo
 

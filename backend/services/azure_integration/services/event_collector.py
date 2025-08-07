@@ -5,13 +5,8 @@ Collects governance events from Azure services for AI analysis.
 
 import asyncio
 import json
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 from azure.identity.aio import DefaultAzureCredential

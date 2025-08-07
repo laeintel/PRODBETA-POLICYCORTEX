@@ -4,19 +4,14 @@ Azure RBAC management service for handling role-based access control operations.
 
 import uuid
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
-from azure.core.exceptions import AzureError
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.mgmt.authorization import AuthorizationManagementClient
 from shared.config import get_settings
 
-from ..models import RBACResponse
-from ..models import RoleAssignmentResponse
+from ..models import RBACResponse, RoleAssignmentResponse
 from .azure_auth import AzureAuthService
 
 settings = get_settings()

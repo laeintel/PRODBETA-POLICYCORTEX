@@ -4,12 +4,8 @@ Handles JWT token validation and user authorization for AI/ML operations.
 """
 
 import json
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import jwt
 import redis.asyncio as redis

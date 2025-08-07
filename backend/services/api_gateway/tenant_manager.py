@@ -6,13 +6,9 @@ Implements tenant-specific namespaces, data encryption, and access control
 import base64
 import hashlib
 import json
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 from azure.cosmos import PartitionKey
@@ -24,9 +20,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
 from shared.config import get_settings
-from shared.database import DatabaseUtils
-from shared.database import async_db_transaction
-from shared.database import cosmos_manager
+from shared.database import DatabaseUtils, async_db_transaction, cosmos_manager
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)

@@ -10,16 +10,9 @@ import asyncio
 import json
 import logging
 import pickle
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -32,20 +25,13 @@ import torch_geometric
 from azure.identity import DefaultAzureCredential
 from azure.monitor.query import LogsQueryClient
 from scipy import sparse
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import KMeans
+from sklearn.cluster import DBSCAN, KMeans
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import classification_report
-from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import StandardScaler
-from torch_geometric.data import Data
-from torch_geometric.data import DataLoader
-from torch_geometric.nn import GATConv
-from torch_geometric.nn import GCNConv
-from torch_geometric.nn import global_max_pool
-from torch_geometric.nn import global_mean_pool
+from sklearn.metrics import classification_report, silhouette_score
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from torch_geometric.data import Data, DataLoader
+from torch_geometric.nn import GATConv, GCNConv, global_max_pool, global_mean_pool
 
 logger = logging.getLogger(__name__)
 

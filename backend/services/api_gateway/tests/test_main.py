@@ -3,18 +3,18 @@ Unit tests for API Gateway main module.
 """
 
 import asyncio
-from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from backend.services.api_gateway.main import app
-from backend.services.api_gateway.main import check_rate_limit
-from backend.services.api_gateway.main import proxy_request
-from backend.services.api_gateway.main import verify_authentication
+from backend.services.api_gateway.main import (
+    app,
+    check_rate_limit,
+    proxy_request,
+    verify_authentication,
+)
 
 
 class TestHealthEndpoints:
@@ -142,7 +142,6 @@ class TestProxyRequest:
         with patch(
             "backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry
         ), patch("backend.services.api_gateway.main.httpx.AsyncClient") as mock_client:
-
             mock_client_instance = AsyncMock()
             mock_client_instance.request.return_value = mock_httpx_response
             mock_client.return_value.__aenter__.return_value = mock_client_instance
@@ -194,7 +193,6 @@ class TestProxyRequest:
         with patch(
             "backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry
         ), patch("backend.services.api_gateway.main.httpx.AsyncClient") as mock_client:
-
             mock_client_instance = AsyncMock()
             mock_client_instance.request.side_effect = Exception("Network error")
             mock_client.return_value.__aenter__.return_value = mock_client_instance
@@ -227,7 +225,6 @@ class TestServiceRoutes:
         ) as mock_auth, patch(
             "backend.services.api_gateway.main.check_rate_limit"
         ) as mock_rate_limit:
-
             mock_auth.return_value = {"id": "test-user"}
             mock_rate_limit.return_value = None
             mock_proxy.return_value = {
@@ -247,7 +244,6 @@ class TestServiceRoutes:
         ) as mock_auth, patch(
             "backend.services.api_gateway.main.check_rate_limit"
         ) as mock_rate_limit:
-
             mock_auth.return_value = {"id": "test-user"}
             mock_rate_limit.return_value = None
             mock_proxy.return_value = {
@@ -267,7 +263,6 @@ class TestServiceRoutes:
         ) as mock_auth, patch(
             "backend.services.api_gateway.main.check_rate_limit"
         ) as mock_rate_limit:
-
             mock_auth.return_value = {"id": "test-user"}
             mock_rate_limit.return_value = None
             mock_proxy.return_value = {
@@ -289,7 +284,6 @@ class TestManagementEndpoints:
         with patch(
             "backend.services.api_gateway.main.SERVICE_REGISTRY", mock_service_registry
         ), patch("backend.services.api_gateway.main.verify_authentication") as mock_auth:
-
             mock_auth.return_value = {"id": "test-user"}
 
             response = client.get("/api/v1/gateway/services", headers=auth_headers)
@@ -305,7 +299,6 @@ class TestManagementEndpoints:
         with patch("backend.services.api_gateway.main.verify_authentication") as mock_auth, patch(
             "backend.services.api_gateway.main.SERVICE_REGISTRY", {}
         ) as mock_registry:
-
             mock_auth.return_value = {"id": "test-user"}
 
             response = client.get("/api/v1/gateway/metrics", headers=auth_headers)

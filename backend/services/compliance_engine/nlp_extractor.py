@@ -8,11 +8,7 @@ import json
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import nltk
 import spacy
@@ -20,12 +16,9 @@ import structlog
 from azure.ai.textanalytics.aio import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 from nltk.corpus import stopwords
-from nltk.tokenize import sent_tokenize
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
 from openai import AsyncAzureOpenAI
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import validator
+from pydantic import BaseModel, Field, validator
 
 logger = structlog.get_logger(__name__)
 
@@ -105,7 +98,6 @@ class NLPPolicyExtractor:
         text_analytics_endpoint: Optional[str] = None,
         text_analytics_key: Optional[str] = None,
     ):
-
         # Azure OpenAI client
         self.openai_client = AsyncAzureOpenAI(
             azure_endpoint=azure_openai_endpoint,

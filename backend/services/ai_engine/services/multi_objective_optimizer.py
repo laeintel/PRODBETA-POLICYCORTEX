@@ -7,17 +7,10 @@ import asyncio
 import json
 import logging
 from collections import defaultdict
-from dataclasses import dataclass
-from dataclasses import field
-from datetime import datetime
-from datetime import timedelta
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 import pandas as pd
@@ -113,7 +106,6 @@ class GovernanceProblem(Problem):
         decision_variables: Dict[str, Any],
         evaluator,
     ):
-
         n_var = len(decision_variables)
         n_obj = len(objectives)
         n_constr = len([c for c in constraints if c.is_hard])

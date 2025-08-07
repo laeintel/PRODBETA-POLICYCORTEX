@@ -3,19 +3,17 @@ Azure Policy management service for handling policy operations.
 """
 
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
-from azure.core.exceptions import AzureError
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.mgmt.policyinsights import PolicyInsightsClient
 from azure.mgmt.resource import PolicyClient
-from services.azure_integration.models import PolicyComplianceResponse
-from services.azure_integration.models import PolicyComplianceState
-from services.azure_integration.models import PolicyResponse
+from services.azure_integration.models import (
+    PolicyComplianceResponse,
+    PolicyComplianceState,
+    PolicyResponse,
+)
 from services.azure_integration.services.azure_auth import AzureAuthService
 from shared.config import get_settings
 

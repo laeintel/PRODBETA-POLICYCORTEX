@@ -8,18 +8,12 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import openai
 import structlog
 import torch
-from transformers import AutoModel
-from transformers import AutoTokenizer
-from transformers import pipeline
+from transformers import AutoModel, AutoTokenizer, pipeline
 
 logger = structlog.get_logger(__name__)
 

@@ -5,10 +5,7 @@ Routes compliance-related requests to the Phase 2 Compliance Engine service
 
 import json
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import structlog

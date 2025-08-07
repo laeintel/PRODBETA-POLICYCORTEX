@@ -7,11 +7,7 @@ import asyncio
 import json
 import re
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 from azure.ai.textanalytics.aio import TextAnalyticsClient

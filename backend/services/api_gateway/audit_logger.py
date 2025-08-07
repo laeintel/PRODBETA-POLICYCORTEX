@@ -7,14 +7,9 @@ import asyncio
 import hashlib
 import json
 from collections import deque
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import redis.asyncio as redis
 import structlog
@@ -22,13 +17,10 @@ from azure.core.exceptions import HttpResponseError
 from azure.identity.aio import DefaultAzureCredential
 from azure.monitor.ingestion import LogsIngestionClient
 from azure.monitor.opentelemetry import configure_azure_monitor
-from opentelemetry import metrics
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 from opentelemetry.metrics import get_meter
 from shared.config import get_settings
-from shared.database import AuditLog
-from shared.database import DatabaseUtils
-from shared.database import async_db_transaction
+from shared.database import AuditLog, DatabaseUtils, async_db_transaction
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -457,7 +449,6 @@ class ComprehensiveAuditLogger:
                     len(self._audit_queue) >= self._batch_size
                     or (datetime.utcnow() - self._last_flush).seconds >= self._flush_interval
                 ):
-
                     # Get events to flush
                     events_to_flush = []
                     while self._audit_queue and len(events_to_flush) < self._batch_size:

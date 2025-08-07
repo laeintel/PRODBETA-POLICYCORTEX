@@ -6,44 +6,34 @@ Provides Azure SDK integrations for policy, RBAC, cost, network, and resource ma
 import time
 import uuid
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Query
-from fastapi import Request
-from fastapi import status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from prometheus_client import Counter
-from prometheus_client import Histogram
-from prometheus_client import generate_latest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from prometheus_client import Counter, Histogram, generate_latest
 from shared.config import get_settings
-from shared.database import DatabaseUtils
-from shared.database import get_async_db
+from shared.database import DatabaseUtils, get_async_db
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
-from .models import APIResponse
-from .models import AzureAuthRequest
-from .models import AzureAuthResponse
-from .models import CostResponse
-from .models import ErrorResponse
-from .models import HealthResponse
-from .models import NetworkResponse
-from .models import PolicyRequest
-from .models import PolicyResponse
-from .models import RBACRequest
-from .models import RBACResponse
-from .models import ResourceResponse
+from .models import (
+    APIResponse,
+    AzureAuthRequest,
+    AzureAuthResponse,
+    CostResponse,
+    ErrorResponse,
+    HealthResponse,
+    NetworkResponse,
+    PolicyRequest,
+    PolicyResponse,
+    RBACRequest,
+    RBACResponse,
+    ResourceResponse,
+)
 
     PolicyManagementService,
     RBACManagementService,

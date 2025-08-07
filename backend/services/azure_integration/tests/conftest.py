@@ -2,9 +2,7 @@
 Test configuration and fixtures for Azure Integration service.
 """
 
-from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -270,7 +268,6 @@ def mock_prometheus_metrics():
     ) as mock_api_counter, patch(
         "backend.services.azure_integration.main.AZURE_API_DURATION"
     ) as mock_api_histogram:
-
         # Mock counter methods
         mock_counter.labels.return_value.inc = MagicMock()
         mock_histogram.observe = MagicMock()
@@ -310,7 +307,6 @@ def mock_azure_sdk_clients():
     ) as mock_network_client, patch(
         "azure.mgmt.monitor.MonitorManagementClient"
     ) as mock_monitor_client:
-
         # Mock credential
         mock_credential.return_value = MagicMock()
 

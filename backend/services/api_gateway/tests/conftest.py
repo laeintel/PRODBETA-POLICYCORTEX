@@ -4,9 +4,7 @@ Test configuration and fixtures for API Gateway service.
 
 import os
 import sys
-from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -103,7 +101,6 @@ def mock_prometheus_metrics():
     with patch("main.REQUEST_COUNT") as mock_counter, patch(
         "main.REQUEST_DURATION"
     ) as mock_histogram, patch("main.SERVICE_REQUESTS") as mock_service_counter:
-
         # Mock counter methods
         mock_counter.labels.return_value.inc = MagicMock()
         mock_histogram.observe = MagicMock()

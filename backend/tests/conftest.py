@@ -4,15 +4,9 @@ Shared test configuration and fixtures for all backend services.
 
 import asyncio
 import uuid
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import AsyncGenerator
-from typing import Dict
-from typing import Generator
-from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from datetime import datetime, timedelta
+from typing import Any, AsyncGenerator, Dict, Generator
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
@@ -23,8 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from backend.shared.config import get_settings
-from backend.shared.database import Base
-from backend.shared.database import get_async_db
+from backend.shared.database import Base, get_async_db
 
 # Test database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -268,7 +261,6 @@ def mock_azure_sdk():
     ) as mock_consumption_client, patch(
         "azure.mgmt.network.NetworkManagementClient"
     ) as mock_network_client:
-
         # Mock credential
         mock_credential.return_value = MagicMock()
 
