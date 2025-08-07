@@ -724,6 +724,11 @@ jobs:
           export AZURE_OPENAI_KEY="${AZURE_OPENAI_KEY:-development-openai-key}"
           export APPLICATION_INSIGHTS_CONNECTION_STRING="${APPLICATION_INSIGHTS_CONNECTION_STRING:-InstrumentationKey=00000000-0000-0000-0000-000000000000}"
           
+          # Get container apps environment name from deployment
+          CONTAINER_APPS_ENV_NAME=$(az containerapp env list \
+            --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
+            --query "[0].name" -o tsv 2>/dev/null || echo "cae-pcx-${{ steps.env.outputs.environment }}")
+          
           # Sanitize service name for Azure Container App naming requirements
           # Replace underscores with hyphens and ensure lowercase
           SERVICE_NAME=$(echo "${{ matrix.service }}" | tr '_' '-' | tr '[:upper:]' '[:lower:]')
@@ -773,14 +778,14 @@ jobs:
               --memory "$MEMORY" \
               --min-replicas "$MIN_REPLICAS" \
               --max-replicas "$MAX_REPLICAS" \
-              --env-vars \
+              --set-env-vars \
                 ENVIRONMENT="${{ steps.env.outputs.environment }}" \
                 SERVICE_NAME="${{ matrix.service }}" \
                 SERVICE_PORT="$PORT" \
                 AZURE_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" \
                 AZURE_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP" \
                 AZURE_LOCATION="$AZURE_LOCATION" \
-              --secrets \
+              --replace-secrets \
                 azure-sql-password="${AZURE_SQL_PASSWORD}" \
                 azure-cosmos-key="${AZURE_COSMOS_KEY}" \
                 redis-password="${REDIS_PASSWORD}" \
@@ -792,7 +797,7 @@ jobs:
             az containerapp create \
               --name "${CONTAINER_APP_NAME}" \
               --resource-group "rg-pcx-app-${{ steps.env.outputs.environment }}" \
-              --environment "cae-pcx-${{ steps.env.outputs.environment }}" \
+              --environment "${CONTAINER_APPS_ENV_NAME}" \
               --image "${{ steps.acr.outputs.acr_login_server }}/${{ matrix.service }}:${{ github.ref_name }}-${{ github.sha }}" \
               --cpu "$CPU" \
               --memory "$MEMORY" \
@@ -801,19 +806,19 @@ jobs:
               --target-port "$PORT" \
               --ingress external \
               --env-vars \
-                ENVIRONMENT="${{ steps.env.outputs.environment }}" \
-                SERVICE_NAME="${{ matrix.service }}" \
-                SERVICE_PORT="$PORT" \
-                AZURE_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" \
-                AZURE_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP" \
-                AZURE_LOCATION="$AZURE_LOCATION" \
+                "ENVIRONMENT=${{ steps.env.outputs.environment }}" \
+                "SERVICE_NAME=${{ matrix.service }}" \
+                "SERVICE_PORT=$PORT" \
+                "AZURE_SUBSCRIPTION_ID=$AZURE_SUBSCRIPTION_ID" \
+                "AZURE_RESOURCE_GROUP=$AZURE_RESOURCE_GROUP" \
+                "AZURE_LOCATION=$AZURE_LOCATION" \
               --secrets \
-                azure-sql-password="${AZURE_SQL_PASSWORD}" \
-                azure-cosmos-key="${AZURE_COSMOS_KEY}" \
-                redis-password="${REDIS_PASSWORD}" \
-                jwt-secret-key="${JWT_SECRET_KEY}" \
-                azure-openai-key="${AZURE_OPENAI_KEY}" \
-                application-insights-connection-string="${APPLICATION_INSIGHTS_CONNECTION_STRING}"
+                "azure-sql-password=$AZURE_SQL_PASSWORD" \
+                "azure-cosmos-key=$AZURE_COSMOS_KEY" \
+                "redis-password=$REDIS_PASSWORD" \
+                "jwt-secret-key=$JWT_SECRET_KEY" \
+                "azure-openai-key=$AZURE_OPENAI_KEY" \
+                "application-insights-connection-string=$APPLICATION_INSIGHTS_CONNECTION_STRING"
           fi
 
       - name: Wait for deployment

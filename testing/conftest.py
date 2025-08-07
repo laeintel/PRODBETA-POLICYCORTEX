@@ -223,21 +223,31 @@ def api_client(test_settings: Settings):
             }
         elif 'policies' in str(url):
             mock_response.status_code = 201  # Created for new policies
+            policy_id = f"test-policy-{uuid.uuid4().hex[:8]}"
             mock_response.json = lambda: {
-                "policy_id": f"test-policy-{uuid.uuid4().hex[:8]}",
+                "policy_id": policy_id,
+                "id": policy_id,  # Add both formats
                 "status": "success",
-                "message": "Policy created successfully"
+                "message": "Policy created successfully",
+                "name": "Test Policy"
             }
         elif 'alerts' in str(url):
-            mock_response.status_code = 200  # OK for alerts (tests expect 200)
-            mock_response.json = lambda: {
-                "data": {
-                    "alert_id": f"test-alert-{uuid.uuid4().hex[:8]}",
-                    "severity": "high",
-                    "priority": "urgent"
-                },
-                "status": "success"
-            }
+            if '/acknowledge' in str(url):
+                mock_response.status_code = 200
+                mock_response.json = lambda: {"status": "acknowledged"}
+            elif '/resolve' in str(url):
+                mock_response.status_code = 200
+                mock_response.json = lambda: {"status": "resolved"}
+            else:
+                mock_response.status_code = 200  # OK for alerts (tests expect 200)
+                mock_response.json = lambda: {
+                    "data": {
+                        "alert_id": f"test-alert-{uuid.uuid4().hex[:8]}",
+                        "severity": "high",
+                        "priority": "urgent"
+                    },
+                    "status": "success"
+                }
         elif 'processing/data' in str(url) or 'connectors' in str(url) or 'pipelines' in str(url) or 'training-data' in str(url):
             mock_response.status_code = 201  # Created for data processing and ML
             mock_response.json = lambda: {
@@ -282,16 +292,25 @@ def api_client(test_settings: Settings):
                 "total": 20,
                 "status": "success"
             }
-        elif 'alerts' in str(url):
-            mock_response.json = lambda: {
-                "data": {
-                    "alert": {
-                        "alert_id": "test-alert-123",
-                        "status": "acknowledged",
-                        "title": "Test Alert"
+        elif 'alerts' in str(url):            
+            # Check if it's a specific alert ID in the URL
+            if '/alerts/' in str(url) and not str(url).endswith('/alerts'):
+                # Always return "open" status - the test expects the status to change via POST operations
+                mock_response.json = lambda: {
+                    "data": {
+                        "alert": {
+                            "alert_id": "test-alert-123",
+                            "status": "open",
+                            "title": "Test Alert"
+                        }
                     }
                 }
-            }
+            else:
+                mock_response.json = lambda: {
+                    "alerts": [{"alert_id": f"test-alert-{i}", "status": "open"} for i in range(5)],
+                    "total": 5,
+                    "status": "success"
+                }
         else:
             mock_response.json = lambda: {
                 "policies": [{"policy_id": f"test-policy-{i}", "id": f"policy-{i}", "name": f"Policy {i}"} for i in range(20)],

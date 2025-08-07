@@ -1,0 +1,210 @@
+<svg viewBox="0 0 2400 3000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- AEOLITECH Premium Gradients -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00b8e6;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="navyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a365d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#15294a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Premium White Background -->
+  <rect width="2400" height="3000" fill="#FFFFFF"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="2400" height="150" fill="#1a365d"/>
+  <text x="1200" y="90" font-family="'SF Pro Display', sans-serif" font-size="36" font-weight="300" fill="#FFFFFF" text-anchor="middle" letter-spacing="4">
+    AEOLITECH INTEGRATED MONOLITH LOGO
+  </text>
+  
+  <!-- PRIMARY VERSION - Perfectly Balanced -->
+  <g transform="translate(200, 250)">
+    <text x="0" y="-30" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#1a365d">PRIMARY LOGO</text>
+    
+    <!-- Integrated Monolith AEOLITECH -->
+    <g transform="scale(1)">
+      <!-- The Monolith A - Precisely crafted -->
+      <path d="M 0 160 L 50 0 L 100 160 L 75 160 L 68 130 L 32 130 L 25 160 Z M 40 100 L 50 60 L 60 100 Z" 
+            fill="#1a365d"/>
+      <!-- Cyan accent bar -->
+      <rect x="32" y="110" width="36" height="10" fill="#00d4ff"/>
+      
+      <!-- EOLITECH - Perfectly aligned -->
+      <text x="115" y="160" 
+            font-family="'Futura PT', 'Futura', sans-serif" 
+            font-size="140" 
+            font-weight="800" 
+            fill="#1a365d"
+            letter-spacing="-3">EOLITECH</text>
+    </g>
+  </g>
+  
+  <!-- REFINED VERSION - Premium Typography -->
+  <g transform="translate(200, 600)">
+    <text x="0" y="-30" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#1a365d">REFINED VERSION</text>
+    
+    <g transform="scale(0.8)">
+      <!-- Refined Monolith A -->
+      <path d="M 0 180 L 60 0 L 120 180 L 90 180 L 81 140 L 39 140 L 30 180 Z M 48 105 L 60 55 L 72 105 Z" 
+            fill="#1a365d"/>
+      <rect x="39" y="120" width="42" height="12" fill="#00d4ff"/>
+      
+      <!-- EOLITECH with adjusted kerning -->
+      <text x="140" y="180" 
+            font-family="'SF Pro Display', -apple-system, sans-serif" 
+            font-size="165" 
+            font-weight="700" 
+            fill="#1a365d"
+            letter-spacing="-2">EOLITECH</text>
+    </g>
+  </g>
+  
+  <!-- COMPACT VERSION - For smaller applications -->
+  <g transform="translate(200, 900)">
+    <text x="0" y="-30" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#1a365d">COMPACT VERSION</text>
+    
+    <g transform="scale(0.6)">
+      <!-- Compact Monolith A -->
+      <path d="M 0 180 L 55 0 L 110 180 L 85 180 L 77 145 L 33 145 L 25 180 Z M 42 110 L 55 60 L 68 110 Z" 
+            fill="#1a365d"/>
+      <rect x="33" y="125" width="44" height="12" fill="#00d4ff"/>
+      
+      <text x="130" y="180" 
+            font-family="'Inter', sans-serif" 
+            font-size="170" 
+            font-weight="800" 
+            fill="#1a365d"
+            letter-spacing="-1">EOLITECH</text>
+    </g>
+  </g>
+  
+  <!-- STACKED VERSION - For square formats -->
+  <g transform="translate(200, 1150)">
+    <text x="0" y="-30" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#1a365d">STACKED VERSION</text>
+    
+    <g>
+      <!-- Larger standalone Monolith A -->
+      <g transform="scale(1.5)">
+        <path d="M 0 100 L 35 0 L 70 100 L 55 100 L 50 80 L 20 80 L 15 100 Z M 25 60 L 35 30 L 45 60 Z" 
+              fill="#1a365d"/>
+        <rect x="20" y="70" width="30" height="8" fill="#00d4ff"/>
+      </g>
+      
+      <!-- AEOLITECH below -->
+      <text x="52" y="220" 
+            font-family="'Futura PT', 'Futura', sans-serif" 
+            font-size="60" 
+            font-weight="700" 
+            fill="#1a365d"
+            text-anchor="middle"
+            letter-spacing="2">AEOLITECH</text>
+    </g>
+  </g>
+  
+  <!-- HORIZONTAL EXTENDED - For wide applications -->
+  <g transform="translate(200, 1500)">
+    <text x="0" y="-30" font-family="'Inter', sans-serif" font-size="18" font-weight="600" fill="#1a365d">HORIZONTAL EXTENDED</text>
+    
+    <g transform="scale(0.7)">
+      <!-- Extended Monolith A -->
+      <path d="M 0 140 L 45 0 L 90 140 L 70 140 L 64 110 L 26 110 L 20 140 Z M 33 85 L 45 45 L 57 85 Z" 
+            fill="#1a365d"/>
+      <rect x="26" y="95" width="38" height="10" fill="#00d4ff"/>
+      
+      <text x="110" y="140" 
+            font-family="'Helvetica Neue', Arial, sans-serif" 
+            font-size="130" 
+            font-weight="500" 
+            fill="#1a365d"
+            letter-spacing="8">EOLITECH</text>
+    </g>
+  </g>
+  
+  <!-- USAGE EXAMPLES -->
+  <g transform="translate(200, 1800)">
+    <rect x="-50" y="-50" width="2100" height="800" fill="#F8F9FA" stroke="#E0E0E0" stroke-width="1" rx="12"/>
+    
+    <text x="0" y="0" font-family="'Inter', sans-serif" font-size="24" font-weight="700" fill="#1a365d">USAGE EXAMPLES</text>
+    
+    <!-- On dark background -->
+    <g transform="translate(0, 50)">
+      <rect x="0" y="0" width="400" height="150" fill="#1a365d" rx="8"/>
+      <g transform="translate(30, 30) scale(0.4)">
+        <path d="M 0 160 L 50 0 L 100 160 L 75 160 L 68 130 L 32 130 L 25 160 Z M 40 100 L 50 60 L 60 100 Z" 
+              fill="#FFFFFF"/>
+        <rect x="32" y="110" width="36" height="10" fill="#00d4ff"/>
+        <text x="115" y="160" 
+              font-family="'Futura PT', 'Futura', sans-serif" 
+              font-size="140" 
+              font-weight="800" 
+              fill="#FFFFFF"
+              letter-spacing="-3">EOLITECH</text>
+      </g>
+    </g>
+    
+    <!-- Icon only -->
+    <g transform="translate(450, 50)">
+      <rect x="0" y="0" width="150" height="150" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1" rx="8"/>
+      <g transform="translate(40, 25)">
+        <path d="M 0 80 L 35 0 L 70 80 L 55 80 L 50 60 L 20 60 L 15 80 Z M 25 45 L 35 20 L 45 45 Z" 
+              fill="#1a365d"/>
+        <rect x="20" y="50" width="30" height="6" fill="#00d4ff"/>
+      </g>
+      <text x="75" y="130" font-family="'Inter', sans-serif" font-size="12" font-weight="500" fill="#666" text-anchor="middle">App Icon</text>
+    </g>
+    
+    <!-- Business card mockup -->
+    <g transform="translate(650, 50)">
+      <rect x="0" y="0" width="350" height="200" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1" rx="4"/>
+      <g transform="translate(25, 25) scale(0.25)">
+        <path d="M 0 160 L 50 0 L 100 160 L 75 160 L 68 130 L 32 130 L 25 160 Z M 40 100 L 50 60 L 60 100 Z" 
+              fill="#1a365d"/>
+        <rect x="32" y="110" width="36" height="10" fill="#00d4ff"/>
+        <text x="115" y="160" 
+              font-family="'Futura PT', 'Futura', sans-serif" 
+              font-size="140" 
+              font-weight="800" 
+              fill="#1a365d"
+              letter-spacing="-3">EOLITECH</text>
+      </g>
+      <text x="25" y="120" font-family="'Inter', sans-serif" font-size="14" font-weight="600" fill="#1a365d">John Smith</text>
+      <text x="25" y="140" font-family="'Inter', sans-serif" font-size="12" font-weight="400" fill="#666">Chief Technology Officer</text>
+      <text x="25" y="170" font-family="'Inter', sans-serif" font-size="11" font-weight="400" fill="#666">john@aeolitech.com | +1 234 567 8900</text>
+    </g>
+    
+    <!-- Tagline integration -->
+    <g transform="translate(0, 250)">
+      <g transform="scale(0.5)">
+        <path d="M 0 160 L 50 0 L 100 160 L 75 160 L 68 130 L 32 130 L 25 160 Z M 40 100 L 50 60 L 60 100 Z" 
+              fill="#1a365d"/>
+        <rect x="32" y="110" width="36" height="10" fill="#00d4ff"/>
+        <text x="115" y="160" 
+              font-family="'Futura PT', 'Futura', sans-serif" 
+              font-size="140" 
+              font-weight="800" 
+              fill="#1a365d"
+              letter-spacing="-3">EOLITECH</text>
+      </g>
+      <text x="0" y="120" font-family="'Inter', sans-serif" font-size="16" font-weight="400" fill="#666">The Science of Cloud Governance</text>
+    </g>
+  </g>
+  
+  <!-- Guidelines -->
+  <g transform="translate(200, 2700)">
+    <text font-family="'Inter', sans-serif" font-size="16" fill="#333">
+      <tspan x="0" y="0" font-size="20" font-weight="700">BRAND GUIDELINES</tspan>
+      <tspan x="0" y="40" font-weight="600">Clear Space:</tspan>
+      <tspan x="120" y="40">Minimum 0.5x the height of the "A" on all sides</tspan>
+      <tspan x="0" y="70" font-weight="600">Minimum Size:</tspan>
+      <tspan x="120" y="70">24px height for digital, 8mm for print</tspan>
+      <tspan x="0" y="100" font-weight="600">Typography:</tspan>
+      <tspan x="120" y="100">Futura PT (primary), SF Pro Display, Inter, Helvetica Neue</tspan>
+      <tspan x="0" y="130" font-weight="600">Colors:</tspan>
+      <tspan x="120" y="130">Navy #1a365d | Cyan #00d4ff | White #FFFFFF</tspan>
+    </text>
+  </g>
+</svg>
