@@ -326,7 +326,7 @@ const ResourceTopologyPage = () => {
     
     const filteredNodes = applyFilters(topologyData.nodes)
     const filteredNodeIds = new Set(filteredNodes.map(n => n.id))
-    const filteredEdges = topologyData.edges.filter(edge => 
+    const filteredEdges = (topologyData.edges || []).filter(edge => 
       filteredNodeIds.has(edge.source) && filteredNodeIds.has(edge.target)
     )
     
@@ -408,8 +408,8 @@ const ResourceTopologyPage = () => {
 
         {/* Global Filter Panel */}
         <GlobalFilterPanel
-          availableResourceGroups={topologyData?.nodes.map(n => n.resourceGroup).filter(Boolean) || []}
-          availableResourceTypes={topologyData?.nodes.map(n => n.type) || []}
+          availableResourceGroups={topologyData?.nodes?.map(n => n.resourceGroup).filter(Boolean) || []}
+          availableResourceTypes={topologyData?.nodes?.map(n => n.type) || []}
         />
 
         {filteredTopology && (
