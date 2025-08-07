@@ -167,7 +167,7 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2023-05-01'
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
         customerId: logWorkspace.properties.customerId
-        sharedKey: listKeys(logWorkspace.id, '2022-10-01').primarySharedKey
+        sharedKey: logWorkspace.listKeys().primarySharedKey
       }
     }
     vnetConfiguration: {
@@ -181,7 +181,7 @@ resource redisPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = {
   parent: keyVault
   name: 'REDIS-PASSWORD'
   properties: {
-    value: listKeys(redisCache.id, '2023-04-01').primaryKey
+    value: redisCache.listKeys().primaryKey
   }
 }
 
@@ -205,7 +205,7 @@ resource containerRegistryPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023
   parent: keyVault
   name: 'CONTAINER-REGISTRY-PASSWORD'
   properties: {
-    value: listCredentials(containerRegistry.id, '2023-01-01-preview').passwords[0].value
+    value: containerRegistry.listCredentials().passwords[0].value
   }
 }
 
