@@ -2247,6 +2247,99 @@ async def get_cost_budgets():
     }
 
 
+# Missing endpoints that frontend needs
+
+@app.get("/api/v1/resources/topology")
+async def get_resource_topology():
+    """Get resource topology data."""
+    return {
+        "nodes": [
+            {
+                "id": "rg-dev-001",
+                "name": "Development Resource Group",
+                "type": "Resource Group",
+                "resourceGroup": "rg-dev-001",
+                "subscription": "subscription-1",
+                "status": "healthy"
+            },
+            {
+                "id": "vm-dev-001",
+                "name": "Development VM",
+                "type": "Virtual Machine",
+                "resourceGroup": "rg-dev-001",
+                "subscription": "subscription-1",
+                "status": "running"
+            }
+        ],
+        "edges": [
+            {
+                "id": "e1",
+                "source": "rg-dev-001",
+                "target": "vm-dev-001",
+                "type": "contains"
+            }
+        ],
+        "summary": {
+            "totalNodes": 2,
+            "totalEdges": 1,
+            "resourceGroups": 1,
+            "subscriptions": 1
+        },
+        "data_source": "azure-resource-graph"
+    }
+
+@app.get("/api/v1/rbac/assignments")
+async def get_rbac_assignments():
+    """Get RBAC role assignments."""
+    return {
+        "assignments": [
+            {
+                "id": "assignment-001",
+                "principalType": "User",
+                "principalName": "admin@aeolitech.com",
+                "roleDefinitionName": "Contributor",
+                "scope": "/subscriptions/test-subscription",
+                "createdOn": "2024-01-01T00:00:00Z"
+            }
+        ],
+        "total": 1,
+        "data_source": "azure-rbac"
+    }
+
+@app.get("/api/v1/security/overview")
+async def get_security_overview():
+    """Get security overview data."""
+    return {
+        "score": 85,
+        "recommendations": [
+            {
+                "id": "rec-001",
+                "title": "Enable MFA for all users",
+                "severity": "High",
+                "status": "Active"
+            }
+        ],
+        "alerts": 2,
+        "data_source": "azure-security-center"
+    }
+
+@app.get("/api/v1/analytics/overview")
+async def get_analytics_overview():
+    """Get analytics overview data."""
+    return {
+        "metrics": {
+            "totalResources": 73,
+            "costTrend": "increasing",
+            "complianceScore": 85,
+            "alerts": 5
+        },
+        "trends": {
+            "weekly": [65, 70, 75, 80, 85, 87, 85],
+            "monthly": [78, 82, 85]
+        },
+        "data_source": "analytics-engine"
+    }
+
 @app.on_event("startup")
 async def startup_event():
     """Pre-fetch policies on startup to populate cache."""
