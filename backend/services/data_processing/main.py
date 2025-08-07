@@ -5,60 +5,47 @@ Handles ETL pipelines, stream processing, data transformation, and quality check
 
 import time
 import uuid
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import BackgroundTasks
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from prometheus_client import Counter
-from prometheus_client import Histogram
-from prometheus_client import generate_latest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from prometheus_client import Counter, Histogram, generate_latest
 from shared.config import get_settings
-from shared.database import DatabaseUtils
-from shared.database import get_async_db
+from shared.database import DatabaseUtils, get_async_db
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
 from .auth import AuthManager
-from .models import APIResponse
-from .models import DataAggregationRequest
-from .models import DataAggregationResponse
-from .models import DataExportRequest
-from .models import DataExportResponse
-from .models import DataLineageRequest
-from .models import DataLineageResponse
-from .models import DataTransformationRequest
-from .models import DataTransformationResponse
-from .models import DataValidationRequest
-from .models import DataValidationResponse
-from .models import ErrorResponse
-from .models import ETLPipelineRequest
-from .models import ETLPipelineResponse
-from .models import HealthResponse
-from .models import PipelineStatus
-from .models import ProcessingMetrics
-from .models import StreamProcessingRequest
-from .models import StreamProcessingResponse
+from .models import (
+    APIResponse,
+    DataAggregationRequest,
+    DataAggregationResponse,
+    DataExportRequest,
+    DataExportResponse,
+    DataLineageRequest,
+    DataLineageResponse,
+    DataTransformationRequest,
+    DataTransformationResponse,
+    DataValidationRequest,
+    DataValidationResponse,
+    ErrorResponse,
+    ETLPipelineRequest,
+    ETLPipelineResponse,
+    HealthResponse,
+    PipelineStatus,
+    ProcessingMetrics,
+    StreamProcessingRequest,
+    StreamProcessingResponse,
+)
 from .services.azure_connectors import AzureConnectorService
 from .services.data_aggregator import DataAggregatorService
 from .services.data_exporter import DataExporterService
-from .services.data_pipeline import DataPipeline
-from .services.data_pipeline import DataSourceType
+from .services.data_pipeline import DataPipeline, DataSourceType
 from .services.data_transformer import DataTransformerService
 from .services.data_validator import DataValidatorService
 from .services.etl_pipeline import ETLPipelineService

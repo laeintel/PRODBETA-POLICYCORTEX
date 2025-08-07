@@ -7,23 +7,15 @@ import asyncio
 import hashlib
 import json
 from collections import defaultdict
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import structlog
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import validator
-from sklearn.ensemble import IsolationForest
-from sklearn.ensemble import RandomForestClassifier
+from pydantic import BaseModel, Field, validator
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
 logger = structlog.get_logger(__name__)
@@ -398,9 +390,9 @@ class ComplianceAnalyzer:
                 result["compliant"] = float(actual_value) < float(expected_value)
 
             if not result["compliant"]:
-                result["description"] = (
-                    f"Property {property_path} is {actual_value}, expected {operator} {expected_value}"
-                )
+                result[
+                    "description"
+                ] = f"Property {property_path} is {actual_value}, expected {operator} {expected_value}"
 
         elif condition_type == "tag":
             # Check resource tags
@@ -414,9 +406,9 @@ class ComplianceAnalyzer:
                 result["description"] = f"Required tag '{tag_key}' is missing"
             elif tag_value and resource_tags[tag_key] != tag_value:
                 result["compliant"] = False
-                result["description"] = (
-                    f"Tag '{tag_key}' has value '{resource_tags[tag_key]}', expected '{tag_value}'"
-                )
+                result[
+                    "description"
+                ] = f"Tag '{tag_key}' has value '{resource_tags[tag_key]}', expected '{tag_value}'"
 
         elif condition_type == "custom":
             # Custom evaluation logic

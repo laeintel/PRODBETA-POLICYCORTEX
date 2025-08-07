@@ -6,23 +6,13 @@ Provides SQLAlchemy configuration, base models, and database utilities.
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import AsyncGenerator
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
-from sqlalchemy import Boolean
-from sqlalchemy import Column
-from sqlalchemy import DateTime
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
-from sqlalchemy import create_engine
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, create_engine
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from .config import get_settings
@@ -249,8 +239,7 @@ class DatabaseUtils:
         details: Optional[str] = None,
     ):
         """Update service health status."""
-        from sqlalchemy import select
-        from sqlalchemy import update
+        from sqlalchemy import select, update
 
         # Check if record exists
         stmt = select(ServiceHealth).where(ServiceHealth.service_name == service_name)

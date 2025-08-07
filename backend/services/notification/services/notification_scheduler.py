@@ -5,12 +5,8 @@ Notification scheduler for handling scheduled and recurring notifications.
 import asyncio
 import json
 import uuid
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import redis.asyncio as redis
 import structlog

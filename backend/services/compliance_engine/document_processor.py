@@ -8,30 +8,20 @@ import hashlib
 import io
 import json
 import mimetypes
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any
-from typing import BinaryIO
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, BinaryIO, Dict, List, Optional
 
 import docx  # python-docx for Word processing
 import fitz  # PyMuPDF for PDF processing
 import pandas as pd
 import structlog
-from azure.functions import HttpRequest
-from azure.functions import HttpResponse
+from azure.functions import HttpRequest, HttpResponse
 from azure.identity.aio import DefaultAzureCredential
-from azure.storage.blob import BlobSasPermissions
-from azure.storage.blob import generate_blob_sas
-from azure.storage.blob.aio import BlobClient
-from azure.storage.blob.aio import BlobServiceClient
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import validator
+from azure.storage.blob import BlobSasPermissions, generate_blob_sas
+from azure.storage.blob.aio import BlobClient, BlobServiceClient
+from pydantic import BaseModel, Field, validator
 
 logger = structlog.get_logger(__name__)
 

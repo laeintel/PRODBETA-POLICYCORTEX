@@ -3,13 +3,11 @@ Unit tests for CircuitBreaker functionality.
 """
 
 import time
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from backend.services.api_gateway.circuit_breaker import CircuitBreaker
-from backend.services.api_gateway.circuit_breaker import CircuitBreakerState
+from backend.services.api_gateway.circuit_breaker import CircuitBreaker, CircuitBreakerState
 
 
 class TestCircuitBreaker:

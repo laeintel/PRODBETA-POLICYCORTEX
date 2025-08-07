@@ -4,8 +4,7 @@ Provides real test data and environments instead of mock values
 """
 
 import os
-from typing import Any
-from typing import Dict
+from typing import Any, Dict
 
 # Real Test Database Configuration (for integration tests)
 TEST_DATABASE_CONFIG = {

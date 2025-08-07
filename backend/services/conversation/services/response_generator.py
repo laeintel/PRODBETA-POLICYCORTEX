@@ -5,10 +5,7 @@ Generates intelligent responses using Azure OpenAI based on intent, context, and
 
 import asyncio
 import json
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 from openai import AsyncAzureOpenAI

@@ -8,17 +8,11 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import aiohttp
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -2121,8 +2115,7 @@ async def get_costs_overview():
 @app.get("/api/v1/costs/details/{subscription_id}")
 async def get_subscription_cost_details(subscription_id: str):
     """Get detailed cost breakdown for a specific subscription."""
-    from azure_cost_fetcher import get_resource_group_costs
-    from azure_cost_fetcher import get_subscription_costs
+    from azure_cost_fetcher import get_resource_group_costs, get_subscription_costs
 
     try:
         # Get subscription cost details
@@ -2149,8 +2142,7 @@ async def get_subscription_cost_details(subscription_id: str):
 async def get_cost_trends():
     """Get cost trends and historical data."""
     # Generate mock historical data for trend analysis
-    from datetime import datetime
-    from datetime import timedelta
+    from datetime import datetime, timedelta
 
     # Generate last 12 months of cost data
     months = []
@@ -2249,6 +2241,7 @@ async def get_cost_budgets():
 
 # Missing endpoints that frontend needs
 
+
 @app.get("/api/v1/resources/topology")
 async def get_resource_topology():
     """Get resource topology data."""
@@ -2260,7 +2253,7 @@ async def get_resource_topology():
                 "type": "Resource Group",
                 "resourceGroup": "rg-dev-001",
                 "subscription": "subscription-1",
-                "status": "healthy"
+                "status": "healthy",
             },
             {
                 "id": "vm-dev-001",
@@ -2268,25 +2261,14 @@ async def get_resource_topology():
                 "type": "Virtual Machine",
                 "resourceGroup": "rg-dev-001",
                 "subscription": "subscription-1",
-                "status": "running"
-            }
+                "status": "running",
+            },
         ],
-        "edges": [
-            {
-                "id": "e1",
-                "source": "rg-dev-001",
-                "target": "vm-dev-001",
-                "type": "contains"
-            }
-        ],
-        "summary": {
-            "totalNodes": 2,
-            "totalEdges": 1,
-            "resourceGroups": 1,
-            "subscriptions": 1
-        },
-        "data_source": "azure-resource-graph"
+        "edges": [{"id": "e1", "source": "rg-dev-001", "target": "vm-dev-001", "type": "contains"}],
+        "summary": {"totalNodes": 2, "totalEdges": 1, "resourceGroups": 1, "subscriptions": 1},
+        "data_source": "azure-resource-graph",
     }
+
 
 @app.get("/api/v1/rbac/assignments")
 async def get_rbac_assignments():
@@ -2299,12 +2281,13 @@ async def get_rbac_assignments():
                 "principalName": "admin@aeolitech.com",
                 "roleDefinitionName": "Contributor",
                 "scope": "/subscriptions/test-subscription",
-                "createdOn": "2024-01-01T00:00:00Z"
+                "createdOn": "2024-01-01T00:00:00Z",
             }
         ],
         "total": 1,
-        "data_source": "azure-rbac"
+        "data_source": "azure-rbac",
     }
+
 
 @app.get("/api/v1/security/overview")
 async def get_security_overview():
@@ -2316,12 +2299,13 @@ async def get_security_overview():
                 "id": "rec-001",
                 "title": "Enable MFA for all users",
                 "severity": "High",
-                "status": "Active"
+                "status": "Active",
             }
         ],
         "alerts": 2,
-        "data_source": "azure-security-center"
+        "data_source": "azure-security-center",
     }
+
 
 @app.get("/api/v1/analytics/overview")
 async def get_analytics_overview():
@@ -2331,14 +2315,12 @@ async def get_analytics_overview():
             "totalResources": 73,
             "costTrend": "increasing",
             "complianceScore": 85,
-            "alerts": 5
+            "alerts": 5,
         },
-        "trends": {
-            "weekly": [65, 70, 75, 80, 85, 87, 85],
-            "monthly": [78, 82, 85]
-        },
-        "data_source": "analytics-engine"
+        "trends": {"weekly": [65, 70, 75, 80, 85, 87, 85], "monthly": [78, 82, 85]},
+        "data_source": "analytics-engine",
     }
+
 
 @app.on_event("startup")
 async def startup_event():

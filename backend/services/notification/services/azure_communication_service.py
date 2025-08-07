@@ -5,10 +5,7 @@ Azure Communication Services integration for email and SMS notifications.
 import json
 import uuid
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 import redis.asyncio as redis

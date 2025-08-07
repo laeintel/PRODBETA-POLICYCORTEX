@@ -4,14 +4,9 @@ Tracks conversation metrics, user behavior, and system performance.
 """
 
 import json
-from collections import Counter
-from collections import defaultdict
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from collections import Counter, defaultdict
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import redis.asyncio as redis
 import structlog

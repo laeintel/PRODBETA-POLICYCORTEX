@@ -3,20 +3,14 @@ Azure Network Management service for handling virtual networks and network secur
 """
 
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
-from azure.core.exceptions import AzureError
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.mgmt.network import NetworkManagementClient
 from shared.config import get_settings
 
-from ..models import NetworkResponse
-from ..models import NetworkSecurityAnalysis
-from ..models import NetworkSecurityGroupResponse
+from ..models import NetworkResponse, NetworkSecurityAnalysis, NetworkSecurityGroupResponse
 from .azure_auth import AzureAuthService
 
 settings = get_settings()

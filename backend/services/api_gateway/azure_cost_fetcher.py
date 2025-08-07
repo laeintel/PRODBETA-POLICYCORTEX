@@ -7,11 +7,8 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
+from datetime import datetime, timedelta
+from typing import Any, Dict, List
 
 
 def get_all_subscriptions() -> List[Dict[str, str]]:

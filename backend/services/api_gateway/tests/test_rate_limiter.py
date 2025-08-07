@@ -3,16 +3,12 @@ Unit tests for RateLimiter functionality.
 """
 
 import time
-from datetime import datetime
-from datetime import timedelta
-from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.services.api_gateway.rate_limiter import RateLimiter
-from backend.services.api_gateway.rate_limiter import RateLimitExceeded
+from backend.services.api_gateway.rate_limiter import RateLimiter, RateLimitExceeded
 
 
 class TestRateLimiter:

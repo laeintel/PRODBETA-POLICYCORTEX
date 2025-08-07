@@ -4,35 +4,21 @@ Phase 5: Self-Service Customer Onboarding System
 """
 
 import asyncio
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import BackgroundTasks
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from backend.shared.config import get_settings
 from backend.shared.database import get_async_db
 
-from .billing_integration import BillingIntegration
-from .billing_integration import PaymentMethod
-from .billing_integration import PaymentProvider
-from .onboarding_wizard import OnboardingStep
-from .onboarding_wizard import OnboardingWizard
+from .billing_integration import BillingIntegration, PaymentMethod, PaymentProvider
+from .onboarding_wizard import OnboardingStep, OnboardingWizard
 from .organization_provisioner import OrganizationProvisioner
-from .subscription_manager import BillingCycle
-from .subscription_manager import PlanTier
-from .subscription_manager import SubscriptionManager
+from .subscription_manager import BillingCycle, PlanTier, SubscriptionManager
 from .trial_manager import TrialManager
 
 settings = get_settings()

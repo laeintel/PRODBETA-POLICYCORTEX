@@ -6,10 +6,7 @@ import time
 from typing import Optional
 
 import structlog
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import status
+from fastapi import HTTPException, Request, Response, status
 from shared.config import get_settings
 from starlette.middleware.base import BaseHTTPMiddleware
 

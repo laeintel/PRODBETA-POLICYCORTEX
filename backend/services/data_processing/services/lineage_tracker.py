@@ -5,20 +5,14 @@ Data lineage tracking service for PolicyCortex.
 import json
 import uuid
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 from sqlalchemy import text
 
 from ....shared.config import get_settings
 from ....shared.database import get_async_db
-from ..models import DataSourceConfig
-from ..models import DataTargetConfig
-from ..models import LineageEdge
-from ..models import LineageNode
+from ..models import DataSourceConfig, DataTargetConfig, LineageEdge, LineageNode
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
