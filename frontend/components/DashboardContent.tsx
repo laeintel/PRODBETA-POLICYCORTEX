@@ -161,6 +161,7 @@ export default function DashboardContent() {
     }
   ]
 
+  // Transform recommendations to include appropriate icons and actions
   const proactiveActions = recommendations.map(rec => ({
     type: rec.recommendation_type,
     severity: rec.severity,
@@ -168,11 +169,16 @@ export default function DashboardContent() {
     description: rec.description,
     action: rec.automation_available ? 'Auto-Remediate' : 'Manual Review',
     icon: rec.recommendation_type === 'cost_optimization' ? DollarSign :
+          rec.recommendation_type === 'resource_optimization' ? Server :
+          rec.recommendation_type === 'rightsizing' ? Gauge :
+          rec.recommendation_type === 'compliance' ? Shield :
           rec.recommendation_type === 'security' ? Lock :
-          rec.recommendation_type === 'rbac' ? Users : Server,
+          rec.recommendation_type === 'rbac' ? Users : 
+          rec.recommendation_type === 'network' ? Network : Server,
     savings: rec.potential_savings,
     risk_reduction: rec.risk_reduction,
-    confidence: rec.confidence
+    confidence: rec.confidence,
+    id: rec.id
   }))
 
   if (loading) {
