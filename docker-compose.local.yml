@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # Rust Core Service
+  core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=debug
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/policycortex
+      - REDIS_URL=redis://dragonfly:6379
+      - EVENT_STORE_URL=http://eventstore:2113
+    depends_on:
+      - postgres
+      - dragonfly
+      - eventstore
+
+  # GraphQL Gateway
+  graphql:
+    build:
+      context: ./graphql
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - CORE_SERVICE_URL=http://core:8080
+      - APOLLO_KEY=${APOLLO_KEY:-dev}
+      - APOLLO_GRAPH_REF=${APOLLO_GRAPH_REF:-local}
+    depends_on:
+      - core
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:4000/graphql
+      - NEXT_PUBLIC_WEBSOCKET_ENDPOINT=ws://localhost:4000/subscriptions
+
+  # PostgreSQL for event store
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=policycortex
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # DragonflyDB (Redis replacement)
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    ports:
+      - "6379:6379"
+    ulimits:
+      memlock: -1
+    volumes:
+      - dragonfly_data:/data
+
+  # EventStore for event sourcing
+  eventstore:
+    image: eventstore/eventstore:latest
+    ports:
+      - "2113:2113"
+      - "1113:1113"
+    environment:
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+      - EVENTSTORE_MEM_DB=true
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+    volumes:
+      - eventstore_data:/var/lib/eventstore
+
+
+volumes:
+  postgres_data:
+  dragonfly_data:
+  eventstore_data:
+
+networks:
+  default:
+    name: policycortex-v2
+    driver: bridge
