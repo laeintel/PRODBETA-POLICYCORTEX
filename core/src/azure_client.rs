@@ -1,7 +1,5 @@
 use azure_identity::{DefaultAzureCredential, TokenCredentialOptions};
 use azure_core::auth::TokenCredential;
-use azure_mgmt_resources::Client as ResourcesClient;
-use azure_mgmt_authorization::Client as AuthorizationClient;
 use reqwest::Client as HttpClient;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -17,8 +15,6 @@ use crate::api::{
 pub struct AzureClient {
     subscription_id: String,
     credential: Arc<DefaultAzureCredential>,
-    resources_client: ResourcesClient,
-    authorization_client: AuthorizationClient,
     http_client: HttpClient,
 }
 
@@ -73,29 +69,15 @@ impl AzureClient {
 
         info!("Initializing Azure client for subscription: {}", subscription_id);
 
-        let credential = Arc::new(DefaultAzureCredential::new(
+        let credential = Arc::new(DefaultAzureCredential::create(
             TokenCredentialOptions::default()
         )?);
-
-        let resources_client = ResourcesClient::new(
-            credential.clone(),
-            subscription_id.clone(),
-            azure_core::new_http_client(),
-        );
-
-        let authorization_client = AuthorizationClient::new(
-            credential.clone(),
-            subscription_id.clone(),
-            azure_core::new_http_client(),
-        );
 
         let http_client = HttpClient::new();
 
         Ok(AzureClient {
             subscription_id,
             credential,
-            resources_client,
-            authorization_client,
             http_client,
         })
     }
@@ -149,7 +131,8 @@ impl AzureClient {
 
         if response.status().is_success() {
             let policy_data: serde_json::Value = response.json().await?;
-            let policies = policy_data["value"].as_array().unwrap_or(&vec![]);
+            let empty_vec = vec![];
+            let policies = policy_data["value"].as_array().unwrap_or(&empty_vec);
             
             let total = policies.len() as u32;
             let active = policies.iter()
@@ -229,7 +212,8 @@ impl AzureClient {
 
         if response.status().is_success() {
             let rbac_data: serde_json::Value = response.json().await?;
-            let role_assignments = rbac_data["value"].as_array().unwrap_or(&vec![]);
+            let empty_vec = vec![];
+            let role_assignments = rbac_data["value"].as_array().unwrap_or(&empty_vec);
             
             // Count unique users/service principals
             let unique_principals: std::collections::HashSet<&str> = role_assignments
@@ -253,7 +237,8 @@ impl AzureClient {
 
             let roles = if roles_response.status().is_success() {
                 let roles_data: serde_json::Value = roles_response.json().await?;
-                roles_data["value"].as_array().unwrap_or(&vec![]).len() as u32
+                let empty_vec = vec![];
+                roles_data["value"].as_array().unwrap_or(&empty_vec).len() as u32
             } else {
                 50 // Fallback
             };
@@ -372,7 +357,8 @@ impl AzureClient {
 
         if response.status().is_success() {
             let network_data: serde_json::Value = response.json().await?;
-            let network_resources = network_data["value"].as_array().unwrap_or(&vec![]);
+            let empty_vec = vec![];
+            let network_resources = network_data["value"].as_array().unwrap_or(&empty_vec);
             
             let endpoints = network_resources.len() as u32;
 
@@ -413,7 +399,8 @@ impl AzureClient {
 
         if response.status().is_success() {
             let resource_data: serde_json::Value = response.json().await?;
-            let resources = resource_data["value"].as_array().unwrap_or(&vec![]);
+            let empty_vec = vec![];
+            let resources = resource_data["value"].as_array().unwrap_or(&empty_vec);
             
             let total = resources.len() as u32;
             let optimized = (total as f64 * 0.75) as u32; // 75% optimized

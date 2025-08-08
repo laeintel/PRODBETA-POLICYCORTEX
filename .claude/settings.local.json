@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cargo:*)"
+      "Bash(cargo:*)",
+      "Bash(SUBSCRIPTION_ID=\"205b477d-17e7-4b3b-92c1-32cf02626b78\")",
+      "Bash(export AZURE_SUBSCRIPTION_ID=\"205b477d-17e7-4b3b-92c1-32cf02626b78\")"
     ],
     "deny": []
   }
