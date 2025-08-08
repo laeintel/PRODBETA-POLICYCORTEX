@@ -168,6 +168,7 @@ pub struct AppState {
     pub predictions: Arc<RwLock<Vec<CompliancePrediction>>>,
     pub recommendations: Arc<RwLock<Vec<ProactiveRecommendation>>>,
     pub start_time: std::time::Instant,
+    pub azure_client: Option<crate::azure_client::AzureClient>,
 }
 
 impl AppState {
@@ -255,6 +256,7 @@ impl AppState {
             predictions: Arc::new(RwLock::new(Vec::new())),
             recommendations: Arc::new(RwLock::new(recommendations)),
             start_time: std::time::Instant::now(),
+            azure_client: None, // Will be initialized in main
         }
     }
 }
@@ -263,6 +265,20 @@ impl AppState {
 pub async fn get_metrics(
     State(state): State<Arc<AppState>>
 ) -> impl IntoResponse {
+    // Try to get real Azure data first
+    if let Some(ref azure_client) = state.azure_client {
+        match azure_client.get_governance_metrics().await {
+            Ok(real_metrics) => {
+                tracing::info!("Successfully fetched real Azure metrics");
+                return Json(real_metrics);
+            }
+            Err(e) => {
+                tracing::warn!("Failed to fetch real Azure metrics, falling back to mock data: {}", e);
+            }
+        }
+    }
+
+    // Fallback to mock data with dynamic AI progress
     let mut metrics = state.metrics.read().await.clone();
     
     // Calculate dynamic AI learning progress (background learning)

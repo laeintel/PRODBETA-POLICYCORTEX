@@ -56,13 +56,13 @@ jobs:
 
       - name: Check Terraform Directory
         run: |
-          if (Test-Path "./infrastructure/terraform") {
-            Write-Host "Terraform directory found"
-          } else {
-            Write-Host "Terraform directory not found, skipping Terraform commands"
+          if [ -d "./infrastructure/terraform" ]; then
+            echo "Terraform directory found"
+          else
+            echo "Terraform directory not found, skipping Terraform commands"
             exit 0
-          }
-        shell: pwsh
+          fi
+        shell: bash
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
@@ -101,7 +101,7 @@ jobs:
           output_file_path: checkov-results.sarif
 
       - name: Upload Checkov results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: checkov-results.sarif
@@ -115,7 +115,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: trivy-results.sarif
