@@ -1,0 +1,10 @@
+graph TD
+  U[User (Chat/Voice)] --> A[NLU Transformer]
+  A --> S[Dialogue State Graph]
+  S --> O[Orchestration (Saga)]
+  O --> P[Policy Synthesis]
+  O --> Q[Governance APIs]
+  Q --> R[Results]
+  P --> R
+  R --> UI[Multimodal Response]
+

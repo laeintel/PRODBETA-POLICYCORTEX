@@ -214,4 +214,11 @@ Unlike siloed governance analyzers and offline correlation dashboards, the discl
 Claim Strategy and Coverage
 Claims cover graph construction, attention-weighted correlation inference, real-time tiered caching, uncertainty-aware impact simulation, and API orchestration; method and CRM claims mirror system scope; dependent claims provide performance and alternative embodiment coverage.
 
+Examples and Embodiments (Expanded)
+E1. Policy/Network Cross-Impact: A production subscription exhibits a spike in blocked NSG attempts and falling compliance rate. The system detects a strong directed correlation from NSG rule changes to compliance deltas (lag 4–8 hours) with p<0.01. What-if analysis simulates tightening ingress on selected subnets, predicting +2.3% (±0.6%) compliance improvement and −12% (±3%) blocked variance.
+E2. RBAC Scope Optimization: Privileged role concentration correlates with incident tickets. The system recommends reducing broad Owner roles to Contributor on 37 resources, with predicted −18% risk and negligible throughput impact at p95.
+E3. Cost/Resource Tradeoffs: Overprovisioned storage correlates with cost creep; recommended tiering actions yield median monthly savings of $42k (±$8k) with no predicted compliance regression.
+E4. Multi-Cloud Pattern: Cross-cloud “compliance drift under peak load” recognized; cross-domain edge weights highlight identity misconfiguration as the dominant factor; recommended staggered policy evaluation windows reduce drift probability by 0.21.
+E5. Deployment Variant: GPU-accelerated message passing for large tenant graphs (>10M nodes) reduces median inference time by 38% under batch updates.
+
 

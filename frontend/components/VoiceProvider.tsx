@@ -1,10 +1,20 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import VoiceInterface from './VoiceInterface'
 
 export default function VoiceProvider() {
   const router = useRouter()
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (!isClient) {
+    return null
+  }
 
   const handleActionTrigger = (action: string, data?: any) => {
     switch (action) {

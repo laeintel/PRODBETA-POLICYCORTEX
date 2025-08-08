@@ -16,7 +16,22 @@
       "Bash(-e REDIS_URL=redis://host.docker.internal:6379 )",
       "Bash(-e RUST_LOG=debug )",
       "Bash(-v C:/Users/leona/.azure:/root/.azure:ro )",
-      "Bash(./start-dev.bat)"
+      "Bash(./start-dev.bat)",
+      "Bash(dir:*)",
+      "Bash(./scripts/test-workflow.sh:*)",
+      "Bash(scripts\\test-workflow.sh:*)",
+      "Bash(powershell:*)",
+      "Bash(start-training.bat --mode local)",
+      "Bash(cmd /c:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(curl:*)",
+      "Bash(docker ps:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(az account show:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }
