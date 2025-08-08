@@ -81,8 +81,14 @@ const mutationCache = new MutationCache({
   }
 })
 
-// React Query Client with advanced configuration
-export const queryClient = new QueryClient({
+// Import performance API client
+import { createPerformanceQueryClient } from './performance-api'
+
+// React Query Client with advanced configuration and performance optimizations
+export const queryClient = createPerformanceQueryClient()
+
+// Legacy query client with fallback configuration
+export const legacyQueryClient = new QueryClient({
   queryCache,
   mutationCache,
   defaultOptions: {
@@ -108,7 +114,7 @@ export const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       
       // Background updates
-      refetchInterval: (data, query) => {
+      refetchInterval: (query) => {
         // Refresh compliance data every 30 seconds
         if (query.queryKey.includes('compliance')) {
           return 30 * 1000
@@ -269,9 +275,9 @@ if (process.env.NODE_ENV === 'development') {
   queryClient.getQueryCache().subscribe((event) => {
     const queryKey = event.query.queryKey.join('.')
     
-    if (event.type === 'queryAdded') {
+    if (event.type === 'added') {
       queryStartTimes.set(queryKey, Date.now())
-    } else if (event.type === 'queryUpdated' && event.query.state.status === 'success') {
+    } else if (event.type === 'updated' && event.query.state.status === 'success') {
       const startTime = queryStartTimes.get(queryKey)
       if (startTime) {
         const duration = Date.now() - startTime
@@ -320,7 +326,7 @@ export const cacheUtils = {
     return {
       totalQueries: queries.length,
       staleQueries: queries.filter(q => q.isStale()).length,
-      fetchingQueries: queries.filter(q => q.state.status === 'loading').length,
+      fetchingQueries: queries.filter(q => q.state.status === 'pending').length,
       errorQueries: queries.filter(q => q.state.status === 'error').length,
       cacheSize: JSON.stringify(cache).length, // Approximate size
     }

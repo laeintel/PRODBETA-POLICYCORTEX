@@ -69,9 +69,7 @@ impl AzureClient {
 
         info!("Initializing Azure client for subscription: {}", subscription_id);
 
-        let credential = Arc::new(DefaultAzureCredential::create(
-            TokenCredentialOptions::default()
-        )?);
+        let credential = Arc::new(DefaultAzureCredential::create(TokenCredentialOptions::default())?);
 
         let http_client = HttpClient::new();
 

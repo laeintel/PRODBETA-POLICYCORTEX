@@ -32,6 +32,23 @@ azure_core = "0.20"
 # HTTP Client
 reqwest = { version = "0.11", features = ["json"] }
 
+# JWT Token Validation
+jsonwebtoken = "9.3"
+serde_urlencoded = "0.7"
+
+# Async traits for authentication
+async-trait = "0.1"
+
+# HTTP Headers
+headers = "0.3"
+
+# Redis caching
+redis = { version = "0.23", features = ["tokio-comp", "connection-manager", "json"] }
+
+# Performance monitoring
+metrics = "0.21"
+metrics-exporter-prometheus = "0.12"
+
 # Environment Variables
 dotenv = "0.15"
 

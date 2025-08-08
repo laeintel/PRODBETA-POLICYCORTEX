@@ -3,7 +3,20 @@
     "allow": [
       "Bash(cargo:*)",
       "Bash(SUBSCRIPTION_ID=\"205b477d-17e7-4b3b-92c1-32cf02626b78\")",
-      "Bash(export AZURE_SUBSCRIPTION_ID=\"205b477d-17e7-4b3b-92c1-32cf02626b78\")"
+      "Bash(export AZURE_SUBSCRIPTION_ID=\"205b477d-17e7-4b3b-92c1-32cf02626b78\")",
+      "Bash(-e AZURE_SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78 )",
+      "Bash(-e AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7 )",
+      "Bash(-e AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c )",
+      "Bash(-e REDIS_URL=redis://host.docker.internal:6379 )",
+      "Bash(-e RUST_LOG=debug )",
+      "Bash(policycortex-core)",
+      "Bash(-e AZURE_SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78 )",
+      "Bash(-e AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7 )",
+      "Bash(-e AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c )",
+      "Bash(-e REDIS_URL=redis://host.docker.internal:6379 )",
+      "Bash(-e RUST_LOG=debug )",
+      "Bash(-v C:/Users/leona/.azure:/root/.azure:ro )",
+      "Bash(./start-dev.bat)"
     ],
     "deny": []
   }

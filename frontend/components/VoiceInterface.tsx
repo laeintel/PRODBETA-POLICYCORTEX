@@ -36,8 +36,8 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
   const [isClient, setIsClient] = useState(false)
   
   const { sendMessage } = useConversation()
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
-  const synthRef = useRef<SpeechSynthesis>(typeof window !== 'undefined' ? window.speechSynthesis : null)
+  const recognitionRef = useRef<any | null>(null)
+  const synthRef = useRef<SpeechSynthesis | null>(typeof window !== 'undefined' ? window.speechSynthesis : null)
 
   // Voice commands mapping
   const voiceCommands = {
@@ -86,7 +86,7 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
         setPulse(true)
       }
       
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: any) => {
         const current = event.resultIndex
         const transcript = event.results[current][0].transcript
         setTranscript(transcript)
@@ -96,7 +96,7 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
         }
       }
       
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error)
         setIsListening(false)
         setPulse(false)
