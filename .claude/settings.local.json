@@ -31,7 +31,11 @@
       "Bash(npm run dev:*)",
       "Bash(az account show:*)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(start-api.bat)",
+      "Bash(./start-local.bat)"
     ],
     "deny": []
   }
