@@ -6,12 +6,8 @@ These provide the same API as the real models but with simulated responses
 import asyncio
 import json
 import random
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 

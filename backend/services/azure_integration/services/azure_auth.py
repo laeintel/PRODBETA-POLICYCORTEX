@@ -3,18 +3,13 @@ Azure authentication service for managing Azure AD authentication and credential
 """
 
 import time
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import jwt
 import structlog
 from azure.core.exceptions import AzureError
-from azure.identity.aio import ClientSecretCredential
-from azure.identity.aio import DefaultAzureCredential
+from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
 from azure.mgmt.subscription.aio import SubscriptionClient
 from jose import JWTError
 from jose import jwt as jose_jwt
@@ -40,15 +35,13 @@ class AzureAuthService:
         tenant_id: str,
         client_id: str,
         client_secret: str,
-        subscription_ids: Optional[List[str]] = None
+        subscription_ids: Optional[List[str]] = None,
     ) -> AzureAuthResponse:
         """Authenticate with Azure AD and return tokens."""
         try:
             # Create credential
             credential = ClientSecretCredential(
-                tenant_id=tenant_id,
-                client_id=client_id,
-                client_secret=client_secret
+                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
             )
 
             # Get access token
@@ -63,7 +56,7 @@ class AzureAuthService:
                 "id": client_id,
                 "tenant_id": tenant_id,
                 "subscription_ids": subscription_ids,
-                "type": "service_principal"
+                "type": "service_principal",
             }
 
             access_token = self._generate_jwt(user_info, expires_minutes=30)
@@ -74,14 +67,14 @@ class AzureAuthService:
             self.credentials_cache[cache_key] = {
                 "credential": credential,
                 "timestamp": time.time(),
-                "subscription_ids": subscription_ids
+                "subscription_ids": subscription_ids,
             }
 
             logger.info(
                 "azure_authentication_successful",
                 tenant_id=tenant_id,
                 client_id=client_id,
-                subscription_count=len(subscription_ids)
+                subscription_count=len(subscription_ids),
             )
 
             return AzureAuthResponse(
@@ -91,7 +84,7 @@ class AzureAuthService:
                 expires_in=1800,  # 30 minutes
                 tenant_id=tenant_id,
                 subscription_ids=subscription_ids,
-                user_info=user_info
+                user_info=user_info,
             )
 
         except Exception as e:
@@ -99,7 +92,7 @@ class AzureAuthService:
                 "azure_authentication_failed",
                 error=str(e),
                 tenant_id=tenant_id,
-                client_id=client_id
+                client_id=client_id,
             )
             raise Exception(f"Azure authentication failed: {str(e)}")
 
@@ -110,7 +103,7 @@ class AzureAuthService:
             payload = jose_jwt.decode(
                 refresh_token,
                 settings.security.jwt_secret_key,
-                algorithms=[settings.security.jwt_algorithm]
+                algorithms=[settings.security.jwt_algorithm],
             )
 
             # Check expiration
@@ -123,7 +116,7 @@ class AzureAuthService:
                 "id": payload.get("id"),
                 "tenant_id": payload.get("tenant_id"),
                 "subscription_ids": payload.get("subscription_ids", []),
-                "type": payload.get("type", "service_principal")
+                "type": payload.get("type", "service_principal"),
             }
 
             # Generate new access token
@@ -132,7 +125,7 @@ class AzureAuthService:
             logger.info(
                 "token_refresh_successful",
                 tenant_id=user_info["tenant_id"],
-                user_id=user_info["id"]
+                user_id=user_info["id"],
             )
 
             return AzureAuthResponse(
@@ -142,7 +135,7 @@ class AzureAuthService:
                 expires_in=1800,  # 30 minutes
                 tenant_id=user_info["tenant_id"],
                 subscription_ids=user_info["subscription_ids"],
-                user_info=user_info
+                user_info=user_info,
             )
 
         except JWTError as e:
@@ -170,7 +163,7 @@ class AzureAuthService:
             credential = ClientSecretCredential(
                 tenant_id=tenant_id or settings.azure.tenant_id,
                 client_id=client_id or settings.azure.client_id,
-                client_secret=settings.azure.client_secret
+                client_secret=settings.azure.client_secret,
             )
 
             return credential
@@ -211,7 +204,7 @@ class AzureAuthService:
             # Cache results
             self.subscription_cache[cache_key] = {
                 "subscription_ids": subscriptions,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
             return subscriptions
@@ -234,13 +227,11 @@ class AzureAuthService:
                 "subscription_ids": user_info["subscription_ids"],
                 "type": user_info.get("type", "service_principal"),
                 "iat": now,
-                "exp": exp
+                "exp": exp,
             }
 
             token = jose_jwt.encode(
-                payload,
-                settings.security.jwt_secret_key,
-                algorithm=settings.security.jwt_algorithm
+                payload, settings.security.jwt_secret_key, algorithm=settings.security.jwt_algorithm
             )
 
             return token
@@ -249,11 +240,7 @@ class AzureAuthService:
             logger.error("jwt_generation_failed", error=str(e))
             raise Exception(f"Failed to generate JWT: {str(e)}")
 
-    async def validate_subscription_access(
-        self,
-        credential,
-        subscription_id: str
-    ) -> bool:
+    async def validate_subscription_access(self, credential, subscription_id: str) -> bool:
         """Validate if credential has access to subscription."""
         try:
             async with SubscriptionClient(credential) as client:
@@ -264,8 +251,6 @@ class AzureAuthService:
             return False
         except Exception as e:
             logger.error(
-                "subscription_validation_failed",
-                error=str(e),
-                subscription_id=subscription_id
+                "subscription_validation_failed", error=str(e), subscription_id=subscription_id
             )
             return False

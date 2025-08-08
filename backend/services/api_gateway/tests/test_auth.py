@@ -2,18 +2,13 @@
 Unit tests for AuthManager functionality.
 """
 
-from datetime import datetime
-from datetime import timedelta
-from unittest.mock import AsyncMock
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import jwt
 import pytest
 
-from backend.services.api_gateway.auth import AuthenticationError
-from backend.services.api_gateway.auth import AuthManager
-from backend.services.api_gateway.auth import AuthorizationError
+from backend.services.api_gateway.auth import AuthenticationError, AuthManager, AuthorizationError
 
 
 class TestAuthManager:

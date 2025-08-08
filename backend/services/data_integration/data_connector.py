@@ -6,10 +6,7 @@ Handles connections to various data sources
 import asyncio
 from datetime import datetime
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import asyncpg
@@ -17,8 +14,7 @@ import motor.motor_asyncio
 import pandas as pd
 import structlog
 from azure.cosmos.aio import CosmosClient
-from azure.eventhub.aio import EventHubConsumerClient
-from azure.eventhub.aio import EventHubProducerClient
+from azure.eventhub.aio import EventHubConsumerClient, EventHubProducerClient
 from azure.servicebus.aio import ServiceBusClient
 from azure.storage.blob.aio import BlobServiceClient
 

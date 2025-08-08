@@ -5,10 +5,7 @@ Subscription manager for handling user notification preferences and subscription
 import json
 import uuid
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import redis.asyncio as redis
 import structlog

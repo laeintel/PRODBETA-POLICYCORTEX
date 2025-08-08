@@ -5,12 +5,9 @@ Provides resilience and fault tolerance for downstream service calls.
 
 import asyncio
 import time
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Callable
-from typing import Optional
+from typing import Any, Callable, Optional
 
 import structlog
 

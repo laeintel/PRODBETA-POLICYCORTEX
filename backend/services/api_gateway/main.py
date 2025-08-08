@@ -7,28 +7,17 @@ import os
 import sys
 import time
 import uuid
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 import httpx
 import structlog
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import status
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from prometheus_client import Counter
-from prometheus_client import Histogram
-from prometheus_client import generate_latest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from prometheus_client import Counter, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
@@ -37,16 +26,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 try:
     from shared.config import get_settings
-    from shared.database import DatabaseUtils
-    from shared.database import get_async_db
+    from shared.database import DatabaseUtils, get_async_db
 
     from .auth import AuthManager
     from .circuit_breaker import CircuitBreaker
-    from .models import APIResponse
-    from .models import ErrorResponse
-    from .models import GatewayMetrics
-    from .models import HealthResponse
-    from .models import ServiceRoute
+    from .models import APIResponse, ErrorResponse, GatewayMetrics, HealthResponse, ServiceRoute
     from .rate_limiter import RateLimiter
 except ImportError as e:
     print(f"Failed to import modules: {e}")

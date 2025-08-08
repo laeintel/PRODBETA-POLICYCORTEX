@@ -6,19 +6,14 @@ import json
 import re
 import uuid
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import structlog
 
 from ....shared.config import get_settings
-from ..models import ValidationResult
-from ..models import ValidationRule
+from ..models import ValidationResult, ValidationRule
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)

@@ -8,12 +8,7 @@ from datetime import datetime
 from typing import Optional
 
 import structlog
-from fastapi import BackgroundTasks
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import File
-from fastapi import HTTPException
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -22,11 +17,9 @@ from backend.shared.config import get_settings
 from backend.shared.database import get_async_db
 
 from .compliance_analyzer import ComplianceAnalyzer
-from .document_processor import DocumentProcessor
-from .document_processor import DocumentStatus
+from .document_processor import DocumentProcessor, DocumentStatus
 from .nlp_extractor import NLPPolicyExtractor
-from .rule_engine import ComplianceRule
-from .rule_engine import RuleEngine
+from .rule_engine import ComplianceRule, RuleEngine
 from .visual_rule_builder import router as rule_builder_router
 
 settings = get_settings()

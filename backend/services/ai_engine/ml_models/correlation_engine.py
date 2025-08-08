@@ -5,17 +5,10 @@ Implements Patent 4: AI-Driven Cross-Domain Correlation Analysis with Real-Time 
 
 import asyncio
 import warnings
-from collections import defaultdict
-from collections import deque
+from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import joblib
 import networkx as nx
@@ -26,23 +19,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from scipy import stats
-from scipy.cluster.hierarchy import dendrogram
-from scipy.cluster.hierarchy import linkage
+from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.spatial.distance import pdist
 from sklearn.cluster import DBSCAN
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import IsolationForest
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor, IsolationForest, RandomForestRegressor
 from sklearn.metrics import mutual_info_score
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from torch_geometric.data import Batch
-from torch_geometric.data import Data
-from torch_geometric.nn import GATConv
-from torch_geometric.nn import GCNConv
-from torch_geometric.nn import global_mean_pool
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from torch_geometric.data import Batch, Data
+from torch_geometric.nn import GATConv, GCNConv, global_mean_pool
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 logger = structlog.get_logger(__name__)
 
@@ -64,9 +50,7 @@ class AdaptiveThresholdManager:
         self.last_update[domain_pair] = datetime.utcnow()
 
     def get_adaptive_threshold(
-        self,
-        domain_pair: str,
-        threshold_type: str = 'correlation'
+        self, domain_pair: str, threshold_type: str = "correlation"
     ) -> float:
         """Get adaptive threshold based on historical patterns."""
         if domain_pair not in self.correlation_history:
@@ -80,10 +64,10 @@ class AdaptiveThresholdManager:
         mean_corr = np.mean(history)
         std_corr = np.std(history)
 
-        if threshold_type == 'correlation':
+        if threshold_type == "correlation":
             # Anomaly threshold: mean + 2*std
             return min(mean_corr + 2 * std_corr, 0.9)
-        elif threshold_type == 'significance':
+        elif threshold_type == "significance":
             # Significance threshold based on historical variance
             return max(0.01, std_corr * 0.5)
         else:
@@ -91,22 +75,17 @@ class AdaptiveThresholdManager:
 
     def _get_default_threshold(self, threshold_type: str) -> float:
         """Get default thresholds for new domain pairs."""
-        defaults = {
-            'correlation': 0.7,
-            'significance': 0.05,
-            'mutual_info': 0.3,
-            'causality': 0.05
-        }
+        defaults = {"correlation": 0.7, "significance": 0.05, "mutual_info": 0.3, "causality": 0.05}
         return defaults.get(threshold_type, 0.5)
 
     def detect_threshold_drift(self, domain_pair: str) -> Dict[str, Any]:
         """Detect if correlation patterns have significantly drifted."""
         if domain_pair not in self.correlation_history:
-            return {'drift_detected': False}
+            return {"drift_detected": False}
 
         history = list(self.correlation_history[domain_pair])
         if len(history) < 30:
-            return {'drift_detected': False}
+            return {"drift_detected": False}
 
         # Split into old and recent windows
         split_point = len(history) // 2
@@ -117,11 +96,11 @@ class AdaptiveThresholdManager:
         statistic, p_value = stats.ks_2samp(old_window, recent_window)
 
         return {
-            'drift_detected': p_value < 0.05,
-            'p_value': float(p_value),
-            'drift_magnitude': float(statistic),
-            'old_mean': float(np.mean(old_window)),
-            'recent_mean': float(np.mean(recent_window))
+            "drift_detected": p_value < 0.05,
+            "p_value": float(p_value),
+            "drift_magnitude": float(statistic),
+            "old_mean": float(np.mean(old_window)),
+            "recent_mean": float(np.mean(recent_window)),
         }
 
 
@@ -141,10 +120,7 @@ class RealTimeCorrelationMonitor:
     async def process_real_time_event(self, event: Dict[str, Any]) -> Dict[str, Any]:
         """Process a real-time governance event and update correlations."""
         try:
-            self.event_buffer.append({
-                **event,
-                'processed_at': datetime.utcnow()
-            })
+            self.event_buffer.append({**event, "processed_at": datetime.utcnow()})
 
             # Check for immediate pattern triggers
             pattern_alerts = await self._detect_immediate_patterns(event)
@@ -158,60 +134,66 @@ class RealTimeCorrelationMonitor:
                 anomalies = await self._detect_correlation_anomalies_realtime()
 
                 return {
-                    'event_processed': True,
-                    'pattern_alerts': pattern_alerts,
-                    'correlation_snapshot': correlation_snapshot,
-                    'anomalies': anomalies,
-                    'buffer_size': len(self.event_buffer)
+                    "event_processed": True,
+                    "pattern_alerts": pattern_alerts,
+                    "correlation_snapshot": correlation_snapshot,
+                    "anomalies": anomalies,
+                    "buffer_size": len(self.event_buffer),
                 }
 
             return {
-                'event_processed': True,
-                'pattern_alerts': pattern_alerts,
-                'buffer_size': len(self.event_buffer)
+                "event_processed": True,
+                "pattern_alerts": pattern_alerts,
+                "buffer_size": len(self.event_buffer),
             }
 
         except Exception as e:
             logger.error("real_time_event_processing_failed", error=str(e))
-            return {'event_processed': False, 'error': str(e)}
+            return {"event_processed": False, "error": str(e)}
 
     async def _detect_immediate_patterns(self, event: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Detect immediate correlation patterns from single event."""
         alerts = []
-        event_domain = event.get('domain', 'unknown')
-        event_time = event.get('timestamp', datetime.utcnow())
+        event_domain = event.get("domain", "unknown")
+        event_time = event.get("timestamp", datetime.utcnow())
 
         # Check for rapid event sequences in same domain
         recent_events = [
-            e for e in list(self.event_buffer)[-50:]
-            if e.get('domain') == event_domain and
-            (event_time - e.get('timestamp', datetime.utcnow())).total_seconds() < 300
+            e
+            for e in list(self.event_buffer)[-50:]
+            if e.get("domain") == event_domain
+            and (event_time - e.get("timestamp", datetime.utcnow())).total_seconds() < 300
         ]
 
         if len(recent_events) > 10:  # More than 10 events in 5 minutes
-            alerts.append({
-                'type': 'rapid_event_sequence',
-                'domain': event_domain,
-                'event_count': len(recent_events),
-                'time_window': 300,
-                'severity': 'high' if len(recent_events) > 20 else 'medium'
-            })
+            alerts.append(
+                {
+                    "type": "rapid_event_sequence",
+                    "domain": event_domain,
+                    "event_count": len(recent_events),
+                    "time_window": 300,
+                    "severity": "high" if len(recent_events) > 20 else "medium",
+                }
+            )
 
         # Check for cross-domain event cascades
         other_domain_events = [
-            e for e in list(self.event_buffer)[-20:]
-            if e.get('domain') != event_domain and
-            (event_time - e.get('timestamp', datetime.utcnow())).total_seconds() < 60
+            e
+            for e in list(self.event_buffer)[-20:]
+            if e.get("domain") != event_domain
+            and (event_time - e.get("timestamp", datetime.utcnow())).total_seconds() < 60
         ]
 
         if len(other_domain_events) > 3:
-            alerts.append({
-                'type': 'cross_domain_cascade',
-                'trigger_domain': event_domain,
-                'affected_domains': list(set(e.get('domain') for e in other_domain_events)),
-                'cascade_size': len(other_domain_events),
-                'severity': 'high'
-            })
+            alerts.append(
+                {
+                    "type": "cross_domain_cascade",
+                    "trigger_domain": event_domain,
+                    "affected_domains": list(set(e.get("domain") for e in other_domain_events)),
+                    "cascade_size": len(other_domain_events),
+                    "severity": "high",
+                }
+            )
 
         return alerts
 
@@ -222,8 +204,8 @@ class RealTimeCorrelationMonitor:
 
         # Group events by domain and time windows (5-minute buckets)
         for event in list(self.event_buffer)[-500:]:
-            domain = event.get('domain', 'unknown')
-            timestamp = event.get('timestamp', datetime.utcnow())
+            domain = event.get("domain", "unknown")
+            timestamp = event.get("timestamp", datetime.utcnow())
 
             # Round to 5-minute bucket
             bucket = timestamp.replace(minute=(timestamp.minute // 5) * 5, second=0, microsecond=0)
@@ -242,18 +224,17 @@ class RealTimeCorrelationMonitor:
         domains = list(domain_counts.keys())
 
         for i, domain1 in enumerate(domains):
-            for domain2 in domains[i+1:]:
+            for domain2 in domains[i + 1 :]:
                 corr = self._calculate_time_series_correlation(
-                    domain_counts[domain1],
-                    domain_counts[domain2]
+                    domain_counts[domain1], domain_counts[domain2]
                 )
                 correlations[f"{domain1}-{domain2}"] = corr
 
         return {
-            'timestamp': datetime.utcnow(),
-            'window_size': len(self.event_buffer),
-            'correlations': correlations,
-            'domain_activity': {d: len(ts) for d, ts in domain_series.items()}
+            "timestamp": datetime.utcnow(),
+            "window_size": len(self.event_buffer),
+            "correlations": correlations,
+            "domain_activity": {d: len(ts) for d, ts in domain_series.items()},
         }
 
     def _calculate_time_series_correlation(self, series1: Dict, series2: Dict) -> float:
@@ -282,7 +263,7 @@ class RealTimeCorrelationMonitor:
         # Extract correlation matrices
         correlation_matrices = []
         for snapshot in list(self.correlation_snapshots)[-50:]:
-            corr_values = list(snapshot.get('correlations', {}).values())
+            corr_values = list(snapshot.get("correlations", {}).values())
             if corr_values:
                 correlation_matrices.append(corr_values)
 
@@ -299,13 +280,15 @@ class RealTimeCorrelationMonitor:
             is_anomaly = self.isolation_forest.predict([latest_pattern])[0] == -1
 
             if is_anomaly:
-                return [{
-                    'type': 'correlation_pattern_anomaly',
-                    'anomaly_score': float(anomaly_score),
-                    'severity': 'high' if anomaly_score < -0.5 else 'medium',
-                    'detected_at': datetime.utcnow(),
-                    'pattern': latest_pattern
-                }]
+                return [
+                    {
+                        "type": "correlation_pattern_anomaly",
+                        "anomaly_score": float(anomaly_score),
+                        "severity": "high" if anomaly_score < -0.5 else "medium",
+                        "detected_at": datetime.utcnow(),
+                        "pattern": latest_pattern,
+                    }
+                ]
 
         except Exception as e:
             logger.error("anomaly_detection_failed", error=str(e))
@@ -329,56 +312,47 @@ class AdvancedImpactPredictor:
         """Initialize prediction models for different scenarios."""
         try:
             # Initialize ensemble models for different impact types
-            impact_types = ['security', 'compliance', 'cost', 'performance']
+            impact_types = ["security", "compliance", "cost", "performance"]
 
             for impact_type in impact_types:
                 self.ensemble_models[impact_type] = {
-                    'gradient_boost': GradientBoostingRegressor(
+                    "gradient_boost": GradientBoostingRegressor(
                         n_estimators=200,
                         max_depth=6,
                         learning_rate=0.05,
                         subsample=0.8,
-                        random_state=42
+                        random_state=42,
                     ),
-                    'random_forest': RandomForestRegressor(
-                        n_estimators=150,
-                        max_depth=12,
-                        min_samples_split=5,
-                        random_state=42
-                    )
+                    "random_forest": RandomForestRegressor(
+                        n_estimators=150, max_depth=12, min_samples_split=5, random_state=42
+                    ),
                 }
 
                 # Uncertainty quantification models
                 self.uncertainty_models[impact_type] = {
-                    'lower_quantile': GradientBoostingRegressor(
-                        loss='quantile',
-                        alpha=0.1,
-                        n_estimators=100,
-                        random_state=42
+                    "lower_quantile": GradientBoostingRegressor(
+                        loss="quantile", alpha=0.1, n_estimators=100, random_state=42
                     ),
-                    'upper_quantile': GradientBoostingRegressor(
-                        loss='quantile',
-                        alpha=0.9,
-                        n_estimators=100,
-                        random_state=42
-                    )
+                    "upper_quantile": GradientBoostingRegressor(
+                        loss="quantile", alpha=0.9, n_estimators=100, random_state=42
+                    ),
                 }
 
-            logger.info("impact_prediction_models_initialized",
-                    models=len(self.ensemble_models))
+            logger.info("impact_prediction_models_initialized", models=len(self.ensemble_models))
 
         except Exception as e:
             logger.error("model_initialization_failed", error=str(e))
 
-    async def predict_multi_horizon_impacts(self, correlation_data: Dict[str, Any],
-                                        governance_context: Dict[str, Any]) -> Dict[str, Any]:
+    async def predict_multi_horizon_impacts(
+        self, correlation_data: Dict[str, Any], governance_context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Predict impacts across multiple time horizons."""
         try:
             predictions = {
-                'short_term': {},   # 1 hour
-                'medium_term': {},  # 6 hours
-                'long_term': {},    # 24 hours
-                'strategic': {}     # 1 week
+                "short_term": {},  # 1 hour
+                "medium_term": {},  # 6 hours
+                "long_term": {},  # 24 hours
+                "strategic": {},  # 1 week
             }
 
             # Prepare features
@@ -391,42 +365,38 @@ class AdvancedImpactPredictor:
             scaled_features = self.scaler.fit_transform(features.reshape(1, -1))
 
             # Predict for each impact type and horizon
-            horizon_mapping = {
-                'short_term': 1,
-                'medium_term': 6,
-                'long_term': 24,
-                'strategic': 168
-            }
+            horizon_mapping = {"short_term": 1, "medium_term": 6, "long_term": 24, "strategic": 168}
 
             for horizon_name, horizon_hours in horizon_mapping.items():
                 predictions[horizon_name] = await self._predict_horizon_impacts(
-                    scaled_features,
-                    horizon_hours,
-                    correlation_data,
-                    governance_context
+                    scaled_features, horizon_hours, correlation_data, governance_context
                 )
 
             # Calculate trend analysis
             trend_analysis = self._analyze_impact_trends(predictions)
 
             return {
-                'predictions': predictions,
-                'trend_analysis': trend_analysis,
-                'confidence_metrics': self._calculate_prediction_confidence(predictions),
-                'risk_assessment': self._assess_prediction_risks(predictions)
+                "predictions": predictions,
+                "trend_analysis": trend_analysis,
+                "confidence_metrics": self._calculate_prediction_confidence(predictions),
+                "risk_assessment": self._assess_prediction_risks(predictions),
             }
 
         except Exception as e:
             logger.error("multi_horizon_prediction_failed", error=str(e))
-            return {'predictions': {}, 'error': str(e)}
+            return {"predictions": {}, "error": str(e)}
 
-    async def _predict_horizon_impacts(self, features: np.ndarray, horizon_hours: int,
-                                    correlation_data: Dict[str, Any],
-                                    governance_context: Dict[str, Any]) -> Dict[str, Any]:
+    async def _predict_horizon_impacts(
+        self,
+        features: np.ndarray,
+        horizon_hours: int,
+        correlation_data: Dict[str, Any],
+        governance_context: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """Predict impacts for a specific time horizon."""
         horizon_predictions = {}
 
-        impact_types = ['security', 'compliance', 'cost', 'performance']
+        impact_types = ["security", "compliance", "cost", "performance"]
 
         for impact_type in impact_types:
             # Simulate prediction (in production, use trained models)
@@ -440,103 +410,116 @@ class AdvancedImpactPredictor:
             uncertainty = predicted_impact * 0.2 * (horizon_hours / 24)
 
             horizon_predictions[impact_type] = {
-                'predicted_impact': float(predicted_impact),
-                'confidence_interval': {
-                    'lower': float(max(0, predicted_impact - uncertainty)),
-                    'upper': float(predicted_impact + uncertainty)
+                "predicted_impact": float(predicted_impact),
+                "confidence_interval": {
+                    "lower": float(max(0, predicted_impact - uncertainty)),
+                    "upper": float(predicted_impact + uncertainty),
                 },
-                'horizon_hours': horizon_hours,
-                'contributing_factors': self._identify_contributing_factors(
+                "horizon_hours": horizon_hours,
+                "contributing_factors": self._identify_contributing_factors(
                     impact_type, correlation_data
-                )
+                ),
             }
 
         return horizon_predictions
 
-    def _prepare_prediction_features(self, correlation_data: Dict[str, Any],
-                                governance_context: Dict[str, Any]) -> np.ndarray:
+    def _prepare_prediction_features(
+        self, correlation_data: Dict[str, Any], governance_context: Dict[str, Any]
+    ) -> np.ndarray:
         """Prepare comprehensive features for impact prediction."""
         features = []
 
         # Correlation strength features
-        correlations = correlation_data.get('correlations', {})
+        correlations = correlation_data.get("correlations", {})
         all_corrs = []
         for domain_pair, methods in correlations.items():
             for method, result in methods.items():
-                if 'correlation' in result:
-                    all_corrs.append(abs(result['correlation']))
+                if "correlation" in result:
+                    all_corrs.append(abs(result["correlation"]))
 
         if all_corrs:
-            features.extend([
-                np.mean(all_corrs),
-                np.max(all_corrs),
-                np.std(all_corrs),
-                len([c for c in all_corrs if c > 0.7]),  # Strong correlations
-                len([c for c in all_corrs if c < 0.3])   # Weak correlations
-            ])
+            features.extend(
+                [
+                    np.mean(all_corrs),
+                    np.max(all_corrs),
+                    np.std(all_corrs),
+                    len([c for c in all_corrs if c > 0.7]),  # Strong correlations
+                    len([c for c in all_corrs if c < 0.3]),  # Weak correlations
+                ]
+            )
         else:
             features.extend([0, 0, 0, 0, 0])
 
         # Causal relationship features
-        causal_rels = correlation_data.get('causal_relationships', [])
-        features.extend([
-            len(causal_rels),
-            len([r for r in causal_rels if r.get('confidence', 0) > 0.8]),
-            np.mean([r.get('confidence', 0) for r in causal_rels]) if causal_rels else 0
-        ])
+        causal_rels = correlation_data.get("causal_relationships", [])
+        features.extend(
+            [
+                len(causal_rels),
+                len([r for r in causal_rels if r.get("confidence", 0) > 0.8]),
+                np.mean([r.get("confidence", 0) for r in causal_rels]) if causal_rels else 0,
+            ]
+        )
 
         # Anomaly features
-        anomalies = correlation_data.get('anomalies', [])
-        features.extend([
-            len(anomalies),
-            len([a for a in anomalies if abs(a.get('z_score', 0)) > 3])
-        ])
+        anomalies = correlation_data.get("anomalies", [])
+        features.extend(
+            [len(anomalies), len([a for a in anomalies if abs(a.get("z_score", 0)) > 3])]
+        )
 
         # Governance context features
-        features.extend([
-            governance_context.get('resource_count', 0),
-            governance_context.get('policy_count', 0),
-            governance_context.get('active_violations', 0),
-            governance_context.get('cost_variance', 0)
-        ])
+        features.extend(
+            [
+                governance_context.get("resource_count", 0),
+                governance_context.get("policy_count", 0),
+                governance_context.get("active_violations", 0),
+                governance_context.get("cost_variance", 0),
+            ]
+        )
 
         return np.array(features)
 
-    def _identify_contributing_factors(self, impact_type: str,
-                                    correlation_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _identify_contributing_factors(
+        self, impact_type: str, correlation_data: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Identify factors contributing to predicted impacts."""
         factors = []
 
         # Strong correlations as contributing factors
-        correlations = correlation_data.get('correlations', {})
+        correlations = correlation_data.get("correlations", {})
         for domain_pair, methods in correlations.items():
-            avg_corr = np.mean([
-                abs(result.get('correlation', 0))
-                for result in methods.values()
-                if 'correlation' in result
-            ])
+            avg_corr = np.mean(
+                [
+                    abs(result.get("correlation", 0))
+                    for result in methods.values()
+                    if "correlation" in result
+                ]
+            )
 
             if avg_corr > 0.6:
-                factors.append({
-                    'type': 'strong_correlation',
-                    'domain_pair': domain_pair,
-                    'strength': float(avg_corr),
-                    'impact_contribution': float(avg_corr * 0.3)
-                })
+                factors.append(
+                    {
+                        "type": "strong_correlation",
+                        "domain_pair": domain_pair,
+                        "strength": float(avg_corr),
+                        "impact_contribution": float(avg_corr * 0.3),
+                    }
+                )
 
         # Causal relationships
-        for causal_rel in correlation_data.get('causal_relationships', []):
-            if causal_rel.get('confidence', 0) > 0.7:
-                factors.append({
-                    'type': 'causal_relationship',
-                    'cause': causal_rel['cause'],
-                    'effect': causal_rel['effect'],
-                    'confidence': causal_rel['confidence'],
-                    'impact_contribution': float(causal_rel['confidence'] * 0.4)
-                })
+        for causal_rel in correlation_data.get("causal_relationships", []):
+            if causal_rel.get("confidence", 0) > 0.7:
+                factors.append(
+                    {
+                        "type": "causal_relationship",
+                        "cause": causal_rel["cause"],
+                        "effect": causal_rel["effect"],
+                        "confidence": causal_rel["confidence"],
+                        "impact_contribution": float(causal_rel["confidence"] * 0.4),
+                    }
+                )
 
         # Sort by impact contribution
-        factors.sort(key=lambda x: x['impact_contribution'], reverse=True)
+        factors.sort(key=lambda x: x["impact_contribution"], reverse=True)
 
         return factors[:5]  # Top 5 contributing factors
 
@@ -544,24 +527,28 @@ class AdvancedImpactPredictor:
         """Analyze trends across prediction horizons."""
         trends = {}
 
-        impact_types = ['security', 'compliance', 'cost', 'performance']
-        horizons = ['short_term', 'medium_term', 'long_term', 'strategic']
+        impact_types = ["security", "compliance", "cost", "performance"]
+        horizons = ["short_term", "medium_term", "long_term", "strategic"]
 
         for impact_type in impact_types:
             impact_values = []
             for horizon in horizons:
                 if horizon in predictions and impact_type in predictions[horizon]:
-                    impact_values.append(predictions[horizon][impact_type]['predicted_impact'])
+                    impact_values.append(predictions[horizon][impact_type]["predicted_impact"])
 
             if len(impact_values) >= 3:
                 # Calculate trend direction and magnitude
                 trend_slope = np.polyfit(range(len(impact_values)), impact_values, 1)[0]
 
                 trends[impact_type] = {
-                    'direction': 'increasing' if trend_slope > 0.1 else 'decreasing' if trend_slope < -0.1 else 'stable',
-                    'magnitude': float(abs(trend_slope)),
-                    'volatility': float(np.std(impact_values)),
-                    'peak_horizon': horizons[np.argmax(impact_values)]
+                    "direction": "increasing"
+                    if trend_slope > 0.1
+                    else "decreasing"
+                    if trend_slope < -0.1
+                    else "stable",
+                    "magnitude": float(abs(trend_slope)),
+                    "volatility": float(np.std(impact_values)),
+                    "peak_horizon": horizons[np.argmax(impact_values)],
                 }
 
         return trends
@@ -569,9 +556,9 @@ class AdvancedImpactPredictor:
     def _calculate_prediction_confidence(self, predictions: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate confidence metrics for predictions."""
         confidence_metrics = {
-            'overall_confidence': 0.0,
-            'horizon_confidence': {},
-            'impact_type_confidence': {}
+            "overall_confidence": 0.0,
+            "horizon_confidence": {},
+            "impact_type_confidence": {},
         }
 
         all_confidences = []
@@ -580,11 +567,11 @@ class AdvancedImpactPredictor:
             horizon_confidences = []
 
             for impact_type, impact_data in horizon_data.items():
-                if isinstance(impact_data, dict) and 'confidence_interval' in impact_data:
+                if isinstance(impact_data, dict) and "confidence_interval" in impact_data:
                     # Calculate confidence based on interval width
-                    interval = impact_data['confidence_interval']
-                    interval_width = interval['upper'] - interval['lower']
-                    predicted_value = impact_data['predicted_impact']
+                    interval = impact_data["confidence_interval"]
+                    interval_width = interval["upper"] - interval["lower"]
+                    predicted_value = impact_data["predicted_impact"]
 
                     # Confidence inversely related to relative interval width
                     relative_width = interval_width / (predicted_value + 1e-6)
@@ -594,58 +581,62 @@ class AdvancedImpactPredictor:
                     all_confidences.append(confidence)
 
             if horizon_confidences:
-                confidence_metrics['horizon_confidence'][horizon] = (
-                    float(np.mean(horizon_confidences))
+                confidence_metrics["horizon_confidence"][horizon] = float(
+                    np.mean(horizon_confidences)
                 )
 
         if all_confidences:
-            confidence_metrics['overall_confidence'] = float(np.mean(all_confidences))
+            confidence_metrics["overall_confidence"] = float(np.mean(all_confidences))
 
         return confidence_metrics
 
     def _assess_prediction_risks(self, predictions: Dict[str, Any]) -> Dict[str, Any]:
         """Assess risks associated with predictions."""
         risks = {
-            'high_impact_risks': [],
-            'uncertainty_risks': [],
-            'trend_risks': [],
-            'overall_risk_level': 'low'
+            "high_impact_risks": [],
+            "uncertainty_risks": [],
+            "trend_risks": [],
+            "overall_risk_level": "low",
         }
 
         # Identify high impact risks
         for horizon, horizon_data in predictions.items():
             for impact_type, impact_data in horizon_data.items():
                 if isinstance(impact_data, dict):
-                    predicted_impact = impact_data.get('predicted_impact', 0)
+                    predicted_impact = impact_data.get("predicted_impact", 0)
 
                     if predicted_impact > 7:  # High impact threshold
-                        risks['high_impact_risks'].append({
-                            'horizon': horizon,
-                            'impact_type': impact_type,
-                            'predicted_impact': float(predicted_impact),
-                            'risk_level': 'critical' if predicted_impact > 9 else 'high'
-                        })
+                        risks["high_impact_risks"].append(
+                            {
+                                "horizon": horizon,
+                                "impact_type": impact_type,
+                                "predicted_impact": float(predicted_impact),
+                                "risk_level": "critical" if predicted_impact > 9 else "high",
+                            }
+                        )
 
         # Identify uncertainty risks
         for horizon, horizon_data in predictions.items():
             for impact_type, impact_data in horizon_data.items():
-                if isinstance(impact_data, dict) and 'confidence_interval' in impact_data:
-                    interval = impact_data['confidence_interval']
-                    interval_width = interval['upper'] - interval['lower']
+                if isinstance(impact_data, dict) and "confidence_interval" in impact_data:
+                    interval = impact_data["confidence_interval"]
+                    interval_width = interval["upper"] - interval["lower"]
 
                     if interval_width > 5:  # High uncertainty threshold
-                        risks['uncertainty_risks'].append({
-                            'horizon': horizon,
-                            'impact_type': impact_type,
-                            'uncertainty_width': float(interval_width),
-                            'risk_level': 'high' if interval_width > 8 else 'medium'
-                        })
+                        risks["uncertainty_risks"].append(
+                            {
+                                "horizon": horizon,
+                                "impact_type": impact_type,
+                                "uncertainty_width": float(interval_width),
+                                "risk_level": "high" if interval_width > 8 else "medium",
+                            }
+                        )
 
         # Determine overall risk level
-        if risks['high_impact_risks'] or len(risks['uncertainty_risks']) > 3:
-            risks['overall_risk_level'] = 'high'
-        elif risks['uncertainty_risks']:
-            risks['overall_risk_level'] = 'medium'
+        if risks["high_impact_risks"] or len(risks["uncertainty_risks"]) > 3:
+            risks["overall_risk_level"] = "high"
+        elif risks["uncertainty_risks"]:
+            risks["overall_risk_level"] = "medium"
 
         return risks
 
@@ -659,9 +650,7 @@ class GovernanceGraphBuilder:
     def __init__(self):
         self.graph = nx.DiGraph()
         self.node_embeddings = {}
-        self.edge_types = [
-            'dependency', 'conflict', 'similarity', 'temporal', 'causal'
-        ]
+        self.edge_types = ["dependency", "conflict", "similarity", "temporal", "causal"]
 
     async def build_governance_graph(self, governance_data: Dict[str, Any]) -> nx.DiGraph:
         """Construct multi-level governance graph from data."""
@@ -671,61 +660,51 @@ class GovernanceGraphBuilder:
         self.graph.clear()
 
         # Add resource-level nodes
-        resources = governance_data.get('resources', [])
+        resources = governance_data.get("resources", [])
         for resource in resources:
             self.graph.add_node(
-                resource['id'],
-                level='resource',
-                type=resource['type'],
-                attributes=resource.get('attributes', {}),
-                domain=resource.get('domain', 'unknown')
+                resource["id"],
+                level="resource",
+                type=resource["type"],
+                attributes=resource.get("attributes", {}),
+                domain=resource.get("domain", "unknown"),
             )
 
         # Add service-level nodes
-        services = governance_data.get('services', [])
+        services = governance_data.get("services", [])
         for service in services:
             service_id = f"service_{service['name']}"
             self.graph.add_node(
                 service_id,
-                level='service',
-                name=service['name'],
-                resources=service.get('resources', [])
+                level="service",
+                name=service["name"],
+                resources=service.get("resources", []),
             )
 
             # Connect service to its resources
-            for resource_id in service.get('resources', []):
+            for resource_id in service.get("resources", []):
                 if resource_id in self.graph:
-                    self.graph.add_edge(
-                        service_id, resource_id,
-                        type='contains',
-                        weight=1.0
-                    )
+                    self.graph.add_edge(service_id, resource_id, type="contains", weight=1.0)
 
         # Add domain-level nodes
-        domains = ['policy', 'rbac', 'network', 'cost']
+        domains = ["policy", "rbac", "network", "cost"]
         for domain in domains:
             domain_id = f"domain_{domain}"
-            self.graph.add_node(
-                domain_id,
-                level='domain',
-                name=domain
-            )
+            self.graph.add_node(domain_id, level="domain", name=domain)
 
             # Connect domain to relevant resources
             for node_id, node_data in self.graph.nodes(data=True):
-                if node_data.get('domain') == domain:
-                    self.graph.add_edge(
-                        domain_id, node_id,
-                        type='governs',
-                        weight=1.0
-                    )
+                if node_data.get("domain") == domain:
+                    self.graph.add_edge(domain_id, node_id, type="governs", weight=1.0)
 
         # Identify and add cross-domain relationships
         await self._identify_relationships(governance_data)
 
-        logger.info("governance_graph_built",
-                nodes=self.graph.number_of_nodes(),
-                edges=self.graph.number_of_edges())
+        logger.info(
+            "governance_graph_built",
+            nodes=self.graph.number_of_nodes(),
+            edges=self.graph.number_of_edges(),
+        )
 
         return self.graph
 
@@ -733,23 +712,22 @@ class GovernanceGraphBuilder:
         """Identify relationships between governance entities."""
 
         # Dependency relationships
-        dependencies = governance_data.get('dependencies', [])
+        dependencies = governance_data.get("dependencies", [])
         for dep in dependencies:
-            if dep['source'] in self.graph and dep['target'] in self.graph:
+            if dep["source"] in self.graph and dep["target"] in self.graph:
                 self.graph.add_edge(
-                    dep['source'], dep['target'],
-                    type='dependency',
-                    weight=dep.get('strength', 1.0)
+                    dep["source"], dep["target"], type="dependency", weight=dep.get("strength", 1.0)
                 )
 
         # Conflict relationships (e.g., conflicting policies)
-        conflicts = governance_data.get('conflicts', [])
+        conflicts = governance_data.get("conflicts", [])
         for conflict in conflicts:
-            if conflict['entity1'] in self.graph and conflict['entity2'] in self.graph:
+            if conflict["entity1"] in self.graph and conflict["entity2"] in self.graph:
                 self.graph.add_edge(
-                    conflict['entity1'], conflict['entity2'],
-                    type='conflict',
-                    weight=-1.0  # Negative weight for conflicts
+                    conflict["entity1"],
+                    conflict["entity2"],
+                    type="conflict",
+                    weight=-1.0,  # Negative weight for conflicts
                 )
 
         # Similarity relationships based on attributes
@@ -761,42 +739,37 @@ class GovernanceGraphBuilder:
     async def _compute_similarity_edges(self, threshold: float = 0.7):
         """Compute similarity edges between nodes based on attributes."""
         resource_nodes = [
-            (n, d) for n, d in self.graph.nodes(data=True)
-            if d.get('level') == 'resource'
+            (n, d) for n, d in self.graph.nodes(data=True) if d.get("level") == "resource"
         ]
 
         for i, (node1, data1) in enumerate(resource_nodes):
-            for j, (node2, data2) in enumerate(resource_nodes[i+1:], i+1):
+            for j, (node2, data2) in enumerate(resource_nodes[i + 1 :], i + 1):
                 similarity = self._calculate_similarity(
-                    data1.get('attributes', {}),
-                    data2.get('attributes', {})
+                    data1.get("attributes", {}), data2.get("attributes", {})
                 )
 
                 if similarity > threshold:
-                    self.graph.add_edge(
-                        node1, node2,
-                        type='similarity',
-                        weight=similarity
-                    )
+                    self.graph.add_edge(node1, node2, type="similarity", weight=similarity)
 
     async def _identify_temporal_relationships(self, governance_data: Dict[str, Any]):
         """Identify temporal relationships from event sequences."""
-        events = governance_data.get('events', [])
+        events = governance_data.get("events", [])
 
         # Sort events by timestamp
-        sorted_events = sorted(events, key=lambda x: x['timestamp'])
+        sorted_events = sorted(events, key=lambda x: x["timestamp"])
 
         # Look for temporal patterns
         for i, event1 in enumerate(sorted_events):
-            for event2 in sorted_events[i+1:i+10]:  # Look ahead 10 events
-                time_diff = (event2['timestamp'] - event1['timestamp']).total_seconds()
+            for event2 in sorted_events[i + 1 : i + 10]:  # Look ahead 10 events
+                time_diff = (event2["timestamp"] - event1["timestamp"]).total_seconds()
 
                 if time_diff < 3600:  # Within 1 hour
-                    if event1['entity'] in self.graph and event2['entity'] in self.graph:
+                    if event1["entity"] in self.graph and event2["entity"] in self.graph:
                         self.graph.add_edge(
-                            event1['entity'], event2['entity'],
-                            type='temporal',
-                            weight=1.0 / (1 + time_diff / 3600)  # Weight by proximity
+                            event1["entity"],
+                            event2["entity"],
+                            type="temporal",
+                            weight=1.0 / (1 + time_diff / 3600),  # Weight by proximity
                         )
 
     def _calculate_similarity(self, attrs1: Dict, attrs2: Dict) -> float:
@@ -827,8 +800,9 @@ class GraphNeuralNetwork(nn.Module):
     evolving governance relationships.
     """
 
-    def __init__(self, input_dim: int, hidden_dim: int = 128, output_dim: int = 64,
-                num_layers: int = 3):
+    def __init__(
+        self, input_dim: int, hidden_dim: int = 128, output_dim: int = 64, num_layers: int = 3
+    ):
         super(GraphNeuralNetwork, self).__init__()
 
         self.num_layers = num_layers
@@ -891,10 +865,10 @@ class CorrelationAnalyzer:
 
     def __init__(self):
         self.correlation_methods = {
-            'pearson': self._pearson_correlation,
-            'spearman': self._spearman_correlation,
-            'mutual_info': self._mutual_information,
-            'granger': self._granger_causality
+            "pearson": self._pearson_correlation,
+            "spearman": self._spearman_correlation,
+            "mutual_info": self._mutual_information,
+            "granger": self._granger_causality,
         }
         self.lag_windows = [1, 6, 12, 24, 168]  # Hours
 
@@ -909,139 +883,139 @@ class CorrelationAnalyzer:
         # Pairwise correlation analysis
         domains = list(data_streams.keys())
         for i, domain1 in enumerate(domains):
-            for domain2 in domains[i+1:]:
+            for domain2 in domains[i + 1 :]:
                 # Calculate correlations using multiple methods
                 for method_name, method_func in self.correlation_methods.items():
                     try:
                         corr_result = await method_func(
-                            data_streams[domain1],
-                            data_streams[domain2]
+                            data_streams[domain1], data_streams[domain2]
                         )
                         correlations[f"{domain1}-{domain2}"][method_name] = corr_result
                     except Exception as e:
-                        logger.error(f"correlation_analysis_failed",
-                                method=method_name,
-                                domains=[domain1, domain2],
-                                error=str(e))
+                        logger.error(
+                            f"correlation_analysis_failed",
+                            method=method_name,
+                            domains=[domain1, domain2],
+                            error=str(e),
+                        )
 
                 # Temporal lag analysis
                 lag_result = await self._analyze_temporal_lags(
-                    data_streams[domain1],
-                    data_streams[domain2]
+                    data_streams[domain1], data_streams[domain2]
                 )
                 temporal_lags[f"{domain1}-{domain2}"] = lag_result
 
                 # Causal inference
-                if method_name == 'granger' and 'p_value' in corr_result:
-                    if corr_result['p_value'] < 0.05:
-                        causal_relationships.append({
-                            'cause': domain1,
-                            'effect': domain2,
-                            'confidence': 1 - corr_result['p_value'],
-                            'lag': lag_result.get('optimal_lag', 0)
-                        })
+                if method_name == "granger" and "p_value" in corr_result:
+                    if corr_result["p_value"] < 0.05:
+                        causal_relationships.append(
+                            {
+                                "cause": domain1,
+                                "effect": domain2,
+                                "confidence": 1 - corr_result["p_value"],
+                                "lag": lag_result.get("optimal_lag", 0),
+                            }
+                        )
 
         # Anomaly detection on correlation patterns
         anomalies = await self._detect_correlation_anomalies(correlations)
 
         return {
-            'correlations': dict(correlations),
-            'temporal_lags': dict(temporal_lags),
-            'causal_relationships': causal_relationships,
-            'anomalies': anomalies,
-            'summary': self._summarize_correlations(correlations)
+            "correlations": dict(correlations),
+            "temporal_lags": dict(temporal_lags),
+            "causal_relationships": causal_relationships,
+            "anomalies": anomalies,
+            "summary": self._summarize_correlations(correlations),
         }
 
     async def _pearson_correlation(
-        self,
-        data1: pd.DataFrame,
-        data2: pd.DataFrame
+        self, data1: pd.DataFrame, data2: pd.DataFrame
     ) -> Dict[str, Any]:
         """Calculate Pearson correlation coefficient."""
         # Align data by timestamp
-        merged = pd.merge(data1, data2, on='timestamp', suffixes=('_1', '_2'))
+        merged = pd.merge(data1, data2, on="timestamp", suffixes=("_1", "_2"))
 
         if len(merged) < 10:
-            return {'correlation': 0.0, 'p_value': 1.0, 'n_samples': len(merged)}
+            return {"correlation": 0.0, "p_value": 1.0, "n_samples": len(merged)}
 
         # Calculate correlation for each metric pair
         correlations = []
         for col1 in data1.columns:
-            if col1 == 'timestamp':
+            if col1 == "timestamp":
                 continue
             for col2 in data2.columns:
-                if col2 == 'timestamp':
+                if col2 == "timestamp":
                     continue
 
                 if f"{col1}_1" in merged.columns and f"{col2}_2" in merged.columns:
                     corr, p_value = stats.pearsonr(
-                        merged[f"{col1}_1"].dropna(),
-                        merged[f"{col2}_2"].dropna()
+                        merged[f"{col1}_1"].dropna(), merged[f"{col2}_2"].dropna()
                     )
-                    correlations.append({
-                        'metric_pair': f"{col1}-{col2}",
-                        'correlation': float(corr),
-                        'p_value': float(p_value)
-                    })
+                    correlations.append(
+                        {
+                            "metric_pair": f"{col1}-{col2}",
+                            "correlation": float(corr),
+                            "p_value": float(p_value),
+                        }
+                    )
 
         # Return strongest correlation
         if correlations:
-            strongest = max(correlations, key=lambda x: abs(x['correlation']))
+            strongest = max(correlations, key=lambda x: abs(x["correlation"]))
             return strongest
         else:
-            return {'correlation': 0.0, 'p_value': 1.0, 'n_samples': 0}
+            return {"correlation": 0.0, "p_value": 1.0, "n_samples": 0}
 
     async def _spearman_correlation(
-        self,
-        data1: pd.DataFrame,
-        data2: pd.DataFrame
+        self, data1: pd.DataFrame, data2: pd.DataFrame
     ) -> Dict[str, Any]:
         """Calculate Spearman rank correlation."""
-        merged = pd.merge(data1, data2, on='timestamp', suffixes=('_1', '_2'))
+        merged = pd.merge(data1, data2, on="timestamp", suffixes=("_1", "_2"))
 
         if len(merged) < 10:
-            return {'correlation': 0.0, 'p_value': 1.0, 'n_samples': len(merged)}
+            return {"correlation": 0.0, "p_value": 1.0, "n_samples": len(merged)}
 
         # Similar to Pearson but using rank correlation
         correlations = []
         for col1 in data1.columns:
-            if col1 == 'timestamp':
+            if col1 == "timestamp":
                 continue
             for col2 in data2.columns:
-                if col2 == 'timestamp':
+                if col2 == "timestamp":
                     continue
 
                 if f"{col1}_1" in merged.columns and f"{col2}_2" in merged.columns:
                     corr, p_value = stats.spearmanr(
-                        merged[f"{col1}_1"].dropna(),
-                        merged[f"{col2}_2"].dropna()
+                        merged[f"{col1}_1"].dropna(), merged[f"{col2}_2"].dropna()
                     )
-                    correlations.append({
-                        'metric_pair': f"{col1}-{col2}",
-                        'correlation': float(corr),
-                        'p_value': float(p_value)
-                    })
+                    correlations.append(
+                        {
+                            "metric_pair": f"{col1}-{col2}",
+                            "correlation": float(corr),
+                            "p_value": float(p_value),
+                        }
+                    )
 
         if correlations:
-            strongest = max(correlations, key=lambda x: abs(x['correlation']))
+            strongest = max(correlations, key=lambda x: abs(x["correlation"]))
             return strongest
         else:
-            return {'correlation': 0.0, 'p_value': 1.0, 'n_samples': 0}
+            return {"correlation": 0.0, "p_value": 1.0, "n_samples": 0}
 
     async def _mutual_information(self, data1: pd.DataFrame, data2: pd.DataFrame) -> Dict[str, Any]:
         """Calculate mutual information between domains."""
-        merged = pd.merge(data1, data2, on='timestamp', suffixes=('_1', '_2'))
+        merged = pd.merge(data1, data2, on="timestamp", suffixes=("_1", "_2"))
 
         if len(merged) < 10:
-            return {'mutual_info': 0.0, 'normalized': 0.0, 'n_samples': len(merged)}
+            return {"mutual_info": 0.0, "normalized": 0.0, "n_samples": len(merged)}
 
         # Discretize continuous variables
         mi_scores = []
         for col1 in data1.columns:
-            if col1 == 'timestamp':
+            if col1 == "timestamp":
                 continue
             for col2 in data2.columns:
-                if col2 == 'timestamp':
+                if col2 == "timestamp":
                     continue
 
                 if f"{col1}_1" in merged.columns and f"{col2}_2" in merged.columns:
@@ -1054,35 +1028,37 @@ class CorrelationAnalyzer:
                     max_mi = min(np.log(10), np.log(10))  # log(n_bins)
                     normalized_mi = mi / max_mi if max_mi > 0 else 0
 
-                    mi_scores.append({
-                        'metric_pair': f"{col1}-{col2}",
-                        'mutual_info': float(mi),
-                        'normalized': float(normalized_mi)
-                    })
+                    mi_scores.append(
+                        {
+                            "metric_pair": f"{col1}-{col2}",
+                            "mutual_info": float(mi),
+                            "normalized": float(normalized_mi),
+                        }
+                    )
 
         if mi_scores:
-            strongest = max(mi_scores, key=lambda x: x['mutual_info'])
+            strongest = max(mi_scores, key=lambda x: x["mutual_info"])
             return strongest
         else:
-            return {'mutual_info': 0.0, 'normalized': 0.0, 'n_samples': 0}
+            return {"mutual_info": 0.0, "normalized": 0.0, "n_samples": 0}
 
     async def _granger_causality(self, data1: pd.DataFrame, data2: pd.DataFrame) -> Dict[str, Any]:
         """Test for Granger causality between time series."""
         # Simplified Granger causality test
         # In production, use statsmodels.tsa.stattools.grangercausalitytests
 
-        merged = pd.merge(data1, data2, on='timestamp', suffixes=('_1', '_2'))
+        merged = pd.merge(data1, data2, on="timestamp", suffixes=("_1", "_2"))
 
         if len(merged) < 20:
-            return {'f_statistic': 0.0, 'p_value': 1.0, 'causality': False}
+            return {"f_statistic": 0.0, "p_value": 1.0, "causality": False}
 
         # For each metric pair, test if past values of X help predict Y
         results = []
         for col1 in data1.columns:
-            if col1 == 'timestamp':
+            if col1 == "timestamp":
                 continue
             for col2 in data2.columns:
-                if col2 == 'timestamp':
+                if col2 == "timestamp":
                     continue
 
                 if f"{col1}_1" in merged.columns and f"{col2}_2" in merged.columns:
@@ -1098,24 +1074,24 @@ class CorrelationAnalyzer:
                         f_stat = np.random.random() * 10  # Placeholder
                         p_value = 1 - stats.f.cdf(f_stat, 1, len(x) - 2)
 
-                        results.append({
-                            'metric_pair': f"{col1}->{col2}",
-                            'f_statistic': float(f_stat),
-                            'p_value': float(p_value),
-                            'causality': p_value < 0.05
-                        })
+                        results.append(
+                            {
+                                "metric_pair": f"{col1}->{col2}",
+                                "f_statistic": float(f_stat),
+                                "p_value": float(p_value),
+                                "causality": p_value < 0.05,
+                            }
+                        )
 
         if results:
             # Return most significant causal relationship
-            most_significant = min(results, key=lambda x: x['p_value'])
+            most_significant = min(results, key=lambda x: x["p_value"])
             return most_significant
         else:
-            return {'f_statistic': 0.0, 'p_value': 1.0, 'causality': False}
+            return {"f_statistic": 0.0, "p_value": 1.0, "causality": False}
 
     async def _analyze_temporal_lags(
-        self,
-        data1: pd.DataFrame,
-        data2: pd.DataFrame
+        self, data1: pd.DataFrame, data2: pd.DataFrame
     ) -> Dict[str, Any]:
         """Analyze optimal temporal lags between domains."""
         best_lag = 0
@@ -1126,26 +1102,24 @@ class CorrelationAnalyzer:
         for lag in self.lag_windows:
             # Shift data2 by lag hours
             data2_lagged = data2.copy()
-            data2_lagged['timestamp'] = data2_lagged['timestamp'] - timedelta(hours=lag)
+            data2_lagged["timestamp"] = data2_lagged["timestamp"] - timedelta(hours=lag)
 
             # Calculate correlation at this lag
             corr_result = await self._pearson_correlation(data1, data2_lagged)
-            lag_correlations[lag] = corr_result['correlation']
+            lag_correlations[lag] = corr_result["correlation"]
 
-            if abs(corr_result['correlation']) > abs(best_correlation):
-                best_correlation = corr_result['correlation']
+            if abs(corr_result["correlation"]) > abs(best_correlation):
+                best_correlation = corr_result["correlation"]
                 best_lag = lag
 
         return {
-            'optimal_lag': best_lag,
-            'optimal_correlation': float(best_correlation),
-            'lag_profile': lag_correlations
+            "optimal_lag": best_lag,
+            "optimal_correlation": float(best_correlation),
+            "lag_profile": lag_correlations,
         }
 
     async def _detect_correlation_anomalies(
-        self,
-        correlations: Dict[str,
-        Dict]
+        self, correlations: Dict[str, Dict]
     ) -> List[Dict[str, Any]]:
         """Detect anomalous correlation patterns."""
         anomalies = []
@@ -1154,8 +1128,8 @@ class CorrelationAnalyzer:
         all_correlations = []
         for pair, methods in correlations.items():
             for method, result in methods.items():
-                if 'correlation' in result:
-                    all_correlations.append(abs(result['correlation']))
+                if "correlation" in result:
+                    all_correlations.append(abs(result["correlation"]))
 
         if len(all_correlations) > 10:
             # Use isolation forest for anomaly detection
@@ -1164,16 +1138,20 @@ class CorrelationAnalyzer:
 
             for pair, methods in correlations.items():
                 for method, result in methods.items():
-                    if 'correlation' in result:
-                        z_score = (abs(result['correlation']) - mean_corr) / std_corr
+                    if "correlation" in result:
+                        z_score = (abs(result["correlation"]) - mean_corr) / std_corr
                         if abs(z_score) > 2:  # 2 standard deviations
-                            anomalies.append({
-                                'domain_pair': pair,
-                                'method': method,
-                                'correlation': result['correlation'],
-                                'z_score': float(z_score),
-                                'anomaly_type': 'unusually_high' if z_score > 0 else 'unusually_low'
-                            })
+                            anomalies.append(
+                                {
+                                    "domain_pair": pair,
+                                    "method": method,
+                                    "correlation": result["correlation"],
+                                    "z_score": float(z_score),
+                                    "anomaly_type": "unusually_high"
+                                    if z_score > 0
+                                    else "unusually_low",
+                                }
+                            )
 
         return anomalies
 
@@ -1183,32 +1161,32 @@ class CorrelationAnalyzer:
         weak_correlations = []
 
         for pair, methods in correlations.items():
-            avg_correlation = np.mean([
-                abs(result.get('correlation', 0))
-                for result in methods.values()
-                if 'correlation' in result
-            ])
+            avg_correlation = np.mean(
+                [
+                    abs(result.get("correlation", 0))
+                    for result in methods.values()
+                    if "correlation" in result
+                ]
+            )
 
             if avg_correlation > 0.7:
-                strong_correlations.append({
-                    'pair': pair,
-                    'strength': float(avg_correlation)
-                })
+                strong_correlations.append({"pair": pair, "strength": float(avg_correlation)})
             elif avg_correlation < 0.3:
-                weak_correlations.append({
-                    'pair': pair,
-                    'strength': float(avg_correlation)
-                })
+                weak_correlations.append({"pair": pair, "strength": float(avg_correlation)})
 
         return {
-            'strong_correlations': strong_correlations,
-            'weak_correlations': weak_correlations,
-            'average_correlation': float(np.mean([
-                abs(result.get('correlation', 0))
-                for methods in correlations.values()
-                for result in methods.values()
-                if 'correlation' in result
-            ]))
+            "strong_correlations": strong_correlations,
+            "weak_correlations": weak_correlations,
+            "average_correlation": float(
+                np.mean(
+                    [
+                        abs(result.get("correlation", 0))
+                        for methods in correlations.values()
+                        for result in methods.values()
+                        if "correlation" in result
+                    ]
+                )
+            ),
         }
 
 
@@ -1238,23 +1216,15 @@ class CrossDomainCorrelationEngine:
         try:
             # Initialize GNN model with enhanced architecture
             self.gnn_model = GraphNeuralNetwork(
-                input_dim=64,  # Feature dimension
-                hidden_dim=128,
-                output_dim=64,
-                num_layers=3
+                input_dim=64, hidden_dim=128, output_dim=64, num_layers=3  # Feature dimension
             )
 
             # Initialize legacy impact prediction models
             self.impact_models = {
-                'gradient_boost': GradientBoostingRegressor(
-                    n_estimators=100,
-                    max_depth=5,
-                    learning_rate=0.1
+                "gradient_boost": GradientBoostingRegressor(
+                    n_estimators=100, max_depth=5, learning_rate=0.1
                 ),
-                'random_forest': RandomForestRegressor(
-                    n_estimators=100,
-                    max_depth=10
-                )
+                "random_forest": RandomForestRegressor(n_estimators=100, max_depth=10),
             }
 
             # Initialize advanced components
@@ -1262,25 +1232,30 @@ class CrossDomainCorrelationEngine:
 
             # Initialize performance tracking
             self.performance_metrics = {
-                'total_analyses': 0,
-                'average_processing_time': 0.0,
-                'accuracy_metrics': {},
-                'real_time_events_processed': 0
+                "total_analyses": 0,
+                "average_processing_time": 0.0,
+                "accuracy_metrics": {},
+                "real_time_events_processed": 0,
             }
 
             self.is_initialized = True
-            logger.info("correlation_engine_initialized",
-                    components=['graph_builder', 'correlation_analyzer', 'threshold_manager',
-                                'real_time_monitor', 'impact_predictor'])
+            logger.info(
+                "correlation_engine_initialized",
+                components=[
+                    "graph_builder",
+                    "correlation_analyzer",
+                    "threshold_manager",
+                    "real_time_monitor",
+                    "impact_predictor",
+                ],
+            )
 
         except Exception as e:
             logger.error("correlation_engine_initialization_failed", error=str(e))
             raise
 
     async def analyze_governance_correlations(
-        self,
-        governance_data: Dict[str,
-        Any]
+        self, governance_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Perform comprehensive cross-domain correlation analysis."""
         logger.info("analyzing_governance_correlations")
@@ -1297,41 +1272,37 @@ class CrossDomainCorrelationEngine:
 
             # Predict cross-domain impacts
             impact_predictions = await self._predict_impacts(
-                graph,
-                correlation_results,
-                governance_data
+                graph, correlation_results, governance_data
             )
 
             # Generate optimization recommendations
             optimizations = await self._generate_optimizations(
-                correlation_results,
-                impact_predictions
+                correlation_results, impact_predictions
             )
 
             return {
-                'graph_metrics': {
-                    'nodes': graph.number_of_nodes(),
-                    'edges': graph.number_of_edges(),
-                    'density': nx.density(graph),
-                    'domains': self._count_domains(graph)
+                "graph_metrics": {
+                    "nodes": graph.number_of_nodes(),
+                    "edges": graph.number_of_edges(),
+                    "density": nx.density(graph),
+                    "domains": self._count_domains(graph),
                 },
-                'correlations': correlation_results,
-                'impact_predictions': impact_predictions,
-                'optimizations': optimizations,
-                'risk_assessment': self._assess_correlation_risks(
-                    correlation_results,
-                    impact_predictions
-                )
+                "correlations": correlation_results,
+                "impact_predictions": impact_predictions,
+                "optimizations": optimizations,
+                "risk_assessment": self._assess_correlation_risks(
+                    correlation_results, impact_predictions
+                ),
             }
 
         except Exception as e:
             logger.error("correlation_analysis_failed", error=str(e))
             return {
-                'error': str(e),
-                'graph_metrics': {},
-                'correlations': {},
-                'impact_predictions': {},
-                'optimizations': []
+                "error": str(e),
+                "graph_metrics": {},
+                "correlations": {},
+                "impact_predictions": {},
+                "optimizations": [],
             }
 
     def _extract_data_streams(self, governance_data: Dict[str, Any]) -> Dict[str, pd.DataFrame]:
@@ -1339,43 +1310,40 @@ class CrossDomainCorrelationEngine:
         data_streams = {}
 
         # Policy compliance data
-        if 'policy_events' in governance_data:
-            policy_df = pd.DataFrame(governance_data['policy_events'])
+        if "policy_events" in governance_data:
+            policy_df = pd.DataFrame(governance_data["policy_events"])
             if not policy_df.empty:
-                policy_df['timestamp'] = pd.to_datetime(policy_df['timestamp'])
-                data_streams['policy'] = policy_df
+                policy_df["timestamp"] = pd.to_datetime(policy_df["timestamp"])
+                data_streams["policy"] = policy_df
 
         # RBAC data
-        if 'rbac_events' in governance_data:
-            rbac_df = pd.DataFrame(governance_data['rbac_events'])
+        if "rbac_events" in governance_data:
+            rbac_df = pd.DataFrame(governance_data["rbac_events"])
             if not rbac_df.empty:
-                rbac_df['timestamp'] = pd.to_datetime(rbac_df['timestamp'])
-                data_streams['rbac'] = rbac_df
+                rbac_df["timestamp"] = pd.to_datetime(rbac_df["timestamp"])
+                data_streams["rbac"] = rbac_df
 
         # Network security data
-        if 'network_events' in governance_data:
-            network_df = pd.DataFrame(governance_data['network_events'])
+        if "network_events" in governance_data:
+            network_df = pd.DataFrame(governance_data["network_events"])
             if not network_df.empty:
-                network_df['timestamp'] = pd.to_datetime(network_df['timestamp'])
-                data_streams['network'] = network_df
+                network_df["timestamp"] = pd.to_datetime(network_df["timestamp"])
+                data_streams["network"] = network_df
 
         # Cost data
-        if 'cost_events' in governance_data:
-            cost_df = pd.DataFrame(governance_data['cost_events'])
+        if "cost_events" in governance_data:
+            cost_df = pd.DataFrame(governance_data["cost_events"])
             if not cost_df.empty:
-                cost_df['timestamp'] = pd.to_datetime(cost_df['timestamp'])
-                data_streams['cost'] = cost_df
+                cost_df["timestamp"] = pd.to_datetime(cost_df["timestamp"])
+                data_streams["cost"] = cost_df
 
         return data_streams
 
-    async def _predict_impacts(self, graph: nx.DiGraph, correlations: Dict[str, Any],
-                            governance_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _predict_impacts(
+        self, graph: nx.DiGraph, correlations: Dict[str, Any], governance_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Predict cross-domain impacts using ensemble models."""
-        predictions = {
-            'domain_impacts': {},
-            'resource_impacts': {},
-            'confidence_intervals': {}
-        }
+        predictions = {"domain_impacts": {}, "resource_impacts": {}, "confidence_intervals": {}}
 
         # Prepare features from graph and correlations
         features = self._prepare_impact_features(graph, correlations)
@@ -1400,126 +1368,138 @@ class CrossDomainCorrelationEngine:
                 mean_impact = np.mean(impact_scores)
                 std_impact = np.std(impact_scores)
 
-                predictions['overall_impact'] = float(mean_impact)
-                predictions['confidence_intervals'] = {
-                    'lower': float(max(0, mean_impact - 1.96 * std_impact)),
-                    'upper': float(mean_impact + 1.96 * std_impact)
+                predictions["overall_impact"] = float(mean_impact)
+                predictions["confidence_intervals"] = {
+                    "lower": float(max(0, mean_impact - 1.96 * std_impact)),
+                    "upper": float(mean_impact + 1.96 * std_impact),
                 }
 
         # Domain-specific impacts based on correlations
-        for domain_pair, corr_data in correlations.get('correlations', {}).items():
-            domains = domain_pair.split('-')
+        for domain_pair, corr_data in correlations.get("correlations", {}).items():
+            domains = domain_pair.split("-")
             if len(domains) == 2:
                 impact_score = self._calculate_domain_impact(corr_data)
-                predictions['domain_impacts'][domain_pair] = {
-                    'impact_score': float(impact_score),
-                    'direction': 'positive' if impact_score > 0 else 'negative',
-                    'magnitude': abs(impact_score)
+                predictions["domain_impacts"][domain_pair] = {
+                    "impact_score": float(impact_score),
+                    "direction": "positive" if impact_score > 0 else "negative",
+                    "magnitude": abs(impact_score),
                 }
 
         return predictions
 
-    async def _generate_optimizations(self, correlations: Dict[str, Any],
-                                    impacts: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _generate_optimizations(
+        self, correlations: Dict[str, Any], impacts: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Generate optimization recommendations based on correlations and impacts."""
         optimizations = []
 
         # Identify strong positive correlations for reinforcement
-        for domain_pair, corr_data in correlations.get('correlations', {}).items():
-            avg_corr = np.mean([
-                result.get('correlation', 0)
-                for result in corr_data.values()
-                if 'correlation' in result
-            ])
+        for domain_pair, corr_data in correlations.get("correlations", {}).items():
+            avg_corr = np.mean(
+                [
+                    result.get("correlation", 0)
+                    for result in corr_data.values()
+                    if "correlation" in result
+                ]
+            )
 
             if avg_corr > 0.7:
-                optimizations.append({
-                    'type': 'reinforce_positive_correlation',
-                    'domain_pair': domain_pair,
-                    'recommendation': f"Strong positive correlation detected between {domain_pair}. "
-                                    f"Consider joint optimization strategies.",
-                    'priority': 'high',
-                    'expected_benefit': avg_corr * 0.3  # Placeholder calculation
-                })
+                optimizations.append(
+                    {
+                        "type": "reinforce_positive_correlation",
+                        "domain_pair": domain_pair,
+                        "recommendation": f"Strong positive correlation detected between {domain_pair}. "
+                        f"Consider joint optimization strategies.",
+                        "priority": "high",
+                        "expected_benefit": avg_corr * 0.3,  # Placeholder calculation
+                    }
+                )
 
         # Identify negative correlations for decoupling
-        for domain_pair, corr_data in correlations.get('correlations', {}).items():
-            avg_corr = np.mean([
-                result.get('correlation', 0)
-                for result in corr_data.values()
-                if 'correlation' in result
-            ])
+        for domain_pair, corr_data in correlations.get("correlations", {}).items():
+            avg_corr = np.mean(
+                [
+                    result.get("correlation", 0)
+                    for result in corr_data.values()
+                    if "correlation" in result
+                ]
+            )
 
             if avg_corr < -0.5:
-                optimizations.append({
-                    'type': 'decouple_negative_correlation',
-                    'domain_pair': domain_pair,
-                    'recommendation': f"Negative correlation detected between {domain_pair}. "
-                                    f"Consider decoupling strategies to reduce conflicts.",
-                    'priority': 'medium',
-                    'expected_benefit': abs(avg_corr) * 0.2
-                })
+                optimizations.append(
+                    {
+                        "type": "decouple_negative_correlation",
+                        "domain_pair": domain_pair,
+                        "recommendation": f"Negative correlation detected between {domain_pair}. "
+                        f"Consider decoupling strategies to reduce conflicts.",
+                        "priority": "medium",
+                        "expected_benefit": abs(avg_corr) * 0.2,
+                    }
+                )
 
         # Causal relationship optimizations
-        for causal_rel in correlations.get('causal_relationships', []):
-            if causal_rel['confidence'] > 0.8:
-                optimizations.append({
-                    'type': 'leverage_causal_relationship',
-                    'cause': causal_rel['cause'],
-                    'effect': causal_rel['effect'],
-                    'recommendation': f"Strong causal relationship: {causal_rel['cause']} → "
-                                    f"{causal_rel['effect']}. Optimize {causal_rel['cause']} "
-                                    f"to improve {causal_rel['effect']}.",
-                    'priority': 'high',
-                    'expected_benefit': causal_rel['confidence'] * 0.4
-                })
+        for causal_rel in correlations.get("causal_relationships", []):
+            if causal_rel["confidence"] > 0.8:
+                optimizations.append(
+                    {
+                        "type": "leverage_causal_relationship",
+                        "cause": causal_rel["cause"],
+                        "effect": causal_rel["effect"],
+                        "recommendation": f"Strong causal relationship: {causal_rel['cause']} → "
+                        f"{causal_rel['effect']}. Optimize {causal_rel['cause']} "
+                        f"to improve {causal_rel['effect']}.",
+                        "priority": "high",
+                        "expected_benefit": causal_rel["confidence"] * 0.4,
+                    }
+                )
 
         # Sort by expected benefit
-        optimizations.sort(key=lambda x: x['expected_benefit'], reverse=True)
+        optimizations.sort(key=lambda x: x["expected_benefit"], reverse=True)
 
         return optimizations[:10]  # Return top 10 optimizations
 
     def _prepare_impact_features(
-        self,
-        graph: nx.DiGraph,
-        correlations: Dict[str,
-        Any]
+        self, graph: nx.DiGraph, correlations: Dict[str, Any]
     ) -> np.ndarray:
         """Prepare features for impact prediction."""
         features = []
 
         # Graph structural features
-        features.extend([
-            graph.number_of_nodes(),
-            graph.number_of_edges(),
-            nx.density(graph),
-            len([n for n, d in graph.nodes(data=True) if d.get('level') == 'resource']),
-            len([n for n, d in graph.nodes(data=True) if d.get('level') == 'service']),
-            len([n for n, d in graph.nodes(data=True) if d.get('level') == 'domain'])
-        ])
+        features.extend(
+            [
+                graph.number_of_nodes(),
+                graph.number_of_edges(),
+                nx.density(graph),
+                len([n for n, d in graph.nodes(data=True) if d.get("level") == "resource"]),
+                len([n for n, d in graph.nodes(data=True) if d.get("level") == "service"]),
+                len([n for n, d in graph.nodes(data=True) if d.get("level") == "domain"]),
+            ]
+        )
 
         # Correlation features
         all_correlations = []
-        for domain_pair, methods in correlations.get('correlations', {}).items():
+        for domain_pair, methods in correlations.get("correlations", {}).items():
             for method, result in methods.items():
-                if 'correlation' in result:
-                    all_correlations.append(abs(result['correlation']))
+                if "correlation" in result:
+                    all_correlations.append(abs(result["correlation"]))
 
         if all_correlations:
-            features.extend([
-                np.mean(all_correlations),
-                np.max(all_correlations),
-                np.min(all_correlations),
-                np.std(all_correlations)
-            ])
+            features.extend(
+                [
+                    np.mean(all_correlations),
+                    np.max(all_correlations),
+                    np.min(all_correlations),
+                    np.std(all_correlations),
+                ]
+            )
         else:
             features.extend([0, 0, 0, 0])
 
         # Causal relationship count
-        features.append(len(correlations.get('causal_relationships', [])))
+        features.append(len(correlations.get("causal_relationships", [])))
 
         # Anomaly count
-        features.append(len(correlations.get('anomalies', [])))
+        features.append(len(correlations.get("anomalies", [])))
 
         return np.array(features)
 
@@ -1529,75 +1509,76 @@ class CrossDomainCorrelationEngine:
 
         # Average correlation strength
         correlations = [
-            abs(result.get('correlation', 0))
+            abs(result.get("correlation", 0))
             for result in correlation_data.values()
-            if 'correlation' in result
+            if "correlation" in result
         ]
         if correlations:
             impact += np.mean(correlations) * 5
 
         # Mutual information contribution
         mi_scores = [
-            result.get('normalized', 0)
+            result.get("normalized", 0)
             for result in correlation_data.values()
-            if 'normalized' in result
+            if "normalized" in result
         ]
         if mi_scores:
             impact += np.mean(mi_scores) * 3
 
         # Causal relationship contribution
-        if any(result.get('causality', False) for result in correlation_data.values()):
+        if any(result.get("causality", False) for result in correlation_data.values()):
             impact += 2
 
         return impact
 
-    def _assess_correlation_risks(self, correlations: Dict[str, Any],
-                                impacts: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_correlation_risks(
+        self, correlations: Dict[str, Any], impacts: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Assess risks based on correlation patterns and impacts."""
         risks = {
-            'high_risk_correlations': [],
-            'volatility_risks': [],
-            'cascade_risks': [],
-            'overall_risk_score': 0.0
+            "high_risk_correlations": [],
+            "volatility_risks": [],
+            "cascade_risks": [],
+            "overall_risk_score": 0.0,
         }
 
         # Identify high-risk correlations
-        for domain_pair, impact_data in impacts.get('domain_impacts', {}).items():
-            if impact_data['impact_score'] > 7:
-                risks['high_risk_correlations'].append({
-                    'domain_pair': domain_pair,
-                    'risk_score': impact_data['impact_score'] / 10,
-                    'risk_type': 'high_impact_correlation'
-                })
+        for domain_pair, impact_data in impacts.get("domain_impacts", {}).items():
+            if impact_data["impact_score"] > 7:
+                risks["high_risk_correlations"].append(
+                    {
+                        "domain_pair": domain_pair,
+                        "risk_score": impact_data["impact_score"] / 10,
+                        "risk_type": "high_impact_correlation",
+                    }
+                )
 
         # Identify volatility risks from anomalies
-        for anomaly in correlations.get('anomalies', []):
-            if abs(anomaly.get('z_score', 0)) > 3:
-                risks['volatility_risks'].append({
-                    'domain_pair': anomaly['domain_pair'],
-                    'volatility_score': abs(anomaly['z_score']) / 5,
-                    'anomaly_type': anomaly['anomaly_type']
-                })
+        for anomaly in correlations.get("anomalies", []):
+            if abs(anomaly.get("z_score", 0)) > 3:
+                risks["volatility_risks"].append(
+                    {
+                        "domain_pair": anomaly["domain_pair"],
+                        "volatility_score": abs(anomaly["z_score"]) / 5,
+                        "anomaly_type": anomaly["anomaly_type"],
+                    }
+                )
 
         # Identify cascade risks from causal relationships
-        causal_chains = self._find_causal_chains(
-            correlations.get('causal_relationships', [])
-        )
+        causal_chains = self._find_causal_chains(correlations.get("causal_relationships", []))
         for chain in causal_chains:
             if len(chain) > 2:
-                risks['cascade_risks'].append({
-                    'chain': ' → '.join(chain),
-                    'length': len(chain),
-                    'risk_score': len(chain) / 5
-                })
+                risks["cascade_risks"].append(
+                    {"chain": " → ".join(chain), "length": len(chain), "risk_score": len(chain) / 5}
+                )
 
         # Calculate overall risk score
         risk_components = (
-            len(risks['high_risk_correlations']) * 0.4 +
-            len(risks['volatility_risks']) * 0.3 +
-            len(risks['cascade_risks']) * 0.3
+            len(risks["high_risk_correlations"]) * 0.4
+            + len(risks["volatility_risks"]) * 0.3
+            + len(risks["cascade_risks"]) * 0.3
         )
-        risks['overall_risk_score'] = min(risk_components, 10.0)
+        risks["overall_risk_score"] = min(risk_components, 10.0)
 
         return risks
 
@@ -1606,7 +1587,7 @@ class CrossDomainCorrelationEngine:
         # Build directed graph of causal relationships
         causal_graph = nx.DiGraph()
         for rel in causal_relationships:
-            causal_graph.add_edge(rel['cause'], rel['effect'])
+            causal_graph.add_edge(rel["cause"], rel["effect"])
 
         # Find all paths longer than 2
         chains = []
@@ -1627,7 +1608,7 @@ class CrossDomainCorrelationEngine:
         """Count entities per domain."""
         domain_counts = defaultdict(int)
         for node, data in graph.nodes(data=True):
-            domain = data.get('domain', 'unknown')
+            domain = data.get("domain", "unknown")
             domain_counts[domain] += 1
         return dict(domain_counts)
 
@@ -1638,8 +1619,8 @@ class CrossDomainCorrelationEngine:
 
         result = await self.real_time_monitor.process_real_time_event(event)
 
-        if result.get('event_processed'):
-            self.performance_metrics['real_time_events_processed'] += 1
+        if result.get("event_processed"):
+            self.performance_metrics["real_time_events_processed"] += 1
 
         return result
 
@@ -1648,74 +1629,74 @@ class CrossDomainCorrelationEngine:
         cutoff_time = datetime.utcnow() - timedelta(hours=time_window_hours)
 
         recent_analyses = [
-            analysis for analysis in self.correlation_history
-            if analysis['timestamp'] > cutoff_time
+            analysis for analysis in self.correlation_history if analysis["timestamp"] > cutoff_time
         ]
 
         if not recent_analyses:
-            return {'trends': {}, 'summary': 'No recent analyses available'}
+            return {"trends": {}, "summary": "No recent analyses available"}
 
         # Analyze trends in correlation patterns
         trend_analysis = {
-            'analysis_count': len(recent_analyses),
-            'time_window_hours': time_window_hours,
-            'correlation_trend': self._analyze_correlation_trend(recent_analyses),
-            'risk_trend': self._analyze_risk_trend(recent_analyses)
+            "analysis_count": len(recent_analyses),
+            "time_window_hours": time_window_hours,
+            "correlation_trend": self._analyze_correlation_trend(recent_analyses),
+            "risk_trend": self._analyze_risk_trend(recent_analyses),
         }
 
         return trend_analysis
 
     def _analyze_correlation_trend(self, analyses: List[Dict]) -> Dict[str, Any]:
         """Analyze trends in correlation strength over time."""
-        correlation_counts = [analysis['result_summary'].get(
-            'correlations_found',
-            0
-        ) for analysis in analyses]
-        strong_correlation_counts = [analysis['result_summary'].get(
-            'strong_correlations',
-            0
-        ) for analysis in analyses]
+        correlation_counts = [
+            analysis["result_summary"].get("correlations_found", 0) for analysis in analyses
+        ]
+        strong_correlation_counts = [
+            analysis["result_summary"].get("strong_correlations", 0) for analysis in analyses
+        ]
 
         return {
-            'average_correlations': float(np.mean(correlation_counts)) if correlation_counts else 0,
-            'average_strong_correlations': float(np.mean(strong_correlation_counts)) if strong_correlation_counts else 0,
-            'trend_direction': 'increasing' if correlation_counts and
-                correlation_counts[-1] > correlation_counts[0] else 'decreasing',
-            'volatility': float(np.std(correlation_counts)) if len(correlation_counts) > 1 else 0
+            "average_correlations": float(np.mean(correlation_counts)) if correlation_counts else 0,
+            "average_strong_correlations": float(np.mean(strong_correlation_counts))
+            if strong_correlation_counts
+            else 0,
+            "trend_direction": "increasing"
+            if correlation_counts and correlation_counts[-1] > correlation_counts[0]
+            else "decreasing",
+            "volatility": float(np.std(correlation_counts)) if len(correlation_counts) > 1 else 0,
         }
 
     def _analyze_risk_trend(self, analyses: List[Dict]) -> Dict[str, Any]:
         """Analyze trends in risk levels over time."""
-        risk_levels = [analysis['result_summary'].get(
-            'overall_risk_level',
-            'unknown'
-        ) for analysis in analyses]
+        risk_levels = [
+            analysis["result_summary"].get("overall_risk_level", "unknown") for analysis in analyses
+        ]
         risk_scores = []
 
         # Convert risk levels to numeric scores
-        risk_mapping = {'low': 1, 'medium': 2, 'high': 3, 'critical': 4, 'unknown': 0}
+        risk_mapping = {"low": 1, "medium": 2, "high": 3, "critical": 4, "unknown": 0}
         for level in risk_levels:
             risk_scores.append(risk_mapping.get(level, 0))
 
         return {
-            'average_risk_score': float(np.mean(risk_scores)) if risk_scores else 0,
-            'current_risk_level': risk_levels[-1] if risk_levels else 'unknown',
-            'risk_trend': 'increasing' if risk_scores and
-                len(risk_scores) > 1 and risk_scores[-1] > risk_scores[0] else 'stable_or_decreasing',
-            'high_risk_periods': len([score for score in risk_scores if score >= 3])
+            "average_risk_score": float(np.mean(risk_scores)) if risk_scores else 0,
+            "current_risk_level": risk_levels[-1] if risk_levels else "unknown",
+            "risk_trend": "increasing"
+            if risk_scores and len(risk_scores) > 1 and risk_scores[-1] > risk_scores[0]
+            else "stable_or_decreasing",
+            "high_risk_periods": len([score for score in risk_scores if score >= 3]),
         }
 
     async def export_correlation_model(self, file_path: str) -> bool:
         """Export trained correlation models and thresholds."""
         try:
             export_data = {
-                'threshold_history': dict(self.threshold_manager.correlation_history),
-                'performance_metrics': self.performance_metrics,
-                'model_metadata': {
-                    'version': '2.0_enhanced',
-                    'export_timestamp': datetime.utcnow().isoformat(),
-                    'total_analyses': self.performance_metrics.get('total_analyses', 0)
-                }
+                "threshold_history": dict(self.threshold_manager.correlation_history),
+                "performance_metrics": self.performance_metrics,
+                "model_metadata": {
+                    "version": "2.0_enhanced",
+                    "export_timestamp": datetime.utcnow().isoformat(),
+                    "total_analyses": self.performance_metrics.get("total_analyses", 0),
+                },
             }
 
             # Use joblib for model serialization
@@ -1734,20 +1715,21 @@ class CrossDomainCorrelationEngine:
             import_data = joblib.load(file_path)
 
             # Restore threshold history
-            if 'threshold_history' in import_data:
-                for domain_pair, history in import_data['threshold_history'].items():
+            if "threshold_history" in import_data:
+                for domain_pair, history in import_data["threshold_history"].items():
                     self.threshold_manager.correlation_history[domain_pair] = deque(
-                        history,
-                        maxlen=100
+                        history, maxlen=100
                     )
 
             # Restore performance metrics
-            if 'performance_metrics' in import_data:
-                self.performance_metrics.update(import_data['performance_metrics'])
+            if "performance_metrics" in import_data:
+                self.performance_metrics.update(import_data["performance_metrics"])
 
-            logger.info("correlation_model_imported",
-                    file_path=file_path,
-                    version=import_data.get('model_metadata', {}).get('version', 'unknown'))
+            logger.info(
+                "correlation_model_imported",
+                file_path=file_path,
+                version=import_data.get("model_metadata", {}).get("version", "unknown"),
+            )
             return True
 
         except Exception as e:

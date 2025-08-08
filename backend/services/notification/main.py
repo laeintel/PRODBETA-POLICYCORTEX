@@ -7,53 +7,41 @@ import asyncio
 import time
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import BackgroundTasks
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from prometheus_client import Counter
-from prometheus_client import Histogram
-from prometheus_client import generate_latest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from prometheus_client import Counter, Histogram, generate_latest
 from services.notification.auth import AuthManager
 from shared.config import get_settings
-from shared.database import DatabaseUtils
-from shared.database import get_async_db
+from shared.database import DatabaseUtils, get_async_db
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 
-from .models import AlertRequest
-from .models import APIResponse
-from .models import BulkNotificationRequest
-from .models import DeliveryStatus
-from .models import EmailRequest
-from .models import ErrorResponse
-from .models import HealthResponse
-from .models import NotificationPreferences
-from .models import NotificationRequest
-from .models import NotificationResponse
-from .models import NotificationStats
-from .models import NotificationTemplate
-from .models import PushNotificationRequest
-from .models import ScheduledNotificationRequest
-from .models import SMSRequest
-from .models import SubscriptionRequest
-from .models import WebhookRequest
+from .models import (
+    AlertRequest,
+    APIResponse,
+    BulkNotificationRequest,
+    DeliveryStatus,
+    EmailRequest,
+    ErrorResponse,
+    HealthResponse,
+    NotificationPreferences,
+    NotificationRequest,
+    NotificationResponse,
+    NotificationStats,
+    NotificationTemplate,
+    PushNotificationRequest,
+    ScheduledNotificationRequest,
+    SMSRequest,
+    SubscriptionRequest,
+    WebhookRequest,
+)
 
     EmailService,
     SMSService,

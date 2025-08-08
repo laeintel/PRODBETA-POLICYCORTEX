@@ -6,22 +6,15 @@ Handles data synchronization between different sources
 import asyncio
 import hashlib
 import json
-from dataclasses import dataclass
-from dataclasses import field
-from datetime import datetime
-from datetime import timedelta
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
+from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
 import structlog
 
-from .data_connector import DataConnector
-from .data_connector import DataSourceType
+from .data_connector import DataConnector, DataSourceType
 
 logger = structlog.get_logger(__name__)
 

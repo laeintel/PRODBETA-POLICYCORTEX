@@ -4,34 +4,22 @@ Phase 3: AI-Powered Analytics Dashboard
 """
 
 import asyncio
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import structlog
-from fastapi import BackgroundTasks
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from backend.shared.config import get_settings
 from backend.shared.database import get_async_db
 
 from .correlation_engine import CorrelationEngine
-from .insight_generator import InsightGenerator
-from .insight_generator import InsightSeverity
-from .insight_generator import InsightType
-from .optimization_engine import OptimizationEngine
-from .optimization_engine import OptimizationType
+from .insight_generator import InsightGenerator, InsightSeverity, InsightType
+from .optimization_engine import OptimizationEngine, OptimizationType
 from .predictive_analytics import PredictiveAnalytics
 
 settings = get_settings()
