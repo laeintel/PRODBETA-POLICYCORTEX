@@ -1,19 +1,41 @@
 use axum::{
     extract::State,
-    http::StatusCode,
-    response::Json,
+    http::{Method, StatusCode, header},
+    response::IntoResponse,
     routing::{get, post},
-    Router,
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
-use tower_http::cors::CorsLayer;
+use std::sync::Arc;
+use tower::ServiceBuilder;
+use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-#[derive(Clone)]
-struct AppState {
-    // Add your application state here
+mod api;
+use api::{AppState, get_metrics, get_predictions, get_recommendations, process_conversation, get_correlations};
+
+#[derive(Serialize)]
+struct HealthResponse {
+    status: String,
+    version: String,
+    service: String,
+    patents: Vec<String>,
+}
+
+async fn health_check() -> Json<HealthResponse> {
+    Json(HealthResponse {
+        status: "healthy".to_string(),
+        version: "2.0.0".to_string(),
+        service: "policycortex-core".to_string(),
+        patents: vec![
+            "Unified AI-Driven Cloud Governance Platform".to_string(),
+            "Predictive Policy Compliance Engine".to_string(),
+            "Conversational Governance Intelligence System".to_string(),
+            "Cross-Domain Governance Correlation Engine".to_string(),
+        ],
+    })
 }
 
 #[tokio::main]
@@ -28,121 +50,142 @@ async fn main() {
         .init();
 
     info!("Starting PolicyCortex v2 Core Service");
+    info!("Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation");
 
     // Initialize application state
-    let state = AppState {};
+    let app_state = Arc::new(AppState::new());
 
-    // Build our application with routes
+    // Configure CORS
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
+
+    // Build the application router
     let app = Router::new()
+        // Health check
         .route("/health", get(health_check))
+        
+        // Patent 1: Unified AI Platform endpoints
+        .route("/api/v1/metrics", get(get_metrics))
+        .route("/api/v1/governance/unified", get(get_metrics))
+        
+        // Patent 2: Predictive Compliance endpoints
+        .route("/api/v1/predictions", get(get_predictions))
+        .route("/api/v1/compliance/predict", get(get_predictions))
+        
+        // Patent 3: Conversational Intelligence endpoints
+        .route("/api/v1/conversation", post(process_conversation))
+        .route("/api/v1/nlp/query", post(process_conversation))
+        
+        // Patent 4: Cross-Domain Correlation endpoints
+        .route("/api/v1/correlations", get(get_correlations))
+        .route("/api/v1/analysis/cross-domain", get(get_correlations))
+        
+        // Proactive Recommendations
+        .route("/api/v1/recommendations", get(get_recommendations))
+        .route("/api/v1/recommendations/proactive", get(get_recommendations))
+        
+        // Legacy endpoints for compatibility
         .route("/api/v1/policies", get(get_policies))
-        .route("/api/v1/policies", post(create_policy))
         .route("/api/v1/resources", get(get_resources))
         .route("/api/v1/compliance", get(get_compliance))
-        .layer(CorsLayer::permissive())
-        .with_state(state);
+        
+        .layer(ServiceBuilder::new().layer(cors))
+        .with_state(app_state);
 
-    // Run our application
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-    info!("PolicyCortex Core listening on {}", addr);
+    info!("PolicyCortex Core API listening on {}", addr);
     
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-#[derive(Serialize)]
-struct HealthResponse {
-    status: String,
-    version: String,
-    service: String,
+// Legacy endpoint handlers
+async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let metrics = state.metrics.read().await;
+    Json(serde_json::json!({
+        "policies": [
+            {
+                "id": "pol-001",
+                "name": "Require HTTPS",
+                "description": "All web apps must use HTTPS",
+                "category": "Security",
+                "severity": "High",
+                "status": "Active",
+                "compliance_rate": metrics.policies.compliance_rate,
+                "automated": true
+            },
+            {
+                "id": "pol-002",
+                "name": "Tag Compliance",
+                "description": "Resources must have required tags",
+                "category": "Governance",
+                "severity": "Medium",
+                "status": "Active",
+                "compliance_rate": 95.2,
+                "automated": true
+            },
+            {
+                "id": "pol-003",
+                "name": "Allowed Locations",
+                "description": "Resources must be in approved regions",
+                "category": "Compliance",
+                "severity": "High",
+                "status": "Active",
+                "compliance_rate": 100.0,
+                "automated": true
+            }
+        ],
+        "total": metrics.policies.total,
+        "active": metrics.policies.active,
+        "violations": metrics.policies.violations
+    }))
 }
 
-async fn health_check() -> Json<HealthResponse> {
-    Json(HealthResponse {
-        status: "healthy".to_string(),
-        version: "2.0.0".to_string(),
-        service: "policycortex-core".to_string(),
-    })
+async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let metrics = state.metrics.read().await;
+    Json(serde_json::json!({
+        "resources": [
+            {
+                "id": "res-001",
+                "name": "policycortex-prod-vm",
+                "type": "Microsoft.Compute/virtualMachines",
+                "location": "East US",
+                "status": "Optimized",
+                "tags": {"Environment": "Production", "Owner": "AeoliTech"}
+            },
+            {
+                "id": "res-002",
+                "name": "policycortex-storage",
+                "type": "Microsoft.Storage/storageAccounts",
+                "location": "East US",
+                "status": "Compliant",
+                "tags": {"Environment": "Production", "Encrypted": "true"}
+            }
+        ],
+        "total": metrics.resources.total,
+        "optimized": metrics.resources.optimized,
+        "idle": metrics.resources.idle
+    }))
 }
 
-#[derive(Serialize)]
-struct Policy {
-    id: String,
-    name: String,
-    category: String,
-    severity: String,
-    status: String,
-}
-
-async fn get_policies() -> Json<Vec<Policy>> {
-    // Mock data for now
-    let policies = vec![
-        Policy {
-            id: "pol-1".to_string(),
-            name: "Require HTTPS for Storage".to_string(),
-            category: "Security".to_string(),
-            severity: "High".to_string(),
-            status: "Active".to_string(),
+async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let metrics = state.metrics.read().await;
+    Json(serde_json::json!({
+        "compliance": {
+            "overall_rate": metrics.policies.compliance_rate,
+            "policies_evaluated": metrics.policies.total,
+            "resources_scanned": metrics.resources.total,
+            "violations_found": metrics.policies.violations,
+            "auto_remediated": 8,
+            "prediction_accuracy": metrics.policies.prediction_accuracy
         },
-        Policy {
-            id: "pol-2".to_string(),
-            name: "Enforce Tagging Standards".to_string(),
-            category: "Governance".to_string(),
-            severity: "Medium".to_string(),
-            status: "Active".to_string(),
-        },
-    ];
-    Json(policies)
-}
-
-#[derive(Deserialize)]
-struct CreatePolicyRequest {
-    name: String,
-    category: String,
-    severity: String,
-}
-
-async fn create_policy(Json(payload): Json<CreatePolicyRequest>) -> StatusCode {
-    info!("Creating policy: {}", payload.name);
-    StatusCode::CREATED
-}
-
-#[derive(Serialize)]
-struct Resource {
-    id: String,
-    name: String,
-    resource_type: String,
-    location: String,
-}
-
-async fn get_resources() -> Json<Vec<Resource>> {
-    let resources = vec![
-        Resource {
-            id: "res-1".to_string(),
-            name: "stcontoso01".to_string(),
-            resource_type: "Storage Account".to_string(),
-            location: "East US".to_string(),
-        },
-    ];
-    Json(resources)
-}
-
-#[derive(Serialize)]
-struct ComplianceResult {
-    policy_id: String,
-    resource_id: String,
-    status: String,
-    checked_at: String,
-}
-
-async fn get_compliance() -> Json<Vec<ComplianceResult>> {
-    let results = vec![
-        ComplianceResult {
-            policy_id: "pol-1".to_string(),
-            resource_id: "res-1".to_string(),
-            status: "Compliant".to_string(),
-            checked_at: "2024-01-15T10:00:00Z".to_string(),
-        },
-    ];
-    Json(results)
+        "by_category": {
+            "Security": 99.2,
+            "Governance": 98.5,
+            "Compliance": 100.0,
+            "Cost": 94.3
+        }
+    }))
 }
