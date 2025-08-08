@@ -14,7 +14,10 @@ use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
+mod azure_client;
+
 use api::{AppState, get_metrics, get_predictions, get_recommendations, process_conversation, get_correlations};
+use azure_client::AzureClient;
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -52,8 +55,22 @@ async fn main() {
     info!("Starting PolicyCortex v2 Core Service");
     info!("Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation");
 
-    // Initialize application state
-    let app_state = Arc::new(AppState::new());
+    // Initialize Azure client if credentials are available
+    let azure_client = match AzureClient::new().await {
+        Ok(client) => {
+            info!("✅ Azure client initialized successfully - real data enabled");
+            Some(client)
+        }
+        Err(e) => {
+            warn!("⚠️ Failed to initialize Azure client: {} - falling back to mock data", e);
+            None
+        }
+    };
+
+    // Initialize application state with Azure client
+    let mut app_state = AppState::new();
+    app_state.azure_client = azure_client;
+    let app_state = Arc::new(app_state);
 
     // Configure CORS
     let cors = CorsLayer::new()
