@@ -37,7 +37,7 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
   
   const { sendMessage } = useConversation()
   const recognitionRef = useRef<any | null>(null)
-  const synthRef = useRef<SpeechSynthesis | null>(typeof window !== 'undefined' ? window.speechSynthesis : null)
+  const synthRef = useRef<SpeechSynthesis | null>(null)
 
   // Voice commands mapping
   const voiceCommands = {
@@ -70,11 +70,19 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
 
   useEffect(() => {
     setIsClient(true)
+    if (typeof window !== 'undefined') {
+      synthRef.current = window.speechSynthesis
+    }
   }, [])
 
   useEffect(() => {
-    if (isClient && typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition
+    if (isClient && typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
+      
+      if (!SpeechRecognition) {
+        console.log('Speech recognition not supported in this browser')
+        return
+      }
       const recognition = new SpeechRecognition()
       
       recognition.continuous = false
@@ -185,7 +193,7 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
   }
 
   const speakResponse = (text: string) => {
-    if (voiceEnabled && synthRef.current) {
+    if (voiceEnabled && synthRef.current && typeof window !== 'undefined') {
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.rate = 0.9
       utterance.pitch = 1.1
