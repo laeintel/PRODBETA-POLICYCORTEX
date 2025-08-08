@@ -44,7 +44,7 @@ permissions:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: windows-latest
+    runs-on: self-hosted
     outputs:
       core: ${{ steps.changes.outputs.core }}
       frontend: ${{ steps.changes.outputs.frontend }}
@@ -68,7 +68,7 @@ jobs:
 
   test-core:
     name: Test Rust Core
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: changes
     if: needs.changes.outputs.core == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -106,7 +106,7 @@ jobs:
 
   test-frontend:
     name: Test Frontend
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -147,7 +147,7 @@ jobs:
 
   test-graphql:
     name: Test GraphQL Gateway
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: changes
     if: needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -171,7 +171,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: windows-latest
+    runs-on: self-hosted
     if: github.event.inputs.force_deploy != 'true'
     steps:
       - name: Checkout
@@ -206,7 +206,7 @@ jobs:
 
   build-core:
     name: Build Core Service
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [test-core, security-scan]
     if: always() && (needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
@@ -232,7 +232,7 @@ jobs:
 
   build-frontend:
     name: Build Frontend
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [test-frontend, security-scan]
     if: always() && (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
@@ -258,7 +258,7 @@ jobs:
 
   build-graphql:
     name: Build GraphQL Gateway
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [test-graphql, security-scan]
     if: always() && (needs.test-graphql.result == 'success' || needs.test-graphql.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
@@ -284,7 +284,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql]
     if: always() && needs.build-core.result == 'success' && needs.build-frontend.result == 'success' && needs.build-graphql.result == 'success'
     services:
@@ -338,7 +338,7 @@ jobs:
 
   deploy-dev:
     name: Deploy to Development
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
     environment: development
@@ -381,7 +381,7 @@ jobs:
 
   deploy-staging:
     name: Deploy to Staging
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     environment: staging
@@ -424,7 +424,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to Production
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
     environment: production
@@ -507,7 +507,7 @@ jobs:
 
   notify:
     name: Notify Deployment Status
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [deploy-dev, deploy-staging, deploy-prod]
     if: always()
     steps:

@@ -37,7 +37,7 @@ permissions:
 jobs:
   validate:
     name: Validate Infrastructure
-    runs-on: windows-latest
+    runs-on: self-hosted
     permissions:
       contents: read
     steps:
@@ -72,7 +72,7 @@ jobs:
 
   security-scan:
     name: Security Scan Infrastructure
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: validate
     steps:
       - name: Checkout
@@ -108,7 +108,7 @@ jobs:
 
   deploy-dev:
     name: Deploy to Development
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [validate, security-scan]
     if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
     environment: development
@@ -160,7 +160,7 @@ jobs:
 
   deploy-staging:
     name: Deploy to Staging
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [validate, security-scan]
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     environment: staging
@@ -212,7 +212,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to Production
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [validate, security-scan]
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
     environment: production
@@ -269,7 +269,7 @@ jobs:
 
   notify:
     name: Notify Deployment Status
-    runs-on: windows-latest
+    runs-on: self-hosted
     needs: [deploy-dev, deploy-staging, deploy-prod]
     if: always()
     steps:
