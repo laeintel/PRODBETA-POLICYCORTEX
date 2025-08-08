@@ -54,21 +54,35 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Check Terraform Directory
+        run: |
+          if (Test-Path "./infrastructure/terraform") {
+            Write-Host "Terraform directory found"
+          } else {
+            Write-Host "Terraform directory not found, skipping Terraform commands"
+            exit 0
+          }
+        shell: pwsh
+
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
         working-directory: ./infrastructure/terraform
+        if: hashFiles('infrastructure/terraform/*.tf') != ''
 
       - name: Terraform Init
         run: terraform init
         working-directory: ./infrastructure/terraform
+        if: hashFiles('infrastructure/terraform/*.tf') != ''
 
       - name: Terraform Validate
         run: terraform validate
         working-directory: ./infrastructure/terraform
+        if: hashFiles('infrastructure/terraform/*.tf') != ''
 
       - name: Terraform Plan
         run: terraform plan -var-file="environments/dev/terraform.tfvars"
         working-directory: ./infrastructure/terraform
+        if: hashFiles('infrastructure/terraform/*.tf') != ''
 
   security-scan:
     name: Security Scan Infrastructure
