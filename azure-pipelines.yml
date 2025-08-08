@@ -9,7 +9,7 @@ pr: none
 variables:
   # Container Registry
   dockerRegistryServiceConnection: 'PolicyCortexACR'
-  containerRegistry: 'policycortexacr.azurecr.io'
+  containerRegistry: 'crpolicortex001dev.azurecr.io'
   
   # Build Configuration
   buildConfiguration: 'Release'
@@ -22,7 +22,7 @@ variables:
   
   # Deployment
   azureSubscription: 'PolicyCortex-Production'
-  resourceGroupName: 'rg-policycortex-$(environment)'
+  resourceGroupName: 'rg-pcx-app-$(environment)'
   
   # Caching
   PYTHON_PIP_CACHE_DIR: $(Pipeline.Workspace)/.pip
@@ -122,7 +122,7 @@ stages:
           - task: Docker@2
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: 'pcx-$(serviceName)'
+              repository: 'policortex001-$(serviceName)'
               command: 'buildAndPush'
               Dockerfile: 'backend/services/$(serviceName)/Dockerfile'
               buildContext: 'backend'
@@ -174,7 +174,7 @@ stages:
           - task: Docker@2
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
-              repository: 'pcx-frontend'
+              repository: 'policortex001-frontend'
               command: 'buildAndPush'
               Dockerfile: 'frontend/Dockerfile'
               buildContext: 'frontend'
@@ -213,9 +213,9 @@ stages:
             displayName: 'Start test environment'
 
           - script: |
-              # Wait for services to be ready - check Container Apps instead of localhost
+              # Wait for services to be ready - check Container Apps
               for i in {1..30}; do
-                if curl -f https://ca-api-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io/health; then
+                if curl -f https://ca-pcx-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io/health; then
                   echo "Container Apps services are ready"
                   break
                 fi
@@ -262,22 +262,24 @@ stages:
           vmImage: 'ubuntu-latest'
         
         steps:
-          - task: WhiteSource@21
+          - task: MicrosoftSecurityDevOps@1
             inputs:
-              cwd: '$(System.DefaultWorkingDirectory)'
-              projectName: 'PolicyCortex'
-            displayName: 'WhiteSource scan'
+              categories: 'secrets,dependencies,IaC,SAST'
+              languages: 'python,javascript,typescript'
+              tools: 'bandit,eslint,templateanalyzer,terrascan,trivy'
+            displayName: 'Microsoft Security DevOps scan'
 
           - script: |
-              # Install and run OWASP dependency check
-              wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
-              unzip dependency-check-8.4.0-release.zip
+              # Install and run OWASP dependency check with scan command
+              wget https://github.com/jeremylong/DependencyCheck/releases/download/v9.0.7/dependency-check-9.0.7-release.zip
+              unzip dependency-check-9.0.7-release.zip
               ./dependency-check/bin/dependency-check.sh \
-                --project "PolicyCortex" \
                 --scan . \
+                --project "PolicyCortex" \
                 --format "ALL" \
-                --out $(Agent.TempDirectory)/dependency-check
-            displayName: 'OWASP Dependency Check'
+                --out $(Agent.TempDirectory)/dependency-check \
+                --failOnCVSS 7
+            displayName: 'OWASP Dependency Scan'
 
           - task: PublishBuildArtifacts@1
             inputs:

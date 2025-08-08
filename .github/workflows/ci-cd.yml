@@ -1,0 +1,231 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: crpolicortex001dev.azurecr.io
+  AZURE_RESOURCE_GROUP: rg-pcx-app-dev
+
+jobs:
+  # Build and Test Backend Services
+  build-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api_gateway, azure_integration, ai_engine, data_processing, conversation, notification]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/services/${{ matrix.service }}/requirements.txt') }}
+    
+    - name: Install dependencies
+      run: |
+        cd backend/services/${{ matrix.service }}
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov flake8 black isort
+    
+    - name: Lint code
+      run: |
+        cd backend/services/${{ matrix.service }}
+        flake8 . --max-line-length=100 --exclude=venv
+        black . --check --line-length=100
+        isort . --check-only --profile black
+    
+    - name: Run tests
+      run: |
+        cd backend/services/${{ matrix.service }}
+        if [ -d "tests" ]; then
+          pytest tests/ -v --cov=. --cov-report=xml
+        else
+          echo "No tests directory found, skipping tests"
+        fi
+    
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.REGISTRY }}
+        username: ${{ secrets.AZURE_CLIENT_ID }}
+        password: ${{ secrets.AZURE_CLIENT_SECRET }}
+    
+    - name: Build and push Docker image
+      run: |
+        cd backend/services/${{ matrix.service }}
+        docker build -t ${{ env.REGISTRY }}/policortex001-${{ matrix.service }}:${{ github.sha }} .
+        docker push ${{ env.REGISTRY }}/policortex001-${{ matrix.service }}:${{ github.sha }}
+
+  # Build and Test Frontend
+  build-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Lint and type check
+      run: |
+        cd frontend
+        npm run lint
+        npm run type-check
+    
+    - name: Run tests
+      run: |
+        cd frontend
+        npm run test:unit -- --coverage
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+    
+    - name: Login to Azure Container Registry
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.REGISTRY }}
+        username: ${{ secrets.AZURE_CLIENT_ID }}
+        password: ${{ secrets.AZURE_CLIENT_SECRET }}
+    
+    - name: Build and push Docker image
+      run: |
+        cd frontend
+        docker build -t ${{ env.REGISTRY }}/policortex001-frontend:${{ github.sha }} .
+        docker push ${{ env.REGISTRY }}/policortex001-frontend:${{ github.sha }}
+
+  # Security Scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Microsoft Security DevOps
+      uses: microsoft/security-devops-action@v1
+      id: msdo
+      with:
+        categories: 'secrets,dependencies,IaC,SAST'
+        languages: 'python,javascript,typescript'
+        tools: 'bandit,eslint,templateanalyzer,terrascan,trivy'
+    
+    - name: Upload security results
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-results
+        path: ${{ steps.msdo.outputs.sarifFile }}
+
+  # Deploy to Development
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend, security-scan]
+    if: github.ref == 'refs/heads/main'
+    environment: development
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy to Azure Container Apps
+      run: |
+        # Deploy backend services
+        services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
+        
+        for service in "${services[@]}"; do
+          service_name=$(echo $service | tr '-' '_')
+          echo "Deploying $service_name to ca-pcx-${service}-dev"
+          
+          az containerapp update \
+            --name ca-pcx-${service}-dev \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.REGISTRY }}/policortex001-${service_name}:${{ github.sha }} \
+            --revision-suffix v${{ github.run_number }} \
+            --output none || echo "Warning: Failed to update ca-pcx-${service}-dev"
+        done
+        
+        # Deploy frontend
+        echo "Deploying frontend to ca-pcx-frontend-dev"
+        az containerapp update \
+          --name ca-pcx-frontend-dev \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --image ${{ env.REGISTRY }}/policortex001-frontend:${{ github.sha }} \
+          --revision-suffix v${{ github.run_number }} \
+          --output none || echo "Warning: Failed to update frontend"
+    
+    - name: Health check
+      run: |
+        echo "Waiting for deployment to be ready..."
+        sleep 60
+        
+        # Check if services are responding
+        curl -f https://ca-pcx-gateway-dev.delightfulsmoke-bbe56ef9.eastus.azurecontainerapps.io/health || exit 1
+        echo "Development deployment successful!"
+
+  # Deploy to Staging (only on main branch)
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy to Azure Container Apps Staging
+      run: |
+        # Deploy backend services to staging
+        services=("api-gateway" "azure-integration" "ai-engine" "data-processing" "conversation" "notification")
+        
+        for service in "${services[@]}"; do
+          service_name=$(echo $service | tr '-' '_')
+          echo "Deploying $service_name to ca-pcx-${service}-staging"
+          
+          az containerapp update \
+            --name ca-pcx-${service}-staging \
+            --resource-group rg-pcx-app-staging \
+            --image ${{ env.REGISTRY }}/policortex001-${service_name}:${{ github.sha }} \
+            --revision-suffix v${{ github.run_number }} \
+            --output none || echo "Warning: Failed to update ca-pcx-${service}-staging"
+        done
+        
+        # Deploy frontend to staging
+        echo "Deploying frontend to ca-pcx-frontend-staging"
+        az containerapp update \
+          --name ca-pcx-frontend-staging \
+          --resource-group rg-pcx-app-staging \
+          --image ${{ env.REGISTRY }}/policortex001-frontend:${{ github.sha }} \
+          --revision-suffix v${{ github.run_number }} \
+          --output none || echo "Warning: Failed to update frontend"
