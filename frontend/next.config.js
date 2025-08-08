@@ -2,9 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    serverActions: true,
-  },
   images: {
     domains: ['localhost'],
   },
@@ -12,11 +9,11 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://core:8080/api/:path*',
+        destination: 'http://localhost:8080/api/:path*',
       },
       {
         source: '/graphql',
-        destination: 'http://graphql:4000/graphql',
+        destination: 'http://localhost:4000/graphql',
       },
     ];
   },

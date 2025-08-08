@@ -14,10 +14,15 @@ use tracing::{info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
+mod auth;
 mod azure_client;
+mod azure_client_async;
+mod cache;
 
 use api::{AppState, get_metrics, get_predictions, get_recommendations, process_conversation, get_correlations};
+use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
+use azure_client_async::AsyncAzureClient;
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -55,20 +60,33 @@ async fn main() {
     info!("Starting PolicyCortex v2 Core Service");
     info!("Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation");
 
-    // Initialize Azure client if credentials are available
-    let azure_client = match AzureClient::new().await {
+    // Initialize high-performance async Azure client first
+    let async_azure_client = match AsyncAzureClient::new().await {
         Ok(client) => {
-            info!("✅ Azure client initialized successfully - real data enabled");
+            info!("🚀 High-performance async Azure client initialized - ultra-fast data access enabled");
             Some(client)
         }
         Err(e) => {
-            warn!("⚠️ Failed to initialize Azure client: {} - falling back to mock data", e);
+            warn!("⚠️ Failed to initialize async Azure client: {}", e);
             None
         }
     };
 
-    // Initialize application state with Azure client
+    // Initialize fallback Azure client
+    let azure_client = match AzureClient::new().await {
+        Ok(client) => {
+            info!("✅ Fallback Azure client initialized");
+            Some(client)
+        }
+        Err(e) => {
+            warn!("⚠️ Failed to initialize fallback Azure client: {} - using mock data only", e);
+            None
+        }
+    };
+
+    // Initialize application state with both clients
     let mut app_state = AppState::new();
+    app_state.async_azure_client = async_azure_client;
     app_state.azure_client = azure_client;
     let app_state = Arc::new(app_state);
 

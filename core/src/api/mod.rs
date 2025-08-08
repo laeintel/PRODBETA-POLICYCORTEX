@@ -4,6 +4,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
+use crate::auth::{AuthUser, OptionalAuthUser, TenantContext};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -169,6 +170,7 @@ pub struct AppState {
     pub recommendations: Arc<RwLock<Vec<ProactiveRecommendation>>>,
     pub start_time: std::time::Instant,
     pub azure_client: Option<crate::azure_client::AzureClient>,
+    pub async_azure_client: Option<crate::azure_client_async::AsyncAzureClient>,
 }
 
 impl AppState {
@@ -257,23 +259,55 @@ impl AppState {
             recommendations: Arc::new(RwLock::new(recommendations)),
             start_time: std::time::Instant::now(),
             azure_client: None, // Will be initialized in main
+            async_azure_client: None, // Will be initialized in main
         }
     }
 }
 
 // API Handlers
 pub async fn get_metrics(
+    auth_user: OptionalAuthUser,
     State(state): State<Arc<AppState>>
 ) -> impl IntoResponse {
-    // Try to get real Azure data first
-    if let Some(ref azure_client) = state.azure_client {
-        match azure_client.get_governance_metrics().await {
+    // Log authentication status
+    if let Some(ref user) = auth_user.0 {
+        tracing::info!("Authenticated request for metrics from user: {:?}", user.claims.preferred_username);
+        
+        // Get tenant context for multi-tenant data access
+        if let Ok(tenant_context) = TenantContext::from_user(user).await {
+            tracing::debug!("User has access to tenant: {} with {} subscriptions", 
+                          tenant_context.tenant_id, tenant_context.subscription_ids.len());
+        }
+    } else {
+        tracing::debug!("Anonymous request for metrics - attempting to use Azure CLI credentials");
+    }
+
+    // Always try to get real Azure data when Azure client is available
+    // This works for local development with Azure CLI authentication
+    
+    // Try high-performance async client first
+    if let Some(ref async_azure_client) = state.async_azure_client {
+        match async_azure_client.get_governance_metrics().await {
             Ok(real_metrics) => {
-                tracing::info!("Successfully fetched real Azure metrics");
+                tracing::info!("✅ Real Azure metrics fetched with async client (cached)");
                 return Json(real_metrics);
             }
             Err(e) => {
-                tracing::warn!("Failed to fetch real Azure metrics, falling back to mock data: {}", e);
+                tracing::warn!("Async Azure client failed: {}", e);
+            }
+        }
+    }
+
+    // Fallback to synchronous client
+    if let Some(ref azure_client) = state.azure_client {
+        match azure_client.get_governance_metrics().await {
+            Ok(real_metrics) => {
+                tracing::info!("✅ Real Azure metrics fetched with sync client");
+                return Json(real_metrics);
+            }
+            Err(e) => {
+                tracing::warn!("Failed to fetch real Azure metrics: {}", e);
+                tracing::debug!("Error details: {:?}", e);
             }
         }
     }
@@ -317,12 +351,20 @@ pub async fn get_recommendations(
 }
 
 pub async fn process_conversation(
+    auth_user: OptionalAuthUser,
     State(_state): State<Arc<AppState>>,
     Json(request): Json<ConversationRequest>
 ) -> impl IntoResponse {
-    // Simulate NLP processing
+    // Get user context for personalized responses
+    let user_context = if let Some(ref user) = auth_user.0 {
+        format!(" (authenticated as {})", user.claims.preferred_username.as_deref().unwrap_or("unknown user"))
+    } else {
+        " (anonymous user)".to_string()
+    };
+
+    // Simulate NLP processing with user context
     let response = ConversationResponse {
-        response: format!("I understand you're asking about: {}. Based on your environment analysis, I recommend reviewing the cost optimization opportunities that could save you $12,450/month.", request.query),
+        response: format!("I understand you're asking about: {}{}. Based on your environment analysis, I recommend reviewing the cost optimization opportunities that could save you $12,450/month.", request.query, user_context),
         intent: "cost_inquiry".to_string(),
         confidence: 92.5,
         suggested_actions: vec![
