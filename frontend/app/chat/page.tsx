@@ -1,26 +1,22 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  ArrowLeft,
   Send,
   Bot,
   User,
   Sparkles,
   Code,
-  FileText,
   CheckCircle,
-  AlertTriangle,
   DollarSign,
   Shield,
   Users,
   Server,
-  Zap,
   Brain
 } from 'lucide-react'
 import { useConversation } from '../../lib/api'
+import AppLayout from '../../components/AppLayout'
 
 interface Message {
   id: string
@@ -34,7 +30,6 @@ interface Message {
 }
 
 export default function ChatPage() {
-  const router = useRouter()
   const { sendMessage, loading } = useConversation()
   const [messages, setMessages] = useState<Message[]>([])
   const [isInitialized, setIsInitialized] = useState(false)
@@ -138,18 +133,11 @@ export default function ChatPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col">
-      {/* Header */}
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-md">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Dashboard</span>
-            </button>
+    <AppLayout>
+      <div className="h-screen flex flex-col">
+        {/* Header */}
+        <div className="border-b border-white/10 bg-black/20 backdrop-blur-md">
+          <div className="px-6 py-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
                 <Brain className="w-4 h-4 text-white" />
@@ -159,10 +147,8 @@ export default function ChatPage() {
                 <p className="text-sm text-gray-400">Patent #3: Conversational Intelligence</p>
               </div>
             </div>
-            <div className="w-24" /> {/* Spacer for centering */}
           </div>
         </div>
-      </div>
 
       {/* Chat Messages */}
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6 overflow-auto">
@@ -323,6 +309,7 @@ export default function ChatPage() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </AppLayout>
   )
 }

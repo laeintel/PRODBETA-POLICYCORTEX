@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useGovernanceData } from '../lib/api'
+import AppLayout from './AppLayout'
 import { 
   Shield, 
   AlertCircle, 
@@ -55,18 +56,20 @@ export default function DashboardContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-400 mb-4">Connection Error</h1>
-          <p className="text-white mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Retry Connection
-          </button>
+      <AppLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-400 mb-4">Connection Error</h1>
+            <p className="text-white mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Retry Connection
+            </button>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
@@ -77,13 +80,6 @@ export default function DashboardContent() {
       icon: Home,
       description: 'Complete governance overview',
       color: 'purple'
-    },
-    {
-      id: 'chat',
-      title: 'AI Assistant',
-      icon: Brain,
-      description: 'Conversational intelligence',
-      color: 'indigo'
     },
     {
       id: 'policies',
@@ -181,113 +177,64 @@ export default function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <motion.div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"
-          />
-          <p className="text-white">AI is analyzing your environment...</p>
-        </motion.div>
-      </div>
+      <AppLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <motion.div className="text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full mx-auto mb-4"
+            />
+            <p className="text-white">AI is analyzing your environment...</p>
+          </motion.div>
+        </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
-      {/* Sidebar */}
-      <motion.div
-        initial={{ x: -300 }}
-        animate={{ x: 0 }}
-        className="w-72 bg-black/30 backdrop-blur-md border-r border-white/10"
-      >
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">PolicyCortex</h2>
-              <p className="text-xs text-gray-400">AI Governance Suite</p>
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <div className="bg-purple-600/20 rounded-lg p-3 border border-purple-500/30">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-purple-300">AI Learning Progress</span>
-                <Brain className={`w-4 h-4 ${(metrics?.ai.learning_progress || 0) >= 100 ? 'text-green-400' : 'text-purple-400 animate-pulse'}`} />
-              </div>
-              <div className="w-full bg-purple-900/50 rounded-full h-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${metrics?.ai.learning_progress || 0}%` }}
-                  className={`h-2 rounded-full ${
-                    (metrics?.ai.learning_progress || 0) >= 100 
-                      ? 'bg-gradient-to-r from-green-400 to-emerald-400' 
-                      : (metrics?.ai.learning_progress || 0) >= 95
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-400'
-                      : 'bg-gradient-to-r from-purple-400 to-pink-400'
-                  }`}
-                />
-              </div>
-              <p className="text-xs text-purple-300 mt-1">
-                {(metrics?.ai.learning_progress || 0) >= 100 
-                  ? '🎉 AI Training Complete - Expert Level Achieved'
-                  : (metrics?.ai.learning_progress || 0) >= 95
-                  ? `🚀 ${metrics?.ai.learning_progress.toFixed(1)}% - Finalizing Domain Expertise`
-                  : `🧠 ${metrics?.ai.learning_progress.toFixed(1)}% Environment Learned`
-                }
-              </p>
-            </div>
-          </div>
-
-          <nav className="space-y-1">
-            {modules.map((module, index) => (
-              <motion.button
-                key={module.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => module.id === 'chat' ? router.push('/chat') : setSelectedModule(module.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  selectedModule === module.id
-                    ? 'bg-purple-600/30 text-white border-l-4 border-purple-400'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <module.icon className="w-5 h-5" />
-                <div className="text-left">
-                  <p className="font-medium">{module.title}</p>
-                  <p className="text-xs opacity-70">{module.description}</p>
-                </div>
-              </motion.button>
-            ))}
-          </nav>
-          
-          <button
-            onClick={() => router.push('/')}
-            className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-all mt-8"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
-        </div>
-      </motion.div>
-
+    <AppLayout>
       {/* Main Content */}
-      <div className="flex-1 p-8 overflow-auto">
+      <div className="p-8 overflow-auto">
         {selectedModule === 'overview' ? (
           <>
-            {/* Header */}
+            {/* Header with AI Learning Progress */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="mb-8"
             >
               <h1 className="text-4xl font-bold text-white mb-2">Unified Cloud Governance</h1>
-              <p className="text-gray-300">Complete visibility and control across all Azure resources</p>
+              <p className="text-gray-300 mb-4">Complete visibility and control across all Azure resources</p>
+              
+              {/* AI Learning Progress Bar */}
+              <div className="bg-purple-600/20 rounded-lg p-3 border border-purple-500/30 max-w-md">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-purple-300">AI Learning Progress</span>
+                  <Brain className={`w-4 h-4 ${(metrics?.ai.learning_progress || 0) >= 100 ? 'text-green-400' : 'text-purple-400 animate-pulse'}`} />
+                </div>
+                <div className="w-full bg-purple-900/50 rounded-full h-2">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${metrics?.ai.learning_progress || 0}%` }}
+                    className={`h-2 rounded-full ${
+                      (metrics?.ai.learning_progress || 0) >= 100 
+                        ? 'bg-gradient-to-r from-green-400 to-emerald-400' 
+                        : (metrics?.ai.learning_progress || 0) >= 95
+                        ? 'bg-gradient-to-r from-yellow-400 to-orange-400'
+                        : 'bg-gradient-to-r from-purple-400 to-pink-400'
+                    }`}
+                  />
+                </div>
+                <p className="text-xs text-purple-300 mt-1">
+                  {(metrics?.ai.learning_progress || 0) >= 100 
+                    ? '🎉 AI Training Complete - Expert Level Achieved'
+                    : (metrics?.ai.learning_progress || 0) >= 95
+                    ? `🚀 ${metrics?.ai.learning_progress.toFixed(1)}% - Finalizing Domain Expertise`
+                    : `🧠 ${metrics?.ai.learning_progress.toFixed(1)}% Environment Learned`
+                  }
+                </p>
+              </div>
             </motion.div>
 
             {/* Integrated Metrics Grid */}
@@ -442,20 +389,12 @@ export default function DashboardContent() {
                       ))}
                     </div>
                   )}
-                  
-                  <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">Module Details</h2>
-                    <p className="text-gray-300">
-                      This module provides comprehensive {module?.title?.toLowerCase()} capabilities with AI-driven automation
-                      and proactive recommendations based on your specific environment.
-                    </p>
-                  </div>
                 </>
               )
             })()}
           </motion.div>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }
