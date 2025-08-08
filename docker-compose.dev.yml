@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: policycortex-postgres
+    environment:
+      POSTGRES_DB: policycortex_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d policycortex_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: policycortex-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Rust Core Service
+  core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    container_name: policycortex-core
+    env_file:
+      - .env.development
+    environment:
+      # Azure Configuration
+      AZURE_SUBSCRIPTION_ID: ${AZURE_SUBSCRIPTION_ID}
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      # Redis Configuration
+      REDIS_URL: redis://redis:6379
+      # Database Configuration
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/policycortex_dev
+      # Application Configuration
+      RUST_LOG: debug,azure_core=debug
+      ENABLE_REAL_AZURE_DATA: "true"
+      ENABLE_CACHE: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # GraphQL Gateway
+  graphql:
+    build:
+      context: ./graphql
+      dockerfile: Dockerfile
+    container_name: policycortex-graphql
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      CORE_SERVICE_URL: http://core:8080
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "4000:4000"
+    depends_on:
+      core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: policycortex-frontend
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_GRAPHQL_ENDPOINT: http://localhost:4000/graphql
+      NEXT_PUBLIC_AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      NEXT_PUBLIC_AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+    ports:
+      - "3000:3000"
+    depends_on:
+      core:
+        condition: service_healthy
+      graphql:
+        condition: service_healthy
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: policycortex-dev
+    driver: bridge

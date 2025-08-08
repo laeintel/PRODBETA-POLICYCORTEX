@@ -1,0 +1,19 @@
+{
+  "name": "policycortex-edge",
+  "version": "2.0.0",
+  "description": "PolicyCortex Edge Functions",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787",
+    "deploy": "wrangler deploy",
+    "build": "wrangler build"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.22.1"
+  },
+  "author": "AeoliTech",
+  "license": "PROPRIETARY"
+}

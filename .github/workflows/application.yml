@@ -1,0 +1,531 @@
+name: Application CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - 'infrastructure/**'
+      - 'docs/**'
+      - '*.md'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'infrastructure/**'
+      - 'docs/**'
+      - '*.md'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      force_deploy:
+        description: 'Force deployment (skip tests)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+  IMAGE_TAG: ${{ github.sha }}
+
+# Permissions for GitHub Actions
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: self-hosted
+    outputs:
+      core: ${{ steps.changes.outputs.core }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      graphql: ${{ steps.changes.outputs.graphql }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            core:
+              - 'core/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            frontend:
+              - 'frontend/**'
+              - 'package.json'
+              - 'package-lock.json'
+            graphql:
+              - 'graphql/**'
+
+  test-core:
+    name: Test Rust Core
+    runs-on: self-hosted
+    needs: changes
+    if: needs.changes.outputs.core == 'true' || github.event.inputs.force_deploy == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Rust Dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core
+
+      - name: Format Check
+        run: cargo fmt --all -- --check
+        working-directory: ./core
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: ./core
+
+      - name: Run Tests
+        run: cargo test --verbose
+        working-directory: ./core
+
+      - name: Security Audit
+        run: |
+          cargo install cargo-audit
+          cargo audit
+        working-directory: ./core
+        shell: bash
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: self-hosted
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Type Check
+        run: npm run type-check
+        working-directory: ./frontend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: ./frontend
+
+      - name: Test
+        run: npm test -- --coverage
+        working-directory: ./frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: ./frontend
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./frontend/coverage
+
+  test-graphql:
+    name: Test GraphQL Gateway
+    runs-on: self-hosted
+    needs: changes
+    if: needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: graphql/package.json
+
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./graphql
+
+      - name: Test GraphQL Schema
+        run: npm test
+        working-directory: ./graphql
+
+  security-scan:
+    name: Security Scan
+    runs-on: self-hosted
+    if: github.event.inputs.force_deploy != 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip OWASP Dependency Check (Windows compatibility issue)
+        run: echo "Skipping OWASP dependency check on self-hosted Windows runner"
+
+      - name: Trivy Container Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+  build-core:
+    name: Build Core Service
+    runs-on: self-hosted
+    needs: [test-core, security-scan]
+    if: always() && (needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Container Registry
+        run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+
+      - name: Build and Push Core Image
+        run: |
+          docker build -t $REGISTRY/policycortex-core:$IMAGE_TAG -t $REGISTRY/policycortex-core:latest ./core
+          docker push $REGISTRY/policycortex-core:$IMAGE_TAG
+          docker push $REGISTRY/policycortex-core:latest
+        shell: bash
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: self-hosted
+    needs: [test-frontend, security-scan]
+    if: always() && (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Container Registry
+        run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -f ./frontend/Dockerfile -t $REGISTRY/policycortex-frontend:$IMAGE_TAG -t $REGISTRY/policycortex-frontend:latest ./frontend
+          docker push $REGISTRY/policycortex-frontend:$IMAGE_TAG
+          docker push $REGISTRY/policycortex-frontend:latest
+        shell: bash
+
+  build-graphql:
+    name: Build GraphQL Gateway
+    runs-on: self-hosted
+    needs: [test-graphql, security-scan]
+    if: always() && (needs.test-graphql.result == 'success' || needs.test-graphql.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Container Registry
+        run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+
+      - name: Build and Push GraphQL Image
+        run: |
+          docker build -t $REGISTRY/policycortex-graphql:$IMAGE_TAG -t $REGISTRY/policycortex-graphql:latest ./graphql
+          docker push $REGISTRY/policycortex-graphql:$IMAGE_TAG
+          docker push $REGISTRY/policycortex-graphql:latest
+        shell: bash
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: self-hosted
+    needs: [build-core, build-frontend, build-graphql]
+    if: always() && needs.build-core.result == 'success' && needs.build-frontend.result == 'success' && needs.build-graphql.result == 'success'
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: policycortex_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Compose
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 30
+
+      - name: Run API Tests
+        run: |
+          curl -f http://localhost:8080/health
+          curl -f http://localhost:8080/api/v1/metrics
+          curl -f http://localhost:3000/
+
+      - name: Run E2E Tests
+        run: |
+          npm ci
+          npm run test:e2e
+        working-directory: ./frontend
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose -f docker-compose.test.yml down
+
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: self-hosted
+    needs: [build-core, build-frontend, build-graphql, integration-tests]
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    environment: development
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS Credentials
+        run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --name ${{ secrets.AKS_CLUSTER_NAME_DEV }}
+
+      - name: Deploy to AKS
+        run: |
+          # Update image tags in Kubernetes manifests
+          sed -i "s|{{IMAGE_TAG}}|${{ env.IMAGE_TAG }}|g" infrastructure/kubernetes/dev/*.yaml
+          sed -i "s|{{REGISTRY}}|${{ env.REGISTRY }}|g" infrastructure/kubernetes/dev/*.yaml
+          
+          # Apply manifests
+          kubectl apply -f infrastructure/kubernetes/dev/
+
+      - name: Wait for Deployment
+        run: |
+          kubectl rollout status deployment/policycortex-core -n policycortex-dev
+          kubectl rollout status deployment/policycortex-frontend -n policycortex-dev
+          kubectl rollout status deployment/policycortex-graphql -n policycortex-dev
+
+      - name: Run Smoke Tests
+        run: |
+          # Get service endpoints
+          FRONTEND_URL=$(kubectl get service policycortex-frontend -n policycortex-dev -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          
+          # Test application endpoints
+          curl -f http://$FRONTEND_URL/health || echo "Smoke test failed"
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: self-hosted
+    needs: [build-core, build-frontend, build-graphql, integration-tests]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS Credentials
+        run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} --name ${{ secrets.AKS_CLUSTER_NAME_STAGING }}
+
+      - name: Deploy to AKS
+        run: |
+          # Update image tags in Kubernetes manifests
+          sed -i "s|{{IMAGE_TAG}}|${{ env.IMAGE_TAG }}|g" infrastructure/kubernetes/staging/*.yaml
+          sed -i "s|{{REGISTRY}}|${{ env.REGISTRY }}|g" infrastructure/kubernetes/staging/*.yaml
+          
+          # Apply manifests
+          kubectl apply -f infrastructure/kubernetes/staging/
+
+      - name: Wait for Deployment
+        run: |
+          kubectl rollout status deployment/policycortex-core -n policycortex-staging
+          kubectl rollout status deployment/policycortex-frontend -n policycortex-staging
+          kubectl rollout status deployment/policycortex-graphql -n policycortex-staging
+
+      - name: Run Performance Tests
+        run: |
+          # Install k6 for performance testing
+          sudo apt-get update && sudo apt-get install -y k6
+          
+          # Run performance tests
+          k6 run scripts/performance-tests.js
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: self-hosted
+    needs: [build-core, build-frontend, build-graphql, integration-tests]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get AKS Credentials
+        run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} --name ${{ secrets.AKS_CLUSTER_NAME_PROD }}
+
+      - name: Pre-deployment Health Check
+        run: |
+          echo "🔍 Running pre-deployment health checks..."
+          # Check current application health
+          kubectl get pods -n policycortex-prod
+          kubectl get services -n policycortex-prod
+
+      - name: Blue-Green Deployment
+        run: |
+          echo "🚀 Starting blue-green deployment..."
+          
+          # Update image tags for green deployment
+          sed -i "s|{{IMAGE_TAG}}|${{ env.IMAGE_TAG }}|g" infrastructure/kubernetes/prod/*.yaml
+          sed -i "s|{{REGISTRY}}|${{ env.REGISTRY }}|g" infrastructure/kubernetes/prod/*.yaml
+          sed -i "s|policycortex-|policycortex-green-|g" infrastructure/kubernetes/prod/*.yaml
+          
+          # Deploy green version
+          kubectl apply -f infrastructure/kubernetes/prod/
+          
+          # Wait for green deployment
+          kubectl rollout status deployment/policycortex-green-core -n policycortex-prod
+          kubectl rollout status deployment/policycortex-green-frontend -n policycortex-prod
+          kubectl rollout status deployment/policycortex-green-graphql -n policycortex-prod
+
+      - name: Production Smoke Tests
+        run: |
+          echo "🧪 Running production smoke tests..."
+          # Test green deployment
+          GREEN_URL=$(kubectl get service policycortex-green-frontend -n policycortex-prod -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          
+          # Comprehensive health check
+          curl -f http://$GREEN_URL/health
+          curl -f http://$GREEN_URL/api/v1/metrics
+          
+          echo "✅ Smoke tests passed"
+
+      - name: Switch Traffic to Green
+        run: |
+          echo "🔄 Switching traffic to green deployment..."
+          
+          # Update service selectors to point to green deployment
+          kubectl patch service policycortex-frontend -n policycortex-prod -p '{"spec":{"selector":{"app":"policycortex-green-frontend"}}}'
+          kubectl patch service policycortex-core -n policycortex-prod -p '{"spec":{"selector":{"app":"policycortex-green-core"}}}'
+          kubectl patch service policycortex-graphql -n policycortex-prod -p '{"spec":{"selector":{"app":"policycortex-green-graphql"}}}'
+          
+          echo "✅ Traffic switched to green deployment"
+
+      - name: Cleanup Blue Deployment
+        run: |
+          echo "🧹 Cleaning up blue deployment..."
+          # Wait a few minutes before cleanup
+          sleep 300
+          
+          # Remove old blue deployments
+          kubectl delete deployment policycortex-core -n policycortex-prod || true
+          kubectl delete deployment policycortex-frontend -n policycortex-prod || true  
+          kubectl delete deployment policycortex-graphql -n policycortex-prod || true
+          
+          # Rename green to blue for next deployment
+          kubectl patch deployment policycortex-green-core -n policycortex-prod -p '{"metadata":{"name":"policycortex-core"}}'
+          kubectl patch deployment policycortex-green-frontend -n policycortex-prod -p '{"metadata":{"name":"policycortex-frontend"}}'
+          kubectl patch deployment policycortex-green-graphql -n policycortex-prod -p '{"metadata":{"name":"policycortex-graphql"}}'
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: self-hosted
+    needs: [deploy-dev, deploy-staging, deploy-prod]
+    if: always()
+    steps:
+      - name: Get Deployment Status
+        run: |
+          echo "DEV_STATUS=${{ needs.deploy-dev.result }}" >> $GITHUB_ENV
+          echo "STAGING_STATUS=${{ needs.deploy-staging.result }}" >> $GITHUB_ENV
+          echo "PROD_STATUS=${{ needs.deploy-prod.result }}" >> $GITHUB_ENV
+
+      - name: Notify Success
+        if: contains(env.DEV_STATUS, 'success') || contains(env.STAGING_STATUS, 'success') || contains(env.PROD_STATUS, 'success')
+        run: |
+          echo "✅ Application deployment completed successfully!"
+          echo "📊 Deployment Summary:"
+          echo "- Development: ${{ env.DEV_STATUS }}"
+          echo "- Staging: ${{ env.STAGING_STATUS }}"
+          echo "- Production: ${{ env.PROD_STATUS }}"
+          echo "📍 Branch: ${{ github.ref_name }}"
+          echo "🔄 Commit: ${{ github.sha }}"
+          echo "📅 Deployed at: $(date)"
+
+      - name: Notify Failure
+        if: contains(env.DEV_STATUS, 'failure') || contains(env.STAGING_STATUS, 'failure') || contains(env.PROD_STATUS, 'failure')
+        run: |
+          echo "❌ Application deployment failed!"
+          echo "📊 Deployment Status:"
+          echo "- Development: ${{ env.DEV_STATUS }}"
+          echo "- Staging: ${{ env.STAGING_STATUS }}"  
+          echo "- Production: ${{ env.PROD_STATUS }}"
+          echo "🔧 Please check the logs and resolve any issues"
+          exit 1

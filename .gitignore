@@ -1,75 +1,16 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-.pytest_cache/
-.coverage
-.coverage.*
-*.cover
-.hypothesis/
-.pytype/
-.mypy_cache/
-.dmypy.json
-dmypy.json
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-
-# Node.js
+# Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
-.npm
-.eslintcache
-.stylelintcache
-.yarn-integrity
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
+target/
 dist/
 build/
+.next/
+out/
 
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-# *.tfvars  # Commented out to allow environment-specific tfvars
-*.tfvars.json
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-crash.log
-crash.*.log
-
-# Azure
-.azure/
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
 
 # IDE
 .vscode/
@@ -79,93 +20,119 @@ crash.*.log
 *~
 .DS_Store
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
 # Logs
 logs/
 *.log
-
-# ML/Data
-*.csv
-*.parquet
-*.h5
-*.pkl
-*.joblib
-data/raw/
-data/processed/
-models/saved/
-models/experiments/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # Testing
-htmlcov/
-.tox/
-.nox/
-coverage.xml
-*.cover
-.hypothesis/
+coverage/
+.nyc_output/
+*.lcov
 
-# Documentation
-docs/_build/
-docs/_static/
-docs/_templates/
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+.vercel/
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# OS
+Thumbs.db
+.DS_Store
 
 # Temporary files
 *.tmp
-*.tmp.*
 *.temp
-*.bak
-*.swp
-*.swo
-*~
+.tmp/
+.temp/
 
-# Development test files
-main_local.py
-test_simple.py
-test-*.py
+# Build artifacts
+*.tsbuildinfo
+*.d.ts.map
 
-# Generated files
-infrastructure/bicep/*.json
-infrastructure/terraform/*.json
+# Database
+*.sqlite
+*.sqlite3
+*.db
 
-# Installers
-*.msi
-*.exe
-*.dmg
-
-# Virtual environments
-backend/venv/
-**/venv/
-**/env/
-
-# Requirements duplicates
-**/requirements-fixed.txt
-
-# Certificates and secrets
+# Certificates
 *.pem
 *.key
 *.crt
-*.pfx
-secrets/ 
-create-github-secrets.ps1
+*.p12
 
-# Patent Documentation and Proprietary Materials
-Project_viewpoint/
-C:\Users\LeonardEsere\Documents\AeoliTech\policycortex\Project_viewpoint/
-**/Project_viewpoint/**
-docs/builddetails/
-**/builddetails/**
-*.patent
-*.proprietary
+# Backup files
+*.backup
+*.bak
+*.old
 
-nul# Azure CLI installer
-AzureCLI.msi
+# Documentation build
+docs/_build/
+docs/.doctrees/
 
-# Docker Compose (local testing only)
-docker-compose*.yml
-docker-compose*.yaml
-docker-compose.override.*
+# Package files
+*.tar.gz
+*.zip
+*.rar
+
+# Azure
+*.azureconfig
+local.settings.json
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# EventStore
+eventstore-data/
+
+# Frontend specific
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+
+# Backend specific
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+
+# Edge functions
+edge/.wrangler/
+edge/dist/
+
+# GraphQL
+graphql/node_modules/
+graphql/generated/
+
+# Core service
+core/target/
+core/Cargo.lock
