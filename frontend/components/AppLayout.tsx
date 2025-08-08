@@ -39,6 +39,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
       color: 'purple'
     },
     {
+      id: 'ai-expert',
+      title: 'AI Expert',
+      icon: Brain,
+      path: '/ai-expert',
+      description: 'Domain Expert',
+      color: 'pink'
+    },
+    {
       id: 'chat',
       title: 'AI Assistant',
       icon: Brain,
