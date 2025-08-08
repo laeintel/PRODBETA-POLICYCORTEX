@@ -2,8 +2,9 @@ FROM rust:1.75 as builder
 
 WORKDIR /app
 
-# Copy manifests
-COPY Cargo.toml Cargo.lock ./
+# Copy manifests (Cargo.lock is optional)
+COPY Cargo.toml ./
+COPY Cargo.lock* ./
 
 # Build dependencies (this is cached)
 RUN mkdir src && echo "fn main() {}" > src/main.rs

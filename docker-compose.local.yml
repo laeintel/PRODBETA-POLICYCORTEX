@@ -17,9 +17,6 @@ services:
       - postgres
       - dragonfly
       - eventstore
-    volumes:
-      - ./core:/app
-    command: cargo watch -x run
 
   # GraphQL Gateway
   graphql:
@@ -35,10 +32,6 @@ services:
       - APOLLO_GRAPH_REF=${APOLLO_GRAPH_REF:-local}
     depends_on:
       - core
-    volumes:
-      - ./graphql:/app
-      - /app/node_modules
-    command: npm run dev
 
   # Next.js Frontend
   frontend:
@@ -51,11 +44,6 @@ services:
       - NODE_ENV=development
       - NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:4000/graphql
       - NEXT_PUBLIC_WEBSOCKET_ENDPOINT=ws://localhost:4000/subscriptions
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
 
   # PostgreSQL for event store
   postgres:
@@ -94,19 +82,6 @@ services:
     volumes:
       - eventstore_data:/var/lib/eventstore
 
-  # Edge function simulator
-  edge-simulator:
-    build:
-      context: ./edge
-      dockerfile: Dockerfile
-    ports:
-      - "8787:8787"
-    environment:
-      - WORKER_ENV=development
-    volumes:
-      - ./edge:/app
-      - ./wasm:/wasm
-    command: npm run dev
 
 volumes:
   postgres_data:
