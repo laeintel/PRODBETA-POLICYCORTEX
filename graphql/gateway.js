@@ -1,184 +1,161 @@
 const { ApolloServer } = require('@apollo/server');
-const { ApolloGateway, IntrospectAndCompose } = require('@apollo/gateway');
 const { startStandaloneServer } = require('@apollo/server/standalone');
+const { buildSubgraphSchema } = require('@apollo/subgraph');
+const { gql } = require('graphql-tag');
+
+// Define the GraphQL schema
+const typeDefs = gql`
+  type Query {
+    policies: [Policy!]!
+    policy(id: ID!): Policy
+    resources: [Resource!]!
+    resource(id: ID!): Resource
+    compliance: [ComplianceResult!]!
+  }
+
+  type Mutation {
+    createPolicy(input: CreatePolicyInput!): Policy!
+    updatePolicy(id: ID!, input: UpdatePolicyInput!): Policy!
+    deletePolicy(id: ID!): Boolean!
+  }
+
+  type Policy {
+    id: ID!
+    name: String!
+    description: String
+    category: String!
+    severity: String!
+    status: String!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type Resource {
+    id: ID!
+    name: String!
+    type: String!
+    location: String!
+    tags: String
+    createdAt: String!
+  }
+
+  type ComplianceResult {
+    id: ID!
+    policyId: String!
+    resourceId: String!
+    status: String!
+    reason: String
+    checkedAt: String!
+  }
+
+  input CreatePolicyInput {
+    name: String!
+    description: String
+    category: String!
+    severity: String!
+  }
+
+  input UpdatePolicyInput {
+    name: String
+    description: String
+    category: String
+    severity: String
+    status: String
+  }
+`;
+
+// Define resolvers
+const resolvers = {
+  Query: {
+    policies: () => [
+      {
+        id: '1',
+        name: 'Require HTTPS',
+        category: 'Security',
+        severity: 'High',
+        status: 'Active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        name: 'Tag Compliance',
+        category: 'Governance',
+        severity: 'Medium',
+        status: 'Active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ],
+    policy: (_, { id }) => ({
+      id,
+      name: 'Sample Policy',
+      category: 'Security',
+      severity: 'High',
+      status: 'Active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }),
+    resources: () => [
+      {
+        id: '1',
+        name: 'Storage Account',
+        type: 'Microsoft.Storage/storageAccounts',
+        location: 'East US',
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    resource: (_, { id }) => ({
+      id,
+      name: 'Sample Resource',
+      type: 'Microsoft.Compute/virtualMachines',
+      location: 'West US',
+      createdAt: new Date().toISOString(),
+    }),
+    compliance: () => [
+      {
+        id: '1',
+        policyId: '1',
+        resourceId: '1',
+        status: 'Compliant',
+        checkedAt: new Date().toISOString(),
+      },
+    ],
+  },
+  Mutation: {
+    createPolicy: (_, { input }) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      ...input,
+      status: 'Active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }),
+    updatePolicy: (_, { id, input }) => ({
+      id,
+      name: input.name || 'Updated Policy',
+      category: input.category || 'Security',
+      severity: input.severity || 'High',
+      status: input.status || 'Active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }),
+    deletePolicy: () => true,
+  },
+};
 
 async function startGateway() {
-  // Create the gateway
-  const gateway = new ApolloGateway({
-    supergraphSdl: `
-      @core(feature: "https://specs.apollo.dev/core/v0.1")
-      @core(feature: "https://specs.apollo.dev/join/v0.1")
-      @core(feature: "https://specs.apollo.dev/inaccessible/v0.1")
-      {
-        query: Query
-        mutation: Mutation
-      }
-
-      type Query {
-        policies: [Policy!]!
-        policy(id: ID!): Policy
-        resources: [Resource!]!
-        resource(id: ID!): Resource
-        compliance: [ComplianceResult!]!
-        users: [User!]!
-        organizations: [Organization!]!
-      }
-
-      type Mutation {
-        createPolicy(input: CreatePolicyInput!): Policy!
-        updatePolicy(id: ID!, input: UpdatePolicyInput!): Policy!
-        deletePolicy(id: ID!): Boolean!
-        createResource(input: CreateResourceInput!): Resource!
-        checkCompliance(policyId: ID!, resourceId: ID!): ComplianceResult!
-      }
-
-      type Policy {
-        id: ID!
-        name: String!
-        description: String
-        category: String!
-        severity: Severity!
-        status: PolicyStatus!
-        rules: [Rule!]!
-        createdAt: String!
-        updatedAt: String!
-      }
-
-      type Resource {
-        id: ID!
-        subscriptionId: String!
-        resourceId: String!
-        name: String!
-        type: String!
-        location: String!
-        tags: String
-        createdAt: String!
-      }
-
-      type ComplianceResult {
-        id: ID!
-        policyId: String!
-        resourceId: String!
-        status: ComplianceStatus!
-        reason: String
-        checkedAt: String!
-      }
-
-      type User {
-        id: ID!
-        email: String!
-        name: String!
-        role: UserRole!
-        organizationId: String!
-      }
-
-      type Organization {
-        id: ID!
-        name: String!
-        tier: Tier!
-        users: [User!]!
-        subscriptions: [Subscription!]!
-      }
-
-      type Subscription {
-        id: ID!
-        subscriptionId: String!
-        name: String!
-        resources: [Resource!]!
-      }
-
-      type Rule {
-        id: ID!
-        name: String!
-        condition: String!
-        action: String!
-      }
-
-      enum Severity {
-        LOW
-        MEDIUM
-        HIGH
-        CRITICAL
-      }
-
-      enum PolicyStatus {
-        DRAFT
-        ACTIVE
-        ARCHIVED
-      }
-
-      enum ComplianceStatus {
-        COMPLIANT
-        NON_COMPLIANT
-        EXEMPT
-        NOT_APPLICABLE
-      }
-
-      enum UserRole {
-        ADMIN
-        ANALYST
-        VIEWER
-      }
-
-      enum Tier {
-        STARTER
-        PROFESSIONAL
-        ENTERPRISE
-      }
-
-      input CreatePolicyInput {
-        name: String!
-        description: String
-        category: String!
-        severity: Severity!
-        rules: [RuleInput!]!
-      }
-
-      input UpdatePolicyInput {
-        name: String
-        description: String
-        category: String
-        severity: Severity
-        status: PolicyStatus
-      }
-
-      input CreateResourceInput {
-        subscriptionId: String!
-        name: String!
-        type: String!
-        location: String!
-        tags: String
-      }
-
-      input RuleInput {
-        name: String!
-        condition: String!
-        action: String!
-      }
-    `,
-    // In production, this would connect to actual subgraph services
-    // For now, we'll use a mock implementation
-  });
-
   // Create Apollo Server
   const server = new ApolloServer({
-    gateway,
-    subscriptions: false, // Subscriptions are not yet supported in Apollo Gateway
+    typeDefs,
+    resolvers,
   });
 
   // Start the server
   const { url } = await startStandaloneServer(server, {
     listen: { port: 4000 },
-    context: async ({ req }) => {
-      // Add authentication context here
-      return {
-        token: req.headers.authorization || '',
-      };
-    },
   });
 
   console.log(`🚀 PolicyCortex GraphQL Gateway ready at ${url}`);
-  console.log(`📊 Query endpoint: ${url}graphql`);
 }
 
 // Start the gateway
