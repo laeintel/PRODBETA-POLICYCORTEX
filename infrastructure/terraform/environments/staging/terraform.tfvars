@@ -1,6 +1,7 @@
-# Staging environment configuration
-environment   = "staging"
-location      = "East US"
-project_name  = "policycortex"
-owner         = "AeoliTech"
-allowed_ips   = []
+# Staging Environment Configuration
+environment = "staging"
+location    = "East US"
+owner       = "AeoliTech"
+
+# Staging-specific settings
+# Add any staging-specific variables here
