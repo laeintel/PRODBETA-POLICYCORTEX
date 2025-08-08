@@ -333,7 +333,8 @@
       "Bash(\"..\\..\\venv\\Scripts\\pip.exe\" install -r requirements_integrated.txt)",
       "Bash(backend/venv/Scripts/pip.exe install redis fastapi uvicorn python-jose[cryptography] aiohttp structlog azure-identity pydantic)",
       "Bash(black:*)",
-      "Bash(del \"C:\\Users\\leona\\Documents\\AeoliTech\\policycortex\\infrastructure\\bicep\\complete-infrastructure.bicep\")"
+      "Bash(del \"C:\\Users\\leona\\Documents\\AeoliTech\\policycortex\\infrastructure\\bicep\\complete-infrastructure.bicep\")",
+      "Bash(git merge:*)"
     ],
     "deny": []
   }
