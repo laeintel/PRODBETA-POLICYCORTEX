@@ -30,10 +30,16 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+# Permissions for GitHub Actions
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Validate Infrastructure
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,9 +52,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
@@ -68,7 +72,7 @@ jobs:
 
   security-scan:
     name: Security Scan Infrastructure
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: validate
     steps:
       - name: Checkout
@@ -104,10 +108,12 @@ jobs:
 
   deploy-dev:
     name: Deploy to Development
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [validate, security-scan]
     if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
     environment: development
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -120,9 +126,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
         run: |
@@ -156,10 +160,12 @@ jobs:
 
   deploy-staging:
     name: Deploy to Staging
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [validate, security-scan]
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     environment: staging
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -172,9 +178,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
         run: |
@@ -208,10 +212,12 @@ jobs:
 
   deploy-prod:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [validate, security-scan]
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
     environment: production
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -224,9 +230,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
         run: |
@@ -265,7 +269,7 @@ jobs:
 
   notify:
     name: Notify Deployment Status
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [deploy-dev, deploy-staging, deploy-prod]
     if: always()
     steps:

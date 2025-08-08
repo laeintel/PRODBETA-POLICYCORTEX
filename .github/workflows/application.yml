@@ -37,10 +37,14 @@ env:
   REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
   IMAGE_TAG: ${{ github.sha }}
 
+# Permissions for GitHub Actions
+permissions:
+  contents: read
+
 jobs:
   changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     outputs:
       core: ${{ steps.changes.outputs.core }}
       frontend: ${{ steps.changes.outputs.frontend }}
@@ -64,7 +68,7 @@ jobs:
 
   test-core:
     name: Test Rust Core
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: changes
     if: needs.changes.outputs.core == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -98,10 +102,11 @@ jobs:
           cargo install cargo-audit
           cargo audit
         working-directory: ./core
+        shell: pwsh
 
   test-frontend:
     name: Test Frontend
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -116,7 +121,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./frontend
 
       - name: Type Check
@@ -142,7 +147,7 @@ jobs:
 
   test-graphql:
     name: Test GraphQL Gateway
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: changes
     if: needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -157,7 +162,7 @@ jobs:
           cache-dependency-path: graphql/package.json
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
         working-directory: ./graphql
 
       - name: Test GraphQL Schema
@@ -166,7 +171,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     if: github.event.inputs.force_deploy != 'true'
     steps:
       - name: Checkout
@@ -201,9 +206,11 @@ jobs:
 
   build-core:
     name: Build Core Service
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [test-core, security-scan]
     if: always() && (needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -211,24 +218,25 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Container Registry
         run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
       - name: Build and Push Core Image
         run: |
-          docker build -t ${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }} -t ${{ env.REGISTRY }}/policycortex-core:latest ./core
-          docker push ${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/policycortex-core:latest
+          docker build -t $env:REGISTRY/policycortex-core:$env:IMAGE_TAG -t $env:REGISTRY/policycortex-core:latest ./core
+          docker push $env:REGISTRY/policycortex-core:$env:IMAGE_TAG
+          docker push $env:REGISTRY/policycortex-core:latest
+        shell: pwsh
 
   build-frontend:
     name: Build Frontend
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [test-frontend, security-scan]
     if: always() && (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -236,24 +244,25 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Container Registry
         run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
       - name: Build and Push Frontend Image
         run: |
-          docker build -f ./frontend/Dockerfile -t ${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }} -t ${{ env.REGISTRY }}/policycortex-frontend:latest ./frontend
-          docker push ${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/policycortex-frontend:latest
+          docker build -f ./frontend/Dockerfile -t $env:REGISTRY/policycortex-frontend:$env:IMAGE_TAG -t $env:REGISTRY/policycortex-frontend:latest ./frontend
+          docker push $env:REGISTRY/policycortex-frontend:$env:IMAGE_TAG
+          docker push $env:REGISTRY/policycortex-frontend:latest
+        shell: pwsh
 
   build-graphql:
     name: Build GraphQL Gateway
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [test-graphql, security-scan]
     if: always() && (needs.test-graphql.result == 'success' || needs.test-graphql.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -261,22 +270,21 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Container Registry
         run: az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
 
       - name: Build and Push GraphQL Image
         run: |
-          docker build -t ${{ env.REGISTRY }}/policycortex-graphql:${{ env.IMAGE_TAG }} -t ${{ env.REGISTRY }}/policycortex-graphql:latest ./graphql
-          docker push ${{ env.REGISTRY }}/policycortex-graphql:${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/policycortex-graphql:latest
+          docker build -t $env:REGISTRY/policycortex-graphql:$env:IMAGE_TAG -t $env:REGISTRY/policycortex-graphql:latest ./graphql
+          docker push $env:REGISTRY/policycortex-graphql:$env:IMAGE_TAG
+          docker push $env:REGISTRY/policycortex-graphql:latest
+        shell: pwsh
 
   integration-tests:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [build-core, build-frontend, build-graphql]
     if: always() && needs.build-core.result == 'success' && needs.build-frontend.result == 'success' && needs.build-graphql.result == 'success'
     services:
@@ -330,10 +338,12 @@ jobs:
 
   deploy-dev:
     name: Deploy to Development
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
     environment: development
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -341,9 +351,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Get AKS Credentials
         run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --name ${{ secrets.AKS_CLUSTER_NAME_DEV }}
@@ -373,10 +381,12 @@ jobs:
 
   deploy-staging:
     name: Deploy to Staging
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     environment: staging
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -384,9 +394,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Get AKS Credentials
         run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} --name ${{ secrets.AKS_CLUSTER_NAME_STAGING }}
@@ -416,10 +424,12 @@ jobs:
 
   deploy-prod:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
     environment: production
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -427,9 +437,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Get AKS Credentials
         run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_PROD }} --name ${{ secrets.AKS_CLUSTER_NAME_PROD }}
@@ -499,7 +507,7 @@ jobs:
 
   notify:
     name: Notify Deployment Status
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [deploy-dev, deploy-staging, deploy-prod]
     if: always()
     steps:
