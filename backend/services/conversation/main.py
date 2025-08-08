@@ -7,30 +7,25 @@ import asyncio
 import json
 import time
 import uuid
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import structlog
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import Response
-from fastapi import WebSocket
-from fastapi import WebSocketDisconnect
-from fastapi import status
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from prometheus_client import Counter
-from prometheus_client import Histogram
-from prometheus_client import generate_latest
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from prometheus_client import Counter, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import PlainTextResponse
 from starlette.websockets import WebSocketState
@@ -44,19 +39,20 @@ from backend.services.conversation.services.intent_classifier import IntentClass
 from backend.services.conversation.services.query_router import QueryRouter
 from backend.services.conversation.services.response_generator import ResponseGenerator
 from backend.shared.config import get_settings
-from backend.shared.database import DatabaseUtils
-from backend.shared.database import get_async_db
+from backend.shared.database import DatabaseUtils, get_async_db
 
-from .models import ConversationAnalytics
-from .models import ConversationHistoryResponse
-from .models import ConversationRequest
-from .models import ConversationResponse
-from .models import ConversationSessionResponse
-from .models import EntityExtractionResponse
-from .models import ErrorResponse
-from .models import HealthResponse
-from .models import IntentClassificationResponse
-from .models import WebSocketMessage
+from .models import (
+    ConversationAnalytics,
+    ConversationHistoryResponse,
+    ConversationRequest,
+    ConversationResponse,
+    ConversationSessionResponse,
+    EntityExtractionResponse,
+    ErrorResponse,
+    HealthResponse,
+    IntentClassificationResponse,
+    WebSocketMessage,
+)
 
 # Configuration
 settings = get_settings()

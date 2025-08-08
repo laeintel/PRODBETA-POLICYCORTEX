@@ -5,10 +5,7 @@ Uses Azure OpenAI for intent classification and entity extraction.
 
 import json
 import re
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import spacy
 import structlog

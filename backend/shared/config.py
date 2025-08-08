@@ -5,12 +5,9 @@ Provides environment-based configuration management using Pydantic Settings.
 
 import os
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import Field, field_validator, ConfigDict
+from pydantic import ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -47,7 +44,9 @@ class DatabaseConfig(BaseSettings):
     sql_max_overflow: int = Field(30, env="SQL_MAX_OVERFLOW")
 
     # Cosmos DB (NoSQL)
-    cosmos_endpoint: str = Field(default="https://test.documents.azure.com:443/", env="AZURE_COSMOS_ENDPOINT")
+    cosmos_endpoint: str = Field(
+        default="https://test.documents.azure.com:443/", env="AZURE_COSMOS_ENDPOINT"
+    )
     cosmos_key: str = Field(default="test-cosmos-key", env="AZURE_COSMOS_KEY")
     cosmos_database: str = Field("policycortex", env="AZURE_COSMOS_DATABASE")
 
@@ -66,10 +65,7 @@ class DatabaseConfig(BaseSettings):
             f"?driver={self.sql_driver.replace(' ', '+')}&TrustServerCertificate=yes"
         )
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
 
 class AzureConfig(BaseSettings):
@@ -111,7 +107,7 @@ class AzureConfig(BaseSettings):
     @classmethod
     def generate_key_vault_url(cls, v, info):
         """Generate Key Vault URL if not provided."""
-        if v is None and hasattr(info, 'data') and "key_vault_name" in info.data:
+        if v is None and hasattr(info, "data") and "key_vault_name" in info.data:
             return f"https://{info.data['key_vault_name']}.vault.azure.net/"
         return v
 
@@ -119,14 +115,11 @@ class AzureConfig(BaseSettings):
     @classmethod
     def default_ml_resource_group(cls, v, info):
         """Use main resource group if ML resource group not specified."""
-        if hasattr(info, 'data') and info.data:
+        if hasattr(info, "data") and info.data:
             return v or info.data.get("resource_group")
         return v
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
 
 class AIConfig(BaseSettings):
@@ -190,10 +183,7 @@ class SecurityConfig(BaseSettings):
             return [origin.strip() for origin in v.split(",")]
         return v
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
 
 class ServiceConfig(BaseSettings):
@@ -215,10 +205,7 @@ class ServiceConfig(BaseSettings):
     health_check_path: str = Field("/health", env="HEALTH_CHECK_PATH")
     readiness_check_path: str = Field("/ready", env="READINESS_CHECK_PATH")
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
 
 class MonitoringConfig(BaseSettings):
@@ -243,10 +230,7 @@ class MonitoringConfig(BaseSettings):
     slow_query_threshold: float = Field(1.0, env="SLOW_QUERY_THRESHOLD")
     enable_sql_tracing: bool = Field(True, env="ENABLE_SQL_TRACING")
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
 
 class Settings(BaseSettings):
@@ -284,14 +268,15 @@ class Settings(BaseSettings):
     @classmethod
     def set_debug_from_environment(cls, v, info):
         """Set debug mode based on environment."""
-        if hasattr(info, 'data') and info.data and info.data.get("environment") == Environment.DEVELOPMENT:
+        if (
+            hasattr(info, "data")
+            and info.data
+            and info.data.get("environment") == Environment.DEVELOPMENT
+        ):
             return True
         return v
 
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
+    model_config = ConfigDict(env_file=".env", case_sensitive=False)
 
     def is_production(self) -> bool:
         """Check if running in production environment."""

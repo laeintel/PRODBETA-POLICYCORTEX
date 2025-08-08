@@ -5,16 +5,9 @@ Pydantic models for Notification service.
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel
-from pydantic import EmailStr
-from pydantic import Field
-from pydantic import validator
+from pydantic import BaseModel, EmailStr, Field, validator
 
 
 class NotificationType(str, Enum):

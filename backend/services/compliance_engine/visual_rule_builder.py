@@ -6,26 +6,15 @@ Provides APIs for frontend visual rule creation interface
 import json
 from datetime import datetime
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 import structlog
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import validator
+from pydantic import BaseModel, Field, validator
 
-from .rule_engine import ComplianceRule
-from .rule_engine import RuleAction
-from .rule_engine import RuleOperator
-from .rule_engine import RuleType
+from .rule_engine import ComplianceRule, RuleAction, RuleOperator, RuleType
 
 logger = structlog.get_logger(__name__)
 

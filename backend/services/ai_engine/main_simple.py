@@ -5,12 +5,9 @@ Basic health checks and AI service endpoints without heavy dependencies.
 
 import os
 from datetime import datetime
-from typing import Any
-from typing import Dict
+from typing import Any, Dict
 
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 

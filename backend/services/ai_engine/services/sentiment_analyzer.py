@@ -6,10 +6,7 @@ Provides sentiment analysis for compliance reports and text content.
 import json
 import re
 from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 from azure.ai.textanalytics.aio import TextAnalyticsClient
@@ -529,7 +526,9 @@ class SentimentAnalyzer:
                         "sentiment": (
                             "positive"
                             if domain_score > 0
-                            else "negative" if domain_score < 0 else "neutral"
+                            else "negative"
+                            if domain_score < 0
+                            else "neutral"
                         ),
                     }
 

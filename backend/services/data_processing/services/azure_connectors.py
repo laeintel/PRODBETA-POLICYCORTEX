@@ -7,32 +7,23 @@ import asyncio
 import io
 import json
 import uuid
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import structlog
 from azure.cosmos.aio import CosmosClient
 from azure.data.tables.aio import TableServiceClient
-from azure.eventhub.aio import EventHubConsumerClient
-from azure.eventhub.aio import EventHubProducerClient
+from azure.eventhub.aio import EventHubConsumerClient, EventHubProducerClient
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient
 from azure.storage.blob.aio import BlobServiceClient
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from ....shared.config import get_settings
-from ..models import DataConnectorHealth
-from ..models import DataSourceConfig
-from ..models import DataSourceType
+from ..models import DataConnectorHealth, DataSourceConfig, DataSourceType
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)

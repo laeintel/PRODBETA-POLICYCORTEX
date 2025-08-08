@@ -5,13 +5,9 @@ Alert manager for handling alerts with escalation rules and automatic resolution
 import asyncio
 import json
 import uuid
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import redis.asyncio as redis
 import structlog

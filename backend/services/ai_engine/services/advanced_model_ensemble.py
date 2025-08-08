@@ -8,21 +8,12 @@ import json
 import logging
 import threading
 import uuid
-from collections import defaultdict
-from collections import deque
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
-from dataclasses import dataclass
-from dataclasses import field
-from datetime import datetime
-from datetime import timedelta
+from collections import defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import mlflow
 import numpy as np
@@ -33,15 +24,10 @@ import torch.nn as nn
 from backend.core.config import settings
 from backend.core.exceptions import APIError
 from backend.core.redis_client import redis_client
-from hydra import compose
-from hydra import initialize
+from hydra import compose, initialize
 from omegaconf import DictConfig
-from sklearn.ensemble import VotingClassifier
-from sklearn.ensemble import VotingRegressor
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
+from sklearn.ensemble import VotingClassifier, VotingRegressor
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import cross_val_score
 
 logger = logging.getLogger(__name__)
@@ -49,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 class ModelType(str, Enum):
     """Types of AI models in the ensemble"""
+
     PREDICTIVE_ANALYTICS = "predictive_analytics"
     ANOMALY_DETECTION = "anomaly_detection"
     NLP_PROCESSING = "nlp_processing"
@@ -63,6 +50,7 @@ class ModelType(str, Enum):
 
 class EnsembleStrategy(str, Enum):
     """Ensemble combination strategies"""
+
     VOTING = "voting"
     STACKING = "stacking"
     BAGGING = "bagging"
@@ -74,6 +62,7 @@ class EnsembleStrategy(str, Enum):
 
 class ModelStatus(str, Enum):
     """Model status indicators"""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     FAILED = "failed"
@@ -84,6 +73,7 @@ class ModelStatus(str, Enum):
 @dataclass
 class ModelMetrics:
     """Model performance metrics"""
+
     model_id: str
     model_type: ModelType
     accuracy: float
@@ -101,6 +91,7 @@ class ModelMetrics:
 @dataclass
 class EnsemblePrediction:
     """Ensemble prediction result"""
+
     prediction_id: str
     predictions: Dict[str, Any]
     confidence_scores: Dict[str, float]
@@ -116,6 +107,7 @@ class EnsemblePrediction:
 @dataclass
 class ModelConfiguration:
     """Model configuration settings"""
+
     model_id: str
     model_type: ModelType
     weight: float = 1.0
@@ -134,10 +126,10 @@ class ModelHealthMonitor:
         self.check_interval = check_interval
         self.model_metrics: Dict[str, ModelMetrics] = {}
         self.alert_thresholds = {
-            'accuracy': 0.7,
-            'latency_ms': 10000,
-            'memory_usage_mb': 2048,
-            'cpu_usage_percent': 80
+            "accuracy": 0.7,
+            "latency_ms": 10000,
+            "memory_usage_mb": 2048,
+            "cpu_usage_percent": 80,
         }
         self._monitoring = False
         self._monitor_task = None
@@ -177,16 +169,16 @@ class ModelHealthMonitor:
 
         # Check for alerts
         alerts = []
-        if metrics.accuracy < self.alert_thresholds['accuracy']:
+        if metrics.accuracy < self.alert_thresholds["accuracy"]:
             alerts.append(f"Low accuracy: {metrics.accuracy:.3f}")
 
-        if metrics.latency_ms > self.alert_thresholds['latency_ms']:
+        if metrics.latency_ms > self.alert_thresholds["latency_ms"]:
             alerts.append(f"High latency: {metrics.latency_ms:.1f}ms")
 
-        if metrics.memory_usage_mb > self.alert_thresholds['memory_usage_mb']:
+        if metrics.memory_usage_mb > self.alert_thresholds["memory_usage_mb"]:
             alerts.append(f"High memory usage: {metrics.memory_usage_mb:.1f}MB")
 
-        if metrics.cpu_usage_percent > self.alert_thresholds['cpu_usage_percent']:
+        if metrics.cpu_usage_percent > self.alert_thresholds["cpu_usage_percent"]:
             alerts.append(f"High CPU usage: {metrics.cpu_usage_percent:.1f}%")
 
         if alerts:
@@ -200,14 +192,10 @@ class ModelHealthMonitor:
         metrics = self.model_metrics[model_id]
 
         # Determine status based on metrics
-        if (metrics.accuracy < 0.5 or
-            metrics.latency_ms > 20000 or
-            metrics.memory_usage_mb > 4096):
+        if metrics.accuracy < 0.5 or metrics.latency_ms > 20000 or metrics.memory_usage_mb > 4096:
             return ModelStatus.FAILED
 
-        if (metrics.accuracy < 0.7 or
-            metrics.latency_ms > 10000 or
-            metrics.memory_usage_mb > 2048):
+        if metrics.accuracy < 0.7 or metrics.latency_ms > 10000 or metrics.memory_usage_mb > 2048:
             return ModelStatus.DEGRADED
 
         return ModelStatus.HEALTHY
@@ -221,24 +209,26 @@ class EnsembleOptimizer:
         self.best_params = {}
         self.optimization_history = []
 
-    async def optimize_ensemble(self,
-                              validation_data: List[Dict[str, Any]],
-                              optimization_metric: str = 'f1_score',
-                              n_trials: int = 100) -> Dict[str, Any]:
+    async def optimize_ensemble(
+        self,
+        validation_data: List[Dict[str, Any]],
+        optimization_metric: str = "f1_score",
+        n_trials: int = 100,
+    ) -> Dict[str, Any]:
         """Optimize ensemble configuration"""
 
         def objective(trial):
             # Suggest hyperparameters
-            strategy = trial.suggest_categorical('strategy', [
-                'voting', 'stacking', 'weighted_average'
-            ])
+            strategy = trial.suggest_categorical(
+                "strategy", ["voting", "stacking", "weighted_average"]
+            )
 
             model_weights = {}
             for model_type in ModelType:
-                weight = trial.suggest_float(f'weight_{model_type.value}', 0.0, 2.0)
+                weight = trial.suggest_float(f"weight_{model_type.value}", 0.0, 2.0)
                 model_weights[model_type.value] = weight
 
-            confidence_threshold = trial.suggest_float('confidence_threshold', 0.1, 0.9)
+            confidence_threshold = trial.suggest_float("confidence_threshold", 0.1, 0.9)
 
             # Simulate ensemble performance with these parameters
             # In production, this would run actual validation
@@ -247,16 +237,16 @@ class EnsembleOptimizer:
             return simulated_score
 
         # Create optimization study
-        self.study = optuna.create_study(direction='maximize')
+        self.study = optuna.create_study(direction="maximize")
         self.study.optimize(objective, n_trials=n_trials)
 
         self.best_params = self.study.best_params
 
         optimization_result = {
-            'best_params': self.best_params,
-            'best_score': self.study.best_value,
-            'n_trials': n_trials,
-            'optimization_time': datetime.now().isoformat()
+            "best_params": self.best_params,
+            "best_score": self.study.best_value,
+            "n_trials": n_trials,
+            "optimization_time": datetime.now().isoformat(),
         }
 
         self.optimization_history.append(optimization_result)
@@ -274,10 +264,9 @@ class DynamicModelSelector:
         self.performance_history = defaultdict(list)
         self.context_models = {}
 
-    async def select_models(self,
-                          input_data: Dict[str, Any],
-                          task_type: str,
-                          available_models: List[str]) -> List[str]:
+    async def select_models(
+        self, input_data: Dict[str, Any], task_type: str, available_models: List[str]
+    ) -> List[str]:
         """Select optimal models for given input and task"""
 
         # Analyze input characteristics
@@ -306,19 +295,18 @@ class DynamicModelSelector:
     def _extract_input_features(self, input_data: Dict[str, Any]) -> Dict[str, float]:
         """Extract features from input data for model selection"""
         features = {
-            'data_size': len(str(input_data)),
-            'complexity': len(input_data),
-            'numeric_ratio': 0.5,  # Placeholder
-            'text_ratio': 0.3,     # Placeholder
-            'temporal_components': 0.2  # Placeholder
+            "data_size": len(str(input_data)),
+            "complexity": len(input_data),
+            "numeric_ratio": 0.5,  # Placeholder
+            "text_ratio": 0.3,  # Placeholder
+            "temporal_components": 0.2,  # Placeholder
         }
 
         return features
 
-    def _calculate_model_suitability(self,
-                                   model_id: str,
-                                   input_features: Dict[str, float],
-                                   task_type: str) -> float:
+    def _calculate_model_suitability(
+        self, model_id: str, input_features: Dict[str, float], task_type: str
+    ) -> float:
         """Calculate how suitable a model is for given input"""
 
         # Base suitability score
@@ -326,13 +314,13 @@ class DynamicModelSelector:
 
         # Adjust based on model type and task type compatibility
         compatibility_matrix = {
-            ('predictive_analytics', 'prediction'): 1.0,
-            ('anomaly_detection', 'anomaly'): 1.0,
-            ('nlp_processing', 'text_analysis'): 1.0,
-            ('correlation_analysis', 'correlation'): 1.0,
+            ("predictive_analytics", "prediction"): 1.0,
+            ("anomaly_detection", "anomaly"): 1.0,
+            ("nlp_processing", "text_analysis"): 1.0,
+            ("correlation_analysis", "correlation"): 1.0,
         }
 
-        model_type = model_id.split('_')[0] if '_' in model_id else model_id
+        model_type = model_id.split("_")[0] if "_" in model_id else model_id
         compatibility_key = (model_type, task_type)
 
         if compatibility_key in compatibility_matrix:
@@ -345,9 +333,7 @@ class DynamicModelSelector:
 
         return min(base_score, 1.0)
 
-    async def update_model_performance(self,
-                                     model_id: str,
-                                     performance_score: float):
+    async def update_model_performance(self, model_id: str, performance_score: float):
         """Update performance history for a model"""
         self.performance_history[model_id].append(performance_score)
 
@@ -390,10 +376,7 @@ class AdvancedModelEnsemble:
             logger.error(f"Failed to initialize ensemble: {str(e)}")
             raise
 
-    async def register_model(self,
-                           model_id: str,
-                           model_instance: Any,
-                           config: ModelConfiguration):
+    async def register_model(self, model_id: str, model_instance: Any, config: ModelConfiguration):
         """Register a model with the ensemble"""
 
         with self._model_lock:
@@ -402,11 +385,13 @@ class AdvancedModelEnsemble:
 
         logger.info(f"Registered model: {model_id} ({config.model_type.value})")
 
-    async def predict_ensemble(self,
-                             input_data: Dict[str, Any],
-                             task_type: str,
-                             strategy: EnsembleStrategy = EnsembleStrategy.WEIGHTED_AVERAGE,
-                             max_models: int = 5) -> EnsemblePrediction:
+    async def predict_ensemble(
+        self,
+        input_data: Dict[str, Any],
+        task_type: str,
+        strategy: EnsembleStrategy = EnsembleStrategy.WEIGHTED_AVERAGE,
+        max_models: int = 5,
+    ) -> EnsemblePrediction:
         """Make ensemble prediction using multiple models"""
 
         if not self._initialized:
@@ -418,9 +403,12 @@ class AdvancedModelEnsemble:
         try:
             # Select appropriate models
             available_models = [
-                model_id for model_id, config in self.model_configs.items()
-                if (config.enabled and
-                    self.health_monitor.get_model_status(model_id) != ModelStatus.FAILED)
+                model_id
+                for model_id, config in self.model_configs.items()
+                if (
+                    config.enabled
+                    and self.health_monitor.get_model_status(model_id) != ModelStatus.FAILED
+                )
             ]
 
             selected_models = await self.selector.select_models(
@@ -474,10 +462,7 @@ class AdvancedModelEnsemble:
 
             # Combine predictions using specified strategy
             ensemble_result = await self._combine_predictions(
-                model_predictions,
-                model_confidences,
-                model_contributions,
-                strategy
+                model_predictions, model_confidences, model_contributions, strategy
             )
 
             # Calculate processing time
@@ -492,7 +477,7 @@ class AdvancedModelEnsemble:
                 ensemble_confidence=np.mean(list(model_confidences.values())),
                 strategy_used=strategy,
                 processing_time_ms=processing_time,
-                models_used=list(model_predictions.keys())
+                models_used=list(model_predictions.keys()),
             )
 
             # Cache prediction
@@ -501,10 +486,7 @@ class AdvancedModelEnsemble:
 
             # Update model performance
             for model_id in model_predictions.keys():
-                await self.selector.update_model_performance(
-                    model_id,
-                    model_confidences[model_id]
-                )
+                await self.selector.update_model_performance(model_id, model_confidences[model_id])
 
             # Log to MLflow if available
             try:
@@ -522,10 +504,9 @@ class AdvancedModelEnsemble:
             logger.error(f"Ensemble prediction failed: {str(e)}")
             raise APIError(f"Ensemble prediction failed: {str(e)}", status_code=500)
 
-    async def _get_model_prediction(self,
-                                  model_id: str,
-                                  input_data: Dict[str, Any],
-                                  task_type: str) -> Tuple[Any, float]:
+    async def _get_model_prediction(
+        self, model_id: str, input_data: Dict[str, Any], task_type: str
+    ) -> Tuple[Any, float]:
         """Get prediction from a specific model"""
 
         model = self.models.get(model_id)
@@ -539,61 +520,58 @@ class AdvancedModelEnsemble:
 
         return prediction, confidence
 
-    async def _combine_predictions(self,
-                                 predictions: Dict[str, Any],
-                                 confidences: Dict[str, float],
-                                 contributions: Dict[str, float],
-                                 strategy: EnsembleStrategy) -> Dict[str, Any]:
+    async def _combine_predictions(
+        self,
+        predictions: Dict[str, Any],
+        confidences: Dict[str, float],
+        contributions: Dict[str, float],
+        strategy: EnsembleStrategy,
+    ) -> Dict[str, Any]:
         """Combine predictions using specified strategy"""
 
         if strategy == EnsembleStrategy.WEIGHTED_AVERAGE:
-            return await self._weighted_average_combination(
-                predictions, confidences, contributions
-            )
+            return await self._weighted_average_combination(predictions, confidences, contributions)
         elif strategy == EnsembleStrategy.VOTING:
             return await self._voting_combination(predictions, confidences)
         elif strategy == EnsembleStrategy.CONSENSUS:
             return await self._consensus_combination(predictions, confidences)
         else:
             # Default to weighted average
-            return await self._weighted_average_combination(
-                predictions, confidences, contributions
-            )
+            return await self._weighted_average_combination(predictions, confidences, contributions)
 
-    async def _weighted_average_combination(self,
-                                          predictions: Dict[str, Any],
-                                          confidences: Dict[str, float],
-                                          contributions: Dict[str, float]) -> Dict[str, Any]:
+    async def _weighted_average_combination(
+        self,
+        predictions: Dict[str, Any],
+        confidences: Dict[str, float],
+        contributions: Dict[str, float],
+    ) -> Dict[str, Any]:
         """Combine predictions using weighted average"""
 
         # Normalize contributions
         total_contribution = sum(contributions.values())
         if total_contribution > 0:
-            normalized_contributions = {
-                k: v / total_contribution for k, v in contributions.items()
-            }
+            normalized_contributions = {k: v / total_contribution for k, v in contributions.items()}
         else:
-            normalized_contributions = {
-                k: 1.0 / len(contributions) for k in contributions.keys()
-            }
+            normalized_contributions = {k: 1.0 / len(contributions) for k in contributions.keys()}
 
         # For numeric predictions, compute weighted average
         # For categorical predictions, use voting
         # This is a simplified implementation
 
         combined_result = {
-            'ensemble_prediction': 'weighted_combination',
-            'individual_predictions': predictions,
-            'weights': normalized_contributions,
-            'confidence': np.average(list(confidences.values()),
-                                   weights=list(normalized_contributions.values()))
+            "ensemble_prediction": "weighted_combination",
+            "individual_predictions": predictions,
+            "weights": normalized_contributions,
+            "confidence": np.average(
+                list(confidences.values()), weights=list(normalized_contributions.values())
+            ),
         }
 
         return combined_result
 
-    async def _voting_combination(self,
-                                predictions: Dict[str, Any],
-                                confidences: Dict[str, float]) -> Dict[str, Any]:
+    async def _voting_combination(
+        self, predictions: Dict[str, Any], confidences: Dict[str, float]
+    ) -> Dict[str, Any]:
         """Combine predictions using majority voting"""
 
         # Simple voting implementation
@@ -608,17 +586,17 @@ class AdvancedModelEnsemble:
         winning_prediction = max(votes.items(), key=lambda x: x[1])
 
         combined_result = {
-            'ensemble_prediction': winning_prediction[0],
-            'vote_weights': votes,
-            'individual_predictions': predictions,
-            'confidence': winning_prediction[1] / sum(votes.values())
+            "ensemble_prediction": winning_prediction[0],
+            "vote_weights": votes,
+            "individual_predictions": predictions,
+            "confidence": winning_prediction[1] / sum(votes.values()),
         }
 
         return combined_result
 
-    async def _consensus_combination(self,
-                                   predictions: Dict[str, Any],
-                                   confidences: Dict[str, float]) -> Dict[str, Any]:
+    async def _consensus_combination(
+        self, predictions: Dict[str, Any], confidences: Dict[str, float]
+    ) -> Dict[str, Any]:
         """Combine predictions requiring consensus"""
 
         # Check if all predictions agree (simplified)
@@ -628,17 +606,15 @@ class AdvancedModelEnsemble:
             # Full consensus
             consensus_confidence = np.mean(list(confidences.values()))
             result = {
-                'ensemble_prediction': list(predictions.values())[0],
-                'consensus': True,
-                'confidence': consensus_confidence,
-                'individual_predictions': predictions
+                "ensemble_prediction": list(predictions.values())[0],
+                "consensus": True,
+                "confidence": consensus_confidence,
+                "individual_predictions": predictions,
             }
         else:
             # No consensus - use weighted average fallback
-            result = await self._weighted_average_combination(
-                predictions, confidences, confidences
-            )
-            result['consensus'] = False
+            result = await self._weighted_average_combination(predictions, confidences, confidences)
+            result["consensus"] = False
 
         return result
 
@@ -646,61 +622,57 @@ class AdvancedModelEnsemble:
         """Get ensemble performance statistics"""
 
         if not self.prediction_history:
-            return {'message': 'No prediction history available'}
+            return {"message": "No prediction history available"}
 
         recent_predictions = list(self.prediction_history)[-100:]
 
         stats = {
-            'total_predictions': len(self.prediction_history),
-            'recent_predictions': len(recent_predictions),
-            'average_confidence': np.mean([
-                p.ensemble_confidence for p in recent_predictions
-            ]),
-            'average_processing_time_ms': np.mean([
-                p.processing_time_ms for p in recent_predictions
-            ]),
-            'strategy_distribution': {},
-            'model_usage': defaultdict(int),
-            'performance_trends': {}
+            "total_predictions": len(self.prediction_history),
+            "recent_predictions": len(recent_predictions),
+            "average_confidence": np.mean([p.ensemble_confidence for p in recent_predictions]),
+            "average_processing_time_ms": np.mean(
+                [p.processing_time_ms for p in recent_predictions]
+            ),
+            "strategy_distribution": {},
+            "model_usage": defaultdict(int),
+            "performance_trends": {},
         }
 
         # Strategy distribution
         for prediction in recent_predictions:
             strategy = prediction.strategy_used.value
-            if strategy not in stats['strategy_distribution']:
-                stats['strategy_distribution'][strategy] = 0
-            stats['strategy_distribution'][strategy] += 1
+            if strategy not in stats["strategy_distribution"]:
+                stats["strategy_distribution"][strategy] = 0
+            stats["strategy_distribution"][strategy] += 1
 
         # Model usage statistics
         for prediction in recent_predictions:
             for model_id in prediction.models_used:
-                stats['model_usage'][model_id] += 1
+                stats["model_usage"][model_id] += 1
 
-        stats['model_usage'] = dict(stats['model_usage'])
+        stats["model_usage"] = dict(stats["model_usage"])
 
         # Model health summary
-        stats['model_health'] = {}
+        stats["model_health"] = {}
         for model_id in self.models.keys():
             status = self.health_monitor.get_model_status(model_id)
-            stats['model_health'][model_id] = status.value
+            stats["model_health"][model_id] = status.value
 
         return stats
 
-    async def optimize_ensemble_configuration(self,
-                                            validation_data: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def optimize_ensemble_configuration(
+        self, validation_data: List[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Optimize ensemble configuration based on validation data"""
 
         if validation_data is None:
             # Use synthetic validation data for demonstration
             validation_data = [
-                {'input': f'sample_{i}', 'expected': f'output_{i}'}
-                for i in range(100)
+                {"input": f"sample_{i}", "expected": f"output_{i}"} for i in range(100)
             ]
 
         optimization_result = await self.optimizer.optimize_ensemble(
-            validation_data=validation_data,
-            optimization_metric='f1_score',
-            n_trials=50
+            validation_data=validation_data, optimization_metric="f1_score", n_trials=50
         )
 
         # Apply optimized configuration
@@ -714,14 +686,14 @@ class AdvancedModelEnsemble:
 
         # Update model weights
         for model_id, config in self.model_configs.items():
-            weight_key = f'weight_{config.model_type.value}'
+            weight_key = f"weight_{config.model_type.value}"
             if weight_key in optimized_params:
                 config.weight = optimized_params[weight_key]
 
         # Update other configuration parameters
-        if 'confidence_threshold' in optimized_params:
+        if "confidence_threshold" in optimized_params:
             for config in self.model_configs.values():
-                config.min_confidence = optimized_params['confidence_threshold']
+                config.min_confidence = optimized_params["confidence_threshold"]
 
         logger.info("Applied optimized ensemble configuration")
 

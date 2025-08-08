@@ -5,10 +5,7 @@ Routes queries to appropriate backend services based on intent and entities.
 
 import asyncio
 import json
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 import structlog

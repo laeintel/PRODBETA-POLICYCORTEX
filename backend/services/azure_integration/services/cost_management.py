@@ -2,22 +2,16 @@
 Azure Cost Management service for handling cost analysis and budgeting operations.
 """
 
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import structlog
-from azure.core.exceptions import AzureError
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.mgmt.consumption import ConsumptionManagementClient
 from azure.mgmt.costmanagement import CostManagementClient
 from shared.config import get_settings
 
-from ..models import BudgetResponse
-from ..models import CostResponse
+from ..models import BudgetResponse, CostResponse
 from .azure_auth import AzureAuthService
 
 settings = get_settings()

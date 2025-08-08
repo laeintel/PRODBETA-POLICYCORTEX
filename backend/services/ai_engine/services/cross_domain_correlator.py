@@ -9,20 +9,12 @@ import json
 import logging
 import uuid
 import warnings
-from collections import defaultdict
-from collections import deque
+from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from dataclasses import field
-from datetime import datetime
-from datetime import timedelta
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import networkx as nx
 import numpy as np
@@ -34,23 +26,15 @@ import torch.nn.functional as F
 from backend.core.config import settings
 from backend.core.exceptions import APIError
 from backend.core.redis_client import redis_client
-from scipy.cluster.hierarchy import dendrogram
-from scipy.cluster.hierarchy import fcluster
-from scipy.cluster.hierarchy import linkage
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-from sklearn.decomposition import FastICA
+from scipy.cluster.hierarchy import dendrogram, fcluster, linkage
+from sklearn.cluster import DBSCAN, KMeans
+from sklearn.decomposition import PCA, FastICA
 from sklearn.ensemble import IsolationForest
 from sklearn.manifold import TSNE
-from sklearn.metrics import adjusted_rand_score
-from sklearn.metrics import mutual_info_score
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import adjusted_rand_score, mutual_info_score
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch_geometric.data import Data
-from torch_geometric.nn import GAT
-from torch_geometric.nn import GCNConv
-from torch_geometric.nn import GraphSAGE
+from torch_geometric.nn import GAT, GCNConv, GraphSAGE
 
 warnings.filterwarnings('ignore')
 logger = logging.getLogger(__name__)

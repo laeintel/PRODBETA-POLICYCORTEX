@@ -8,39 +8,24 @@ import json
 import os
 import re
 import subprocess
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import structlog
-from audit_logger import AuditEventType
-from audit_logger import AuditSeverity
-from audit_logger import ComprehensiveAuditLogger
+from audit_logger import AuditEventType, AuditSeverity, ComprehensiveAuditLogger
 
 # Import Phase 2 compliance components
 from compliance_proxy import ComplianceEngineProxy
 
 # Import our Phase 1 authentication components
-from enterprise_auth import AuthenticationMethod
-from enterprise_auth import EnterpriseAuthManager
-from enterprise_auth import OrganizationType
-from enterprise_auth import Role
-from fastapi import Depends
-from fastapi import FastAPI
-from fastapi import HTTPException
-from fastapi import Request
-from fastapi import status
+from enterprise_auth import AuthenticationMethod, EnterpriseAuthManager, OrganizationType, Role
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-from tenant_manager import DataClassification
-from tenant_manager import TenantManager
+from tenant_manager import DataClassification, TenantManager
 
 # Configure structured logging
 structlog.configure(

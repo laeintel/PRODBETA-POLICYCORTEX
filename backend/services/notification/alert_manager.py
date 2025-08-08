@@ -6,16 +6,10 @@ Advanced alert management with escalation and correlation
 import asyncio
 import json
 import uuid
-from dataclasses import dataclass
-from dataclasses import field
-from datetime import datetime
-from datetime import timedelta
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
+from typing import Any, Dict, List, Optional, Set
 
 import structlog
 
@@ -487,7 +481,6 @@ class AlertManager:
                 and existing_alert.status in [AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED]
                 and (alert.created_at - existing_alert.created_at) < correlation_window
             ):
-
                 # Calculate title similarity (simplified)
                 title_similarity = self._calculate_similarity(alert.title, existing_alert.title)
 
