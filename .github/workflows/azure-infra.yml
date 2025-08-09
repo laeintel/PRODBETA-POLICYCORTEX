@@ -160,6 +160,34 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Import Existing Resources (if any)
+        run: |
+          # Try to import existing Container Apps if they exist
+          # This prevents "already exists" errors
+          echo "Checking for existing Container Apps to import..."
+          
+          # Check if core app exists and import if needed
+          if az containerapp show --name ca-cortex-core-${ENV_NAME} --resource-group rg-cortex-${ENV_NAME} 2>/dev/null; then
+            echo "Importing existing core Container App..."
+            terraform import -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }} \
+              azurerm_container_app.core \
+              /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-cortex-${ENV_NAME}/providers/Microsoft.App/containerApps/ca-cortex-core-${ENV_NAME} || true
+          fi
+          
+          # Check if frontend app exists and import if needed
+          if az containerapp show --name ca-cortex-frontend-${ENV_NAME} --resource-group rg-cortex-${ENV_NAME} 2>/dev/null; then
+            echo "Importing existing frontend Container App..."
+            terraform import -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }} \
+              azurerm_container_app.frontend \
+              /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-cortex-${ENV_NAME}/providers/Microsoft.App/containerApps/ca-cortex-frontend-${ENV_NAME} || true
+          fi
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: true
+        continue-on-error: true
+      
       - name: Terraform Plan
         run: terraform plan -input=false -no-color -out=tfplan -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }}
         env:

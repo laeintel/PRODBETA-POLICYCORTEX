@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
-import { useAzurePolicies, type AzurePolicy } from '../../lib/azure-api'
+import { azurePolicies, getPolicyStatistics, getNonCompliantResources, type PolicyDefinition } from '../../lib/policies-data'
 import { 
   Shield,
   Search,
@@ -32,42 +32,50 @@ import {
 import ActionDrawer from '../../components/ActionDrawer'
 import type { CreateActionRequest } from '../../lib/actions-api'
 
-interface Policy extends AzurePolicy {}
-
 interface NonCompliantResource {
   id: string
   name: string
   type: string
   resourceGroup: string
-  reason: string
+  subscription: string
+  violations: { policy: string; reason: string }[]
   lastEvaluated: string
+  riskLevel: string
 }
 
 export default function PoliciesPage() {
-  const { policies, loading } = useAzurePolicies()
+  const [policies, setPolicies] = useState<PolicyDefinition[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null)
+  const [selectedPolicy, setSelectedPolicy] = useState<PolicyDefinition | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [nonCompliantResources, setNonCompliantResources] = useState<NonCompliantResource[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerRequest, setDrawerRequest] = useState<CreateActionRequest | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showStatistics, setShowStatistics] = useState(true)
 
-  if (nonCompliantResources.length === 0) {
-    setNonCompliantResources([
-      { id: 'res-nc-001', name: 'stpolicycortexdev', type: 'Microsoft.Storage/storageAccounts', resourceGroup: 'rg-policycortex-dev', reason: 'Storage account does not have encryption enabled', lastEvaluated: '2025-01-08 10:30 AM' },
-      { id: 'res-nc-002', name: 'vm-test-01', type: 'Microsoft.Compute/virtualMachines', resourceGroup: 'rg-test', reason: 'Missing required tag: Environment', lastEvaluated: '2025-01-08 09:15 AM' }
-    ])
-  }
+  useEffect(() => {
+    // Simulate loading real policies
+    setTimeout(() => {
+      setPolicies(azurePolicies)
+      setNonCompliantResources(getNonCompliantResources())
+      setLoading(false)
+    }, 500)
+  }, [])
 
   const filteredPolicies = policies.filter(policy => {
-    const matchesSearch = policy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         policy.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = policy.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         policy.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         policy.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = filterCategory === 'all' || policy.category === filterCategory
     const matchesStatus = filterStatus === 'all' || policy.status === filterStatus
     return matchesSearch && matchesCategory && matchesStatus
   })
+
+  const stats = getPolicyStatistics()
 
   const totalCompliant = filteredPolicies.reduce((sum, p) => sum + (p.compliance?.compliant || 0), 0)
   const totalNonCompliant = filteredPolicies.reduce((sum, p) => sum + (p.compliance?.nonCompliant || 0), 0)
@@ -173,6 +181,9 @@ export default function PoliciesPage() {
               <option value="Backup">Backup</option>
               <option value="Monitoring">Monitoring</option>
               <option value="Network">Network</option>
+              <option value="Cost Management">Cost Management</option>
+              <option value="SQL">SQL</option>
+              <option value="Kubernetes">Kubernetes</option>
             </select>
             
             <select
@@ -186,11 +197,64 @@ export default function PoliciesPage() {
               <option value="Draft">Draft</option>
             </select>
 
-            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              Import Policy
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                className="px-3 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
+              >
+                {viewMode === 'grid' ? <BarChart3 className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+              </button>
+              <button 
+                onClick={() => setShowStatistics(!showStatistics)}
+                className="px-3 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+              <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Import
+              </button>
+            </div>
           </div>
+
+          {/* Statistics Dashboard */}
+          {showStatistics && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-8 p-6 bg-white/10 backdrop-blur-md rounded-xl border border-white/20"
+            >
+              <h2 className="text-xl font-semibold text-white mb-4">Policy Analytics</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-purple-400">{stats.total}</p>
+                  <p className="text-sm text-gray-400">Total Policies</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-400">{stats.active}</p>
+                  <p className="text-sm text-gray-400">Active</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-blue-400">{stats.totalAssignments}</p>
+                  <p className="text-sm text-gray-400">Assignments</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-yellow-400">{stats.totalRemediationTasks}</p>
+                  <p className="text-sm text-gray-400">Remediation Tasks</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(stats.byCategory).map(([category, count]) => (
+                    <span key={category} className="px-3 py-1 bg-white/10 text-white rounded-lg text-sm">
+                      {category}: {count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Policies Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -230,12 +294,12 @@ export default function PoliciesPage() {
                   </span>
                 </div>
 
-                <h3 className="text-white font-medium mb-1">{policy.name}</h3>
+                <h3 className="text-white font-medium mb-1 line-clamp-1">{policy.displayName}</h3>
                 <p className="text-xs text-gray-400 mb-3 line-clamp-2">{policy.description}</p>
 
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-gray-400">{policy.category}</span>
-                  <span className="text-xs text-gray-400">{policy.assignments} assignments</span>
+                  <span className="text-xs text-gray-400">{policy.assignments} assignment{policy.assignments !== 1 ? 's' : ''}</span>
                 </div>
 
                 {/* Compliance Bar */}
@@ -272,15 +336,33 @@ export default function PoliciesPage() {
                 Non-Compliant Resources Requiring Action
               </h2>
               <div className="space-y-3">
-                {nonCompliantResources.map((resource) => (
+                {nonCompliantResources.slice(0, 5).map((resource) => (
                   <div key={resource.id} className="flex items-center justify-between p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium text-white">{resource.name}</p>
-                      <p className="text-xs text-gray-400">{resource.resourceGroup} • {resource.type}</p>
-                      <p className="text-xs text-red-300 mt-1">{resource.reason}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-white">{resource.name}</p>
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          resource.riskLevel === 'Critical' ? 'bg-red-900/50 text-red-400' :
+                          resource.riskLevel === 'High' ? 'bg-orange-900/50 text-orange-400' :
+                          'bg-yellow-900/50 text-yellow-400'
+                        }`}>
+                          {resource.riskLevel} Risk
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400">{resource.subscription} / {resource.resourceGroup}</p>
+                      <p className="text-xs text-gray-500 mt-1">{resource.type}</p>
+                      <div className="mt-2">
+                        {resource.violations.map((v, idx) => (
+                          <p key={idx} className="text-xs text-red-300">
+                            • {v.policy}: {v.reason}
+                          </p>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{resource.lastEvaluated}</span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="text-xs text-gray-400">
+                        {new Date(resource.lastEvaluated).toLocaleString()}
+                      </span>
                       <button onClick={() => openRemediate(resource.id, 'auto-remediate')} className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                         Remediate
                       </button>
@@ -302,7 +384,7 @@ export default function PoliciesPage() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-bold text-white">{selectedPolicy.name}</h2>
+                      <h2 className="text-2xl font-bold text-white">{selectedPolicy.displayName}</h2>
                       <p className="text-sm text-gray-400 mt-1">{selectedPolicy.description}</p>
                     </div>
                     <button
@@ -340,12 +422,16 @@ export default function PoliciesPage() {
                           <span className="text-sm text-white">{selectedPolicy.status}</span>
                         </div>
                         <div className="flex justify-between">
+                          <span className="text-sm text-gray-400">Version:</span>
+                          <span className="text-sm text-white">{selectedPolicy.version}</span>
+                        </div>
+                        <div className="flex justify-between">
                           <span className="text-sm text-gray-400">Created By:</span>
-                          <span className="text-sm text-white">{selectedPolicy.createdBy}</span>
+                          <span className="text-sm text-white">{selectedPolicy.metadata.createdBy}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-400">Last Modified:</span>
-                          <span className="text-sm text-white">{selectedPolicy.lastModified}</span>
+                          <span className="text-sm text-white">{new Date(selectedPolicy.metadata.updatedOn).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>

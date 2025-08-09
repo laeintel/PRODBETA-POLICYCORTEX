@@ -30,9 +30,9 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 - Pointers: FE MSAL `frontend/lib/auth-config.ts`; BE JWT validation `core/src/auth.rs`
 - Next: enforce scopes/roles on handlers; propagate tenant context
 
-7) Tenant Isolation — [Missing]
-- Pointers: `scripts/init.sql` uses subscription_id; `TenantContext` not applied to DB
-- Next: add `tenant_id` to tables, RLS policies, per-request tenant scoping
+7) Tenant Isolation — [Partial]
+- Pointers: `scripts/migrations/001_add_tenant_isolation.sql` (tenant_id + RLS), `core/src/tenant.rs` (middleware/DB context)
+- Next: wire middleware in router; migrate all queries to tenant-aware access
 
 8) Durable SOR — [Partial]
 - Pointers: Python actions persisted (`backend/services/api_gateway/main.py`); rich DB schema `scripts/init.sql`
@@ -46,17 +46,17 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 - Pointers: Action drawer tabs (preflight/approvals/evidence) in `frontend/components/ActionDrawer`
 - Next: confirmations, disable destructive ops without approvals in UI
 
-11) Approvals & SoD — [Missing]
-- Pointers: design `Roadmap_17_Approval_and_Rollback_Sequences.md`
-- Next: implement approvals endpoints, roles, and state machine
+11) Approvals & SoD — [Partial]
+- Pointers: `core/src/approvals.rs` (models/policies), `Roadmap_17_Approval_and_Rollback_Sequences.md`
+- Next: add approve/rollback endpoints and integrate with action lifecycle
 
 12) Evidence Factory — [Partial]
 - Pointers: `core/src/compliance/mod.rs`, API in `core/src/api/compliance.rs`
 - Next: immutable storage (WORM), signatures, auditor exports
 
-13) Tamper‑Evident Logs — [Missing]
-- Pointers: tracing only
-- Next: append-only hashed logs, signatures/attestations
+13) Tamper‑Evident Logs — [Partial]
+- Pointers: `core/src/audit_chain.rs` (hash chaining, WORM insert)
+- Next: emit audit entries from auth/actions/compliance; verify chain on startup
 
 14) Secrets Lifecycle — [Partial]
 - Pointers: Key Vault hydration in gateway; Terraform KV
@@ -65,11 +65,13 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 15) Secret Boundary Checks — [Missing]
 - Next: log redaction, CI checks preventing secret bundling
 
-16) Accessibility — [Missing]
-- Next: add ARIA/keyboard nav/focus traps, a11y tests
+16) Accessibility — [Partial]
+- Pointers: `frontend/lib/accessibility.ts` (focus trap, ARIA helpers)
+- Next: adopt across components; add automated a11y tests
 
-17) i18n — [Missing]
-- Next: introduce i18n framework and locales
+17) i18n — [Partial]
+- Pointers: `frontend/lib/i18n.ts` (provider, translations)
+- Next: wrap app provider; migrate strings; load locales
 
 18) UI Scale — [Partial]
 - Pointers: `frontend/lib/performance-api.ts` (caching/backpressure/streaming)
@@ -86,8 +88,9 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 - Pointers: docs `advance docs/15-monitoring-observability.md`; tracing init in core
 - Next: wire OpenTelemetry exporter, dashboards, SLIs
 
-22) SLOs & Error Budgets — [Missing]
-- Next: define SLOs per API and enforce
+22) SLOs & Error Budgets — [Partial]
+- Pointers: `core/src/slo.rs` (SLO manager, error budget)
+- Next: wire SLIs to metrics/exporter; alerting and release gates
 
 23) DR Strategy — [Partial]
 - Pointers: Terraform backups/retention
@@ -125,8 +128,9 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 - Pointers: `advance docs/07-security-architecture.md`
 - Next: track mitigations, gate releases on reviews
 
-32) Supply Chain Security — [Missing]
-- Next: SBOM + CVE scans + provenance
+32) Supply Chain Security — [Partial]
+- Pointers: `scripts/supply-chain-security.sh`, `.bat` (SBOM/CVE)
+- Next: integrate in CI; add provenance/signing policy gates
 
 33) Operability — [Partial]
 - Pointers: compose + Terraform; docs
@@ -161,8 +165,8 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 - Next: versioning policy + CI checks
 
 41) Event‑Driven Architecture — [Partial]
-- Pointers: NATS/EventStore in compose; event module
-- Next: wire producers/consumers across services
+- Pointers: NATS impl `core/src/events/mod.rs`
+- Next: publish/subscribe from action/compliance/cost flows
 
 42) Performance Engineering — [Partial]
 - Pointers: perf client; basic scripts
@@ -184,8 +188,9 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 - Pointers: stubs in `core/src/api/mod.rs` and gateway
 - Next: expiry/recertification workflows
 
-47) Change Management — [Missing]
-- Next: ServiceNow/JSM integrations, freeze windows
+47) Change Management — [Partial]
+- Pointers: `core/src/change_management.rs` (ServiceNow/Jira integrations)
+- Next: invoke during high‑risk actions; freeze window checks
 
 48) References & Community — [Missing]
 - Next: add design partners, references, community space
