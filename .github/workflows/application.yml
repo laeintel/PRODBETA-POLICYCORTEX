@@ -74,10 +74,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
+      - name: Setup Rust (Windows)
+        shell: powershell
+        run: |
+          # Check if Rust is already installed
+          if (Get-Command cargo -ErrorAction SilentlyContinue) {
+            Write-Host "Rust is already installed"
+            rustc --version
+            cargo --version
+          } else {
+            Write-Host "Installing Rust..."
+            Invoke-WebRequest https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
+            .\rustup-init.exe -y --default-toolchain stable --profile minimal
+            $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+          }
+          # Install required components
+          rustup component add rustfmt clippy
 
       - name: Cache Rust Dependencies
         uses: Swatinem/rust-cache@v2
@@ -85,14 +97,17 @@ jobs:
           workspaces: core
 
       - name: Format Check
+        shell: powershell
         run: cargo fmt --all -- --check
         working-directory: ./core
 
       - name: Clippy
+        shell: powershell
         run: cargo clippy --all-targets --all-features -- -D warnings
         working-directory: ./core
 
       - name: Run Tests
+        shell: powershell
         run: cargo test --verbose
         working-directory: ./core
 
