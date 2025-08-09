@@ -27,6 +27,10 @@ use api::{
     process_conversation,
     get_correlations,
     get_policies_deep,
+    get_rbac_deep,
+    get_costs_deep,
+    get_network_deep,
+    get_resources_deep,
     remediate,
     create_exception,
     create_action,
@@ -136,6 +140,10 @@ async fn main() {
 
         // Deep insights (Phase 1)
         .route("/api/v1/policies/deep", get(get_policies_deep))
+        .route("/api/v1/rbac/deep", get(get_rbac_deep))
+        .route("/api/v1/costs/deep", get(get_costs_deep))
+        .route("/api/v1/network/deep", get(get_network_deep))
+        .route("/api/v1/resources/deep", get(get_resources_deep))
 
         // Actions (Phase 1)
         .route("/api/v1/remediate", post(remediate))
