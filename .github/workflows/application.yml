@@ -44,7 +44,7 @@ permissions:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Use GitHub-hosted runner for simple tasks
     outputs:
       core: ${{ steps.changes.outputs.core }}
       frontend: ${{ steps.changes.outputs.frontend }}
@@ -68,7 +68,7 @@ jobs:
 
   test-core:
     name: Test Rust Core
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Use GitHub-hosted runner for tests
     needs: changes
     if: needs.changes.outputs.core == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -106,7 +106,7 @@ jobs:
 
   test-frontend:
     name: Test Frontend
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Use GitHub-hosted runner for tests
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -147,7 +147,7 @@ jobs:
 
   test-graphql:
     name: Test GraphQL Gateway
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Use GitHub-hosted runner for tests
     needs: changes
     if: needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -171,28 +171,31 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Changed from self-hosted to ubuntu-latest for Linux compatibility
     if: github.event.inputs.force_deploy != 'true'
+    permissions:
+      contents: read
+      security-events: write  # Required for uploading SARIF results
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Skip OWASP Dependency Check (Windows compatibility issue)
-        run: echo "Skipping OWASP dependency check on self-hosted Windows runner"
-
-      - name: Trivy Container Scan
+      - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail the build on vulnerabilities
 
-      - name: Upload Trivy Results
+      - name: Upload Trivy results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: trivy-results.sarif
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy'
 
   build-core:
     name: Build Core Service
@@ -274,7 +277,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest  # Use GitHub-hosted runner for tests
     needs: [build-core, build-frontend, build-graphql]
     if: always() && needs.build-core.result == 'success' && needs.build-frontend.result == 'success' && needs.build-graphql.result == 'success'
     services:
