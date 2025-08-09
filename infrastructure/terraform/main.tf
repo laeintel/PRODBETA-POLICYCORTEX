@@ -298,7 +298,8 @@ resource "azurerm_container_app" "core" {
   template {
     container {
       name   = "core-api"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-core:latest"
+      # Use nginx as placeholder until actual image is pushed
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
       cpu    = 0.25    # Minimum CPU (0.25 vCPU)
       memory = "0.5Gi" # Minimum memory (0.5 GB)
 
@@ -343,16 +344,17 @@ resource "azurerm_container_app" "core" {
     value = random_password.postgres.result
   }
 
-  registry {
-    server               = azurerm_container_registry.main.login_server
-    username             = azurerm_container_registry.main.admin_username
-    password_secret_name = "registry-password"
-  }
-
-  secret {
-    name  = "registry-password"
-    value = azurerm_container_registry.main.admin_password
-  }
+  # Registry configuration removed - using public images initially
+  # Uncomment and update when pushing custom images:
+  # registry {
+  #   server               = azurerm_container_registry.main.login_server
+  #   username             = azurerm_container_registry.main.admin_username
+  #   password_secret_name = "registry-password"
+  # }
+  # secret {
+  #   name  = "registry-password"
+  #   value = azurerm_container_registry.main.admin_password
+  # }
 
   tags = local.common_tags
 }
@@ -367,7 +369,8 @@ resource "azurerm_container_app" "frontend" {
   template {
     container {
       name   = "frontend"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-frontend:latest"
+      # Use nginx as placeholder until actual image is pushed
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
       cpu    = 0.25
       memory = "0.5Gi"
 
@@ -391,16 +394,17 @@ resource "azurerm_container_app" "frontend" {
     }
   }
 
-  registry {
-    server               = azurerm_container_registry.main.login_server
-    username             = azurerm_container_registry.main.admin_username
-    password_secret_name = "registry-password"
-  }
-
-  secret {
-    name  = "registry-password"
-    value = azurerm_container_registry.main.admin_password
-  }
+  # Registry configuration removed - using public images initially
+  # Uncomment and update when pushing custom images:
+  # registry {
+  #   server               = azurerm_container_registry.main.login_server
+  #   username             = azurerm_container_registry.main.admin_username
+  #   password_secret_name = "registry-password"
+  # }
+  # secret {
+  #   name  = "registry-password"
+  #   value = azurerm_container_registry.main.admin_password
+  # }
 
   tags = local.common_tags
 }
