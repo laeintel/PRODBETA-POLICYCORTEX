@@ -67,7 +67,20 @@
       "Bash(set AZURE_SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78)",
       "Bash(set AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7)",
       "Bash(sed:*)",
-      "Bash(.start-backend.bat)"
+      "Bash(.start-backend.bat)",
+      "Bash(docker-compose:*)",
+      "Bash(docker-build-run.bat)",
+      "Bash(az ad app federated-credential list:*)",
+      "Bash(docker:*)",
+      "Bash(az ad app federated-credential create:*)",
+      "Bash(az role assignment create:*)",
+      "Bash(az ad sp show:*)",
+      "Bash(az role assignment list:*)",
+      "Bash(az account set:*)",
+      "Bash(az account list:*)",
+      "Bash(terraform:*)",
+      "Bash(az storage account create:*)",
+      "Bash(gh secret:*)"
     ],
     "deny": []
   }

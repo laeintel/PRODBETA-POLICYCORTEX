@@ -153,7 +153,7 @@ class PerformanceApiClient {
   private requestQueue: Array<() => void> = []
   private activeRequests = 0
 
-  constructor(baseURL = 'http://localhost:8080') {
+  constructor(baseURL = '') {
     this.baseURL = baseURL
     
     // Warm up critical endpoints

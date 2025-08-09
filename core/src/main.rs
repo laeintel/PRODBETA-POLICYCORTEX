@@ -167,7 +167,7 @@ async fn main() {
         .route("/api/v1/actions/:id/events", get(stream_action_events))
         
         // Legacy endpoints for compatibility
-        .route("/api/v1/policies", get(get_policies))
+        // Note: /api/v1/policies is already registered above
         .route("/api/v1/resources", get(get_resources))
         .route("/api/v1/compliance", get(get_compliance))
         

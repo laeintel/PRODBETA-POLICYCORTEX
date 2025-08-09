@@ -4,30 +4,26 @@ const nextConfig = {
   swcMinify: true,
   output: 'standalone',
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'backend', 'frontend'],
   },
   async rewrites() {
     return [
-      // Route all API v1 calls to the Python deep API to ensure real data
+      // In Docker, use container names for internal communication
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:8090/api/v1/:path*',
+        destination: 'http://backend:8080/api/v1/:path*',
       },
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8080/api/:path*',
+        destination: 'http://backend:8080/api/:path*',
       },
       {
         source: '/actions/:path*',
-        destination: 'http://localhost:8090/api/v1/actions/:path*',
-      },
-      {
-        source: '/api/deep/:path*',
-        destination: 'http://localhost:8090/api/v1/:path*',
+        destination: 'http://backend:8080/api/v1/actions/:path*',
       },
       {
         source: '/graphql',
-        destination: 'http://localhost:4000/graphql',
+        destination: 'http://graphql:4000/graphql',
       },
     ];
   },

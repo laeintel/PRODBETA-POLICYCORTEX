@@ -44,30 +44,37 @@ export const msalConfig: Configuration = {
 }
 
 // Basic permissions for PolicyCortex (can be expanded with admin consent)
+// Note: Azure AD only allows scopes from one resource per request
 export const loginRequest = {
   scopes: [
-    // Core Azure Management (user's own access)
-    'https://management.azure.com/user_impersonation',
-    
-    // Basic Microsoft Graph permissions  
-    'https://graph.microsoft.com/User.Read'
+    // Basic profile and OpenID Connect scopes (same resource)
+    'openid',
+    'profile',
+    'offline_access',
+    'User.Read' // Microsoft Graph user profile
   ]
 }
 
-// Extended permissions for tenant-wide access (requires admin consent)
-export const adminConsentRequest = {
+// Azure Management API request (separate from Graph API)
+export const azureManagementRequest = {
   scopes: [
-    'https://management.azure.com/user_impersonation',
-    'https://graph.microsoft.com/User.Read',
-    'https://graph.microsoft.com/Directory.Read.All',
-    'https://graph.microsoft.com/Organization.Read.All', 
-    'https://graph.microsoft.com/GroupMember.Read.All',
-    'https://graph.microsoft.com/SecurityEvents.Read.All',
-    'https://graph.microsoft.com/Policy.Read.All'
+    'https://management.azure.com/user_impersonation'
   ]
 }
 
-// API request configuration for backend calls
+// Microsoft Graph API request (separate from Azure Management)
+export const graphApiRequest = {
+  scopes: [
+    'User.Read',
+    'Directory.Read.All',
+    'Organization.Read.All', 
+    'GroupMember.Read.All',
+    'SecurityEvents.Read.All',
+    'Policy.Read.All'
+  ]
+}
+
+// API request configuration for backend calls (Azure Management)
 export const apiRequest = {
   scopes: [
     'https://management.azure.com/user_impersonation'

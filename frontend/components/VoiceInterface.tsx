@@ -216,7 +216,20 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
       setTranscript('')
-      recognitionRef.current.start()
+      try {
+        recognitionRef.current.start()
+      } catch (error) {
+        console.error('Failed to start speech recognition:', error)
+        // If already started, try to stop and restart
+        try {
+          recognitionRef.current.stop()
+          setTimeout(() => {
+            recognitionRef.current.start()
+          }, 100)
+        } catch (restartError) {
+          console.error('Failed to restart speech recognition:', restartError)
+        }
+      }
     }
   }
 

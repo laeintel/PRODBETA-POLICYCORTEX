@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 use uuid::Uuid;
+use futures_lite::stream::StreamExt;
 
 // Core event types
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -177,17 +177,17 @@ impl SecurityGraphEngine {
         for identity_data in identities {
             // Calculate risk score based on real data
             let mut risk_score = 0.0;
-            if identity_data.has_privileged_roles { risk_score += 30.0; }
-            if identity_data.stale_credentials { risk_score += 20.0; }
-            if identity_data.anomalous_activity { risk_score += 25.0; }
-            if identity_data.external_user { risk_score += 15.0; }
+            if identity_data.get("has_privileged_roles").and_then(|v| v.as_bool()).unwrap_or(false) { risk_score += 30.0; }
+            if identity_data.get("stale_credentials").and_then(|v| v.as_bool()).unwrap_or(false) { risk_score += 20.0; }
+            if identity_data.get("anomalous_activity").and_then(|v| v.as_bool()).unwrap_or(false) { risk_score += 25.0; }
+            if identity_data.get("external_user").and_then(|v| v.as_bool()).unwrap_or(false) { risk_score += 15.0; }
             
             let identity = SecurityNode::Identity {
-                id: identity_data.id.clone(),
-                name: identity_data.display_name,
-                identity_type: identity_data.identity_type,
+                id: identity_data.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
+                name: identity_data.get("display_name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
+                identity_type: identity_data.get("identity_type").and_then(|v| v.as_str()).unwrap_or("User").to_string(),
                 risk_score,
-                last_active: identity_data.last_sign_in.unwrap_or_else(chrono::Utc::now),
+                last_active: chrono::Utc::now(),
             };
             
             let idx = self.graph.add_node(identity.clone());
@@ -247,18 +247,28 @@ impl SecurityGraphEngine {
         let resource_items = resources.get("items").and_then(|v| v.as_array()).map(|v| v.clone()).unwrap_or_default();
         for resource_data in resource_items {
             // Determine classification based on tags and type
-            let classification = if resource_data.tags.contains_key("data-classification") {
-                resource_data.tags["data-classification"].clone()
-            } else if resource_data.resource_type.contains("KeyVault") || resource_data.resource_type.contains("Database") {
+            let tags = resource_data.get("tags").and_then(|v| v.as_object());
+            let resource_type = resource_data.get("resource_type").and_then(|v| v.as_str()).unwrap_or("");
+            
+            let classification = if let Some(tags_obj) = tags {
+                if let Some(class) = tags_obj.get("data-classification").and_then(|v| v.as_str()) {
+                    class.to_string()
+                } else if resource_type.contains("KeyVault") || resource_type.contains("Database") {
+                    "Confidential".to_string()
+                } else if tags_obj.get("environment").and_then(|v| v.as_str()) == Some("production") {
+                    "Internal".to_string()
+                } else {
+                    "Public".to_string()
+                }
+            } else if resource_type.contains("KeyVault") || resource_type.contains("Database") {
                 "Confidential".to_string()
-            } else if resource_data.tags.contains_key("environment") && resource_data.tags["environment"] == "production" {
-                "Internal".to_string()
             } else {
                 "Public".to_string()
             };
             
             // Check encryption status
-            let encryption_status = if let Some(props) = &resource_data.properties {
+            let properties = resource_data.get("properties").and_then(|v| v.as_object());
+            let encryption_status = if let Some(props) = properties {
                 if props.get("encryption").is_some() || props.get("encryptionSettings").is_some() {
                     "Enabled".to_string()
                 } else {
@@ -269,7 +279,8 @@ impl SecurityGraphEngine {
             };
             
             // Check backup status
-            let backup_status = client.get_backup_status(&resource_data.id).await.unwrap_or("Unknown".to_string());
+            let resource_id = resource_data.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
+            let backup_status = client.get_backup_status(resource_id).await.unwrap_or("Unknown".to_string());
             
             let resource = SecurityNode::Resource {
                 id: resource_data.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
@@ -306,11 +317,13 @@ impl SecurityGraphEngine {
             };
             
             let endpoint = SecurityNode::NetworkEndpoint {
-                id: public_endpoint.id.clone(),
-                ip_address: public_endpoint.ip_address,
-                port: public_endpoint.port,
+                id: public_endpoint.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
+                ip_address: public_endpoint.get("ip_address").and_then(|v| v.as_str()).unwrap_or("0.0.0.0").to_string(),
+                port: public_endpoint.get("port").and_then(|v| v.as_u64()).unwrap_or(443) as u16,
                 exposure,
-                protocols: public_endpoint.protocols,
+                protocols: public_endpoint.get("protocols").and_then(|v| v.as_array()).map(|arr| {
+                    arr.iter().filter_map(|v| v.as_str()).map(|s| s.to_string()).collect()
+                }).unwrap_or_default(),
             };
             
             let idx = self.graph.add_node(endpoint.clone());
@@ -323,11 +336,13 @@ impl SecurityGraphEngine {
         let private_endpoints = network_data.get("private_endpoints").and_then(|v| v.as_array()).map(|v| v.clone()).unwrap_or_default();
         for private_endpoint in private_endpoints {
             let endpoint = SecurityNode::NetworkEndpoint {
-                id: private_endpoint.id.clone(),
-                ip_address: private_endpoint.ip_address,
-                port: private_endpoint.port,
+                id: private_endpoint.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
+                ip_address: private_endpoint.get("ip_address").and_then(|v| v.as_str()).unwrap_or("0.0.0.0").to_string(),
+                port: private_endpoint.get("port").and_then(|v| v.as_u64()).unwrap_or(443) as u16,
                 exposure: "Private".to_string(),
-                protocols: private_endpoint.protocols,
+                protocols: private_endpoint.get("protocols").and_then(|v| v.as_array()).map(|arr| {
+                    arr.iter().filter_map(|v| v.as_str()).map(|s| s.to_string()).collect()
+                }).unwrap_or_default(),
             };
             
             let idx = self.graph.add_node(endpoint.clone());
@@ -346,25 +361,31 @@ impl SecurityGraphEngine {
         
         for datastore_data in datastores {
             // Determine sensitivity based on data classification and compliance tags
-            let sensitivity = if datastore_data.tags.contains_key("sensitivity") {
-                datastore_data.tags["sensitivity"].clone()
-            } else if datastore_data.compliance_tags.iter().any(|t| t == "PCI" || t == "HIPAA") {
+            let tags = datastore_data.get("tags").and_then(|v| v.as_object());
+            let compliance_tags = datastore_data.get("compliance_tags")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+                .unwrap_or_default();
+            
+            let sensitivity = if let Some(tags_obj) = tags {
+                tags_obj.get("sensitivity").and_then(|v| v.as_str()).unwrap_or("Low").to_string()
+            } else if compliance_tags.iter().any(|t| *t == "PCI" || *t == "HIPAA") {
                 "Critical".to_string()
-            } else if datastore_data.compliance_tags.iter().any(|t| t == "GDPR" || t == "SOC2") {
+            } else if compliance_tags.iter().any(|t| *t == "GDPR" || *t == "SOC2") {
                 "High".to_string()
-            } else if datastore_data.encrypted {
+            } else if datastore_data.get("encrypted").and_then(|v| v.as_bool()).unwrap_or(false) {
                 "Medium".to_string()
             } else {
                 "Low".to_string()
             };
             
             let datastore = SecurityNode::DataStore {
-                id: datastore_data.id.clone(),
-                name: datastore_data.name,
-                data_type: datastore_data.data_type,
+                id: datastore_data.get("id").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
+                name: datastore_data.get("name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
+                data_type: datastore_data.get("data_type").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
                 sensitivity,
-                size_gb: datastore_data.size_gb,
-                compliance_tags: datastore_data.compliance_tags,
+                size_gb: datastore_data.get("size_gb").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                compliance_tags: compliance_tags.into_iter().map(|s| s.to_string()).collect(),
             };
             
             let idx = self.graph.add_node(datastore.clone());
@@ -382,32 +403,44 @@ impl SecurityGraphEngine {
             .map_err(|e| SecurityGraphError::AzureError(format!("Failed to fetch role assignments: {}", e)))?;
         
         for assignment in role_assignments {
+            let principal_id = assignment.get("principal_id").and_then(|v| v.as_str()).unwrap_or("");
+            let role_definition_id = assignment.get("role_definition_id").and_then(|v| v.as_str()).unwrap_or("");
+            let scope = assignment.get("scope").and_then(|v| v.as_str()).unwrap_or("");
+            
             // Add edge: Identity -> Role
             if let (Some(&identity_idx), Some(&role_idx)) = 
-                (self.node_index.get(&assignment.principal_id), self.node_index.get(&assignment.role_definition_id)) {
+                (self.node_index.get(principal_id), self.node_index.get(role_definition_id)) {
                 self.graph.add_edge(
                     identity_idx,
                     role_idx,
                     SecurityEdge::AssumesRole {
-                        granted_at: assignment.created_on,
-                        expires_at: assignment.expires_on,
-                        elevation_required: assignment.requires_elevation,
+                        granted_at: chrono::Utc::now(),
+                        expires_at: None,
+                        elevation_required: assignment.get("requires_elevation").and_then(|v| v.as_bool()).unwrap_or(false),
                     },
                 );
             }
             
             // Add edge: Role -> Resource based on scope
-            if let Some(&role_idx) = self.node_index.get(&assignment.role_definition_id) {
+            if let Some(&role_idx) = self.node_index.get(role_definition_id) {
                 // Find resources that match the assignment scope
                 for (resource_id, &resource_idx) in &self.node_index {
-                    if resource_id.starts_with(&assignment.scope) {
+                    if resource_id.starts_with(scope) {
+                        let permissions = assignment.get("permissions")
+                            .and_then(|v| v.as_array())
+                            .and_then(|arr| arr.first())
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("Read");
+                        
                         self.graph.add_edge(
                             role_idx,
                             resource_idx,
                             SecurityEdge::HasPermission {
-                                action: assignment.permissions.first().cloned().unwrap_or_else(|| "Read".to_string()),
-                                scope: assignment.scope.clone(),
-                                conditions: assignment.conditions.clone(),
+                                action: permissions.to_string(),
+                                scope: scope.to_string(),
+                                conditions: assignment.get("conditions").and_then(|v| v.as_array()).map(|arr| {
+                                    arr.iter().filter_map(|v| v.as_str()).map(|s| s.to_string()).collect()
+                                }).unwrap_or_default(),
                             },
                         );
                     }
@@ -420,15 +453,20 @@ impl SecurityGraphEngine {
             .map_err(|e| SecurityGraphError::AzureError(format!("Failed to fetch network flows: {}", e)))?;
         
         for flow in network_flows {
+            let source_id = flow.get("source_id").and_then(|v| v.as_str()).unwrap_or("");
+            let target_id = flow.get("target_id").and_then(|v| v.as_str()).unwrap_or("");
+            
             if let (Some(&source_idx), Some(&target_idx)) = 
-                (self.node_index.get(&flow.source_id), self.node_index.get(&flow.target_id)) {
+                (self.node_index.get(source_id), self.node_index.get(target_id)) {
                 self.graph.add_edge(
                     source_idx,
                     target_idx,
                     SecurityEdge::Reachable {
-                        port: flow.port,
-                        protocol: flow.protocol,
-                        firewall_rules: flow.nsg_rules,
+                        port: flow.get("port").and_then(|v| v.as_u64()).unwrap_or(443) as u16,
+                        protocol: flow.get("protocol").and_then(|v| v.as_str()).unwrap_or("TCP").to_string(),
+                        firewall_rules: flow.get("nsg_rules").and_then(|v| v.as_array()).map(|arr| {
+                            arr.iter().filter_map(|v| v.as_str()).map(|s| s.to_string()).collect()
+                        }).unwrap_or_default(),
                     },
                 );
             }

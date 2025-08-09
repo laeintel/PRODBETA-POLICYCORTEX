@@ -109,6 +109,10 @@ jobs:
 
       - name: Terraform Init (AzureRM backend)
         run: terraform init -input=false -backend-config="resource_group_name=${{ steps.names.outputs.TFSTATE_RG }}" -backend-config="storage_account_name=${{ steps.names.outputs.TFSTATE_SA }}" -backend-config="container_name=${{ steps.names.outputs.TFSTATE_CONTAINER }}" -backend-config="key=${{ steps.names.outputs.TFSTATE_KEY }}" -backend-config="use_azuread_auth=true"
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Select tfvars by environment
         id: tfvars
@@ -117,6 +121,10 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate -no-color
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Terraform Plan
         run: terraform plan -input=false -no-color -out=tfplan -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }}
