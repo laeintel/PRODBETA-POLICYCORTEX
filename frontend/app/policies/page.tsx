@@ -29,8 +29,10 @@ import {
   Code,
   GitBranch
 } from 'lucide-react'
+import ActionDrawer from '../../components/ActionDrawer'
+import type { CreateActionRequest } from '../../lib/actions-api'
 
-type Policy = AzurePolicy
+interface Policy extends AzurePolicy {}
 
 interface NonCompliantResource {
   id: string
@@ -49,34 +51,14 @@ export default function PoliciesPage() {
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [nonCompliantResources, setNonCompliantResources] = useState<NonCompliantResource[]>([])
-  // Preload a realistic set of non-compliant resources to drive urgency UI
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerRequest, setDrawerRequest] = useState<CreateActionRequest | null>(null)
+
   if (nonCompliantResources.length === 0) {
     setNonCompliantResources([
-        {
-          id: 'res-nc-001',
-          name: 'stpolicycortexdev',
-          type: 'Microsoft.Storage/storageAccounts',
-          resourceGroup: 'rg-policycortex-dev',
-          reason: 'Storage account does not have encryption enabled',
-          lastEvaluated: '2025-01-08 10:30 AM'
-        },
-        {
-          id: 'res-nc-002',
-          name: 'vm-test-01',
-          type: 'Microsoft.Compute/virtualMachines',
-          resourceGroup: 'rg-test',
-          reason: 'Missing required tag: Environment',
-          lastEvaluated: '2025-01-08 09:15 AM'
-        },
-        {
-          id: 'res-nc-003',
-          name: 'vm-legacy-app',
-          type: 'Microsoft.Compute/virtualMachines',
-          resourceGroup: 'rg-legacy',
-          reason: 'Azure Backup is not configured',
-          lastEvaluated: '2025-01-08 08:45 AM'
-        }
-      ])
+      { id: 'res-nc-001', name: 'stpolicycortexdev', type: 'Microsoft.Storage/storageAccounts', resourceGroup: 'rg-policycortex-dev', reason: 'Storage account does not have encryption enabled', lastEvaluated: '2025-01-08 10:30 AM' },
+      { id: 'res-nc-002', name: 'vm-test-01', type: 'Microsoft.Compute/virtualMachines', resourceGroup: 'rg-test', reason: 'Missing required tag: Environment', lastEvaluated: '2025-01-08 09:15 AM' }
+    ])
   }
 
   const filteredPolicies = policies.filter(policy => {
@@ -84,7 +66,6 @@ export default function PoliciesPage() {
                          policy.description.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = filterCategory === 'all' || policy.category === filterCategory
     const matchesStatus = filterStatus === 'all' || policy.status === filterStatus
-    
     return matchesSearch && matchesCategory && matchesStatus
   })
 
@@ -93,6 +74,11 @@ export default function PoliciesPage() {
   const overallCompliance = totalCompliant + totalNonCompliant > 0 
     ? ((totalCompliant / (totalCompliant + totalNonCompliant)) * 100).toFixed(1)
     : '0'
+
+  const openRemediate = (resourceId: string, action: string) => {
+    setDrawerRequest({ action_type: action, resource_id: resourceId })
+    setDrawerOpen(true)
+  }
 
   return (
     <AppLayout>
@@ -295,7 +281,7 @@ export default function PoliciesPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-400">{resource.lastEvaluated}</span>
-                      <button className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
+                      <button onClick={() => openRemediate(resource.id, 'auto-remediate')} className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
                         Remediate
                       </button>
                     </div>
@@ -444,6 +430,7 @@ export default function PoliciesPage() {
           )}
         </div>
       </div>
+      <ActionDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} request={drawerRequest} />
     </AppLayout>
   )
 }

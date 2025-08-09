@@ -33,6 +33,8 @@ import {
   Layers,
   Zap
 } from 'lucide-react'
+import ActionDrawer from '../../components/ActionDrawer'
+import type { CreateActionRequest } from '../../lib/actions-api'
 
 export default function ResourcesPage() {
   const { resources: azureResources, loading, error } = useAzureResources()
@@ -43,6 +45,8 @@ export default function ResourcesPage() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [selectedResource, setSelectedResource] = useState<AzureResource | null>(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerRequest, setDrawerRequest] = useState<CreateActionRequest | null>(null)
 
   // Transform Azure resources to match our UI needs
   const resources = azureResources?.map(r => ({
@@ -80,8 +84,14 @@ export default function ResourcesPage() {
   const nonCompliant = filteredResources.filter(r => r.compliance === 'Non-Compliant')
 
   const handleResourceAction = (resource: AzureResource, action: string) => {
-    console.log(`Performing ${action} on ${resource.name}`)
-    // Here you would call the actual Azure API to perform the action
+    // Example: open action drawer to run a remediation/operation
+    const req: CreateActionRequest = {
+      action_type: action,
+      resource_id: resource.id,
+      params: { name: resource.name }
+    }
+    setDrawerRequest(req)
+    setDrawerOpen(true)
   }
 
   return (
@@ -308,10 +318,7 @@ export default function ResourcesPage() {
                         <div className="flex items-center gap-2">
                           {resource.status === 'Running' ? (
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleResourceAction(resource, 'stop')
-                              }}
+                              onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'stop') }}
                               className="p-1 hover:bg-white/10 rounded transition-colors"
                               title="Stop"
                             >
@@ -319,10 +326,7 @@ export default function ResourcesPage() {
                             </button>
                           ) : (
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleResourceAction(resource, 'start')
-                              }}
+                              onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'start') }}
                               className="p-1 hover:bg-white/10 rounded transition-colors"
                               title="Start"
                             >
@@ -330,20 +334,14 @@ export default function ResourcesPage() {
                             </button>
                           )}
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleResourceAction(resource, 'restart')
-                            }}
+                            onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'restart') }}
                             className="p-1 hover:bg-white/10 rounded transition-colors"
                             title="Restart"
                           >
                             <RefreshCw className="w-4 h-4 text-gray-400" />
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleResourceAction(resource, 'delete')
-                            }}
+                            onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'delete') }}
                             className="p-1 hover:bg-white/10 rounded transition-colors"
                             title="Delete"
                           >
@@ -462,6 +460,7 @@ export default function ResourcesPage() {
           )}
         </div>
       </div>
+      <ActionDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} request={drawerRequest} />
     </AppLayout>
   )
 }
