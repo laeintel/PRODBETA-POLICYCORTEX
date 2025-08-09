@@ -25,7 +25,6 @@ on:
         type: choice
         options:
           - dev
-          - staging
           - prod
       force_deploy:
         description: 'Force deployment (skip tests)'
@@ -433,57 +432,9 @@ jobs:
   deploy-dev:
     name: Deploy to Development
     runs-on: self-hosted
-    needs: [test-core, test-frontend, test-graphql]  # Changed to only depend on tests, not builds
-    if: always() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
-    environment: development
-    continue-on-error: true  # Allow deployment attempts even if some steps fail
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure (Simplified)
-        shell: powershell
-        run: |
-          Write-Host "Simplified deployment for Windows runner"
-          Write-Host "Note: Full container deployment requires Docker. Using alternative deployment method."
-          
-          # For now, we'll skip the actual deployment since Docker isn't available
-          # In a real scenario, you would:
-          # 1. Deploy to Azure App Service instead of AKS
-          # 2. Use Azure Static Web Apps for the frontend
-          # 3. Use Azure Functions for the API
-          
-          Write-Host "Deployment configuration needed:"
-          Write-Host "- Azure App Service for API"
-          Write-Host "- Azure Static Web Apps for frontend"
-          Write-Host "- Connection strings in Azure Key Vault"
-          
-      - name: Show Deployment URLs
-        shell: powershell
-        run: |
-          Write-Host "==============================================="
-          Write-Host "Deployment Status: Pending Configuration"
-          Write-Host "==============================================="
-          Write-Host "To complete deployment and use real Azure data:"
-          Write-Host "1. Create Azure App Service: az webapp create --name policycortex-api --resource-group rg-pcx-app-dev --plan asp-pcx-dev"
-          Write-Host "2. Deploy API: az webapp deployment source config-zip --name policycortex-api --resource-group rg-pcx-app-dev --src api.zip"
-          Write-Host "3. Create Static Web App: az staticwebapp create --name policycortex-frontend --resource-group rg-pcx-app-dev"
-          Write-Host "4. Set environment variables with Azure connection strings"
-          Write-Host "==============================================="
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
-    environment: staging
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    environment: development
     permissions:
       contents: read
     steps:
@@ -495,31 +446,21 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Get AKS Credentials
-        run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_STAGING }} --name ${{ secrets.AKS_CLUSTER_NAME_STAGING }}
+      - name: Get AKS Credentials (Dev)
+        run: az aks get-credentials --resource-group ${{ secrets.AZURE_RESOURCE_GROUP_DEV }} --name ${{ secrets.AKS_CLUSTER_NAME_DEV }}
 
-      - name: Deploy to AKS
+      - name: Deploy to AKS (Dev)
         run: |
-          # Update image tags in Kubernetes manifests
-          sed -i "s|{{IMAGE_TAG}}|${{ env.IMAGE_TAG }}|g" infrastructure/kubernetes/staging/*.yaml
-          sed -i "s|{{REGISTRY}}|${{ env.REGISTRY }}|g" infrastructure/kubernetes/staging/*.yaml
-          
-          # Apply manifests
-          kubectl apply -f infrastructure/kubernetes/staging/
+          sed -i "s|{{IMAGE_TAG}}|${{ env.IMAGE_TAG }}|g" infrastructure/kubernetes/dev/*.yaml
+          sed -i "s|{{REGISTRY}}|${{ env.REGISTRY }}|g" infrastructure/kubernetes/dev/*.yaml
+          kubectl apply -f infrastructure/kubernetes/dev/
 
-      - name: Wait for Deployment
+      - name: Wait for Deployment (Dev)
         run: |
-          kubectl rollout status deployment/policycortex-core -n policycortex-staging
-          kubectl rollout status deployment/policycortex-frontend -n policycortex-staging
-          kubectl rollout status deployment/policycortex-graphql -n policycortex-staging
+          kubectl rollout status deployment/policycortex-core -n policycortex-dev
+          kubectl rollout status deployment/policycortex-frontend -n policycortex-dev
+          kubectl rollout status deployment/policycortex-graphql -n policycortex-dev
 
-      - name: Run Performance Tests
-        run: |
-          # Install k6 for performance testing
-          sudo apt-get update && sudo apt-get install -y k6
-          
-          # Run performance tests
-          k6 run scripts/performance-tests.js
 
   deploy-prod:
     name: Deploy to Production
@@ -607,34 +548,34 @@ jobs:
   notify:
     name: Notify Deployment Status
     runs-on: self-hosted
-    needs: [deploy-dev, deploy-staging, deploy-prod]
+    needs: [deploy-dev, deploy-prod]
     if: always()
     steps:
       - name: Get Deployment Status
         run: |
           echo "DEV_STATUS=${{ needs.deploy-dev.result }}" >> $GITHUB_ENV
-          echo "STAGING_STATUS=${{ needs.deploy-staging.result }}" >> $GITHUB_ENV
+          echo "STAGING_STATUS=removed" >> $GITHUB_ENV
           echo "PROD_STATUS=${{ needs.deploy-prod.result }}" >> $GITHUB_ENV
 
       - name: Notify Success
-        if: contains(env.DEV_STATUS, 'success') || contains(env.STAGING_STATUS, 'success') || contains(env.PROD_STATUS, 'success')
+        if: contains(env.DEV_STATUS, 'success') || contains(env.PROD_STATUS, 'success')
         run: |
           echo "✅ Application deployment completed successfully!"
           echo "📊 Deployment Summary:"
           echo "- Development: ${{ env.DEV_STATUS }}"
-          echo "- Staging: ${{ env.STAGING_STATUS }}"
+          echo "- Staging: removed"
           echo "- Production: ${{ env.PROD_STATUS }}"
           echo "📍 Branch: ${{ github.ref_name }}"
           echo "🔄 Commit: ${{ github.sha }}"
           echo "📅 Deployed at: $(date)"
 
       - name: Notify Failure
-        if: contains(env.DEV_STATUS, 'failure') || contains(env.STAGING_STATUS, 'failure') || contains(env.PROD_STATUS, 'failure')
+        if: contains(env.DEV_STATUS, 'failure') || contains(env.PROD_STATUS, 'failure')
         run: |
           echo "❌ Application deployment failed!"
           echo "📊 Deployment Status:"
           echo "- Development: ${{ env.DEV_STATUS }}"
-          echo "- Staging: ${{ env.STAGING_STATUS }}"  
+          echo "- Staging: removed"  
           echo "- Production: ${{ env.PROD_STATUS }}"
           echo "🔧 Please check the logs and resolve any issues"
           exit 1
