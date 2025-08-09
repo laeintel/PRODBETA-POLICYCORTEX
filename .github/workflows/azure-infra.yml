@@ -90,43 +90,28 @@ jobs:
       - name: Provision tfstate backend (idempotent)
         shell: bash
         run: |
+          # Create resource group
           az group create -n ${{ steps.names.outputs.TFSTATE_RG }} -l eastus
+          
+          # Create storage account
           az storage account create \
             -g ${{ steps.names.outputs.TFSTATE_RG }} \
             -n ${{ steps.names.outputs.TFSTATE_SA }} \
             -l eastus --sku Standard_LRS --encryption-services blob
           
-          # Grant Storage Blob Data Contributor role to the Service Principal
-          echo "Granting Storage Blob Data Contributor role to Service Principal..."
-          STORAGE_ID=$(az storage account show --name ${{ steps.names.outputs.TFSTATE_SA }} --resource-group ${{ steps.names.outputs.TFSTATE_RG }} --query id -o tsv)
+          # Create container using storage account key
+          echo "Creating tfstate container..."
+          STORAGE_KEY=$(az storage account keys list \
+            --resource-group ${{ steps.names.outputs.TFSTATE_RG }} \
+            --account-name ${{ steps.names.outputs.TFSTATE_SA }} \
+            --query '[0].value' -o tsv)
           
-          # Check if role assignment already exists
-          EXISTING_ROLE=$(az role assignment list --assignee ${{ secrets.AZURE_CLIENT_ID }} --scope "$STORAGE_ID" --role "Storage Blob Data Contributor" --query "[0].id" -o tsv 2>/dev/null || echo "")
-          
-          if [ -z "$EXISTING_ROLE" ]; then
-            echo "Creating new role assignment..."
-            az role assignment create \
-              --role "Storage Blob Data Contributor" \
-              --assignee ${{ secrets.AZURE_CLIENT_ID }} \
-              --scope "$STORAGE_ID"
-            
-            # Wait for role assignment to propagate
-            echo "Waiting for role assignment to propagate..."
-            sleep 30
-          else
-            echo "Role assignment already exists"
-          fi
-          
-          # List all role assignments for verification
-          echo "Current role assignments for Service Principal:"
-          az role assignment list --assignee ${{ secrets.AZURE_CLIENT_ID }} --scope "$STORAGE_ID" --output table
-          
-          # Create container using key auth as fallback for initial setup
-          echo "Creating container..."
-          STORAGE_KEY=$(az storage account keys list --resource-group ${{ steps.names.outputs.TFSTATE_RG }} --account-name ${{ steps.names.outputs.TFSTATE_SA }} --query '[0].value' -o tsv)
-          az storage container create --name ${{ steps.names.outputs.TFSTATE_CONTAINER }} \
+          az storage container create \
+            --name ${{ steps.names.outputs.TFSTATE_CONTAINER }} \
             --account-name ${{ steps.names.outputs.TFSTATE_SA }} \
             --account-key "$STORAGE_KEY" 2>/dev/null || true
+          
+          echo "✅ Backend storage provisioned successfully"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -136,6 +121,16 @@ jobs:
       - name: Terraform Format
         run: terraform fmt -check
 
+      - name: Get Storage Account Key
+        id: storage_key
+        run: |
+          STORAGE_KEY=$(az storage account keys list \
+            --resource-group ${{ steps.names.outputs.TFSTATE_RG }} \
+            --account-name ${{ steps.names.outputs.TFSTATE_SA }} \
+            --query '[0].value' -o tsv)
+          echo "::add-mask::$STORAGE_KEY"
+          echo "STORAGE_KEY=$STORAGE_KEY" >> $GITHUB_OUTPUT
+      
       - name: Terraform Init (AzureRM backend)
         run: |
           terraform init -input=false \
@@ -143,13 +138,12 @@ jobs:
             -backend-config="storage_account_name=${{ steps.names.outputs.TFSTATE_SA }}" \
             -backend-config="container_name=${{ steps.names.outputs.TFSTATE_CONTAINER }}" \
             -backend-config="key=${{ steps.names.outputs.TFSTATE_KEY }}" \
-            -backend-config="use_azuread_auth=true"
+            -backend-config="access_key=${{ steps.storage_key.outputs.STORAGE_KEY }}"
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_USE_OIDC: true
-          ARM_USE_AZUREAD: true
 
       - name: Select tfvars by environment
         id: tfvars
