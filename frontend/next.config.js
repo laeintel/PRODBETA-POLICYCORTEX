@@ -12,6 +12,14 @@ const nextConfig = {
         destination: 'http://localhost:8080/api/:path*',
       },
       {
+        source: '/actions/:path*',
+        destination: 'http://localhost:8090/api/v1/actions/:path*',
+      },
+      {
+        source: '/api/deep/:path*',
+        destination: 'http://localhost:8090/api/v1/:path*',
+      },
+      {
         source: '/graphql',
         destination: 'http://localhost:4000/graphql',
       },

@@ -13,6 +13,8 @@ import os
 from datetime import datetime
 import json
 import logging
+import uuid
+from fastapi.responses import StreamingResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -74,6 +76,82 @@ MOCK_POLICIES = [
     {"id": "pol-002", "name": "Tag Compliance", "type": "Governance", "compliance": 0.78, "resources": 67},
     {"id": "pol-003", "name": "Allowed Locations", "type": "Compliance", "compliance": 0.95, "resources": 89},
 ]
+
+# ================== In-memory Action Orchestrator (Dev Stub) ==================
+
+class ActionRequest(BaseModel):
+    action_type: str
+    resource_id: Optional[str] = None
+    params: Optional[Dict[str, Any]] = {}
+
+_ACTIONS: Dict[str, Dict[str, Any]] = {}
+_ACTION_QUEUES: Dict[str, asyncio.Queue] = {}
+
+async def _simulate_action(action_id: str):
+    q = _ACTION_QUEUES[action_id]
+    rec = _ACTIONS[action_id]
+    async def emit(msg: str):
+        await q.put(msg)
+    try:
+        await emit("queued")
+        rec["status"] = "in_progress"
+        rec["updated_at"] = datetime.utcnow().isoformat()
+        await emit("in_progress: preflight")
+        await asyncio.sleep(0.5)
+        await emit("in_progress: executing")
+        await asyncio.sleep(1.0)
+        await emit("in_progress: verifying")
+        await asyncio.sleep(0.5)
+        rec["status"] = "completed"
+        rec["updated_at"] = datetime.utcnow().isoformat()
+        rec["result"] = {"message": "Action executed successfully", "changes": 1}
+        await emit("completed")
+    except Exception as e:
+        rec["status"] = "failed"
+        rec["updated_at"] = datetime.utcnow().isoformat()
+        rec["result"] = {"error": str(e)}
+        await emit(f"failed: {e}")
+    finally:
+        await q.put(None)  # signal close
+
+@app.post("/api/v1/actions")
+async def create_action(payload: ActionRequest):
+    action_id = str(uuid.uuid4())
+    _ACTIONS[action_id] = {
+        "id": action_id,
+        "action_type": payload.action_type,
+        "resource_id": payload.resource_id,
+        "status": "queued",
+        "params": payload.params or {},
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+        "result": None,
+    }
+    _ACTION_QUEUES[action_id] = asyncio.Queue()
+    asyncio.create_task(_simulate_action(action_id))
+    return {"action_id": action_id}
+
+@app.get("/api/v1/actions/{action_id}")
+async def get_action(action_id: str):
+    rec = _ACTIONS.get(action_id)
+    if not rec:
+        raise HTTPException(404, "action not found")
+    return rec
+
+@app.get("/api/v1/actions/{action_id}/events")
+async def stream_action_events(action_id: str):
+    if action_id not in _ACTION_QUEUES:
+        raise HTTPException(404, "action not found")
+    q = _ACTION_QUEUES[action_id]
+
+    async def event_gen():
+        while True:
+            msg = await q.get()
+            if msg is None:
+                break
+            yield f"data: {msg}\n\n"
+
+    return StreamingResponse(event_gen(), media_type="text/event-stream")
 
 @app.get("/")
 async def root():

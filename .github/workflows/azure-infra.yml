@@ -1,0 +1,162 @@
+name: Azure Infra Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (dev|staging|prod)"
+        required: true
+        default: dev
+      apply:
+        description: "Apply changes (true/false)"
+        required: true
+        default: true
+  push:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/terraform/**'
+      - '.github/workflows/azure-infra.yml'
+  pull_request:
+    paths:
+      - 'infrastructure/terraform/**'
+
+concurrency:
+  group: infra-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'matrix' }}
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: true
+  ARM_USE_OIDC: true
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infrastructure/terraform
+    strategy:
+      fail-fast: false
+      matrix:
+        env_name: [ dev, staging, prod ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set environment from trigger
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo "ENV_NAME=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+
+      - name: Set environment from matrix
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: echo "ENV_NAME=${{ matrix.env_name }}" >> $GITHUB_ENV
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set subscription (optional)
+        run: |
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Register Azure Resource Providers (idempotent)
+        shell: bash
+        run: |
+          for ns in Microsoft.Resources Microsoft.OperationalInsights Microsoft.KeyVault Microsoft.ContainerRegistry Microsoft.App Microsoft.Insights; do
+            az provider register --namespace $ns --wait || true
+          done
+
+      - name: Compute backend names (tfstate)
+        id: names
+        shell: bash
+        run: |
+          # stable 6-char hash from repo for global uniqueness
+          HASH=$(echo -n "$GITHUB_REPOSITORY" | sha1sum | cut -c1-6)
+          echo "ENV_NAME=${ENV_NAME}" >> $GITHUB_OUTPUT
+          echo "TFSTATE_RG=tfstate-pcx-${ENV_NAME}" >> $GITHUB_OUTPUT
+          echo "TFSTATE_SA=pcxtf${ENV_NAME}${HASH}" >> $GITHUB_OUTPUT
+          echo "TFSTATE_CONTAINER=tfstate" >> $GITHUB_OUTPUT
+          echo "TFSTATE_KEY=${ENV_NAME}.tfstate" >> $GITHUB_OUTPUT
+
+      - name: Provision tfstate backend (idempotent)
+        shell: bash
+        run: |
+          az group create -n ${{ steps.names.outputs.TFSTATE_RG }} -l eastus
+          az storage account create \
+            -g ${{ steps.names.outputs.TFSTATE_RG }} \
+            -n ${{ steps.names.outputs.TFSTATE_SA }} \
+            -l eastus --sku Standard_LRS --encryption-services blob
+          # create container using Azure AD auth (requires 'Storage Blob Data Contributor')
+          az storage container create --name ${{ steps.names.outputs.TFSTATE_CONTAINER }} \
+            --account-name ${{ steps.names.outputs.TFSTATE_SA }} --auth-mode login >/dev/null
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Format
+        run: terraform fmt -check
+
+      - name: Terraform Init (AzureRM backend)
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ steps.names.outputs.TFSTATE_RG }}" \
+            -backend-config="storage_account_name=${{ steps.names.outputs.TFSTATE_SA }}" \
+            -backend-config="container_name=${{ steps.names.outputs.TFSTATE_CONTAINER }}" \
+            -backend-config="key=${{ steps.names.outputs.TFSTATE_KEY }}" \
+            -backend-config="use_azuread_auth=true"
+
+      - name: Select tfvars by environment
+        id: tfvars
+        run: |
+          echo "TFVARS_FILE=environments/${ENV_NAME}/terraform.tfvars" >> $GITHUB_OUTPUT
+
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        run: terraform plan -input=false -no-color -out=tfplan -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Show Plan (human)
+        run: terraform show -no-color tfplan > plan.txt
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ env.ENV_NAME }}
+          path: |
+            infrastructure/terraform/plan.txt
+            infrastructure/terraform/.terraform.lock.hcl
+
+      - name: Capture Terraform Outputs
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: terraform output -json > outputs-${ENV_NAME}.json || echo '{}' > outputs-${ENV_NAME}.json
+
+      - name: Upload Outputs Artifact
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfoutputs-${{ env.ENV_NAME }}
+          path: infrastructure/terraform/outputs-${{ env.ENV_NAME }}.json
+
+      - name: Conditional Apply (main only, opt-in)
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true') || (github.ref == 'refs/heads/main') }}
+        run: terraform apply -input=false -auto-approve tfplan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+
