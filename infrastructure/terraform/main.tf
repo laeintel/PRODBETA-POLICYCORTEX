@@ -297,7 +297,7 @@ resource "azurerm_container_app" "core" {
 
   template {
     container {
-      name   = "core-api"
+      name = "core-api"
       # Use nginx as placeholder until actual image is pushed
       image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
       cpu    = 0.25    # Minimum CPU (0.25 vCPU)
@@ -368,7 +368,7 @@ resource "azurerm_container_app" "frontend" {
 
   template {
     container {
-      name   = "frontend"
+      name = "frontend"
       # Use nginx as placeholder until actual image is pushed
       image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
       cpu    = 0.25
