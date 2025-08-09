@@ -4,7 +4,7 @@ import { useGovernanceStore } from '@/store/governanceStore'
 
 export function useRealtimeUpdates(enabled: boolean = true) {
   const { messages, isConnected, error } = useSSE(
-    enabled ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/events` : ''
+    enabled ? `/api/v1/events` : ''
   )
   const updateMetric = useGovernanceStore(state => state.updateMetric)
 
