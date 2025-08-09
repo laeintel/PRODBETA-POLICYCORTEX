@@ -75,9 +75,9 @@ export interface ConversationRequest {
 
 export interface ConversationResponse {
   response: string;
-  intent: string;
+  intent?: string;
   confidence: number;
-  suggested_actions: string[];
+  suggested_actions?: string[];
   generated_policy?: string;
 }
 
@@ -145,10 +145,41 @@ class PolicyCortexAPI {
 
   // Patent 3: Conversational Intelligence - No cache for real-time interaction
   async processConversation(request: ConversationRequest): Promise<ConversationResponse> {
-    return performanceApi.post('/api/v1/conversation', request, {
+    // Call chat endpoint (returns model + suggestions)
+    const base = await performanceApi.post<any>('/api/v1/chat', request, {
       headers: await this.getAuthHeaders(),
-      invalidateCache: ['conversation', 'recommendations'] // Invalidate related caches
+      invalidateCache: ['conversation', 'recommendations']
     });
+
+    const response: ConversationResponse = {
+      response: base?.response ?? '',
+      confidence: typeof base?.confidence === 'number' ? base.confidence * 100 : 0,
+      suggested_actions: base?.suggestions ?? [],
+    };
+
+    // Simple intent inference
+    const q = request.query.toLowerCase();
+    if (q.includes('cost')) response.intent = 'cost_inquiry';
+    else if (q.includes('security')) response.intent = 'security_insight';
+    else if (q.includes('compliance') || q.includes('policy')) response.intent = 'compliance_policy';
+
+    // Opportunistically generate a sample policy if user asks for policy
+    if (q.includes('policy')) {
+      try {
+        const gen = await performanceApi.post<any>('/api/v1/policies/generate', {
+          requirement: request.query,
+          provider: 'azure',
+          framework: undefined,
+        }, { headers: await this.getAuthHeaders() });
+        if (gen?.policy) {
+          response.generated_policy = JSON.stringify(gen.policy);
+        }
+      } catch (_) {
+        // ignore
+      }
+    }
+
+    return response;
   }
 
   // Patent 4: Cross-Domain Correlation - Warm cached

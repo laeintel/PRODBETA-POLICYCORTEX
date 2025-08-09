@@ -22,6 +22,9 @@ fi
 echo -e "${GREEN}Starting resource import for environment: $ENV${NC}"
 echo "Subscription ID: $SUBSCRIPTION_ID"
 
+# Ensure correct subscription context
+az account set --subscription "$SUBSCRIPTION_ID" >/dev/null 2>&1 || true
+
 # Function to try importing a resource
 import_resource() {
     local resource_type=$1
@@ -42,6 +45,12 @@ import_resource() {
             echo -e "  ${YELLOW}⚠ Resource not found or import failed${NC}"
         fi
     fi
+}
+
+# Generic existence check that doesn't require provider-specific CLI extensions
+resource_exists() {
+    local resource_id=$1
+    az resource show --ids "$resource_id" >/dev/null 2>&1
 }
 
 # Resource Group
@@ -146,31 +155,34 @@ if az monitor app-insights component show --app "$APPI_NAME" --resource-group "$
         "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.Insights/components/${APPI_NAME}"
 fi
 
-# Container Apps Environment
+# Container Apps Environment (via az resource)
 CAE_NAME="cae-cortex-${ENV}"
+CAE_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/managedEnvironments/${CAE_NAME}"
 echo -e "\n${GREEN}Checking Container Apps Environment: $CAE_NAME${NC}"
-if az containerapp env show --name "$CAE_NAME" --resource-group "$RG_NAME" 2>/dev/null; then
+if resource_exists "$CAE_ID"; then
     import_resource "Container Apps Environment" \
         "azurerm_container_app_environment.main" \
-        "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/managedEnvironments/${CAE_NAME}"
+        "$CAE_ID"
 fi
 
-# Container App - Core
+# Container App - Core (via az resource)
 CA_CORE_NAME="ca-cortex-core-${ENV}"
+CA_CORE_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/containerApps/${CA_CORE_NAME}"
 echo -e "\n${GREEN}Checking Container App Core: $CA_CORE_NAME${NC}"
-if az containerapp show --name "$CA_CORE_NAME" --resource-group "$RG_NAME" 2>/dev/null; then
+if resource_exists "$CA_CORE_ID"; then
     import_resource "Container App Core" \
         "azurerm_container_app.core" \
-        "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/containerApps/${CA_CORE_NAME}"
+        "$CA_CORE_ID"
 fi
 
-# Container App - Frontend
+# Container App - Frontend (via az resource)
 CA_FRONTEND_NAME="ca-cortex-frontend-${ENV}"
+CA_FRONTEND_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/containerApps/${CA_FRONTEND_NAME}"
 echo -e "\n${GREEN}Checking Container App Frontend: $CA_FRONTEND_NAME${NC}"
-if az containerapp show --name "$CA_FRONTEND_NAME" --resource-group "$RG_NAME" 2>/dev/null; then
+if resource_exists "$CA_FRONTEND_ID"; then
     import_resource "Container App Frontend" \
         "azurerm_container_app.frontend" \
-        "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/containerApps/${CA_FRONTEND_NAME}"
+        "$CA_FRONTEND_ID"
 fi
 
 # Service Bus (prod only)
