@@ -11,6 +11,8 @@ use tokio::sync::RwLock;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
+use serde::Deserialize;
+
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GovernanceMetrics {
@@ -541,4 +543,120 @@ pub async fn get_correlations() -> impl IntoResponse {
     };
     
     Json(vec![correlation])
+}
+
+// ===================== Deep Insights & Actions (Phase 1) =====================
+
+#[derive(Debug, Deserialize)]
+pub struct RemediateRequest {
+    pub resource_id: String,
+    pub action: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateExceptionRequest {
+    pub resource_id: String,
+    pub policy_id: String,
+    pub reason: String,
+}
+
+// Policies Deep Compliance
+pub async fn get_policies_deep() -> impl IntoResponse {
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Deep policy compliance (core)",
+        "complianceResults": [
+            {
+                "assignment": {
+                    "name": "require-tags",
+                    "displayName": "Require Resource Tags",
+                    "scope": "/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78"
+                },
+                "summary": {
+                    "totalResources": 147,
+                    "compliantResources": 89,
+                    "nonCompliantResources": 58,
+                    "compliancePercentage": 60.5
+                },
+                "nonCompliantResources": [
+                    {
+                        "resourceId": "/subscriptions/205b477d/resourceGroups/rg-prod/providers/Microsoft.Compute/virtualMachines/vm-prod-001",
+                        "resourceName": "vm-prod-001",
+                        "resourceType": "Microsoft.Compute/virtualMachines",
+                        "complianceState": "NonCompliant",
+                        "complianceReason": "Missing required tags: Environment, Owner, CostCenter",
+                        "remediationOptions": [
+                            {"action": "auto-remediate", "description": "Automatically add missing tags"},
+                            {"action": "create-exception", "description": "Create policy exception"},
+                            {"action": "manual-fix", "description": "Manually add tags"}
+                        ]
+                    },
+                    {
+                        "resourceId": "/subscriptions/205b477d/resourceGroups/rg-prod/providers/Microsoft.Storage/storageAccounts/stprod001",
+                        "resourceName": "stprod001",
+                        "resourceType": "Microsoft.Storage/storageAccounts",
+                        "complianceState": "NonCompliant",
+                        "complianceReason": "Missing required tags: Environment, CostCenter",
+                        "remediationOptions": [
+                            {"action": "auto-remediate", "description": "Automatically add missing tags"},
+                            {"action": "create-exception", "description": "Create policy exception"}
+                        ]
+                    }
+                ]
+            },
+            {
+                "assignment": {
+                    "name": "require-encryption",
+                    "displayName": "Require Encryption at Rest",
+                    "scope": "/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78"
+                },
+                "summary": {
+                    "totalResources": 83,
+                    "compliantResources": 71,
+                    "nonCompliantResources": 12,
+                    "compliancePercentage": 85.5
+                },
+                "nonCompliantResources": [
+                    {
+                        "resourceId": "/subscriptions/205b477d/resourceGroups/rg-dev/providers/Microsoft.Storage/storageAccounts/stdev002",
+                        "resourceName": "stdev002",
+                        "resourceType": "Microsoft.Storage/storageAccounts",
+                        "complianceState": "NonCompliant",
+                        "complianceReason": "Encryption at rest is not enabled",
+                        "remediationOptions": [
+                            {"action": "auto-remediate", "description": "Enable encryption automatically"},
+                            {"action": "create-exception", "description": "Create policy exception"}
+                        ]
+                    }
+                ]
+            }
+        ]
+    }))
+}
+
+// Initiate remediation (stub – Phase 1). Later, orchestrate jobs and stream progress.
+pub async fn remediate(Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
+    Json(serde_json::json!({
+        "success": true,
+        "resourceId": payload.resource_id,
+        "action": payload.action,
+        "status": "Initiated",
+        "estimatedCompletion": "5 minutes",
+        "message": format!("Remediation '{}' initiated for resource {}", payload.action, payload.resource_id)
+    }))
+}
+
+// Create a policy exception (stub – Phase 1)
+pub async fn create_exception(Json(payload): Json<CreateExceptionRequest>) -> impl IntoResponse {
+    use chrono::Utc;
+    let id = format!("exc-{}", Utc::now().format("%Y%m%d%H%M%S"));
+    Json(serde_json::json!({
+        "success": true,
+        "exceptionId": id,
+        "resourceId": payload.resource_id,
+        "policyId": payload.policy_id,
+        "reason": payload.reason,
+        "expiresIn": "30 days",
+        "status": "Approved"
+    }))
 }

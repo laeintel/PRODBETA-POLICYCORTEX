@@ -4,6 +4,17 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useGovernanceData } from '../lib/api'
+import {
+  useAzurePolicies,
+  useAzureResources,
+  useRbacAssignments,
+  useCostBreakdown,
+  type AzurePolicy,
+  type AzureResource,
+  type RbacAssignment,
+  type CostBreakdown
+} from '../lib/azure-api'
+import PoliciesDeepView from './PoliciesDeepView'
 import AppLayout from './AppLayout'
 import { 
   Shield, 
@@ -399,6 +410,34 @@ export default function DashboardContent() {
                       ))}
                     </div>
                   )}
+
+                  {/* Rich module content */}
+                  {selectedModule === 'policies' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-2xl font-semibold text-white">Policy Compliance</h2>
+                        <button
+                          onClick={() => router.push('/policies')}
+                          className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-sm text-white hover:bg-white/20"
+                        >
+                          Open full policies view
+                        </button>
+                      </div>
+                      <PoliciesDeepView />
+                    </div>
+                  )}
+
+                  {selectedModule === 'resources' && (
+                    <ResourcesModule onOpenAll={() => router.push('/resources')} />
+                  )}
+
+                  {selectedModule === 'rbac' && (
+                    <RbacModule />)
+                  }
+
+                  {selectedModule === 'costs' && (
+                    <CostsModule />)
+                  }
                 </>
               )
             })()}
@@ -406,5 +445,123 @@ export default function DashboardContent() {
         )}
       </div>
     </AppLayout>
+  )
+}
+
+// Module subviews (kept in this file for simplicity)
+
+function ResourcesModule({ onOpenAll }: { onOpenAll: () => void }) {
+  const { resources, loading } = useAzureResources()
+  const top = (resources || []).slice(0, 10)
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <h2 className="text-lg font-semibold text-white">Top Resources</h2>
+        <button onClick={onOpenAll} className="text-sm text-purple-300 hover:text-white">View all</button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Group</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Compliance</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Monthly</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {(loading ? [] : top).map((r) => (
+              <tr key={r.id} className="hover:bg-white/5">
+                <td className="px-6 py-3 text-white text-sm">{r.name}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{r.type.split('/')[1]}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{r.resourceGroup}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{r.status}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{r.compliance}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">${(r.monthlyCost || 0).toFixed(2)}</td>
+              </tr>
+            ))}
+            {(!loading && top.length === 0) && (
+              <tr><td className="px-6 py-4 text-sm text-gray-400" colSpan={6}>No resources found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function RbacModule() {
+  const { assignments, loading } = useRbacAssignments()
+  const rows = (assignments || []).slice(0, 15)
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+      <div className="px-6 py-4 border-b border-white/10">
+        <h2 className="text-lg font-semibold text-white">Recent RBAC Assignments</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Principal</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Scope</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Last Used</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {(loading ? [] : rows).map(a => (
+              <tr key={a.id} className="hover:bg-white/5">
+                <td className="px-6 py-3 text-white text-sm">{a.principalName}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{a.roleName}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{a.scope.split('/').slice(0,3).join('/')}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{a.lastUsed || '-'}</td>
+              </tr>
+            ))}
+            {(!loading && rows.length === 0) && (
+              <tr><td className="px-6 py-4 text-sm text-gray-400" colSpan={4}>No assignments found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function CostsModule() {
+  const { breakdown, loading } = useCostBreakdown()
+  const rows = (breakdown || []).slice(0, 12)
+  return (
+    <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+      <div className="px-6 py-4 border-b border-white/10">
+        <h2 className="text-lg font-semibold text-white">Cost Breakdown</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Resource Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Daily</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Monthly</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Trend</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {(loading ? [] : rows).map(r => (
+              <tr key={r.resourceId} className="hover:bg-white/5">
+                <td className="px-6 py-3 text-white text-sm">{r.resourceName}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">${r.dailyCost.toFixed(2)}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">${r.monthlyCost.toFixed(2)}</td>
+                <td className={`px-6 py-3 text-sm ${r.trend > 0 ? 'text-red-300' : r.trend < 0 ? 'text-green-300' : 'text-gray-300'}`}>{r.trend}%</td>
+              </tr>
+            ))}
+            {(!loading && rows.length === 0) && (
+              <tr><td className="px-6 py-4 text-sm text-gray-400" colSpan={4}>No cost data found</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   )
 }

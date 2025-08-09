@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
 import { useAzurePolicies, type AzurePolicy } from '../../lib/azure-api'
@@ -30,27 +30,7 @@ import {
   GitBranch
 } from 'lucide-react'
 
-interface Policy {
-  id: string
-  name: string
-  description: string
-  category: string
-  type: 'BuiltIn' | 'Custom'
-  effect: 'Deny' | 'Audit' | 'AuditIfNotExists' | 'DeployIfNotExists' | 'Append'
-  scope: string
-  assignments: number
-  compliance: {
-    compliant: number
-    nonCompliant: number
-    exempt: number
-    percentage: number
-  }
-  lastModified: string
-  createdBy: string
-  parameters: Record<string, any>
-  resourceTypes: string[]
-  status: 'Active' | 'Disabled' | 'Draft'
-}
+type Policy = AzurePolicy
 
 interface NonCompliantResource {
   id: string
@@ -62,186 +42,16 @@ interface NonCompliantResource {
 }
 
 export default function PoliciesPage() {
-  const [policies, setPolicies] = useState<Policy[]>([])
-  const [loading, setLoading] = useState(true)
+  const { policies, loading } = useAzurePolicies()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [nonCompliantResources, setNonCompliantResources] = useState<NonCompliantResource[]>([])
-
-  useEffect(() => {
-    fetchPolicies()
-  }, [])
-
-  const fetchPolicies = async () => {
-    try {
-      // Mock Azure Policy data that would come from the backend
-      const mockPolicies: Policy[] = [
-        {
-          id: 'pol-001',
-          name: 'Require encryption for storage accounts',
-          description: 'Ensures all storage accounts have encryption enabled for data at rest',
-          category: 'Security',
-          type: 'BuiltIn',
-          effect: 'Deny',
-          scope: '/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78',
-          assignments: 3,
-          compliance: {
-            compliant: 45,
-            nonCompliant: 3,
-            exempt: 2,
-            percentage: 93.8
-          },
-          lastModified: '2025-01-07',
-          createdBy: 'Microsoft',
-          parameters: {
-            effect: { type: 'String', defaultValue: 'Deny' }
-          },
-          resourceTypes: ['Microsoft.Storage/storageAccounts'],
-          status: 'Active'
-        },
-        {
-          id: 'pol-002',
-          name: 'Require tag and its value',
-          description: 'Enforces existence of a tag and its value on resources',
-          category: 'Governance',
-          type: 'Custom',
-          effect: 'Audit',
-          scope: '/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78',
-          assignments: 5,
-          compliance: {
-            compliant: 72,
-            nonCompliant: 13,
-            exempt: 0,
-            percentage: 84.7
-          },
-          lastModified: '2025-01-05',
-          createdBy: 'PolicyCortex Admin',
-          parameters: {
-            tagName: { type: 'String', value: 'Environment' },
-            tagValue: { type: 'String', value: 'Production' }
-          },
-          resourceTypes: ['*'],
-          status: 'Active'
-        },
-        {
-          id: 'pol-003',
-          name: 'Allowed locations',
-          description: 'Restricts the locations where resources can be deployed',
-          category: 'Compliance',
-          type: 'BuiltIn',
-          effect: 'Deny',
-          scope: '/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78',
-          assignments: 2,
-          compliance: {
-            compliant: 85,
-            nonCompliant: 0,
-            exempt: 0,
-            percentage: 100
-          },
-          lastModified: '2025-01-06',
-          createdBy: 'Microsoft',
-          parameters: {
-            listOfAllowedLocations: { 
-              type: 'Array', 
-              value: ['East US', 'West US', 'Central US'] 
-            }
-          },
-          resourceTypes: ['*'],
-          status: 'Active'
-        },
-        {
-          id: 'pol-004',
-          name: 'VM backup should be enabled',
-          description: 'Ensures Azure Backup service is enabled for Virtual Machines',
-          category: 'Backup',
-          type: 'BuiltIn',
-          effect: 'AuditIfNotExists',
-          scope: '/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78',
-          assignments: 1,
-          compliance: {
-            compliant: 8,
-            nonCompliant: 4,
-            exempt: 1,
-            percentage: 66.7
-          },
-          lastModified: '2025-01-04',
-          createdBy: 'Microsoft',
-          parameters: {},
-          resourceTypes: ['Microsoft.Compute/virtualMachines'],
-          status: 'Active'
-        },
-        {
-          id: 'pol-005',
-          name: 'Diagnostic logs in Key Vault should be enabled',
-          description: 'Audit enabling of diagnostic logs to track Key Vault activity',
-          category: 'Monitoring',
-          type: 'BuiltIn',
-          effect: 'Audit',
-          scope: '/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78',
-          assignments: 2,
-          compliance: {
-            compliant: 3,
-            nonCompliant: 2,
-            exempt: 0,
-            percentage: 60.0
-          },
-          lastModified: '2025-01-03',
-          createdBy: 'Microsoft',
-          parameters: {
-            requiredRetentionDays: { type: 'Integer', value: 90 }
-          },
-          resourceTypes: ['Microsoft.KeyVault/vaults'],
-          status: 'Active'
-        },
-        {
-          id: 'pol-006',
-          name: 'SQL Server auditing should be enabled',
-          description: 'Enables auditing on SQL servers to track database activities',
-          category: 'Security',
-          type: 'BuiltIn',
-          effect: 'AuditIfNotExists',
-          scope: '/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78',
-          assignments: 1,
-          compliance: {
-            compliant: 2,
-            nonCompliant: 1,
-            exempt: 0,
-            percentage: 66.7
-          },
-          lastModified: '2025-01-02',
-          createdBy: 'Microsoft',
-          parameters: {},
-          resourceTypes: ['Microsoft.Sql/servers'],
-          status: 'Active'
-        },
-        {
-          id: 'pol-007',
-          name: 'Network Watcher should be enabled',
-          description: 'Ensures Network Watcher is enabled for all regions with virtual networks',
-          category: 'Network',
-          type: 'BuiltIn',
-          effect: 'Audit',
-          scope: '/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78',
-          assignments: 1,
-          compliance: {
-            compliant: 2,
-            nonCompliant: 1,
-            exempt: 0,
-            percentage: 66.7
-          },
-          lastModified: '2025-01-01',
-          createdBy: 'Microsoft',
-          parameters: {},
-          resourceTypes: ['Microsoft.Network/networkWatchers'],
-          status: 'Draft'
-        }
-      ]
-
-      // Mock non-compliant resources
-      const mockNonCompliant: NonCompliantResource[] = [
+  // Preload a realistic set of non-compliant resources to drive urgency UI
+  if (nonCompliantResources.length === 0) {
+    setNonCompliantResources([
         {
           id: 'res-nc-001',
           name: 'stpolicycortexdev',
@@ -266,15 +76,7 @@ export default function PoliciesPage() {
           reason: 'Azure Backup is not configured',
           lastEvaluated: '2025-01-08 08:45 AM'
         }
-      ]
-      
-      setPolicies(mockPolicies)
-      setNonCompliantResources(mockNonCompliant)
-    } catch (error) {
-      console.error('Error fetching policies:', error)
-    } finally {
-      setLoading(false)
-    }
+      ])
   }
 
   const filteredPolicies = policies.filter(policy => {
