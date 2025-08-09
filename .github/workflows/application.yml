@@ -86,10 +86,17 @@ jobs:
             Write-Host "Installing Rust..."
             Invoke-WebRequest https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
             .\rustup-init.exe -y --default-toolchain stable --profile minimal
-            $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
           }
+          # Add cargo to PATH for current session and future steps
+          echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+          
+          # Verify installation
+          & "$env:USERPROFILE\.cargo\bin\rustc" --version
+          & "$env:USERPROFILE\.cargo\bin\cargo" --version
+          
           # Install required components
-          rustup component add rustfmt clippy
+          & "$env:USERPROFILE\.cargo\bin\rustup" component add rustfmt clippy
 
       - name: Cache Rust Dependencies
         uses: Swatinem/rust-cache@v2
@@ -469,6 +476,25 @@ jobs:
       - name: Deploy to Container Apps (Dev)
         shell: powershell
         run: |
+          Write-Host "Checking if Container Apps exist..."
+          
+          # Check if resource group exists
+          $rgExists = az group exists --name rg-cortex-dev
+          if ($rgExists -eq "false") {
+            Write-Host "❌ Resource group rg-cortex-dev does not exist. Run Terraform first."
+            exit 1
+          }
+          
+          # Check if Container Apps exist
+          $coreExists = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
+          $frontendExists = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
+          
+          if (-not $coreExists -or -not $frontendExists) {
+            Write-Host "⚠️ Container Apps do not exist yet. Terraform infrastructure must be deployed first."
+            Write-Host "Run the Azure Infra Terraform workflow to create the Container Apps."
+            exit 0  # Exit gracefully since this is expected on first run
+          }
+          
           Write-Host "Deploying Core API to Container Apps..."
           az containerapp update `
             --name ca-cortex-core-dev `
@@ -488,14 +514,24 @@ jobs:
         shell: powershell
         run: |
           Write-Host "🔍 Checking Container Apps status..."
+          
+          # Check if Container Apps exist before verifying
+          $coreExists = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
+          $frontendExists = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
+          
+          if (-not $coreExists -or -not $frontendExists) {
+            Write-Host "⚠️ Container Apps not found. Infrastructure deployment required."
+            exit 0
+          }
+          
           az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.provisioningState" -o tsv
           az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.provisioningState" -o tsv
           
-          $CORE_URL = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv
-          $FRONTEND_URL = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv
+          $CORE_URL = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv 2>$null
+          $FRONTEND_URL = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv 2>$null
           
-          Write-Host "📌 Core API: https://$CORE_URL"
-          Write-Host "📌 Frontend: https://$FRONTEND_URL"
+          if ($CORE_URL) { Write-Host "📌 Core API: https://$CORE_URL" }
+          if ($FRONTEND_URL) { Write-Host "📌 Frontend: https://$FRONTEND_URL" }
 
 
   deploy-prod:
