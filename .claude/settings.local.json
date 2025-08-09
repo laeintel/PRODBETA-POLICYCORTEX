@@ -80,7 +80,9 @@
       "Bash(az account list:*)",
       "Bash(terraform:*)",
       "Bash(az storage account create:*)",
-      "Bash(gh secret:*)"
+      "Bash(gh secret:*)",
+      "Bash(az storage account show:*)",
+      "Bash(az storage account list:*)"
     ],
     "deny": []
   }

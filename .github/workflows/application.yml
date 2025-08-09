@@ -452,37 +452,35 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Container Apps (Dev)
-        shell: bash
+        shell: powershell
         run: |
-          # Deploy Core API
-          az containerapp update \
-            --name ca-cortex-core-dev \
-            --resource-group rg-cortex-dev \
-            --image ${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }} \
+          Write-Host "Deploying Core API to Container Apps..."
+          az containerapp update `
+            --name ca-cortex-core-dev `
+            --resource-group rg-cortex-dev `
+            --image "${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }}" `
             --set-env-vars ENVIRONMENT=dev
           
-          # Deploy Frontend
-          az containerapp update \
-            --name ca-cortex-frontend-dev \
-            --resource-group rg-cortex-dev \
-            --image ${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }}
+          Write-Host "Deploying Frontend to Container Apps..."
+          az containerapp update `
+            --name ca-cortex-frontend-dev `
+            --resource-group rg-cortex-dev `
+            --image "${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }}"
           
-          echo "✅ Container Apps deployment completed"
+          Write-Host "✅ Container Apps deployment completed"
 
       - name: Verify Deployment (Dev)
-        shell: bash
+        shell: powershell
         run: |
-          # Get deployment status
-          echo "🔍 Checking Container Apps status..."
+          Write-Host "🔍 Checking Container Apps status..."
           az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.provisioningState" -o tsv
           az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.provisioningState" -o tsv
           
-          # Get URLs
-          CORE_URL=$(az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv)
-          FRONTEND_URL=$(az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv)
+          $CORE_URL = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv
+          $FRONTEND_URL = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv
           
-          echo "📌 Core API: https://$CORE_URL"
-          echo "📌 Frontend: https://$FRONTEND_URL"
+          Write-Host "📌 Core API: https://$CORE_URL"
+          Write-Host "📌 Frontend: https://$FRONTEND_URL"
 
 
   deploy-prod:
