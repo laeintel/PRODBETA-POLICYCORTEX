@@ -19,7 +19,17 @@ mod azure_client;
 mod azure_client_async;
 mod cache;
 
-use api::{AppState, get_metrics, get_predictions, get_recommendations, process_conversation, get_correlations};
+use api::{
+    AppState,
+    get_metrics,
+    get_predictions,
+    get_recommendations,
+    process_conversation,
+    get_correlations,
+    get_policies_deep,
+    remediate,
+    create_exception,
+};
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
 use azure_client_async::AsyncAzureClient;
@@ -120,6 +130,13 @@ async fn main() {
         // Proactive Recommendations
         .route("/api/v1/recommendations", get(get_recommendations))
         .route("/api/v1/recommendations/proactive", get(get_recommendations))
+
+        // Deep insights (Phase 1)
+        .route("/api/v1/policies/deep", get(get_policies_deep))
+
+        // Actions (Phase 1)
+        .route("/api/v1/remediate", post(remediate))
+        .route("/api/v1/exception", post(create_exception))
         
         // Legacy endpoints for compatibility
         .route("/api/v1/policies", get(get_policies))

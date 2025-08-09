@@ -58,7 +58,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       id: 'policies',
       title: 'Policies',
       icon: Shield,
-      path: '/dashboard?module=policies',
+      path: '/policies',
       description: 'Compliance',
       color: 'blue'
     },
@@ -66,7 +66,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       id: 'rbac',
       title: 'RBAC',
       icon: Users,
-      path: '/dashboard?module=rbac',
+      path: '/rbac',
       description: 'Permissions',
       color: 'green'
     },
@@ -90,7 +90,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       id: 'resources',
       title: 'Resources',
       icon: Server,
-      path: '/dashboard?module=resources',
+      path: '/resources',
       description: 'Management',
       color: 'indigo'
     }

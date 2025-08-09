@@ -36,6 +36,8 @@ import {
 
 export default function ResourcesPage() {
   const { resources: azureResources, loading, error } = useAzureResources()
+  // Enable deep-link support via hash (?sel=<id>) without Next dynamic route for now
+  // If a hash or query is provided, preselect that resource in the modal
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
@@ -230,6 +232,9 @@ export default function ResourcesPage() {
                       onClick={() => {
                         setSelectedResource(resource)
                         setShowDetails(true)
+                        if (typeof window !== 'undefined') {
+                          history.replaceState(null, '', `/resources#${encodeURIComponent(resource.id)}`)
+                        }
                       }}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
