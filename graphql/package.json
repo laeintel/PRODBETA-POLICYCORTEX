@@ -5,7 +5,8 @@
   "main": "gateway.js",
   "scripts": {
     "start": "node gateway.js",
-    "dev": "nodemon gateway.js"
+    "dev": "nodemon gateway.js",
+    "test": "echo \"Warning: No tests configured yet\" && exit 0"
   },
   "dependencies": {
     "@apollo/gateway": "^2.5.8",

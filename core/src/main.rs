@@ -35,6 +35,8 @@ use api::{
     process_conversation,
     get_correlations,
     get_policies,
+    get_compliance,
+    get_resources,
     get_policies_deep,
     get_rbac_deep,
     get_costs_deep,
@@ -150,6 +152,10 @@ async fn main() {
         // Policies endpoints
         .route("/api/v1/policies", get(get_policies))
         
+        // Compliance and Resources endpoints
+        .route("/api/v1/compliance", get(get_compliance))
+        .route("/api/v1/resources", get(get_resources))
+        
         // Deep insights (Phase 1)
         .route("/api/v1/policies/deep", get(get_policies_deep))
         .route("/api/v1/rbac/deep", get(get_rbac_deep))
@@ -181,16 +187,3 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    if state.async_azure_client.is_none() && state.azure_client.is_none() {
-        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({"error": "Azure not connected"}))).into_response();
-    }
-    (StatusCode::NOT_IMPLEMENTED, Json(serde_json::json!({"message": "Use /api/v1/resources/deep via Python service"}))).into_response()
-}
-
-async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    if state.async_azure_client.is_none() && state.azure_client.is_none() {
-        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({"error": "Azure not connected"}))).into_response();
-    }
-    (StatusCode::NOT_IMPLEMENTED, Json(serde_json::json!({"message": "Use deep endpoints for compliance detail"}))).into_response()
-}

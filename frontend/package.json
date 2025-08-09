@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "echo \"Warning: No tests configured yet\" && exit 0",
+    "test:e2e": "echo \"Warning: E2E tests not configured yet\" && exit 0"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
