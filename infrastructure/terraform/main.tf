@@ -161,14 +161,40 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Note: Cosmos DB already exists in the subscription
-# To avoid conflicts, we'll reference it as a data source instead
-# If you need to manage it via Terraform, import it first:
-# terraform import azurerm_cosmosdb_account.main /subscriptions/.../cosmos-cortex-dev
-
-data "azurerm_cosmosdb_account" "existing" {
-  name                = "cosmos-cortex-${local.env_suffix}"
+# Cosmos DB - Free Tier Account
+# Free: 25GB storage, 1000 RU/s
+resource "azurerm_cosmosdb_account" "main" {
+  name                = "cosmos-cortex-${local.env_suffix}-${local.unique_suffix}"
+  location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
+  offer_type          = "Standard"
+  kind                = "GlobalDocumentDB"
+
+  # Enable free tier (only one per subscription)
+  enable_free_tier = var.environment == "dev" ? true : false
+
+  consistency_policy {
+    consistency_level       = "Session"
+    max_interval_in_seconds = 5
+    max_staleness_prefix    = 100
+  }
+
+  geo_location {
+    location          = azurerm_resource_group.main.location
+    failover_priority = 0
+  }
+
+  tags = local.common_tags
+}
+
+# Cosmos DB SQL Database
+resource "azurerm_cosmosdb_sql_database" "main" {
+  name                = "policycortex"
+  resource_group_name = azurerm_cosmosdb_account.main.resource_group_name
+  account_name        = azurerm_cosmosdb_account.main.name
+
+  # Free tier gets 1000 RU/s shared
+  throughput = 400
 }
 
 # Note: VM and Public IP removed due to Azure free tier limits
@@ -221,22 +247,6 @@ resource "azurerm_key_vault" "main" {
   tags = local.common_tags
 }
 
-# Application Insights - Free tier includes 5GB/month
-resource "azurerm_application_insights" "main" {
-  name                = "appi-cortex-${local.env_suffix}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  application_type    = "web"
-
-  daily_data_cap_in_gb                  = 0.5 # Keep under free limit
-  daily_data_cap_notifications_disabled = false
-  retention_in_days                     = 30 # Minimum retention
-  sampling_percentage                   = 50 # Sample to reduce data
-  disable_ip_masking                    = false
-
-  tags = local.common_tags
-}
-
 # Log Analytics Workspace for Container Apps
 resource "azurerm_log_analytics_workspace" "main" {
   name                = "log-cortex-${local.env_suffix}"
@@ -244,6 +254,23 @@ resource "azurerm_log_analytics_workspace" "main" {
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
   retention_in_days   = 30 # Minimum retention to save costs
+
+  tags = local.common_tags
+}
+
+# Application Insights - Free tier includes 5GB/month
+resource "azurerm_application_insights" "main" {
+  name                = "appi-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  application_type    = "web"
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+
+  daily_data_cap_in_gb                  = 0.5 # Keep under free limit
+  daily_data_cap_notifications_disabled = false
+  retention_in_days                     = 30 # Minimum retention
+  sampling_percentage                   = 50 # Sample to reduce data
+  disable_ip_masking                    = false
 
   tags = local.common_tags
 }
@@ -289,7 +316,7 @@ resource "azurerm_container_app" "core" {
       }
       env {
         name  = "COSMOS_ENDPOINT"
-        value = data.azurerm_cosmosdb_account.existing.endpoint
+        value = azurerm_cosmosdb_account.main.endpoint
       }
       env {
         name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
@@ -426,7 +453,7 @@ output "postgresql_fqdn" {
 
 output "cosmosdb_endpoint" {
   description = "Cosmos DB endpoint"
-  value       = data.azurerm_cosmosdb_account.existing.endpoint
+  value       = azurerm_cosmosdb_account.main.endpoint
 }
 
 output "container_registry_login_server" {
