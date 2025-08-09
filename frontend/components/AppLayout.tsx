@@ -118,6 +118,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
+      {/* Connection status banner */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <ConnectionStatusBanner />
+      </div>
       {/* Desktop Sidebar */}
       <motion.div
         initial={{ x: 0 }}

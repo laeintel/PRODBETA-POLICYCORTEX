@@ -6,7 +6,7 @@ Connects to your actual Azure subscription and fetches real governance data
 
 import os
 import json
-from azure.identity import AzureCliCredential, DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, AzureCliCredential
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
@@ -22,9 +22,14 @@ from typing import Dict, List, Any
 
 class AzureRealDataCollector:
     def __init__(self):
-        # Use Azure CLI credentials (you're already logged in)
-        self.credential = AzureCliCredential()
-        self.subscription_id = "205b477d-17e7-4b3b-92c1-32cf02626b78"
+        # Prefer DefaultAzureCredential to support CLI, Managed Identity, VSCode, Environment
+        try:
+            self.credential = DefaultAzureCredential(exclude_interactive_browser_credential=False)
+        except Exception:
+            # fallback to CLI
+            self.credential = AzureCliCredential()
+        # Subscription from env or fallback to hardcoded id (avoid hardcoding in production)
+        self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID", "205b477d-17e7-4b3b-92c1-32cf02626b78")
         
         # Initialize Azure clients
         self.resource_client = ResourceManagementClient(self.credential, self.subscription_id)
