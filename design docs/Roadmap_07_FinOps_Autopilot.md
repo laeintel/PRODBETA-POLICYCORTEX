@@ -24,3 +24,22 @@
 
 ## 7.6 KPIs & Dashboards
 - Net savings/month; realized vs potential; ROI per action; anomaly MTTR; budget adherence
+
+## 7.7 Commitment Planner (Worked Example)
+Inputs:
+- Compute hours/month by family M: 200,000
+- On‑demand rate: $0.10/h; 1y SP: $0.07/h; 3y SP: $0.05/h
+- Forecast: flat ±10%
+
+Heuristic mix:
+- Baseline (guaranteed): 60% 1y SP
+- Stable workload: 20% 3y SP
+- Variable: 20% on‑demand/spare
+
+Savings:
+- 60% * 200k * (0.10-0.07) = $3,600/mo
+- 20% * 200k * (0.10-0.05) = $2,000/mo
+- Total ≈ $5,600/mo (~28%)
+
+Guardrails:
+- Budget ceiling; cancellation penalties; diversification across SKUs/regions; rebalancing monthly
