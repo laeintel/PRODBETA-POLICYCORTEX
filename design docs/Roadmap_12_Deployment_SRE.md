@@ -14,3 +14,11 @@
 
 ## 12.5 Security Ops
 - Image signing, SBOM, vulnerability scans; least privilege IAM; periodic pen‑tests
+
+## 12.6 IaC Outline
+- Terraform modules: Core API, AI services, Postgres, Redis, NATS, ClickHouse/Timescale, Object store
+- Per‑env workspaces; secrets via Key Vault/SM; pipelines enforce plan/apply approvals
+
+## 12.7 Runbooks
+- API outage; DB failover; queue backlog; evidence generation failures; high error rate; budget overrun
+- Each includes detection, diagnostics (dashboards/queries), remediation steps, and rollback

@@ -35,3 +35,49 @@ Input: “Enforce encryption at rest for storage across production.”
 ## 6.7 APIs
 - POST `DEEP_API_BASE/api/v1/policies/generate`
 - POST `DEEP_API_BASE/api/v1/analyze` (prompt‑engineered with evidence requests)
+
+## 6.8 Sample Generated Policies
+
+### Azure Policy (JSON)
+```json
+{
+  "properties": {
+    "displayName": "Enforce Storage Encryption",
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {"field": "type", "equals": "Microsoft.Storage/storageAccounts"},
+          {"field": "Microsoft.Storage/storageAccounts/encryption.enabled", "equals": false}
+        ]
+      },
+      "then": {"effect": "Deny"}
+    },
+    "parameters": {}
+  }
+}
+```
+
+### AWS SCP (JSON)
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": ["s3:PutObject"],
+      "Resource": "*",
+      "Condition": {"StringNotEquals": {"s3:x-amz-server-side-encryption": ["AES256","aws:kms"]}}
+    }
+  ]
+}
+```
+
+### GCP Org Policy (YAML)
+```yaml
+name: constraints/gcp.restrictCmekCryptoKeyProjects
+spec:
+  rules:
+    - values:
+        allowedValues:
+          - projects/my-kms-project
+```
