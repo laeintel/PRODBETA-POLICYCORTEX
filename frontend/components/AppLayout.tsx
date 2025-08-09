@@ -107,7 +107,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
     if (path.includes('?module=')) {
       const module = path.split('module=')[1]
-      return pathname === '/dashboard' && window.location.search.includes(`module=${module}`)
+      // Check if window is defined (client-side)
+      if (typeof window !== 'undefined') {
+        return pathname === '/dashboard' && window.location.search.includes(`module=${module}`)
+      }
+      return false
     }
     return pathname === path
   }

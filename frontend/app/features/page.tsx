@@ -202,7 +202,11 @@ export default function FeaturesPage() {
               Start Free Trial
             </button>
             <button
-              onClick={() => window.open('https://github.com/aeolitech/policycortex', '_blank')}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.open('https://github.com/aeolitech/policycortex', '_blank')
+                }
+              }}
               className="px-8 py-3 bg-white/10 text-white rounded-lg font-semibold backdrop-blur-md hover:bg-white/20 transition-colors border border-white/20"
             >
               View on GitHub
