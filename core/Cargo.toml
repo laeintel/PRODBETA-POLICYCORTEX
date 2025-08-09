@@ -55,4 +55,34 @@ metrics-exporter-prometheus = "0.12"
 dotenv = "0.15"
 
 # UUID
-uuid = { version = "1.0", features = ["serde"] }
+uuid = { version = "1.0", features = ["serde", "v4"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Graph algorithms
+petgraph = "0.6"
+
+# Cryptography
+sha2 = "0.10"
+
+# Regular expressions
+regex = "1.0"
+
+# AWS SDK (optional, for multi-cloud)
+aws-config = { version = "1.0", optional = true }
+aws-sdk-iam = { version = "1.0", optional = true }
+aws-sdk-organizations = { version = "1.0", optional = true }
+aws-sdk-ec2 = { version = "1.0", optional = true }
+aws-sdk-s3 = { version = "1.0", optional = true }
+aws-sdk-cloudtrail = { version = "1.0", optional = true }
+aws-sdk-config = { version = "1.0", optional = true }
+
+# NATS for event streaming (optional)
+async-nats = { version = "0.33", optional = true }
+
+[features]
+default = ["events"]
+aws = ["aws-config", "aws-sdk-iam", "aws-sdk-organizations", "aws-sdk-ec2", "aws-sdk-s3", "aws-sdk-cloudtrail", "aws-sdk-config"]
+events = ["async-nats"]

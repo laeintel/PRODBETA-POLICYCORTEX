@@ -106,13 +106,7 @@ jobs:
         run: terraform fmt -check
 
       - name: Terraform Init (AzureRM backend)
-        run: |
-          terraform init -input=false \
-            -backend-config="resource_group_name=${{ steps.names.outputs.TFSTATE_RG }}" \
-            -backend-config="storage_account_name=${{ steps.names.outputs.TFSTATE_SA }}" \
-            -backend-config="container_name=${{ steps.names.outputs.TFSTATE_CONTAINER }}" \
-            -backend-config="key=${{ steps.names.outputs.TFSTATE_KEY }}" \
-            -backend-config="use_azuread_auth=true"
+        run: terraform init -input=false -backend-config="resource_group_name=${{ steps.names.outputs.TFSTATE_RG }}" -backend-config="storage_account_name=${{ steps.names.outputs.TFSTATE_SA }}" -backend-config="container_name=${{ steps.names.outputs.TFSTATE_CONTAINER }}" -backend-config="key=${{ steps.names.outputs.TFSTATE_KEY }}" -backend-config="use_azuread_auth=true"
 
       - name: Select tfvars by environment
         id: tfvars

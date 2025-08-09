@@ -69,8 +69,8 @@ export default function PoliciesPage() {
     return matchesSearch && matchesCategory && matchesStatus
   })
 
-  const totalCompliant = filteredPolicies.reduce((sum, p) => sum + p.compliance.compliant, 0)
-  const totalNonCompliant = filteredPolicies.reduce((sum, p) => sum + p.compliance.nonCompliant, 0)
+  const totalCompliant = filteredPolicies.reduce((sum, p) => sum + (p.compliance?.compliant || 0), 0)
+  const totalNonCompliant = filteredPolicies.reduce((sum, p) => sum + (p.compliance?.nonCompliant || 0), 0)
   const overallCompliance = totalCompliant + totalNonCompliant > 0 
     ? ((totalCompliant / (totalCompliant + totalNonCompliant)) * 100).toFixed(1)
     : '0'
@@ -242,23 +242,23 @@ export default function PoliciesPage() {
                 <div className="mb-2">
                   <div className="flex items-center justify-between text-xs mb-1">
                     <span className="text-gray-400">Compliance</span>
-                    <span className="text-white">{policy.compliance.percentage.toFixed(1)}%</span>
+                    <span className="text-white">{(policy.compliance?.percentage || 0).toFixed(1)}%</span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div 
                       className={`h-2 rounded-full ${
-                        policy.compliance.percentage >= 90 ? 'bg-green-400' :
-                        policy.compliance.percentage >= 70 ? 'bg-yellow-400' :
+                        (policy.compliance?.percentage || 0) >= 90 ? 'bg-green-400' :
+                        (policy.compliance?.percentage || 0) >= 70 ? 'bg-yellow-400' :
                         'bg-red-400'
                       }`}
-                      style={{ width: `${policy.compliance.percentage}%` }}
+                      style={{ width: `${policy.compliance?.percentage || 0}%` }}
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-between text-xs">
-                  <span className="text-green-400">{policy.compliance.compliant} compliant</span>
-                  <span className="text-red-400">{policy.compliance.nonCompliant} non-compliant</span>
+                  <span className="text-green-400">{policy.compliance?.compliant || 0} compliant</span>
+                  <span className="text-red-400">{policy.compliance?.nonCompliant || 0} non-compliant</span>
                 </div>
               </motion.div>
             ))}
@@ -356,30 +356,30 @@ export default function PoliciesPage() {
                         <div>
                           <div className="flex justify-between mb-1">
                             <span className="text-sm text-gray-400">Overall Compliance</span>
-                            <span className="text-sm text-white">{selectedPolicy.compliance.percentage.toFixed(1)}%</span>
+                            <span className="text-sm text-white">{(selectedPolicy.compliance?.percentage || 0).toFixed(1)}%</span>
                           </div>
                           <div className="w-full bg-gray-700 rounded-full h-2">
                             <div 
                               className={`h-2 rounded-full ${
-                                selectedPolicy.compliance.percentage >= 90 ? 'bg-green-400' :
-                                selectedPolicy.compliance.percentage >= 70 ? 'bg-yellow-400' :
+                                (selectedPolicy.compliance?.percentage || 0) >= 90 ? 'bg-green-400' :
+                                (selectedPolicy.compliance?.percentage || 0) >= 70 ? 'bg-yellow-400' :
                                 'bg-red-400'
                               }`}
-                              style={{ width: `${selectedPolicy.compliance.percentage}%` }}
+                              style={{ width: `${selectedPolicy.compliance?.percentage || 0}%` }}
                             />
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div className="p-2 bg-green-900/20 rounded">
-                            <p className="text-lg font-bold text-green-400">{selectedPolicy.compliance.compliant}</p>
+                            <p className="text-lg font-bold text-green-400">{selectedPolicy.compliance?.compliant || 0}</p>
                             <p className="text-xs text-gray-400">Compliant</p>
                           </div>
                           <div className="p-2 bg-red-900/20 rounded">
-                            <p className="text-lg font-bold text-red-400">{selectedPolicy.compliance.nonCompliant}</p>
+                            <p className="text-lg font-bold text-red-400">{selectedPolicy.compliance?.nonCompliant || 0}</p>
                             <p className="text-xs text-gray-400">Non-Compliant</p>
                           </div>
                           <div className="p-2 bg-yellow-900/20 rounded">
-                            <p className="text-lg font-bold text-yellow-400">{selectedPolicy.compliance.exempt}</p>
+                            <p className="text-lg font-bold text-yellow-400">{selectedPolicy.compliance?.exempt || 0}</p>
                             <p className="text-xs text-gray-400">Exempt</p>
                           </div>
                         </div>

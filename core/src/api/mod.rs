@@ -11,7 +11,6 @@ use tokio::sync::{RwLock, broadcast};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
-use serde::Deserialize;
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -320,28 +319,49 @@ pub async fn get_metrics(
         }
     }
 
-    // Fallback to mock data with dynamic AI progress
-    let mut metrics = state.metrics.read().await.clone();
-    
-    // Calculate dynamic AI learning progress (background learning)
-    let elapsed_seconds = state.start_time.elapsed().as_secs() as f64;
-    let base_progress = 87.3;
-    
-    // Progress increases over time, reaching 100% after ~5 minutes
-    let time_progress = (elapsed_seconds / 300.0) * 12.7; // 12.7% over 5 minutes
-    let learning_progress = (base_progress + time_progress).min(100.0);
-    
-    // Update AI metrics with dynamic values
-    metrics.ai.learning_progress = learning_progress;
-    metrics.ai.predictions_made += (elapsed_seconds as u64) / 10; // Increase predictions
-    metrics.ai.automations_executed += (elapsed_seconds as u64) / 20; // Increase automations
-    
-    // Slightly improve accuracy over time
-    if learning_progress > 95.0 {
-        metrics.ai.accuracy = (96.8 + (learning_progress - 95.0) * 0.6).min(99.9);
-    }
-    
-    Json(metrics)
+    // No Azure connection available - return simulated data
+    let simulated_metrics = GovernanceMetrics {
+        policies: PolicyMetrics {
+            total: 15,
+            active: 12,
+            violations: 3,
+            automated: 10,
+            compliance_rate: 85.5,
+            prediction_accuracy: 92.3,
+        },
+        rbac: RbacMetrics {
+            users: 150,
+            roles: 25,
+            violations: 2,
+            risk_score: 3.2,
+            anomalies_detected: 1,
+        },
+        costs: CostMetrics {
+            current_spend: 125000.0,
+            predicted_spend: 118000.0,
+            savings_identified: 7000.0,
+            optimization_rate: 88.5,
+        },
+        network: NetworkMetrics {
+            endpoints: 450,
+            active_threats: 0,
+            blocked_attempts: 127,
+            latency_ms: 15.2,
+        },
+        resources: ResourceMetrics {
+            total: 2500,
+            optimized: 2100,
+            idle: 200,
+            overprovisioned: 200,
+        },
+        ai: AIMetrics {
+            accuracy: 94.5,
+            predictions_made: 12000,
+            automations_executed: 8500,
+            learning_progress: 85.0,
+        },
+    };
+    Json(simulated_metrics)
 }
 
 pub async fn get_predictions(
@@ -565,6 +585,38 @@ pub struct CreateExceptionRequest {
     pub reason: String,
 }
 
+// Get policies with data mode support
+pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    use crate::data_mode::{DataMode, DataResponse};
+    use crate::simulated_data::SimulatedDataProvider;
+    
+    let mode = DataMode::from_env();
+    
+    // Try to get real data if available and mode is Real
+    if mode.is_real() {
+        if let Some(ref async_azure_client) = state.async_azure_client {
+            match async_azure_client.get_policies().await {
+                Ok(policies) => {
+                    return Json(DataResponse::new(serde_json::json!({
+                        "policies": policies,
+                        "total": policies.len(),
+                    }), DataMode::Real));
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to get real policies: {}", e);
+                }
+            }
+        }
+    }
+    
+    // Use simulated data as fallback or when in simulated mode
+    let simulated_policies = SimulatedDataProvider::get_policies();
+    Json(DataResponse::new(serde_json::json!({
+        "policies": simulated_policies,
+        "total": simulated_policies.len(),
+    }), DataMode::Simulated))
+}
+
 // Policies Deep Compliance
 pub async fn get_policies_deep() -> impl IntoResponse {
     // Try proxy to Python deep service if configured
@@ -682,45 +734,133 @@ async fn proxy_deep_get(path: &str) -> Option<serde_json::Value> {
     }
 }
 
-// Additional deep endpoints proxied to Python, with fallback stubs
-pub async fn get_rbac_deep() -> impl IntoResponse {
-    if let Some(json) = proxy_deep_get("/api/v1/rbac/deep").await { return Json(json); }
+// Additional deep endpoints with REAL Azure data
+pub async fn get_rbac_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // Try Python service first for AI-enhanced analysis
+    if let Some(json) = proxy_deep_get("/api/v1/rbac/deep").await { 
+        return Json(json); 
+    }
+    
+    // Fallback to direct Azure API
+    if let Some(ref client) = state.async_azure_client {
+        match client.get_rbac_analysis().await {
+            Ok(rbac_data) => {
+                return Json(serde_json::json!({
+                    "success": true,
+                    "roleAssignments": rbac_data.get("assignments"),
+                    "riskAnalysis": {
+                        "privilegedAccounts": rbac_data.get("privileged_count"),
+                        "highRiskAssignments": rbac_data.get("high_risk_count"),
+                        "staleAssignments": rbac_data.get("stale_count"),
+                        "overprivilegedIdentities": rbac_data.get("overprivileged_identities")
+                    },
+                    "recommendations": rbac_data.get("recommendations")
+                }));
+            }
+            Err(e) => {
+                tracing::error!("Failed to get RBAC data from Azure: {}", e);
+            }
+        }
+    }
+    
+    // No Azure connection available
     Json(serde_json::json!({
-        "success": false,
-        "message": "Using detailed mock data",
-        "roleAssignments": [
-            {"principalId":"user@company.com","roleName":"Owner","scope":"/subscriptions/xxx","riskLevel":"High","isPrivileged":true,"lastActivity":"2024-01-15","recommendations":["Review for least privilege","Enable PIM"]}
-        ],
-        "riskAnalysis": {"privilegedAccounts":5,"highRiskAssignments":2,"staleAssignments":3}
+        "error": "Azure connection not available",
+        "status": "unavailable"
     }))
 }
 
-pub async fn get_costs_deep() -> impl IntoResponse {
-    if let Some(json) = proxy_deep_get("/api/v1/costs/deep").await { return Json(json); }
+pub async fn get_costs_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(json) = proxy_deep_get("/api/v1/costs/deep").await { 
+        return Json(json); 
+    }
+    
+    // Get REAL cost data from Azure Cost Management
+    if let Some(ref client) = state.async_azure_client {
+        match client.get_cost_analysis().await {
+            Ok(cost_data) => {
+                return Json(serde_json::json!({
+                    "success": true,
+                    "totalCost": cost_data.get("total_cost"),
+                    "breakdown": cost_data.get("service_breakdown"),
+                    "anomalies": cost_data.get("anomalies"),
+                    "trends": cost_data.get("trends"),
+                    "forecast": cost_data.get("forecast"),
+                    "optimizationPotential": cost_data.get("optimization_potential"),
+                    "recommendations": cost_data.get("recommendations")
+                }));
+            }
+            Err(e) => {
+                tracing::error!("Failed to get cost data from Azure: {}", e);
+            }
+        }
+    }
+    
     Json(serde_json::json!({
-        "success": false,
-        "message": "Using detailed mock data",
-        "totalCost": 25000,
-        "breakdown": [{"service":"Virtual Machines","cost":10000,"optimizationPotential":3000,"recommendations":["Use Reserved Instances","Right-size VMs"]}],
-        "anomalies": [{"resource":"vm-test-001","cost":2000,"expectedCost":500,"severity":"High"}]
+        "error": "Azure Cost Management API not available",
+        "status": "unavailable"
     }))
 }
 
-pub async fn get_network_deep() -> impl IntoResponse {
-    if let Some(json) = proxy_deep_get("/api/v1/network/deep").await { return Json(json); }
+pub async fn get_network_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(json) = proxy_deep_get("/api/v1/network/deep").await { 
+        return Json(json); 
+    }
+    
+    // Get REAL network topology from Azure
+    if let Some(ref client) = state.async_azure_client {
+        match client.get_network_topology().await {
+            Ok(network_data) => {
+                return Json(serde_json::json!({
+                    "success": true,
+                    "networkSecurityGroups": network_data.get("nsgs"),
+                    "virtualNetworks": network_data.get("vnets"),
+                    "publicEndpoints": network_data.get("public_endpoints"),
+                    "privateEndpoints": network_data.get("private_endpoints"),
+                    "securityRisks": network_data.get("security_risks"),
+                    "recommendations": network_data.get("recommendations")
+                }));
+            }
+            Err(e) => {
+                tracing::error!("Failed to get network data from Azure: {}", e);
+            }
+        }
+    }
+    
     Json(serde_json::json!({
-        "success": false,
-        "message": "Using detailed mock data",
-        "networkSecurityGroups":[{"name":"nsg-prod","rules":[{"name":"AllowRDP","direction":"Inbound","sourceAddress":"*","destinationPort":"3389","riskLevel":"High","issues":["RDP exposed to internet"]}],"recommendations":["Restrict RDP access","Use Azure Bastion"]}]
+        "error": "Azure Network API not available",
+        "status": "unavailable"
     }))
 }
 
-pub async fn get_resources_deep() -> impl IntoResponse {
-    if let Some(json) = proxy_deep_get("/api/v1/resources/deep").await { return Json(json); }
+pub async fn get_resources_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(json) = proxy_deep_get("/api/v1/resources/deep").await { 
+        return Json(json); 
+    }
+    
+    // Get REAL resources from Azure Resource Graph
+    if let Some(ref client) = state.async_azure_client {
+        match client.get_all_resources_with_health().await {
+            Ok(resources) => {
+                return Json(serde_json::json!({
+                    "success": true,
+                    "resources": resources.get("items"),
+                    "totalCount": resources.get("total_count"),
+                    "healthSummary": resources.get("health_summary"),
+                    "complianceSummary": resources.get("compliance_summary"),
+                    "tagAnalysis": resources.get("tag_analysis"),
+                    "recommendations": resources.get("recommendations")
+                }));
+            }
+            Err(e) => {
+                tracing::error!("Failed to get resources from Azure: {}", e);
+            }
+        }
+    }
+    
     Json(serde_json::json!({
-        "success": false,
-        "message": "Using detailed mock data",
-        "resources":[{"id":"vm-prod-001","name":"Production VM 1","type":"VirtualMachine","healthStatus":"Healthy","complianceStatus":"NonCompliant","issues":["Missing tags","No backup configured"],"recommendations":["Add required tags","Enable Azure Backup"]}]
+        "error": "Azure Resource Graph not available",
+        "status": "unavailable"
     }))
 }
 
@@ -779,6 +919,7 @@ pub async fn create_action(
     }
 
     let state_clone = state.clone();
+    let id_clone = id.clone();
     tokio::spawn(async move {
         let send_step = |m: &str| {
             let _ = tx.send(m.to_string());
@@ -786,7 +927,7 @@ pub async fn create_action(
         send_step("queued");
         {
             let mut actions = state_clone.actions.write().await;
-            if let Some(a) = actions.get_mut(&id) {
+            if let Some(a) = actions.get_mut(&id_clone) {
                 a.status = "in_progress".to_string();
                 a.updated_at = chrono::Utc::now();
             }
@@ -799,7 +940,7 @@ pub async fn create_action(
         tokio::time::sleep(std::time::Duration::from_millis(600)).await;
         {
             let mut actions = state_clone.actions.write().await;
-            if let Some(a) = actions.get_mut(&id) {
+            if let Some(a) = actions.get_mut(&id_clone) {
                 a.status = "completed".to_string();
                 a.updated_at = chrono::Utc::now();
                 a.result = Some(serde_json::json!({"message": "Action executed successfully", "changes": 1}));
@@ -817,9 +958,9 @@ pub async fn get_action(
 ) -> impl IntoResponse {
     let actions = state.actions.read().await;
     if let Some(a) = actions.get(&action_id) {
-        return Json(a);
+        return Json(serde_json::json!(a));
     }
-    (StatusCode::NOT_FOUND, Json(serde_json::json!({"error": "action not found"}))).into_response()
+    Json(serde_json::json!({"error": "action not found"}))
 }
 
 pub async fn stream_action_events(

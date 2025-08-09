@@ -47,7 +47,27 @@
       "Bash(gh issue list:*)",
       "Bash(gh api:*)",
       "Bash(gh issue edit:*)",
-      "Bash(gh project list:*)"
+      "Bash(gh project list:*)",
+      "Bash(for:*)",
+      "Bash(do)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(gh issue comment:*)",
+      "Bash(gh label:*)",
+      "Bash(where cargo)",
+      "Bash(do gh issue edit $issue --add-label \"in-review\")",
+      "Bash(gh repo view:*)",
+      "Bash(mkdir:*)",
+      "Bash(wsl:*)",
+      "Bash(C:Usersleonacursor-agent.bat --version)",
+      "Bash(cursor-agent.bat --version)",
+      "Bash(C:\\Users\\leona\\cursor-agent.bat --version)",
+      "Bash(call C:Usersleonacursor-agent.bat --version)",
+      "Bash(set USE_REAL_DATA=true)",
+      "Bash(set AZURE_SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78)",
+      "Bash(set AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7)",
+      "Bash(sed:*)",
+      "Bash(.start-backend.bat)"
     ],
     "deny": []
   }
