@@ -46,36 +46,25 @@ class ResourcesRequest(BaseModel):
     subscription_id: Optional[str] = "205b477d-17e7-4b3b-92c1-32cf02626b78"
     resource_type: Optional[str] = None
 
-# Try to import Azure real data and deep insights, fallback to mock if not available
+# Require real Azure; fail fast if not available
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from azure_real_data import AzureRealDataCollector
+from azure_deep_insights import AzureDeepInsights
+
+USE_REAL_AZURE = os.getenv("USE_REAL_AZURE", "true").lower() == "true"
+if not USE_REAL_AZURE:
+    raise RuntimeError("USE_REAL_AZURE=false is not supported. Remove mocks requested; service requires Azure connectivity.")
+
 try:
-    import sys
-    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    from azure_real_data import AzureRealDataCollector
-    from azure_deep_insights import AzureDeepInsights
     azure_collector = AzureRealDataCollector()
     azure_insights = AzureDeepInsights()
-    USE_REAL_AZURE = True
     logger.info("Using REAL Azure data with deep insights")
 except Exception as e:
-    logger.warning(f"Could not initialize Azure connection, using mock data: {e}")
-    USE_REAL_AZURE = False
-    azure_collector = None
-    azure_insights = None
+    logger.error(f"Azure initialization failed (no mocks allowed): {e}")
+    raise
 
-# Mock Azure data for demonstration (only used if Azure connection fails)
-MOCK_RESOURCES = [
-    {"id": "vm-prod-001", "name": "Production VM 1", "type": "VirtualMachine", "location": "East US", "status": "Running", "cost": 450.00},
-    {"id": "vm-prod-002", "name": "Production VM 2", "type": "VirtualMachine", "location": "East US", "status": "Running", "cost": 450.00},
-    {"id": "vm-dev-001", "name": "Development VM", "type": "VirtualMachine", "location": "East US", "status": "Stopped", "cost": 0.00},
-    {"id": "storage-001", "name": "Data Storage", "type": "StorageAccount", "location": "East US", "status": "Active", "cost": 125.00},
-    {"id": "sql-001", "name": "SQL Database", "type": "SQLDatabase", "location": "East US", "status": "Active", "cost": 850.00},
-]
-
-MOCK_POLICIES = [
-    {"id": "pol-001", "name": "Require Encryption", "type": "Security", "compliance": 0.92, "resources": 45},
-    {"id": "pol-002", "name": "Tag Compliance", "type": "Governance", "compliance": 0.78, "resources": 67},
-    {"id": "pol-003", "name": "Allowed Locations", "type": "Compliance", "compliance": 0.95, "resources": 89},
-]
+# No mock datasets retained – service returns 503 if Azure is unavailable
 
 # ================== In-memory Action Orchestrator (Dev Stub) ==================
 
@@ -171,60 +160,55 @@ async def health():
 
 @app.get("/api/v1/metrics")
 async def get_metrics():
-    """Get governance metrics"""
+    """Get governance metrics (derived from real Azure data)"""
+    if not azure_collector:
+        raise HTTPException(503, "Azure not connected")
+    data = azure_collector.get_complete_governance_data()
     return {
         "compliance": {
-            "score": 85,
-            "trend": "up",
-            "critical": 2,
-            "warning": 5,
-            "info": 12
+            "score": data["policies"]["compliance_rate"],
+            "trend": "unknown",
         },
         "costs": {
-            "current": 25000,
-            "projected": 24000,
-            "savings": 1000,
-            "trend": "down"
+            "current": data["costs"]["current_spend"],
+            "projected": data["costs"]["predicted_spend"],
+            "savings": data["costs"]["savings_identified"],
         },
-        "security": {
-            "score": 92,
-            "incidents": 0,
-            "risks": 3,
-            "patches": 5
-        },
+        "security": data.get("security", {}),
         "resources": {
-            "total": len(MOCK_RESOURCES),
-            "active": 4,
-            "idle": 1,
-            "compliance": 0.85
-        }
+            "total": data["summary"]["total_resources"],
+            "compliance": data["policies"]["compliance_rate"]/100.0,
+        },
     }
 
 @app.get("/api/v1/resources")
 async def get_resources(request: ResourcesRequest = Depends()):
-    """Get Azure resources"""
-    resources = MOCK_RESOURCES
-    
+    """Get Azure resources (real)"""
+    if not azure_collector:
+        raise HTTPException(503, "Azure not connected")
+    resources: List[Dict[str, Any]] = []
+    for res in azure_collector.resource_client.resources.list():
+        resources.append({
+            "id": res.id,
+            "name": res.name,
+            "type": res.type,
+            "location": res.location,
+            "resourceGroup": res.id.split('/')[4] if len(res.id.split('/'))>4 else None,
+            "tags": res.tags or {},
+        })
     if request.resource_type:
         resources = [r for r in resources if r["type"] == request.resource_type]
-    
-    return {
-        "resources": resources,
-        "total": len(resources),
-        "subscription_id": request.subscription_id,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return {"resources": resources, "total": len(resources), "subscription_id": request.subscription_id, "timestamp": datetime.utcnow().isoformat()}
 
 @app.get("/api/v1/policies")
 async def get_policies():
-    """Get policies"""
-    return {
-        "policies": MOCK_POLICIES,
-        "total": len(MOCK_POLICIES),
-        "compliant": 2,
-        "non_compliant": 1,
-        "average_compliance": 0.88
-    }
+    """Get policy assignments (real)"""
+    if not azure_insights:
+        raise HTTPException(503, "Azure not connected")
+    assignments = []
+    for a in azure_insights.policy_insights.policy_assignments.list():
+        assignments.append({"id": a.id, "name": a.name, "displayName": a.display_name})
+    return {"policies": assignments, "total": len(assignments)}
 
 @app.post("/api/v1/chat")
 async def chat(request: ChatRequest):
@@ -433,148 +417,33 @@ async def analyze_environment(context: Optional[Dict] = None):
 
 @app.get("/api/v1/policies/deep")
 async def get_policies_deep():
-    """Get deep policy compliance insights with drill-down capabilities"""
-    if USE_REAL_AZURE and azure_insights:
-        return await azure_insights.get_policy_compliance_deep()
-    else:
-        # Return detailed mock data
-        return {
-            "success": False,
-            "message": "Using detailed mock data",
-            "complianceResults": [
-                {
-                    "assignment": {
-                        "name": "require-tags",
-                        "displayName": "Require Tags Policy",
-                        "scope": "/subscriptions/xxx"
-                    },
-                    "summary": {
-                        "totalResources": 100,
-                        "compliantResources": 75,
-                        "nonCompliantResources": 25,
-                        "compliancePercentage": 75.0
-                    },
-                    "nonCompliantResources": [
-                        {
-                            "resourceId": "/subscriptions/xxx/resourceGroups/rg-prod/providers/Microsoft.Compute/virtualMachines/vm-prod-001",
-                            "resourceType": "Microsoft.Compute/virtualMachines",
-                            "resourceName": "vm-prod-001",
-                            "complianceState": "NonCompliant",
-                            "complianceReason": "Missing required tags: Environment, Owner, CostCenter",
-                            "remediationOptions": [
-                                {"action": "auto-remediate", "description": "Automatically add missing tags"},
-                                {"action": "create-exception", "description": "Create policy exception"},
-                                {"action": "manual-fix", "description": "Manually add tags"}
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+    if not azure_insights:
+        raise HTTPException(503, "Azure not connected")
+    return await azure_insights.get_policy_compliance_deep()
 
 @app.get("/api/v1/rbac/deep")
 async def get_rbac_deep():
-    """Get deep RBAC analysis with privilege insights"""
-    if USE_REAL_AZURE and azure_insights:
-        return await azure_insights.get_rbac_deep_analysis()
-    else:
-        return {
-            "success": False,
-            "message": "Using detailed mock data",
-            "roleAssignments": [
-                {
-                    "principalId": "user@company.com",
-                    "roleName": "Owner",
-                    "scope": "/subscriptions/xxx",
-                    "riskLevel": "High",
-                    "isPrivileged": True,
-                    "lastActivity": "2024-01-15",
-                    "recommendations": ["Review for least privilege", "Enable PIM"]
-                }
-            ],
-            "riskAnalysis": {
-                "privilegedAccounts": 5,
-                "highRiskAssignments": 2,
-                "staleAssignments": 3
-            }
-        }
+    if not azure_insights:
+        raise HTTPException(503, "Azure not connected")
+    return await azure_insights.get_rbac_deep_analysis()
 
 @app.get("/api/v1/costs/deep")
 async def get_costs_deep():
-    """Get deep cost analysis with optimization opportunities"""
-    if USE_REAL_AZURE and azure_insights:
-        return await azure_insights.get_cost_analysis_deep()
-    else:
-        return {
-            "success": False,
-            "message": "Using detailed mock data",
-            "totalCost": 25000,
-            "breakdown": [
-                {
-                    "service": "Virtual Machines",
-                    "cost": 10000,
-                    "optimizationPotential": 3000,
-                    "recommendations": ["Use Reserved Instances", "Right-size VMs"]
-                }
-            ],
-            "anomalies": [
-                {
-                    "resource": "vm-test-001",
-                    "cost": 2000,
-                    "expectedCost": 500,
-                    "severity": "High"
-                }
-            ]
-        }
+    if not azure_insights:
+        raise HTTPException(503, "Azure not connected")
+    return await azure_insights.get_cost_analysis_deep()
 
 @app.get("/api/v1/network/deep")
 async def get_network_deep():
-    """Get deep network security analysis"""
-    if USE_REAL_AZURE and azure_insights:
-        return await azure_insights.get_network_security_deep()
-    else:
-        return {
-            "success": False,
-            "message": "Using detailed mock data",
-            "networkSecurityGroups": [
-                {
-                    "name": "nsg-prod",
-                    "rules": [
-                        {
-                            "name": "AllowRDP",
-                            "direction": "Inbound",
-                            "sourceAddress": "*",
-                            "destinationPort": "3389",
-                            "riskLevel": "High",
-                            "issues": ["RDP exposed to internet"]
-                        }
-                    ],
-                    "recommendations": ["Restrict RDP access", "Use Azure Bastion"]
-                }
-            ]
-        }
+    if not azure_insights:
+        raise HTTPException(503, "Azure not connected")
+    return await azure_insights.get_network_security_deep()
 
 @app.get("/api/v1/resources/deep")
 async def get_resources_deep():
-    """Get deep resource insights with health and performance"""
-    if USE_REAL_AZURE and azure_insights:
-        return await azure_insights.get_resource_insights_deep()
-    else:
-        return {
-            "success": False,
-            "message": "Using detailed mock data",
-            "resources": [
-                {
-                    "id": "vm-prod-001",
-                    "name": "Production VM 1",
-                    "type": "VirtualMachine",
-                    "healthStatus": "Healthy",
-                    "complianceStatus": "NonCompliant",
-                    "issues": ["Missing tags", "No backup configured"],
-                    "recommendations": ["Add required tags", "Enable Azure Backup"]
-                }
-            ]
-        }
+    if not azure_insights:
+        raise HTTPException(503, "Azure not connected")
+    return await azure_insights.get_resource_insights_deep()
 
 @app.post("/api/v1/remediate")
 async def remediate_resource(resource_id: str, action: str):
