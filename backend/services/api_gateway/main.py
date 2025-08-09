@@ -44,7 +44,20 @@ class ResourcesRequest(BaseModel):
     subscription_id: Optional[str] = "205b477d-17e7-4b3b-92c1-32cf02626b78"
     resource_type: Optional[str] = None
 
-# Mock Azure data for demonstration
+# Try to import Azure real data, fallback to mock if not available
+try:
+    import sys
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from azure_real_data import AzureRealDataCollector
+    azure_collector = AzureRealDataCollector()
+    USE_REAL_AZURE = True
+    logger.info("Using REAL Azure data")
+except Exception as e:
+    logger.warning(f"Could not initialize Azure connection, using mock data: {e}")
+    USE_REAL_AZURE = False
+    azure_collector = None
+
+# Mock Azure data for demonstration (only used if Azure connection fails)
 MOCK_RESOURCES = [
     {"id": "vm-prod-001", "name": "Production VM 1", "type": "VirtualMachine", "location": "East US", "status": "Running", "cost": 450.00},
     {"id": "vm-prod-002", "name": "Production VM 2", "type": "VirtualMachine", "location": "East US", "status": "Running", "cost": 450.00},

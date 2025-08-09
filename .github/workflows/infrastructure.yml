@@ -55,14 +55,14 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Check Terraform Directory
+        shell: powershell
         run: |
-          if [ -d "./infrastructure/terraform" ]; then
-            echo "Terraform directory found"
-          else
-            echo "Terraform directory not found, skipping Terraform commands"
+          if (Test-Path "./infrastructure/terraform") {
+            Write-Host "Terraform directory found"
+          } else {
+            Write-Host "Terraform directory not found, skipping Terraform commands"
             exit 0
-          fi
-        shell: bash
+          }
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
