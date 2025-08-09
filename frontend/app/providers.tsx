@@ -6,6 +6,9 @@ import { useState, useEffect } from 'react'
 import { client } from '@/lib/apollo-client'
 import dynamic from 'next/dynamic'
 import { AuthProvider } from '../contexts/AuthContext'
+import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration'
+import { OfflineIndicator, OfflineQueue, ConflictResolver } from '../components/OfflineIndicator'
+import { I18nProvider } from '../lib/i18n'
 
 // Dynamically import VoiceProvider to avoid SSR issues
 const VoiceProvider = dynamic(
@@ -26,12 +29,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <ApolloProvider client={client}>
-          {children}
-          {mounted && <VoiceProvider />}
-        </ApolloProvider>
-      </QueryClientProvider>
+      <I18nProvider>
+        <QueryClientProvider client={queryClient}>
+          <ApolloProvider client={client}>
+            <ServiceWorkerRegistration />
+            {children}
+            <OfflineIndicator />
+            <OfflineQueue />
+            <ConflictResolver />
+            {mounted && <VoiceProvider />}
+          </ApolloProvider>
+        </QueryClientProvider>
+      </I18nProvider>
     </AuthProvider>
   )
 }

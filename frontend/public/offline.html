@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolicyCortex - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: #6b7280;
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        h1 {
+            color: #1f2937;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            color: #6b7280;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .features {
+            text-align: left;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 10px;
+        }
+        
+        .features h2 {
+            color: #374151;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .features ul {
+            list-style: none;
+        }
+        
+        .features li {
+            color: #4b5563;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .features li::before {
+            content: '✓';
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #f59e0b;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        
+        .retry-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #6366f1;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+        
+        .retry-btn:hover {
+            background: #5558e3;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1e1b4b 0%, #581c87 100%);
+            }
+            
+            .container {
+                background: #1f2937;
+            }
+            
+            .icon {
+                background: #374151;
+            }
+            
+            .icon svg {
+                stroke: #9ca3af;
+            }
+            
+            h1 {
+                color: #f3f4f6;
+            }
+            
+            p {
+                color: #9ca3af;
+            }
+            
+            .features {
+                background: #111827;
+            }
+            
+            .features h2 {
+                color: #e5e7eb;
+            }
+            
+            .features li {
+                color: #d1d5db;
+            }
+            
+            .status {
+                background: #451a03;
+                color: #fbbf24;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <svg viewBox="0 0 24 24">
+                <path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="3" y1="3" x2="21" y2="21" stroke-linecap="round"/>
+            </svg>
+        </div>
+        
+        <h1>You're Offline</h1>
+        <p>Don't worry! PolicyCortex works offline too.</p>
+        
+        <div class="status">
+            <span class="status-dot"></span>
+            Working Offline
+        </div>
+        
+        <div class="features">
+            <h2>What you can do offline:</h2>
+            <ul>
+                <li>View cached policies and resources</li>
+                <li>Create and edit policies locally</li>
+                <li>Review compliance data</li>
+                <li>Access recent dashboards</li>
+                <li>Queue actions for sync</li>
+            </ul>
+        </div>
+        
+        <p>Your changes will be automatically synced when you're back online.</p>
+        
+        <button class="retry-btn" onclick="checkConnection()">
+            Check Connection
+        </button>
+    </div>
+    
+    <script>
+        function checkConnection() {
+            if (navigator.onLine) {
+                window.location.reload();
+            } else {
+                const btn = document.querySelector('.retry-btn');
+                btn.textContent = 'Still Offline...';
+                setTimeout(() => {
+                    btn.textContent = 'Check Connection';
+                }, 2000);
+            }
+        }
+        
+        // Auto-check every 10 seconds
+        setInterval(() => {
+            if (navigator.onLine) {
+                window.location.reload();
+            }
+        }, 10000);
+        
+        // Listen for online event
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>

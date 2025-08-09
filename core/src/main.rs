@@ -26,6 +26,12 @@ mod data_mode;
 mod simulated_data;
 mod ai;
 mod collectors;
+mod tenant;
+mod approvals;
+mod audit_chain;
+mod secret_guard;
+mod slo;
+mod change_management;
 
 use api::{
     AppState,
