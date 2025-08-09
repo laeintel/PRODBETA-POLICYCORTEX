@@ -327,6 +327,147 @@ resource "azurerm_application_insights" "main" {
   tags = local.common_tags
 }
 
+# Log Analytics Workspace for Container Apps
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "log-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30  # Minimum retention to save costs
+
+  tags = local.common_tags
+}
+
+# Container Apps Environment - Using Consumption profile for cost efficiency
+resource "azurerm_container_app_environment" "main" {
+  name                       = "cae-cortex-${local.env_suffix}"
+  location                   = azurerm_resource_group.main.location
+  resource_group_name        = azurerm_resource_group.main.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  
+  # No workload_profile block = Consumption profile (serverless, pay-per-use)
+  # This is the most cost-effective option
+  
+  tags = local.common_tags
+}
+
+# Container App - Core API
+resource "azurerm_container_app" "core" {
+  name                         = "ca-cortex-core-${local.env_suffix}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+
+  template {
+    container {
+      name   = "core-api"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-core:latest"
+      cpu    = 0.25  # Minimum CPU (0.25 vCPU)
+      memory = "0.5Gi"  # Minimum memory (0.5 GB)
+
+      env {
+        name  = "POSTGRES_HOST"
+        value = azurerm_postgresql_flexible_server.main.fqdn
+      }
+      env {
+        name  = "POSTGRES_DB"
+        value = azurerm_postgresql_flexible_server_database.main.name
+      }
+      env {
+        name        = "POSTGRES_PASSWORD"
+        secret_name = "postgres-password"
+      }
+      env {
+        name  = "COSMOS_ENDPOINT"
+        value = azurerm_cosmosdb_account.main.endpoint
+      }
+      env {
+        name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        value = azurerm_application_insights.main.connection_string
+      }
+    }
+    
+    min_replicas = 0  # Scale to zero to save costs
+    max_replicas = 2
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 8080
+    
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+  }
+
+  secret {
+    name  = "postgres-password"
+    value = random_password.postgres.result
+  }
+
+  registry {
+    server               = azurerm_container_registry.main.login_server
+    username             = azurerm_container_registry.main.admin_username
+    password_secret_name = "registry-password"
+  }
+
+  secret {
+    name  = "registry-password"
+    value = azurerm_container_registry.main.admin_password
+  }
+
+  tags = local.common_tags
+}
+
+# Container App - Frontend
+resource "azurerm_container_app" "frontend" {
+  name                         = "ca-cortex-frontend-${local.env_suffix}"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
+
+  template {
+    container {
+      name   = "frontend"
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-frontend:latest"
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name  = "NEXT_PUBLIC_API_URL"
+        value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
+      }
+    }
+    
+    min_replicas = 0  # Scale to zero
+    max_replicas = 2
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 3000
+    
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+  }
+
+  registry {
+    server               = azurerm_container_registry.main.login_server
+    username             = azurerm_container_registry.main.admin_username
+    password_secret_name = "registry-password"
+  }
+
+  secret {
+    name  = "registry-password"
+    value = azurerm_container_registry.main.admin_password
+  }
+
+  tags = local.common_tags
+}
+
 # Service Bus Namespace - Basic tier (lowest cost)
 resource "azurerm_servicebus_namespace" "main" {
   count = var.environment == "prod" ? 1 : 0 # Only in prod to manage costs
@@ -402,4 +543,19 @@ output "application_insights_instrumentation_key" {
 output "vm_public_ip" {
   description = "VM public IP address"
   value       = var.environment == "dev" && length(azurerm_public_ip.vm) > 0 ? azurerm_public_ip.vm[0].ip_address : null
+}
+
+output "container_app_environment_id" {
+  description = "Container Apps Environment ID"
+  value       = azurerm_container_app_environment.main.id
+}
+
+output "container_app_core_url" {
+  description = "Core API Container App URL"
+  value       = "https://${azurerm_container_app.core.latest_revision_fqdn}"
+}
+
+output "container_app_frontend_url" {
+  description = "Frontend Container App URL"
+  value       = "https://${azurerm_container_app.frontend.latest_revision_fqdn}"
 }
