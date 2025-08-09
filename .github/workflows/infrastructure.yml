@@ -6,13 +6,13 @@ on:
       - main
       - develop
     paths:
-      - 'infrastructure/**'
+      - 'infrastructure/kubernetes/**'
       - '.github/workflows/infrastructure.yml'
   pull_request:
     branches:
       - main
     paths:
-      - 'infrastructure/**'
+      - 'infrastructure/kubernetes/**'
   workflow_dispatch:
     inputs:
       environment:
