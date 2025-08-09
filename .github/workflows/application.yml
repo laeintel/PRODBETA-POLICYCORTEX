@@ -377,30 +377,8 @@ jobs:
     needs: [build-core, build-frontend, build-graphql]
     if: always()
     continue-on-error: true
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: policycortex_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
+    # Services removed - not supported on Windows runners
+    # For Windows, these services should be installed locally or skipped
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -410,6 +388,8 @@ jobs:
         shell: powershell
         continue-on-error: true
         run: |
+          Write-Host "Note: Container services (postgres, redis) are not supported on Windows runners"
+          Write-Host "Integration tests requiring these services will be skipped"
           $ErrorActionPreference = "Stop"
           try {
             $dockerVersion = docker version 2>&1
