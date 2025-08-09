@@ -333,7 +333,7 @@ resource "azurerm_log_analytics_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
-  retention_in_days   = 30  # Minimum retention to save costs
+  retention_in_days   = 30 # Minimum retention to save costs
 
   tags = local.common_tags
 }
@@ -344,10 +344,10 @@ resource "azurerm_container_app_environment" "main" {
   location                   = azurerm_resource_group.main.location
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-  
+
   # No workload_profile block = Consumption profile (serverless, pay-per-use)
   # This is the most cost-effective option
-  
+
   tags = local.common_tags
 }
 
@@ -362,8 +362,8 @@ resource "azurerm_container_app" "core" {
     container {
       name   = "core-api"
       image  = "${azurerm_container_registry.main.login_server}/policycortex-core:latest"
-      cpu    = 0.25  # Minimum CPU (0.25 vCPU)
-      memory = "0.5Gi"  # Minimum memory (0.5 GB)
+      cpu    = 0.25    # Minimum CPU (0.25 vCPU)
+      memory = "0.5Gi" # Minimum memory (0.5 GB)
 
       env {
         name  = "POSTGRES_HOST"
@@ -386,15 +386,15 @@ resource "azurerm_container_app" "core" {
         value = azurerm_application_insights.main.connection_string
       }
     }
-    
-    min_replicas = 0  # Scale to zero to save costs
+
+    min_replicas = 0 # Scale to zero to save costs
     max_replicas = 2
   }
 
   ingress {
     external_enabled = true
     target_port      = 8080
-    
+
     traffic_weight {
       percentage      = 100
       latest_revision = true
@@ -439,15 +439,15 @@ resource "azurerm_container_app" "frontend" {
         value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
       }
     }
-    
-    min_replicas = 0  # Scale to zero
+
+    min_replicas = 0 # Scale to zero
     max_replicas = 2
   }
 
   ingress {
     external_enabled = true
     target_port      = 3000
-    
+
     traffic_weight {
       percentage      = 100
       latest_revision = true
