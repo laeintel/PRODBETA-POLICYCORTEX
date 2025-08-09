@@ -433,7 +433,12 @@ jobs:
     name: Deploy to Development
     runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    if: |
+      always() && 
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')) &&
+      (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
+      (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped')
     environment: development
     permissions:
       contents: read
