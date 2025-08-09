@@ -15,6 +15,11 @@ import json
 import logging
 import uuid
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import Column, String, Float, DateTime, JSON, Text
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +50,55 @@ class PolicyRequest(BaseModel):
 class ResourcesRequest(BaseModel):
     subscription_id: Optional[str] = "205b477d-17e7-4b3b-92c1-32cf02626b78"
     resource_type: Optional[str] = None
+
+# -------------------- Persistence & Secrets --------------------
+# Async Postgres (for actions/audit). Configure via DATABASE_URL
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/policycortex_dev",
+)
+
+engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+Base = declarative_base()
+
+
+class DBAction(Base):
+    __tablename__ = "actions"
+    id = Column(String, primary_key=True)
+    action_type = Column(String, nullable=False)
+    resource_id = Column(String, nullable=True)
+    status = Column(String, nullable=False)
+    progress = Column(Float, nullable=False, default=0.0)
+    message = Column(Text, nullable=True)
+    params = Column(JSON, nullable=True)
+    result = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+
+
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+@app.on_event("startup")
+async def on_startup():
+    # Create tables if missing
+    await init_db()
+    # Optionally hydrate secrets from Key Vault
+    kv_url = os.getenv("KEY_VAULT_URL")
+    if kv_url:
+        try:
+            credential = DefaultAzureCredential()
+            kv = SecretClient(vault_url=kv_url, credential=credential)
+            # Example: prefer KV secret for subscription id
+            sub = kv.get_secret("AZURE-SUBSCRIPTION-ID").value
+            if sub:
+                os.environ["AZURE_SUBSCRIPTION_ID"] = sub
+            logger.info("Key Vault secrets loaded")
+        except Exception as e:
+            logger.warning(f"Key Vault load failed: {e}")
 
 # Require real Azure; fail fast if not available
 import sys
@@ -85,6 +139,17 @@ async def _simulate_action(action_id: str):
         await emit("queued")
         rec["status"] = "in_progress"
         rec["updated_at"] = datetime.utcnow().isoformat()
+        # persist queued->in_progress
+        try:
+            async with AsyncSessionLocal() as session:
+                db = await session.get(DBAction, action_id)
+                if db:
+                    db.status = "in_progress"
+                    db.progress = 10.0
+                    db.updated_at = datetime.utcnow()
+                    await session.commit()
+        except Exception as e:
+            logger.warning(f"DB update failed: {e}")
         await emit("in_progress: preflight")
         await asyncio.sleep(0.5)
         await emit("in_progress: executing")
@@ -95,6 +160,18 @@ async def _simulate_action(action_id: str):
         rec["updated_at"] = datetime.utcnow().isoformat()
         rec["result"] = {"message": "Action executed successfully", "changes": 1}
         await emit("completed")
+        # persist completion
+        try:
+            async with AsyncSessionLocal() as session:
+                db = await session.get(DBAction, action_id)
+                if db:
+                    db.status = "completed"
+                    db.progress = 100.0
+                    db.result = rec.get("result")
+                    db.updated_at = datetime.utcnow()
+                    await session.commit()
+        except Exception as e:
+            logger.warning(f"DB finalize failed: {e}")
     except Exception as e:
         rec["status"] = "failed"
         rec["updated_at"] = datetime.utcnow().isoformat()
@@ -111,21 +188,57 @@ async def create_action(payload: ActionRequest):
         "action_type": payload.action_type,
         "resource_id": payload.resource_id,
         "status": "queued",
+        "progress": 0.0,
         "params": payload.params or {},
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat(),
         "result": None,
     }
     _ACTION_QUEUES[action_id] = asyncio.Queue()
+    # persist queued action
+    try:
+        async with AsyncSessionLocal() as session:
+            db = DBAction(
+                id=action_id,
+                action_type=payload.action_type,
+                resource_id=payload.resource_id,
+                status="queued",
+                progress=0.0,
+                message="Action queued",
+                params=payload.params or {},
+                result=None,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            session.add(db)
+            await session.commit()
+    except Exception as e:
+        logger.warning(f"DB persist failed for action {action_id}: {e}")
     asyncio.create_task(_simulate_action(action_id))
     return {"action_id": action_id}
 
 @app.get("/api/v1/actions/{action_id}")
 async def get_action(action_id: str):
     rec = _ACTIONS.get(action_id)
-    if not rec:
-        raise HTTPException(404, "action not found")
-    return rec
+    if rec:
+        return rec
+    # fallback to DB
+    async with AsyncSessionLocal() as session:
+        db = await session.get(DBAction, action_id)
+        if not db:
+            raise HTTPException(404, "action not found")
+        return {
+            "id": db.id,
+            "action_type": db.action_type,
+            "resource_id": db.resource_id,
+            "status": db.status,
+            "progress": db.progress,
+            "message": db.message,
+            "params": db.params,
+            "result": db.result,
+            "created_at": db.created_at.isoformat(),
+            "updated_at": db.updated_at.isoformat(),
+        }
 
 @app.get("/api/v1/actions/{action_id}/events")
 async def stream_action_events(action_id: str):
