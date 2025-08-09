@@ -22,6 +22,10 @@ mod finops;
 mod security_graph;
 mod compliance;
 mod events;
+mod data_mode;
+mod simulated_data;
+mod ai;
+mod collectors;
 
 use api::{
     AppState,
@@ -30,6 +34,7 @@ use api::{
     get_recommendations,
     process_conversation,
     get_correlations,
+    get_policies,
     get_policies_deep,
     get_rbac_deep,
     get_costs_deep,
@@ -142,6 +147,9 @@ async fn main() {
         .route("/api/v1/recommendations", get(get_recommendations))
         .route("/api/v1/recommendations/proactive", get(get_recommendations))
 
+        // Policies endpoints
+        .route("/api/v1/policies", get(get_policies))
+        
         // Deep insights (Phase 1)
         .route("/api/v1/policies/deep", get(get_policies_deep))
         .route("/api/v1/rbac/deep", get(get_rbac_deep))
@@ -171,14 +179,6 @@ async fn main() {
     
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
-}
-
-// Legacy endpoint handlers (now return 503 if real data is required but unavailable)
-async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    if state.async_azure_client.is_none() && state.azure_client.is_none() {
-        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({"error": "Azure not connected"}))).into_response();
-    }
-    (StatusCode::NOT_IMPLEMENTED, Json(serde_json::json!({"message": "Use /api/v1/policies/deep via Python service"}))).into_response()
 }
 
 async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {

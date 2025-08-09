@@ -18,6 +18,7 @@ import {
   Menu,
   X
 } from 'lucide-react'
+import ConnectionStatusBanner from './ConnectionStatusBanner'
 
 interface AppLayoutProps {
   children: React.ReactNode
