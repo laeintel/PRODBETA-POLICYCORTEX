@@ -15,10 +15,23 @@
 - FinOps optimization strategies (commitments, rightsizing)
 - Security exposure analysis (attack paths)
 
-## 6.4 Guardrails
-- Deterministic rules backstop; never run actions from LLMs without orchestrator safeguards
-- Hallucination defenses: evidence requirement; confidence thresholds; red teaming
+## 6.4 Policy Equivalence (Examples)
+| Control | Azure Policy | AWS | GCP |
+|---|---|---|---|
+| Encryption at rest | `Microsoft.Storage/storageAccounts` encryption enabled | S3/Bucket Server-Side Encryption | CMEK for GCS Buckets |
+| Allowed locations | Azure location allowlist | SCP `aws:RequestedRegion` allowlist | Org Policy `constraints/gcp.resourceLocations` |
+| Required tags/labels | Require tag policy | Config Rule + Tagging enforcement | Label enforcement via Org Policy |
 
-## 6.5 APIs
+## 6.5 Generation Examples
+Input: “Enforce encryption at rest for storage across production.”
+- Azure: Policy with `then.effect: Deny`; scope `prod` management group
+- AWS: SCP denying `s3:PutObject` without SSE; Config rule for EBS encryption
+- GCP: Org Policy for CMEK + enforce required key usage
+
+## 6.6 Guardrails
+- Deterministic rules backstop; never run actions from LLMs without orchestrator safeguards
+- Evidence requirement; confidence thresholds; prompt red teaming
+
+## 6.7 APIs
 - POST `DEEP_API_BASE/api/v1/policies/generate`
 - POST `DEEP_API_BASE/api/v1/analyze` (prompt‑engineered with evidence requests)
