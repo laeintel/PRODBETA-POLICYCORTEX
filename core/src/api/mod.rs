@@ -567,6 +567,11 @@ pub struct CreateExceptionRequest {
 
 // Policies Deep Compliance
 pub async fn get_policies_deep() -> impl IntoResponse {
+    // Try proxy to Python deep service if configured
+    if let Some(json) = proxy_deep_get("/api/v1/policies/deep").await {
+        return Json(json);
+    }
+
     Json(serde_json::json!({
         "success": true,
         "message": "Deep policy compliance (core)",
@@ -663,6 +668,59 @@ pub async fn create_exception(Json(payload): Json<CreateExceptionRequest>) -> im
         "reason": payload.reason,
         "expiresIn": "30 days",
         "status": "Approved"
+    }))
+}
+
+// Helper: Proxy deep GET to Python service (Phase 3). Base from DEEP_API_BASE or http://localhost:8090
+async fn proxy_deep_get(path: &str) -> Option<serde_json::Value> {
+    let base = std::env::var("DEEP_API_BASE").unwrap_or_else(|_| "http://localhost:8090".to_string());
+    let url = format!("{}{}", base, path);
+    let client = reqwest::Client::new();
+    match client.get(&url).send().await {
+        Ok(resp) if resp.status().is_success() => resp.json::<serde_json::Value>().await.ok(),
+        _ => None,
+    }
+}
+
+// Additional deep endpoints proxied to Python, with fallback stubs
+pub async fn get_rbac_deep() -> impl IntoResponse {
+    if let Some(json) = proxy_deep_get("/api/v1/rbac/deep").await { return Json(json); }
+    Json(serde_json::json!({
+        "success": false,
+        "message": "Using detailed mock data",
+        "roleAssignments": [
+            {"principalId":"user@company.com","roleName":"Owner","scope":"/subscriptions/xxx","riskLevel":"High","isPrivileged":true,"lastActivity":"2024-01-15","recommendations":["Review for least privilege","Enable PIM"]}
+        ],
+        "riskAnalysis": {"privilegedAccounts":5,"highRiskAssignments":2,"staleAssignments":3}
+    }))
+}
+
+pub async fn get_costs_deep() -> impl IntoResponse {
+    if let Some(json) = proxy_deep_get("/api/v1/costs/deep").await { return Json(json); }
+    Json(serde_json::json!({
+        "success": false,
+        "message": "Using detailed mock data",
+        "totalCost": 25000,
+        "breakdown": [{"service":"Virtual Machines","cost":10000,"optimizationPotential":3000,"recommendations":["Use Reserved Instances","Right-size VMs"]}],
+        "anomalies": [{"resource":"vm-test-001","cost":2000,"expectedCost":500,"severity":"High"}]
+    }))
+}
+
+pub async fn get_network_deep() -> impl IntoResponse {
+    if let Some(json) = proxy_deep_get("/api/v1/network/deep").await { return Json(json); }
+    Json(serde_json::json!({
+        "success": false,
+        "message": "Using detailed mock data",
+        "networkSecurityGroups":[{"name":"nsg-prod","rules":[{"name":"AllowRDP","direction":"Inbound","sourceAddress":"*","destinationPort":"3389","riskLevel":"High","issues":["RDP exposed to internet"]}],"recommendations":["Restrict RDP access","Use Azure Bastion"]}]
+    }))
+}
+
+pub async fn get_resources_deep() -> impl IntoResponse {
+    if let Some(json) = proxy_deep_get("/api/v1/resources/deep").await { return Json(json); }
+    Json(serde_json::json!({
+        "success": false,
+        "message": "Using detailed mock data",
+        "resources":[{"id":"vm-prod-001","name":"Production VM 1","type":"VirtualMachine","healthStatus":"Healthy","complianceStatus":"NonCompliant","issues":["Missing tags","No backup configured"],"recommendations":["Add required tags","Enable Azure Backup"]}]
     }))
 }
 
