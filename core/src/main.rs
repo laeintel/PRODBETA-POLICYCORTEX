@@ -29,6 +29,9 @@ use api::{
     get_policies_deep,
     remediate,
     create_exception,
+    create_action,
+    get_action,
+    stream_action_events,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -137,6 +140,11 @@ async fn main() {
         // Actions (Phase 1)
         .route("/api/v1/remediate", post(remediate))
         .route("/api/v1/exception", post(create_exception))
+
+        // Actions (Phase 2)
+        .route("/api/v1/actions", post(create_action))
+        .route("/api/v1/actions/:id", get(get_action))
+        .route("/api/v1/actions/:id/events", get(stream_action_events))
         
         // Legacy endpoints for compatibility
         .route("/api/v1/policies", get(get_policies))
