@@ -288,6 +288,10 @@ resource "azurerm_container_app_environment" "main" {
   tags = local.common_tags
 }
 
+# Import existing Container Apps if they exist
+# terraform import azurerm_container_app.core /subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78/resourceGroups/rg-cortex-dev/providers/Microsoft.App/containerApps/ca-cortex-core-dev
+# terraform import azurerm_container_app.frontend /subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78/resourceGroups/rg-cortex-dev/providers/Microsoft.App/containerApps/ca-cortex-frontend-dev
+
 # Container App - Core API
 resource "azurerm_container_app" "core" {
   name                         = "ca-cortex-core-${local.env_suffix}"
