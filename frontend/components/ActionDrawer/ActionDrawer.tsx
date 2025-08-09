@@ -16,8 +16,8 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
   const [activeTab, setActiveTab] = useState('summary');
   const [isExecuting, setIsExecuting] = useState(false);
   
-  const { events, isConnected } = useSSE(
-    actionId ? `/api/v1/actions/${actionId}/events` : null
+  const { messages: events, isConnected } = useSSE(
+    actionId ? `/api/v1/actions/${actionId}/events` : ''
   );
 
   useEffect(() => {

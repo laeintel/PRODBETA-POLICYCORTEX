@@ -68,11 +68,13 @@ export function DashboardGrid() {
   const [loading, setLoading] = useState(true);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false);
+  const [proactiveActions, setProactiveActions] = useState<any[]>([]);
   
-  const { proactiveActions, fetchMetrics } = useGovernanceStore();
+  // Store is available but not using it directly in this component
+  // const store = useGovernanceStore();
   
   // Real-time updates via SSE
-  const { data: realtimeData, isConnected } = useRealtimeUpdates('/api/v1/metrics/stream');
+  const { isConnected } = useRealtimeUpdates(false); // Disabled for now, using polling instead
 
   useEffect(() => {
     fetchDashboardMetrics();
@@ -80,15 +82,7 @@ export function DashboardGrid() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (realtimeData) {
-      // Update metrics with real-time data
-      setMetrics(prev => ({
-        ...prev,
-        ...realtimeData
-      }));
-    }
-  }, [realtimeData]);
+  // Removed realtime data effect since we're using polling for now
 
   const fetchDashboardMetrics = async () => {
     try {
@@ -173,13 +167,13 @@ export function DashboardGrid() {
         {/* Policy Compliance */}
         <KPITile
           title="Policy Compliance"
-          value={metrics ? formatPercentage(metrics.policies.compliance_rate) : '--'}
+          value={metrics ? formatPercentage(metrics.policies.compliance_rate ?? 0) : '--'}
           subtitle={`${metrics?.policies.violations || 0} violations detected`}
           change={metrics?.policies.trend}
           changeLabel="vs last month"
-          trend={metrics?.policies.trend > 0 ? 'up' : 'down'}
-          status={metrics?.policies.compliance_rate >= 99 ? 'success' : 
-                  metrics?.policies.compliance_rate >= 95 ? 'warning' : 'error'}
+          trend={(metrics?.policies.trend ?? 0) > 0 ? 'up' : 'down'}
+          status={(metrics?.policies.compliance_rate ?? 0) >= 99 ? 'success' : 
+                  (metrics?.policies.compliance_rate ?? 0) >= 95 ? 'warning' : 'error'}
           deepLink="/policies"
           icon={<Shield className="w-5 h-5 text-blue-600" />}
           loading={loading}
@@ -189,12 +183,12 @@ export function DashboardGrid() {
         {/* Cost Optimization */}
         <KPITile
           title="Monthly Spend"
-          value={metrics ? formatCurrency(metrics.costs.current_spend) : '--'}
+          value={metrics ? formatCurrency(metrics.costs.current_spend ?? 0) : '--'}
           subtitle={`${formatCurrency(metrics?.costs.savings_identified || 0)} savings identified`}
           change={metrics?.costs.trend}
           changeLabel="vs last month"
-          trend={metrics?.costs.trend < 0 ? 'down' : 'up'}
-          status={metrics?.costs.optimization_rate >= 80 ? 'success' : 'warning'}
+          trend={(metrics?.costs.trend ?? 0) < 0 ? 'down' : 'up'}
+          status={(metrics?.costs.optimization_rate ?? 0) >= 80 ? 'success' : 'warning'}
           deepLink="/costs"
           icon={<DollarSign className="w-5 h-5 text-green-600" />}
           loading={loading}
@@ -204,13 +198,13 @@ export function DashboardGrid() {
         {/* Security Risk Score */}
         <KPITile
           title="Security Risk Score"
-          value={metrics ? metrics.security.risk_score.toFixed(1) : '--'}
+          value={metrics ? (metrics.security.risk_score ?? 0).toFixed(1) : '--'}
           subtitle={`${metrics?.security.active_threats || 0} active threats`}
           change={metrics?.security.trend}
           changeLabel="vs last week"
-          trend={metrics?.security.trend < 0 ? 'down' : 'up'}
-          status={metrics?.security.risk_score <= 30 ? 'success' : 
-                  metrics?.security.risk_score <= 60 ? 'warning' : 'error'}
+          trend={(metrics?.security.trend ?? 0) < 0 ? 'down' : 'up'}
+          status={(metrics?.security.risk_score ?? 100) <= 30 ? 'success' : 
+                  (metrics?.security.risk_score ?? 100) <= 60 ? 'warning' : 'error'}
           deepLink="/security"
           icon={<Lock className="w-5 h-5 text-red-600" />}
           loading={loading}
@@ -220,12 +214,12 @@ export function DashboardGrid() {
         {/* Resource Utilization */}
         <KPITile
           title="Resource Utilization"
-          value={metrics ? formatPercentage(metrics.resources.utilization_rate) : '--'}
+          value={metrics ? formatPercentage(metrics.resources.utilization_rate ?? 0) : '--'}
           subtitle={`${metrics?.resources.idle || 0} idle resources`}
           change={5.2}
           changeLabel="efficiency gain"
           trend="up"
-          status={metrics?.resources.utilization_rate >= 70 ? 'success' : 'warning'}
+          status={(metrics?.resources.utilization_rate ?? 0) >= 70 ? 'success' : 'warning'}
           deepLink="/resources"
           icon={<Cpu className="w-5 h-5 text-purple-600" />}
           loading={loading}
@@ -235,13 +229,13 @@ export function DashboardGrid() {
         {/* Compliance Score */}
         <KPITile
           title="Compliance Score"
-          value={metrics ? formatPercentage(metrics.compliance.overall_score) : '--'}
+          value={metrics ? formatPercentage(metrics.compliance.overall_score ?? 0) : '--'}
           subtitle={`${metrics?.compliance.frameworks || 0} frameworks tracked`}
           change={2.1}
           changeLabel="improvement"
           trend="up"
-          status={metrics?.compliance.overall_score >= 95 ? 'success' : 
-                  metrics?.compliance.overall_score >= 80 ? 'warning' : 'error'}
+          status={(metrics?.compliance.overall_score ?? 0) >= 95 ? 'success' : 
+                  (metrics?.compliance.overall_score ?? 0) >= 80 ? 'warning' : 'error'}
           deepLink="/compliance"
           icon={<Activity className="w-5 h-5 text-indigo-600" />}
           loading={loading}
@@ -250,7 +244,7 @@ export function DashboardGrid() {
         {/* AI Predictions */}
         <KPITile
           title="AI Predictions"
-          value={metrics ? formatNumber(metrics.ai.predictions_made) : '--'}
+          value={metrics ? formatNumber(metrics.ai?.predictions_made ?? 0) : '--'}
           subtitle={`${formatPercentage(metrics?.ai.accuracy || 0)} accuracy`}
           change={metrics?.ai.learning_progress}
           changeLabel="learning progress"
@@ -264,7 +258,7 @@ export function DashboardGrid() {
         {/* Automations */}
         <KPITile
           title="Automations"
-          value={metrics ? formatNumber(metrics.ai.automations_executed) : '--'}
+          value={metrics ? formatNumber(metrics.ai?.automations_executed ?? 0) : '--'}
           subtitle="This month"
           change={18.5}
           changeLabel="vs last month"
