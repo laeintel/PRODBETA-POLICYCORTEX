@@ -38,22 +38,24 @@ jobs:
     defaults:
       run:
         working-directory: infrastructure/terraform
-    strategy:
-      fail-fast: false
-      matrix:
-        env_name: [ dev, prod ]
+    # Remove matrix strategy - use conditional environment selection instead
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set environment from trigger
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "ENV_NAME=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-
-      - name: Set environment from matrix
-        if: ${{ github.event_name != 'workflow_dispatch' }}
-        run: echo "ENV_NAME=${{ matrix.env_name }}" >> $GITHUB_ENV
+      - name: Set environment
+        run: |
+          # For workflow_dispatch, use the input
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "ENV_NAME=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          # For push to main, only deploy dev
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENV_NAME=dev" >> $GITHUB_ENV
+          # For PR, just plan dev
+          else
+            echo "ENV_NAME=dev" >> $GITHUB_ENV
+          fi
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2

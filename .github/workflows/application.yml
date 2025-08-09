@@ -452,6 +452,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Container Apps (Dev)
+        shell: bash
         run: |
           # Deploy Core API
           az containerapp update \
@@ -469,6 +470,7 @@ jobs:
           echo "✅ Container Apps deployment completed"
 
       - name: Verify Deployment (Dev)
+        shell: bash
         run: |
           # Get deployment status
           echo "🔍 Checking Container Apps status..."
