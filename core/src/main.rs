@@ -173,9 +173,7 @@ async fn main() {
         .route("/api/v1/actions/:id/events", get(stream_action_events))
         
         // Legacy endpoints for compatibility
-        // Note: /api/v1/policies is already registered above
-        .route("/api/v1/resources", get(get_resources))
-        .route("/api/v1/compliance", get(get_compliance))
+        // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         
         .layer(ServiceBuilder::new().layer(cors))
         .with_state(app_state);
