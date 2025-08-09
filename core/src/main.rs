@@ -100,7 +100,7 @@ async fn main() {
             Some(client)
         }
         Err(e) => {
-            warn!("⚠️ Failed to initialize fallback Azure client: {} - using mock data only", e);
+            warn!("⚠️ Failed to initialize fallback Azure client: {} - real Azure data unavailable", e);
             None
         }
     };
@@ -173,91 +173,24 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-// Legacy endpoint handlers
+// Legacy endpoint handlers (now return 503 if real data is required but unavailable)
 async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let metrics = state.metrics.read().await;
-    Json(serde_json::json!({
-        "policies": [
-            {
-                "id": "pol-001",
-                "name": "Require HTTPS",
-                "description": "All web apps must use HTTPS",
-                "category": "Security",
-                "severity": "High",
-                "status": "Active",
-                "compliance_rate": metrics.policies.compliance_rate,
-                "automated": true
-            },
-            {
-                "id": "pol-002",
-                "name": "Tag Compliance",
-                "description": "Resources must have required tags",
-                "category": "Governance",
-                "severity": "Medium",
-                "status": "Active",
-                "compliance_rate": 95.2,
-                "automated": true
-            },
-            {
-                "id": "pol-003",
-                "name": "Allowed Locations",
-                "description": "Resources must be in approved regions",
-                "category": "Compliance",
-                "severity": "High",
-                "status": "Active",
-                "compliance_rate": 100.0,
-                "automated": true
-            }
-        ],
-        "total": metrics.policies.total,
-        "active": metrics.policies.active,
-        "violations": metrics.policies.violations
-    }))
+    if state.async_azure_client.is_none() && state.azure_client.is_none() {
+        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({"error": "Azure not connected"}))).into_response();
+    }
+    (StatusCode::NOT_IMPLEMENTED, Json(serde_json::json!({"message": "Use /api/v1/policies/deep via Python service"}))).into_response()
 }
 
 async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let metrics = state.metrics.read().await;
-    Json(serde_json::json!({
-        "resources": [
-            {
-                "id": "res-001",
-                "name": "policycortex-prod-vm",
-                "type": "Microsoft.Compute/virtualMachines",
-                "location": "East US",
-                "status": "Optimized",
-                "tags": {"Environment": "Production", "Owner": "AeoliTech"}
-            },
-            {
-                "id": "res-002",
-                "name": "policycortex-storage",
-                "type": "Microsoft.Storage/storageAccounts",
-                "location": "East US",
-                "status": "Compliant",
-                "tags": {"Environment": "Production", "Encrypted": "true"}
-            }
-        ],
-        "total": metrics.resources.total,
-        "optimized": metrics.resources.optimized,
-        "idle": metrics.resources.idle
-    }))
+    if state.async_azure_client.is_none() && state.azure_client.is_none() {
+        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({"error": "Azure not connected"}))).into_response();
+    }
+    (StatusCode::NOT_IMPLEMENTED, Json(serde_json::json!({"message": "Use /api/v1/resources/deep via Python service"}))).into_response()
 }
 
 async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let metrics = state.metrics.read().await;
-    Json(serde_json::json!({
-        "compliance": {
-            "overall_rate": metrics.policies.compliance_rate,
-            "policies_evaluated": metrics.policies.total,
-            "resources_scanned": metrics.resources.total,
-            "violations_found": metrics.policies.violations,
-            "auto_remediated": 8,
-            "prediction_accuracy": metrics.policies.prediction_accuracy
-        },
-        "by_category": {
-            "Security": 99.2,
-            "Governance": 98.5,
-            "Compliance": 100.0,
-            "Cost": 94.3
-        }
-    }))
+    if state.async_azure_client.is_none() && state.azure_client.is_none() {
+        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({"error": "Azure not connected"}))).into_response();
+    }
+    (StatusCode::NOT_IMPLEMENTED, Json(serde_json::json!({"message": "Use deep endpoints for compliance detail"}))).into_response()
 }
