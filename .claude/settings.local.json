@@ -36,7 +36,9 @@
       "Bash(git pull:*)",
       "Bash(start-api.bat)",
       "Bash(./start-local.bat)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }
