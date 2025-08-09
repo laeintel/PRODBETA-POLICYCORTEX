@@ -1,7 +1,12 @@
-# Production Environment Configuration
+# Production Environment Configuration - Optimized for Free Tier
 environment = "prod"
-location    = "East US"
-owner       = "AeoliTech"
+location    = "eastus"  # Use consistent lowercase format
 
-# Production-specific settings
-# Add any production-specific variables here
+tags = {
+  Owner       = "AeoliTech"
+  Project     = "PolicyCortex"
+  ManagedBy   = "Terraform"
+  Environment = "Production"
+  CostCenter  = "FreeTier"
+  Compliance  = "Required"
+}

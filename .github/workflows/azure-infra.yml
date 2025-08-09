@@ -80,8 +80,8 @@ jobs:
           # stable 6-char hash from repo for global uniqueness
           HASH=$(echo -n "$GITHUB_REPOSITORY" | sha1sum | cut -c1-6)
           echo "ENV_NAME=${ENV_NAME}" >> $GITHUB_OUTPUT
-          echo "TFSTATE_RG=tfstate-pcx-${ENV_NAME}" >> $GITHUB_OUTPUT
-          echo "TFSTATE_SA=pcxtf${ENV_NAME}${HASH}" >> $GITHUB_OUTPUT
+          echo "TFSTATE_RG=rg-tfstate-cortex-${ENV_NAME}" >> $GITHUB_OUTPUT
+          echo "TFSTATE_SA=sttfcortex${ENV_NAME}${HASH}" >> $GITHUB_OUTPUT
           echo "TFSTATE_CONTAINER=tfstate" >> $GITHUB_OUTPUT
           echo "TFSTATE_KEY=${ENV_NAME}.tfstate" >> $GITHUB_OUTPUT
 

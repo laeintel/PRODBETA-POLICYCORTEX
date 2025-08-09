@@ -1,7 +1,11 @@
-# Development Environment Configuration
+# Development Environment Configuration - Optimized for Free Tier
 environment = "dev"
-location    = "East US"
-owner       = "AeoliTech"
+location    = "eastus"  # Use consistent lowercase format
 
-# Development-specific settings
-# Add any dev-specific variables here
+tags = {
+  Owner       = "AeoliTech"
+  Project     = "PolicyCortex"
+  ManagedBy   = "Terraform"
+  Environment = "Development"
+  CostCenter  = "FreeTier"
+}

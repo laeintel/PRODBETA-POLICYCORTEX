@@ -1,18 +1,21 @@
-# PolicyCortex Infrastructure - Main Configuration
+# PolicyCortex Infrastructure - Optimized for Azure Free Tier
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.6.0"
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.0"
+      version = "~> 3.85.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "~> 3.0"
+      version = "~> 3.6.0"
     }
   }
-  
-  backend "azurerm" {}
+
+  backend "azurerm" {
+    # Backend config will be provided during init
+    use_azuread_auth = true
+  }
 }
 
 provider "azurerm" {
@@ -24,11 +27,22 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
+  use_oidc = true
+}
+
+# Data sources
+data "azurerm_client_config" "current" {}
+
+# Random suffix for unique resource names
+resource "random_string" "suffix" {
+  length  = 6
+  special = false
+  upper   = false
 }
 
 # Variables
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Environment name (dev, prod)"
   type        = string
   default     = "dev"
 }
@@ -36,127 +50,356 @@ variable "environment" {
 variable "location" {
   description = "Azure region"
   type        = string
-  default     = "East US"
+  default     = "eastus"
 }
 
-variable "owner" {
-  description = "Owner tag for resources"
-  type        = string
-  default     = "AeoliTech"
-}
-
-# Random suffix for unique resource names
-resource "random_string" "suffix" {
-  length  = 8
-  special = false
-  upper   = false
-}
-
-# Resource Group
-resource "azurerm_resource_group" "main" {
-  name     = "rg-policycortex-${var.environment}"
-  location = var.location
-
-  tags = {
-    Environment = var.environment
-    Owner       = var.owner
-    Project     = "PolicyCortex"
-    ManagedBy   = "Terraform"
+variable "tags" {
+  description = "Resource tags"
+  type        = map(string)
+  default = {
+    Owner     = "AeoliTech"
+    Project   = "PolicyCortex"
+    ManagedBy = "Terraform"
   }
 }
 
-# Container Registry
-resource "azurerm_container_registry" "main" {
-  name                = "crpolicycortex${var.environment}${random_string.suffix.result}"
+locals {
+  common_tags = merge(var.tags, {
+    Environment = var.environment
+    CreatedDate = timestamp()
+  })
+
+  # Naming convention: <resource>-cortex-<env>
+  env_suffix    = var.environment
+  unique_suffix = random_string.suffix.result
+}
+
+# Resource Group - New group for Terraform-managed resources
+resource "azurerm_resource_group" "main" {
+  name     = "rg-cortex-${local.env_suffix}"
+  location = var.location
+  tags     = local.common_tags
+}
+
+# ===========================================================================
+# FREE TIER RESOURCES
+# ===========================================================================
+
+# Storage Account - Using free tier limits
+# Free: 5GB Hot storage, 100GB File storage
+resource "azurerm_storage_account" "main" {
+  name                     = "stcortex${local.env_suffix}${local.unique_suffix}"
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = azurerm_resource_group.main.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS" # Locally redundant (cheapest)
+  account_kind             = "StorageV2"
+
+  blob_properties {
+    delete_retention_policy {
+      days = 7
+    }
+  }
+
+  tags = local.common_tags
+}
+
+# Storage containers for different purposes
+resource "azurerm_storage_container" "data" {
+  name                  = "data"
+  storage_account_name  = azurerm_storage_account.main.name
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_container" "backups" {
+  name                  = "backups"
+  storage_account_name  = azurerm_storage_account.main.name
+  container_access_type = "private"
+}
+
+# Azure Database for PostgreSQL - Flexible Server
+# Free tier: B1MS (1 vCore, 2GB RAM) - 750 hours/month
+resource "azurerm_postgresql_flexible_server" "main" {
+  name                = "psql-cortex-${local.env_suffix}"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
-  sku                 = "Standard"
+
+  # Free tier eligible
+  sku_name = "B_Standard_B1ms" # Burstable, 1 vCore, 2GB RAM
+  version  = "15"
+
+  # Free storage: 32GB
+  storage_mb = 32768
+
+  administrator_login    = "pcxadmin"
+  administrator_password = random_password.postgres.result
+
+  backup_retention_days        = 7
+  geo_redundant_backup_enabled = false # Keep costs down
+
+  zone = "1"
+
+  tags = local.common_tags
+}
+
+# PostgreSQL Database
+resource "azurerm_postgresql_flexible_server_database" "main" {
+  name      = "policycortex"
+  server_id = azurerm_postgresql_flexible_server.main.id
+  charset   = "UTF8"
+  collation = "en_US.utf8"
+}
+
+# PostgreSQL Firewall Rule - Allow Azure services
+resource "azurerm_postgresql_flexible_server_firewall_rule" "azure" {
+  name             = "AllowAzureServices"
+  server_id        = azurerm_postgresql_flexible_server.main.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
+
+# Cosmos DB - Free Tier Account
+# Free: 25GB storage, 1000 RU/s
+resource "azurerm_cosmosdb_account" "main" {
+  name                = "cosmos-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  offer_type          = "Standard"
+  kind                = "GlobalDocumentDB"
+
+  # Enable free tier
+  enable_free_tier = true
+
+  consistency_policy {
+    consistency_level       = "Session"
+    max_interval_in_seconds = 5
+    max_staleness_prefix    = 100
+  }
+
+  geo_location {
+    location          = azurerm_resource_group.main.location
+    failover_priority = 0
+  }
+
+  tags = local.common_tags
+}
+
+# Cosmos DB SQL Database
+resource "azurerm_cosmosdb_sql_database" "main" {
+  name                = "policycortex"
+  resource_group_name = azurerm_cosmosdb_account.main.resource_group_name
+  account_name        = azurerm_cosmosdb_account.main.name
+
+  # Free tier gets 1000 RU/s shared
+  throughput = 400
+}
+
+# Virtual Machine - B1s (Free tier eligible)
+# Free: 750 hours/month of B1s Linux VM
+resource "azurerm_linux_virtual_machine" "main" {
+  count = var.environment == "dev" ? 1 : 0 # Only in dev to stay within free limits
+
+  name                = "vm-cortex-${local.env_suffix}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+
+  # Free tier: B1s - 1 vCPU, 1GB RAM
+  size = "Standard_B1s"
+
+  admin_username = "azureuser"
+
+  admin_ssh_key {
+    username   = "azureuser"
+    public_key = file("~/.ssh/id_rsa.pub") # You'll need to provide this
+  }
+
+  disable_password_authentication = true
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS" # Standard HDD (cheapest)
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-focal"
+    sku       = "20_04-lts-gen2"
+    version   = "latest"
+  }
+
+  network_interface_ids = [
+    azurerm_network_interface.vm[0].id
+  ]
+
+  tags = local.common_tags
+}
+
+# Network Interface for VM
+resource "azurerm_network_interface" "vm" {
+  count = var.environment == "dev" ? 1 : 0
+
+  name                = "nic-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.main.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.vm[0].id
+  }
+
+  tags = local.common_tags
+}
+
+# Public IP - Free tier includes 1500 hours/month
+resource "azurerm_public_ip" "vm" {
+  count = var.environment == "dev" ? 1 : 0
+
+  name                = "pip-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  allocation_method   = "Static"
+  sku                 = "Basic" # Basic is cheaper than Standard
+
+  tags = local.common_tags
+}
+
+# Virtual Network - No cost
+resource "azurerm_virtual_network" "main" {
+  name                = "vnet-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  address_space       = ["10.0.0.0/16"]
+
+  tags = local.common_tags
+}
+
+# Subnet - No cost
+resource "azurerm_subnet" "main" {
+  name                 = "subnet-app"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+# Container Registry - Basic tier (lower cost than Standard)
+resource "azurerm_container_registry" "main" {
+  name                = "crcortex${local.env_suffix}${local.unique_suffix}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  sku                 = "Basic" # Cheapest tier
   admin_enabled       = true
 
-  tags = {
-    Environment = var.environment
-    Owner       = var.owner
-    Project     = "PolicyCortex"
-  }
+  tags = local.common_tags
 }
 
-# Log Analytics Workspace
-resource "azurerm_log_analytics_workspace" "main" {
-  name                = "law-policycortex-${var.environment}-${random_string.suffix.result}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  sku                 = "PerGB2018"
-  retention_in_days   = 30
-
-  tags = {
-    Environment = var.environment
-    Owner       = var.owner
-    Project     = "PolicyCortex"
-  }
-}
-
-# Container Apps Environment
-resource "azurerm_container_app_environment" "main" {
-  name                       = "cae-policycortex-${var.environment}"
-  location                   = azurerm_resource_group.main.location
-  resource_group_name        = azurerm_resource_group.main.name
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-
-  tags = {
-    Environment = var.environment
-    Owner       = var.owner
-    Project     = "PolicyCortex"
-  }
-}
-
-# Key Vault
+# Key Vault - Standard tier (no free tier, but minimal cost)
 resource "azurerm_key_vault" "main" {
-  name                = "kv-pcx-${var.environment}-${random_string.suffix.result}"
+  name                = "kv-cortex-${local.env_suffix}-${local.unique_suffix}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
-  enable_rbac_authorization = true
-  purge_protection_enabled  = false
+  enable_rbac_authorization       = true
+  enabled_for_deployment          = true
+  enabled_for_disk_encryption     = true
+  enabled_for_template_deployment = true
+  purge_protection_enabled        = false # Can be deleted immediately (dev friendly)
 
-  tags = {
-    Environment = var.environment
-    Owner       = var.owner
-    Project     = "PolicyCortex"
-  }
+  tags = local.common_tags
 }
 
-# Current Azure configuration
-data "azurerm_client_config" "current" {}
+# Application Insights - Free tier includes 5GB/month
+resource "azurerm_application_insights" "main" {
+  name                = "appi-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  application_type    = "web"
 
-# Outputs
-output "resource_group" {
+  daily_data_cap_in_gb                  = 0.5 # Keep under free limit
+  daily_data_cap_notifications_disabled = false
+  retention_in_days                     = 30 # Minimum retention
+  sampling_percentage                   = 50 # Sample to reduce data
+  disable_ip_masking                    = false
+
+  tags = local.common_tags
+}
+
+# Service Bus Namespace - Basic tier (lowest cost)
+resource "azurerm_servicebus_namespace" "main" {
+  count = var.environment == "prod" ? 1 : 0 # Only in prod to manage costs
+
+  name                = "sb-cortex-${local.env_suffix}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "Basic" # Cheapest tier
+
+  tags = local.common_tags
+}
+
+# Random password for PostgreSQL
+resource "random_password" "postgres" {
+  length  = 16
+  special = true
+}
+
+# Store PostgreSQL password in Key Vault
+resource "azurerm_key_vault_secret" "postgres_password" {
+  name         = "postgres-password"
+  value        = random_password.postgres.result
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [azurerm_key_vault.main]
+}
+
+# ===========================================================================
+# OUTPUTS
+# ===========================================================================
+
+output "resource_group_name" {
   description = "Resource group name"
   value       = azurerm_resource_group.main.name
 }
 
-output "container_registry" {
-  description = "Container registry name"
-  value       = azurerm_container_registry.main.name
+output "storage_account_name" {
+  description = "Storage account name"
+  value       = azurerm_storage_account.main.name
+}
+
+output "postgresql_server_name" {
+  description = "PostgreSQL server name"
+  value       = azurerm_postgresql_flexible_server.main.name
+}
+
+output "postgresql_fqdn" {
+  description = "PostgreSQL server FQDN"
+  value       = azurerm_postgresql_flexible_server.main.fqdn
+}
+
+output "cosmosdb_endpoint" {
+  description = "Cosmos DB endpoint"
+  value       = azurerm_cosmosdb_account.main.endpoint
 }
 
 output "container_registry_login_server" {
-  description = "Container registry login server"
+  description = "Container Registry login server"
   value       = azurerm_container_registry.main.login_server
-}
-
-output "container_apps_environment" {
-  description = "Container Apps environment name"
-  value       = azurerm_container_app_environment.main.name
-}
-
-output "key_vault_name" {
-  description = "Key Vault name"
-  value       = azurerm_key_vault.main.name
 }
 
 output "key_vault_uri" {
   description = "Key Vault URI"
   value       = azurerm_key_vault.main.vault_uri
+}
+
+output "application_insights_instrumentation_key" {
+  description = "Application Insights instrumentation key"
+  value       = azurerm_application_insights.main.instrumentation_key
+  sensitive   = true
+}
+
+output "vm_public_ip" {
+  description = "VM public IP address"
+  value       = var.environment == "dev" && length(azurerm_public_ip.vm) > 0 ? azurerm_public_ip.vm[0].ip_address : null
 }
