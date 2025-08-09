@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0.0"
+    }
   }
 
   backend "azurerm" {
@@ -63,6 +67,12 @@ variable "tags" {
   }
 }
 
+variable "ssh_public_key" {
+  description = "SSH public key for VM access (optional - will generate one if not provided)"
+  type        = string
+  default     = ""
+}
+
 locals {
   common_tags = merge(var.tags, {
     Environment = var.environment
@@ -79,6 +89,13 @@ resource "azurerm_resource_group" "main" {
   name     = "rg-cortex-${local.env_suffix}"
   location = var.location
   tags     = local.common_tags
+}
+
+# Generate SSH key pair if not provided
+resource "tls_private_key" "ssh" {
+  count     = var.ssh_public_key == "" ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 # ===========================================================================
@@ -210,7 +227,7 @@ resource "azurerm_linux_virtual_machine" "main" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("~/.ssh/id_rsa.pub") # You'll need to provide this
+    public_key = var.ssh_public_key != "" ? var.ssh_public_key : tls_private_key.ssh[0].public_key_openssh
   }
 
   disable_password_authentication = true
@@ -558,4 +575,10 @@ output "container_app_core_url" {
 output "container_app_frontend_url" {
   description = "Frontend Container App URL"
   value       = "https://${azurerm_container_app.frontend.latest_revision_fqdn}"
+}
+
+output "ssh_private_key" {
+  description = "Generated SSH private key (if auto-generated)"
+  value       = var.ssh_public_key == "" ? tls_private_key.ssh[0].private_key_pem : null
+  sensitive   = true
 }
