@@ -71,9 +71,12 @@ jobs:
       - name: Register Azure Resource Providers (idempotent)
         shell: bash
         run: |
-          for ns in Microsoft.Resources Microsoft.OperationalInsights Microsoft.KeyVault Microsoft.ContainerRegistry Microsoft.App Microsoft.Insights; do
-            az provider register --namespace $ns --wait || true
+          # Register only the providers we actually need
+          for ns in Microsoft.Resources Microsoft.OperationalInsights Microsoft.KeyVault Microsoft.ContainerRegistry Microsoft.App Microsoft.Insights Microsoft.Storage Microsoft.Compute Microsoft.Network Microsoft.DocumentDB Microsoft.DBforPostgreSQL Microsoft.ServiceBus; do
+            echo "Registering provider: $ns"
+            az provider register --namespace $ns --wait 2>/dev/null || true
           done
+          echo "✅ Resource providers registered"
 
       - name: Compute backend names (tfstate)
         id: names
