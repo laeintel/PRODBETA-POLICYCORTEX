@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "Target environment (dev|staging|prod)"
+        description: "Target environment (dev|prod)"
         required: true
         default: dev
       apply:
@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env_name: [ dev, staging, prod ]
+        env_name: [ dev, prod ]
 
     steps:
       - name: Checkout
