@@ -37,12 +37,18 @@ import_resource() {
     if terraform state show "$resource_address" 2>/dev/null; then
         echo "  ✓ Already in state"
     else
-        # Try to import
-        echo "  → Importing $resource_type..."
-        if terraform import "$resource_address" "$resource_id" 2>/dev/null; then
-            echo -e "  ${GREEN}✓ Imported successfully${NC}"
+        # Check if the resource exists in Azure first
+        if resource_exists "$resource_id"; then
+            echo "  → Resource exists in Azure, importing..."
+            # Try to import with more verbose output for debugging
+            if terraform import "$resource_address" "$resource_id"; then
+                echo -e "  ${GREEN}✓ Imported successfully${NC}"
+            else
+                echo -e "  ${RED}✗ Import failed - resource exists but couldn't be imported${NC}"
+                echo "  Resource ID: $resource_id"
+            fi
         else
-            echo -e "  ${YELLOW}⚠ Resource not found or import failed${NC}"
+            echo -e "  ${YELLOW}⚠ Resource not found in Azure${NC}"
         fi
     fi
 }
@@ -50,6 +56,11 @@ import_resource() {
 # Generic existence check that doesn't require provider-specific CLI extensions
 resource_exists() {
     local resource_id=$1
+    # Handle Git Bash on Windows path translation issue
+    if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+        # Use double slash to prevent Git Bash from treating it as a Unix path
+        resource_id="//${resource_id#/}"
+    fi
     az resource show --ids "$resource_id" >/dev/null 2>&1
 }
 
@@ -159,6 +170,17 @@ fi
 CAE_NAME="cae-cortex-${ENV}"
 CAE_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/managedEnvironments/${CAE_NAME}"
 echo -e "\n${GREEN}Checking Container Apps Environment: $CAE_NAME${NC}"
+
+# First check if resource exists in state and remove if it's stale
+if terraform state show "azurerm_container_app_environment.main" 2>/dev/null; then
+    # Verify the resource still exists in Azure
+    if ! resource_exists "$CAE_ID"; then
+        echo "  → Resource in state but not in Azure, removing from state..."
+        terraform state rm "azurerm_container_app_environment.main" 2>/dev/null || true
+    fi
+fi
+
+# Now check if it exists in Azure and needs importing
 if resource_exists "$CAE_ID"; then
     import_resource "Container Apps Environment" \
         "azurerm_container_app_environment.main" \
@@ -169,20 +191,60 @@ fi
 CA_CORE_NAME="ca-cortex-core-${ENV}"
 CA_CORE_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/containerApps/${CA_CORE_NAME}"
 echo -e "\n${GREEN}Checking Container App Core: $CA_CORE_NAME${NC}"
+
+# First check if resource exists in state and remove if it's stale
+if terraform state show "azurerm_container_app.core" 2>/dev/null; then
+    # Verify the resource still exists in Azure
+    if ! resource_exists "$CA_CORE_ID"; then
+        echo "  → Resource in state but not in Azure, removing from state..."
+        terraform state rm "azurerm_container_app.core" 2>/dev/null || true
+    fi
+fi
+
+# Now check if it exists in Azure
 if resource_exists "$CA_CORE_ID"; then
-    import_resource "Container App Core" \
-        "azurerm_container_app.core" \
-        "$CA_CORE_ID"
+    # Check if the Container App is in a failed state
+    PROVISIONING_STATE=$(az containerapp show --name "$CA_CORE_NAME" --resource-group "$RG_NAME" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "Unknown")
+    
+    if [ "$PROVISIONING_STATE" == "Failed" ]; then
+        echo "  → Container App exists but is in Failed state, deleting..."
+        az containerapp delete --name "$CA_CORE_NAME" --resource-group "$RG_NAME" --yes >/dev/null 2>&1
+        echo "  → Failed Container App deleted, will be recreated by Terraform"
+    else
+        import_resource "Container App Core" \
+            "azurerm_container_app.core" \
+            "$CA_CORE_ID"
+    fi
 fi
 
 # Container App - Frontend (via az resource)
 CA_FRONTEND_NAME="ca-cortex-frontend-${ENV}"
 CA_FRONTEND_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_NAME}/providers/Microsoft.App/containerApps/${CA_FRONTEND_NAME}"
 echo -e "\n${GREEN}Checking Container App Frontend: $CA_FRONTEND_NAME${NC}"
+
+# First check if resource exists in state and remove if it's stale
+if terraform state show "azurerm_container_app.frontend" 2>/dev/null; then
+    # Verify the resource still exists in Azure
+    if ! resource_exists "$CA_FRONTEND_ID"; then
+        echo "  → Resource in state but not in Azure, removing from state..."
+        terraform state rm "azurerm_container_app.frontend" 2>/dev/null || true
+    fi
+fi
+
+# Now check if it exists in Azure
 if resource_exists "$CA_FRONTEND_ID"; then
-    import_resource "Container App Frontend" \
-        "azurerm_container_app.frontend" \
-        "$CA_FRONTEND_ID"
+    # Check if the Container App is in a failed state
+    PROVISIONING_STATE=$(az containerapp show --name "$CA_FRONTEND_NAME" --resource-group "$RG_NAME" --query "properties.provisioningState" -o tsv 2>/dev/null || echo "Unknown")
+    
+    if [ "$PROVISIONING_STATE" == "Failed" ]; then
+        echo "  → Container App exists but is in Failed state, deleting..."
+        az containerapp delete --name "$CA_FRONTEND_NAME" --resource-group "$RG_NAME" --yes >/dev/null 2>&1
+        echo "  → Failed Container App deleted, will be recreated by Terraform"
+    else
+        import_resource "Container App Frontend" \
+            "azurerm_container_app.frontend" \
+            "$CA_FRONTEND_ID"
+    fi
 fi
 
 # Service Bus (prod only)
