@@ -2,12 +2,12 @@ use axum::{
     extract::{Query, State, Path},
     Json,
     http::StatusCode,
-    response::IntoResponse,
+    response::{IntoResponse, sse::{Event, Sse}},
 };
 use crate::auth::{AuthUser, OptionalAuthUser, TenantContext};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, broadcast};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 
@@ -174,6 +174,9 @@ pub struct AppState {
     pub start_time: std::time::Instant,
     pub azure_client: Option<crate::azure_client::AzureClient>,
     pub async_azure_client: Option<crate::azure_client_async::AsyncAzureClient>,
+    // Phase 2 action orchestrator (in-memory)
+    pub actions: Arc<RwLock<std::collections::HashMap<String, ActionRecord>>>,
+    pub action_events: Arc<RwLock<std::collections::HashMap<String, broadcast::Sender<String>>>>,
 }
 
 impl AppState {
@@ -263,6 +266,8 @@ impl AppState {
             start_time: std::time::Instant::now(),
             azure_client: None, // Will be initialized in main
             async_azure_client: None, // Will be initialized in main
+            actions: Arc::new(RwLock::new(std::collections::HashMap::new())),
+            action_events: Arc::new(RwLock::new(std::collections::HashMap::new())),
         }
     }
 }
@@ -659,4 +664,123 @@ pub async fn create_exception(Json(payload): Json<CreateExceptionRequest>) -> im
         "expiresIn": "30 days",
         "status": "Approved"
     }))
+}
+
+// ===================== Action Orchestrator (Phase 2) =====================
+
+#[derive(Debug, Deserialize)]
+pub struct CreateActionRequest {
+    pub action_type: String,
+    pub resource_id: String,
+    #[serde(default)]
+    pub params: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActionRecord {
+    pub id: String,
+    pub action_type: String,
+    pub resource_id: String,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub params: serde_json::Value,
+    pub result: Option<serde_json::Value>,
+}
+
+pub async fn create_action(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<CreateActionRequest>
+) -> impl IntoResponse {
+    use chrono::Utc;
+    use uuid::Uuid;
+
+    let id = Uuid::new_v4().to_string();
+    let now = Utc::now();
+
+    let record = ActionRecord {
+        id: id.clone(),
+        action_type: payload.action_type.clone(),
+        resource_id: payload.resource_id.clone(),
+        status: "queued".to_string(),
+        created_at: now,
+        updated_at: now,
+        params: payload.params.clone(),
+        result: None,
+    };
+
+    {
+        let mut actions = state.actions.write().await;
+        actions.insert(id.clone(), record);
+    }
+
+    let (tx, _rx) = broadcast::channel::<String>(100);
+    {
+        let mut events = state.action_events.write().await;
+        events.insert(id.clone(), tx.clone());
+    }
+
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        let send_step = |m: &str| {
+            let _ = tx.send(m.to_string());
+        };
+        send_step("queued");
+        {
+            let mut actions = state_clone.actions.write().await;
+            if let Some(a) = actions.get_mut(&id) {
+                a.status = "in_progress".to_string();
+                a.updated_at = chrono::Utc::now();
+            }
+        }
+        send_step("in_progress: preflight");
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        send_step("in_progress: executing");
+        tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+        send_step("in_progress: verifying");
+        tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+        {
+            let mut actions = state_clone.actions.write().await;
+            if let Some(a) = actions.get_mut(&id) {
+                a.status = "completed".to_string();
+                a.updated_at = chrono::Utc::now();
+                a.result = Some(serde_json::json!({"message": "Action executed successfully", "changes": 1}));
+            }
+        }
+        send_step("completed");
+    });
+
+    Json(serde_json::json!({"action_id": id}))
+}
+
+pub async fn get_action(
+    State(state): State<Arc<AppState>>,
+    Path(action_id): Path<String>
+) -> impl IntoResponse {
+    let actions = state.actions.read().await;
+    if let Some(a) = actions.get(&action_id) {
+        return Json(a);
+    }
+    (StatusCode::NOT_FOUND, Json(serde_json::json!({"error": "action not found"}))).into_response()
+}
+
+pub async fn stream_action_events(
+    State(state): State<Arc<AppState>>,
+    Path(action_id): Path<String>
+) -> impl IntoResponse {
+    let rx_opt = {
+        let events = state.action_events.read().await;
+        events.get(&action_id).cloned()
+    };
+    if let Some(tx) = rx_opt {
+        let mut rx = tx.subscribe();
+        let stream = async_stream::stream! {
+            while let Ok(msg) = rx.recv().await {
+                yield Ok::<Event, std::convert::Infallible>(Event::default().data(msg));
+            }
+        };
+        Sse::new(stream).into_response()
+    } else {
+        (StatusCode::NOT_FOUND, Json(serde_json::json!({"error": "action not found"}))).into_response()
+    }
 }
