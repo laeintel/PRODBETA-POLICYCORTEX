@@ -18,6 +18,10 @@ mod auth;
 mod azure_client;
 mod azure_client_async;
 mod cache;
+mod finops;
+mod security_graph;
+mod compliance;
+mod events;
 
 use api::{
     AppState,

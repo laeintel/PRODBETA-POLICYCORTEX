@@ -12,9 +12,7 @@ terraform {
     }
   }
   
-  backend "azurerm" {
-    # Backend configuration will be provided via CLI or environment variables
-  }
+  backend "azurerm" {}
 }
 
 provider "azurerm" {
