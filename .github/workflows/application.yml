@@ -468,21 +468,54 @@ jobs:
         run: |
           Write-Host "Checking if Container Apps exist..."
           
-          # Check if resource group exists
-          $rgExists = az group exists --name rg-cortex-dev
-          if ($rgExists -eq "false") {
+          # Check if resource group exists (returns JSON boolean)
+          $rgExists = az group exists --name rg-cortex-dev 2>$null
+          if ($rgExists -ne "true") {
             Write-Host "❌ Resource group rg-cortex-dev does not exist. Run Terraform first."
+            Write-Host "Actual value returned: $rgExists"
             exit 1
           }
           
+          Write-Host "✅ Resource group exists"
+          
           # Check if Container Apps exist
-          $coreExists = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
-          $frontendExists = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
+          Write-Host "Checking for Container Apps..."
+          $coreExists = $false
+          $frontendExists = $false
+          
+          try {
+            $core = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
+            if ($core) { $coreExists = $true }
+          } catch { }
+          
+          try {
+            $frontend = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
+            if ($frontend) { $frontendExists = $true }
+          } catch { }
           
           if (-not $coreExists -or -not $frontendExists) {
             Write-Host "⚠️ Container Apps do not exist yet. Terraform infrastructure must be deployed first."
+            Write-Host "Core API exists: $coreExists"
+            Write-Host "Frontend exists: $frontendExists"
             Write-Host "Run the Azure Infra Terraform workflow to create the Container Apps."
             exit 0  # Exit gracefully since this is expected on first run
+          }
+          
+          Write-Host "✅ Container Apps found, proceeding with deployment..."
+          
+          # Check if images exist in registry
+          $registryName = "${{ env.REGISTRY }}".Replace(".azurecr.io", "")
+          Write-Host "Checking for images in registry: $registryName"
+          
+          $coreImageExists = az acr repository show --name $registryName --image "policycortex-core:${{ env.IMAGE_TAG }}" 2>$null
+          $frontendImageExists = az acr repository show --name $registryName --image "policycortex-frontend:${{ env.IMAGE_TAG }}" 2>$null
+          
+          if (-not $coreImageExists -or -not $frontendImageExists) {
+            Write-Host "⚠️ Docker images not found in registry. Build and push images first."
+            Write-Host "Expected images:"
+            Write-Host "  - ${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }}"
+            Write-Host "  - ${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }}"
+            exit 0
           }
           
           Write-Host "Deploying Core API to Container Apps..."
