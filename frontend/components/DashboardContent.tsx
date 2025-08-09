@@ -62,7 +62,11 @@ export default function DashboardContent() {
             <h1 className="text-2xl font-bold text-red-400 mb-4">Connection Error</h1>
             <p className="text-white mb-4">{error}</p>
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.location.reload()
+                }
+              }} 
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               Retry Connection
