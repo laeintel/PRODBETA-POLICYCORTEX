@@ -70,13 +70,22 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
 
   useEffect(() => {
     setIsClient(true)
-    if (typeof window !== 'undefined') {
-      synthRef.current = window.speechSynthesis
-    }
   }, [])
 
   useEffect(() => {
-    if (isClient && typeof window !== 'undefined') {
+    // Only run on client side after component is mounted
+    if (!isClient) return
+    
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      synthRef.current = window.speechSynthesis
+    }
+  }, [isClient])
+
+  useEffect(() => {
+    // Only run on client side after component is mounted
+    if (!isClient) return
+    
+    if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
       
       if (!SpeechRecognition) {
@@ -193,8 +202,10 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
   }
 
   const speakResponse = (text: string) => {
-    if (voiceEnabled && synthRef.current && typeof window !== 'undefined') {
-      const utterance = new SpeechSynthesisUtterance(text)
+    if (!isClient || typeof window === 'undefined') return
+    
+    if (voiceEnabled && synthRef.current && window.SpeechSynthesisUtterance) {
+      const utterance = new window.SpeechSynthesisUtterance(text)
       utterance.rate = 0.9
       utterance.pitch = 1.1
       utterance.volume = 0.8
