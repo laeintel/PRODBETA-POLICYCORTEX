@@ -12,7 +12,7 @@ class PerformanceCache {
   set(key: string, data: any, ttl: number = 300000) { // 5 min default TTL
     // LRU eviction if cache is full
     if (this.cache.size >= this.maxSize) {
-      const oldestKey = [...this.accessOrder.entries()]
+      const oldestKey = Array.from(this.accessOrder.entries())
         .sort(([,a], [,b]) => a - b)[0][0]
       this.cache.delete(oldestKey)
       this.accessOrder.delete(oldestKey)
@@ -43,7 +43,7 @@ class PerformanceCache {
   }
 
   invalidate(pattern: string) {
-    const keysToDelete = [...this.cache.keys()].filter(key => 
+    const keysToDelete = Array.from(this.cache.keys()).filter(key => 
       key.includes(pattern) || new RegExp(pattern).test(key)
     )
     
