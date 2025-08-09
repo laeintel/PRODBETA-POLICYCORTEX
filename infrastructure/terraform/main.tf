@@ -10,10 +10,6 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6.0"
     }
-    tls = {
-      source  = "hashicorp/tls"
-      version = "~> 4.0.0"
-    }
   }
 
   backend "azurerm" {
@@ -68,11 +64,6 @@ variable "tags" {
   }
 }
 
-variable "ssh_public_key" {
-  description = "SSH public key for VM access (optional - will generate one if not provided)"
-  type        = string
-  default     = ""
-}
 
 locals {
   common_tags = merge(var.tags, {
@@ -92,12 +83,6 @@ resource "azurerm_resource_group" "main" {
   tags     = local.common_tags
 }
 
-# Generate SSH key pair if not provided
-resource "tls_private_key" "ssh" {
-  count     = var.ssh_public_key == "" ? 1 : 0
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
 
 # ===========================================================================
 # FREE TIER RESOURCES
@@ -176,112 +161,19 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Cosmos DB - Free Tier Account
-# Free: 25GB storage, 1000 RU/s
-resource "azurerm_cosmosdb_account" "main" {
+# Note: Cosmos DB already exists in the subscription
+# To avoid conflicts, we'll reference it as a data source instead
+# If you need to manage it via Terraform, import it first:
+# terraform import azurerm_cosmosdb_account.main /subscriptions/.../cosmos-cortex-dev
+
+data "azurerm_cosmosdb_account" "existing" {
   name                = "cosmos-cortex-${local.env_suffix}"
-  location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  offer_type          = "Standard"
-  kind                = "GlobalDocumentDB"
-
-  # Enable free tier
-  enable_free_tier = true
-
-  consistency_policy {
-    consistency_level       = "Session"
-    max_interval_in_seconds = 5
-    max_staleness_prefix    = 100
-  }
-
-  geo_location {
-    location          = azurerm_resource_group.main.location
-    failover_priority = 0
-  }
-
-  tags = local.common_tags
 }
 
-# Cosmos DB SQL Database
-resource "azurerm_cosmosdb_sql_database" "main" {
-  name                = "policycortex"
-  resource_group_name = azurerm_cosmosdb_account.main.resource_group_name
-  account_name        = azurerm_cosmosdb_account.main.name
-
-  # Free tier gets 1000 RU/s shared
-  throughput = 400
-}
-
-# Virtual Machine - B1s (Free tier eligible)
-# Free: 750 hours/month of B1s Linux VM
-resource "azurerm_linux_virtual_machine" "main" {
-  count = var.environment == "dev" ? 1 : 0 # Only in dev to stay within free limits
-
-  name                = "vm-cortex-${local.env_suffix}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-
-  # Free tier: B1s - 1 vCPU, 1GB RAM
-  size = "Standard_B1s"
-
-  admin_username = "azureuser"
-
-  admin_ssh_key {
-    username   = "azureuser"
-    public_key = var.ssh_public_key != "" ? var.ssh_public_key : tls_private_key.ssh[0].public_key_openssh
-  }
-
-  disable_password_authentication = true
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS" # Standard HDD (cheapest)
-  }
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-focal"
-    sku       = "20_04-lts-gen2"
-    version   = "latest"
-  }
-
-  network_interface_ids = [
-    azurerm_network_interface.vm[0].id
-  ]
-
-  tags = local.common_tags
-}
-
-# Network Interface for VM
-resource "azurerm_network_interface" "vm" {
-  count = var.environment == "dev" ? 1 : 0
-
-  name                = "nic-cortex-${local.env_suffix}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.main.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.vm[0].id
-  }
-
-  tags = local.common_tags
-}
-
-# Public IP - Free tier includes 1500 hours/month
-resource "azurerm_public_ip" "vm" {
-  count = var.environment == "dev" ? 1 : 0
-
-  name                = "pip-cortex-${local.env_suffix}"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  allocation_method   = "Static"
-  sku                 = "Basic" # Basic is cheaper than Standard
-
-  tags = local.common_tags
-}
+# Note: VM and Public IP removed due to Azure free tier limits
+# The free tier only allows limited Basic SKU public IPs
+# Container Apps provide sufficient compute for the application
 
 # Virtual Network - No cost
 resource "azurerm_virtual_network" "main" {
@@ -397,7 +289,7 @@ resource "azurerm_container_app" "core" {
       }
       env {
         name  = "COSMOS_ENDPOINT"
-        value = azurerm_cosmosdb_account.main.endpoint
+        value = data.azurerm_cosmosdb_account.existing.endpoint
       }
       env {
         name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
@@ -504,14 +396,9 @@ resource "random_password" "postgres" {
   special = true
 }
 
-# Store PostgreSQL password in Key Vault
-resource "azurerm_key_vault_secret" "postgres_password" {
-  name         = "postgres-password"
-  value        = random_password.postgres.result
-  key_vault_id = azurerm_key_vault.main.id
-
-  depends_on = [azurerm_key_vault.main]
-}
+# Note: Key Vault secret creation requires additional RBAC permissions
+# The Service Principal needs "Key Vault Secrets Officer" role
+# For now, we're passing the password directly to Container Apps
 
 # ===========================================================================
 # OUTPUTS
@@ -539,7 +426,7 @@ output "postgresql_fqdn" {
 
 output "cosmosdb_endpoint" {
   description = "Cosmos DB endpoint"
-  value       = azurerm_cosmosdb_account.main.endpoint
+  value       = data.azurerm_cosmosdb_account.existing.endpoint
 }
 
 output "container_registry_login_server" {
@@ -558,11 +445,6 @@ output "application_insights_instrumentation_key" {
   sensitive   = true
 }
 
-output "vm_public_ip" {
-  description = "VM public IP address"
-  value       = var.environment == "dev" && length(azurerm_public_ip.vm) > 0 ? azurerm_public_ip.vm[0].ip_address : null
-}
-
 output "container_app_environment_id" {
   description = "Container Apps Environment ID"
   value       = azurerm_container_app_environment.main.id
@@ -576,10 +458,4 @@ output "container_app_core_url" {
 output "container_app_frontend_url" {
   description = "Frontend Container App URL"
   value       = "https://${azurerm_container_app.frontend.latest_revision_fqdn}"
-}
-
-output "ssh_private_key" {
-  description = "Generated SSH private key (if auto-generated)"
-  value       = var.ssh_public_key == "" ? tls_private_key.ssh[0].private_key_pem : null
-  sensitive   = true
 }
