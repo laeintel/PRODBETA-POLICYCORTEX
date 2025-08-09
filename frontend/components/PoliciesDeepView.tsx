@@ -58,7 +58,7 @@ export default function PoliciesDeepView() {
 
   const fetchPolicyData = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/policies/deep')
+      const response = await fetch('/api/v1/policies/deep')
       const data = await response.json()
       setComplianceResults(data.complianceResults || [])
     } catch (error) {
@@ -138,7 +138,7 @@ export default function PoliciesDeepView() {
   const handleRemediate = async (resource: NonCompliantResource, action: string) => {
     setRemediating(true)
     try {
-      const response = await fetch('http://localhost:8080/api/v1/remediate', {
+      const response = await fetch('/api/v1/remediate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -163,7 +163,7 @@ export default function PoliciesDeepView() {
     if (!reason) return
 
     try {
-      const response = await fetch('http://localhost:8080/api/v1/exception', {
+      const response = await fetch('/api/v1/exception', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

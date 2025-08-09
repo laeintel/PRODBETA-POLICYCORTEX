@@ -2,7 +2,8 @@
 import { performanceApi, queryKeys } from './performance-api'
 import React from 'react'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// Use relative URLs to leverage Next.js proxy configuration
+const API_BASE_URL = '';
 
 export interface GovernanceMetrics {
   policies: {
