@@ -39,7 +39,9 @@
       "Bash(npm run build:*)",
       "Bash(npm run type-check:*)",
       "Bash(npx tsc:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(gh project create:*)",
+      "Bash(gh issue create:*)"
     ],
     "deny": []
   }

@@ -1,0 +1,39 @@
+name: Project Automation
+
+on:
+  issues:
+    types: [opened, labeled]
+  pull_request:
+    types: [opened, ready_for_review, closed]
+
+jobs:
+  add-to-project:
+    name: Add to project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add to project
+        uses: actions/add-to-project@v0.5.0
+        with:
+          project-url: https://github.com/users/laeintel/projects/1
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+  label-issues:
+    name: Auto-label issues
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues'
+    steps:
+      - name: Label new issues
+        uses: andymckay/labeler@master
+        if: github.event.action == 'opened'
+        with:
+          add-labels: "needs-triage"
+          
+  assign-pr-author:
+    name: Auto-assign PR author
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    steps:
+      - name: Assign PR to author
+        uses: technote-space/assign-author@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
