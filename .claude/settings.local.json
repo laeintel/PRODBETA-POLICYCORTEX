@@ -41,7 +41,12 @@
       "Bash(npx tsc:*)",
       "Bash(rm:*)",
       "Bash(gh project create:*)",
-      "Bash(gh issue create:*)"
+      "Bash(gh issue create:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh label create:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh api:*)",
+      "Bash(gh issue edit:*)"
     ],
     "deny": []
   }
