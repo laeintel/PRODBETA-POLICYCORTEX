@@ -192,7 +192,7 @@ class PolicyCortexAPI {
 
   // Batch loading for dashboard performance
   async getDashboardData(): Promise<{
-    metrics: GovernanceMetrics;
+    metrics: GovernanceMetrics | null;
     recommendations: ProactiveRecommendation[];
     correlations: CrossDomainCorrelation[];
     predictions: any[];
@@ -213,10 +213,10 @@ class PolicyCortexAPI {
     }
 
     return {
-      metrics: results[0] instanceof Error ? null : results[0],
-      recommendations: results[1] instanceof Error ? [] : results[1],
-      correlations: results[2] instanceof Error ? [] : results[2],
-      predictions: results[3] instanceof Error ? [] : results[3]
+      metrics: results[0] instanceof Error ? null : results[0] as GovernanceMetrics,
+      recommendations: results[1] instanceof Error ? [] : results[1] as ProactiveRecommendation[],
+      correlations: results[2] instanceof Error ? [] : results[2] as CrossDomainCorrelation[],
+      predictions: results[3] instanceof Error ? [] : results[3] as any[]
     };
   }
 

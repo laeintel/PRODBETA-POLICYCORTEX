@@ -43,7 +43,7 @@ export default function ResourcesPage() {
   const [showDetails, setShowDetails] = useState(false)
 
   // Transform Azure resources to match our UI needs
-  const resources = azureResources.map(r => ({
+  const resources = azureResources?.map(r => ({
     ...r,
     cost: r.cost || 0,
     monthlyCost: r.monthlyCost || 0,
@@ -54,14 +54,14 @@ export default function ResourcesPage() {
     createdDate: r.createdDate || '2024-01-01',
     lastModified: r.lastModified || '2025-01-08',
     recommendations: r.recommendations || []
-  }))
+  })) || []
 
   const filteredResources = resources.filter(resource => {
     const matchesSearch = resource.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          resource.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          resource.resourceGroup.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          resource.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         Object.entries(resource.tags).some(([key, value]) => 
+                         Object.entries(resource.tags || {}).some(([key, value]) => 
                            key.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            value.toLowerCase().includes(searchQuery.toLowerCase())
                          )
@@ -404,15 +404,15 @@ export default function ResourcesPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-400">Hourly Cost:</span>
-                          <span className="text-sm text-white">${selectedResource.cost.toFixed(2)}</span>
+                          <span className="text-sm text-white">${(selectedResource.cost || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-400">Monthly Cost:</span>
-                          <span className="text-sm text-white">${selectedResource.monthlyCost.toFixed(2)}</span>
+                          <span className="text-sm text-white">${(selectedResource.monthlyCost || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-sm text-gray-400">Potential Savings:</span>
-                          <span className="text-sm text-yellow-400">${selectedResource.savings.toFixed(2)}</span>
+                          <span className="text-sm text-yellow-400">${(selectedResource.savings || 0).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
@@ -421,7 +421,7 @@ export default function ResourcesPage() {
                   <div className="mt-6">
                     <h3 className="text-sm font-medium text-gray-400 mb-3">Tags</h3>
                     <div className="flex flex-wrap gap-2">
-                      {Object.entries(selectedResource.tags).map(([key, value]) => (
+                      {Object.entries(selectedResource.tags || {}).map(([key, value]) => (
                         <span key={key} className="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-lg text-sm">
                           {key}: {value}
                         </span>
@@ -429,7 +429,7 @@ export default function ResourcesPage() {
                     </div>
                   </div>
 
-                  {selectedResource.recommendations.length > 0 && (
+                  {selectedResource.recommendations && selectedResource.recommendations.length > 0 && (
                     <div className="mt-6">
                       <h3 className="text-sm font-medium text-gray-400 mb-3">AI Recommendations</h3>
                       <div className="space-y-2">
