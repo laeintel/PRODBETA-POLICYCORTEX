@@ -16,6 +16,7 @@ import {
 } from '../lib/azure-api'
 import PoliciesDeepView from './PoliciesDeepView'
 import AppLayout from './AppLayout'
+import { ChartCard, ComplianceTrend, CostTrend, RiskSurface } from './ChartCards'
 import { 
   Shield, 
   AlertCircle, 
@@ -331,6 +332,32 @@ export default function DashboardContent() {
                 })}
               </div>
             </motion.div>
+
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+              <ChartCard title="Compliance Trend" subtitle="Last 12 weeks">
+                <ComplianceTrend data={[
+                  { name: 'W1', value: 82 }, { name: 'W2', value: 84 }, { name: 'W3', value: 86 }, { name: 'W4', value: 87 },
+                  { name: 'W5', value: 88 }, { name: 'W6', value: 89 }, { name: 'W7', value: 90 }, { name: 'W8', value: 92 },
+                  { name: 'W9', value: 93 }, { name: 'W10', value: 94 }, { name: 'W11', value: 96 }, { name: 'W12', value: 97 }
+                ]} />
+              </ChartCard>
+              <ChartCard title="Cost Trend" subtitle="Month to date">
+                <CostTrend data={[
+                  { name: 'D1', value: 820 }, { name: 'D5', value: 790 }, { name: 'D10', value: 760 }, { name: 'D15', value: 740 },
+                  { name: 'D20', value: 710 }, { name: 'D25', value: 700 }, { name: 'D30', value: 690 }
+                ]} />
+              </ChartCard>
+              <ChartCard title="Risk Surface" subtitle="Security posture">
+                <RiskSurface data={[
+                  { metric: 'Identity', score: 62 },
+                  { metric: 'Network', score: 48 },
+                  { metric: 'Data', score: 55 },
+                  { metric: 'Compute', score: 44 },
+                  { metric: 'Policy', score: 38 },
+                ]} />
+              </ChartCard>
+            </div>
 
             {/* Real-time Activity */}
             <motion.div

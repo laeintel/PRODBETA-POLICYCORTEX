@@ -288,9 +288,14 @@ resource "azurerm_container_app_environment" "main" {
   tags = local.common_tags
 }
 
-# Import existing Container Apps if they exist
-# terraform import azurerm_container_app.core /subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78/resourceGroups/rg-cortex-dev/providers/Microsoft.App/containerApps/ca-cortex-core-dev
-# terraform import azurerm_container_app.frontend /subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78/resourceGroups/rg-cortex-dev/providers/Microsoft.App/containerApps/ca-cortex-frontend-dev
+# Import guidance (handled automatically by deploy.ps1 before apply)
+# If running Terraform manually, import pre-existing resources first:
+#   terraform import azurerm_container_app_environment.main \
+#     "/subscriptions/<SUB>/resourceGroups/rg-cortex-<env>/providers/Microsoft.App/managedEnvironments/cae-cortex-<env>"
+#   terraform import azurerm_container_app.core \
+#     "/subscriptions/<SUB>/resourceGroups/rg-cortex-<env>/providers/Microsoft.App/containerApps/ca-cortex-core-<env>"
+#   terraform import azurerm_container_app.frontend \
+#     "/subscriptions/<SUB>/resourceGroups/rg-cortex-<env>/providers/Microsoft.App/containerApps/ca-cortex-frontend-<env>"
 
 # Container App - Core API
 resource "azurerm_container_app" "core" {

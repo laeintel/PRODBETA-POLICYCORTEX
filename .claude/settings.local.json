@@ -85,7 +85,8 @@
       "Bash(az storage account list:*)",
       "Bash(git branch:*)",
       "Bash(az login:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(.restart-services.bat)"
     ],
     "deny": []
   }

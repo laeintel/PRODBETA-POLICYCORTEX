@@ -112,6 +112,60 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "✓ Configuration is valid" -ForegroundColor Green
 
+# ==============================================
+# Import-on-exist: Ensure state owns existing AZ resources
+# ==============================================
+
+function Import-If-Exists {
+    param(
+        [Parameter(Mandatory=$true)][string]$Address,
+        [Parameter(Mandatory=$true)][string]$ResourceId
+    )
+    try {
+        $inState = terraform state list 2>$null | Select-String -SimpleMatch $Address
+    } catch { $inState = $null }
+
+    if ($inState) {
+        Write-Host "✓ In state: $Address" -ForegroundColor Green
+        return
+    }
+
+    $res = az resource show --ids $ResourceId 2>$null
+    if ($LASTEXITCODE -eq 0 -and $res) {
+        Write-Host "↪ Importing existing Azure resource into state: $Address" -ForegroundColor Yellow
+        terraform import $Address $ResourceId | Out-Host
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✓ Imported: $Address" -ForegroundColor Green
+        } else {
+            Write-Host "⚠ Import failed for $Address (you can retry manually): terraform import `"$Address`" `"$ResourceId`"" -ForegroundColor Red
+        }
+    } else {
+        Write-Host "⧗ Not found in Azure (will be created on apply): $Address" -ForegroundColor DarkGray
+    }
+}
+
+# Compute deterministic resource IDs from naming convention
+$subId = az account show --query id -o tsv 2>$null
+$rgName = "rg-cortex-$Environment"
+$envName = "cae-cortex-$Environment"
+$coreApp = "ca-cortex-core-$Environment"
+$feApp = "ca-cortex-frontend-$Environment"
+
+if ($subId) {
+    $rgId   = "/subscriptions/$subId/resourceGroups/$rgName"
+    $envId  = "/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.App/managedEnvironments/$envName"
+    $coreId = "/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.App/containerApps/$coreApp"
+    $feId   = "/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.App/containerApps/$feApp"
+
+    Write-Host "`nReconciling Terraform state with existing Azure resources..." -ForegroundColor Yellow
+    Import-If-Exists -Address "azurerm_resource_group.main" -ResourceId $rgId
+    Import-If-Exists -Address "azurerm_container_app_environment.main" -ResourceId $envId
+    Import-If-Exists -Address "azurerm_container_app.core" -ResourceId $coreId
+    Import-If-Exists -Address "azurerm_container_app.frontend" -ResourceId $feId
+} else {
+    Write-Host "Could not resolve subscription id; skipping import-on-exist step" -ForegroundColor Yellow
+}
+
 # Plan or Apply based on parameters
 $tfvarsFile = "environments/$Environment/terraform.tfvars"
 
