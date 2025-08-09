@@ -68,24 +68,96 @@ export interface RbacAssignment {
   lastUsed?: string
 }
 
-// Fetch real Azure resources with details
+// Fetch Azure resources (deep insights preferred)
 export async function fetchAzureResources(): Promise<AzureResource[]> {
+  // Prefer deep endpoint for richer data; fall back to basic
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/resources/deep`)
+    if (resp.ok) {
+      const data = await resp.json()
+      const raw = (data && (data.resources ?? data)) as any
+      const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+      return items.map((r) => ({
+        id: r.id,
+        name: r.name,
+        type: r.type,
+        resourceGroup: r.resourceGroup || (r.id?.split('/')?.[4] ?? ''),
+        location: r.location,
+        tags: r.tags || {},
+        status: r.healthStatus || 'Unknown',
+        compliance: r.complianceStatus || 'Unknown',
+        monthlyCost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) : 0,
+        cost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) / 720 : 0, // approx hourly
+        savings: 0,
+        cpu: r.utilization?.cpu ?? 0,
+        memory: r.utilization?.memory ?? 0,
+        storage: r.utilization?.disk ?? 0,
+        createdDate: r.createdDate || undefined,
+        lastModified: r.lastModified || undefined,
+        recommendations: r.recommendations || [],
+      })) as AzureResource[]
+    }
+  } catch (error) {
+    console.debug('Deep resource insights unavailable, falling back:', error)
+  }
+
   try {
     const resp = await fetch(`${API_BASE}/api/v1/resources`)
     const data = await resp.json()
-    return (data.resources || []) as AzureResource[]
+    const raw = (data && (data.resources ?? data)) as any
+    const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+    return items as AzureResource[]
   } catch (error) {
     console.error('Error fetching Azure resources:', error)
     return []
   }
 }
 
-// Fetch real Azure policies
+// Fetch Azure policies (deep compliance preferred)
 export async function fetchAzurePolicies(): Promise<AzurePolicy[]> {
+  // Try deep policy compliance for richer data
+  try {
+    const resp = await fetch(`${API_BASE}/api/v1/policies/deep`)
+    if (resp.ok) {
+      const data = await resp.json()
+      const raw = (data && (data.complianceResults ?? data)) as any
+      const results: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+      return results.map((res) => {
+        const a = res.assignment || {}
+        const s = res.summary || {}
+        return {
+          id: a.id || a.name || '',
+          name: a.name || '',
+          description: a.description || '',
+          category: 'Governance',
+          type: a.policyDefinitionId?.includes('/providers/Microsoft.Authorization/policyDefinitions/') ? 'BuiltIn' : 'Custom',
+          effect: 'Audit',
+          scope: a.scope || '',
+          assignments: 1,
+          compliance: {
+            compliant: Number(s.compliantResources || 0),
+            nonCompliant: Number(s.nonCompliantResources || 0),
+            exempt: 0,
+            percentage: Number(s.compliancePercentage || 0),
+          },
+          lastModified: new Date().toISOString(),
+          createdBy: 'Azure',
+          parameters: a.parameters || {},
+          resourceTypes: [],
+          status: 'Active',
+        } as AzurePolicy
+      })
+    }
+  } catch (error) {
+    console.debug('Deep policy endpoint unavailable, falling back:', error)
+  }
+
   try {
     const resp = await fetch(`${API_BASE}/api/v1/policies`)
     const data = await resp.json()
-    return (data.policies || []) as AzurePolicy[]
+    const raw = (data && (data.policies ?? data)) as any
+    const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+    return items as AzurePolicy[]
   } catch (error) {
     console.error('Error fetching Azure policies:', error)
     return []
@@ -97,7 +169,9 @@ export async function fetchCostBreakdown(): Promise<CostBreakdown[]> {
   try {
     const resp = await fetch(`${API_BASE}/api/v1/costs/deep`)
     const data = await resp.json()
-    const breakdown: CostBreakdown[] = (data.breakdown || []).map((b: any) => ({
+    const raw = (data && (data.breakdown ?? data)) as any
+    const list: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+    const breakdown: CostBreakdown[] = list.map((b: any) => ({
       resourceId: `${b.resourceGroup}-${b.service}`,
       resourceName: b.service,
       resourceType: 'unknown',
@@ -118,7 +192,8 @@ export async function fetchRbacAssignments(): Promise<RbacAssignment[]> {
   try {
     const resp = await fetch(`${API_BASE}/api/v1/rbac/deep`)
     const data = await resp.json()
-    const items = data.roleAssignments || []
+    const raw = (data && (data.roleAssignments ?? data)) as any
+    const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
     return items.map((a: any) => ({
       id: a.id || a.principalId,
       principalId: a.principalId,

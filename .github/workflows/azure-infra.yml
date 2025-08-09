@@ -160,27 +160,17 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Import Existing Resources (if any)
+      - name: Import Existing Resources
         run: |
-          # Try to import existing Container Apps if they exist
-          # This prevents "already exists" errors
-          echo "Checking for existing Container Apps to import..."
+          echo "Scanning for existing Azure resources to import..."
+          chmod +x ./import-existing.sh
           
-          # Check if core app exists and import if needed
-          if az containerapp show --name ca-cortex-core-${ENV_NAME} --resource-group rg-cortex-${ENV_NAME} 2>/dev/null; then
-            echo "Importing existing core Container App..."
-            terraform import -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }} \
-              azurerm_container_app.core \
-              /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-cortex-${ENV_NAME}/providers/Microsoft.App/containerApps/ca-cortex-core-${ENV_NAME} || true
-          fi
+          # Export required environment variables
+          export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          export GITHUB_REPOSITORY="${{ github.repository }}"
           
-          # Check if frontend app exists and import if needed
-          if az containerapp show --name ca-cortex-frontend-${ENV_NAME} --resource-group rg-cortex-${ENV_NAME} 2>/dev/null; then
-            echo "Importing existing frontend Container App..."
-            terraform import -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }} \
-              azurerm_container_app.frontend \
-              /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-cortex-${ENV_NAME}/providers/Microsoft.App/containerApps/ca-cortex-frontend-${ENV_NAME} || true
-          fi
+          # Run import script
+          ./import-existing.sh ${ENV_NAME} ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

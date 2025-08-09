@@ -38,11 +38,15 @@ import type { CreateActionRequest } from '../../lib/actions-api'
 
 export default function ResourcesPage() {
   const { resources: azureResources, loading, error } = useAzureResources()
+  // Read initial filters from query string
+  const initialParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const initialType = initialParams?.get('type') || 'all'
+  const initialStatus = initialParams?.get('status') || 'all'
   // Enable deep-link support via hash (?sel=<id>) without Next dynamic route for now
   // If a hash or query is provided, preselect that resource in the modal
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterType, setFilterType] = useState(initialType)
+  const [filterStatus, setFilterStatus] = useState(initialStatus)
   const [selectedResource, setSelectedResource] = useState<AzureResource | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -77,6 +81,15 @@ export default function ResourcesPage() {
     
     return matchesSearch && matchesType && matchesStatus
   })
+
+  // Keep URL in sync when filters change
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (filterType && filterType !== 'all') url.searchParams.set('type', filterType); else url.searchParams.delete('type')
+    if (filterStatus && filterStatus !== 'all') url.searchParams.set('status', filterStatus); else url.searchParams.delete('status')
+    window.history.replaceState(null, '', url.toString())
+  }, [filterType, filterStatus])
 
   const totalCost = filteredResources.reduce((sum, r) => sum + r.monthlyCost, 0)
   const totalSavings = filteredResources.reduce((sum, r) => sum + r.savings, 0)

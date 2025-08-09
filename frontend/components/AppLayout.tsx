@@ -29,6 +29,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const navigation = [
     {
@@ -61,7 +62,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
       icon: Shield,
       path: '/policies',
       description: 'Compliance',
-      color: 'blue'
+      color: 'blue',
+      children: [
+        { id: 'policies-overview', title: 'Overview', path: '/policies' },
+        { id: 'policies-security', title: 'Security', path: '/policies?category=Security' },
+        { id: 'policies-governance', title: 'Governance', path: '/policies?category=Governance' },
+        { id: 'policies-compliance', title: 'Compliance', path: '/policies?category=Compliance' },
+        { id: 'policies-network', title: 'Network', path: '/policies?category=Network' },
+        { id: 'policies-monitoring', title: 'Monitoring', path: '/policies?category=Monitoring' },
+        { id: 'policies-sql', title: 'SQL', path: '/policies?category=SQL' },
+        { id: 'policies-k8s', title: 'Kubernetes', path: '/policies?category=Kubernetes' },
+        { id: 'policies-noncompliant', title: 'Non-Compliant', path: '/policies?view=noncompliant' },
+      ]
     },
     {
       id: 'rbac',
@@ -69,7 +81,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
       icon: Users,
       path: '/rbac',
       description: 'Permissions',
-      color: 'green'
+      color: 'green',
+      children: [
+        { id: 'rbac-overview', title: 'Overview', path: '/rbac' },
+        { id: 'rbac-privileged', title: 'Privileged Accounts', path: '/rbac?filter=privileged' },
+        { id: 'rbac-service-principals', title: 'Service Principals', path: '/rbac?type=ServicePrincipal' },
+        { id: 'rbac-role-defs', title: 'Role Definitions', path: '/rbac?view=roles' },
+        { id: 'rbac-access-reviews', title: 'Access Reviews', path: '/rbac?view=reviews' },
+      ]
     },
     {
       id: 'costs',
@@ -77,7 +96,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
       icon: DollarSign,
       path: '/dashboard?module=costs',
       description: 'FinOps',
-      color: 'yellow'
+      color: 'yellow',
+      children: [
+        { id: 'costs-overview', title: 'Overview', path: '/dashboard?module=costs' },
+        { id: 'costs-breakdown', title: 'Breakdown', path: '/dashboard?module=costs&view=breakdown' },
+        { id: 'costs-anomalies', title: 'Anomalies', path: '/dashboard?module=costs&view=anomalies' },
+        { id: 'costs-optimizations', title: 'Optimizations', path: '/dashboard?module=costs&view=optimizations' },
+      ]
     },
     {
       id: 'network',
@@ -85,7 +110,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
       icon: Network,
       path: '/dashboard?module=network',
       description: 'Security',
-      color: 'red'
+      color: 'red',
+      children: [
+        { id: 'network-overview', title: 'Overview', path: '/dashboard?module=network' },
+        { id: 'network-nsg', title: 'NSG Rules', path: '/dashboard?module=network&view=nsg' },
+        { id: 'network-endpoints', title: 'Public Endpoints', path: '/dashboard?module=network&view=endpoints' },
+        { id: 'network-zero-trust', title: 'Zero Trust', path: '/dashboard?module=network&view=zero-trust' },
+      ]
     },
     {
       id: 'resources',
@@ -93,13 +124,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
       icon: Server,
       path: '/resources',
       description: 'Management',
-      color: 'indigo'
+      color: 'indigo',
+      children: [
+        { id: 'resources-all', title: 'All Resources', path: '/resources' },
+        { id: 'resources-vm', title: 'Virtual Machines', path: '/resources?type=virtualMachines' },
+        { id: 'resources-storage', title: 'Storage Accounts', path: '/resources?type=storageAccounts' },
+        { id: 'resources-db', title: 'Databases', path: '/resources?type=databases' },
+        { id: 'resources-k8s', title: 'Kubernetes', path: '/resources?type=managedClusters' },
+        { id: 'resources-web', title: 'Web Apps', path: '/resources?type=Web' },
+      ]
     }
   ]
 
   const handleNavigation = (path: string) => {
     router.push(path)
     setMobileMenuOpen(false)
+  }
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
   const isActive = (path: string) => {
@@ -159,21 +202,46 @@ export default function AppLayout({ children }: AppLayoutProps) {
               const active = isActive(item.path)
               
               return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                    active 
-                      ? 'bg-purple-600/20 border border-purple-500/50 text-white' 
-                      : 'hover:bg-white/5 text-gray-300 hover:text-white'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${active ? 'text-purple-400' : ''}`} />
-                  <div className="text-left">
-                    <div className="text-sm font-medium">{item.title}</div>
-                    <div className="text-xs text-gray-400">{item.description}</div>
+                <div key={item.id}>
+                  <div className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                      active 
+                        ? 'bg-purple-600/20 border border-purple-500/50 text-white' 
+                        : 'hover:bg-white/5 text-gray-300 hover:text-white'
+                    }`}>
+                    <button
+                      onClick={() => handleNavigation(item.path)}
+                      className="flex-1 flex items-center gap-3 text-left"
+                    >
+                      <Icon className={`w-5 h-5 ${active ? 'text-purple-400' : ''}`} />
+                      <div>
+                        <div className="text-sm font-medium">{item.title}</div>
+                        <div className="text-xs text-gray-400">{item.description}</div>
+                      </div>
+                    </button>
+                    {Array.isArray((item as any).children) && (
+                      <button
+                        onClick={() => toggleExpand(item.id)}
+                        className="text-gray-400 hover:text-white"
+                        aria-label={`Toggle ${item.title} submenu`}
+                      >
+                        {(expanded[item.id] ? <ChevronLeft className="w-4 h-4 rotate-90" /> : <ChevronRight className="w-4 h-4" />)}
+                      </button>
+                    )}
                   </div>
-                </button>
+                  {Array.isArray((item as any).children) && expanded[item.id] && (
+                    <div className="ml-10 mt-1 mb-2 space-y-1">
+                      {(item as any).children.map((sub: any) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => handleNavigation(sub.path)}
+                          className={`w-full text-left text-xs px-2 py-1 rounded hover:bg-white/5 ${isActive(sub.path) ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                        >
+                          {sub.title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )
             })}
           </nav>
