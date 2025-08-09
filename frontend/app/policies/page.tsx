@@ -46,9 +46,10 @@ interface NonCompliantResource {
 export default function PoliciesPage() {
   const [policies, setPolicies] = useState<PolicyDefinition[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterCategory, setFilterCategory] = useState('all')
-  const [filterStatus, setFilterStatus] = useState('all')
+  const initialParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const [searchQuery, setSearchQuery] = useState(initialParams?.get('q') || '')
+  const [filterCategory, setFilterCategory] = useState(initialParams?.get('category') || 'all')
+  const [filterStatus, setFilterStatus] = useState(initialParams?.get('status') || 'all')
   const [selectedPolicy, setSelectedPolicy] = useState<PolicyDefinition | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [nonCompliantResources, setNonCompliantResources] = useState<NonCompliantResource[]>([])
@@ -65,6 +66,16 @@ export default function PoliciesPage() {
       setLoading(false)
     }, 500)
   }, [])
+
+  // Keep URL in sync with filters/search
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (searchQuery) url.searchParams.set('q', searchQuery); else url.searchParams.delete('q')
+    if (filterCategory && filterCategory !== 'all') url.searchParams.set('category', filterCategory); else url.searchParams.delete('category')
+    if (filterStatus && filterStatus !== 'all') url.searchParams.set('status', filterStatus); else url.searchParams.delete('status')
+    window.history.replaceState(null, '', url.toString())
+  }, [searchQuery, filterCategory, filterStatus])
 
   const filteredPolicies = policies.filter(policy => {
     const matchesSearch = policy.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
