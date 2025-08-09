@@ -1,7 +1,8 @@
 // Azure API integration for real data fetching
 import { useState, useEffect } from 'react'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+// Use relative URLs to leverage Next.js proxy configuration
+const API_BASE = ''
 
 export interface AzureResource {
   id: string
