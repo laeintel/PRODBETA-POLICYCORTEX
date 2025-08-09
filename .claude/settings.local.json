@@ -84,7 +84,8 @@
       "Bash(az storage account show:*)",
       "Bash(az storage account list:*)",
       "Bash(git branch:*)",
-      "Bash(az login:*)"
+      "Bash(az login:*)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": []
   }

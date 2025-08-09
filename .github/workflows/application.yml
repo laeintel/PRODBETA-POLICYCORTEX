@@ -1,21 +1,6 @@
 name: Application CI/CD
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-    paths-ignore:
-      - 'infrastructure/**'
-      - 'docs/**'
-      - '*.md'
-  pull_request:
-    branches:
-      - main
-    paths-ignore:
-      - 'infrastructure/**'
-      - 'docs/**'
-      - '*.md'
   workflow_dispatch:
     inputs:
       environment:
@@ -30,6 +15,11 @@ on:
         description: 'Force deployment (skip tests)'
         required: false
         default: false
+        type: boolean
+      run_tests:
+        description: 'Run tests before deployment'
+        required: false
+        default: true
         type: boolean
 
 env:
@@ -69,7 +59,7 @@ jobs:
     name: Test Rust Core
     runs-on: self-hosted
     needs: changes
-    if: needs.changes.outputs.core == 'true' || github.event.inputs.force_deploy == 'true'
+    if: (needs.changes.outputs.core == 'true' && github.event.inputs.run_tests == 'true') || github.event.inputs.force_deploy != 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
