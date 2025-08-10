@@ -311,26 +311,33 @@ export function I18nProvider({
   const [locale, setLocaleState] = useState<Locale>(defaultLocale)
 
   useEffect(() => {
-    // Detect browser locale
-    const browserLocale = navigator.language as Locale
-    if (LOCALES[browserLocale]) {
-      setLocaleState(browserLocale)
-    }
+    // Only access browser APIs on client side
+    if (typeof window !== 'undefined') {
+      // Detect browser locale
+      const browserLocale = navigator.language as Locale
+      if (LOCALES[browserLocale]) {
+        setLocaleState(browserLocale)
+      }
 
-    // Load saved locale from localStorage
-    const savedLocale = localStorage.getItem('locale') as Locale
-    if (savedLocale && LOCALES[savedLocale]) {
-      setLocaleState(savedLocale)
+      // Load saved locale from localStorage
+      const savedLocale = localStorage.getItem('locale') as Locale
+      if (savedLocale && LOCALES[savedLocale]) {
+        setLocaleState(savedLocale)
+      }
     }
   }, [])
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale)
-    localStorage.setItem('locale', newLocale)
     
-    // Update document direction for RTL languages
-    document.documentElement.dir = LOCALES[newLocale].dir
-    document.documentElement.lang = newLocale
+    // Only access browser APIs on client side
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('locale', newLocale)
+      
+      // Update document direction for RTL languages
+      document.documentElement.dir = LOCALES[newLocale].dir
+      document.documentElement.lang = newLocale
+    }
   }
 
   const t = (key: string, values?: Record<string, any>): string => {

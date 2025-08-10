@@ -2,6 +2,7 @@
 PolicyCortex API Gateway with GPT-5/GLM-4.5 Integration
 Fast, lightweight API with real Azure integration
 """
+from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,9 +23,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, String, Float, DateTime, JSON, Text
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-import sys
-sys.path.append('..')
-from ai_engine.real_ai_service import ai_service
+from ..ai_engine.real_ai_service import ai_service
 
 # Configure logging early (before optional imports use it)
 logging.basicConfig(level=logging.INFO)
@@ -32,16 +31,16 @@ logger = logging.getLogger(__name__)
 
 # Import enhanced auth and rate limiting
 try:
-    from auth_middleware import (
+    from services.api_gateway.auth_middleware import (
         AuthContext, get_auth_context, require_auth, require_roles, require_admin,
         TenantIsolation, ResourceAuthorization
     )
-    from rate_limiter import (
+    from services.api_gateway.rate_limiter import (
         rate_limiter, rate_limit, circuit_breaker, rate_limit_middleware,
         adaptive_limiter
     )
     AUTH_ENHANCED = True
-except ImportError:
+except Exception:
     AUTH_ENHANCED = False
 
 # Import observability
@@ -76,16 +75,10 @@ app.add_middleware(
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "http://localhost:3005",
-        "http://localhost:5173",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
     expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
 )
 
@@ -118,8 +111,10 @@ class ResourcesRequest(BaseModel):
 # -------------------- Auth (Azure AD JWT) --------------------
 AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID") or os.getenv("NEXT_PUBLIC_AZURE_TENANT_ID")
 AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID") or os.getenv("NEXT_PUBLIC_AZURE_CLIENT_ID")
-API_AUDIENCE = os.getenv("API_AUDIENCE") or os.getenv("NEXT_PUBLIC_API_AUDIENCE")
-ALLOWED_AUDIENCES: List[str] = [a for a in [API_AUDIENCE, AZURE_CLIENT_ID] if a]
+# Unify audience/issuer naming
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE") or os.getenv("API_AUDIENCE") or os.getenv("NEXT_PUBLIC_API_AUDIENCE")
+JWT_ISSUER = os.getenv("JWT_ISSUER") or (f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/v2.0" if AZURE_TENANT_ID else None)
+ALLOWED_AUDIENCES: List[str] = [a for a in [JWT_AUDIENCE, AZURE_CLIENT_ID] if a]
 # Default to no-auth in local/dev to make UI demoable; set REQUIRE_AUTH=true in prod
 REQUIRE_AUTH = (os.getenv("REQUIRE_AUTH", "false").lower() == "true")
 REQUIRE_SCOPE = os.getenv("API_REQUIRED_SCOPE")
@@ -159,7 +154,7 @@ def _get_rsa_key(token: str, jwks: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 async def _validate_bearer_token(token: str) -> Dict[str, Any]:
     if not AZURE_TENANT_ID or not ALLOWED_AUDIENCES:
         raise HTTPException(status_code=500, detail="Auth is required but tenant or audience not configured")
-    issuer = _issuer_for_tenant(AZURE_TENANT_ID)
+    issuer = JWT_ISSUER or _issuer_for_tenant(AZURE_TENANT_ID)
     jwks = JWKS_CACHE.get(AZURE_TENANT_ID)
     if not jwks:
         jwks = await _load_jwks(AZURE_TENANT_ID)
@@ -177,7 +172,7 @@ async def _validate_bearer_token(token: str) -> Dict[str, Any]:
             algorithms=["RS256"],
             audience=ALLOWED_AUDIENCES if len(ALLOWED_AUDIENCES) > 1 else ALLOWED_AUDIENCES[0],
             issuer=issuer,
-            options={"verify_aud": True, "verify_signature": True},
+            options={"verify_aud": True, "verify_signature": True, "leeway": 60},
         )
         # Optional scope/role enforcement
         if REQUIRE_SCOPE:
@@ -207,9 +202,10 @@ async def auth_dependency(request: Request) -> Dict[str, Any]:
 
 # -------------------- Persistence & Secrets --------------------
 # Async Postgres (for actions/audit). Configure via DATABASE_URL
+# Prefer SQLite by default for local/demo to avoid external dependency
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/policycortex_dev",
+    "sqlite:///./policycortex.db",
 )
 
 # Support SQLite as fallback for development without Docker
@@ -278,12 +274,10 @@ async def on_shutdown():
         await rate_limiter.close()
 
 # Initialize cloud providers
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from cloud_providers import multi_cloud_provider, CloudProvider
-from azure_real_data import AzureRealDataCollector
-from azure_deep_insights import AzureDeepInsights
-from finops_ingestion import finops_ingestion
+from services.cloud_providers import multi_cloud_provider, CloudProvider
+from services.azure_real_data import AzureRealDataCollector
+from services.api_gateway.azure_deep_insights import AzureDeepInsights
+from services.finops_ingestion import finops_ingestion
 
 # Azure providers for backward compatibility
 azure_collector = None
