@@ -366,10 +366,21 @@ export function I18nProvider({
     setLocale,
     t,
     dir: LOCALES[locale].dir,
-    formatNumber: (value, options) => formatNumber(value, locale as any, options),
-    formatCurrency: (value, currency) => formatCurrency(value, currency, locale as any),
-    formatDate: (date, options) => formatDate(date, locale as any, options),
-    formatRelativeTime: (date) => formatRelativeTime(date, locale as any),
+    formatNumber: (num, opts) => new Intl.NumberFormat(String(locale), opts).format(num),
+    formatCurrency: (num, curr) => new Intl.NumberFormat(String(locale), { style: 'currency', currency: curr }).format(num),
+    formatDate: (d, opts) => new Intl.DateTimeFormat(String(locale), opts).format(typeof d === 'string' ? new Date(d) : d),
+    formatRelativeTime: (d) => {
+      const dateObj = typeof d === 'string' ? new Date(d) : d
+      const rtf = new Intl.RelativeTimeFormat(String(locale), { numeric: 'auto' })
+      const diff = (dateObj.getTime() - Date.now()) / 1000
+      const abs = Math.abs(diff)
+      if (abs < 60) return rtf.format(Math.round(diff), 'second')
+      if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute')
+      if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour')
+      if (abs < 2592000) return rtf.format(Math.round(diff / 86400), 'day')
+      if (abs < 31536000) return rtf.format(Math.round(diff / 2592000), 'month')
+      return rtf.format(Math.round(diff / 31536000), 'year')
+    },
   }
 
   return (
