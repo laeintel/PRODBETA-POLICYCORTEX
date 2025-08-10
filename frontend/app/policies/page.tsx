@@ -9,6 +9,7 @@ import { ChartCard, ComplianceTrend } from '../../components/ChartCards'
 import FilterBar from '../../components/FilterBar'
 import AppLayout from '../../components/AppLayout'
 import { azurePolicies, getPolicyStatistics, getNonCompliantResources, type PolicyDefinition } from '../../lib/policies-data'
+import MockDataIndicator, { DataWithIndicator, useMockDataStatus } from '@/components/MockDataIndicator'
 import { 
   Shield,
   Search,
@@ -51,6 +52,8 @@ interface NonCompliantResource {
 export default function PoliciesPage() {
   const [policies, setPolicies] = useState<PolicyDefinition[]>([])
   const [loading, setLoading] = useState(true)
+  const [isUsingFallback, setIsUsingFallback] = useState(false)
+  const { isMockData } = useMockDataStatus()
   const initialParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   const [searchQuery, setSearchQuery] = useState(initialParams?.get('q') || '')
   const [filterCategory, setFilterCategory] = useState(initialParams?.get('category') || 'all')
@@ -65,12 +68,29 @@ export default function PoliciesPage() {
   const [showStatistics, setShowStatistics] = useState(true)
 
   useEffect(() => {
-    // Simulate loading real policies
-    setTimeout(() => {
-      setPolicies(azurePolicies)
-      setNonCompliantResources(getNonCompliantResources())
-      setLoading(false)
-    }, 500)
+    // Try to fetch real policies first
+    const fetchPolicies = async () => {
+      try {
+        const response = await fetch('/api/v1/policies/deep')
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+        const data = await response.json()
+        setPolicies(data.policies || [])
+        setNonCompliantResources(data.nonCompliantResources || [])
+        setIsUsingFallback(false)
+      } catch (error) {
+        console.warn('Failed to fetch policies, using fallback data:', error)
+        // Use fallback data
+        setPolicies(azurePolicies)
+        setNonCompliantResources(getNonCompliantResources())
+        setIsUsingFallback(true)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchPolicies()
   }, [])
 
   // Keep URL in sync with filters/search
@@ -128,10 +148,26 @@ export default function PoliciesPage() {
     <AppLayout>
       <div className="p-8">
         <div className="max-w-7xl mx-auto">
+          {/* Mock Data Indicator */}
+          {(isMockData || isUsingFallback) && (
+            <MockDataIndicator 
+              type="banner" 
+              dataSource={isUsingFallback ? "Cached Policy Data" : "Mock Policy Data"}
+              className="mb-6"
+            />
+          )}
+          
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Policy Management</h1>
-            <p className="text-gray-400">Azure Policy compliance and governance control</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Policy Management</h1>
+                <p className="text-gray-400">Azure Policy compliance and governance control</p>
+              </div>
+              {!isMockData && !isUsingFallback && (
+                <MockDataIndicator type="badge" />
+              )}
+            </div>
           </div>
 
           {/* Summary Cards */}

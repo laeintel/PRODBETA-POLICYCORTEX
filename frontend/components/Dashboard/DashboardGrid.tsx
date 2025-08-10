@@ -5,6 +5,7 @@ import { KPITile } from './KPITile';
 import { ActionDrawer } from '../ActionDrawer/ActionDrawer';
 import { useGovernanceStore } from '@/store/governanceStore';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import MockDataIndicator, { useMockDataStatus } from '../MockDataIndicator';
 import { 
   Shield, 
   DollarSign, 
@@ -69,6 +70,10 @@ export function DashboardGrid() {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [isActionDrawerOpen, setIsActionDrawerOpen] = useState(false);
   const [proactiveActions, setProactiveActions] = useState<any[]>([]);
+  const [isUsingFallback, setIsUsingFallback] = useState(false);
+  
+  // Check if we're using mock data
+  const { isMockData } = useMockDataStatus();
   
   // Store is available but not using it directly in this component
   // const store = useGovernanceStore();
@@ -87,14 +92,65 @@ export function DashboardGrid() {
   const fetchDashboardMetrics = async () => {
     try {
       const response = await fetch('/api/v1/metrics');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
       setMetrics(data);
+      setIsUsingFallback(false);
     } catch (error) {
       console.error('Failed to fetch dashboard metrics:', error);
+      // Use fallback data if API fails
+      setIsUsingFallback(true);
+      setMetrics(getFallbackMetrics());
     } finally {
       setLoading(false);
     }
   };
+  
+  const getFallbackMetrics = (): DashboardMetrics => ({
+    policies: {
+      total: 45,
+      active: 38,
+      violations: 7,
+      compliance_rate: 84.4,
+      trend: 2.3
+    },
+    costs: {
+      current_spend: 127500,
+      predicted_spend: 135000,
+      savings_identified: 18750,
+      optimization_rate: 14.7,
+      trend: -3.2
+    },
+    security: {
+      risk_score: 72,
+      active_threats: 3,
+      critical_paths: 2,
+      mitigations_available: 8,
+      trend: -5.1
+    },
+    resources: {
+      total: 312,
+      optimized: 198,
+      idle: 42,
+      overprovisioned: 28,
+      utilization_rate: 63.5
+    },
+    compliance: {
+      frameworks: 4,
+      overall_score: 87,
+      findings: 12,
+      evidence_packs: 156,
+      next_assessment_days: 14
+    },
+    ai: {
+      predictions_made: 2847,
+      automations_executed: 412,
+      accuracy: 94.3,
+      learning_progress: 78
+    }
+  });
 
   const handleActionClick = (actionId: string) => {
     setSelectedAction(actionId)
@@ -120,16 +176,30 @@ export function DashboardGrid() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Mock Data Indicator */}
+      {(isMockData || isUsingFallback) && (
+        <MockDataIndicator 
+          type="banner" 
+          dataSource={isUsingFallback ? "Fallback Data (API Unavailable)" : "Mock Data"}
+          className="mb-4"
+        />
+      )}
+      
       {/* Real-time connection indicator */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Governance Dashboard
         </h1>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`} />
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {isConnected ? 'Real-time updates active' : 'Connecting...'}
-          </span>
+        <div className="flex items-center gap-4">
+          {!isMockData && !isUsingFallback && (
+            <MockDataIndicator type="badge" className="" />
+          )}
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {isConnected ? 'Real-time updates active' : 'Connecting...'}
+            </span>
+          </div>
         </div>
       </div>
 
