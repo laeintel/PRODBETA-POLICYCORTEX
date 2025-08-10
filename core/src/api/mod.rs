@@ -273,21 +273,27 @@ impl AppState {
 
 // API Handlers
 pub async fn get_metrics(
-    auth_user: OptionalAuthUser,
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>
 ) -> impl IntoResponse {
-    // Log authentication status
-    if let Some(ref user) = auth_user.0 {
-        tracing::info!("Authenticated request for metrics from user: {:?}", user.claims.preferred_username);
-        
-        // Get tenant context for multi-tenant data access
-        if let Ok(tenant_context) = TenantContext::from_user(user).await {
+    // Log authenticated request
+    tracing::info!("Authenticated request for metrics from user: {:?}", auth_user.claims.preferred_username);
+    
+    // Get tenant context for multi-tenant data access
+    let tenant_context = match TenantContext::from_user(&auth_user).await {
+        Ok(context) => {
             tracing::debug!("User has access to tenant: {} with {} subscriptions", 
-                          tenant_context.tenant_id, tenant_context.subscription_ids.len());
+                          context.tenant_id, context.subscription_ids.len());
+            context
         }
-    } else {
-        tracing::debug!("Anonymous request for metrics - attempting to use Azure CLI credentials");
-    }
+        Err(e) => {
+            tracing::error!("Failed to get tenant context: {:?}", e);
+            return (StatusCode::FORBIDDEN, Json(serde_json::json!({
+                "error": "tenant_access_denied",
+                "message": "Unable to determine tenant access"
+            }))).into_response();
+        }
+    };
 
     // Always try to get real Azure data when Azure client is available
     // This works for local development with Azure CLI authentication
@@ -297,7 +303,15 @@ pub async fn get_metrics(
         match async_azure_client.get_governance_metrics().await {
             Ok(real_metrics) => {
                 tracing::info!("✅ Real Azure metrics fetched with async client (cached)");
-                return Json(real_metrics);
+                let response = serde_json::json!({
+                    "data": real_metrics,
+                    "metadata": {
+                        "source": "azure_live",
+                        "timestamp": Utc::now(),
+                        "message": "Real-time Azure data"
+                    }
+                });
+                return Json(response).into_response();
             }
             Err(e) => {
                 tracing::warn!("Async Azure client failed: {}", e);
@@ -310,7 +324,15 @@ pub async fn get_metrics(
         match azure_client.get_governance_metrics().await {
             Ok(real_metrics) => {
                 tracing::info!("✅ Real Azure metrics fetched with sync client");
-                return Json(real_metrics);
+                let response = serde_json::json!({
+                    "data": real_metrics,
+                    "metadata": {
+                        "source": "azure_live",
+                        "timestamp": Utc::now(),
+                        "message": "Real-time Azure data"
+                    }
+                });
+                return Json(response).into_response();
             }
             Err(e) => {
                 tracing::warn!("Failed to fetch real Azure metrics: {}", e);
@@ -361,19 +383,48 @@ pub async fn get_metrics(
             learning_progress: 85.0,
         },
     };
-    Json(simulated_metrics)
+    
+    // Add metadata to indicate this is simulated data
+    let response = serde_json::json!({
+        "data": simulated_metrics,
+        "metadata": {
+            "source": "simulated",
+            "timestamp": Utc::now(),
+            "message": "Using simulated data. Connect Azure for real-time metrics."
+        }
+    });
+    
+    Json(response).into_response()
 }
 
 pub async fn get_predictions(
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>
 ) -> impl IntoResponse {
+    // Verify authentication and tenant access
+    tracing::info!("Authenticated request for predictions from user: {:?}", auth_user.claims.preferred_username);
+    
+    let _tenant_context = match TenantContext::from_user(&auth_user).await {
+        Ok(context) => context,
+        Err(e) => {
+            tracing::error!("Failed to get tenant context: {:?}", e);
+            return (StatusCode::FORBIDDEN, Json(serde_json::json!({
+                "error": "tenant_access_denied",
+                "message": "Unable to determine tenant access"
+            }))).into_response();
+        }
+    };
+    
     let predictions = state.predictions.read().await;
-    Json(predictions.clone())
+    Json(predictions.clone()).into_response()
 }
 
 pub async fn get_recommendations(
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>
 ) -> impl IntoResponse {
+    // Verify authentication
+    tracing::info!("Authenticated request for recommendations from user: {:?}", auth_user.claims.preferred_username);
     // If we have an Azure client, fetch real recommendations based on actual Azure data
     if let Some(ref async_azure_client) = state.async_azure_client {
         match async_azure_client.get_governance_metrics().await {
@@ -508,16 +559,15 @@ pub async fn get_recommendations(
 }
 
 pub async fn process_conversation(
-    auth_user: OptionalAuthUser,
+    auth_user: AuthUser,
     State(_state): State<Arc<AppState>>,
     Json(request): Json<ConversationRequest>
 ) -> impl IntoResponse {
-    // Get user context for personalized responses
-    let user_context = if let Some(ref user) = auth_user.0 {
-        format!(" (authenticated as {})", user.claims.preferred_username.as_deref().unwrap_or("unknown user"))
-    } else {
-        " (anonymous user)".to_string()
-    };
+    // Verify authentication and get user context for personalized responses
+    tracing::info!("Authenticated conversation request from user: {:?}", auth_user.claims.preferred_username);
+    
+    let user_context = format!(" (authenticated as {})", 
+        auth_user.claims.preferred_username.as_deref().unwrap_or("unknown user"));
 
     // Simulate NLP processing with user context
     let response = ConversationResponse {
@@ -546,7 +596,9 @@ pub async fn process_conversation(
     Json(response)
 }
 
-pub async fn get_correlations() -> impl IntoResponse {
+pub async fn get_correlations(auth_user: AuthUser) -> impl IntoResponse {
+    // Verify authentication
+    tracing::info!("Authenticated request for correlations from user: {:?}", auth_user.claims.preferred_username);
     let correlation = CrossDomainCorrelation {
         correlation_id: "corr-001".to_string(),
         domains: vec!["cost".to_string(), "resources".to_string()],

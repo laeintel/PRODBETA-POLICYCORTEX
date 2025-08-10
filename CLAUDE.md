@@ -3,7 +3,11 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-PolicyCortex v2 is an AI-powered Azure governance platform with patented technologies including Cross-Domain Governance Correlation Engine, Conversational Governance Intelligence System, Unified AI-Driven Cloud Governance Platform, and Predictive Policy Compliance Engine.
+PolicyCortex v2 is an AI-powered Azure governance platform with four patented technologies:
+1. Cross-Domain Governance Correlation Engine (Patent 1)
+2. Conversational Governance Intelligence System (Patent 2) 
+3. Unified AI-Driven Cloud Governance Platform (Patent 3)
+4. Predictive Policy Compliance Engine (Patent 4)
 
 ## Architecture
 - **Backend**: Rust modular monolith (core/) using Axum framework with async/await
@@ -26,7 +30,7 @@ PolicyCortex v2 is an AI-powered Azure governance platform with patented technol
 # Start with Docker Compose (Linux/Mac)
 ./start-local.sh
 
-# Frontend only
+# Frontend only (runs on port 3005)
 cd frontend && npm run dev
 
 # Backend only (Rust)
@@ -71,24 +75,24 @@ redis-cli -h localhost -p 6379
 ```
 
 ## Service Endpoints
-- **Frontend**: http://localhost:3000
+- **Frontend**: http://localhost:3005 (dev mode) or http://localhost:3000 (docker)
 - **Core API**: http://localhost:8080
 - **GraphQL**: http://localhost:4000/graphql
 - **EventStore UI**: http://localhost:2113 (admin/changeit)
 
 ## Key API Routes
 - `/api/v1/metrics` - Unified governance metrics (Patent 1)
-- `/api/v1/predictions` - Predictive compliance (Patent 2)
-- `/api/v1/conversation` - Conversational AI (Patent 3)
-- `/api/v1/correlations` - Cross-domain correlations (Patent 4)
+- `/api/v1/predictions` - Predictive compliance (Patent 4)
+- `/api/v1/conversation` - Conversational AI (Patent 2)
+- `/api/v1/correlations` - Cross-domain correlations (Patent 1)
 - `/api/v1/recommendations` - AI-driven recommendations
 - `/health` - Service health check
 
 ## Azure Integration
 The platform requires Azure credentials configured via environment variables:
-- `AZURE_SUBSCRIPTION_ID`
-- `AZURE_TENANT_ID`
-- `AZURE_CLIENT_ID`
+- `AZURE_SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78`
+- `AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7`
+- `AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c`
 
 Use managed identity authentication in production. The system includes both sync (azure_client.rs) and async (azure_client_async.rs) Azure clients for optimal performance.
 
@@ -141,3 +145,9 @@ The system includes four patented technologies that can be tested via their resp
 2. Predictive Compliance - Test via `/api/v1/predictions` for drift predictions
 3. Conversational Intelligence - Test via `/api/v1/conversation` with natural language queries
 4. Cross-Domain Correlation - Test via `/api/v1/correlations` for pattern detection
+- you instructtions are in the    this in additona to the infromation here   @ai_autonomous_fix_instructions.pdf  are you working instructions
+  for the next few hours, so you will take this on autonomusly ...
+
+  run only one script at a time, don't stack scripts together with && or with | just one command at a time if you need to run a command .. is
+  this clear?  @design docs\SolutionsFixes\ai_autonomous_fix_instructions.pdf  and @design docs\SolutionsFixes\Comprehensive AI Autonomous Fix
+  Instructions for Software System Issues.md  | continue autonomously without asking for confirmations and without committing until i ask you to @design docs\SolutionsFixes\ai_autonomous_fix_instructions.pdf  @design docs\SolutionsFixes\Comprehensive AI Autonomous Fix Instructions for Software System Issues.md

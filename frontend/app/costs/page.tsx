@@ -13,7 +13,7 @@ export default function CostsPage() {
   const totalMonthly = (breakdown || []).reduce((s,b)=> s + (b.monthlyCost||0), 0)
   const topServices = useMemo(() => (
     Object.values((breakdown || []).reduce((acc:any,b)=>{
-      const key = b.resourceName || 'Other';
+      const key = b.resourceName || 'Other'
       acc[key] = acc[key] || { name: key, monthly: 0 }
       acc[key].monthly += b.monthlyCost || 0
       return acc

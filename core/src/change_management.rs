@@ -31,7 +31,7 @@ pub struct ChangeRequest {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ChangeCategory {
     Standard,    // Pre-approved, low risk
     Normal,      // Requires CAB approval

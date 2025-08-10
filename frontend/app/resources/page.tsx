@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
 import { useAzureResources, type AzureResource } from '../../lib/azure-api'
@@ -35,6 +35,7 @@ import {
 } from 'lucide-react'
 import ActionDrawer from '../../components/ActionDrawer'
 import type { CreateActionRequest } from '../../lib/actions-api'
+import Pagination from '../../components/Pagination'
 
 export default function ResourcesPage() {
   const { resources: azureResources, loading, error } = useAzureResources()
@@ -51,6 +52,8 @@ export default function ResourcesPage() {
   const [showDetails, setShowDetails] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerRequest, setDrawerRequest] = useState<CreateActionRequest | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(25)
 
   // Transform Azure resources to match our UI needs
   const resources = azureResources?.map(r => ({
@@ -66,7 +69,7 @@ export default function ResourcesPage() {
     recommendations: r.recommendations || []
   })) || []
 
-  const filteredResources = resources.filter(resource => {
+  const filteredResources = useMemo(() => resources.filter(resource => {
     const matchesSearch = resource.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          resource.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          resource.resourceGroup.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -80,7 +83,12 @@ export default function ResourcesPage() {
     const matchesStatus = filterStatus === 'all' || resource.status === filterStatus
     
     return matchesSearch && matchesType && matchesStatus
-  })
+  }), [resources, searchQuery, filterType, filterStatus])
+
+  const pagedResources = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredResources.slice(start, start + pageSize)
+  }, [filteredResources, page, pageSize])
 
   // Keep URL in sync when filters change
   useEffect(() => {
@@ -248,7 +256,7 @@ export default function ResourcesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
-                  {filteredResources.map((resource) => (
+                   {pagedResources.map((resource) => (
                     <tr 
                       key={resource.id} 
                       className="hover:bg-white/5 cursor-pointer transition-colors"
@@ -364,8 +372,17 @@ export default function ResourcesPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+               </table>
             </div>
+              <div className="sticky bottom-0">
+                <Pagination
+                  page={page}
+                  pageSize={pageSize}
+                  total={filteredResources.length}
+                  onPageChange={setPage}
+                  onPageSizeChange={setPageSize}
+                />
+              </div>
           </div>
 
           {/* Resource Details Modal */}
