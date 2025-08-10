@@ -39,13 +39,22 @@ interface AuthContextType {
   error: string | null
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+// Default context for SSR
+const defaultAuthContext: AuthContextType = {
+  isAuthenticated: false,
+  user: null,
+  login: async () => { console.log('Login not available during SSR') },
+  logout: async () => { console.log('Logout not available during SSR') },
+  getAccessToken: async () => '',
+  loading: false,
+  error: null
+}
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext)
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
+  // Return context (will have default value if not within provider)
   return context
 }
 
@@ -138,9 +147,13 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Return children directly during SSR
+  // Return with default context during SSR
   if (typeof window === 'undefined' || !msalInstance) {
-    return <>{children}</>;
+    return (
+      <AuthContext.Provider value={defaultAuthContext}>
+        {children}
+      </AuthContext.Provider>
+    );
   }
   
   return (
