@@ -91,7 +91,11 @@
       "Bash(az:*)",
       "Bash(.start-dev.bat)",
       "Bash(start-dev.bat)",
-      "Bash(./restart-services.bat)"
+      "Bash(./restart-services.bat)",
+      "Bash(taskkill:*)",
+      "Bash(npm run start:*)",
+      "Bash(uvicorn:*)",
+      "Bash(npx next:*)"
     ],
     "deny": []
   }

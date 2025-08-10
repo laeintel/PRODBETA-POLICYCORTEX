@@ -97,9 +97,9 @@ export function DashboardGrid() {
   };
 
   const handleActionClick = (actionId: string) => {
-    setSelectedAction(actionId);
-    setIsActionDrawerOpen(true);
-  };
+    setSelectedAction(actionId)
+    setIsActionDrawerOpen(true)
+  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -369,11 +369,7 @@ export function DashboardGrid() {
       </div>
 
       {/* Action Drawer */}
-      <ActionDrawer
-        isOpen={isActionDrawerOpen}
-        onClose={() => setIsActionDrawerOpen(false)}
-        actionId={selectedAction}
-      />
+      <ActionDrawer isOpen={isActionDrawerOpen} onClose={() => setIsActionDrawerOpen(false)} actionId={selectedAction} />
     </div>
   );
 }

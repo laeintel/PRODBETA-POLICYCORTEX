@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertTriangle, CheckCircle, Clock, Download, Play, RefreshCw } from 'lucide-react';
 import { useSSE } from '@/hooks/useSSE';
@@ -15,6 +15,8 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
   const [action, setAction] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [isExecuting, setIsExecuting] = useState(false);
+  const lastFocusedRef = useRef<HTMLElement | null>(null)
+  const headingRef = useRef<HTMLHeadingElement | null>(null)
   
   const { messages: events, isConnected } = useSSE(
     actionId ? `/api/v1/actions/${actionId}/events` : ''
@@ -25,6 +27,21 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
       fetchActionDetails(actionId);
     }
   }, [actionId]);
+
+  // Focus management and body scroll lock to ensure the drawer stays in focus
+  useEffect(() => {
+    if (isOpen) {
+      lastFocusedRef.current = document.activeElement as HTMLElement
+      document.body.style.overflow = 'hidden'
+      setTimeout(() => headingRef.current?.focus(), 0)
+    } else {
+      document.body.style.overflow = ''
+      lastFocusedRef.current?.focus?.()
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
 
   const fetchActionDetails = async (id: string) => {
     try {
@@ -78,13 +95,13 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
             className="fixed inset-0 bg-black/50 z-[98] backdrop-blur-sm"
           />
 
-          {/* Drawer */}
+          {/* Drawer (right-side, always on top) */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[99] overflow-hidden"
+            className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[100] overflow-hidden"
             role="dialog"
             aria-modal="true"
             aria-labelledby="action-drawer-heading"
@@ -94,7 +111,7 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
             <div className="border-b border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 id="action-drawer-heading" className="text-2xl font-bold text-gray-900 dark:text-white" tabIndex={0}>
+                  <h2 id="action-drawer-heading" ref={headingRef} className="text-2xl font-bold text-gray-900 dark:text-white" tabIndex={0}>
                     Action Execution
                   </h2>
                   {action && (

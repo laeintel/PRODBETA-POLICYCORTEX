@@ -16,6 +16,6 @@ azure-mgmt-network==25.4.0
 azure-mgmt-storage==21.1.0
 azure-mgmt-authorization==3.0.0
 azure-mgmt-monitor==6.0.1
-azure-mgmt-policyinsights==1.1.0
-azure-mgmt-costmanagement==6.0.0
-azure-mgmt-security==7.0.0
+azure-mgmt-policyinsights==1.0.0
+azure-mgmt-costmanagement==4.0.1
+azure-mgmt-security==5.0.0
