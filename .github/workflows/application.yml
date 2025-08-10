@@ -23,7 +23,9 @@ on:
         type: boolean
 
 env:
-  REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+  # Use environment-specific registries
+  REGISTRY_DEV: crpcxdev.azurecr.io
+  REGISTRY_PROD: crcortexprodvb9v2h.azurecr.io
   IMAGE_TAG: ${{ github.sha }}
   TARGET_ENV: ${{ github.event.inputs.target_env || 'dev' }}
 
@@ -225,7 +227,8 @@ jobs:
       - name: Login to Container Registry
         run: |
           echo "Logging into Azure Container Registry"
-          az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+          # Use dev registry for now, can be made conditional based on environment
+          az acr login --name crpcxdev
 
       - name: Build and Push Core Image
         uses: docker/build-push-action@v5
@@ -233,8 +236,8 @@ jobs:
           context: ./core
           push: true
           tags: |
-            ${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }}
-            ${{ env.REGISTRY }}/policycortex-core:latest
+            ${{ env.REGISTRY_DEV }}/policycortex-core:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY_DEV }}/policycortex-core:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -261,7 +264,8 @@ jobs:
       - name: Login to Container Registry
         run: |
           echo "Logging into Azure Container Registry"
-          az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+          # Use dev registry for now, can be made conditional based on environment
+          az acr login --name crpcxdev
 
       - name: Build and Push Frontend Image
         uses: docker/build-push-action@v5
@@ -270,8 +274,8 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }}
-            ${{ env.REGISTRY }}/policycortex-frontend:latest
+            ${{ env.REGISTRY_DEV }}/policycortex-frontend:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY_DEV }}/policycortex-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -298,7 +302,8 @@ jobs:
       - name: Login to Container Registry
         run: |
           echo "Logging into Azure Container Registry"
-          az acr login --name ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+          # Use dev registry for now, can be made conditional based on environment
+          az acr login --name crpcxdev
 
       - name: Build and Push GraphQL Image
         uses: docker/build-push-action@v5
@@ -306,8 +311,8 @@ jobs:
           context: ./graphql
           push: true
           tags: |
-            ${{ env.REGISTRY }}/policycortex-graphql:${{ env.IMAGE_TAG }}
-            ${{ env.REGISTRY }}/policycortex-graphql:latest
+            ${{ env.REGISTRY_DEV }}/policycortex-graphql:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY_DEV }}/policycortex-graphql:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
