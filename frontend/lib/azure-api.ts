@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 
 // Use relative URLs to leverage Next.js proxy configuration
 const API_BASE = ''
+const DISABLE_DEEP = process.env.NEXT_PUBLIC_DISABLE_DEEP === 'true'
 
 export interface AzureResource {
   id: string
@@ -71,34 +72,36 @@ export interface RbacAssignment {
 // Fetch Azure resources (deep insights preferred)
 export async function fetchAzureResources(): Promise<AzureResource[]> {
   // Prefer deep endpoint for richer data; fall back to basic
-  try {
-    const resp = await fetch(`${API_BASE}/api/v1/resources/deep`)
-    if (resp.ok) {
-      const data = await resp.json()
-      const raw = (data && (data.resources ?? data)) as any
-      const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
-      return items.map((r) => ({
-        id: r.id,
-        name: r.name,
-        type: r.type,
-        resourceGroup: r.resourceGroup || (r.id?.split('/')?.[4] ?? ''),
-        location: r.location,
-        tags: r.tags || {},
-        status: r.healthStatus || 'Unknown',
-        compliance: r.complianceStatus || 'Unknown',
-        monthlyCost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) : 0,
-        cost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) / 720 : 0, // approx hourly
-        savings: 0,
-        cpu: r.utilization?.cpu ?? 0,
-        memory: r.utilization?.memory ?? 0,
-        storage: r.utilization?.disk ?? 0,
-        createdDate: r.createdDate || undefined,
-        lastModified: r.lastModified || undefined,
-        recommendations: r.recommendations || [],
-      })) as AzureResource[]
+  if (!DISABLE_DEEP) {
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/resources/deep`)
+      if (resp.ok) {
+        const data = await resp.json()
+        const raw = (data && (data.resources ?? data)) as any
+        const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+        return items.map((r) => ({
+          id: r.id,
+          name: r.name,
+          type: r.type,
+          resourceGroup: r.resourceGroup || (r.id?.split('/')?.[4] ?? ''),
+          location: r.location,
+          tags: r.tags || {},
+          status: r.healthStatus || 'Unknown',
+          compliance: r.complianceStatus || 'Unknown',
+          monthlyCost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) : 0,
+          cost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) / 720 : 0, // approx hourly
+          savings: 0,
+          cpu: r.utilization?.cpu ?? 0,
+          memory: r.utilization?.memory ?? 0,
+          storage: r.utilization?.disk ?? 0,
+          createdDate: r.createdDate || undefined,
+          lastModified: r.lastModified || undefined,
+          recommendations: r.recommendations || [],
+        })) as AzureResource[]
+      }
+    } catch (error) {
+      console.debug('Deep resource insights unavailable, falling back:', error)
     }
-  } catch (error) {
-    console.debug('Deep resource insights unavailable, falling back:', error)
   }
 
   try {

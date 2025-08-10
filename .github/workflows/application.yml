@@ -3,7 +3,7 @@ name: Application CI/CD
 on:
   workflow_dispatch:
     inputs:
-      environment:
+      target_env:
         description: 'Environment to deploy'
         required: true
         default: 'dev'
@@ -25,6 +25,7 @@ on:
 env:
   REGISTRY: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
   IMAGE_TAG: ${{ github.sha }}
+  TARGET_ENV: ${{ github.event.inputs.target_env || 'dev' }}
 
 # Permissions for GitHub Actions
 permissions:
@@ -446,8 +447,7 @@ jobs:
     runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: |
-      always() && 
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')) &&
+      always() && env.TARGET_ENV == 'dev' &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
       (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
       (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped')
@@ -463,75 +463,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Container Apps (Dev)
-        shell: powershell
+      - name: Terraform Reconcile and Apply (Dev)
+        shell: bash
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
         run: |
-          Write-Host "Checking if Container Apps exist..."
-          
-          # Check if resource group exists (returns JSON boolean)
-          $rgExists = az group exists --name rg-cortex-dev 2>$null
-          if ($rgExists -ne "true") {
-            Write-Host "❌ Resource group rg-cortex-dev does not exist. Run Terraform first."
-            Write-Host "Actual value returned: $rgExists"
-            exit 1
-          }
-          
-          Write-Host "✅ Resource group exists"
-          
-          # Check if Container Apps exist
-          Write-Host "Checking for Container Apps..."
-          $coreExists = $false
-          $frontendExists = $false
-          
-          try {
-            $core = az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
-            if ($core) { $coreExists = $true }
-          } catch { }
-          
-          try {
-            $frontend = az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query name -o tsv 2>$null
-            if ($frontend) { $frontendExists = $true }
-          } catch { }
-          
-          if (-not $coreExists -or -not $frontendExists) {
-            Write-Host "⚠️ Container Apps do not exist yet. Terraform infrastructure must be deployed first."
-            Write-Host "Core API exists: $coreExists"
-            Write-Host "Frontend exists: $frontendExists"
-            Write-Host "Run the Azure Infra Terraform workflow to create the Container Apps."
-            exit 0  # Exit gracefully since this is expected on first run
-          }
-          
-          Write-Host "✅ Container Apps found, proceeding with deployment..."
-          
-          # Check if images exist in registry
-          $registryName = "${{ env.REGISTRY }}".Replace(".azurecr.io", "")
-          Write-Host "Checking for images in registry: $registryName"
-          
-          $coreImageExists = az acr repository show --name $registryName --image "policycortex-core:${{ env.IMAGE_TAG }}" 2>$null
-          $frontendImageExists = az acr repository show --name $registryName --image "policycortex-frontend:${{ env.IMAGE_TAG }}" 2>$null
-          
-          if (-not $coreImageExists -or -not $frontendImageExists) {
-            Write-Host "⚠️ Docker images not found in registry. Build and push images first."
-            Write-Host "Expected images:"
-            Write-Host "  - ${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }}"
-            Write-Host "  - ${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }}"
-            exit 0
-          }
-          
-          Write-Host "Deploying Core API to Container Apps..."
-          az containerapp update `
-            --name ca-cortex-core-dev `
-            --resource-group rg-cortex-dev `
-            --image "${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }}" `
-            --set-env-vars ENVIRONMENT=dev
-          
-          Write-Host "Deploying Frontend to Container Apps..."
-          az containerapp update `
-            --name ca-cortex-frontend-dev `
-            --resource-group rg-cortex-dev `
-            --image "${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }}"
-          
-          Write-Host "✅ Container Apps deployment completed"
+          chmod +x infrastructure/terraform/ci-deploy.sh
+          ./infrastructure/terraform/ci-deploy.sh dev "$AZURE_SUBSCRIPTION_ID"
 
       - name: Verify Deployment (Dev)
         shell: powershell
@@ -561,7 +499,7 @@ jobs:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    if: github.event_name == 'workflow_dispatch' && env.TARGET_ENV == 'prod'
     environment: production
     permissions:
       contents: read
@@ -586,26 +524,13 @@ jobs:
           az containerapp show --name ca-cortex-core-prod --resource-group rg-cortex-prod --query "properties.runningStatus" -o tsv || echo "Core app not found"
           az containerapp show --name ca-cortex-frontend-prod --resource-group rg-cortex-prod --query "properties.runningStatus" -o tsv || echo "Frontend app not found"
 
-      - name: Blue-Green Deployment
+      - name: Terraform Reconcile and Apply (Prod)
+        shell: bash
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_PROD }}
         run: |
-          echo "🚀 Starting Container Apps revision deployment..."
-          
-          # Deploy new revision for Core API (Container Apps handles blue-green automatically)
-          az containerapp update \
-            --name ca-cortex-core-prod \
-            --resource-group rg-cortex-prod \
-            --image ${{ env.REGISTRY }}/policycortex-core:${{ env.IMAGE_TAG }} \
-            --revision-suffix v${{ github.run_number }} \
-            --set-env-vars ENVIRONMENT=prod
-          
-          # Deploy new revision for Frontend
-          az containerapp update \
-            --name ca-cortex-frontend-prod \
-            --resource-group rg-cortex-prod \
-            --image ${{ env.REGISTRY }}/policycortex-frontend:${{ env.IMAGE_TAG }} \
-            --revision-suffix v${{ github.run_number }}
-          
-          echo "✅ New revisions deployed"
+          chmod +x infrastructure/terraform/ci-deploy.sh
+          ./infrastructure/terraform/ci-deploy.sh prod "$AZURE_SUBSCRIPTION_ID"
 
       - name: Production Smoke Tests
         run: |
