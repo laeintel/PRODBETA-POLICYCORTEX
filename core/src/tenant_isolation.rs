@@ -1,15 +1,15 @@
 use axum::{
     extract::Extension,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    middleware::Next,
     extract::Request,
+    http::StatusCode,
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
-use uuid::Uuid;
 use tracing::{error, info, warn};
+use uuid::Uuid;
 
 /// Tenant context for request processing
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,12 +28,12 @@ impl TenantContext {
             .as_str()
             .and_then(|s| Uuid::parse_str(s).ok())
             .ok_or_else(|| "Missing or invalid tenant ID".to_string())?;
-        
+
         let user_id = claims["oid"]
             .as_str()
             .or_else(|| claims["sub"].as_str())
             .and_then(|s| Uuid::parse_str(s).ok());
-        
+
         let is_admin = claims["roles"]
             .as_array()
             .map(|roles| {
@@ -44,7 +44,7 @@ impl TenantContext {
                 })
             })
             .unwrap_or(false);
-        
+
         Ok(Self {
             tenant_id,
             tenant_name: claims["tenant_name"]
@@ -53,17 +53,15 @@ impl TenantContext {
                 .to_string(),
             is_admin,
             user_id,
-            subscription_id: claims["subscription_id"]
-                .as_str()
-                .map(String::from),
+            subscription_id: claims["subscription_id"].as_str().map(String::from),
         })
     }
-    
+
     /// Check if user can access a specific tenant
     pub fn can_access_tenant(&self, target_tenant_id: &Uuid) -> bool {
         self.is_admin || self.tenant_id == *target_tenant_id
     }
-    
+
     /// Check if user can access a resource
     pub fn can_access_resource(&self, resource_tenant_id: &Uuid) -> bool {
         self.is_admin || self.tenant_id == *resource_tenant_id
@@ -81,7 +79,7 @@ pub async fn tenant_isolation_middleware(
         warn!("Request without tenant context");
         return (StatusCode::UNAUTHORIZED, "Tenant context required").into_response();
     }
-    
+
     let response = next.run(request).await;
     response
 }
@@ -94,8 +92,7 @@ pub trait TenantFilter {
 impl TenantFilter for sqlx::QueryBuilder<'_, sqlx::Postgres> {
     fn apply_tenant_filter(mut self, tenant: &TenantContext) -> Self {
         if !tenant.is_admin {
-            self.push(" AND tenant_id = ")
-                .push_bind(tenant.tenant_id);
+            self.push(" AND tenant_id = ").push_bind(tenant.tenant_id);
         }
         self
     }
@@ -110,9 +107,12 @@ pub struct TenantResource<T> {
 
 impl<T> TenantResource<T> {
     pub fn new(tenant_id: Uuid, resource: T) -> Self {
-        Self { tenant_id, resource }
+        Self {
+            tenant_id,
+            resource,
+        }
     }
-    
+
     /// Check if resource belongs to tenant
     pub fn belongs_to(&self, tenant: &TenantContext) -> bool {
         tenant.can_access_resource(&self.tenant_id)
@@ -128,34 +128,31 @@ impl TenantDatabase {
     pub fn new(pool: Arc<PgPool>) -> Self {
         Self { pool }
     }
-    
+
     /// Get resources for a tenant
     pub async fn get_resources(
         &self,
         tenant: &TenantContext,
         resource_type: Option<&str>,
     ) -> Result<Vec<serde_json::Value>, sqlx::Error> {
-        let mut query = sqlx::QueryBuilder::new(
-            "SELECT * FROM resources WHERE 1=1"
-        );
-        
+        let mut query = sqlx::QueryBuilder::new("SELECT * FROM resources WHERE 1=1");
+
         // Apply tenant filter
         if !tenant.is_admin {
             query.push(" AND tenant_id = ").push_bind(tenant.tenant_id);
         }
-        
+
         // Apply resource type filter
         if let Some(rtype) = resource_type {
             query.push(" AND resource_type = ").push_bind(rtype);
         }
-        
+
         query.push(" ORDER BY created_at DESC");
-        
-        let rows = query.build()
-            .fetch_all(&*self.pool)
-            .await?;
-        
-        Ok(rows.into_iter()
+
+        let rows = query.build().fetch_all(&*self.pool).await?;
+
+        Ok(rows
+            .into_iter()
             .map(|row| {
                 serde_json::json!({
                     "id": row.try_get::<Uuid, _>("id").ok(),
@@ -167,7 +164,7 @@ impl TenantDatabase {
             })
             .collect())
     }
-    
+
     /// Create a resource with tenant isolation
     pub async fn create_resource(
         &self,
@@ -177,7 +174,7 @@ impl TenantDatabase {
         data: serde_json::Value,
     ) -> Result<Uuid, sqlx::Error> {
         let id = Uuid::new_v4();
-        
+
         sqlx::query!(
             r#"
             INSERT INTO resources (id, tenant_id, resource_type, name, data, created_at, created_by)
@@ -192,11 +189,11 @@ impl TenantDatabase {
         )
         .execute(&*self.pool)
         .await?;
-        
+
         info!("Created resource {} for tenant {}", id, tenant.tenant_id);
         Ok(id)
     }
-    
+
     /// Update a resource with tenant isolation
     pub async fn update_resource(
         &self,
@@ -234,10 +231,10 @@ impl TenantDatabase {
             .execute(&*self.pool)
             .await?
         };
-        
+
         Ok(result.rows_affected() > 0)
     }
-    
+
     /// Delete a resource with tenant isolation
     pub async fn delete_resource(
         &self,
@@ -246,12 +243,9 @@ impl TenantDatabase {
     ) -> Result<bool, sqlx::Error> {
         let result = if tenant.is_admin {
             // Admin can delete any resource
-            sqlx::query!(
-                "DELETE FROM resources WHERE id = $1",
-                resource_id
-            )
-            .execute(&*self.pool)
-            .await?
+            sqlx::query!("DELETE FROM resources WHERE id = $1", resource_id)
+                .execute(&*self.pool)
+                .await?
         } else {
             // Regular user can only delete their tenant's resources
             sqlx::query!(
@@ -262,10 +256,10 @@ impl TenantDatabase {
             .execute(&*self.pool)
             .await?
         };
-        
+
         Ok(result.rows_affected() > 0)
     }
-    
+
     /// Get policies for a tenant
     pub async fn get_policies(
         &self,
@@ -283,8 +277,9 @@ impl TenantDatabase {
             .fetch_all(&*self.pool)
             .await?
         };
-        
-        Ok(rows.into_iter()
+
+        Ok(rows
+            .into_iter()
             .map(|row| {
                 serde_json::json!({
                     "id": row.id,
@@ -297,7 +292,7 @@ impl TenantDatabase {
             })
             .collect())
     }
-    
+
     /// Get compliance data for a tenant
     pub async fn get_compliance(
         &self,
@@ -326,9 +321,9 @@ impl TenantDatabase {
                 tenant.tenant_id
             )
         };
-        
+
         let row = query.fetch_one(&*self.pool).await?;
-        
+
         Ok(serde_json::json!({
             "total": row.total_resources,
             "compliant": row.compliant,
@@ -366,14 +361,14 @@ pub async fn audit_log(
     )
     .execute(pool)
     .await?;
-    
+
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_tenant_context_from_claims() {
         let claims = serde_json::json!({
@@ -383,13 +378,13 @@ mod tests {
             "roles": ["admin"],
             "subscription_id": "test-sub-123"
         });
-        
+
         let context = TenantContext::from_claims(&claims).unwrap();
         assert_eq!(context.tenant_name, "Test Tenant");
         assert!(context.is_admin);
         assert!(context.user_id.is_some());
     }
-    
+
     #[test]
     fn test_tenant_access_control() {
         let tenant = TenantContext {
@@ -399,13 +394,13 @@ mod tests {
             user_id: Some(Uuid::new_v4()),
             subscription_id: None,
         };
-        
+
         let same_tenant = tenant.tenant_id;
         let different_tenant = Uuid::new_v4();
-        
+
         assert!(tenant.can_access_tenant(&same_tenant));
         assert!(!tenant.can_access_tenant(&different_tenant));
-        
+
         // Admin can access any tenant
         let admin = TenantContext {
             is_admin: true,

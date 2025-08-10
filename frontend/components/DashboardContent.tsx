@@ -118,10 +118,10 @@ export default function DashboardContent() {
       description: 'Intelligent access control',
       color: 'green',
       metrics: [
-        { label: 'Total Users', value: metrics?.rbac.users || 0 },
-        { label: 'Active Roles', value: metrics?.rbac.roles || 0 },
-        { label: 'Risk Score', value: `${metrics?.rbac.risk_score || 0}%`, trend: 'down' },
-        { label: 'Violations', value: metrics?.rbac.violations || 0, trend: 'down' }
+        { label: 'Total Users', value: metrics?.rbac?.users ?? 0 },
+        { label: 'Active Roles', value: metrics?.rbac?.roles ?? 0 },
+        { label: 'Risk Score', value: `${metrics?.rbac?.risk_score ?? 0}%`, trend: 'down' },
+        { label: 'Violations', value: metrics?.rbac?.violations ?? 0, trend: 'down' }
       ]
     },
     {
@@ -179,7 +179,7 @@ export default function DashboardContent() {
   ]
 
   // Transform recommendations to include appropriate icons and actions
-  const proactiveActions = recommendations.map(rec => ({
+  const proactiveActions = (recommendations || []).map(rec => ({
     type: rec.recommendation_type,
     severity: rec.severity,
     title: rec.title,

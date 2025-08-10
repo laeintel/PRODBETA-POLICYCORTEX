@@ -1,5 +1,7 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -26,7 +28,7 @@ interface AppLayoutProps {
   children: React.ReactNode
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
+function AppLayoutInner({ children }: AppLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -371,3 +373,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
     </div>
   )
 }
+
+// Export dynamically imported version that doesn't run during SSR
+const AppLayout = dynamic(
+  () => Promise.resolve(AppLayoutInner),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
+          <p className="text-white">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+)
+
+export default AppLayout

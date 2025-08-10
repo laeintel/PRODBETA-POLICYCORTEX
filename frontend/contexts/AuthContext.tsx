@@ -11,17 +11,23 @@ import {
 import { MsalProvider, useMsal, useAccount, useIsAuthenticated } from '@azure/msal-react'
 import { msalConfig, loginRequest, apiRequest } from '../lib/auth-config'
 
-// Create the MSAL instance
-const msalInstance = new PublicClientApplication(msalConfig)
+// Create the MSAL instance only on client side
+let msalInstance: PublicClientApplication | null = null;
 
-// Initialize MSAL
-msalInstance.initialize().then(() => {
-  // Check if there's an account already signed in
-  const accounts = msalInstance.getAllAccounts()
-  if (accounts.length > 0) {
-    msalInstance.setActiveAccount(accounts[0])
-  }
-})
+if (typeof window !== 'undefined') {
+  msalInstance = new PublicClientApplication(msalConfig);
+  
+  // Initialize MSAL
+  msalInstance.initialize().then(() => {
+    // Check if there's an account already signed in
+    const accounts = msalInstance!.getAllAccounts()
+    if (accounts.length > 0) {
+      msalInstance!.setActiveAccount(accounts[0])
+    }
+  }).catch((error) => {
+    console.error('MSAL initialization failed:', error);
+  });
+}
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -132,6 +138,11 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Return children directly during SSR
+  if (typeof window === 'undefined' || !msalInstance) {
+    return <>{children}</>;
+  }
+  
   return (
     <MsalProvider instance={msalInstance}>
       <AuthProviderInner>

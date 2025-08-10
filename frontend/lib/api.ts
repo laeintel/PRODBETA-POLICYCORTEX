@@ -108,12 +108,18 @@ class PolicyCortexAPI {
   }
 
   private async getAuthHeaders(): Promise<Record<string, string>> {
+    // Skip auth headers during SSR
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    
     try {
       // If we have MSAL context, get the access token
       const { PublicClientApplication } = await import('@azure/msal-browser');
       const { msalConfig } = await import('./auth-config');
       
       const msalInstance = new PublicClientApplication(msalConfig);
+      await msalInstance.initialize();
       const accounts = msalInstance.getAllAccounts();
       
       if (accounts.length > 0) {
@@ -193,7 +199,8 @@ class PolicyCortexAPI {
 
   // Proactive Recommendations - Hot cached for immediate actions
   async getRecommendations(): Promise<ProactiveRecommendation[]> {
-    return performanceApi.get('/api/v1/recommendations', { cache: 'hot', ttl: 60000, headers: await this.getAuthHeaders() });
+    const response = await performanceApi.get('/api/v1/recommendations', { cache: 'hot', ttl: 60000, headers: await this.getAuthHeaders() });
+    return response?.recommendations || [];
   }
 
   // Health Check - No cache for real-time status
@@ -249,9 +256,18 @@ class PolicyCortexAPI {
       console.warn('Some dashboard requests failed:', errors);
     }
 
+    const defaultMetrics: GovernanceMetrics = {
+      policies: { total: 0, active: 0, violations: 0, automated: 0 as any, compliance_rate: 0, prediction_accuracy: 0 },
+      rbac: { users: 0, roles: 0, violations: 0, risk_score: 0, anomalies_detected: 0 },
+      costs: { current_spend: 0, predicted_spend: 0, savings_identified: 0, optimization_rate: 0 },
+      network: { endpoints: 0, active_threats: 0, blocked_attempts: 0, latency_ms: 0 },
+      resources: { total: 0, optimized: 0, idle: 0, overprovisioned: 0 },
+      ai: { accuracy: 0, predictions_made: 0, automations_executed: 0, learning_progress: 0 }
+    } as unknown as GovernanceMetrics;
+
     return {
-      metrics: results[0] instanceof Error ? null : results[0] as GovernanceMetrics,
-      recommendations: results[1] instanceof Error ? [] : results[1] as ProactiveRecommendation[],
+      metrics: results[0] instanceof Error ? defaultMetrics : (results[0] as GovernanceMetrics),
+      recommendations: results[1] instanceof Error ? [] : ((results[1] as any)?.recommendations || results[1] || []),
       correlations: results[2] instanceof Error ? [] : results[2] as CrossDomainCorrelation[],
       predictions: results[3] instanceof Error ? [] : results[3] as any[]
     };

@@ -370,7 +370,7 @@ export async function offlineFetch(
     maxRetries?: number
   }
 ): Promise<Response> {
-  const isOnline = navigator.onLine
+  const isOnline = typeof window !== 'undefined' ? navigator.onLine : true
 
   if (!isOnline && options?.offline !== false) {
     // Queue request for later
@@ -409,7 +409,7 @@ export async function offlineFetch(
  * Hook for offline status
  */
 export function useOfflineStatus() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true)
   const [queueSize, setQueueSize] = useState(0)
 
   useEffect(() => {

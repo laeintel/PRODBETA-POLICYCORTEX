@@ -49,8 +49,8 @@ use api::{
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
-use tenant_isolation::{TenantContext, TenantDatabase, tenant_isolation_middleware};
 use azure_client_async::AsyncAzureClient;
+use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
 
 #[derive(Serialize)]
 struct HealthResponse {
