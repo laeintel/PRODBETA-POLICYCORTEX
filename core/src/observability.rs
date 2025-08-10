@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
 use opentelemetry::{
     global,
-    sdk::propagation::TraceContextPropagator,
     trace::{TraceError, Tracer, TracerProvider},
 };
+use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_otlp::WithExportConfig;
 use prometheus::{Counter, Encoder, Gauge, Histogram, HistogramOpts, Registry, TextEncoder};
 use serde::{Deserialize, Serialize};

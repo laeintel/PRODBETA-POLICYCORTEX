@@ -254,7 +254,7 @@ impl DefaultPolicyEngine {
             }
             Condition::HasTag { tag } => resource.tags.contains_key(tag),
             Condition::MissingTag { tag } => !resource.tags.contains_key(tag),
-            Condition::Custom { expression } => {
+            Condition::Custom { expression: _ } => {
                 // Evaluate custom expression (simplified)
                 // In production, use a proper expression evaluator
                 false
