@@ -105,10 +105,10 @@ export default function DashboardContent() {
       description: 'Automated policy management',
       color: 'blue',
       metrics: [
-        { label: 'Active Policies', value: metrics?.policies.active || 0, total: metrics?.policies.total || 0 },
-        { label: 'Automated', value: metrics ? `${Math.round((metrics.policies.automated / metrics.policies.active) * 100)}%` : '0%' },
-        { label: 'Violations', value: metrics?.policies.violations || 0, trend: 'down' },
-        { label: 'Compliance Rate', value: `${metrics?.policies.compliance_rate || 0}%`, trend: 'up' }
+        { label: 'Active Policies', value: metrics?.policies?.active ?? 0, total: metrics?.policies?.total ?? 0 },
+        { label: 'Automated', value: (metrics?.policies?.active ?? 0) > 0 ? `${Math.round(((metrics?.policies?.automated ?? 0) / (metrics?.policies?.active ?? 1)) * 100)}%` : '0%' },
+        { label: 'Violations', value: metrics?.policies?.violations ?? 0, trend: 'down' },
+        { label: 'Compliance Rate', value: `${metrics?.policies?.compliance_rate ?? 0}%`, trend: 'up' }
       ]
     },
     {
@@ -131,10 +131,10 @@ export default function DashboardContent() {
       description: 'FinOps automation',
       color: 'yellow',
       metrics: [
-        { label: 'Current Spend', value: `$${metrics?.costs.current_spend.toLocaleString() || '0'}` },
-        { label: 'Predicted', value: `$${metrics?.costs.predicted_spend.toLocaleString() || '0'}` },
-        { label: 'Savings', value: `$${metrics?.costs.savings_identified.toLocaleString() || '0'}`, trend: 'up' },
-        { label: 'Optimized', value: `${metrics?.costs.optimization_rate || 0}%`, trend: 'up' }
+        { label: 'Current Spend', value: `$${(metrics?.costs?.current_spend ?? 0).toLocaleString()}` },
+        { label: 'Predicted', value: `$${(metrics?.costs?.predicted_spend ?? 0).toLocaleString()}` },
+        { label: 'Savings', value: `$${(metrics?.costs?.savings_identified ?? 0).toLocaleString()}` , trend: 'up' },
+        { label: 'Optimized', value: `${metrics?.costs?.optimization_rate ?? 0}%`, trend: 'up' }
       ]
     },
     {
@@ -144,10 +144,10 @@ export default function DashboardContent() {
       description: 'Zero-trust governance',
       color: 'red',
       metrics: [
-        { label: 'Endpoints', value: metrics?.network.endpoints || 0 },
-        { label: 'Active Threats', value: metrics?.network.active_threats || 0, trend: 'down' },
-        { label: 'Blocked', value: metrics?.network.blocked_attempts || 0 },
-        { label: 'Latency', value: `${metrics?.network.latency_ms || 0}ms` }
+        { label: 'Endpoints', value: metrics?.network?.endpoints ?? 0 },
+        { label: 'Active Threats', value: metrics?.network?.active_threats ?? 0, trend: 'down' },
+        { label: 'Blocked', value: metrics?.network?.blocked_attempts ?? 0 },
+        { label: 'Latency', value: `${metrics?.network?.latency_ms ?? 0}ms` }
       ]
     },
     {
@@ -157,10 +157,10 @@ export default function DashboardContent() {
       description: 'Lifecycle automation',
       color: 'indigo',
       metrics: [
-        { label: 'Total Resources', value: metrics?.resources.total || 0 },
-        { label: 'Optimized', value: metrics?.resources.optimized || 0 },
-        { label: 'Idle', value: metrics?.resources.idle || 0, trend: 'down' },
-        { label: 'Over-provisioned', value: metrics?.resources.overprovisioned || 0, trend: 'down' }
+        { label: 'Total Resources', value: metrics?.resources?.total ?? 0 },
+        { label: 'Optimized', value: metrics?.resources?.optimized ?? 0 },
+        { label: 'Idle', value: metrics?.resources?.idle ?? 0, trend: 'down' },
+        { label: 'Over-provisioned', value: metrics?.resources?.overprovisioned ?? 0, trend: 'down' }
       ]
     },
     {
@@ -170,10 +170,10 @@ export default function DashboardContent() {
       description: 'Custom-trained intelligence',
       color: 'pink',
       metrics: [
-        { label: 'Accuracy', value: `${metrics?.ai.accuracy || 0}%`, trend: 'up' },
-        { label: 'Predictions', value: metrics?.ai.predictions_made.toLocaleString() || '0' },
-        { label: 'Automations', value: metrics?.ai.automations_executed.toLocaleString() || '0' },
-        { label: 'Learning', value: `${metrics?.ai.learning_progress.toFixed(1) || 0}%`, trend: 'up' }
+        { label: 'Accuracy', value: `${metrics?.ai?.accuracy ?? 0}%`, trend: 'up' },
+        { label: 'Predictions', value: (metrics?.ai?.predictions_made ?? 0).toLocaleString() },
+        { label: 'Automations', value: (metrics?.ai?.automations_executed ?? 0).toLocaleString() },
+        { label: 'Learning', value: `${(metrics?.ai?.learning_progress ?? 0).toFixed(1)}%`, trend: 'up' }
       ]
     }
   ]
