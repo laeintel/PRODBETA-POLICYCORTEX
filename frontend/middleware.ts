@@ -19,8 +19,8 @@ export function middleware(request: NextRequest) {
   // Only handle /health here for local development convenience.
   if (url.pathname === '/health') {
     const healthBase = (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
-      ? 'http://localhost:8090'
-      : (process.env.NEXT_PUBLIC_API_URL || 'http://backend:8090')
+      ? 'http://localhost:8080'
+      : (process.env.NEXT_PUBLIC_API_URL || 'http://backend:8080')
     url.href = `${healthBase}${url.pathname}${url.search}`
     return NextResponse.rewrite(url)
   }

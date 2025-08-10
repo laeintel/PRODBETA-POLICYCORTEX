@@ -8,22 +8,22 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // Route all API v1 calls to the Python API Gateway
+      // Route all API v1 calls to the Rust API
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:8090/api/v1/:path*',
+        destination: 'http://localhost:8080/api/v1/:path*',
       },
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8090/api/:path*',
+        destination: 'http://localhost:8080/api/:path*',
       },
       {
         source: '/actions/:path*',
-        destination: 'http://localhost:8090/api/v1/actions/:path*',
+        destination: 'http://localhost:8080/api/v1/actions/:path*',
       },
       {
         source: '/api/deep/:path*',
-        destination: 'http://localhost:8090/api/v1/:path*',
+        destination: 'http://localhost:8080/api/v1/:path*',
       },
       {
         source: '/graphql',
