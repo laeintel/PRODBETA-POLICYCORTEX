@@ -86,7 +86,12 @@
       "Bash(git branch:*)",
       "Bash(az login:*)",
       "Bash(git check-ignore:*)",
-      "Bash(.restart-services.bat)"
+      "Bash(.restart-services.bat)",
+      "Bash(bash:*)",
+      "Bash(az:*)",
+      "Bash(.start-dev.bat)",
+      "Bash(start-dev.bat)",
+      "Bash(./restart-services.bat)"
     ],
     "deny": []
   }

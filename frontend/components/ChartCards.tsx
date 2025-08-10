@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, AreaChart, Area, BarChart, Bar, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts'
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, AreaChart, Area, BarChart, Bar, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts'
 
 type Point = { name: string; value: number; [key: string]: any }
 
@@ -73,6 +73,21 @@ export function RiskSurface({ data }: { data: Array<{ metric: string; score: num
         <PolarRadiusAxis stroke="#94a3b8" angle={30} domain={[0, 100]} />
         <Radar name="Risk" dataKey="score" stroke="#ef4444" fill="#ef4444" fillOpacity={0.35} />
       </RadarChart>
+    </ResponsiveContainer>
+  )
+}
+
+export function ServiceCostBar({ data }: { data: Array<{ name: string; monthly: number }> }) {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={data} margin={{ left: 0, right: 0, top: 8, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <XAxis dataKey="name" stroke="#94a3b8" tickLine={false} axisLine={false} />
+        <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} />
+        <Tooltip contentStyle={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8 }} />
+        <Legend />
+        <Bar dataKey="monthly" name="Monthly" fill="#a78bfa" />
+      </BarChart>
     </ResponsiveContainer>
   )
 }

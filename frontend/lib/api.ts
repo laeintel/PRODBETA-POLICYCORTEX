@@ -350,8 +350,8 @@ export function useConversation() {
     setLoading(true);
     try {
       // Build context from conversation history
-      const enhancedContext = {
-        previous_intents: conversationHistory.slice(-3).map(h => h.response.intent),
+        const enhancedContext = {
+          previous_intents: conversationHistory.slice(-3).map(h => h.response.intent || '').filter(Boolean) as string[],
         entities: context?.entities || [],
         turn_count: conversationHistory.length,
         ...context

@@ -13,10 +13,11 @@ export default function ActionDrawer({ open, onClose, request }: ActionDrawerPro
   const [actionId, setActionId] = useState<string | null>(null)
   const [record, setRecord] = useState<ActionRecord | null>(null)
   const [events, setEvents] = useState<string[]>([])
+  const [lastFocused, setLastFocused] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     if (!open || !request) return
-    let es: EventSource | null = null
+    let es: { close: () => void } | null = null
     ;(async () => {
       try {
         const { action_id } = await createAction(request)
@@ -38,15 +39,31 @@ export default function ActionDrawer({ open, onClose, request }: ActionDrawerPro
     }
   }, [open, request])
 
+  // Accessibility: trap focus and restore
+  useEffect(() => {
+    if (open) {
+      setLastFocused(document.activeElement as HTMLElement)
+      document.body.style.overflow = 'hidden'
+      setTimeout(() => {
+        const el = document.getElementById('action-drawer-title')
+        el?.focus()
+      }, 0)
+    } else {
+      document.body.style.overflow = ''
+      lastFocused?.focus()
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
   if (!open || !request) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-3xl bg-slate-900 border border-white/10 rounded-t-2xl p-4">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center" aria-modal="true" role="dialog">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-3xl bg-slate-900 border border-white/10 rounded-t-2xl p-4 shadow-2xl focus:outline-none" tabIndex={-1}>
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-semibold">Action</h3>
-          <button className="text-gray-300 hover:text-white" onClick={onClose}>Close</button>
+          <h3 id="action-drawer-title" className="text-white font-semibold" tabIndex={0}>Action</h3>
+          <button className="text-gray-300 hover:text-white" onClick={onClose} aria-label="Close action drawer">Close</button>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
           <div className="bg-white/5 rounded p-3">

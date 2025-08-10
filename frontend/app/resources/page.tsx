@@ -253,10 +253,9 @@ export default function ResourcesPage() {
                       key={resource.id} 
                       className="hover:bg-white/5 cursor-pointer transition-colors"
                       onClick={() => {
-                        setSelectedResource(resource)
-                        setShowDetails(true)
+                        // Navigate to deep drill-in page for this resource
                         if (typeof window !== 'undefined') {
-                          history.replaceState(null, '', `/resources#${encodeURIComponent(resource.id)}`)
+                          window.location.href = `/resources/${encodeURIComponent(resource.id)}`
                         }
                       }}
                     >

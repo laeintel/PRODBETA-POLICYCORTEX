@@ -18,6 +18,7 @@ import {
   Menu,
   X
 } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import ConnectionStatusBanner from './ConnectionStatusBanner'
 
 interface AppLayoutProps {
@@ -29,6 +30,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { isAuthenticated, login, logout, user } = useAuth()
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const navigation = [
@@ -248,20 +250,35 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           {/* User Section */}
           <div className="p-4 border-t border-white/10">
-            <button
-              onClick={() => router.push('/settings')}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white transition-all"
-            >
-              <Settings className="w-5 h-5" />
-              <span className="text-sm">Settings</span>
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white transition-all mt-2"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="text-sm">Sign Out</span>
-            </button>
+            <div className="mb-3 text-xs text-gray-400">
+              {isAuthenticated ? `Signed in as ${user?.username || user?.name || 'user'}` : 'Not signed in'}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push('/settings')}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white transition-all"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="text-sm">Settings</span>
+              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => logout()}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm">Sign out</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => login()}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white transition-all"
+                >
+                  <Brain className="w-4 h-4" />
+                  <span className="text-sm">Sign in</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>

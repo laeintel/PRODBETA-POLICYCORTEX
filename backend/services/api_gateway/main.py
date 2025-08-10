@@ -182,6 +182,9 @@ async def _simulate_action(action_id: str):
 
 @app.post("/api/v1/actions")
 async def create_action(payload: ActionRequest):
+    # Defensive: ensure minimal payload
+    if not payload.action_type:
+        raise HTTPException(400, "action_type is required")
     action_id = str(uuid.uuid4())
     _ACTIONS[action_id] = {
         "id": action_id,
@@ -315,13 +318,18 @@ async def get_resources(request: ResourcesRequest = Depends()):
 
 @app.get("/api/v1/policies")
 async def get_policies():
-    """Get policy assignments (real)"""
+    """Get policy assignments (prefer deep with graceful fallback)"""
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
-    assignments = []
-    for a in azure_insights.policy_insights.policy_assignments.list():
-        assignments.append({"id": a.id, "name": a.name, "displayName": a.display_name})
-    return {"policies": assignments, "total": len(assignments)}
+    try:
+        assignments = []
+        for a in azure_insights.policy_insights.policy_assignments.list():
+            assignments.append({"id": a.id, "name": a.name, "displayName": a.display_name})
+        return {"policies": assignments, "total": len(assignments)}
+    except Exception as e:
+        logger.warning(f"/policies fallback to deep due to error: {e}")
+        # Fall back to deep endpoint which provides mock data when Azure is unavailable
+        return await azure_insights.get_policy_compliance_deep()
 
 @app.post("/api/v1/chat")
 async def chat(request: ChatRequest):

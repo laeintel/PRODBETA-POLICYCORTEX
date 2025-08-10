@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import AppLayout from '../../../components/AppLayout'
+import Breadcrumbs from '../../../components/Breadcrumbs'
 import { useAzureResources } from '../../../lib/azure-api'
 import { MapPin, Pause, Play, RefreshCw, Trash2, Zap } from 'lucide-react'
 import ActionDrawer from '../../../components/ActionDrawer'
@@ -35,7 +36,7 @@ export default function ResourceDetailPage() {
   return (
     <AppLayout>
       <div className="p-6 max-w-5xl mx-auto">
-        <button onClick={() => router.back()} className="text-sm text-gray-300 hover:text-white mb-4">← Back</button>
+        <Breadcrumbs items={[{ href: '/resources', label: 'Resources' }, { href: '#', label: resource?.name || 'Resource' }]} />
         {loading && <div className="text-gray-300">Loading resource…</div>}
         {!loading && !resource && <div className="text-gray-300">Resource not found.</div>}
         {resource && (

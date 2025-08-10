@@ -75,7 +75,7 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/50 z-[98] backdrop-blur-sm"
           />
 
           {/* Drawer */}
@@ -84,13 +84,17 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-50 overflow-hidden"
+            className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-[99] overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="action-drawer-heading"
+            tabIndex={-1}
           >
             {/* Header */}
             <div className="border-b border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h2 id="action-drawer-heading" className="text-2xl font-bold text-gray-900 dark:text-white" tabIndex={0}>
                     Action Execution
                   </h2>
                   {action && (
@@ -102,6 +106,7 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
                 <button
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                  aria-label="Close action drawer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -130,6 +135,8 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
                         ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
+                    aria-selected={activeTab === tab.id}
+                    role="tab"
                   >
                     {tab.label}
                   </button>
@@ -138,7 +145,7 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6" role="tabpanel">
               {activeTab === 'summary' && <SummaryTab action={action} />}
               {activeTab === 'preflight' && <PreflightTab action={action} />}
               {activeTab === 'blast-radius' && <BlastRadiusTab action={action} />}

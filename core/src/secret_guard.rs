@@ -93,7 +93,9 @@ lazy_static! {
         },
         SecretPattern {
             name: "API Key".to_string(),
-            pattern: r"api[_-]?key[_-]?[=:]\s*['\"]?[a-zA-Z0-9]{32,}['\"]?".to_string(),
+            // Use raw string with custom delimiter to avoid escaping quotes
+            pattern: r#"api[_-]?key[_-]?[=:]\s*['\"]?[a-zA-Z0-9]{32,}['\"]?"#
+                .to_string(),
             entropy_threshold: None,
             severity: Severity::High,
             redaction_text: "[API_KEY_REDACTED]".to_string(),

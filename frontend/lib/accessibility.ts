@@ -59,36 +59,23 @@ export function useFocusTrap(isActive: boolean = true) {
 /**
  * Skip navigation links for screen readers
  */
+import * as React from 'react'
+
 export function SkipLinks() {
   return (
-    <nav className="sr-only focus-within:not-sr-only" aria-label="Skip links">
+    <div className="sr-only focus-within:not-sr-only" aria-label="Skip links">
       <ul className="flex flex-col space-y-2 p-4 bg-white dark:bg-gray-900 shadow-lg">
         <li>
-          <a 
-            href="#main-content" 
-            className="skip-link focus:outline-none focus:ring-2 focus:ring-blue-500 p-2 block"
-          >
-            Skip to main content
-          </a>
+          <a href="#main-content" className="skip-link focus:outline-none focus:ring-2 focus:ring-blue-500 p-2 block">Skip to main content</a>
         </li>
         <li>
-          <a 
-            href="#main-navigation" 
-            className="skip-link focus:outline-none focus:ring-2 focus:ring-blue-500 p-2 block"
-          >
-            Skip to navigation
-          </a>
+          <a href="#main-navigation" className="skip-link focus:outline-none focus:ring-2 focus:ring-blue-500 p-2 block">Skip to navigation</a>
         </li>
         <li>
-          <a 
-            href="#footer" 
-            className="skip-link focus:outline-none focus:ring-2 focus:ring-blue-500 p-2 block"
-          >
-            Skip to footer
-          </a>
+          <a href="#footer" className="skip-link focus:outline-none focus:ring-2 focus:ring-blue-500 p-2 block">Skip to footer</a>
         </li>
       </ul>
-    </nav>
+    </div>
   )
 }
 
@@ -114,29 +101,14 @@ export function useAnnounce() {
     }, 1000)
   }
 
-  return {
-    announce,
-    LiveRegion: () => (
-      <>
-        <div 
-          role="status" 
-          aria-live="polite" 
-          aria-atomic="true" 
-          className="sr-only"
-        >
-          {announcement}
-        </div>
-        <div 
-          role="alert" 
-          aria-live="assertive" 
-          aria-atomic="true" 
-          className="sr-only"
-        >
-          {announcement}
-        </div>
-      </>
+  const LiveRegion: React.FC = () => {
+    return React.createElement(React.Fragment, {},
+      React.createElement('div', { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true', className: 'sr-only' }, announcement),
+      React.createElement('div', { role: 'alert', 'aria-live': 'assertive', 'aria-atomic': 'true', className: 'sr-only' }, announcement)
     )
   }
+
+  return { announce, LiveRegion }
 }
 
 /**
@@ -256,7 +228,7 @@ export const aria = {
     'aria-labelledby': labelledby,
   }),
 
-  dialog: (label: string, describedby?: string): AriaProps => ({
+  dialog: (label: string, describedby?: string): AriaProps & { 'aria-modal'?: boolean } => ({
     role: 'dialog',
     'aria-label': label,
     'aria-describedby': describedby,
