@@ -14,13 +14,18 @@ export default function ActionDrawer({ open, onClose, request }: ActionDrawerPro
   const [record, setRecord] = useState<ActionRecord | null>(null)
   const [events, setEvents] = useState<string[]>([])
   const [lastFocused, setLastFocused] = useState<HTMLElement | null>(null)
+  const DEMO_MODE = process.env.NEXT_PUBLIC_DISABLE_DEEP === 'true'
 
   useEffect(() => {
     if (!open || !request) return
     let es: { close: () => void } | null = null
     ;(async () => {
       try {
-        const { action_id } = await createAction(request)
+        // In demo mode, force dry_run and annotate request
+        const effective: CreateActionRequest = DEMO_MODE
+          ? { ...request, params: { ...(request.params || {}), dry_run: true, demo_mode: true } }
+          : request
+        const { action_id } = await createAction(effective)
         setActionId(action_id)
         // initial fetch
         const rec = await getAction(action_id)
@@ -65,6 +70,11 @@ export default function ActionDrawer({ open, onClose, request }: ActionDrawerPro
           <h3 id="action-drawer-title" className="text-white font-semibold" tabIndex={0}>Action</h3>
           <button className="text-gray-300 hover:text-white" onClick={onClose} aria-label="Close action drawer">Close</button>
         </div>
+        {DEMO_MODE && (
+          <div className="mt-2 text-xs text-yellow-300">
+            Demo Mode: Executions are dry-run only. Connect Azure to enable live changes.
+          </div>
+        )}
         <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
           <div className="bg-white/5 rounded p-3">
             <div className="text-gray-300">Summary</div>
