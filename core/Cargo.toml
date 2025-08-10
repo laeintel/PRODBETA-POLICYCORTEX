@@ -30,6 +30,7 @@ chrono = { version = "0.4", features = ["serde"] }
 # Azure SDK
 azure_identity = "0.20"
 azure_core = "0.20"
+azure_security_keyvault = "0.20"
 
 # HTTP Client
 reqwest = { version = "0.11", features = ["json"] }
@@ -47,9 +48,32 @@ headers = "0.3"
 # Redis caching
 redis = { version = "0.23", features = ["tokio-comp", "connection-manager", "json"] }
 
+# SQL database support
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono"] }
+
+# Lazy static for compile-time patterns
+lazy_static = "1.4"
+
+# Regular expressions for secret scanning
+regex = "1.10"
+
+# Random number generation for jitter
+rand = "0.8"
+
+# Base64 encoding for signatures
+base64 = "0.21"
+
 # Performance monitoring
 metrics = "0.21"
 metrics-exporter-prometheus = "0.12"
+
+# OpenTelemetry for distributed tracing
+opentelemetry = { version = "0.21", features = ["trace"] }
+opentelemetry-otlp = "0.14"
+opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
+
+# Prometheus metrics
+prometheus = "0.13"
 
 # Environment Variables
 dotenv = "0.15"

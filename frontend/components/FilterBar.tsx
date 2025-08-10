@@ -77,7 +77,7 @@ export default function FilterBar({ facets, initial = {}, onChange }: FilterBarP
   }), [facets, filters])
 
   return (
-    <div className="w-full bg-white/5 border border-white/10 rounded-lg p-3">
+    <div className="w-full bg-white/5 border border-white/10 rounded-lg p-3 sticky top-16 z-10 backdrop-blur supports-[backdrop-filter]:bg-white/5">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {controls}
       </div>

@@ -28,8 +28,13 @@ mod ai;
 mod collectors;
 mod tenant;
 mod approvals;
+mod approval_workflow;
+mod action_orchestrator;
 mod audit_chain;
+mod evidence_pipeline;
+mod observability;
 mod secret_guard;
+mod secrets;
 mod slo;
 mod change_management;
 
@@ -64,9 +69,14 @@ struct HealthResponse {
     version: String,
     service: String,
     patents: Vec<String>,
+    azure_connected: bool,
+    data_mode: String,
 }
 
-async fn health_check() -> Json<HealthResponse> {
+async fn health_check(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
+    let azure_connected = state.async_azure_client.is_some() || state.azure_client.is_some();
+    let data_mode = if azure_connected { "live" } else { "simulated" };
+    
     Json(HealthResponse {
         status: "healthy".to_string(),
         version: "2.0.0".to_string(),
@@ -77,6 +87,8 @@ async fn health_check() -> Json<HealthResponse> {
             "Conversational Governance Intelligence System".to_string(),
             "Cross-Domain Governance Correlation Engine".to_string(),
         ],
+        azure_connected,
+        data_mode: data_mode.to_string(),
     })
 }
 

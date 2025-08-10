@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 export default function ConnectionStatusBanner() {
   const [status, setStatus] = useState<'ok' | 'degraded' | 'down'>('ok')
   const [message, setMessage] = useState<string>('')
+  const [auth, setAuth] = useState<'ok' | 'unauth'>('ok')
 
   useEffect(() => {
     const check = async () => {
@@ -23,7 +24,8 @@ export default function ConnectionStatusBanner() {
     return () => clearInterval(id)
   }, [])
 
-  if (status === 'ok') return null
+  const show = status !== 'ok' || auth === 'unauth'
+  if (!show) return null
 
   return (
     <div className={`text-sm text-white px-4 py-2 ${status === 'down' ? 'bg-red-600/80' : 'bg-yellow-600/80'}`}>
