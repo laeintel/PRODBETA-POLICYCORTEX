@@ -156,8 +156,8 @@ class OfflineManager {
     this.emit('sync-start')
     
     try {
-      // Get all unsynced actions
-      const actions = await this.db.getAllFromIndex('actions', 'synced', false)
+      // Get all unsynced actions (index value equals false)
+      const actions = await this.db.getAllFromIndex('actions', 'synced', IDBKeyRange.only(false))
       
       for (const action of actions) {
         try {
@@ -338,7 +338,7 @@ class OfflineManager {
   async getPendingActionsCount(): Promise<number> {
     if (!this.db) return 0
     
-    const actions = await this.db.getAllFromIndex('actions', 'synced', false)
+    const actions = await this.db.getAllFromIndex('actions', 'synced', IDBKeyRange.only(false))
     return actions.length
   }
 
