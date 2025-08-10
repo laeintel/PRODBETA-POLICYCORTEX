@@ -4,7 +4,7 @@ Fast, lightweight API with real Azure integration
 """
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel
@@ -23,7 +23,11 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, String, Float, DateTime, JSON, Text
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-from ..ai_engine.real_ai_service import ai_service
+# Always import via absolute package path when running as module
+from services.ai_engine.real_ai_service import ai_service
+import base64
+from PIL import Image
+import io
 
 # Configure logging early (before optional imports use it)
 logging.basicConfig(level=logging.INFO)
@@ -42,6 +46,38 @@ try:
     AUTH_ENHANCED = True
 except Exception:
     AUTH_ENHANCED = False
+
+# Import continuous learning system
+try:
+    from services.ai_engine.continuous_learning import (
+        initialize_continuous_learning,
+        continuous_learner,
+        ErrorEvent
+    )
+    from services.api_gateway.error_learning_middleware import (
+        setup_error_learning,
+        ErrorPredictionHelper
+    )
+    CONTINUOUS_LEARNING_ENABLED = True
+    error_prediction_helper = None  # Will be initialized on startup
+except ImportError:
+    CONTINUOUS_LEARNING_ENABLED = False
+    error_prediction_helper = None
+    logger.warning("Continuous learning system not available")
+
+# Import multimodal processing
+try:
+    from services.ai_engine.multimodal_processing import (
+        MultiModalProcessor,
+        ModalityType,
+        MultiModalInput
+    )
+    MULTIMODAL_ENABLED = True
+    multimodal_processor = None  # Will be initialized on startup
+except ImportError:
+    MULTIMODAL_ENABLED = False
+    multimodal_processor = None
+    logger.warning("Multimodal processing not available")
 
 # Import observability
 try:
@@ -98,6 +134,9 @@ class ChatRequest(BaseModel):
     message: str
     context: Optional[Dict[str, Any]] = {}
     model: Optional[str] = "gpt-5"  # or "glm-4.5"
+    image_base64: Optional[str] = None  # Base64 encoded image
+    document_url: Optional[str] = None  # URL or path to document
+    attachments: Optional[List[Dict[str, str]]] = []  # List of attachments with type and data
 
 class PolicyRequest(BaseModel):
     requirement: str
@@ -200,6 +239,117 @@ async def auth_dependency(request: Request) -> Dict[str, Any]:
     return await _validate_bearer_token(token)
 
 
+def _get_request_tenant(request: Request) -> Optional[str]:
+    # Prefer header, then query string
+    hdr = request.headers.get("X-Tenant-ID") or request.headers.get("x-tenant-id")
+    if hdr:
+        return hdr.strip()
+    # query param
+    try:
+        return request.query_params.get("tenant_id")
+    except Exception:
+        return None
+
+
+def _claims_tenant(claims_or_ctx: Any) -> Optional[str]:
+    if AUTH_ENHANCED and hasattr(claims_or_ctx, "tenant_id"):
+        return getattr(claims_or_ctx, "tenant_id", None)
+    if isinstance(claims_or_ctx, dict):
+        return claims_or_ctx.get("tid") or claims_or_ctx.get("tenant_id")
+    return None
+
+
+def enforce_tenant_match(request: Request, claims_or_ctx: Any) -> None:
+    if not REQUIRE_AUTH:
+        return
+    expected = _get_request_tenant(request)
+    if not expected:
+        return
+    actual = _claims_tenant(claims_or_ctx)
+    if actual and expected and actual != expected:
+        raise HTTPException(status_code=403, detail="Tenant access forbidden")
+
+
+# -------------------- Role/Scope Access Helpers --------------------
+_ROLE_RANK = {
+    "user": 0,
+    "viewer": 1,
+    "contributor": 2,
+    "admin": 3,
+}
+
+
+def _extract_roles(auth: Any) -> List[str]:
+    if AUTH_ENHANCED and hasattr(auth, "roles"):
+        return [r.lower() for r in list(auth.roles)]
+    if isinstance(auth, dict):
+        roles_val = auth.get("roles")
+        if isinstance(roles_val, list):
+            return [str(r).lower() for r in roles_val]
+        if isinstance(roles_val, str):
+            return [roles_val.lower()]
+        groups = auth.get("groups")
+        if isinstance(groups, list):
+            return [str(g).lower() for g in groups]
+    return []
+
+
+def _extract_scopes(auth: Any) -> List[str]:
+    if AUTH_ENHANCED and hasattr(auth, "scopes"):
+        return [s.lower() for s in list(auth.scopes)]
+    if isinstance(auth, dict):
+        scp = auth.get("scp")
+        if isinstance(scp, str):
+            return [s.lower() for s in scp.split(" ") if s]
+    return []
+
+
+def _roles_authorized(granted_roles: List[str], min_role: Optional[str]) -> bool:
+    if not min_role:
+        return True
+    max_granted = max((_ROLE_RANK.get(r, -1) for r in granted_roles), default=-1)
+    return max_granted >= _ROLE_RANK.get(min_role, 99)
+
+
+def _scopes_authorized(granted_scopes: List[str], required_keywords: Optional[List[str]]) -> bool:
+    if not required_keywords:
+        return True
+    lowered = [s.lower() for s in granted_scopes]
+    for scope in lowered:
+        for kw in required_keywords:
+            if kw in scope:
+                return True
+    return False
+
+
+def require_access(auth: Any, *, min_role: Optional[str] = None, scope_keywords: Optional[List[str]] = None) -> None:
+    if not REQUIRE_AUTH:
+        return
+    roles = _extract_roles(auth)
+    scopes = _extract_scopes(auth)
+    if _roles_authorized(roles, min_role) or _scopes_authorized(scopes, scope_keywords):
+        return
+    raise HTTPException(
+        status_code=403,
+        detail={
+            "error": "forbidden",
+            "reason": "missing_role_or_scope",
+            "required": {"min_role": min_role, "scope_keywords": scope_keywords or []},
+            "granted": {"roles": roles, "scopes": scopes},
+        },
+    )
+
+
+def require_read_access(auth: Any) -> None:
+    # viewer or any scope containing 'read'
+    require_access(auth, min_role="viewer", scope_keywords=["read"])
+
+
+def require_write_access(auth: Any) -> None:
+    # contributor or any scope containing 'write'
+    require_access(auth, min_role="contributor", scope_keywords=["write"])
+
+
 # -------------------- Persistence & Secrets --------------------
 # Async Postgres (for actions/audit). Configure via DATABASE_URL
 # Prefer SQLite by default for local/demo to avoid external dependency
@@ -252,6 +402,27 @@ async def on_startup():
     if AUTH_ENHANCED:
         await rate_limiter.initialize()
         logger.info("Rate limiter initialized")
+    
+    # Initialize continuous learning system
+    if CONTINUOUS_LEARNING_ENABLED:
+        try:
+            global error_prediction_helper
+            initialize_continuous_learning(vocab_size=50000)
+            # Setup error learning middleware
+            error_prediction_helper = setup_error_learning(app, continuous_learner)
+            logger.info("Continuous learning system initialized - learning from errors in real-time")
+            logger.info("Error learning middleware activated - capturing errors automatically")
+        except Exception as e:
+            logger.warning(f"Failed to initialize continuous learning: {e}")
+    
+    # Initialize multimodal processor
+    if MULTIMODAL_ENABLED:
+        try:
+            global multimodal_processor
+            multimodal_processor = MultiModalProcessor(embedding_dim=768)
+            logger.info("Multimodal processing initialized - can process images, documents, and text")
+        except Exception as e:
+            logger.warning(f"Failed to initialize multimodal processing: {e}")
     
     # Optionally hydrate secrets from Key Vault
     kv_url = os.getenv("KEY_VAULT_URL")
@@ -496,8 +667,11 @@ if OBSERVABILITY_ENABLED:
 @app.get("/api/v1/metrics")
 @rate_limit(requests=200, window=60) if AUTH_ENHANCED else lambda f: f
 async def get_metrics(
-    auth: AuthContext = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+    request: Request,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     """Get governance metrics formatted for the frontend dashboard with safe fallbacks."""
     base = {
         "policies": {
@@ -588,10 +762,12 @@ async def get_metrics(
         return base
 
 @app.get("/api/v1/compliance")
-async def get_compliance(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_compliance(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Summarized compliance view for dashboards and warming.
     Returns overall score (0-1) and framework count when available.
     """
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     try:
         if azure_insights:
             data = await azure_insights.get_policy_compliance_deep()
@@ -613,8 +789,10 @@ async def get_compliance(_: Dict[str, Any] = Depends(auth_dependency)):
         return {"frameworks": 0, "overall_score": 0.0, "assignments": 0}
 
 @app.get("/api/v1/resources")
-async def get_resources(request: ResourcesRequest = Depends(), _: Dict[str, Any] = Depends(auth_dependency)):
+async def get_resources(request: ResourcesRequest = Depends(), req: Request = None, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Get Azure resources (real)"""
+    enforce_tenant_match(req, auth)
+    require_read_access(auth)
     if not azure_collector:
         raise HTTPException(503, "Azure not connected")
     resources: List[Dict[str, Any]] = []
@@ -632,8 +810,10 @@ async def get_resources(request: ResourcesRequest = Depends(), _: Dict[str, Any]
     return {"resources": resources, "total": len(resources), "subscription_id": request.subscription_id, "timestamp": datetime.utcnow().isoformat()}
 
 @app.get("/api/v1/policies")
-async def get_policies(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_policies(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Get policy assignments (prefer deep with graceful fallback)"""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
     try:
@@ -653,22 +833,92 @@ async def get_policies(_: Dict[str, Any] = Depends(auth_dependency)):
 @circuit_breaker(failure_threshold=3, recovery_timeout=30) if AUTH_ENHANCED else lambda f: f
 async def chat(
     request: ChatRequest,
-    auth: AuthContext = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency),
+    req: Request = None,
 ):
-    """Chat with AI domain expert using real AI service"""
+    """Chat with AI domain expert using real AI service with multimodal support"""
     try:
+        enforce_tenant_match(req, auth)
+        require_read_access(auth)
         # Record business metrics if observability is enabled
         if OBSERVABILITY_ENABLED:
             observability.record_metric("chat_requests", 1, {
                 "model": request.model,
-                "has_context": bool(request.context)
+                "has_context": bool(request.context),
+                "has_image": bool(request.image_base64),
+                "has_document": bool(request.document_url),
+                "has_attachments": len(request.attachments or [])
             })
+        
+        # Process multimodal inputs if available
+        multimodal_context = {}
+        
+        if MULTIMODAL_ENABLED and multimodal_processor:
+            # Process image if provided
+            if request.image_base64:
+                try:
+                    img_bytes = base64.b64decode(request.image_base64)
+                    img = Image.open(io.BytesIO(img_bytes))
+                    img_result = await multimodal_processor.process_input(img, "image")
+                    
+                    multimodal_context["image"] = {
+                        "extracted_text": img_result.get("extracted_text", ""),
+                        "analysis": img_result.get("image_analysis", {}),
+                        "has_chart": img_result.get("image_analysis", {}).get("contains_chart", False),
+                        "has_diagram": img_result.get("image_analysis", {}).get("contains_diagram", False)
+                    }
+                    
+                    # Add extracted text to message context
+                    if img_result.get("extracted_text"):
+                        request.message += f"\n[Image contains text: {img_result['extracted_text']}]"
+                except Exception as e:
+                    logger.warning(f"Failed to process image: {e}")
+            
+            # Process document if provided
+            if request.document_url:
+                try:
+                    doc_result = await multimodal_processor.process_input(request.document_url, "document")
+                    
+                    multimodal_context["document"] = {
+                        "content_preview": str(doc_result.get("document_content", ""))[:1000],
+                        "file_type": doc_result.get("file_type", "unknown")
+                    }
+                    
+                    # Add document context to message
+                    if doc_result.get("document_content"):
+                        content_preview = str(doc_result["document_content"])[:500]
+                        request.message += f"\n[Document content: {content_preview}...]"
+                except Exception as e:
+                    logger.warning(f"Failed to process document: {e}")
+            
+            # Process attachments
+            if request.attachments:
+                for attachment in request.attachments[:3]:  # Limit to 3 attachments
+                    try:
+                        att_type = attachment.get("type", "unknown")
+                        att_data = attachment.get("data", "")
+                        
+                        if att_type == "image" and att_data:
+                            img_bytes = base64.b64decode(att_data)
+                            img = Image.open(io.BytesIO(img_bytes))
+                            att_result = await multimodal_processor.process_input(img, "image")
+                            
+                            if "attachments" not in multimodal_context:
+                                multimodal_context["attachments"] = []
+                            
+                            multimodal_context["attachments"].append({
+                                "type": "image",
+                                "extracted_text": att_result.get("extracted_text", "")
+                            })
+                    except Exception as e:
+                        logger.warning(f"Failed to process attachment: {e}")
         
         # Extract context from message for AI analysis
         context_data = {
             "message": request.message,
             "model": request.model,
-            "context": request.context
+            "context": request.context,
+            "multimodal": multimodal_context
         }
         
         # Analyze the message to determine intent
@@ -781,8 +1031,10 @@ async def chat(
         }
 
 @app.get("/api/v1/predictions")
-async def get_predictions(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_predictions(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Return simple predictive signals for dashboards/experiments."""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     try:
         # Illustrative predictions; real implementation would query a model service
         horizon = [7, 14, 30]
@@ -799,9 +1051,96 @@ async def get_predictions(_: Dict[str, Any] = Depends(auth_dependency)):
         logger.warning(f"/predictions failed: {e}")
         return []
 
+@app.post("/api/v1/policies/analyze-document")
+async def analyze_policy_document(
+    document: UploadFile = File(...),
+    screenshots: List[UploadFile] = File(None),
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Analyze policy documents with optional screenshots for visual context"""
+    if not MULTIMODAL_ENABLED or not multimodal_processor:
+        raise HTTPException(503, "Multimodal processing not available")
+    
+    try:
+        result = {
+            "document_analysis": {},
+            "screenshot_insights": [],
+            "compliance_assessment": {},
+            "recommendations": []
+        }
+        
+        # Process main document
+        temp_doc_path = f"/tmp/{document.filename}"
+        doc_content = await document.read()
+        
+        with open(temp_doc_path, "wb") as f:
+            f.write(doc_content)
+        
+        try:
+            doc_result = await multimodal_processor.process_input(temp_doc_path, "document")
+            
+            result["document_analysis"] = {
+                "filename": document.filename,
+                "file_type": doc_result.get("file_type", "unknown"),
+                "content_summary": str(doc_result.get("document_content", {}).get("text", ""))[:1000],
+                "tables_found": len(doc_result.get("document_content", {}).get("tables", [])),
+                "metadata": doc_result.get("document_content", {}).get("metadata", {})
+            }
+            
+            # Extract policy-specific information
+            content_text = str(doc_result.get("document_content", {}).get("text", "")).lower()
+            
+            # Check for compliance keywords
+            compliance_keywords = ["must", "shall", "required", "mandatory", "prohibited"]
+            requirements_found = sum(1 for kw in compliance_keywords if kw in content_text)
+            
+            result["compliance_assessment"] = {
+                "requirements_found": requirements_found,
+                "has_enforcement_clause": "enforce" in content_text or "violation" in content_text,
+                "has_exception_clause": "exception" in content_text or "exempt" in content_text,
+                "estimated_complexity": "high" if requirements_found > 10 else "medium" if requirements_found > 5 else "low"
+            }
+            
+        finally:
+            if os.path.exists(temp_doc_path):
+                os.remove(temp_doc_path)
+        
+        # Process screenshots if provided
+        if screenshots:
+            for screenshot in screenshots[:5]:  # Limit to 5 screenshots
+                img_data = await screenshot.read()
+                img = Image.open(io.BytesIO(img_data))
+                
+                img_result = await multimodal_processor.process_input(img, "image")
+                
+                result["screenshot_insights"].append({
+                    "filename": screenshot.filename,
+                    "extracted_text": img_result.get("extracted_text", ""),
+                    "contains_diagram": img_result.get("image_analysis", {}).get("contains_diagram", False),
+                    "contains_chart": img_result.get("image_analysis", {}).get("contains_chart", False)
+                })
+        
+        # Generate recommendations based on analysis
+        if result["compliance_assessment"]["requirements_found"] > 10:
+            result["recommendations"].append("Consider breaking down this policy into smaller, more manageable sections")
+        
+        if not result["compliance_assessment"]["has_enforcement_clause"]:
+            result["recommendations"].append("Add clear enforcement and violation handling procedures")
+        
+        if result["screenshot_insights"]:
+            result["recommendations"].append("Visual elements detected - ensure all diagrams have text descriptions for accessibility")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Policy document analysis failed: {e}")
+        raise HTTPException(500, f"Failed to analyze policy document: {str(e)}")
+
 @app.post("/api/v1/policies/generate")
-async def generate_policy(request: PolicyRequest, _: Dict[str, Any] = Depends(auth_dependency)):
+async def generate_policy(request: PolicyRequest, req: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Generate policy using GPT-5/GLM-4.5"""
+    enforce_tenant_match(req, auth)
+    require_write_access(auth)
     try:
         # Generate a policy based on the requirement
         policy = {
@@ -843,8 +1182,10 @@ async def generate_policy(request: PolicyRequest, _: Dict[str, Any] = Depends(au
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/recommendations")
-async def get_recommendations(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_recommendations(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Get AI-powered recommendations"""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     try:
         recommendations = []
         total_savings = 0
@@ -1004,8 +1345,10 @@ async def get_recommendations(_: Dict[str, Any] = Depends(auth_dependency)):
         }
 
 @app.get("/api/v1/correlations")
-async def get_correlations(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_correlations(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Cross-domain correlations for dashboard visualizations."""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     try:
         # Simple illustrative correlations (fallback when providers unavailable)
         correlations: List[Dict[str, Any]] = []
@@ -1343,33 +1686,43 @@ async def analyze_environment(context: Optional[Dict] = None, _: Dict[str, Any] 
 # ============= DEEP INSIGHTS ENDPOINTS =============
 
 @app.get("/api/v1/policies/deep")
-async def get_policies_deep(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_policies_deep(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     return await azure_insights.get_policy_compliance_deep()
 
 @app.get("/api/v1/rbac/deep")
-async def get_rbac_deep(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_rbac_deep(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     return await azure_insights.get_rbac_deep_analysis()
 
 @app.get("/api/v1/costs/deep")
-async def get_costs_deep(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_costs_deep(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     return await azure_insights.get_cost_analysis_deep()
 
 @app.get("/api/v1/network/deep")
-async def get_network_deep(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_network_deep(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     return await azure_insights.get_network_security_deep()
 
 @app.get("/api/v1/resources/deep")
-async def get_resources_deep(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_resources_deep(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     return await azure_insights.get_resource_insights_deep()
 
 @app.post("/api/v1/remediate")
@@ -1378,9 +1731,10 @@ async def get_resources_deep(_: Dict[str, Any] = Depends(auth_dependency)):
 async def remediate_resource(
     resource_id: str,
     action: str,
-    auth: AuthContext = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
     """AI-driven remediation action - requires contributor role"""
+    require_write_access(auth)
     return {
         "success": True,
         "resourceId": resource_id,
@@ -1393,17 +1747,22 @@ async def remediate_resource(
 # ============= MULTI-CLOUD ENDPOINTS =============
 
 @app.get("/api/v1/providers")
-async def get_providers(_: Dict[str, Any] = Depends(auth_dependency)):
+async def get_providers(request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Get status of all cloud providers"""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     return multi_cloud_provider.get_provider_status()
 
 @app.get("/api/v1/multi-cloud/resources")
 async def get_multi_cloud_resources(
     provider: Optional[str] = None,
     resource_type: Optional[str] = None,
-    _: Dict[str, Any] = Depends(auth_dependency)
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
     """Get resources from multiple cloud providers"""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     cloud_provider = CloudProvider.ALL
     if provider:
         try:
@@ -1423,9 +1782,12 @@ async def get_multi_cloud_resources(
 @app.get("/api/v1/multi-cloud/policies")
 async def get_multi_cloud_policies(
     provider: Optional[str] = None,
-    _: Dict[str, Any] = Depends(auth_dependency)
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
     """Get policies from multiple cloud providers"""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     cloud_provider = CloudProvider.ALL
     if provider:
         try:
@@ -1447,9 +1809,12 @@ async def get_multi_cloud_costs(
     provider: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    _: Dict[str, Any] = Depends(auth_dependency)
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
     """Get cost information from multiple cloud providers"""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     cloud_provider = CloudProvider.ALL
     if provider:
         try:
@@ -1464,9 +1829,12 @@ async def get_multi_cloud_costs(
 @app.get("/api/v1/multi-cloud/compliance")
 async def get_multi_cloud_compliance(
     provider: Optional[str] = None,
-    _: Dict[str, Any] = Depends(auth_dependency)
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
     """Get compliance status from multiple cloud providers"""
+    enforce_tenant_match(request, auth)
+    require_read_access(auth)
     cloud_provider = CloudProvider.ALL
     if provider:
         try:
@@ -1481,9 +1849,11 @@ async def get_multi_cloud_compliance(
 @app.get("/api/v1/multi-cloud/security")
 async def get_multi_cloud_security(
     provider: Optional[str] = None,
-    _: Dict[str, Any] = Depends(auth_dependency)
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
     """Get security findings from multiple cloud providers"""
+    enforce_tenant_match(request, auth)
     cloud_provider = CloudProvider.ALL
     if provider:
         try:
@@ -1503,15 +1873,20 @@ async def get_multi_cloud_security(
 @app.post("/api/v1/multi-cloud/governance-action")
 async def apply_multi_cloud_governance(
     action: Dict[str, Any],
-    _: Dict[str, Any] = Depends(auth_dependency)
+    request: Request,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
 ):
     """Apply governance action across cloud providers"""
+    enforce_tenant_match(request, auth)
+    require_write_access(auth)
     result = await multi_cloud_provider.apply_governance_action(action)
     return result
 
 @app.post("/api/v1/exception")
-async def create_exception(resource_id: str, policy_id: str, reason: str, _: Dict[str, Any] = Depends(auth_dependency)):
+async def create_exception(resource_id: str, policy_id: str, reason: str, request: Request, auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)):
     """Create policy exception"""
+    enforce_tenant_match(request, auth)
+    require_write_access(auth)
     return {
         "success": True,
         "exceptionId": "exc-" + datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -1692,6 +2067,284 @@ async def get_finops_summary(_: Dict[str, Any] = Depends(auth_dependency)):
     except Exception as e:
         logger.error(f"FinOps summary error: {e}")
         raise HTTPException(500, f"Failed to get FinOps summary: {str(e)}")
+
+# ============= CONTINUOUS LEARNING ENDPOINTS =============
+
+@app.post("/api/v1/learning/errors")
+@rate_limit(requests=100, window=60) if AUTH_ENHANCED else lambda f: f
+async def report_errors(
+    errors: List[Dict[str, Any]],
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Report application errors for continuous learning"""
+    if not CONTINUOUS_LEARNING_ENABLED or not continuous_learner:
+        raise HTTPException(503, "Continuous learning system not available")
+    
+    try:
+        # Convert to ErrorEvent objects
+        error_events = await continuous_learner.collect_errors_from_application(errors)
+        
+        # Learn from errors
+        await continuous_learner.learn_from_errors(error_events)
+        
+        # Send errors to continuous learning if they're critical
+        critical_errors = [e for e in error_events if e.severity in ["critical", "high"]]
+        if critical_errors and OBSERVABILITY_ENABLED:
+            observability.record_metric("critical_errors_learned", len(critical_errors), {
+                "source": "application"
+            })
+        
+        return {
+            "success": True,
+            "errors_processed": len(error_events),
+            "learning_stats": continuous_learner.get_learning_stats(),
+            "message": f"Processed {len(error_events)} errors for continuous learning"
+        }
+    except Exception as e:
+        logger.error(f"Error learning failed: {e}")
+        raise HTTPException(500, f"Failed to process errors: {str(e)}")
+
+@app.post("/api/v1/learning/predict")
+@rate_limit(requests=50, window=60) if AUTH_ENHANCED else lambda f: f
+async def predict_error_solution(
+    error_message: str,
+    domain: Optional[str] = "other",
+    context: Optional[Dict[str, Any]] = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Get AI-predicted solution for an error"""
+    if not CONTINUOUS_LEARNING_ENABLED or not continuous_learner:
+        raise HTTPException(503, "Continuous learning system not available")
+    
+    try:
+        # Get prediction from continuous learning model
+        prediction = continuous_learner.predict_solution(error_message, domain)
+        
+        # Enhance with context if provided
+        if context:
+            prediction["context_considered"] = True
+            prediction["context_keys"] = list(context.keys())
+        
+        # Record prediction request
+        if OBSERVABILITY_ENABLED:
+            observability.record_metric("error_predictions", 1, {
+                "domain": domain,
+                "has_context": bool(context)
+            })
+        
+        return {
+            "success": True,
+            "prediction": prediction,
+            "model_info": {
+                "type": "ErrorLearningModel",
+                "training_errors": continuous_learner.metrics["total_errors_processed"],
+                "accuracy": continuous_learner.metrics.get("accuracy", 0.0)
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error prediction failed: {e}")
+        raise HTTPException(500, f"Failed to predict solution: {str(e)}")
+
+@app.get("/api/v1/learning/stats")
+async def get_learning_stats(
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Get continuous learning system statistics"""
+    if not CONTINUOUS_LEARNING_ENABLED or not continuous_learner:
+        raise HTTPException(503, "Continuous learning system not available")
+    
+    try:
+        stats = continuous_learner.get_learning_stats()
+        
+        return {
+            "success": True,
+            "stats": stats,
+            "status": "active" if stats["metrics"]["total_training_steps"] > 0 else "initializing",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get learning stats: {e}")
+        raise HTTPException(500, f"Failed to get stats: {str(e)}")
+
+@app.post("/api/v1/learning/feedback")
+@rate_limit(requests=30, window=60) if AUTH_ENHANCED else lambda f: f
+async def submit_learning_feedback(
+    error_id: str,
+    solution_worked: bool,
+    feedback: Optional[str] = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Submit feedback on predicted solutions for model improvement"""
+    if not CONTINUOUS_LEARNING_ENABLED:
+        raise HTTPException(503, "Continuous learning system not available")
+    
+    try:
+        # Record feedback for future training iterations
+        feedback_data = {
+            "error_id": error_id,
+            "solution_worked": solution_worked,
+            "feedback": feedback,
+            "timestamp": datetime.utcnow().isoformat(),
+            "user": getattr(auth, "user_id", "unknown") if AUTH_ENHANCED else "anonymous"
+        }
+        
+        # In production, this would update the training dataset
+        logger.info(f"Learning feedback received: {feedback_data}")
+        
+        # Record metric
+        if OBSERVABILITY_ENABLED:
+            observability.record_metric("learning_feedback", 1, {
+                "worked": solution_worked
+            })
+        
+        return {
+            "success": True,
+            "message": "Feedback recorded for model improvement",
+            "feedback_id": f"fb-{error_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        }
+    except Exception as e:
+        logger.error(f"Failed to record feedback: {e}")
+        raise HTTPException(500, f"Failed to submit feedback: {str(e)}")
+
+@app.post("/api/v1/multimodal/analyze")
+@rate_limit(requests=50, window=60) if AUTH_ENHANCED else lambda f: f
+async def analyze_multimodal(
+    message: Optional[str] = Form(None),
+    files: List[UploadFile] = File(None),
+    images: List[UploadFile] = File(None),
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Analyze multimodal inputs including images, documents, and text"""
+    if not MULTIMODAL_ENABLED or not multimodal_processor:
+        raise HTTPException(503, "Multimodal processing not available")
+    
+    try:
+        results = {
+            "text_analysis": None,
+            "image_analysis": [],
+            "document_analysis": [],
+            "combined_insights": None
+        }
+        
+        # Process text message
+        if message:
+            results["text_analysis"] = {
+                "message": message,
+                "length": len(message),
+                "language": "en"  # Could add language detection
+            }
+        
+        # Process images
+        if images:
+            for img_file in images:
+                # Read image data
+                img_data = await img_file.read()
+                img = Image.open(io.BytesIO(img_data))
+                
+                # Process with multimodal processor
+                img_result = await multimodal_processor.process_input(img, "image")
+                
+                results["image_analysis"].append({
+                    "filename": img_file.filename,
+                    "size": len(img_data),
+                    "dimensions": img.size,
+                    "format": img.format,
+                    "extracted_text": img_result.get("extracted_text", ""),
+                    "analysis": img_result.get("image_analysis", {}),
+                    "has_features": "image_features" in img_result
+                })
+        
+        # Process documents
+        if files:
+            for doc_file in files:
+                # Save temporarily
+                temp_path = f"/tmp/{doc_file.filename}"
+                content = await doc_file.read()
+                
+                with open(temp_path, "wb") as f:
+                    f.write(content)
+                
+                try:
+                    # Process with multimodal processor
+                    doc_result = await multimodal_processor.process_input(temp_path, "document")
+                    
+                    results["document_analysis"].append({
+                        "filename": doc_file.filename,
+                        "size": len(content),
+                        "content_preview": str(doc_result.get("document_content", ""))[:500],
+                        "file_type": doc_result.get("file_type", "unknown"),
+                        "has_features": "document_features" in doc_result
+                    })
+                finally:
+                    # Clean up temp file
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+        
+        # Generate combined insights
+        total_inputs = bool(message) + len(images or []) + len(files or [])
+        
+        results["combined_insights"] = {
+            "total_modalities": total_inputs,
+            "has_text": bool(message),
+            "has_images": len(images or []),
+            "has_documents": len(files or []),
+            "processing_complete": True,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        # Record metric if observability enabled
+        if OBSERVABILITY_ENABLED:
+            observability.record_metric("multimodal_analysis", 1, {
+                "modalities": total_inputs
+            })
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Multimodal analysis failed: {e}")
+        raise HTTPException(500, f"Failed to analyze multimodal input: {str(e)}")
+
+@app.get("/api/v1/learning/suggest-fix")
+@rate_limit(requests=100, window=60) if AUTH_ENHANCED else lambda f: f
+async def suggest_error_fix(
+    error_message: str,
+    error_type: Optional[str] = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Get real-time AI suggestion for fixing an error"""
+    if not CONTINUOUS_LEARNING_ENABLED or not error_prediction_helper:
+        raise HTTPException(503, "Continuous learning system not available")
+    
+    try:
+        # Detect domain from error
+        domain = "other"
+        error_lower = error_message.lower()
+        if any(word in error_lower for word in ['auth', 'permission', 'token']):
+            domain = "security"
+        elif any(word in error_lower for word in ['connection', 'timeout', 'network']):
+            domain = "network"
+        elif any(word in error_lower for word in ['azure', 'aws', 'resource']):
+            domain = "cloud"
+        
+        # Get AI suggestion
+        suggestion = await error_prediction_helper.get_solution_suggestion(
+            error_message, domain
+        )
+        
+        if not suggestion:
+            # Fallback to basic continuous learner prediction
+            suggestion = continuous_learner.predict_solution(error_message, domain)
+        
+        return {
+            "success": True,
+            "suggestion": suggestion,
+            "domain": domain,
+            "cache_stats": error_prediction_helper.get_cache_stats() if error_prediction_helper else None,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get error suggestion: {e}")
+        raise HTTPException(500, f"Failed to suggest fix: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

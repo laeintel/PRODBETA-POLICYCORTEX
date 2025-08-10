@@ -16,11 +16,9 @@ const STATIC_ASSETS = [
 ];
 
 // API endpoints to cache
+// Only cache non-auth, public endpoints. Avoid caching protected API data.
 const CACHEABLE_API_PATTERNS = [
-  /\/api\/v1\/metrics$/,
-  /\/api\/v1\/policies$/,
-  /\/api\/v1\/resources$/,
-  /\/api\/v1\/compliance$/,
+  /\/health$/,
 ];
 
 // Install event - cache static assets
@@ -71,19 +69,27 @@ self.addEventListener('fetch', (event) => {
 // Handle API requests with network-first strategy
 async function handleApiRequest(request) {
   try {
+    // Strip authorization header before any caching logic
+    const safeRequest = new Request(request, {
+      headers: [...request.headers].filter(([k]) => k.toLowerCase() !== 'authorization')
+    });
+
     // Try network first
-    const networkResponse = await fetch(request);
+    const networkResponse = await fetch(safeRequest);
     
     // Cache successful responses
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
+      // Cache only explicitly allowed API patterns
+      if (CACHEABLE_API_PATTERNS.some((re) => re.test(safeRequest.url))) {
+        cache.put(safeRequest, networkResponse.clone());
+      }
     }
     
     return networkResponse;
   } catch (error) {
     // Network failed, try cache
-    const cachedResponse = await caches.match(request);
+    const cachedResponse = await caches.match(safeRequest);
     if (cachedResponse) {
       console.log('[SW] Serving API from cache:', request.url);
       return cachedResponse;

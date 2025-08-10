@@ -121,9 +121,13 @@ class PolicyCortexAPI {
           scopes: ['https://management.azure.com/user_impersonation'],
           account: accounts[0]
         });
+        const tenantId = (accounts[0] as any)?.idTokenClaims?.tid as string | undefined
+          || (typeof process !== 'undefined' ? (process as any).env?.NEXT_PUBLIC_AZURE_TENANT_ID : undefined)
+          || (typeof window !== 'undefined' ? window.localStorage.getItem('tenantId') || undefined : undefined);
         
         return {
           'Authorization': `Bearer ${tokenResponse.accessToken}`,
+          ...(tenantId ? { 'X-Tenant-ID': tenantId } : {})
         };
       }
     } catch (error) {
@@ -135,12 +139,12 @@ class PolicyCortexAPI {
 
   // Patent 1: Unified AI Platform - Hot cached for real-time governance
   async getUnifiedMetrics(): Promise<GovernanceMetrics> {
-    return performanceApi.get('/api/v1/metrics', { cache: 'hot', ttl: 30000 });
+    return performanceApi.get('/api/v1/metrics', { cache: 'hot', ttl: 30000, headers: await this.getAuthHeaders() });
   }
 
   // Patent 2: Predictive Compliance - Warm cached for frequent access
   async getPredictions(): Promise<any[]> {
-    return performanceApi.get('/api/v1/predictions', { cache: 'warm', ttl: 300000 });
+    return performanceApi.get('/api/v1/predictions', { cache: 'warm', ttl: 300000, headers: await this.getAuthHeaders() });
   }
 
   // Patent 3: Conversational Intelligence - No cache for real-time interaction
@@ -184,12 +188,12 @@ class PolicyCortexAPI {
 
   // Patent 4: Cross-Domain Correlation - Warm cached
   async getCorrelations(): Promise<CrossDomainCorrelation[]> {
-    return performanceApi.get('/api/v1/correlations', { cache: 'warm', ttl: 300000 });
+    return performanceApi.get('/api/v1/correlations', { cache: 'warm', ttl: 300000, headers: await this.getAuthHeaders() });
   }
 
   // Proactive Recommendations - Hot cached for immediate actions
   async getRecommendations(): Promise<ProactiveRecommendation[]> {
-    return performanceApi.get('/api/v1/recommendations', { cache: 'hot', ttl: 60000 });
+    return performanceApi.get('/api/v1/recommendations', { cache: 'hot', ttl: 60000, headers: await this.getAuthHeaders() });
   }
 
   // Health Check - No cache for real-time status
@@ -229,11 +233,12 @@ class PolicyCortexAPI {
     correlations: CrossDomainCorrelation[];
     predictions: any[];
   }> {
+    const headers = await this.getAuthHeaders();
     const requests = [
-      { endpoint: '/api/v1/metrics', options: { cache: 'hot', ttl: 30000 } },
-      { endpoint: '/api/v1/recommendations', options: { cache: 'hot', ttl: 60000 } },
-      { endpoint: '/api/v1/correlations', options: { cache: 'warm', ttl: 300000 } },
-      { endpoint: '/api/v1/predictions', options: { cache: 'warm', ttl: 300000 } }
+      { endpoint: '/api/v1/metrics', options: { cache: 'hot', ttl: 30000, headers } },
+      { endpoint: '/api/v1/recommendations', options: { cache: 'hot', ttl: 60000, headers } },
+      { endpoint: '/api/v1/correlations', options: { cache: 'warm', ttl: 300000, headers } },
+      { endpoint: '/api/v1/predictions', options: { cache: 'warm', ttl: 300000, headers } }
     ];
 
     const results = await performanceApi.batch(requests);
