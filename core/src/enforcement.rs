@@ -1,11 +1,11 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::policy_engine::{Policy, PolicyEvaluation, Violation, Severity, Resource};
+use crate::policy_engine::{Policy, PolicyEvaluation, Resource, Severity, Violation};
 
 /// Enforcement action
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -153,40 +153,37 @@ pub trait EnforcementEngine: Send + Sync {
         policy: &Policy,
         resource: &Resource,
     ) -> Result<EnforcementAction, String>;
-    
+
     /// Execute enforcement action
     async fn execute_enforcement(
         &self,
         action: &EnforcementAction,
         resource: &Resource,
     ) -> Result<EnforcementResult, String>;
-    
+
     /// Rollback enforcement action
     async fn rollback_enforcement(
         &self,
         action: &EnforcementAction,
     ) -> Result<EnforcementResult, String>;
-    
+
     /// Get enforcement path for violations
     async fn get_enforcement_path(
         &self,
         violations: &[Violation],
         resource: &Resource,
     ) -> Result<EnforcementPath, String>;
-    
+
     /// Schedule enforcement action
     async fn schedule_enforcement(
         &self,
         action: &EnforcementAction,
         scheduled_at: DateTime<Utc>,
     ) -> Result<(), String>;
-    
+
     /// Cancel enforcement action
-    async fn cancel_enforcement(
-        &self,
-        action_id: &str,
-    ) -> Result<(), String>;
-    
+    async fn cancel_enforcement(&self, action_id: &str) -> Result<(), String>;
+
     /// Get enforcement history
     async fn get_enforcement_history(
         &self,
@@ -211,12 +208,12 @@ impl DefaultEnforcementEngine {
             approval_service,
         }
     }
-    
+
     /// Determine enforcement type based on violations
     fn determine_enforcement_type(&self, violations: &[Violation]) -> EnforcementType {
         // Check for critical violations
         let has_critical = violations.iter().any(|v| v.severity == Severity::Critical);
-        
+
         if has_critical {
             // Critical violations require immediate action
             EnforcementType::Block
@@ -225,7 +222,7 @@ impl DefaultEnforcementEngine {
             EnforcementType::AutoRemediate
         }
     }
-    
+
     /// Check if approval is required
     fn requires_approval(&self, action: &EnforcementType, resource: &Resource) -> bool {
         match action {
@@ -247,10 +244,10 @@ impl EnforcementEngine for DefaultEnforcementEngine {
         if evaluation.compliant {
             return Err("Resource is compliant, no enforcement needed".to_string());
         }
-        
+
         let action_type = self.determine_enforcement_type(&evaluation.violations);
         let approval_required = self.requires_approval(&action_type, resource);
-        
+
         let action = EnforcementAction {
             id: Uuid::new_v4().to_string(),
             policy_id: policy.id.clone(),
@@ -271,10 +268,10 @@ impl EnforcementEngine for DefaultEnforcementEngine {
             executed_at: None,
             result: None,
         };
-        
+
         Ok(action)
     }
-    
+
     async fn execute_enforcement(
         &self,
         action: &EnforcementAction,
@@ -284,12 +281,12 @@ impl EnforcementEngine for DefaultEnforcementEngine {
         if action.approval_required && action.approved_by.is_none() {
             return Err("Approval required for this enforcement action".to_string());
         }
-        
+
         let start = std::time::Instant::now();
-        
+
         // Execute the enforcement
         let result = self.enforcer.enforce(&action.action_type, resource).await?;
-        
+
         Ok(EnforcementResult {
             success: result.success,
             message: result.message,
@@ -299,21 +296,25 @@ impl EnforcementEngine for DefaultEnforcementEngine {
             duration_ms: start.elapsed().as_millis() as u64,
         })
     }
-    
+
     async fn rollback_enforcement(
         &self,
         action: &EnforcementAction,
     ) -> Result<EnforcementResult, String> {
-        if action.result.as_ref().map_or(true, |r| !r.rollback_available) {
+        if action
+            .result
+            .as_ref()
+            .map_or(true, |r| !r.rollback_available)
+        {
             return Err("Rollback not available for this action".to_string());
         }
-        
+
         // Execute rollback
         let result = self.enforcer.rollback(&action.id).await?;
-        
+
         Ok(result)
     }
-    
+
     async fn get_enforcement_path(
         &self,
         violations: &[Violation],
@@ -321,7 +322,7 @@ impl EnforcementEngine for DefaultEnforcementEngine {
     ) -> Result<EnforcementPath, String> {
         let mut steps = Vec::new();
         let mut rollback_steps = Vec::new();
-        
+
         // Create enforcement steps based on violations
         for violation in violations {
             let step = EnforcementStep {
@@ -333,9 +334,9 @@ impl EnforcementEngine for DefaultEnforcementEngine {
                 retry_count: 3,
                 continue_on_error: violation.severity != Severity::Critical,
             };
-            
+
             steps.push(step.clone());
-            
+
             // Create corresponding rollback step
             rollback_steps.push(EnforcementStep {
                 id: Uuid::new_v4().to_string(),
@@ -347,21 +348,24 @@ impl EnforcementEngine for DefaultEnforcementEngine {
                 continue_on_error: true,
             });
         }
-        
+
         // Reverse rollback steps
         rollback_steps.reverse();
-        
+
         Ok(EnforcementPath {
             id: Uuid::new_v4().to_string(),
             name: format!("Enforcement path for {}", resource.id),
-            description: format!("Auto-generated enforcement path for {} violations", violations.len()),
+            description: format!(
+                "Auto-generated enforcement path for {} violations",
+                violations.len()
+            ),
             steps,
             rollback_steps,
             conditions: Vec::new(),
             metadata: HashMap::new(),
         })
     }
-    
+
     async fn schedule_enforcement(
         &self,
         _action: &EnforcementAction,
@@ -370,15 +374,12 @@ impl EnforcementEngine for DefaultEnforcementEngine {
         // In production, persist to scheduler
         Ok(())
     }
-    
-    async fn cancel_enforcement(
-        &self,
-        _action_id: &str,
-    ) -> Result<(), String> {
+
+    async fn cancel_enforcement(&self, _action_id: &str) -> Result<(), String> {
         // In production, cancel in scheduler
         Ok(())
     }
-    
+
     async fn get_enforcement_history(
         &self,
         _resource_id: Option<&str>,
@@ -387,9 +388,10 @@ impl EnforcementEngine for DefaultEnforcementEngine {
         // In production, query from database
         Ok(Vec::new())
     }
-    
+
     fn determine_priority(&self, violations: &[Violation]) -> Priority {
-        violations.iter()
+        violations
+            .iter()
             .map(|v| match v.severity {
                 Severity::Critical => Priority::Critical,
                 Severity::High => Priority::High,
@@ -410,7 +412,7 @@ pub trait Enforcer: Send + Sync {
         action: &EnforcementType,
         resource: &Resource,
     ) -> Result<EnforcerResult, String>;
-    
+
     async fn rollback(&self, action_id: &str) -> Result<EnforcementResult, String>;
 }
 
@@ -434,37 +436,34 @@ impl Enforcer for DefaultEnforcer {
         _resource: &Resource,
     ) -> Result<EnforcerResult, String> {
         match action {
-            EnforcementType::Block => {
-                Ok(EnforcerResult {
-                    success: true,
-                    message: "Resource blocked".to_string(),
-                    changes: Vec::new(),
-                    error: None,
-                })
-            }
-            EnforcementType::AutoRemediate => {
-                Ok(EnforcerResult {
-                    success: true,
-                    message: "Resource auto-remediated".to_string(),
-                    changes: vec![
-                        Change {
-                            field: "compliance".to_string(),
-                            old_value: Some(Value::Bool(false)),
-                            new_value: Some(Value::Bool(true)),
-                            change_type: ChangeType::Modified,
-                        }
-                    ],
-                    error: None,
-                })
-            }
+            EnforcementType::Block => Ok(EnforcerResult {
+                success: true,
+                message: "Resource blocked".to_string(),
+                changes: Vec::new(),
+                error: None,
+            }),
+            EnforcementType::AutoRemediate => Ok(EnforcerResult {
+                success: true,
+                message: "Resource auto-remediated".to_string(),
+                changes: vec![Change {
+                    field: "compliance".to_string(),
+                    old_value: Some(Value::Bool(false)),
+                    new_value: Some(Value::Bool(true)),
+                    change_type: ChangeType::Modified,
+                }],
+                error: None,
+            }),
             EnforcementType::ApplyTags(tags) => {
-                let changes = tags.iter().map(|(k, v)| Change {
-                    field: format!("tags.{}", k),
-                    old_value: None,
-                    new_value: Some(Value::String(v.clone())),
-                    change_type: ChangeType::Added,
-                }).collect();
-                
+                let changes = tags
+                    .iter()
+                    .map(|(k, v)| Change {
+                        field: format!("tags.{}", k),
+                        old_value: None,
+                        new_value: Some(Value::String(v.clone())),
+                        change_type: ChangeType::Added,
+                    })
+                    .collect();
+
                 Ok(EnforcerResult {
                     success: true,
                     message: format!("Applied {} tags", tags.len()),
@@ -472,17 +471,15 @@ impl Enforcer for DefaultEnforcer {
                     error: None,
                 })
             }
-            _ => {
-                Ok(EnforcerResult {
-                    success: false,
-                    message: "Enforcement type not implemented".to_string(),
-                    changes: Vec::new(),
-                    error: Some("Not implemented".to_string()),
-                })
-            }
+            _ => Ok(EnforcerResult {
+                success: false,
+                message: "Enforcement type not implemented".to_string(),
+                changes: Vec::new(),
+                error: Some("Not implemented".to_string()),
+            }),
         }
     }
-    
+
     async fn rollback(&self, _action_id: &str) -> Result<EnforcementResult, String> {
         Ok(EnforcementResult {
             success: true,

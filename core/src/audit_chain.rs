@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
-use sha2::{Sha256, Digest};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -136,7 +136,7 @@ impl AuditChain {
 
     fn calculate_hash(&self, entry: &AuditEntry) -> String {
         let mut hasher = Sha256::new();
-        
+
         // Hash all immutable fields
         hasher.update(entry.id.to_string().as_bytes());
         hasher.update(entry.sequence.to_string().as_bytes());
@@ -148,7 +148,7 @@ impl AuditChain {
         hasher.update(entry.action.as_bytes());
         hasher.update(format!("{:?}", entry.outcome).as_bytes());
         hasher.update(entry.previous_hash.as_bytes());
-        
+
         // Include details in hash
         let details_json = serde_json::to_string(&entry.details).unwrap_or_default();
         hasher.update(details_json.as_bytes());
@@ -226,7 +226,9 @@ impl AuditChain {
     }
 
     pub fn export_for_auditor(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> AuditExport {
-        let filtered_entries: Vec<AuditEntry> = self.entries.iter()
+        let filtered_entries: Vec<AuditEntry> = self
+            .entries
+            .iter()
             .filter(|e| e.timestamp >= start && e.timestamp <= end)
             .cloned()
             .collect();
@@ -271,11 +273,11 @@ impl MerkleTree {
         }
 
         let mut levels = vec![leaf_hashes];
-        
+
         while levels.last().unwrap().len() > 1 {
             let current_level = levels.last().unwrap();
             let mut next_level = Vec::new();
-            
+
             for i in (0..current_level.len()).step_by(2) {
                 let left = &current_level[i];
                 let right = if i + 1 < current_level.len() {
@@ -283,13 +285,13 @@ impl MerkleTree {
                 } else {
                     left // Duplicate last node if odd number
                 };
-                
+
                 let mut hasher = Sha256::new();
                 hasher.update(left.as_bytes());
                 hasher.update(right.as_bytes());
                 next_level.push(format!("{:x}", hasher.finalize()));
             }
-            
+
             levels.push(next_level);
         }
 
@@ -302,21 +304,21 @@ impl MerkleTree {
     pub fn get_proof(&self, index: usize) -> Vec<(String, bool)> {
         let mut proof = Vec::new();
         let mut current_index = index;
-        
+
         for level in &self.levels[..self.levels.len() - 1] {
             let sibling_index = if current_index % 2 == 0 {
                 current_index + 1
             } else {
                 current_index - 1
             };
-            
+
             if sibling_index < level.len() {
                 proof.push((level[sibling_index].clone(), current_index % 2 == 0));
             }
-            
+
             current_index /= 2;
         }
-        
+
         proof
     }
 }
@@ -345,10 +347,10 @@ impl PersistentAuditChain {
             db_pool,
             cache: AuditChain::new(),
         };
-        
+
         // Load recent entries into cache
         chain.load_recent_entries().await?;
-        
+
         Ok(chain)
     }
 
@@ -359,10 +361,10 @@ impl PersistentAuditChain {
             ORDER BY sequence DESC
             LIMIT 1000
         "#;
-        
+
         // Execute query and populate cache
         // Implementation depends on actual database schema
-        
+
         Ok(())
     }
 
@@ -377,13 +379,7 @@ impl PersistentAuditChain {
         details: HashMap<String, serde_json::Value>,
     ) -> Result<AuditEntry, sqlx::Error> {
         let entry = self.cache.add_entry(
-            tenant_id,
-            event_type,
-            actor,
-            resource,
-            action,
-            outcome,
-            details,
+            tenant_id, event_type, actor, resource, action, outcome, details,
         );
 
         // Persist to database with WORM guarantees
@@ -423,7 +419,7 @@ mod tests {
     #[test]
     fn test_audit_chain_integrity() {
         let mut chain = AuditChain::new();
-        
+
         // Add some entries
         for i in 0..5 {
             chain.add_entry(
@@ -448,15 +444,15 @@ mod tests {
                 HashMap::new(),
             );
         }
-        
+
         // Verify chain integrity
         assert!(chain.verify_chain().is_ok());
-        
+
         // Tamper with an entry
         if let Some(entry) = chain.entries.get_mut(2) {
             entry.action = "TAMPERED".to_string();
         }
-        
+
         // Verification should fail
         assert!(chain.verify_chain().is_err());
     }
@@ -469,10 +465,10 @@ mod tests {
             "hash3".to_string(),
             "hash4".to_string(),
         ];
-        
+
         let tree = MerkleTree::new(hashes);
         assert!(!tree.root.is_empty());
-        
+
         let proof = tree.get_proof(0);
         assert!(!proof.is_empty());
     }

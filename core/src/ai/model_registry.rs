@@ -203,10 +203,18 @@ impl ModelRegistry {
         Ok(id)
     }
 
-    pub fn evaluate_model(&self, model_id: &Uuid, harness_id: &Uuid) -> Result<EvaluationReport, String> {
-        let model = self.models.get(model_id)
+    pub fn evaluate_model(
+        &self,
+        model_id: &Uuid,
+        harness_id: &Uuid,
+    ) -> Result<EvaluationReport, String> {
+        let model = self
+            .models
+            .get(model_id)
             .ok_or_else(|| format!("Model {} not found", model_id))?;
-        let harness = self.harnesses.get(harness_id)
+        let harness = self
+            .harnesses
+            .get(harness_id)
             .ok_or_else(|| format!("Harness {} not found", harness_id))?;
 
         // Perform evaluation (simplified for example)
@@ -244,7 +252,7 @@ mod tests {
     #[test]
     fn test_model_registration() {
         let mut registry = ModelRegistry::new();
-        
+
         let model = ModelCard {
             id: Uuid::new_v4(),
             name: "PolicyPredictor".to_string(),
@@ -302,7 +310,7 @@ mod tests {
 
         let id = registry.register_model(model.clone()).unwrap();
         assert_eq!(id, model.id);
-        
+
         let retrieved = registry.get_model(&id).unwrap();
         assert_eq!(retrieved.name, "PolicyPredictor");
     }

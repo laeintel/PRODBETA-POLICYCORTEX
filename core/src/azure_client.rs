@@ -1,14 +1,14 @@
-use azure_identity::{DefaultAzureCredential, TokenCredentialOptions};
 use azure_core::auth::TokenCredential;
+use azure_identity::{DefaultAzureCredential, TokenCredentialOptions};
+use chrono::{DateTime, Utc};
 use reqwest::Client as HttpClient;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tracing::{info, warn, error};
-use chrono::{DateTime, Utc};
+use tracing::{error, info, warn};
 
 use crate::api::{
-    GovernanceMetrics, PolicyMetrics, RbacMetrics, CostMetrics, 
-    NetworkMetrics, ResourceMetrics, AIMetrics
+    AIMetrics, CostMetrics, GovernanceMetrics, NetworkMetrics, PolicyMetrics, RbacMetrics,
+    ResourceMetrics,
 };
 
 #[derive(Clone)]
@@ -67,9 +67,14 @@ impl AzureClient {
         let subscription_id = std::env::var("AZURE_SUBSCRIPTION_ID")
             .map_err(|_| "AZURE_SUBSCRIPTION_ID environment variable not set")?;
 
-        info!("Initializing Azure client for subscription: {}", subscription_id);
+        info!(
+            "Initializing Azure client for subscription: {}",
+            subscription_id
+        );
 
-        let credential = Arc::new(DefaultAzureCredential::create(TokenCredentialOptions::default())?);
+        let credential = Arc::new(DefaultAzureCredential::create(
+            TokenCredentialOptions::default(),
+        )?);
 
         let http_client = HttpClient::new();
 
@@ -80,7 +85,9 @@ impl AzureClient {
         })
     }
 
-    pub async fn get_governance_metrics(&self) -> Result<GovernanceMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_governance_metrics(
+        &self,
+    ) -> Result<GovernanceMetrics, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching real Azure governance metrics...");
 
         let (
@@ -89,7 +96,7 @@ impl AzureClient {
             cost_metrics,
             network_metrics,
             resource_metrics,
-            ai_metrics
+            ai_metrics,
         ) = tokio::try_join!(
             self.get_policy_metrics(),
             self.get_rbac_metrics(),
@@ -109,7 +116,9 @@ impl AzureClient {
         })
     }
 
-    async fn get_policy_metrics(&self) -> Result<PolicyMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn get_policy_metrics(
+        &self,
+    ) -> Result<PolicyMetrics, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure Policy metrics...");
 
         let policy_assignments_url = format!(
@@ -117,11 +126,13 @@ impl AzureClient {
             self.subscription_id
         );
 
-        let token = self.credential
+        let token = self
+            .credential
             .get_token(&["https://management.azure.com/.default"])
             .await?;
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&policy_assignments_url)
             .bearer_auth(&token.token.secret())
             .send()
@@ -131,10 +142,16 @@ impl AzureClient {
             let policy_data: serde_json::Value = response.json().await?;
             let empty_vec = vec![];
             let policies = policy_data["value"].as_array().unwrap_or(&empty_vec);
-            
+
             let total = policies.len() as u32;
-            let active = policies.iter()
-                .filter(|p| p["properties"]["enforcementMode"].as_str().unwrap_or("Default") == "Default")
+            let active = policies
+                .iter()
+                .filter(|p| {
+                    p["properties"]["enforcementMode"]
+                        .as_str()
+                        .unwrap_or("Default")
+                        == "Default"
+                })
                 .count() as u32;
 
             // Get compliance data from Policy Insights API
@@ -143,7 +160,8 @@ impl AzureClient {
                 self.subscription_id
             );
 
-            let compliance_response = self.http_client
+            let compliance_response = self
+                .http_client
                 .post(&compliance_url)
                 .bearer_auth(&token.token.secret())
                 .json(&serde_json::json!({}))
@@ -152,10 +170,17 @@ impl AzureClient {
 
             let (violations, compliance_rate) = if compliance_response.status().is_success() {
                 let compliance_data: serde_json::Value = compliance_response.json().await?;
-                let total_evaluations = compliance_data["value"]["results"]["nonCompliantResources"].as_u64().unwrap_or(0) 
-                    + compliance_data["value"]["results"]["compliantResources"].as_u64().unwrap_or(0);
-                let non_compliant = compliance_data["value"]["results"]["nonCompliantResources"].as_u64().unwrap_or(0);
-                
+                let total_evaluations = compliance_data["value"]["results"]
+                    ["nonCompliantResources"]
+                    .as_u64()
+                    .unwrap_or(0)
+                    + compliance_data["value"]["results"]["compliantResources"]
+                        .as_u64()
+                        .unwrap_or(0);
+                let non_compliant = compliance_data["value"]["results"]["nonCompliantResources"]
+                    .as_u64()
+                    .unwrap_or(0);
+
                 let compliance_rate = if total_evaluations > 0 {
                     ((total_evaluations - non_compliant) as f64 / total_evaluations as f64) * 100.0
                 } else {
@@ -164,7 +189,10 @@ impl AzureClient {
 
                 (non_compliant as u32, compliance_rate)
             } else {
-                warn!("Failed to fetch compliance data: {}", compliance_response.status());
+                warn!(
+                    "Failed to fetch compliance data: {}",
+                    compliance_response.status()
+                );
                 (0, 100.0)
             };
 
@@ -190,7 +218,9 @@ impl AzureClient {
         }
     }
 
-    async fn get_rbac_metrics(&self) -> Result<RbacMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn get_rbac_metrics(
+        &self,
+    ) -> Result<RbacMetrics, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure RBAC metrics...");
 
         let role_assignments_url = format!(
@@ -198,11 +228,13 @@ impl AzureClient {
             self.subscription_id
         );
 
-        let token = self.credential
+        let token = self
+            .credential
             .get_token(&["https://management.azure.com/.default"])
             .await?;
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&role_assignments_url)
             .bearer_auth(&token.token.secret())
             .send()
@@ -212,7 +244,7 @@ impl AzureClient {
             let rbac_data: serde_json::Value = response.json().await?;
             let empty_vec = vec![];
             let role_assignments = rbac_data["value"].as_array().unwrap_or(&empty_vec);
-            
+
             // Count unique users/service principals
             let unique_principals: std::collections::HashSet<&str> = role_assignments
                 .iter()
@@ -227,7 +259,8 @@ impl AzureClient {
                 self.subscription_id
             );
 
-            let roles_response = self.http_client
+            let roles_response = self
+                .http_client
                 .get(&roles_url)
                 .bearer_auth(&token.token.secret())
                 .send()
@@ -260,7 +293,9 @@ impl AzureClient {
         }
     }
 
-    async fn get_cost_metrics(&self) -> Result<CostMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn get_cost_metrics(
+        &self,
+    ) -> Result<CostMetrics, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure Cost Management metrics...");
 
         // Cost Management API requires specific date ranges
@@ -272,7 +307,8 @@ impl AzureClient {
             self.subscription_id
         );
 
-        let token = self.credential
+        let token = self
+            .credential
             .get_token(&["https://management.azure.com/.default"])
             .await?;
 
@@ -294,7 +330,8 @@ impl AzureClient {
             }
         });
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(&cost_url)
             .bearer_auth(&token.token.secret())
             .json(&query_body)
@@ -303,11 +340,15 @@ impl AzureClient {
 
         if response.status().is_success() {
             let cost_data: serde_json::Value = response.json().await?;
-            
+
             let mut total_cost = 0.0;
             if let Some(rows) = cost_data["properties"]["rows"].as_array() {
                 for row in rows {
-                    if let Some(cost) = row.as_array().and_then(|r| r.get(0)).and_then(|c| c.as_f64()) {
+                    if let Some(cost) = row
+                        .as_array()
+                        .and_then(|r| r.get(0))
+                        .and_then(|c| c.as_f64())
+                    {
                         total_cost += cost;
                     }
                 }
@@ -335,7 +376,9 @@ impl AzureClient {
         }
     }
 
-    async fn get_network_metrics(&self) -> Result<NetworkMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn get_network_metrics(
+        &self,
+    ) -> Result<NetworkMetrics, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching network security metrics...");
 
         let resources_url = format!(
@@ -343,11 +386,13 @@ impl AzureClient {
             self.subscription_id
         );
 
-        let token = self.credential
+        let token = self
+            .credential
             .get_token(&["https://management.azure.com/.default"])
             .await?;
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&resources_url)
             .bearer_auth(&token.token.secret())
             .send()
@@ -357,14 +402,14 @@ impl AzureClient {
             let network_data: serde_json::Value = response.json().await?;
             let empty_vec = vec![];
             let network_resources = network_data["value"].as_array().unwrap_or(&empty_vec);
-            
+
             let endpoints = network_resources.len() as u32;
 
             Ok(NetworkMetrics {
                 endpoints,
                 active_threats: (endpoints as f64 * 0.01) as u32, // 1% threat rate
-                blocked_attempts: endpoints * 5, // 5 blocked attempts per endpoint
-                latency_ms: 12.5, // Average network latency
+                blocked_attempts: endpoints * 5,                  // 5 blocked attempts per endpoint
+                latency_ms: 12.5,                                 // Average network latency
             })
         } else {
             error!("Failed to fetch network data: {}", response.status());
@@ -377,7 +422,9 @@ impl AzureClient {
         }
     }
 
-    async fn get_resource_metrics(&self) -> Result<ResourceMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn get_resource_metrics(
+        &self,
+    ) -> Result<ResourceMetrics, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure resource metrics...");
 
         let resources_url = format!(
@@ -385,11 +432,13 @@ impl AzureClient {
             self.subscription_id
         );
 
-        let token = self.credential
+        let token = self
+            .credential
             .get_token(&["https://management.azure.com/.default"])
             .await?;
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .get(&resources_url)
             .bearer_auth(&token.token.secret())
             .send()
@@ -399,7 +448,7 @@ impl AzureClient {
             let resource_data: serde_json::Value = response.json().await?;
             let empty_vec = vec![];
             let resources = resource_data["value"].as_array().unwrap_or(&empty_vec);
-            
+
             let total = resources.len() as u32;
             let optimized = (total as f64 * 0.75) as u32; // 75% optimized
             let idle = (total as f64 * 0.1) as u32; // 10% idle

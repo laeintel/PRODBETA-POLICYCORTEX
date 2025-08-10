@@ -109,7 +109,10 @@ pub trait CloudCollector: Send + Sync {
     async fn collect_resources(&self) -> Result<Vec<CloudResource>, Box<dyn std::error::Error>>;
     async fn collect_policies(&self) -> Result<Vec<CloudPolicy>, Box<dyn std::error::Error>>;
     async fn collect_audit_logs(&self) -> Result<Vec<AuditLog>, Box<dyn std::error::Error>>;
-    async fn normalize_data(&self, data: serde_json::Value) -> Result<serde_json::Value, Box<dyn std::error::Error>>;
+    async fn normalize_data(
+        &self,
+        data: serde_json::Value,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>>;
 }
 
 #[async_trait]
@@ -129,7 +132,10 @@ impl CloudCollector for AwsCollector {
         Ok(Vec::new())
     }
 
-    async fn normalize_data(&self, data: serde_json::Value) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    async fn normalize_data(
+        &self,
+        data: serde_json::Value,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         Ok(data)
     }
 }

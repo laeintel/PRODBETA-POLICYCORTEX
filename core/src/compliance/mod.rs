@@ -2,11 +2,11 @@
 // Based on Roadmap_09_Compliance_Evidence_Factory.md
 // Addresses GitHub Issues #60-63: Compliance and Evidence Generation
 
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc, Duration};
-use std::collections::HashMap;
 use async_trait::async_trait;
-use sha2::{Sha256, Digest};
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 // Core compliance models
@@ -163,10 +163,23 @@ pub struct ManifestEntry {
 // Compliance Engine trait
 #[async_trait]
 pub trait ComplianceEngine: Send + Sync {
-    async fn run_control_tests(&self, framework: &str) -> Result<Vec<ControlEvidenceResult>, ComplianceError>;
-    async fn generate_artifacts(&self, control_id: &str) -> Result<Vec<EvidenceArtifact>, ComplianceError>;
-    async fn assemble_evidence_pack(&self, framework: &str, period: DateRange) -> Result<EvidencePack, ComplianceError>;
-    async fn validate_compliance(&self, framework: &str) -> Result<ComplianceValidation, ComplianceError>;
+    async fn run_control_tests(
+        &self,
+        framework: &str,
+    ) -> Result<Vec<ControlEvidenceResult>, ComplianceError>;
+    async fn generate_artifacts(
+        &self,
+        control_id: &str,
+    ) -> Result<Vec<EvidenceArtifact>, ComplianceError>;
+    async fn assemble_evidence_pack(
+        &self,
+        framework: &str,
+        period: DateRange,
+    ) -> Result<EvidencePack, ComplianceError>;
+    async fn validate_compliance(
+        &self,
+        framework: &str,
+    ) -> Result<ComplianceValidation, ComplianceError>;
     async fn schedule_assessments(&self) -> Result<Vec<AssessmentSchedule>, ComplianceError>;
 }
 
@@ -221,20 +234,23 @@ pub struct AzureComplianceEngine {
 }
 
 impl AzureComplianceEngine {
-    pub async fn new(azure_client: crate::azure_client_async::AsyncAzureClient) -> Result<Self, ComplianceError> {
+    pub async fn new(
+        azure_client: crate::azure_client_async::AsyncAzureClient,
+    ) -> Result<Self, ComplianceError> {
         let mut engine = Self {
             azure_client,
             frameworks: HashMap::new(),
             artifact_store: PathBuf::from("/tmp/compliance_artifacts"),
         };
-        
+
         // Initialize frameworks
         engine.load_frameworks().await?;
-        
+
         // Create artifact store directory
-        tokio::fs::create_dir_all(&engine.artifact_store).await
+        tokio::fs::create_dir_all(&engine.artifact_store)
+            .await
             .map_err(|e| ComplianceError::ArtifactError(e.to_string()))?;
-        
+
         Ok(engine)
     }
 
@@ -247,11 +263,11 @@ impl AzureComplianceEngine {
             self.create_gdpr_framework(),
             self.create_cis_framework(),
         ];
-        
+
         for framework in frameworks {
             self.frameworks.insert(framework.id.clone(), framework);
         }
-        
+
         Ok(())
     }
 
@@ -323,20 +339,19 @@ impl AzureComplianceEngine {
             id: "pci-dss".to_string(),
             name: "PCI DSS v4.0".to_string(),
             version: "4.0".to_string(),
-            controls: vec![
-                ComplianceControl {
-                    control_id: "1.1".to_string(),
-                    framework: "pci-dss".to_string(),
-                    name: "Firewall configuration standards".to_string(),
-                    description: "Establish and implement firewall and router configuration standards".to_string(),
-                    category: "Network Security".to_string(),
-                    severity: "Critical".to_string(),
-                    automated: true,
-                    test_frequency: "Continuous".to_string(),
-                    test_queries: vec![],
-                    required_artifacts: vec![],
-                },
-            ],
+            controls: vec![ComplianceControl {
+                control_id: "1.1".to_string(),
+                framework: "pci-dss".to_string(),
+                name: "Firewall configuration standards".to_string(),
+                description: "Establish and implement firewall and router configuration standards"
+                    .to_string(),
+                category: "Network Security".to_string(),
+                severity: "Critical".to_string(),
+                automated: true,
+                test_frequency: "Continuous".to_string(),
+                test_queries: vec![],
+                required_artifacts: vec![],
+            }],
             last_assessed: Utc::now() - Duration::days(7),
             next_assessment: Utc::now() + Duration::days(23),
         }
@@ -347,20 +362,19 @@ impl AzureComplianceEngine {
             id: "hipaa".to_string(),
             name: "HIPAA Security Rule".to_string(),
             version: "2013".to_string(),
-            controls: vec![
-                ComplianceControl {
-                    control_id: "164.312(a)(1)".to_string(),
-                    framework: "hipaa".to_string(),
-                    name: "Access Control".to_string(),
-                    description: "Implement technical policies for electronic information systems".to_string(),
-                    category: "Technical Safeguards".to_string(),
-                    severity: "Critical".to_string(),
-                    automated: true,
-                    test_frequency: "Daily".to_string(),
-                    test_queries: vec![],
-                    required_artifacts: vec![],
-                },
-            ],
+            controls: vec![ComplianceControl {
+                control_id: "164.312(a)(1)".to_string(),
+                framework: "hipaa".to_string(),
+                name: "Access Control".to_string(),
+                description: "Implement technical policies for electronic information systems"
+                    .to_string(),
+                category: "Technical Safeguards".to_string(),
+                severity: "Critical".to_string(),
+                automated: true,
+                test_frequency: "Daily".to_string(),
+                test_queries: vec![],
+                required_artifacts: vec![],
+            }],
             last_assessed: Utc::now() - Duration::days(30),
             next_assessment: Utc::now() + Duration::days(60),
         }
@@ -371,20 +385,19 @@ impl AzureComplianceEngine {
             id: "gdpr".to_string(),
             name: "General Data Protection Regulation".to_string(),
             version: "2018".to_string(),
-            controls: vec![
-                ComplianceControl {
-                    control_id: "Article-32".to_string(),
-                    framework: "gdpr".to_string(),
-                    name: "Security of processing".to_string(),
-                    description: "Implement appropriate technical and organizational measures".to_string(),
-                    category: "Data Protection".to_string(),
-                    severity: "High".to_string(),
-                    automated: true,
-                    test_frequency: "Weekly".to_string(),
-                    test_queries: vec![],
-                    required_artifacts: vec![],
-                },
-            ],
+            controls: vec![ComplianceControl {
+                control_id: "Article-32".to_string(),
+                framework: "gdpr".to_string(),
+                name: "Security of processing".to_string(),
+                description: "Implement appropriate technical and organizational measures"
+                    .to_string(),
+                category: "Data Protection".to_string(),
+                severity: "High".to_string(),
+                automated: true,
+                test_frequency: "Weekly".to_string(),
+                test_queries: vec![],
+                required_artifacts: vec![],
+            }],
             last_assessed: Utc::now() - Duration::days(14),
             next_assessment: Utc::now() + Duration::days(7),
         }
@@ -395,88 +408,172 @@ impl AzureComplianceEngine {
             id: "cis-azure".to_string(),
             name: "CIS Azure Foundations Benchmark".to_string(),
             version: "1.5.0".to_string(),
-            controls: vec![
-                ComplianceControl {
-                    control_id: "1.1".to_string(),
-                    framework: "cis-azure".to_string(),
-                    name: "Ensure Security Defaults is enabled".to_string(),
-                    description: "Security defaults in Azure AD provide secure default settings".to_string(),
-                    category: "Identity and Access Management".to_string(),
-                    severity: "High".to_string(),
-                    automated: true,
-                    test_frequency: "Daily".to_string(),
-                    test_queries: vec![],
-                    required_artifacts: vec![],
-                },
-            ],
+            controls: vec![ComplianceControl {
+                control_id: "1.1".to_string(),
+                framework: "cis-azure".to_string(),
+                name: "Ensure Security Defaults is enabled".to_string(),
+                description: "Security defaults in Azure AD provide secure default settings"
+                    .to_string(),
+                category: "Identity and Access Management".to_string(),
+                severity: "High".to_string(),
+                automated: true,
+                test_frequency: "Daily".to_string(),
+                test_queries: vec![],
+                required_artifacts: vec![],
+            }],
             last_assessed: Utc::now() - Duration::days(3),
             next_assessment: Utc::now() + Duration::days(4),
         }
     }
 
-    async fn execute_control_test(&self, control: &ComplianceControl, test: &ControlTest) -> Result<TestResult, ComplianceError> {
+    async fn execute_control_test(
+        &self,
+        control: &ComplianceControl,
+        test: &ControlTest,
+    ) -> Result<TestResult, ComplianceError> {
         // Execute REAL tests based on signal source
         let (status, actual_value, details) = match test.signal_source.as_str() {
             "AzurePolicy" => {
                 // Query REAL Azure Policy compliance
-                let policy_results = self.azure_client.get_policy_compliance_details(&test.query).await
-                    .map_err(|e| ComplianceError::TestError(format!("Failed to query Azure Policy: {}", e)))?;
-                
+                let policy_results = self
+                    .azure_client
+                    .get_policy_compliance_details(&test.query)
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::TestError(format!("Failed to query Azure Policy: {}", e))
+                    })?;
+
                 let compliance_percentage = policy_results.compliance_percentage;
-                let expected = test.success_criteria.expected_value.as_f64().unwrap_or(100.0);
-                
+                let expected = test
+                    .success_criteria
+                    .expected_value
+                    .as_f64()
+                    .unwrap_or(100.0);
+
                 let status = match test.success_criteria.operator.as_str() {
-                    "equals" => if compliance_percentage == expected { "Pass" } else { "Fail" },
-                    "greater_than" => if compliance_percentage > expected { "Pass" } else { "Fail" },
-                    "less_than" => if compliance_percentage < expected { "Pass" } else { "Fail" },
-                    _ => "Warning"
+                    "equals" => {
+                        if compliance_percentage == expected {
+                            "Pass"
+                        } else {
+                            "Fail"
+                        }
+                    }
+                    "greater_than" => {
+                        if compliance_percentage > expected {
+                            "Pass"
+                        } else {
+                            "Fail"
+                        }
+                    }
+                    "less_than" => {
+                        if compliance_percentage < expected {
+                            "Pass"
+                        } else {
+                            "Fail"
+                        }
+                    }
+                    _ => "Warning",
                 };
-                
-                (status, serde_json::json!(compliance_percentage), 
-                 format!("Policy compliance: {:.1}% (expected {} {})", 
-                         compliance_percentage, test.success_criteria.operator, expected))
+
+                (
+                    status,
+                    serde_json::json!(compliance_percentage),
+                    format!(
+                        "Policy compliance: {:.1}% (expected {} {})",
+                        compliance_percentage, test.success_criteria.operator, expected
+                    ),
+                )
             }
             "AzureMonitor" => {
                 // Query REAL Azure Monitor metrics
-                let metrics = self.azure_client.query_metrics(&test.query).await
-                    .map_err(|e| ComplianceError::TestError(format!("Failed to query Azure Monitor: {}", e)))?;
-                
+                let metrics = self
+                    .azure_client
+                    .query_metrics(&test.query)
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::TestError(format!("Failed to query Azure Monitor: {}", e))
+                    })?;
+
                 let metric_value = metrics.average_value;
                 let threshold = test.success_criteria.expected_value.as_f64().unwrap_or(0.0);
-                
+
                 let status = match test.success_criteria.operator.as_str() {
-                    "less_than" => if metric_value < threshold { "Pass" } else { "Fail" },
-                    "greater_than" => if metric_value > threshold { "Pass" } else { "Fail" },
-                    _ => "Warning"
+                    "less_than" => {
+                        if metric_value < threshold {
+                            "Pass"
+                        } else {
+                            "Fail"
+                        }
+                    }
+                    "greater_than" => {
+                        if metric_value > threshold {
+                            "Pass"
+                        } else {
+                            "Fail"
+                        }
+                    }
+                    _ => "Warning",
                 };
-                
-                (status, serde_json::json!(metric_value),
-                 format!("Metric value: {:.2} (threshold: {} {})", 
-                         metric_value, test.success_criteria.operator, threshold))
+
+                (
+                    status,
+                    serde_json::json!(metric_value),
+                    format!(
+                        "Metric value: {:.2} (threshold: {} {})",
+                        metric_value, test.success_criteria.operator, threshold
+                    ),
+                )
             }
             "ConfigSnapshot" => {
                 // Check REAL configuration snapshots
-                let config = self.azure_client.get_resource_configuration(&test.query).await
-                    .map_err(|e| ComplianceError::TestError(format!("Failed to get config: {}", e)))?;
-                
+                let config = self
+                    .azure_client
+                    .get_resource_configuration(&test.query)
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::TestError(format!("Failed to get config: {}", e))
+                    })?;
+
                 let is_compliant = self.validate_configuration(&config, &test.success_criteria);
                 let status = if is_compliant { "Pass" } else { "Fail" };
-                
-                (status, serde_json::json!(config),
-                 format!("Configuration validation: {}", if is_compliant { "Compliant" } else { "Non-compliant" }))
+
+                (
+                    status,
+                    serde_json::json!(config),
+                    format!(
+                        "Configuration validation: {}",
+                        if is_compliant {
+                            "Compliant"
+                        } else {
+                            "Non-compliant"
+                        }
+                    ),
+                )
             }
             "Logs" => {
                 // Analyze REAL log data
-                let log_results = self.azure_client.query_logs(&test.query).await
-                    .map_err(|e| ComplianceError::TestError(format!("Failed to query logs: {}", e)))?;
-                
+                let log_results = self
+                    .azure_client
+                    .query_logs(&test.query)
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::TestError(format!("Failed to query logs: {}", e))
+                    })?;
+
                 let violation_count = log_results.security_violations;
                 let status = if violation_count == 0 { "Pass" } else { "Fail" };
-                
-                (status, serde_json::json!(violation_count),
-                 format!("{} security violations found in logs", violation_count))
+
+                (
+                    status,
+                    serde_json::json!(violation_count),
+                    format!("{} security violations found in logs", violation_count),
+                )
             }
-            _ => ("Skip", serde_json::json!(null), "Unknown signal source".to_string())
+            _ => (
+                "Skip",
+                serde_json::json!(null),
+                "Unknown signal source".to_string(),
+            ),
         };
 
         Ok(TestResult {
@@ -488,20 +585,27 @@ impl AzureComplianceEngine {
         })
     }
 
-    fn validate_configuration(&self, config: &serde_json::Value, criteria: &SuccessCriteria) -> bool {
+    fn validate_configuration(
+        &self,
+        config: &serde_json::Value,
+        criteria: &SuccessCriteria,
+    ) -> bool {
         // Validate configuration against criteria
         match criteria.criteria_type.as_str() {
             "Boolean" => config.as_bool() == criteria.expected_value.as_bool(),
             "Regex" => {
-                if let (Some(config_str), Some(pattern)) = (config.as_str(), criteria.expected_value.as_str()) {
-                    regex::Regex::new(pattern).ok()
+                if let (Some(config_str), Some(pattern)) =
+                    (config.as_str(), criteria.expected_value.as_str())
+                {
+                    regex::Regex::new(pattern)
+                        .ok()
                         .and_then(|re| Some(re.is_match(config_str)))
                         .unwrap_or(false)
                 } else {
                     false
                 }
             }
-            _ => config == &criteria.expected_value
+            _ => config == &criteria.expected_value,
         }
     }
 
@@ -509,16 +613,30 @@ impl AzureComplianceEngine {
         format!("evidence-{}", uuid::Uuid::new_v4())
     }
 
-    async fn generate_artifact(&self, control: &ComplianceControl, requirement: &ArtifactRequirement) -> Result<EvidenceArtifact, ComplianceError> {
+    async fn generate_artifact(
+        &self,
+        control: &ComplianceControl,
+        requirement: &ArtifactRequirement,
+    ) -> Result<EvidenceArtifact, ComplianceError> {
         let content = match requirement.artifact_type.as_str() {
             "PolicyDefinition" => {
                 // Fetch REAL policy definitions from Azure
-                let policies = self.azure_client.get_policy_definitions().await
-                    .map_err(|e| ComplianceError::ArtifactError(format!("Failed to fetch policies: {}", e)))?;
-                
-                let compliance_state = self.azure_client.get_policy_compliance_summary().await
-                    .map_err(|e| ComplianceError::ArtifactError(format!("Failed to fetch compliance: {}", e)))?;
-                
+                let policies = self
+                    .azure_client
+                    .get_policy_definitions()
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::ArtifactError(format!("Failed to fetch policies: {}", e))
+                    })?;
+
+                let compliance_state = self
+                    .azure_client
+                    .get_policy_compliance_summary()
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::ArtifactError(format!("Failed to fetch compliance: {}", e))
+                    })?;
+
                 serde_json::json!({
                     "framework": control.framework,
                     "control_id": control.control_id,
@@ -528,13 +646,19 @@ impl AzureComplianceEngine {
                     "total_policies": policies.len(),
                     "compliant_resources": compliance_state.compliant_count,
                     "non_compliant_resources": compliance_state.non_compliant_count
-                }).to_string()
+                })
+                .to_string()
             }
             "ConfigSnapshot" => {
                 // Fetch REAL configuration snapshot from Azure
-                let resources = self.azure_client.get_resource_configurations().await
-                    .map_err(|e| ComplianceError::ArtifactError(format!("Failed to fetch configs: {}", e)))?;
-                
+                let resources = self
+                    .azure_client
+                    .get_resource_configurations()
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::ArtifactError(format!("Failed to fetch configs: {}", e))
+                    })?;
+
                 serde_json::json!({
                     "framework": control.framework,
                     "control_id": control.control_id,
@@ -542,13 +666,19 @@ impl AzureComplianceEngine {
                     "resources": resources,
                     "total_resources": resources.len(),
                     "configuration_drift": self.detect_configuration_drift(&resources)
-                }).to_string()
+                })
+                .to_string()
             }
             "Report" => {
                 // Generate REAL compliance report from Azure data
-                let metrics = self.azure_client.get_governance_metrics().await
-                    .map_err(|e| ComplianceError::ArtifactError(format!("Failed to fetch metrics: {}", e)))?;
-                
+                let metrics = self
+                    .azure_client
+                    .get_governance_metrics()
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::ArtifactError(format!("Failed to fetch metrics: {}", e))
+                    })?;
+
                 format!("Compliance Report for {}\n\nControl: {}\n\nSummary:\n- Policies: {}\n- Compliance Rate: {:.1}%\n- RBAC Violations: {}\n- Network Threats: {}\n\nGenerated: {}",
                     control.framework,
                     control.name,
@@ -561,9 +691,14 @@ impl AzureComplianceEngine {
             }
             "Log" => {
                 // Fetch REAL audit logs from Azure
-                let logs = self.azure_client.get_audit_logs(24).await // Last 24 hours
-                    .map_err(|e| ComplianceError::ArtifactError(format!("Failed to fetch logs: {}", e)))?;
-                
+                let logs = self
+                    .azure_client
+                    .get_audit_logs(24)
+                    .await // Last 24 hours
+                    .map_err(|e| {
+                        ComplianceError::ArtifactError(format!("Failed to fetch logs: {}", e))
+                    })?;
+
                 serde_json::json!({
                     "framework": control.framework,
                     "control_id": control.control_id,
@@ -571,22 +706,33 @@ impl AzureComplianceEngine {
                     "timestamp": Utc::now(),
                     "audit_logs": logs,
                     "total_events": logs.len()
-                }).to_string()
+                })
+                .to_string()
             }
             "Screenshot" => {
                 // For screenshots, we'll generate a placeholder as real screenshots require UI automation
-                format!("Screenshot evidence for control {} captured at {}", control.control_id, Utc::now())
+                format!(
+                    "Screenshot evidence for control {} captured at {}",
+                    control.control_id,
+                    Utc::now()
+                )
             }
             _ => {
                 // Default: fetch general compliance data
-                let compliance = self.azure_client.get_compliance_state().await
-                    .map_err(|e| ComplianceError::ArtifactError(format!("Failed to fetch compliance: {}", e)))?;
-                
-                serde_json::to_string(&compliance)
-                    .map_err(|e| ComplianceError::ArtifactError(format!("Failed to serialize: {}", e)))?
+                let compliance = self
+                    .azure_client
+                    .get_compliance_state()
+                    .await
+                    .map_err(|e| {
+                        ComplianceError::ArtifactError(format!("Failed to fetch compliance: {}", e))
+                    })?;
+
+                serde_json::to_string(&compliance).map_err(|e| {
+                    ComplianceError::ArtifactError(format!("Failed to serialize: {}", e))
+                })?
             }
         };
-        
+
         // Save the artifact content and return the artifact
         self.save_artifact(content, control, requirement).await
     }
@@ -606,17 +752,27 @@ impl AzureComplianceEngine {
         drifts
     }
 
-    async fn save_artifact(&self, content: String, control: &ComplianceControl, requirement: &ArtifactRequirement) -> Result<EvidenceArtifact, ComplianceError> {
+    async fn save_artifact(
+        &self,
+        content: String,
+        control: &ComplianceControl,
+        requirement: &ArtifactRequirement,
+    ) -> Result<EvidenceArtifact, ComplianceError> {
         let content_bytes = content.as_bytes();
         let mut hasher = Sha256::new();
         hasher.update(content_bytes);
         let hash = format!("{:x}", hasher.finalize());
 
         let artifact_id = format!("artifact-{}", uuid::Uuid::new_v4());
-        let storage_path = self.artifact_store.join(&artifact_id).to_string_lossy().to_string();
+        let storage_path = self
+            .artifact_store
+            .join(&artifact_id)
+            .to_string_lossy()
+            .to_string();
 
         // Write artifact to storage
-        tokio::fs::write(&storage_path, content_bytes).await
+        tokio::fs::write(&storage_path, content_bytes)
+            .await
             .map_err(|e| ComplianceError::ArtifactError(e.to_string()))?;
 
         Ok(EvidenceArtifact {
@@ -640,24 +796,27 @@ impl AzureComplianceEngine {
 
         let passed = results.iter().filter(|r| r.status == "Pass").count() as f64;
         let total = results.len() as f64;
-        
+
         (passed / total * 100.0).round() / 100.0
     }
 
     fn create_manifest(&self, artifacts: &[EvidenceArtifact]) -> EvidenceManifest {
         let total_size: u64 = artifacts.iter().map(|a| a.size_bytes).sum();
         let mut manifest_hasher = Sha256::new();
-        
-        let file_index: Vec<ManifestEntry> = artifacts.iter().map(|a| {
-            manifest_hasher.update(&a.content_hash);
-            ManifestEntry {
-                filename: format!("{}.{}", a.artifact_id, a.format.to_lowercase()),
-                path: a.storage_path.clone(),
-                checksum: a.content_hash.clone(),
-                size_bytes: a.size_bytes,
-                artifact_type: a.artifact_type.clone(),
-            }
-        }).collect();
+
+        let file_index: Vec<ManifestEntry> = artifacts
+            .iter()
+            .map(|a| {
+                manifest_hasher.update(&a.content_hash);
+                ManifestEntry {
+                    filename: format!("{}.{}", a.artifact_id, a.format.to_lowercase()),
+                    path: a.storage_path.clone(),
+                    checksum: a.content_hash.clone(),
+                    size_bytes: a.size_bytes,
+                    artifact_type: a.artifact_type.clone(),
+                }
+            })
+            .collect();
 
         EvidenceManifest {
             version: "1.0".to_string(),
@@ -672,15 +831,19 @@ impl AzureComplianceEngine {
 
 #[async_trait]
 impl ComplianceEngine for AzureComplianceEngine {
-    async fn run_control_tests(&self, framework: &str) -> Result<Vec<ControlEvidenceResult>, ComplianceError> {
-        let framework = self.frameworks.get(framework)
-            .ok_or_else(|| ComplianceError::TestError(format!("Framework {} not found", framework)))?;
+    async fn run_control_tests(
+        &self,
+        framework: &str,
+    ) -> Result<Vec<ControlEvidenceResult>, ComplianceError> {
+        let framework = self.frameworks.get(framework).ok_or_else(|| {
+            ComplianceError::TestError(format!("Framework {} not found", framework))
+        })?;
 
         let mut results = Vec::new();
 
         for control in &framework.controls {
             let mut test_results = Vec::new();
-            
+
             for test in &control.test_queries {
                 let result = self.execute_control_test(control, test).await?;
                 test_results.push(result);
@@ -708,11 +871,18 @@ impl ComplianceEngine for AzureComplianceEngine {
         Ok(results)
     }
 
-    async fn generate_artifacts(&self, control_id: &str) -> Result<Vec<EvidenceArtifact>, ComplianceError> {
+    async fn generate_artifacts(
+        &self,
+        control_id: &str,
+    ) -> Result<Vec<EvidenceArtifact>, ComplianceError> {
         let mut artifacts = Vec::new();
 
         for framework in self.frameworks.values() {
-            if let Some(control) = framework.controls.iter().find(|c| c.control_id == control_id) {
+            if let Some(control) = framework
+                .controls
+                .iter()
+                .find(|c| c.control_id == control_id)
+            {
                 for requirement in &control.required_artifacts {
                     let artifact = self.generate_artifact(control, requirement).await?;
                     artifacts.push(artifact);
@@ -723,10 +893,14 @@ impl ComplianceEngine for AzureComplianceEngine {
         Ok(artifacts)
     }
 
-    async fn assemble_evidence_pack(&self, framework: &str, period: DateRange) -> Result<EvidencePack, ComplianceError> {
+    async fn assemble_evidence_pack(
+        &self,
+        framework: &str,
+        period: DateRange,
+    ) -> Result<EvidencePack, ComplianceError> {
         // Run all control tests
         let mut control_results = self.run_control_tests(framework).await?;
-        
+
         // Generate artifacts for each control
         let mut all_artifacts = Vec::new();
         for result in &mut control_results {
@@ -736,11 +910,23 @@ impl ComplianceEngine for AzureComplianceEngine {
         }
 
         // Calculate summary
-        let passed = control_results.iter().filter(|r| r.status == "Pass").count() as u32;
-        let failed = control_results.iter().filter(|r| r.status == "Fail").count() as u32;
-        let warning = control_results.iter().filter(|r| r.status == "Warning").count() as u32;
-        let skipped = control_results.iter().filter(|r| r.status == "Skip").count() as u32;
-        
+        let passed = control_results
+            .iter()
+            .filter(|r| r.status == "Pass")
+            .count() as u32;
+        let failed = control_results
+            .iter()
+            .filter(|r| r.status == "Fail")
+            .count() as u32;
+        let warning = control_results
+            .iter()
+            .filter(|r| r.status == "Warning")
+            .count() as u32;
+        let skipped = control_results
+            .iter()
+            .filter(|r| r.status == "Skip")
+            .count() as u32;
+
         let summary = ComplianceSummary {
             total_controls: control_results.len() as u32,
             passed_controls: passed,
@@ -748,7 +934,8 @@ impl ComplianceEngine for AzureComplianceEngine {
             warning_controls: warning,
             skipped_controls: skipped,
             compliance_score: self.calculate_compliance_score(&control_results),
-            critical_findings: control_results.iter()
+            critical_findings: control_results
+                .iter()
                 .filter(|r| r.status == "Fail")
                 .map(|r| r.control_name.clone())
                 .collect(),
@@ -772,14 +959,22 @@ impl ComplianceEngine for AzureComplianceEngine {
         })
     }
 
-    async fn validate_compliance(&self, framework: &str) -> Result<ComplianceValidation, ComplianceError> {
+    async fn validate_compliance(
+        &self,
+        framework: &str,
+    ) -> Result<ComplianceValidation, ComplianceError> {
         let results = self.run_control_tests(framework).await?;
         let score = self.calculate_compliance_score(&results);
-        
-        let findings: Vec<Finding> = results.iter()
+
+        let findings: Vec<Finding> = results
+            .iter()
             .filter(|r| r.status != "Pass")
             .map(|r| Finding {
-                severity: if r.status == "Fail" { "High".to_string() } else { "Medium".to_string() },
+                severity: if r.status == "Fail" {
+                    "High".to_string()
+                } else {
+                    "Medium".to_string()
+                },
                 control_id: r.control_id.clone(),
                 description: format!("Control {} failed validation", r.control_name),
                 recommendation: "Review control implementation and remediate issues".to_string(),
@@ -825,13 +1020,17 @@ impl ComplianceEngine for AzureComplianceEngine {
 pub async fn get_compliance_status(
     azure_client: Option<&crate::azure_client_async::AsyncAzureClient>,
 ) -> Result<ComplianceStatus, ComplianceError> {
-    let client = azure_client
-        .ok_or_else(|| ComplianceError::TestError("Azure client not initialized. Please ensure Azure credentials are configured.".to_string()))?;
-    
+    let client = azure_client.ok_or_else(|| {
+        ComplianceError::TestError(
+            "Azure client not initialized. Please ensure Azure credentials are configured."
+                .to_string(),
+        )
+    })?;
+
     let engine = AzureComplianceEngine::new(client.clone()).await?;
 
     let mut framework_status = Vec::new();
-    
+
     for framework_id in ["iso27001", "pci-dss", "hipaa", "gdpr", "cis-azure"] {
         let validation = engine.validate_compliance(framework_id).await?;
         framework_status.push(FrameworkStatus {

@@ -2,13 +2,13 @@
 // Based on Roadmap_02_System_Architecture.md
 // Implements GitHub Issue #50: Event-driven architecture with NATS/Kafka
 
-use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use futures_lite::stream::StreamExt;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
 use uuid::Uuid;
-use futures_lite::stream::StreamExt;
 
 // Core event types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,8 +27,8 @@ pub enum GovernanceEvent {
         action_taken: String,
         success: bool,
     },
-    
-    // Resource Events  
+
+    // Resource Events
     ResourceCreated {
         resource_id: String,
         resource_type: String,
@@ -42,7 +42,7 @@ pub enum GovernanceEvent {
         resource_id: String,
         reason: String,
     },
-    
+
     // Cost Events
     CostAnomaly {
         service: String,
@@ -55,7 +55,7 @@ pub enum GovernanceEvent {
         savings_achieved: f64,
         resources_affected: Vec<String>,
     },
-    
+
     // Security Events
     SecurityThreat {
         threat_id: String,
@@ -68,7 +68,7 @@ pub enum GovernanceEvent {
         mitigation_applied: String,
         success: bool,
     },
-    
+
     // Compliance Events
     ComplianceCheck {
         framework: String,
@@ -82,7 +82,7 @@ pub enum GovernanceEvent {
         previous_score: f64,
         controls_affected: Vec<String>,
     },
-    
+
     // Action Lifecycle Events
     ActionInitiated {
         action_id: String,
@@ -139,12 +139,12 @@ impl EventEnvelope {
             metadata: HashMap::new(),
         }
     }
-    
+
     pub fn with_correlation_id(mut self, correlation_id: String) -> Self {
         self.correlation_id = correlation_id;
         self
     }
-    
+
     pub fn with_metadata(mut self, key: String, value: String) -> Self {
         self.metadata.insert(key, value);
         self
@@ -170,18 +170,18 @@ impl NatsEventBus {
         let client = async_nats::connect(&urls.join(","))
             .await
             .map_err(|e| EventError::ConnectionError(e.to_string()))?;
-        
+
         let jetstream = async_nats::jetstream::new(client.clone());
-        
+
         // Create streams for different event categories
         Self::ensure_streams(&jetstream).await?;
-        
+
         Ok(Self { client, jetstream })
     }
-    
+
     async fn ensure_streams(js: &async_nats::jetstream::Context) -> Result<(), EventError> {
         use async_nats::jetstream::stream::Config;
-        
+
         let streams = vec![
             ("GOVERNANCE", vec!["governance.>".to_string()]),
             ("COSTS", vec!["costs.>".to_string()]),
@@ -189,7 +189,7 @@ impl NatsEventBus {
             ("COMPLIANCE", vec!["compliance.>".to_string()]),
             ("ACTIONS", vec!["actions.>".to_string()]),
         ];
-        
+
         for (name, subjects) in streams {
             let config = Config {
                 name: name.to_string(),
@@ -199,38 +199,43 @@ impl NatsEventBus {
                 max_age: std::time::Duration::from_secs(7 * 24 * 60 * 60), // 7 days
                 ..Default::default()
             };
-            
+
             js.get_or_create_stream(config)
                 .await
                 .map_err(|e| EventError::StreamError(e.to_string()))?;
         }
-        
+
         Ok(())
     }
-    
+
     fn get_subject(event: &GovernanceEvent) -> String {
         match event {
-            GovernanceEvent::PolicyViolation { .. } |
-            GovernanceEvent::PolicyRemediated { .. } => "governance.policy",
-            
-            GovernanceEvent::ResourceCreated { .. } |
-            GovernanceEvent::ResourceModified { .. } |
-            GovernanceEvent::ResourceDeleted { .. } => "governance.resources",
-            
-            GovernanceEvent::CostAnomaly { .. } |
-            GovernanceEvent::CostOptimization { .. } => "costs.events",
-            
-            GovernanceEvent::SecurityThreat { .. } |
-            GovernanceEvent::SecurityMitigation { .. } => "security.events",
-            
-            GovernanceEvent::ComplianceCheck { .. } |
-            GovernanceEvent::ComplianceDrift { .. } => "compliance.events",
-            
-            GovernanceEvent::ActionInitiated { .. } |
-            GovernanceEvent::ActionProgress { .. } |
-            GovernanceEvent::ActionCompleted { .. } |
-            GovernanceEvent::ActionFailed { .. } => "actions.lifecycle",
-        }.to_string()
+            GovernanceEvent::PolicyViolation { .. } | GovernanceEvent::PolicyRemediated { .. } => {
+                "governance.policy"
+            }
+
+            GovernanceEvent::ResourceCreated { .. }
+            | GovernanceEvent::ResourceModified { .. }
+            | GovernanceEvent::ResourceDeleted { .. } => "governance.resources",
+
+            GovernanceEvent::CostAnomaly { .. } | GovernanceEvent::CostOptimization { .. } => {
+                "costs.events"
+            }
+
+            GovernanceEvent::SecurityThreat { .. } | GovernanceEvent::SecurityMitigation { .. } => {
+                "security.events"
+            }
+
+            GovernanceEvent::ComplianceCheck { .. } | GovernanceEvent::ComplianceDrift { .. } => {
+                "compliance.events"
+            }
+
+            GovernanceEvent::ActionInitiated { .. }
+            | GovernanceEvent::ActionProgress { .. }
+            | GovernanceEvent::ActionCompleted { .. }
+            | GovernanceEvent::ActionFailed { .. } => "actions.lifecycle",
+        }
+        .to_string()
     }
 }
 
@@ -240,39 +245,41 @@ impl EventBus for NatsEventBus {
         let subject = Self::get_subject(&event.event);
         let payload = serde_json::to_vec(&event)
             .map_err(|e| EventError::SerializationError(e.to_string()))?;
-        
+
         self.client
             .publish(subject, payload.into())
             .await
             .map_err(|e| EventError::PublishError(e.to_string()))?;
-        
+
         Ok(())
     }
-    
+
     async fn subscribe(&self, topics: Vec<String>) -> Result<EventSubscription, EventError> {
         let mut subscription = EventSubscription::new();
-        
+
         for topic in topics {
-            let sub = self.client
+            let sub = self
+                .client
                 .subscribe(topic)
                 .await
                 .map_err(|e| EventError::SubscriptionError(e.to_string()))?;
-            
+
             subscription.add_subscription(sub);
         }
-        
+
         Ok(subscription)
     }
-    
+
     async fn subscribe_pattern(&self, pattern: String) -> Result<EventSubscription, EventError> {
-        let sub = self.client
+        let sub = self
+            .client
             .subscribe(pattern)
             .await
             .map_err(|e| EventError::SubscriptionError(e.to_string()))?;
-        
+
         let mut subscription = EventSubscription::new();
         subscription.add_subscription(sub);
-        
+
         Ok(subscription)
     }
 }
@@ -292,18 +299,19 @@ impl InMemoryEventBus {
 #[async_trait]
 impl EventBus for InMemoryEventBus {
     async fn publish(&self, event: EventEnvelope) -> Result<(), EventError> {
-        self.sender.send(event)
+        self.sender
+            .send(event)
             .map_err(|e| EventError::PublishError(e.to_string()))?;
         Ok(())
     }
-    
+
     async fn subscribe(&self, _topics: Vec<String>) -> Result<EventSubscription, EventError> {
         let receiver = self.sender.subscribe();
         let mut subscription = EventSubscription::new();
         subscription.add_broadcast_receiver(receiver);
         Ok(subscription)
     }
-    
+
     async fn subscribe_pattern(&self, _pattern: String) -> Result<EventSubscription, EventError> {
         self.subscribe(vec![]).await
     }
@@ -322,15 +330,15 @@ impl EventSubscription {
             broadcast_receivers: Vec::new(),
         }
     }
-    
+
     fn add_subscription(&mut self, sub: async_nats::Subscriber) {
         self.nats_subs.push(sub);
     }
-    
+
     fn add_broadcast_receiver(&mut self, receiver: broadcast::Receiver<EventEnvelope>) {
         self.broadcast_receivers.push(receiver);
     }
-    
+
     pub async fn next(&mut self) -> Option<EventEnvelope> {
         // Try NATS subscriptions first
         for sub in &mut self.nats_subs {
@@ -340,14 +348,14 @@ impl EventSubscription {
                 }
             }
         }
-        
+
         // Try in-memory receivers
         for receiver in &mut self.broadcast_receivers {
             if let Ok(event) = receiver.try_recv() {
                 return Some(event);
             }
         }
-        
+
         None
     }
 }
@@ -363,11 +371,11 @@ impl EventProcessor {
             handlers: HashMap::new(),
         }
     }
-    
+
     pub fn register_handler(&mut self, event_type: String, handler: Box<dyn EventHandler>) {
         self.handlers.insert(event_type, handler);
     }
-    
+
     pub async fn process(&self, event: EventEnvelope) -> Result<(), EventError> {
         let event_type = match &event.event {
             GovernanceEvent::PolicyViolation { .. } => "PolicyViolation",
@@ -386,11 +394,11 @@ impl EventProcessor {
             GovernanceEvent::ActionCompleted { .. } => "ActionCompleted",
             GovernanceEvent::ActionFailed { .. } => "ActionFailed",
         };
-        
+
         if let Some(handler) = self.handlers.get(event_type) {
             handler.handle(event).await?;
         }
-        
+
         Ok(())
     }
 }
@@ -430,27 +438,27 @@ impl EventAggregator {
             events: tokio::sync::RwLock::new(Vec::new()),
         }
     }
-    
+
     pub async fn add_event(&self, event: EventEnvelope) {
         let mut events = self.events.write().await;
         events.push(event);
-        
+
         // Clean old events
         let cutoff = Utc::now() - chrono::Duration::from_std(self.window_size).unwrap();
         events.retain(|e| e.timestamp > cutoff);
     }
-    
+
     pub async fn get_statistics(&self) -> EventStatistics {
         let events = self.events.read().await;
-        
+
         let mut by_type = HashMap::new();
         let mut by_tenant = HashMap::new();
-        
+
         for event in events.iter() {
             *by_type.entry(format!("{:?}", event.event)).or_insert(0) += 1;
             *by_tenant.entry(event.tenant_id.clone()).or_insert(0) += 1;
         }
-        
+
         EventStatistics {
             total_events: events.len(),
             events_by_type: by_type,
