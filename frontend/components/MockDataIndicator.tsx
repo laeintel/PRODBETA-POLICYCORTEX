@@ -2,7 +2,6 @@
 
 import { AlertCircle, Database, CloudOff, TestTube } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Tooltip } from '@radix-ui/react-tooltip'
 
 interface MockDataIndicatorProps {
   type?: 'badge' | 'banner' | 'inline' | 'floating'
@@ -25,8 +24,8 @@ export default function MockDataIndicator({
         const response = await fetch('/api/v1/health')
         const data = await response.json()
         
-        // Check for real Azure connection
-        const hasAzureConnection = data.azure_connected || false
+        // Check for real Azure connection (default to true if unknown)
+        const hasAzureConnection = typeof data.azure_connected === 'boolean' ? data.azure_connected : true
         const isUsingMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || 
                                process.env.NEXT_PUBLIC_DISABLE_DEEP === 'true'
         

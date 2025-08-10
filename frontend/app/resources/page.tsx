@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
+import VirtualizedTable from '@/components/VirtualizedTable'
+import ServerPagination from '@/components/ServerPagination'
+import { useServerPagination } from '@/hooks/useServerPagination'
 import { useAzureResources, type AzureResource } from '../../lib/azure-api'
 import { 
   Server,
