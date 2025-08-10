@@ -61,7 +61,10 @@ class ResourcesRequest(BaseModel):
 # -------------------- Auth (Azure AD JWT) --------------------
 AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID") or os.getenv("NEXT_PUBLIC_AZURE_TENANT_ID")
 AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID") or os.getenv("NEXT_PUBLIC_AZURE_CLIENT_ID")
+API_AUDIENCE = os.getenv("API_AUDIENCE") or os.getenv("NEXT_PUBLIC_API_AUDIENCE")
+ALLOWED_AUDIENCES: List[str] = [a for a in [API_AUDIENCE, AZURE_CLIENT_ID] if a]
 REQUIRE_AUTH = (os.getenv("REQUIRE_AUTH", "true").lower() == "true")
+REQUIRE_SCOPE = os.getenv("API_REQUIRED_SCOPE")
 
 JWKS_CACHE: Dict[str, Any] = {}
 
@@ -96,8 +99,8 @@ def _get_rsa_key(token: str, jwks: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return None
 
 async def _validate_bearer_token(token: str) -> Dict[str, Any]:
-    if not AZURE_TENANT_ID or not AZURE_CLIENT_ID:
-        raise HTTPException(status_code=500, detail="Auth is required but AZURE_TENANT_ID/AZURE_CLIENT_ID not configured")
+    if not AZURE_TENANT_ID or not ALLOWED_AUDIENCES:
+        raise HTTPException(status_code=500, detail="Auth is required but tenant or audience not configured")
     issuer = _issuer_for_tenant(AZURE_TENANT_ID)
     jwks = JWKS_CACHE.get(AZURE_TENANT_ID)
     if not jwks:
@@ -114,10 +117,21 @@ async def _validate_bearer_token(token: str) -> Dict[str, Any]:
             token,
             rsa_key,
             algorithms=["RS256"],
-            audience=AZURE_CLIENT_ID,
+            audience=ALLOWED_AUDIENCES if len(ALLOWED_AUDIENCES) > 1 else ALLOWED_AUDIENCES[0],
             issuer=issuer,
             options={"verify_aud": True, "verify_signature": True},
         )
+        # Optional scope/role enforcement
+        if REQUIRE_SCOPE:
+            scopes = []
+            scp = claims.get("scp")
+            if isinstance(scp, str):
+                scopes.extend(scp.split(" "))
+            roles = claims.get("roles")
+            if isinstance(roles, list):
+                scopes.extend(roles)
+            if REQUIRE_SCOPE not in scopes:
+                raise HTTPException(status_code=403, detail="Required scope not granted")
         return claims
     except Exception as e:
         logger.warning(f"JWT validation failed: {e}")
