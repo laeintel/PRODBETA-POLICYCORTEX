@@ -37,6 +37,8 @@ mod secret_guard;
 mod secrets;
 mod slo;
 mod change_management;
+mod policy_engine;
+mod enforcement;
 
 use api::{
     AppState,

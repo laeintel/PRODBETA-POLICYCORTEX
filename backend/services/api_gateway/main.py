@@ -205,6 +205,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from cloud_providers import multi_cloud_provider, CloudProvider
 from azure_real_data import AzureRealDataCollector
 from azure_deep_insights import AzureDeepInsights
+from finops_ingestion import finops_ingestion
 
 # Azure providers for backward compatibility
 azure_collector = None
@@ -219,6 +220,9 @@ except Exception as e:
 
 # Multi-cloud provider
 logger.info(f"Multi-cloud provider initialized with: {multi_cloud_provider.get_enabled_providers()}")
+
+# FinOps ingestion service
+logger.info("FinOps ingestion service initialized")
 
 # No mock datasets retained – service returns 503 if Azure is unavailable
 
@@ -1231,6 +1235,177 @@ async def create_exception(resource_id: str, policy_id: str, reason: str, _: Dic
         "expiresIn": "30 days",
         "status": "Approved"
     }
+
+# ============= FINOPS ENDPOINTS =============
+
+@app.get("/api/v1/finops/costs")
+async def get_finops_costs(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Get real FinOps cost data from all cloud providers"""
+    try:
+        # Parse dates
+        start = datetime.fromisoformat(start_date) if start_date else datetime.utcnow() - timedelta(days=30)
+        end = datetime.fromisoformat(end_date) if end_date else datetime.utcnow()
+        
+        # Ingest costs from all providers
+        costs = await finops_ingestion.ingest_all_costs(start, end)
+        
+        # Get summary
+        summary = finops_ingestion.get_cost_summary()
+        
+        return {
+            "costs": [
+                {
+                    "provider": c.provider,
+                    "service": c.service,
+                    "resource_id": c.resource_id,
+                    "region": c.region,
+                    "cost": float(c.cost),
+                    "currency": c.currency,
+                    "usage": float(c.usage_quantity),
+                    "date": c.date.isoformat(),
+                    "tags": c.tags
+                }
+                for c in costs[:100]  # Limit to 100 for response size
+            ],
+            "summary": summary,
+            "total_records": len(costs),
+            "period": {
+                "start": start.isoformat(),
+                "end": end.isoformat()
+            }
+        }
+    except Exception as e:
+        logger.error(f"FinOps costs error: {e}")
+        raise HTTPException(500, f"Failed to get FinOps costs: {str(e)}")
+
+@app.get("/api/v1/finops/budgets")
+async def get_finops_budgets(_: Dict[str, Any] = Depends(auth_dependency)):
+    """Get budget information from all cloud providers"""
+    try:
+        budgets = await finops_ingestion.ingest_budgets()
+        
+        return {
+            "budgets": [
+                {
+                    "provider": b.provider,
+                    "name": b.budget_name,
+                    "amount": float(b.budget_amount),
+                    "spent": float(b.spent_amount),
+                    "remaining": float(b.remaining_amount),
+                    "percentage": b.percentage_used,
+                    "currency": b.currency,
+                    "period_start": b.period_start.isoformat(),
+                    "period_end": b.period_end.isoformat(),
+                    "alerts": b.alerts
+                }
+                for b in budgets
+            ],
+            "total": len(budgets),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"FinOps budgets error: {e}")
+        raise HTTPException(500, f"Failed to get budgets: {str(e)}")
+
+@app.get("/api/v1/finops/recommendations")
+async def get_finops_recommendations(_: Dict[str, Any] = Depends(auth_dependency)):
+    """Get FinOps savings recommendations"""
+    try:
+        recommendations = await finops_ingestion.generate_savings_recommendations()
+        
+        return {
+            "recommendations": [
+                {
+                    "provider": r.provider,
+                    "type": r.recommendation_type,
+                    "resource_id": r.resource_id,
+                    "description": r.description,
+                    "estimated_savings": float(r.estimated_savings),
+                    "currency": r.currency,
+                    "impact": r.impact,
+                    "effort": r.effort,
+                    "confidence": r.confidence,
+                    "actions": r.actions
+                }
+                for r in recommendations
+            ],
+            "total_savings": sum(float(r.estimated_savings) for r in recommendations),
+            "count": len(recommendations),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"FinOps recommendations error: {e}")
+        raise HTTPException(500, f"Failed to get recommendations: {str(e)}")
+
+@app.get("/api/v1/finops/anomalies")
+async def get_finops_anomalies(
+    threshold: Optional[float] = 1.5,
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Detect cost anomalies"""
+    try:
+        anomalies = await finops_ingestion.get_cost_anomalies(threshold)
+        
+        return {
+            "anomalies": anomalies,
+            "total": len(anomalies),
+            "threshold": threshold,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"FinOps anomalies error: {e}")
+        raise HTTPException(500, f"Failed to detect anomalies: {str(e)}")
+
+@app.get("/api/v1/finops/summary")
+async def get_finops_summary(_: Dict[str, Any] = Depends(auth_dependency)):
+    """Get comprehensive FinOps summary"""
+    try:
+        # Get all data
+        summary = finops_ingestion.get_cost_summary()
+        budgets = await finops_ingestion.ingest_budgets()
+        recommendations = await finops_ingestion.generate_savings_recommendations()
+        anomalies = await finops_ingestion.get_cost_anomalies()
+        
+        # Calculate budget health
+        budget_health = []
+        for budget in budgets[:5]:  # Top 5 budgets
+            health_status = "healthy"
+            if budget.percentage_used > 90:
+                health_status = "critical"
+            elif budget.percentage_used > 75:
+                health_status = "warning"
+            
+            budget_health.append({
+                "name": budget.budget_name,
+                "provider": budget.provider,
+                "status": health_status,
+                "percentage": budget.percentage_used,
+                "remaining": float(budget.remaining_amount)
+            })
+        
+        return {
+            "summary": summary,
+            "budget_health": budget_health,
+            "savings_opportunity": sum(float(r.estimated_savings) for r in recommendations),
+            "anomalies_detected": len(anomalies),
+            "top_recommendations": [
+                {
+                    "description": r.description,
+                    "savings": float(r.estimated_savings),
+                    "impact": r.impact
+                }
+                for r in sorted(recommendations, key=lambda x: x.estimated_savings, reverse=True)[:3]
+            ],
+            "providers": list(set(c.provider for c in finops_ingestion.cost_data_cache)),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"FinOps summary error: {e}")
+        raise HTTPException(500, f"Failed to get FinOps summary: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
