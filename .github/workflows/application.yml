@@ -446,11 +446,10 @@ jobs:
     name: Deploy to Development
     runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: |
-      always() && env.TARGET_ENV == 'dev' &&
+    if: ${{ always() && (env.TARGET_ENV == 'dev') &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
       (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
-      (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped')
+      (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped') }}
     environment: development
     permissions:
       contents: read
@@ -499,7 +498,7 @@ jobs:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: github.event_name == 'workflow_dispatch' && env.TARGET_ENV == 'prod'
+    if: ${{ github.event_name == 'workflow_dispatch' && env.TARGET_ENV == 'prod' }}
     environment: production
     permissions:
       contents: read
