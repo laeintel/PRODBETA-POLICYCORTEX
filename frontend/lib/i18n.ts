@@ -361,16 +361,27 @@ export function I18nProvider({
     return key
   }
 
-  const value: I18nContextType = {
+  const value = {
     locale,
     setLocale,
     t,
     dir: LOCALES[locale].dir,
-    formatNumber: (value, options) => formatNumber(value, locale, options),
-    formatCurrency: (value, currency) => formatCurrency(value, currency, locale),
-    formatDate: (date, options) => formatDate(date, locale, options),
-    formatRelativeTime: (date) => formatRelativeTime(date, locale),
-  }
+    formatNumber: (num: number, opts?: Intl.NumberFormatOptions) => new Intl.NumberFormat(String(locale), opts).format(num),
+    formatCurrency: (num: number, curr: string) => new Intl.NumberFormat(String(locale), { style: 'currency', currency: curr }).format(num),
+    formatDate: (d: Date | string, opts?: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(String(locale), opts).format(typeof d === 'string' ? new Date(d) : d),
+    formatRelativeTime: (d) => {
+      const dateObj = typeof d === 'string' ? new Date(d) : d
+      const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+      const diff = (dateObj.getTime() - Date.now()) / 1000
+      const abs = Math.abs(diff)
+      if (abs < 60) return rtf.format(Math.round(diff), 'second')
+      if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute')
+      if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour')
+      if (abs < 2592000) return rtf.format(Math.round(diff / 86400), 'day')
+      if (abs < 31536000) return rtf.format(Math.round(diff / 2592000), 'month')
+      return rtf.format(Math.round(diff / 31536000), 'year')
+    },
+  } as I18nContextType
 
   return (
     <I18nContext.Provider value={value}>
@@ -393,21 +404,18 @@ export function useI18n() {
 // Language selector component
 export function LanguageSelector() {
   const { locale, setLocale } = useI18n()
-
-  return (
-    <select
-      value={locale}
-      onChange={(e) => setLocale(e.target.value as Locale)}
-      className="px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-      aria-label="Select language"
-    >
-      {Object.entries(LOCALES).map(([key, value]) => (
-        <option key={key} value={key}>
-          {value.flag} {value.name}
-        </option>
-      ))}
-    </select>
-  )
+  return createElement(
+    'select',
+    {
+      value: locale,
+      onChange: (e: any) => setLocale(e.target.value as Locale),
+      className: 'px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+      'aria-label': 'Select language'
+    } as any,
+    ...Object.entries(LOCALES).map(([key, value]) =>
+      createElement('option', { key, value: key }, `${value.flag} ${value.name}`)
+    )
+  ) as any
 }
 
 // Load translations dynamically
@@ -429,5 +437,4 @@ export async function preloadTranslations(locales: Locale[]) {
   await Promise.all(locales.map(loadTranslations))
 }
 
-// Export types
-export type { TranslationDict, I18nContextType }
+// types already exported above

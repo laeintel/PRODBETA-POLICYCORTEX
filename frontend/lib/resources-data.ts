@@ -394,7 +394,7 @@ export const azureResources: ResourceDefinition[] = [
         remoteDebuggingEnabled: false,
         remoteDebuggingVersion: null,
         httpLoggingEnabled: true,
-        azureMonitorLogCategories: null,
+        // azureMonitorLogCategories duplicated; keep a single occurrence
         acrUseManagedIdentityCreds: false,
         acrUserManagedIdentityID: null,
         logsDirectorySizeLimit: 100,
@@ -772,6 +772,7 @@ export const azureResources: ResourceDefinition[] = [
     provisioningState: 'Succeeded',
     sku: {
       name: 'Premium',
+      tier: 'Premium',
       family: 'P',
       capacity: 1
     },

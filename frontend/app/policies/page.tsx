@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { ChartCard, ComplianceTrend } from '../../components/ChartCards'
+import FilterBar from '../../components/FilterBar'
 import AppLayout from '../../components/AppLayout'
 import { azurePolicies, getPolicyStatistics, getNonCompliantResources, type PolicyDefinition } from '../../lib/policies-data'
 import { 
@@ -88,6 +90,10 @@ export default function PoliciesPage() {
 
   const stats = getPolicyStatistics()
 
+  const complianceTrend = useMemo(() => (
+    Array.from({ length: 12 }).map((_, i) => ({ name: `W${i + 1}`, value: 80 + (i % 4) }))
+  ), [])
+
   const totalCompliant = filteredPolicies.reduce((sum, p) => sum + (p.compliance?.compliant || 0), 0)
   const totalNonCompliant = filteredPolicies.reduce((sum, p) => sum + (p.compliance?.nonCompliant || 0), 0)
   const overallCompliance = totalCompliant + totalNonCompliant > 0 
@@ -97,6 +103,11 @@ export default function PoliciesPage() {
   const openRemediate = (resourceId: string, action: string) => {
     setDrawerRequest({ action_type: action, resource_id: resourceId })
     setDrawerOpen(true)
+    // bring drawer to focus in next tick for accessibility
+    setTimeout(() => {
+      const el = document.getElementById('action-drawer-title')
+      el?.focus()
+    }, 0)
   }
 
   return (
@@ -228,7 +239,7 @@ export default function PoliciesPage() {
             </div>
           </div>
 
-          {/* Statistics Dashboard */}
+          {/* Statistics & Trend */}
           {showStatistics && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -264,11 +275,32 @@ export default function PoliciesPage() {
                   ))}
                 </div>
               </div>
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ChartCard title="Compliance Trend" subtitle="Last 12 weeks">
+                  <ComplianceTrend data={[{name:'W1',value:78},{name:'W2',value:80},{name:'W3',value:81},{name:'W4',value:83},{name:'W5',value:84},{name:'W6',value:85},{name:'W7',value:86},{name:'W8',value:88},{name:'W9',value:89},{name:'W10',value:90},{name:'W11',value:92},{name:'W12',value:93}]} />
+                </ChartCard>
+                <div className="p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+                  <h3 className="text-sm font-medium text-white mb-2">Quick Filters</h3>
+                  <FilterBar
+                    facets={[
+                      { key: 'subscription', label: 'Subscription' },
+                      { key: 'resourceGroup', label: 'Resource Group' },
+                      { key: 'effect', label: 'Effect', options: [
+                        { label: 'Deny', value: 'Deny' },
+                        { label: 'Audit', value: 'Audit' },
+                        { label: 'Append', value: 'Append' },
+                        { label: 'Modify', value: 'Modify' },
+                        { label: 'DeployIfNotExists', value: 'DeployIfNotExists' }
+                      ]},
+                    ]}
+                  />
+                </div>
+              </div>
             </motion.div>
           )}
 
           {/* Policies Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 sticky top-2">
             {filteredPolicies.map((policy) => (
               <motion.div
                 key={policy.id}
@@ -276,8 +308,9 @@ export default function PoliciesPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.02 }}
                 onClick={() => {
-                  setSelectedPolicy(policy)
-                  setShowDetails(true)
+                  if (typeof window !== 'undefined') {
+                    window.location.href = `/policies/${encodeURIComponent(policy.id || policy.name)}`
+                  }
                 }}
                 className="p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 cursor-pointer hover:bg-white/15 transition-all"
               >

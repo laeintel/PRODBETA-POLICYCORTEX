@@ -165,9 +165,10 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
       setCortexResponse(response.response)
       speakResponse(response.response)
       
-      // Extract actions from AI response
-      if (response.suggested_actions?.length > 0) {
-        onActionTrigger?.('ai_suggestions', response.suggested_actions)
+      // Extract actions from AI response (guarded)
+      const actions = (response as any)?.suggested_actions as string[] | undefined
+      if (Array.isArray(actions) && actions.length > 0) {
+        onActionTrigger?.('ai_suggestions', actions)
       }
     } catch (error) {
       speakResponse("I'm having trouble processing that request. Please try again.")

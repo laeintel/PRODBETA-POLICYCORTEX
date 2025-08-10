@@ -6,17 +6,28 @@
 import { Configuration, LogLevel } from '@azure/msal-browser'
 
 // Azure AD Application Configuration
+const clientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || ''
+const tenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID || ''
+const redirectUri = process.env.NEXT_PUBLIC_MSAL_REDIRECT_URI || (typeof window !== 'undefined' ? window.location.origin : '/')
+const postLogoutRedirectUri = process.env.NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI || (typeof window !== 'undefined' ? window.location.origin : '/')
+
+if (!clientId || !tenantId) {
+  // Surface a clear console error instead of silently using wrong defaults
+  // This prevents AADSTS9002326 caused by misconfigured client type / redirect origin
+  console.error('MSAL configuration missing NEXT_PUBLIC_AZURE_CLIENT_ID or NEXT_PUBLIC_AZURE_TENANT_ID. Configure your SPA app in Azure AD and set .env vars.')
+}
+
 export const msalConfig: Configuration = {
   auth: {
-    clientId: process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || '1ecc95d1-e5bb-43e2-9324-30a17cb6b01c', // From your GitHub secrets
-    authority: `https://login.microsoftonline.com/${process.env.NEXT_PUBLIC_AZURE_TENANT_ID || '9ef5b184-d371-462a-bc75-5024ce8baff7'}`, // Your tenant ID
-    redirectUri: typeof window !== 'undefined' ? window.location.origin : '/',
-    postLogoutRedirectUri: typeof window !== 'undefined' ? window.location.origin : '/',
+    clientId,
+    authority: tenantId ? `https://login.microsoftonline.com/${tenantId}` : undefined,
+    redirectUri,
+    postLogoutRedirectUri,
     navigateToLoginRequestUrl: false,
   },
   cache: {
     cacheLocation: 'sessionStorage', // or 'localStorage'
-    storeAuthStateInCookie: false, // Set to true for IE11 or Edge
+    storeAuthStateInCookie: false, // Set true only for legacy browsers
   },
   system: {
     loggerOptions: {
