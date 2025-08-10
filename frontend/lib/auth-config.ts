@@ -8,10 +8,14 @@ import { Configuration, LogLevel } from '@azure/msal-browser'
 // Azure AD Application Configuration
 const clientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || ''
 const tenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID || ''
-const redirectUri = process.env.NEXT_PUBLIC_MSAL_REDIRECT_URI || (typeof window !== 'undefined' ? window.location.origin : '/')
-const postLogoutRedirectUri = process.env.NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI || (typeof window !== 'undefined' ? window.location.origin : '/')
+const redirectUri = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_MSAL_REDIRECT_URI || window.location.origin)
+  : undefined
+const postLogoutRedirectUri = typeof window !== 'undefined'
+  ? (process.env.NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI || window.location.origin)
+  : undefined
 
-if (!clientId || !tenantId) {
+if (typeof window !== 'undefined' && (!clientId || !tenantId)) {
   // Surface a clear console error instead of silently using wrong defaults
   // This prevents AADSTS9002326 caused by misconfigured client type / redirect origin
   console.error('MSAL configuration missing NEXT_PUBLIC_AZURE_CLIENT_ID or NEXT_PUBLIC_AZURE_TENANT_ID. Configure your SPA app in Azure AD and set .env vars.')

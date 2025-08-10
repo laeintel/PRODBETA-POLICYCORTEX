@@ -237,8 +237,8 @@ export function DashboardGrid() {
         {/* Policy Compliance */}
         <KPITile
           title="Policy Compliance"
-          value={metrics ? formatPercentage(metrics.policies.compliance_rate ?? 0) : '--'}
-          subtitle={`${metrics?.policies.violations || 0} violations detected`}
+          value={metrics ? formatPercentage(metrics?.policies?.compliance_rate ?? 0) : '--'}
+          subtitle={`${metrics?.policies?.violations ?? 0} violations detected`}
           change={metrics?.policies.trend}
           changeLabel="vs last month"
           trend={(metrics?.policies.trend ?? 0) > 0 ? 'up' : 'down'}
@@ -253,12 +253,12 @@ export function DashboardGrid() {
         {/* Cost Optimization */}
         <KPITile
           title="Monthly Spend"
-          value={metrics ? formatCurrency(metrics.costs.current_spend ?? 0) : '--'}
-          subtitle={`${formatCurrency(metrics?.costs.savings_identified || 0)} savings identified`}
-          change={metrics?.costs.trend}
+          value={metrics ? formatCurrency(metrics?.costs?.current_spend ?? 0) : '--'}
+          subtitle={`${formatCurrency(metrics?.costs?.savings_identified ?? 0)} savings identified`}
+          change={metrics?.costs?.trend}
           changeLabel="vs last month"
-          trend={(metrics?.costs.trend ?? 0) < 0 ? 'down' : 'up'}
-          status={(metrics?.costs.optimization_rate ?? 0) >= 80 ? 'success' : 'warning'}
+          trend={(metrics?.costs?.trend ?? 0) < 0 ? 'down' : 'up'}
+          status={(metrics?.costs?.optimization_rate ?? 0) >= 80 ? 'success' : 'warning'}
           deepLink="/costs"
           icon={<DollarSign className="w-5 h-5 text-green-600" />}
           loading={loading}
@@ -268,13 +268,13 @@ export function DashboardGrid() {
         {/* Security Risk Score */}
         <KPITile
           title="Security Risk Score"
-          value={metrics ? (metrics.security.risk_score ?? 0).toFixed(1) : '--'}
-          subtitle={`${metrics?.security.active_threats || 0} active threats`}
-          change={metrics?.security.trend}
+          value={metrics ? (metrics?.security?.risk_score ?? 0).toFixed(1) : '--'}
+          subtitle={`${metrics?.security?.active_threats ?? 0} active threats`}
+          change={metrics?.security?.trend}
           changeLabel="vs last week"
-          trend={(metrics?.security.trend ?? 0) < 0 ? 'down' : 'up'}
-          status={(metrics?.security.risk_score ?? 100) <= 30 ? 'success' : 
-                  (metrics?.security.risk_score ?? 100) <= 60 ? 'warning' : 'error'}
+          trend={(metrics?.security?.trend ?? 0) < 0 ? 'down' : 'up'}
+          status={(metrics?.security?.risk_score ?? 100) <= 30 ? 'success' : 
+                  (metrics?.security?.risk_score ?? 100) <= 60 ? 'warning' : 'error'}
           deepLink="/security"
           icon={<Lock className="w-5 h-5 text-red-600" />}
           loading={loading}
@@ -284,12 +284,12 @@ export function DashboardGrid() {
         {/* Resource Utilization */}
         <KPITile
           title="Resource Utilization"
-          value={metrics ? formatPercentage(metrics.resources.utilization_rate ?? 0) : '--'}
-          subtitle={`${metrics?.resources.idle || 0} idle resources`}
+          value={metrics ? formatPercentage(metrics?.resources?.utilization_rate ?? 0) : '--'}
+          subtitle={`${metrics?.resources?.idle ?? 0} idle resources`}
           change={5.2}
           changeLabel="efficiency gain"
           trend="up"
-          status={(metrics?.resources.utilization_rate ?? 0) >= 70 ? 'success' : 'warning'}
+          status={(metrics?.resources?.utilization_rate ?? 0) >= 70 ? 'success' : 'warning'}
           deepLink="/resources"
           icon={<Cpu className="w-5 h-5 text-purple-600" />}
           loading={loading}
@@ -299,8 +299,8 @@ export function DashboardGrid() {
         {/* Compliance Score */}
         <KPITile
           title="Compliance Score"
-          value={metrics ? formatPercentage(metrics.compliance.overall_score ?? 0) : '--'}
-          subtitle={`${metrics?.compliance.frameworks || 0} frameworks tracked`}
+          value={metrics ? formatPercentage(metrics?.compliance?.overall_score ?? 0) : '--'}
+          subtitle={`${metrics?.compliance?.frameworks ?? 0} frameworks tracked`}
           change={2.1}
           changeLabel="improvement"
           trend="up"
@@ -314,9 +314,9 @@ export function DashboardGrid() {
         {/* AI Predictions */}
         <KPITile
           title="AI Predictions"
-          value={metrics ? formatNumber(metrics.ai?.predictions_made ?? 0) : '--'}
-          subtitle={`${formatPercentage(metrics?.ai.accuracy || 0)} accuracy`}
-          change={metrics?.ai.learning_progress}
+          value={metrics ? formatNumber(metrics?.ai?.predictions_made ?? 0) : '--'}
+          subtitle={`${formatPercentage(metrics?.ai?.accuracy ?? 0)} accuracy`}
+          change={metrics?.ai?.learning_progress}
           changeLabel="learning progress"
           trend="up"
           status="success"
@@ -328,7 +328,7 @@ export function DashboardGrid() {
         {/* Automations */}
         <KPITile
           title="Automations"
-          value={metrics ? formatNumber(metrics.ai?.automations_executed ?? 0) : '--'}
+          value={metrics ? formatNumber(metrics?.ai?.automations_executed ?? 0) : '--'}
           subtitle="This month"
           change={18.5}
           changeLabel="vs last month"
@@ -342,8 +342,8 @@ export function DashboardGrid() {
         {/* Data Governance */}
         <KPITile
           title="Evidence Packs"
-          value={metrics?.compliance.evidence_packs || '--'}
-          subtitle={`Next assessment in ${metrics?.compliance.next_assessment_days || '--'} days`}
+          value={metrics?.compliance?.evidence_packs ?? '--'}
+          subtitle={`Next assessment in ${metrics?.compliance?.next_assessment_days ?? '--'} days`}
           trend="neutral"
           status="neutral"
           deepLink="/compliance/evidence"
@@ -362,19 +362,19 @@ export function DashboardGrid() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Active Policies</span>
-              <span className="font-medium">{metrics?.policies.active || '--'}</span>
+              <span className="font-medium">{metrics?.policies?.active ?? '--'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Total Resources</span>
-              <span className="font-medium">{metrics?.resources.total || '--'}</span>
+              <span className="font-medium">{metrics?.resources?.total ?? '--'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Critical Paths</span>
-              <span className="font-medium">{metrics?.security.critical_paths || '--'}</span>
+              <span className="font-medium">{metrics?.security?.critical_paths ?? '--'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Compliance Findings</span>
-              <span className="font-medium">{metrics?.compliance.findings || '--'}</span>
+              <span className="font-medium">{metrics?.compliance?.findings ?? '--'}</span>
             </div>
           </div>
         </div>

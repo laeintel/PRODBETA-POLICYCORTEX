@@ -32,14 +32,16 @@ interface ConflictResolution {
 class OfflineManager {
   private db: IDBPDatabase | null = null
   private syncQueue: OfflineAction[] = []
-  private isOnline: boolean = navigator.onLine
+  private isOnline: boolean = typeof window !== 'undefined' ? navigator.onLine : true
   private syncInProgress: boolean = false
   private listeners: Map<string, Set<Function>> = new Map()
   
   constructor() {
-    this.initializeDB()
-    this.setupEventListeners()
-    this.startSyncWorker()
+    if (typeof window !== 'undefined') {
+      this.initializeDB()
+      this.setupEventListeners()
+      this.startSyncWorker()
+    }
   }
 
   private async initializeDB() {
@@ -425,16 +427,19 @@ class OfflineManager {
   }
 }
 
-// Singleton instance
-export const offlineManager = new OfflineManager()
+// Singleton instance - only create on client side
+export const offlineManager = typeof window !== 'undefined' ? new OfflineManager() : null as any
 
 // React hook for offline status
 export function useOfflineStatus() {
-  const [isOnline, setIsOnline] = useState(offlineManager.getIsOnline())
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? offlineManager?.getIsOnline() ?? true : true)
   const [pendingActions, setPendingActions] = useState(0)
   const [conflicts, setConflicts] = useState<any[]>([])
   
   useEffect(() => {
+    // Skip on SSR
+    if (typeof window === 'undefined' || !offlineManager) return
+    
     const updateStatus = () => setIsOnline(offlineManager.getIsOnline())
     const updatePending = async () => {
       const count = await offlineManager.getPendingActionsCount()
@@ -470,9 +475,9 @@ export function useOfflineStatus() {
     isOnline,
     pendingActions,
     conflicts,
-    syncNow: () => offlineManager.syncPendingActions(),
-    resolveConflict: (id: string, resolution: any) => offlineManager.resolveConflict(id, resolution),
-    clearOfflineData: () => offlineManager.clearOfflineData()
+    syncNow: () => offlineManager?.syncPendingActions?.() ?? Promise.resolve(),
+    resolveConflict: (id: string, resolution: any) => offlineManager?.resolveConflict?.(id, resolution) ?? Promise.resolve(),
+    clearOfflineData: () => offlineManager?.clearOfflineData?.() ?? Promise.resolve()
   }
 }
 
