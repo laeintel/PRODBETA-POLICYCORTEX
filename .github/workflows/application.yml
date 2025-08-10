@@ -113,7 +113,12 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm install --legacy-peer-deps
+          fi
         working-directory: ./frontend
 
       - name: Type Check
@@ -155,7 +160,12 @@ jobs:
           cache-dependency-path: graphql/package.json
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm install --legacy-peer-deps
+          fi
         working-directory: ./graphql
 
       - name: Test GraphQL Schema
@@ -183,7 +193,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -332,7 +342,7 @@ jobs:
 
       - name: Setup Docker Compose
         run: |
-          docker-compose -f docker-compose.test.yml up -d
+          docker compose -f docker-compose.test.yml up -d
           sleep 30
 
       - name: Run API Tests
@@ -348,13 +358,17 @@ jobs:
 
       - name: Run E2E Tests
         run: |
-          npm ci
+          if [ -f package-lock.json ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm install --legacy-peer-deps
+          fi
           npm run test:e2e || true
         working-directory: ./frontend
 
       - name: Cleanup
         if: always()
-        run: docker-compose -f docker-compose.test.yml down
+        run: docker compose -f docker-compose.test.yml down
 
   deploy-dev:
     name: Deploy to Development

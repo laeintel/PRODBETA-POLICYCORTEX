@@ -447,7 +447,7 @@ export function useOfflineStatus() {
     }
     const updateConflicts = async () => {
       const conflictsList = await offlineManager.getConflicts()
-      setConflicts(conflictsList.filter(c => !c.resolved))
+      setConflicts(conflictsList.filter((c: any) => !c.resolved))
     }
     
     offlineManager.on('online', updateStatus)

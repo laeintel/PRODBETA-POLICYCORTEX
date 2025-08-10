@@ -30,17 +30,29 @@ PolicyCortex v2 is an AI-powered Azure governance platform with four patented te
 # Start with Docker Compose (Linux/Mac)
 ./start-local.sh
 
-# Frontend only (runs on port 3005)
+# Restart all services (Windows)
+.\restart-services.bat
+
+# Frontend only (runs on port 3000 in dev mode, port 3005 with custom dev)
 cd frontend && npm run dev
 
-# Backend only (Rust)
+# Backend only (Rust) with auto-reload
 cd core && cargo watch -x run
+
+# Backend only (Rust) without auto-reload
+cd core && cargo run
 
 # GraphQL gateway
 cd graphql && npm run dev
 
 # API Gateway (Python)
-cd backend/services/api_gateway && uvicorn main:app --reload
+cd backend/services/api_gateway && uvicorn main:app --reload --port 8000
+
+# API Gateway without Docker (Windows)
+.\start-api-only.bat
+
+# AI Engine (Python)
+cd backend/services/ai_engine && python app.py
 ```
 
 ### Building & Testing
@@ -51,7 +63,7 @@ npm run build
 npm run lint
 npm run type-check
 
-# Rust backend
+# Rust backend  
 cd core
 cargo build --release
 cargo test
@@ -59,6 +71,12 @@ cargo clippy
 
 # Run full test suite
 ./scripts/test-workflow.sh  # Linux/Mac
+
+# Run single Rust test
+cd core && cargo test test_name
+
+# Run Python tests
+cd backend && pytest
 ```
 
 ### Database Operations
@@ -75,9 +93,11 @@ redis-cli -h localhost -p 6379
 ```
 
 ## Service Endpoints
-- **Frontend**: http://localhost:3005 (dev mode) or http://localhost:3000 (docker)
+- **Frontend**: http://localhost:3000 (docker/production) or http://localhost:3005 (dev mode)
 - **Core API**: http://localhost:8080
 - **GraphQL**: http://localhost:4000/graphql
+- **API Gateway**: http://localhost:8000 (Python FastAPI)
+- **AI Engine**: http://localhost:8001
 - **EventStore UI**: http://localhost:2113 (admin/changeit)
 
 ## Key API Routes
@@ -104,7 +124,11 @@ The AI engine uses a domain expert architecture (NOT generic AI) with specialize
 - Security threat detection
 - Cost optimization
 
-Training configuration is in `training/` with Azure AI Foundry integration.
+Training configuration is in `training/` with Azure AI Foundry integration. Key AI components:
+- `backend/services/ai_engine/domain_expert.py` - Core domain-specific AI engine
+- `backend/services/ai_engine/continuous_learning.py` - Real-time learning system
+- `backend/services/ai_engine/advanced_learning_integration.py` - Advanced learning features
+- `backend/services/ai_engine/meta_learning_system.py` - Meta-learning capabilities
 
 ## State Management
 - Frontend uses Zustand (not Redux) for state management
@@ -126,18 +150,24 @@ Training configuration is in `training/` with Azure AI Foundry integration.
 
 ## Development Workflow
 1. Check Azure authentication: `az account show`
-2. Start services with appropriate script (start-dev.bat or start-local.bat)
+2. Start services with appropriate script (start-dev.bat, start-local.bat, or restart-services.bat)
 3. Frontend hot-reloads automatically
-4. Backend requires restart for Rust changes (use cargo watch for auto-reload)
-5. Test patent features with `scripts/test-workflow.sh`
+4. Backend requires restart for Rust changes (use `cargo watch` for auto-reload)
+5. Python services auto-reload with uvicorn --reload flag
+6. Test patent features with `scripts/test-workflow.sh`
 
 ## Important Files
 - `core/src/main.rs` - Rust API entry point
 - `core/src/api/mod.rs` - API route handlers
+- `core/src/services/` - Core business logic services
 - `frontend/app/layout.tsx` - Next.js root layout
 - `frontend/components/AppLayout.tsx` - Main app layout with navigation
+- `frontend/components/Dashboard/` - Dashboard components
 - `backend/services/ai_engine/domain_expert.py` - Core AI engine
+- `backend/services/api_gateway/main.py` - Python API gateway
 - `graphql/gateway.js` - GraphQL federation gateway
+- `docker-compose.local.yml` - Local Docker configuration
+- `docker-compose.dev.yml` - Development Docker configuration
 
 ## Testing Patent Features
 The system includes four patented technologies that can be tested via their respective APIs:
@@ -145,9 +175,31 @@ The system includes four patented technologies that can be tested via their resp
 2. Predictive Compliance - Test via `/api/v1/predictions` for drift predictions
 3. Conversational Intelligence - Test via `/api/v1/conversation` with natural language queries
 4. Cross-Domain Correlation - Test via `/api/v1/correlations` for pattern detection
-- you instructtions are in the    this in additona to the infromation here   @ai_autonomous_fix_instructions.pdf  are you working instructions
-  for the next few hours, so you will take this on autonomusly ...
 
-  run only one script at a time, don't stack scripts together with && or with | just one command at a time if you need to run a command .. is
-  this clear?  @design docs\SolutionsFixes\ai_autonomous_fix_instructions.pdf  and @design docs\SolutionsFixes\Comprehensive AI Autonomous Fix
-  Instructions for Software System Issues.md  | continue autonomously without asking for confirmations and without committing until i ask you to @design docs\SolutionsFixes\ai_autonomous_fix_instructions.pdf  @design docs\SolutionsFixes\Comprehensive AI Autonomous Fix Instructions for Software System Issues.md
+## Frontend Package Scripts
+- `npm run dev` - Start development server on port 3000
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run type-check` - TypeScript type checking
+
+## Rust Cargo Commands
+- `cargo build` - Build debug version
+- `cargo build --release` - Build optimized release version
+- `cargo test` - Run all tests
+- `cargo clippy` - Run linter
+- `cargo watch -x run` - Auto-reload on file changes
+
+## Docker Operations
+- `docker-compose -f docker-compose.local.yml up -d` - Start all services
+- `docker-compose -f docker-compose.local.yml down` - Stop all services
+- `docker-compose -f docker-compose.local.yml logs -f [service]` - View logs
+- `docker ps` - List running containers
+- `docker exec -it [container] /bin/sh` - Shell into container
+
+## Troubleshooting
+- If frontend port 3000 is in use, it runs on 3005 in dev mode
+- Clear Redis cache: `redis-cli FLUSHALL`
+- Reset PostgreSQL: Drop and recreate the database
+- Check service health: `curl http://localhost:8080/health`
+- View Rust logs: Set `RUST_LOG=debug` environment variable
+- Python debugging: Check uvicorn output in API gateway window
