@@ -152,9 +152,10 @@ export default function DataGrid<T extends Record<string, any>>({
       const headers = columns.map(col => col.label).join(',')
       const rows = allData.data.map(item => 
         columns.map(col => {
-          const value = col.key.includes('.')
-            ? col.key.split('.').reduce((obj, key) => obj?.[key], item)
-            : item[col.key]
+          const keyPath = String(col.key)
+          const value = keyPath.includes('.')
+            ? keyPath.split('.').reduce((obj: any, key: string) => obj?.[key], item)
+            : item[col.key as keyof T]
           return JSON.stringify(value ?? '')
         }).join(',')
       )

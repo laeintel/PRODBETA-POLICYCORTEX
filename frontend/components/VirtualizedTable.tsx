@@ -122,9 +122,10 @@ export default function VirtualizedTable<T extends Record<string, any>>({
         onClick={() => onRowClick?.(item, index)}
       >
         {columns.map((column, colIndex) => {
-          const value = column.key.includes('.')
-            ? column.key.split('.').reduce((obj, key) => obj?.[key], item)
-            : item[column.key]
+          const keyPath = String(column.key)
+          const value = keyPath.includes('.')
+            ? keyPath.split('.').reduce((obj: any, key: string) => obj?.[key], item)
+            : item[column.key as keyof T]
           
           return (
             <div
