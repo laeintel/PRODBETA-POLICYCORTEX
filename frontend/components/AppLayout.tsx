@@ -139,8 +139,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
   ]
 
   const handleNavigation = (path: string) => {
-    router.push(path)
-    setMobileMenuOpen(false)
+    try {
+      router.push(path)
+    } catch (e) {
+      // Hard fallback if Next router stalls
+      if (typeof window !== 'undefined') {
+        window.location.href = path
+      }
+    } finally {
+      setMobileMenuOpen(false)
+    }
   }
 
   const toggleExpand = (id: string) => {
