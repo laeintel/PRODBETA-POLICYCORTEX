@@ -4,7 +4,8 @@ import { useEffect } from 'react'
 
 export function ServiceWorkerRegistration() {
   useEffect(() => {
-    if ('serviceWorker' in navigator && window.location.hostname !== 'localhost') {
+    // Only run on client side
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && window.location.hostname !== 'localhost') {
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/service-worker.js')
