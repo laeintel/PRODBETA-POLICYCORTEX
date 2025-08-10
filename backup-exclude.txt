@@ -1,0 +1,17 @@
+node_modules
+.git
+.venv
+__pycache__
+*.pyc
+target
+dist
+build
+.next
+.cache
+*.log
+*.tmp
+.env.local
+coverage
+.pytest_cache
+.cargo
+pkg

@@ -199,8 +199,8 @@ class PolicyCortexAPI {
 
   // Proactive Recommendations - Hot cached for immediate actions
   async getRecommendations(): Promise<ProactiveRecommendation[]> {
-    const response = await performanceApi.get('/api/v1/recommendations', { cache: 'hot', ttl: 60000, headers: await this.getAuthHeaders() });
-    return response?.recommendations || [];
+    const response = await performanceApi.get<any>('/api/v1/recommendations', { cache: 'hot', ttl: 60000, headers: await this.getAuthHeaders() });
+    return response?.recommendations || response || [];
   }
 
   // Health Check - No cache for real-time status

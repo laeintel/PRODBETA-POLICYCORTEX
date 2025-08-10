@@ -135,4 +135,4 @@ graphql/generated/
 
 # Core service
 core/target/
-core/Cargo.lock
+core/Cargo.lockmodels/continuous_learning/*.pt

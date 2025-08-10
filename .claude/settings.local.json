@@ -99,7 +99,10 @@
       "Bash(npm install:*)",
       "Bash(git commit:*)",
       "Bash(psql:*)",
-      "Bash(./start-api-only.bat)"
+      "Bash(./start-api-only.bat)",
+      "Bash(git archive:*)",
+      "Bash(./create-backup.bat)",
+      "Bash(set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/policycortex)"
     ],
     "deny": []
   }
