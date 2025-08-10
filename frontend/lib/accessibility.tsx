@@ -2,6 +2,7 @@
  * Accessibility utilities and components for WCAG 2.1 AA compliance
  */
 
+import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 /**
@@ -59,8 +60,6 @@ export function useFocusTrap(isActive: boolean = true) {
 /**
  * Skip navigation links for screen readers
  */
-import * as React from 'react'
-
 export function SkipLinks() {
   return (
     <div className="sr-only focus-within:not-sr-only" aria-label="Skip links">
@@ -102,9 +101,11 @@ export function useAnnounce() {
   }
 
   const LiveRegion: React.FC = () => {
-    return React.createElement(React.Fragment, {},
-      React.createElement('div', { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true', className: 'sr-only' }, announcement),
-      React.createElement('div', { role: 'alert', 'aria-live': 'assertive', 'aria-atomic': 'true', className: 'sr-only' }, announcement)
+    return (
+      <>
+        <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">{announcement}</div>
+        <div role="alert" aria-live="assertive" aria-atomic="true" className="sr-only">{announcement}</div>
+      </>
     )
   }
 
@@ -235,13 +236,13 @@ export const aria = {
     'aria-modal': true,
   }),
 
-  alert: (message: string): AriaProps => ({
+  alert: (_message: string): AriaProps => ({
     role: 'alert',
     'aria-live': 'assertive',
     'aria-atomic': true,
   }),
 
-  status: (message: string): AriaProps => ({
+  status: (_message: string): AriaProps => ({
     role: 'status',
     'aria-live': 'polite',
     'aria-atomic': true,
@@ -366,11 +367,11 @@ export async function runAccessibilityTests() {
   try {
     // Dynamically import axe-core for testing
     const axe = await import('axe-core')
-    const results = await axe.default.run()
+    const results = await (axe as any).default.run()
     
-    if (results.violations.length > 0) {
+    if ((results as any).violations.length > 0) {
       console.group('🔴 Accessibility Violations')
-      results.violations.forEach(violation => {
+      ;(results as any).violations.forEach((violation: any) => {
         console.error(
           `${violation.impact?.toUpperCase()}: ${violation.description}`,
           violation.nodes
@@ -386,3 +387,5 @@ export async function runAccessibilityTests() {
     console.warn('Could not run accessibility tests:', error)
   }
 }
+
+
