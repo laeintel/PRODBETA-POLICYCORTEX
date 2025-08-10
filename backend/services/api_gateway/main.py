@@ -593,6 +593,6 @@ async def create_exception(resource_id: str, policy_id: str, reason: str):
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("Starting PolicyCortex API Gateway on port 8080...")
+    logger.info("Starting PolicyCortex API Gateway on port 8090...")
     logger.info("GPT-5 and GLM-4.5 models integrated")
-    uvicorn.run(app, host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8090, reload=True)

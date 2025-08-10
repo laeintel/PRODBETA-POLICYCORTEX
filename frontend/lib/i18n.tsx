@@ -366,21 +366,14 @@ export function I18nProvider({
     setLocale,
     t,
     dir: LOCALES[locale].dir,
-    formatNumber: (num, opts) => new Intl.NumberFormat(String(locale), opts).format(num),
-    formatCurrency: (num, curr) => new Intl.NumberFormat(String(locale), { style: 'currency', currency: curr }).format(num),
-    formatDate: (d, opts) => new Intl.DateTimeFormat(String(locale), opts).format(typeof d === 'string' ? new Date(d) : d),
-    formatRelativeTime: (d) => {
-      const dateObj = typeof d === 'string' ? new Date(d) : d
-      const rtf = new Intl.RelativeTimeFormat(String(locale), { numeric: 'auto' })
-      const diff = (dateObj.getTime() - Date.now()) / 1000
-      const abs = Math.abs(diff)
-      if (abs < 60) return rtf.format(Math.round(diff), 'second')
-      if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute')
-      if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour')
-      if (abs < 2592000) return rtf.format(Math.round(diff / 86400), 'day')
-      if (abs < 31536000) return rtf.format(Math.round(diff / 2592000), 'month')
-      return rtf.format(Math.round(diff / 31536000), 'year')
-    },
+    formatNumber: (value: number, localeOverride?: Locale, options?: Intl.NumberFormatOptions) => 
+      formatNumber(value, localeOverride || locale, options),
+    formatCurrency: (value: number, currency?: string, localeOverride?: Locale) => 
+      formatCurrency(value, currency, localeOverride || locale),
+    formatDate: (date: Date | string, localeOverride?: Locale, options?: Intl.DateTimeFormatOptions) => 
+      formatDate(date, localeOverride || locale, options),
+    formatRelativeTime: (date: Date | string, localeOverride?: Locale) => 
+      formatRelativeTime(date, localeOverride || locale),
   }
 
   return (
@@ -441,6 +434,6 @@ export async function preloadTranslations(locales: Locale[]) {
 }
 
 // Export types
-export type { TranslationDict, I18nContextType }
+export type { I18nContextType }
 
 

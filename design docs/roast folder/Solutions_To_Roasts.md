@@ -17,6 +17,7 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 3) Truthful Data Modes — [Partial]
 - Pointers: `core/src/data_mode.rs`; gateway forces real Azure; core falls back in `core/src/api/mod.rs`
 - Next: surface source banner in FE; block writes when simulated
+  - Update: Demo/Simulated data banner added in `frontend/components/DemoModeBanner.tsx` and mounted globally in `frontend/components/AppLayout.tsx`.
 
 4) Harden Local Runtime — [Partial]
 - Pointers: `docker-compose*.yml`, `bootstrap.*`
@@ -45,6 +46,7 @@ Legend: [Full] implemented end-to-end; [Partial] exists but incomplete; [Missing
 10) Honest UX — [Partial]
 - Pointers: Action drawer tabs (preflight/approvals/evidence) in `frontend/components/ActionDrawer`
 - Next: confirmations, disable destructive ops without approvals in UI
+  - Update: Focus management, scroll lock, and topmost z-index applied to Action Drawer to ensure visibility and usability.
 
 11) Approvals & SoD — [Partial]
 - Pointers: `core/src/approvals.rs` (models/policies), `Roadmap_17_Approval_and_Rollback_Sequences.md`

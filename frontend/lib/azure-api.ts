@@ -1,5 +1,6 @@
 // Azure API integration for real data fetching
 import { useState, useEffect } from 'react'
+import { useAuthenticatedFetch } from '../contexts/AuthContext'
 
 // Use relative URLs to leverage Next.js proxy configuration
 const API_BASE = ''
@@ -70,11 +71,11 @@ export interface RbacAssignment {
 }
 
 // Fetch Azure resources (deep insights preferred)
-export async function fetchAzureResources(): Promise<AzureResource[]> {
+export async function fetchAzureResources(fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>): Promise<AzureResource[]> {
   // Prefer deep endpoint for richer data; fall back to basic
   if (!DISABLE_DEEP) {
     try {
-      const resp = await fetch(`${API_BASE}/api/v1/resources/deep`)
+      const resp = await (fetcher ? fetcher(`${API_BASE}/api/v1/resources/deep`, { cache: 'no-store' }) : fetch(`${API_BASE}/api/v1/resources/deep`))
       if (resp.ok) {
         const data = await resp.json()
         const raw = (data && (data.resources ?? data)) as any
@@ -105,7 +106,7 @@ export async function fetchAzureResources(): Promise<AzureResource[]> {
   }
 
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/resources`)
+    const resp = await (fetcher ? fetcher(`${API_BASE}/api/v1/resources`, { cache: 'no-store' }) : fetch(`${API_BASE}/api/v1/resources`))
     const data = await resp.json()
     const raw = (data && (data.resources ?? data)) as any
     const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
@@ -117,10 +118,10 @@ export async function fetchAzureResources(): Promise<AzureResource[]> {
 }
 
 // Fetch Azure policies (deep compliance preferred)
-export async function fetchAzurePolicies(): Promise<AzurePolicy[]> {
+export async function fetchAzurePolicies(fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>): Promise<AzurePolicy[]> {
   // Try deep policy compliance for richer data
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/policies/deep`)
+    const resp = await (fetcher ? fetcher(`${API_BASE}/api/v1/policies/deep`, { cache: 'no-store' }) : fetch(`${API_BASE}/api/v1/policies/deep`))
     if (resp.ok) {
       const data = await resp.json()
       const raw = (data && (data.complianceResults ?? data)) as any
@@ -156,7 +157,7 @@ export async function fetchAzurePolicies(): Promise<AzurePolicy[]> {
   }
 
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/policies`)
+    const resp = await (fetcher ? fetcher(`${API_BASE}/api/v1/policies`, { cache: 'no-store' }) : fetch(`${API_BASE}/api/v1/policies`))
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     const data = await resp.json()
     const raw = (data && (data.policies ?? data)) as any
@@ -165,7 +166,7 @@ export async function fetchAzurePolicies(): Promise<AzurePolicy[]> {
   } catch (error) {
     console.warn('Basic policy endpoint failed, falling back to deep:', error)
     try {
-      const resp = await fetch(`${API_BASE}/api/v1/policies/deep`)
+      const resp = await (fetcher ? fetcher(`${API_BASE}/api/v1/policies/deep`, { cache: 'no-store' }) : fetch(`${API_BASE}/api/v1/policies/deep`))
       const data = await resp.json()
       const raw = (data && (data.complianceResults ?? data)) as any
       const results: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
@@ -202,9 +203,9 @@ export async function fetchAzurePolicies(): Promise<AzurePolicy[]> {
 }
 
 // Fetch cost breakdown
-export async function fetchCostBreakdown(): Promise<CostBreakdown[]> {
+export async function fetchCostBreakdown(fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>): Promise<CostBreakdown[]> {
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/costs/deep`)
+    const resp = await (fetcher ? fetcher(`${API_BASE}/api/v1/costs/deep`, { cache: 'no-store' }) : fetch(`${API_BASE}/api/v1/costs/deep`))
     const data = await resp.json()
     const raw = (data && (data.breakdown ?? data)) as any
     const list: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
@@ -225,10 +226,10 @@ export async function fetchCostBreakdown(): Promise<CostBreakdown[]> {
 }
 
 // Fetch RBAC assignments
-export async function fetchRbacAssignments(): Promise<RbacAssignment[]> {
+export async function fetchRbacAssignments(fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>): Promise<RbacAssignment[]> {
   // First try deep endpoint (returns mock structure if Azure not connected)
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/rbac/deep`)
+    const resp = await (fetcher ? fetcher(`${API_BASE}/api/v1/rbac/deep`, { cache: 'no-store' }) : fetch(`${API_BASE}/api/v1/rbac/deep`))
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     const data = await resp.json()
     const raw = (data && (data.roleAssignments ?? data)) as any
@@ -295,9 +296,10 @@ export function useAzureResources() {
   const [resources, setResources] = useState<AzureResource[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const authenticatedFetch = useAuthenticatedFetch()
   
   useEffect(() => {
-    fetchAzureResources()
+    fetchAzureResources(authenticatedFetch as any)
       .then(setResources)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
@@ -311,9 +313,10 @@ export function useAzurePolicies() {
   const [policies, setPolicies] = useState<AzurePolicy[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const authenticatedFetch = useAuthenticatedFetch()
   
   useEffect(() => {
-    fetchAzurePolicies()
+    fetchAzurePolicies(authenticatedFetch as any)
       .then(setPolicies)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
@@ -327,9 +330,10 @@ export function useCostBreakdown() {
   const [breakdown, setBreakdown] = useState<CostBreakdown[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const authenticatedFetch = useAuthenticatedFetch()
   
   useEffect(() => {
-    fetchCostBreakdown()
+    fetchCostBreakdown(authenticatedFetch as any)
       .then(setBreakdown)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
@@ -343,9 +347,10 @@ export function useRbacAssignments() {
   const [assignments, setAssignments] = useState<RbacAssignment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const authenticatedFetch = useAuthenticatedFetch()
   
   useEffect(() => {
-    fetchRbacAssignments()
+    fetchRbacAssignments(authenticatedFetch as any)
       .then(setAssignments)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))

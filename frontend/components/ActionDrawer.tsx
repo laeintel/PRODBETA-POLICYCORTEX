@@ -58,9 +58,9 @@ export default function ActionDrawer({ open, onClose, request }: ActionDrawerPro
   if (!open || !request) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center" aria-modal="true" role="dialog">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" aria-modal="true" role="dialog">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-3xl bg-slate-900 border border-white/10 rounded-t-2xl p-4 shadow-2xl focus:outline-none" tabIndex={-1}>
+      <div className="relative w-full max-w-3xl max-h-[80vh] overflow-auto bg-slate-900 border border-white/10 rounded-2xl p-4 shadow-2xl focus:outline-none" tabIndex={-1}>
         <div className="flex items-center justify-between">
           <h3 id="action-drawer-title" className="text-white font-semibold" tabIndex={0}>Action</h3>
           <button className="text-gray-300 hover:text-white" onClick={onClose} aria-label="Close action drawer">Close</button>
