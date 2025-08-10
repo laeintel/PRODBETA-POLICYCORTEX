@@ -95,7 +95,8 @@
       "Bash(taskkill:*)",
       "Bash(npm run start:*)",
       "Bash(uvicorn:*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

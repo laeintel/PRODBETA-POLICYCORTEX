@@ -199,23 +199,26 @@ async def on_startup():
         except Exception as e:
             logger.warning(f"Key Vault load failed: {e}")
 
-# Require real Azure; fail fast if not available
+# Initialize cloud providers
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from cloud_providers import multi_cloud_provider, CloudProvider
 from azure_real_data import AzureRealDataCollector
 from azure_deep_insights import AzureDeepInsights
 
-USE_REAL_AZURE = os.getenv("USE_REAL_AZURE", "true").lower() == "true"
-if not USE_REAL_AZURE:
-    raise RuntimeError("USE_REAL_AZURE=false is not supported. Remove mocks requested; service requires Azure connectivity.")
+# Azure providers for backward compatibility
+azure_collector = None
+azure_insights = None
 
 try:
     azure_collector = AzureRealDataCollector()
     azure_insights = AzureDeepInsights()
-    logger.info("Using REAL Azure data with deep insights")
+    logger.info("Azure providers initialized")
 except Exception as e:
-    logger.error(f"Azure initialization failed (no mocks allowed): {e}")
-    raise
+    logger.warning(f"Azure providers not available: {e}")
+
+# Multi-cloud provider
+logger.info(f"Multi-cloud provider initialized with: {multi_cloud_provider.get_enabled_providers()}")
 
 # No mock datasets retained – service returns 503 if Azure is unavailable
 
@@ -1096,6 +1099,125 @@ async def remediate_resource(resource_id: str, action: str, _: Dict[str, Any] = 
         "estimatedCompletion": "5 minutes",
         "message": f"Remediation '{action}' initiated for resource {resource_id}"
     }
+
+# ============= MULTI-CLOUD ENDPOINTS =============
+
+@app.get("/api/v1/providers")
+async def get_providers(_: Dict[str, Any] = Depends(auth_dependency)):
+    """Get status of all cloud providers"""
+    return multi_cloud_provider.get_provider_status()
+
+@app.get("/api/v1/multi-cloud/resources")
+async def get_multi_cloud_resources(
+    provider: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Get resources from multiple cloud providers"""
+    cloud_provider = CloudProvider.ALL
+    if provider:
+        try:
+            cloud_provider = CloudProvider(provider)
+        except ValueError:
+            raise HTTPException(400, f"Invalid provider: {provider}")
+    
+    resources = await multi_cloud_provider.get_resources(cloud_provider, resource_type)
+    
+    return {
+        "resources": resources,
+        "total": len(resources),
+        "providers": multi_cloud_provider.get_enabled_providers(),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/api/v1/multi-cloud/policies")
+async def get_multi_cloud_policies(
+    provider: Optional[str] = None,
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Get policies from multiple cloud providers"""
+    cloud_provider = CloudProvider.ALL
+    if provider:
+        try:
+            cloud_provider = CloudProvider(provider)
+        except ValueError:
+            raise HTTPException(400, f"Invalid provider: {provider}")
+    
+    policies = await multi_cloud_provider.get_policies(cloud_provider)
+    
+    return {
+        "policies": policies,
+        "total": len(policies),
+        "providers": multi_cloud_provider.get_enabled_providers(),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/api/v1/multi-cloud/costs")
+async def get_multi_cloud_costs(
+    provider: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Get cost information from multiple cloud providers"""
+    cloud_provider = CloudProvider.ALL
+    if provider:
+        try:
+            cloud_provider = CloudProvider(provider)
+        except ValueError:
+            raise HTTPException(400, f"Invalid provider: {provider}")
+    
+    costs = await multi_cloud_provider.get_costs(cloud_provider, start_date, end_date)
+    
+    return costs
+
+@app.get("/api/v1/multi-cloud/compliance")
+async def get_multi_cloud_compliance(
+    provider: Optional[str] = None,
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Get compliance status from multiple cloud providers"""
+    cloud_provider = CloudProvider.ALL
+    if provider:
+        try:
+            cloud_provider = CloudProvider(provider)
+        except ValueError:
+            raise HTTPException(400, f"Invalid provider: {provider}")
+    
+    compliance = await multi_cloud_provider.get_compliance_status(cloud_provider)
+    
+    return compliance
+
+@app.get("/api/v1/multi-cloud/security")
+async def get_multi_cloud_security(
+    provider: Optional[str] = None,
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Get security findings from multiple cloud providers"""
+    cloud_provider = CloudProvider.ALL
+    if provider:
+        try:
+            cloud_provider = CloudProvider(provider)
+        except ValueError:
+            raise HTTPException(400, f"Invalid provider: {provider}")
+    
+    findings = await multi_cloud_provider.get_security_findings(cloud_provider)
+    
+    return {
+        "findings": findings,
+        "total": len(findings),
+        "providers": multi_cloud_provider.get_enabled_providers(),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.post("/api/v1/multi-cloud/governance-action")
+async def apply_multi_cloud_governance(
+    action: Dict[str, Any],
+    _: Dict[str, Any] = Depends(auth_dependency)
+):
+    """Apply governance action across cloud providers"""
+    result = await multi_cloud_provider.apply_governance_action(action)
+    return result
 
 @app.post("/api/v1/exception")
 async def create_exception(resource_id: str, policy_id: str, reason: str, _: Dict[str, Any] = Depends(auth_dependency)):
