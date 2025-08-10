@@ -4,6 +4,7 @@
  */
 
 import { openDB, IDBPDatabase } from 'idb'
+import { useEffect, useState } from 'react'
 
 interface OfflineAction {
   id: string
@@ -330,7 +331,7 @@ class OfflineManager {
       await cursor.delete()
     }
     
-    await tx.complete
+    await tx.done
   }
 
   // Get pending actions count
