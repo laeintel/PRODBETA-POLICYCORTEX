@@ -157,7 +157,13 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://postgres:postgres@localhost:5432/policycortex_dev",
 )
 
-engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+# Support SQLite as fallback for development without Docker
+if DATABASE_URL.startswith("sqlite"):
+    # SQLite with aiosqlite for async support
+    DATABASE_URL = DATABASE_URL.replace("sqlite://", "sqlite+aiosqlite://")
+    engine = create_async_engine(DATABASE_URL, echo=False, future=True, connect_args={"check_same_thread": False})
+else:
+    engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 Base = declarative_base()
 
@@ -380,7 +386,16 @@ async def root():
 @app.get("/health")
 async def health():
     """Health check for monitoring"""
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "azure_connected": bool(azure_collector and azure_insights),
+    }
+
+@app.get("/api/v1/health")
+async def health_v1():
+    """Versioned health endpoint (alias)"""
+    return await health()
 
 @app.get("/api/v1/metrics")
 async def get_metrics(_: Dict[str, Any] = Depends(auth_dependency)):
@@ -522,7 +537,7 @@ async def chat(request: ChatRequest, _: Dict[str, Any] = Depends(auth_dependency
             anomaly_result = await ai_service.detect_anomalies(metrics_data)
             
             response = {
-                "response": f"AI detected {anomaly_result['anomalies_detected']} anomalies in your metrics. {f'Most recent at {anomaly_result[\"anomalies\"][0][\"timestamp\"]}' if anomaly_result['anomalies'] else 'System operating normally.'}",
+                "response": f"AI detected {anomaly_result['anomalies_detected']} anomalies in your metrics. " + (f"Most recent at {anomaly_result['anomalies'][0]['timestamp']}" if anomaly_result['anomalies'] else "System operating normally."),
                 "model": request.model,
                 "confidence": 0.90,
                 "suggestions": [

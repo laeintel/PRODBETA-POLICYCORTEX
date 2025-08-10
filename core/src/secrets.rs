@@ -274,7 +274,7 @@ impl SecretScanner {
             },
             SecretPattern {
                 name: "API Key".to_string(),
-                regex: regex::Regex::new(r"[aA][pP][iI][-_]?[kK][eE][yY]\s*[:=]\s*['\"]?[a-zA-Z0-9]{32,}['\"]?").unwrap(),
+                regex: regex::Regex::new(r#"[aA][pP][iI][-_]?[kK][eE][yY]\s*[:=]\s*['"]?[a-zA-Z0-9]{32,}['"]?"#).unwrap(),
                 entropy_threshold: None,
             },
             SecretPattern {

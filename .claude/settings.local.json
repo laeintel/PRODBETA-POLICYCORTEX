@@ -97,7 +97,9 @@
       "Bash(uvicorn:*)",
       "Bash(npx next:*)",
       "Bash(npm install:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(psql:*)",
+      "Bash(./start-api-only.bat)"
     ],
     "deny": []
   }

@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import VirtualizedTable from '@/components/VirtualizedTable'
+import ServerPagination from '@/components/ServerPagination'
+import { useServerPagination } from '@/hooks/useServerPagination'
 import { ChartCard, ComplianceTrend } from '../../components/ChartCards'
 import FilterBar from '../../components/FilterBar'
 import AppLayout from '../../components/AppLayout'
@@ -58,6 +61,7 @@ export default function PoliciesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerRequest, setDrawerRequest] = useState<CreateActionRequest | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const pagination = useServerPagination({ initialPageSize: 25 })
   const [showStatistics, setShowStatistics] = useState(true)
 
   useEffect(() => {
@@ -109,6 +113,16 @@ export default function PoliciesPage() {
       el?.focus()
     }, 0)
   }
+
+  const tableColumns = [
+    { key: 'displayName', label: 'Name', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'effect', label: 'Effect', sortable: true },
+    { key: 'assignments', label: 'Assignments', sortable: true },
+  ] as const
+
+  const paged = filteredPolicies.slice((pagination.page - 1) * pagination.pageSize, pagination.page * pagination.pageSize)
 
   return (
     <AppLayout>
@@ -299,7 +313,8 @@ export default function PoliciesPage() {
             </motion.div>
           )}
 
-          {/* Policies Grid */}
+          {/* Policies Grid/Table */}
+          {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 sticky top-2">
             {filteredPolicies.map((policy) => (
               <motion.div
@@ -371,6 +386,27 @@ export default function PoliciesPage() {
               </motion.div>
             ))}
           </div>
+          ) : (
+            <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
+              <VirtualizedTable
+                data={paged}
+                columns={tableColumns as any}
+                onRowClick={(p:any)=>{ if (typeof window !== 'undefined') window.location.href = `/policies/${encodeURIComponent(p.id || p.name)}` }}
+                rowHeight={48}
+                overscan={8}
+                loading={false}
+              />
+              <ServerPagination
+                page={pagination.page}
+                pageSize={pagination.pageSize}
+                total={filteredPolicies.length}
+                totalPages={Math.ceil(filteredPolicies.length / pagination.pageSize) || 1}
+                onPageChange={pagination.goToPage}
+                onPageSizeChange={pagination.setPageSize}
+                pageSizeOptions={[10,25,50,100]}
+              />
+            </div>
+          )}
 
           {/* Non-Compliant Resources */}
           {nonCompliantResources.length > 0 && (

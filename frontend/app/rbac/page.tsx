@@ -6,6 +6,9 @@ import { useRbacAssignments } from '../../lib/azure-api'
 import { Search, Users, Shield, Filter, AlertTriangle, BarChart3 } from 'lucide-react'
 import { ChartCard, RiskSurface } from '../../components/ChartCards'
 import FilterBar from '../../components/FilterBar'
+import VirtualizedTable from '@/components/VirtualizedTable'
+import ServerPagination from '@/components/ServerPagination'
+import { useServerPagination } from '@/hooks/useServerPagination'
 
 export default function RbacPage() {
   const { assignments, loading } = useRbacAssignments()
@@ -25,6 +28,8 @@ export default function RbacPage() {
   // Basic privileged-role heuristic
   const privilegedRoles = new Set(['Owner','User Access Administrator','Contributor'])
   const filtered = onlyPrivileged ? rows.filter(a => privilegedRoles.has(a.roleName)) : rows
+  const pagination = useServerPagination({ initialPageSize: 25 })
+  const paged = filtered.slice((pagination.page - 1) * pagination.pageSize, pagination.page * pagination.pageSize)
 
   const stats = useMemo(() => {
     const total = assignments?.length || 0
@@ -134,43 +139,28 @@ export default function RbacPage() {
           </div>
 
           <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden sticky top-2">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-white/5">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Principal</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Scope</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Created</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Last Used</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                  {(loading ? [] : filtered).map(a => (
-                    <tr key={a.id} className="hover:bg-white/5 cursor-pointer" onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.location.href = `/rbac/${encodeURIComponent(a.principalId)}`
-                      }
-                    }}>
-                      <td className="px-6 py-3 text-white text-sm">{a.principalName}</td>
-                      <td className="px-6 py-3 text-gray-300 text-sm">{a.roleName}</td>
-                      <td className="px-6 py-3 text-gray-300 text-sm">{a.principalType}</td>
-                      <td className="px-6 py-3 text-gray-300 text-sm">{a.scope}</td>
-                      <td className="px-6 py-3 text-gray-300 text-sm">{a.createdDate}</td>
-                      <td className="px-6 py-3 text-gray-300 text-sm">{a.lastUsed || '-'}</td>
-                    </tr>
-                  ))}
-                  {(!loading && filtered.length === 0) && (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-6 text-sm text-gray-400">
-                        <div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-yellow-400"/> No assignments found. Ensure Azure access is configured and try widening your filters.</div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <VirtualizedTable
+              data={paged}
+              columns={[
+                { key: 'principalName', label: 'Principal', sortable: true },
+                { key: 'roleName', label: 'Role', sortable: true },
+                { key: 'principalType', label: 'Type', sortable: true },
+                { key: 'scope', label: 'Scope' }
+              ] as any}
+              onRowClick={(a:any)=>{ if (typeof window !== 'undefined') window.location.href = `/rbac/${encodeURIComponent(a.principalId)}` }}
+              rowHeight={48}
+              overscan={8}
+              loading={loading}
+            />
+            <ServerPagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              total={filtered.length}
+              totalPages={Math.ceil(filtered.length / pagination.pageSize) || 1}
+              onPageChange={pagination.goToPage}
+              onPageSizeChange={pagination.setPageSize}
+              pageSizeOptions={[10,25,50,100]}
+            />
           </div>
         </div>
       </div>

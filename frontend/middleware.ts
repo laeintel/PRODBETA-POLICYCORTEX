@@ -16,10 +16,10 @@ export function middleware(request: NextRequest) {
   } catch {}
   
   // Proxy API requests to backend (prefer explicit env; fall back smartly for local dev)
-  let backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8080'
-  // If we're on localhost and no env provided, prefer localhost:8080 instead of docker hostname
+  let backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8090'
+  // If we're on localhost and no env provided, prefer localhost:8090 instead of docker hostname
   if (!process.env.NEXT_PUBLIC_API_URL && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')) {
-    backendBase = 'http://localhost:8080'
+    backendBase = 'http://localhost:8090'
   }
   if (url.pathname.startsWith('/api/') || url.pathname === '/health') {
     url.href = `${backendBase}${url.pathname}${url.search}`
