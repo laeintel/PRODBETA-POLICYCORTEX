@@ -8,10 +8,53 @@ import json
 import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
-from google.cloud import compute_v1, storage, monitoring_v3, billing_v1, asset_v1
-from google.cloud import resourcemanager_v3, securitycenter_v1
-from google.oauth2 import service_account
-from google.api_core import exceptions
+# GCP imports with fallback
+try:
+    from google.cloud import storage
+    from google.cloud import billing_v1
+    from google.cloud import bigquery
+    from google.oauth2 import service_account
+    from google.api_core import exceptions
+    GCP_AVAILABLE = True
+    # Optional imports - will check individually
+    try:
+        from google.cloud import compute_v1
+        COMPUTE_AVAILABLE = True
+    except ImportError:
+        COMPUTE_AVAILABLE = False
+        compute_v1 = None
+    
+    try:
+        from google.cloud import monitoring_v3
+        MONITORING_AVAILABLE = True
+    except ImportError:
+        MONITORING_AVAILABLE = False
+        monitoring_v3 = None
+    
+    try:
+        from google.cloud import asset_v1
+        ASSET_AVAILABLE = True
+    except ImportError:
+        ASSET_AVAILABLE = False
+        asset_v1 = None
+    
+    try:
+        from google.cloud import resourcemanager_v3
+        RESOURCE_MANAGER_AVAILABLE = True
+    except ImportError:
+        RESOURCE_MANAGER_AVAILABLE = False
+        resourcemanager_v3 = None
+    
+    try:
+        from google.cloud import securitycenter_v1
+        SECURITY_CENTER_AVAILABLE = True
+    except ImportError:
+        SECURITY_CENTER_AVAILABLE = False
+        securitycenter_v1 = None
+        
+except ImportError:
+    GCP_AVAILABLE = False
+    logger.warning("GCP libraries not available")
 
 logger = logging.getLogger(__name__)
 
@@ -46,24 +89,34 @@ class GCPProvider:
                     scopes=['https://www.googleapis.com/auth/cloud-platform']
                 )
             
-            # Initialize service clients
+            # Initialize service clients (only if available)
             if self.credentials:
-                self.compute_client = compute_v1.InstancesClient(credentials=self.credentials)
-                self.storage_client = storage.Client(credentials=self.credentials, project=self.project_id)
-                self.monitoring_client = monitoring_v3.MetricServiceClient(credentials=self.credentials)
-                self.billing_client = billing_v1.CloudBillingClient(credentials=self.credentials)
-                self.asset_client = asset_v1.AssetServiceClient(credentials=self.credentials)
-                self.resource_manager = resourcemanager_v3.ProjectsClient(credentials=self.credentials)
-                self.security_center = securitycenter_v1.SecurityCenterClient(credentials=self.credentials)
+                if COMPUTE_AVAILABLE and compute_v1:
+                    self.compute_client = compute_v1.InstancesClient(credentials=self.credentials)
+                self.storage_client = storage.Client(credentials=self.credentials, project=self.project_id) if GCP_AVAILABLE else None
+                if MONITORING_AVAILABLE and monitoring_v3:
+                    self.monitoring_client = monitoring_v3.MetricServiceClient(credentials=self.credentials)
+                self.billing_client = billing_v1.CloudBillingClient(credentials=self.credentials) if GCP_AVAILABLE else None
+                if ASSET_AVAILABLE and asset_v1:
+                    self.asset_client = asset_v1.AssetServiceClient(credentials=self.credentials)
+                if RESOURCE_MANAGER_AVAILABLE and resourcemanager_v3:
+                    self.resource_manager = resourcemanager_v3.ProjectsClient(credentials=self.credentials)
+                if SECURITY_CENTER_AVAILABLE and securitycenter_v1:
+                    self.security_center = securitycenter_v1.SecurityCenterClient(credentials=self.credentials)
             else:
-                # Use default credentials (application default credentials)
-                self.compute_client = compute_v1.InstancesClient()
-                self.storage_client = storage.Client(project=self.project_id)
-                self.monitoring_client = monitoring_v3.MetricServiceClient()
-                self.billing_client = billing_v1.CloudBillingClient()
-                self.asset_client = asset_v1.AssetServiceClient()
-                self.resource_manager = resourcemanager_v3.ProjectsClient()
-                self.security_center = securitycenter_v1.SecurityCenterClient()
+                # Use default credentials (application default credentials) if available
+                if COMPUTE_AVAILABLE and compute_v1:
+                    self.compute_client = compute_v1.InstancesClient()
+                self.storage_client = storage.Client(project=self.project_id) if GCP_AVAILABLE else None
+                if MONITORING_AVAILABLE and monitoring_v3:
+                    self.monitoring_client = monitoring_v3.MetricServiceClient()
+                self.billing_client = billing_v1.CloudBillingClient() if GCP_AVAILABLE else None
+                if ASSET_AVAILABLE and asset_v1:
+                    self.asset_client = asset_v1.AssetServiceClient()
+                if RESOURCE_MANAGER_AVAILABLE and resourcemanager_v3:
+                    self.resource_manager = resourcemanager_v3.ProjectsClient()
+                if SECURITY_CENTER_AVAILABLE and securitycenter_v1:
+                    self.security_center = securitycenter_v1.SecurityCenterClient()
             
             logger.info(f"GCP clients initialized for project: {self.project_id}")
             
@@ -76,7 +129,7 @@ class GCPProvider:
         
         try:
             # Get Compute Engine instances
-            if not resource_type or resource_type == "compute":
+            if (not resource_type or resource_type == "compute") and COMPUTE_AVAILABLE and compute_v1:
                 zones_client = compute_v1.ZonesClient(credentials=self.credentials)
                 zones = zones_client.list(project=self.project_id)
                 
@@ -266,32 +319,43 @@ class GCPProvider:
                 
                 # Fallback to billing API
                 billing_account = None
-                accounts = self.billing_client.list_billing_accounts()
-                
-                for account in accounts:
-                    if account.open:
-                        billing_account = account.name
-                        break
+                if self.billing_client:
+                    accounts = self.billing_client.list_billing_accounts()
+                    
+                    for account in accounts:
+                        if account.open:
+                            billing_account = account.name
+                            break
                 
                 if billing_account:
-                    # Get budget information
-                    from google.cloud import billing_budgets_v1
-                    budget_client = billing_budgets_v1.BudgetServiceClient(credentials=self.credentials)
-                    
-                    budgets = budget_client.list_budgets(parent=billing_account)
-                    total_budget = 0
-                    
-                    for budget in budgets:
-                        if hasattr(budget.amount, 'specified_amount'):
-                            total_budget += budget.amount.specified_amount.units
-                    
-                    return {
-                        "provider": "GCP",
-                        "current_spend": 0,  # Cannot get actual spend without BigQuery export
-                        "budget": total_budget,
-                        "currency": "USD",
-                        "note": "Enable billing export to BigQuery for detailed cost data"
-                    }
+                    # Note: Budget API may not be available
+                    try:
+                        from google.cloud import billing_budgets_v1
+                        budget_client = billing_budgets_v1.BudgetServiceClient(credentials=self.credentials)
+                        
+                        budgets = budget_client.list_budgets(parent=billing_account)
+                        total_budget = 0
+                        
+                        for budget in budgets:
+                            if hasattr(budget.amount, 'specified_amount'):
+                                total_budget += budget.amount.specified_amount.units
+                        
+                        return {
+                            "provider": "GCP",
+                            "current_spend": 0,  # Cannot get actual spend without BigQuery export
+                            "budget": total_budget,
+                            "currency": "USD",
+                            "note": "Enable billing export to BigQuery for detailed cost data"
+                        }
+                    except ImportError:
+                        logger.warning("GCP billing budgets API not available")
+                        return {
+                            "provider": "GCP",
+                            "current_spend": 0,
+                            "budget": 0,
+                            "currency": "USD",
+                            "note": "Budget API not available. Enable billing export to BigQuery for cost data"
+                        }
                 
                 return {
                     "provider": "GCP",

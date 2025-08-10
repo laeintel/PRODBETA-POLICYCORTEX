@@ -8,14 +8,14 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // Route all API v1 calls to the Rust backend
+      // Route all API v1 calls to the Python API Gateway
       {
         source: '/api/v1/:path*',
-        destination: 'http://localhost:8080/api/v1/:path*',
+        destination: 'http://localhost:8090/api/v1/:path*',
       },
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8080/api/:path*',
+        destination: 'http://localhost:8090/api/:path*',
       },
       {
         source: '/actions/:path*',

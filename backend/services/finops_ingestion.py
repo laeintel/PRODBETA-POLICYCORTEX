@@ -14,22 +14,38 @@ import numpy as np
 from dataclasses import dataclass
 import json
 
+# Set up logger first
+logger = logging.getLogger(__name__)
+
 # Azure imports
-from azure.identity import DefaultAzureCredential
-from azure.mgmt.costmanagement import CostManagementClient
-from azure.mgmt.consumption import ConsumptionManagementClient
-from azure.mgmt.billing import BillingManagementClient
+try:
+    from azure.identity import DefaultAzureCredential
+    from azure.mgmt.costmanagement import CostManagementClient
+    from azure.mgmt.consumption import ConsumptionManagementClient
+    from azure.mgmt.billing import BillingManagementClient
+    AZURE_AVAILABLE = True
+except ImportError:
+    AZURE_AVAILABLE = False
+    logger.warning("Azure FinOps libraries not available")
 
 # AWS imports
-import boto3
-from botocore.exceptions import ClientError
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    AWS_AVAILABLE = True
+except ImportError:
+    AWS_AVAILABLE = False
+    logger.warning("AWS FinOps libraries not available")
 
 # GCP imports
-from google.cloud import bigquery
-from google.cloud import billing_v1
-from google.cloud import billing_budgets_v1
+try:
+    from google.cloud import bigquery
+    from google.cloud import billing_v1
+    GCP_AVAILABLE = True
+except ImportError:
+    GCP_AVAILABLE = False
+    logger.warning("GCP FinOps libraries not available")
 
-logger = logging.getLogger(__name__)
 
 @dataclass
 class CostData:
@@ -93,7 +109,7 @@ class FinOpsIngestion:
     def _initialize_clients(self):
         """Initialize cloud provider clients"""
         # Azure
-        if os.getenv("AZURE_SUBSCRIPTION_ID"):
+        if os.getenv("AZURE_SUBSCRIPTION_ID") and AZURE_AVAILABLE:
             try:
                 self.azure_credential = DefaultAzureCredential()
                 self.azure_subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
@@ -110,7 +126,7 @@ class FinOpsIngestion:
                 logger.error(f"Failed to initialize Azure FinOps clients: {e}")
         
         # AWS
-        if os.getenv("AWS_ACCESS_KEY_ID"):
+        if os.getenv("AWS_ACCESS_KEY_ID") and AWS_AVAILABLE:
             try:
                 self.aws_session = boto3.Session(
                     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -124,11 +140,11 @@ class FinOpsIngestion:
                 logger.error(f"Failed to initialize AWS FinOps clients: {e}")
         
         # GCP
-        if os.getenv("GCP_PROJECT_ID"):
+        if os.getenv("GCP_PROJECT_ID") and GCP_AVAILABLE:
             try:
                 self.gcp_project_id = os.getenv("GCP_PROJECT_ID")
                 self.gcp_bq_client = bigquery.Client(project=self.gcp_project_id)
-                self.gcp_budget_client = billing_budgets_v1.BudgetServiceClient()
+                # Note: billing_budgets_v1 is not available, using billing_v1 only
                 logger.info("GCP FinOps clients initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize GCP FinOps clients: {e}")
