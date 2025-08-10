@@ -15,6 +15,7 @@ import json
 import logging
 import uuid
 from fastapi.responses import StreamingResponse
+from jose import jwt
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, String, Float, DateTime, JSON, Text
@@ -30,7 +31,13 @@ app = FastAPI(title="PolicyCortex API Gateway", version="3.0.0")
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3005",
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,6 +57,81 @@ class PolicyRequest(BaseModel):
 class ResourcesRequest(BaseModel):
     subscription_id: Optional[str] = "205b477d-17e7-4b3b-92c1-32cf02626b78"
     resource_type: Optional[str] = None
+
+# -------------------- Auth (Azure AD JWT) --------------------
+AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID") or os.getenv("NEXT_PUBLIC_AZURE_TENANT_ID")
+AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID") or os.getenv("NEXT_PUBLIC_AZURE_CLIENT_ID")
+REQUIRE_AUTH = (os.getenv("REQUIRE_AUTH", "true").lower() == "true")
+
+JWKS_CACHE: Dict[str, Any] = {}
+
+def _issuer_for_tenant(tenant_id: str) -> str:
+    return f"https://login.microsoftonline.com/{tenant_id}/v2.0"
+
+def _jwks_uri_for_tenant(tenant_id: str) -> str:
+    return f"https://login.microsoftonline.com/{tenant_id}/discovery/v2.0/keys"
+
+async def _load_jwks(tenant_id: str) -> Dict[str, Any]:
+    url = _jwks_uri_for_tenant(tenant_id)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, timeout=10) as resp:
+            if resp.status != 200:
+                raise RuntimeError(f"Failed to load JWKS: HTTP {resp.status}")
+            data = await resp.json()
+            JWKS_CACHE[tenant_id] = data
+            return data
+
+def _get_rsa_key(token: str, jwks: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    unverified_header = jwt.get_unverified_header(token)
+    kid = unverified_header.get("kid")
+    for key in jwks.get("keys", []):
+        if key.get("kid") == kid:
+            return {
+                "kty": key.get("kty"),
+                "kid": key.get("kid"),
+                "use": key.get("use"),
+                "n": key.get("n"),
+                "e": key.get("e"),
+            }
+    return None
+
+async def _validate_bearer_token(token: str) -> Dict[str, Any]:
+    if not AZURE_TENANT_ID or not AZURE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Auth is required but AZURE_TENANT_ID/AZURE_CLIENT_ID not configured")
+    issuer = _issuer_for_tenant(AZURE_TENANT_ID)
+    jwks = JWKS_CACHE.get(AZURE_TENANT_ID)
+    if not jwks:
+        jwks = await _load_jwks(AZURE_TENANT_ID)
+    rsa_key = _get_rsa_key(token, jwks)
+    if not rsa_key:
+        # Refresh JWKS once and retry
+        jwks = await _load_jwks(AZURE_TENANT_ID)
+        rsa_key = _get_rsa_key(token, jwks)
+        if not rsa_key:
+            raise HTTPException(status_code=401, detail="Unable to find appropriate key to verify token")
+    try:
+        claims = jwt.decode(
+            token,
+            rsa_key,
+            algorithms=["RS256"],
+            audience=AZURE_CLIENT_ID,
+            issuer=issuer,
+            options={"verify_aud": True, "verify_signature": True},
+        )
+        return claims
+    except Exception as e:
+        logger.warning(f"JWT validation failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+async def auth_dependency(request: Request) -> Dict[str, Any]:
+    if not REQUIRE_AUTH:
+        return {}
+    auth = request.headers.get("Authorization")
+    if not auth or not auth.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    token = auth.split(" ", 1)[1]
+    return await _validate_bearer_token(token)
+
 
 # -------------------- Persistence & Secrets --------------------
 # Async Postgres (for actions/audit). Configure via DATABASE_URL
@@ -275,7 +357,7 @@ async def health():
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
 @app.get("/api/v1/metrics")
-async def get_metrics():
+async def get_metrics(_: Dict[str, Any] = Depends(auth_dependency)):
     """Get governance metrics (derived from real Azure data)"""
     if not azure_collector:
         raise HTTPException(503, "Azure not connected")
@@ -298,7 +380,7 @@ async def get_metrics():
     }
 
 @app.get("/api/v1/resources")
-async def get_resources(request: ResourcesRequest = Depends()):
+async def get_resources(request: ResourcesRequest = Depends(), _: Dict[str, Any] = Depends(auth_dependency)):
     """Get Azure resources (real)"""
     if not azure_collector:
         raise HTTPException(503, "Azure not connected")
@@ -317,7 +399,7 @@ async def get_resources(request: ResourcesRequest = Depends()):
     return {"resources": resources, "total": len(resources), "subscription_id": request.subscription_id, "timestamp": datetime.utcnow().isoformat()}
 
 @app.get("/api/v1/policies")
-async def get_policies():
+async def get_policies(_: Dict[str, Any] = Depends(auth_dependency)):
     """Get policy assignments (prefer deep with graceful fallback)"""
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
@@ -332,7 +414,7 @@ async def get_policies():
         return await azure_insights.get_policy_compliance_deep()
 
 @app.post("/api/v1/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, _: Dict[str, Any] = Depends(auth_dependency)):
     """Chat with GPT-5 or GLM-4.5 domain expert"""
     try:
         # For now, return intelligent mock response
@@ -382,7 +464,7 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/v1/policies/generate")
-async def generate_policy(request: PolicyRequest):
+async def generate_policy(request: PolicyRequest, _: Dict[str, Any] = Depends(auth_dependency)):
     """Generate policy using GPT-5/GLM-4.5"""
     try:
         # Generate a policy based on the requirement
@@ -425,7 +507,7 @@ async def generate_policy(request: PolicyRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/recommendations")
-async def get_recommendations():
+async def get_recommendations(_: Dict[str, Any] = Depends(auth_dependency)):
     """Get AI-powered recommendations"""
     return {
         "recommendations": [
@@ -482,7 +564,7 @@ async def get_recommendations():
     }
 
 @app.get("/api/v1/dashboard")
-async def get_dashboard():
+async def get_dashboard(_: Dict[str, Any] = Depends(auth_dependency)):
     """Get dashboard data"""
     return {
         "summary": {
@@ -515,7 +597,7 @@ async def get_dashboard():
     }
 
 @app.post("/api/v1/analyze")
-async def analyze_environment(context: Optional[Dict] = None):
+async def analyze_environment(context: Optional[Dict] = None, _: Dict[str, Any] = Depends(auth_dependency)):
     """Analyze environment with GPT-5/GLM-4.5"""
     return {
         "analysis": {
@@ -537,37 +619,37 @@ async def analyze_environment(context: Optional[Dict] = None):
 # ============= DEEP INSIGHTS ENDPOINTS =============
 
 @app.get("/api/v1/policies/deep")
-async def get_policies_deep():
+async def get_policies_deep(_: Dict[str, Any] = Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
     return await azure_insights.get_policy_compliance_deep()
 
 @app.get("/api/v1/rbac/deep")
-async def get_rbac_deep():
+async def get_rbac_deep(_: Dict[str, Any] = Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
     return await azure_insights.get_rbac_deep_analysis()
 
 @app.get("/api/v1/costs/deep")
-async def get_costs_deep():
+async def get_costs_deep(_: Dict[str, Any] = Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
     return await azure_insights.get_cost_analysis_deep()
 
 @app.get("/api/v1/network/deep")
-async def get_network_deep():
+async def get_network_deep(_: Dict[str, Any] = Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
     return await azure_insights.get_network_security_deep()
 
 @app.get("/api/v1/resources/deep")
-async def get_resources_deep():
+async def get_resources_deep(_: Dict[str, Any] = Depends(auth_dependency)):
     if not azure_insights:
         raise HTTPException(503, "Azure not connected")
     return await azure_insights.get_resource_insights_deep()
 
 @app.post("/api/v1/remediate")
-async def remediate_resource(resource_id: str, action: str):
+async def remediate_resource(resource_id: str, action: str, _: Dict[str, Any] = Depends(auth_dependency)):
     """AI-driven remediation action"""
     return {
         "success": True,
@@ -579,7 +661,7 @@ async def remediate_resource(resource_id: str, action: str):
     }
 
 @app.post("/api/v1/exception")
-async def create_exception(resource_id: str, policy_id: str, reason: str):
+async def create_exception(resource_id: str, policy_id: str, reason: str, _: Dict[str, Any] = Depends(auth_dependency)):
     """Create policy exception"""
     return {
         "success": True,
