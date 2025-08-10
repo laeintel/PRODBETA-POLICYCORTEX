@@ -291,7 +291,7 @@ impl SecretRedactionMiddleware {
     }
 
     pub fn redact_headers(&self, headers: &mut axum::http::HeaderMap) {
-        for (name, value) in headers.iter_mut() {
+        for (_name, value) in headers.iter_mut() {
             if let Ok(value_str) = value.to_str() {
                 let redacted = self.guard.redact(value_str);
                 if redacted != value_str {

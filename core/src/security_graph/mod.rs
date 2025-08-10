@@ -833,7 +833,7 @@ impl SecurityGraphEngine {
         }
     }
 
-    fn generate_mitigations(&self, path: &[NodeIndex]) -> Vec<MitigationBundle> {
+    fn generate_mitigations(&self, _path: &[NodeIndex]) -> Vec<MitigationBundle> {
         let mut bundles = Vec::new();
 
         // Network segmentation bundle

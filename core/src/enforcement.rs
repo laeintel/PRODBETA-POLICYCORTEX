@@ -389,7 +389,7 @@ impl EnforcementEngine for DefaultEnforcementEngine {
         Ok(Vec::new())
     }
 
-    fn determine_priority(&self, violations: &[Violation]) -> Priority {
+    fn _determine_priority(&self, violations: &[Violation]) -> Priority {
         violations
             .iter()
             .map(|v| match v.severity {

@@ -102,7 +102,9 @@
       "Bash(./start-api-only.bat)",
       "Bash(git archive:*)",
       "Bash(./create-backup.bat)",
-      "Bash(set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/policycortex)"
+      "Bash(set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/policycortex)",
+      "Bash(git rm:*)",
+      "Bash(set SQLX_OFFLINE=true)"
     ],
     "deny": []
   }
