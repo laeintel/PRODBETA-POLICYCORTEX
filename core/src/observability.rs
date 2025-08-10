@@ -1,13 +1,17 @@
+use chrono::{DateTime, Utc};
+use opentelemetry::{
+    global,
+    sdk::propagation::TraceContextPropagator,
+    trace::{TraceError, Tracer, TracerProvider},
+};
+use opentelemetry_otlp::WithExportConfig;
+use prometheus::{Counter, Encoder, Gauge, Histogram, HistogramOpts, Registry, TextEncoder};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing::{error, info, span, warn, Level, Span};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error, span, Level, Span};
-use opentelemetry::{global, sdk::propagation::TraceContextPropagator, trace::{Tracer, TracerProvider, TraceError}};
-use opentelemetry_otlp::WithExportConfig;
-use prometheus::{Encoder, TextEncoder, Counter, Gauge, Histogram, HistogramOpts, Registry};
 
 /// Comprehensive observability system with distributed tracing, metrics, and logging
 pub struct ObservabilitySystem {
@@ -15,13 +19,13 @@ pub struct ObservabilitySystem {
     metrics_registry: Registry,
     spans: Arc<RwLock<HashMap<String, SpanContext>>>,
     correlation_ids: Arc<RwLock<HashMap<String, CorrelationContext>>>,
-    
+
     // Metrics
     request_counter: Counter,
     error_counter: Counter,
     latency_histogram: Histogram,
     active_requests: Gauge,
-    
+
     // SLO tracking
     slo_metrics: Arc<RwLock<SloMetrics>>,
 }
@@ -79,27 +83,30 @@ impl ObservabilitySystem {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
         // Initialize OpenTelemetry
         global::set_text_map_propagator(TraceContextPropagator::new());
-        
+
         let tracer = Self::init_tracer()?;
-        
+
         // Initialize Prometheus metrics
         let registry = Registry::new();
-        
+
         let request_counter = Counter::new("requests_total", "Total number of requests")?;
         let error_counter = Counter::new("errors_total", "Total number of errors")?;
-        
+
         let latency_histogram = Histogram::with_opts(
-            HistogramOpts::new("request_duration_seconds", "Request duration in seconds")
-                .buckets(vec![0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0])
+            HistogramOpts::new("request_duration_seconds", "Request duration in seconds").buckets(
+                vec![
+                    0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0,
+                ],
+            ),
         )?;
-        
+
         let active_requests = Gauge::new("active_requests", "Number of active requests")?;
-        
+
         registry.register(Box::new(request_counter.clone()))?;
         registry.register(Box::new(error_counter.clone()))?;
         registry.register(Box::new(latency_histogram.clone()))?;
         registry.register(Box::new(active_requests.clone()))?;
-        
+
         Ok(Self {
             tracer: Arc::new(tracer),
             metrics_registry: registry,
@@ -122,34 +129,29 @@ impl ObservabilitySystem {
     fn init_tracer() -> Result<impl Tracer, TraceError> {
         let otlp_endpoint = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT")
             .unwrap_or_else(|_| "http://localhost:4317".to_string());
-        
+
         opentelemetry_otlp::new_pipeline()
             .tracing()
             .with_exporter(
                 opentelemetry_otlp::new_exporter()
                     .tonic()
-                    .with_endpoint(otlp_endpoint)
+                    .with_endpoint(otlp_endpoint),
             )
-            .with_trace_config(
-                opentelemetry::sdk::trace::config()
-                    .with_resource(opentelemetry::sdk::Resource::new(vec![
-                        opentelemetry::KeyValue::new("service.name", "policycortex"),
-                        opentelemetry::KeyValue::new("service.version", "2.0.0"),
-                    ]))
-            )
+            .with_trace_config(opentelemetry::sdk::trace::config().with_resource(
+                opentelemetry::sdk::Resource::new(vec![
+                    opentelemetry::KeyValue::new("service.name", "policycortex"),
+                    opentelemetry::KeyValue::new("service.version", "2.0.0"),
+                ]),
+            ))
             .install_batch(opentelemetry::runtime::Tokio)
             .map(|provider| provider.tracer("policycortex"))
     }
 
     /// Start a new trace span
-    pub async fn start_span(
-        &self,
-        operation_name: &str,
-        correlation_id: Option<Uuid>,
-    ) -> String {
+    pub async fn start_span(&self, operation_name: &str, correlation_id: Option<Uuid>) -> String {
         let trace_id = Uuid::new_v4().to_string();
         let span_id = Uuid::new_v4().to_string();
-        
+
         let span_context = SpanContext {
             trace_id: trace_id.clone(),
             span_id: span_id.clone(),
@@ -163,10 +165,10 @@ impl ObservabilitySystem {
             attributes: HashMap::new(),
             events: Vec::new(),
         };
-        
+
         let mut spans = self.spans.write().await;
         spans.insert(span_id.clone(), span_context);
-        
+
         // Track correlation context
         if let Some(corr_id) = correlation_id {
             let correlation_context = CorrelationContext {
@@ -178,52 +180,52 @@ impl ObservabilitySystem {
                 request_path: operation_name.to_string(),
                 created_at: Utc::now(),
             };
-            
+
             let mut correlations = self.correlation_ids.write().await;
             correlations.insert(corr_id.to_string(), correlation_context);
         }
-        
+
         // Increment active requests
         self.active_requests.inc();
-        
+
         info!(
             trace_id = %trace_id,
             span_id = %span_id,
             operation = %operation_name,
             "Started span"
         );
-        
+
         span_id
     }
 
     /// End a trace span
     pub async fn end_span(&self, span_id: &str, status: SpanStatus) {
         let mut spans = self.spans.write().await;
-        
+
         if let Some(span) = spans.get_mut(span_id) {
             span.end_time = Some(Utc::now());
-            span.duration_ms = Some(
-                (span.end_time.unwrap() - span.start_time).num_milliseconds() as u64
-            );
+            span.duration_ms =
+                Some((span.end_time.unwrap() - span.start_time).num_milliseconds() as u64);
             span.status = status.clone();
-            
+
             // Record metrics
             self.request_counter.inc();
-            
+
             if let SpanStatus::Error(_) = status {
                 self.error_counter.inc();
             }
-            
+
             if let Some(duration_ms) = span.duration_ms {
                 self.latency_histogram.observe(duration_ms as f64 / 1000.0);
             }
-            
+
             // Decrement active requests
             self.active_requests.dec();
-            
+
             // Update SLO metrics
-            self.update_slo_metrics(matches!(status, SpanStatus::Ok)).await;
-            
+            self.update_slo_metrics(matches!(status, SpanStatus::Ok))
+                .await;
+
             info!(
                 span_id = %span_id,
                 duration_ms = span.duration_ms.unwrap_or(0),
@@ -234,9 +236,14 @@ impl ObservabilitySystem {
     }
 
     /// Add an event to a span
-    pub async fn add_span_event(&self, span_id: &str, event_name: &str, attributes: HashMap<String, String>) {
+    pub async fn add_span_event(
+        &self,
+        span_id: &str,
+        event_name: &str,
+        attributes: HashMap<String, String>,
+    ) {
         let mut spans = self.spans.write().await;
-        
+
         if let Some(span) = spans.get_mut(span_id) {
             span.events.push(SpanEvent {
                 timestamp: Utc::now(),
@@ -249,14 +256,17 @@ impl ObservabilitySystem {
     /// Set span attributes
     pub async fn set_span_attributes(&self, span_id: &str, attributes: HashMap<String, String>) {
         let mut spans = self.spans.write().await;
-        
+
         if let Some(span) = spans.get_mut(span_id) {
             span.attributes.extend(attributes);
         }
     }
 
     /// Get correlation context for a correlation ID
-    pub async fn get_correlation_context(&self, correlation_id: &Uuid) -> Option<CorrelationContext> {
+    pub async fn get_correlation_context(
+        &self,
+        correlation_id: &Uuid,
+    ) -> Option<CorrelationContext> {
         let correlations = self.correlation_ids.read().await;
         correlations.get(&correlation_id.to_string()).cloned()
     }
@@ -269,7 +279,7 @@ impl ObservabilitySystem {
             labels = ?labels,
             "Recorded metric"
         );
-        
+
         // TODO: Send to metrics backend
     }
 
@@ -277,43 +287,44 @@ impl ObservabilitySystem {
     pub fn export_metrics(&self) -> Result<String, Box<dyn std::error::Error>> {
         let encoder = TextEncoder::new();
         let metric_families = self.metrics_registry.gather();
-        
+
         let mut buffer = Vec::new();
         encoder.encode(&metric_families, &mut buffer)?;
-        
+
         Ok(String::from_utf8(buffer)?)
     }
 
     /// Update SLO metrics
     async fn update_slo_metrics(&self, success: bool) {
         let mut slo = self.slo_metrics.write().await;
-        
+
         slo.total_requests += 1;
         if success {
             slo.successful_requests += 1;
         }
-        
+
         // Calculate current availability
         if slo.total_requests > 0 {
-            slo.current_availability = (slo.successful_requests as f64 / slo.total_requests as f64) * 100.0;
+            slo.current_availability =
+                (slo.successful_requests as f64 / slo.total_requests as f64) * 100.0;
         }
-        
+
         // Calculate error budget consumed (assuming 99.9% SLO)
         let target_slo = 99.9;
         let allowed_failures = slo.total_requests as f64 * (100.0 - target_slo) / 100.0;
         let actual_failures = slo.total_requests - slo.successful_requests;
-        
+
         if allowed_failures > 0.0 {
             slo.error_budget_consumed = (actual_failures as f64 / allowed_failures) * 100.0;
         }
-        
+
         slo.last_updated = Utc::now();
     }
 
     /// Get current SLO status
     pub async fn get_slo_status(&self) -> SloStatus {
         let slo = self.slo_metrics.read().await;
-        
+
         SloStatus {
             availability: slo.current_availability,
             error_budget_consumed: slo.error_budget_consumed,
@@ -327,20 +338,27 @@ impl ObservabilitySystem {
     /// Create a distributed trace context for cross-service calls
     pub fn create_trace_context(&self, parent_span_id: &str) -> HashMap<String, String> {
         let mut headers = HashMap::new();
-        
+
         // W3C Trace Context headers
-        headers.insert("traceparent".to_string(), format!("00-{}-{}-01", 
-            Uuid::new_v4().to_string().replace("-", ""),
-            parent_span_id.replace("-", "")
-        ));
-        
+        headers.insert(
+            "traceparent".to_string(),
+            format!(
+                "00-{}-{}-01",
+                Uuid::new_v4().to_string().replace("-", ""),
+                parent_span_id.replace("-", "")
+            ),
+        );
+
         headers.insert("tracestate".to_string(), "policycortex=active".to_string());
-        
+
         headers
     }
 
     /// Extract trace context from incoming request headers
-    pub fn extract_trace_context(&self, headers: &HashMap<String, String>) -> Option<(String, String)> {
+    pub fn extract_trace_context(
+        &self,
+        headers: &HashMap<String, String>,
+    ) -> Option<(String, String)> {
         if let Some(traceparent) = headers.get("traceparent") {
             let parts: Vec<&str> = traceparent.split('-').collect();
             if parts.len() >= 3 {
@@ -359,7 +377,7 @@ impl ObservabilitySystem {
             fields,
             service: "policycortex".to_string(),
         };
-        
+
         match level {
             LogLevel::Error => error!("{:?}", log_entry),
             LogLevel::Warn => warn!("{:?}", log_entry),

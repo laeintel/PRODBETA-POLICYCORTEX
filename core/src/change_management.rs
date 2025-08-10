@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use reqwest::Client;
 
 /// Change Management Integration
 /// Supports ServiceNow, JIRA Service Management, and generic webhooks
@@ -33,10 +33,10 @@ pub struct ChangeRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ChangeCategory {
-    Standard,    // Pre-approved, low risk
-    Normal,      // Requires CAB approval
-    Emergency,   // Urgent, bypass normal process
-    Major,       // High impact, executive approval
+    Standard,  // Pre-approved, low risk
+    Normal,    // Requires CAB approval
+    Emergency, // Urgent, bypass normal process
+    Major,     // High impact, executive approval
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -49,10 +49,10 @@ pub enum Priority {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Impact {
-    Enterprise,  // Affects entire organization
-    Department,  // Affects specific department
-    Service,     // Affects specific service
-    User,        // Affects individual users
+    Enterprise, // Affects entire organization
+    Department, // Affects specific department
+    Service,    // Affects specific service
+    User,       // Affects individual users
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -69,7 +69,7 @@ pub enum Environment {
     Production,
     Staging,
     Development,
-    DR,  // Disaster Recovery
+    DR, // Disaster Recovery
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,7 +98,7 @@ pub struct FreezeWindow {
     pub start: DateTime<Utc>,
     pub end: DateTime<Utc>,
     pub reason: String,
-    pub exceptions: Vec<String>,  // Service IDs that are exempt
+    pub exceptions: Vec<String>, // Service IDs that are exempt
     pub allow_emergency: bool,
 }
 
@@ -128,7 +128,11 @@ pub trait ChangeManagementSystem: Send + Sync {
     async fn get_change(&self, id: &str) -> Result<ChangeRequest, String>;
     async fn approve_change(&self, id: &str, approver: &str, notes: &str) -> Result<(), String>;
     async fn reject_change(&self, id: &str, approver: &str, reason: &str) -> Result<(), String>;
-    async fn check_freeze_window(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> Result<bool, String>;
+    async fn check_freeze_window(
+        &self,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<bool, String>;
     async fn get_active_changes(&self) -> Result<Vec<ChangeRequest>, String>;
 }
 
@@ -212,8 +216,9 @@ impl ChangeManagementSystem for ServiceNowIntegration {
     async fn create_change(&self, request: &ChangeRequest) -> Result<String, String> {
         let url = format!("{}/api/now/table/change_request", self.instance_url);
         let body = self.map_to_servicenow(request);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .post(&url)
             .basic_auth(&self.username, Some(&self.password))
             .header("Content-Type", "application/json")
@@ -222,11 +227,13 @@ impl ChangeManagementSystem for ServiceNowIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to create change: {}", e))?;
-        
+
         if response.status().is_success() {
-            let result: serde_json::Value = response.json().await
+            let result: serde_json::Value = response
+                .json()
+                .await
                 .map_err(|e| format!("Failed to parse response: {}", e))?;
-            
+
             Ok(result["result"]["sys_id"]
                 .as_str()
                 .unwrap_or("unknown")
@@ -239,8 +246,9 @@ impl ChangeManagementSystem for ServiceNowIntegration {
     async fn update_change(&self, id: &str, request: &ChangeRequest) -> Result<(), String> {
         let url = format!("{}/api/now/table/change_request/{}", self.instance_url, id);
         let body = self.map_to_servicenow(request);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .patch(&url)
             .basic_auth(&self.username, Some(&self.password))
             .header("Content-Type", "application/json")
@@ -248,7 +256,7 @@ impl ChangeManagementSystem for ServiceNowIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to update change: {}", e))?;
-        
+
         if response.status().is_success() {
             Ok(())
         } else {
@@ -258,37 +266,57 @@ impl ChangeManagementSystem for ServiceNowIntegration {
 
     async fn get_change(&self, id: &str) -> Result<ChangeRequest, String> {
         let url = format!("{}/api/now/table/change_request/{}", self.instance_url, id);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(&url)
             .basic_auth(&self.username, Some(&self.password))
             .header("Accept", "application/json")
             .send()
             .await
             .map_err(|e| format!("Failed to get change: {}", e))?;
-        
+
         if response.status().is_success() {
-            let result: serde_json::Value = response.json().await
+            let result: serde_json::Value = response
+                .json()
+                .await
                 .map_err(|e| format!("Failed to parse response: {}", e))?;
-            
+
             // Map ServiceNow response back to ChangeRequest
             // This is simplified - real implementation would need full mapping
             Ok(ChangeRequest {
                 id: id.to_string(),
-                title: result["result"]["short_description"].as_str().unwrap_or("").to_string(),
-                description: result["result"]["description"].as_str().unwrap_or("").to_string(),
+                title: result["result"]["short_description"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
+                description: result["result"]["description"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
                 category: ChangeCategory::Normal,
                 priority: Priority::Medium,
                 impact: Impact::Service,
                 risk_level: RiskLevel::Medium,
-                requested_by: result["result"]["requested_by"].as_str().unwrap_or("").to_string(),
-                assigned_to: result["result"]["assigned_to"]["value"].as_str().map(String::from),
+                requested_by: result["result"]["requested_by"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
+                assigned_to: result["result"]["assigned_to"]["value"]
+                    .as_str()
+                    .map(String::from),
                 scheduled_start: Utc::now(),
                 scheduled_end: Utc::now(),
                 environment: Environment::Production,
                 affected_services: vec![],
-                rollback_plan: result["result"]["backout_plan"].as_str().unwrap_or("").to_string(),
-                test_plan: result["result"]["test_plan"].as_str().unwrap_or("").to_string(),
+                rollback_plan: result["result"]["backout_plan"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
+                test_plan: result["result"]["test_plan"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
                 approval_status: ApprovalStatus::Pending,
                 implementation_status: ImplementationStatus::NotStarted,
                 metadata: HashMap::new(),
@@ -302,15 +330,16 @@ impl ChangeManagementSystem for ServiceNowIntegration {
 
     async fn approve_change(&self, id: &str, approver: &str, notes: &str) -> Result<(), String> {
         let url = format!("{}/api/now/table/sysapproval_approver", self.instance_url);
-        
+
         let body = serde_json::json!({
             "document_id": id,
             "state": "approved",
             "approver": approver,
             "comments": notes,
         });
-        
-        let response = self.client
+
+        let response = self
+            .client
             .post(&url)
             .basic_auth(&self.username, Some(&self.password))
             .header("Content-Type", "application/json")
@@ -318,7 +347,7 @@ impl ChangeManagementSystem for ServiceNowIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to approve change: {}", e))?;
-        
+
         if response.status().is_success() {
             Ok(())
         } else {
@@ -328,15 +357,16 @@ impl ChangeManagementSystem for ServiceNowIntegration {
 
     async fn reject_change(&self, id: &str, approver: &str, reason: &str) -> Result<(), String> {
         let url = format!("{}/api/now/table/sysapproval_approver", self.instance_url);
-        
+
         let body = serde_json::json!({
             "document_id": id,
             "state": "rejected",
             "approver": approver,
             "comments": reason,
         });
-        
-        let response = self.client
+
+        let response = self
+            .client
             .post(&url)
             .basic_auth(&self.username, Some(&self.password))
             .header("Content-Type", "application/json")
@@ -344,7 +374,7 @@ impl ChangeManagementSystem for ServiceNowIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to reject change: {}", e))?;
-        
+
         if response.status().is_success() {
             Ok(())
         } else {
@@ -352,17 +382,22 @@ impl ChangeManagementSystem for ServiceNowIntegration {
         }
     }
 
-    async fn check_freeze_window(&self, start: DateTime<Utc>, end: DateTime<Utc>) -> Result<bool, String> {
+    async fn check_freeze_window(
+        &self,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<bool, String> {
         // Query ServiceNow for active freeze windows
         let url = format!("{}/api/now/table/change_blackout", self.instance_url);
-        
+
         let query = format!(
             "start_date<={}&end_date>={}",
             end.to_rfc3339(),
             start.to_rfc3339()
         );
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(&url)
             .basic_auth(&self.username, Some(&self.password))
             .query(&[("sysparm_query", &query)])
@@ -370,12 +405,16 @@ impl ChangeManagementSystem for ServiceNowIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to check freeze window: {}", e))?;
-        
+
         if response.status().is_success() {
-            let result: serde_json::Value = response.json().await
+            let result: serde_json::Value = response
+                .json()
+                .await
                 .map_err(|e| format!("Failed to parse response: {}", e))?;
-            
-            Ok(result["result"].as_array().map_or(false, |arr| !arr.is_empty()))
+
+            Ok(result["result"]
+                .as_array()
+                .map_or(false, |arr| !arr.is_empty()))
         } else {
             Err(format!("ServiceNow returned error: {}", response.status()))
         }
@@ -383,8 +422,9 @@ impl ChangeManagementSystem for ServiceNowIntegration {
 
     async fn get_active_changes(&self) -> Result<Vec<ChangeRequest>, String> {
         let url = format!("{}/api/now/table/change_request", self.instance_url);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(&url)
             .basic_auth(&self.username, Some(&self.password))
             .query(&[("sysparm_query", "active=true")])
@@ -392,11 +432,13 @@ impl ChangeManagementSystem for ServiceNowIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to get active changes: {}", e))?;
-        
+
         if response.status().is_success() {
-            let result: serde_json::Value = response.json().await
+            let result: serde_json::Value = response
+                .json()
+                .await
                 .map_err(|e| format!("Failed to parse response: {}", e))?;
-            
+
             // Map results - simplified
             Ok(vec![])
         } else {
@@ -452,8 +494,9 @@ impl ChangeManagementSystem for JiraIntegration {
     async fn create_change(&self, request: &ChangeRequest) -> Result<String, String> {
         let url = format!("{}/rest/api/3/issue", self.base_url);
         let body = self.map_to_jira(request);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .post(&url)
             .bearer_auth(&self.api_token)
             .header("Content-Type", "application/json")
@@ -461,11 +504,13 @@ impl ChangeManagementSystem for JiraIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to create JIRA issue: {}", e))?;
-        
+
         if response.status().is_success() {
-            let result: serde_json::Value = response.json().await
+            let result: serde_json::Value = response
+                .json()
+                .await
                 .map_err(|e| format!("Failed to parse response: {}", e))?;
-            
+
             Ok(result["key"].as_str().unwrap_or("unknown").to_string())
         } else {
             Err(format!("JIRA returned error: {}", response.status()))
@@ -475,8 +520,9 @@ impl ChangeManagementSystem for JiraIntegration {
     async fn update_change(&self, id: &str, request: &ChangeRequest) -> Result<(), String> {
         let url = format!("{}/rest/api/3/issue/{}", self.base_url, id);
         let body = self.map_to_jira(request);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .put(&url)
             .bearer_auth(&self.api_token)
             .header("Content-Type", "application/json")
@@ -484,7 +530,7 @@ impl ChangeManagementSystem for JiraIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to update JIRA issue: {}", e))?;
-        
+
         if response.status().is_success() {
             Ok(())
         } else {
@@ -494,29 +540,43 @@ impl ChangeManagementSystem for JiraIntegration {
 
     async fn get_change(&self, id: &str) -> Result<ChangeRequest, String> {
         let url = format!("{}/rest/api/3/issue/{}", self.base_url, id);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(&url)
             .bearer_auth(&self.api_token)
             .send()
             .await
             .map_err(|e| format!("Failed to get JIRA issue: {}", e))?;
-        
+
         if response.status().is_success() {
-            let result: serde_json::Value = response.json().await
+            let result: serde_json::Value = response
+                .json()
+                .await
                 .map_err(|e| format!("Failed to parse response: {}", e))?;
-            
+
             // Map JIRA response back to ChangeRequest - simplified
             Ok(ChangeRequest {
                 id: id.to_string(),
-                title: result["fields"]["summary"].as_str().unwrap_or("").to_string(),
-                description: result["fields"]["description"].as_str().unwrap_or("").to_string(),
+                title: result["fields"]["summary"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
+                description: result["fields"]["description"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
                 category: ChangeCategory::Normal,
                 priority: Priority::Medium,
                 impact: Impact::Service,
                 risk_level: RiskLevel::Medium,
-                requested_by: result["fields"]["reporter"]["displayName"].as_str().unwrap_or("").to_string(),
-                assigned_to: result["fields"]["assignee"]["displayName"].as_str().map(String::from),
+                requested_by: result["fields"]["reporter"]["displayName"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string(),
+                assigned_to: result["fields"]["assignee"]["displayName"]
+                    .as_str()
+                    .map(String::from),
                 scheduled_start: Utc::now(),
                 scheduled_end: Utc::now(),
                 environment: Environment::Production,
@@ -537,7 +597,7 @@ impl ChangeManagementSystem for JiraIntegration {
     async fn approve_change(&self, id: &str, approver: &str, notes: &str) -> Result<(), String> {
         // Transition the issue to approved state
         let url = format!("{}/rest/api/3/issue/{}/transitions", self.base_url, id);
-        
+
         let body = serde_json::json!({
             "transition": {
                 "id": "21"  // Approve transition ID - would need to be configured
@@ -548,8 +608,9 @@ impl ChangeManagementSystem for JiraIntegration {
                 }
             }
         });
-        
-        let response = self.client
+
+        let response = self
+            .client
             .post(&url)
             .bearer_auth(&self.api_token)
             .header("Content-Type", "application/json")
@@ -557,7 +618,7 @@ impl ChangeManagementSystem for JiraIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to approve JIRA issue: {}", e))?;
-        
+
         if response.status().is_success() {
             Ok(())
         } else {
@@ -568,7 +629,7 @@ impl ChangeManagementSystem for JiraIntegration {
     async fn reject_change(&self, id: &str, approver: &str, reason: &str) -> Result<(), String> {
         // Transition the issue to rejected state
         let url = format!("{}/rest/api/3/issue/{}/transitions", self.base_url, id);
-        
+
         let body = serde_json::json!({
             "transition": {
                 "id": "31"  // Reject transition ID - would need to be configured
@@ -579,8 +640,9 @@ impl ChangeManagementSystem for JiraIntegration {
                 }
             }
         });
-        
-        let response = self.client
+
+        let response = self
+            .client
             .post(&url)
             .bearer_auth(&self.api_token)
             .header("Content-Type", "application/json")
@@ -588,7 +650,7 @@ impl ChangeManagementSystem for JiraIntegration {
             .send()
             .await
             .map_err(|e| format!("Failed to reject JIRA issue: {}", e))?;
-        
+
         if response.status().is_success() {
             Ok(())
         } else {
@@ -596,24 +658,29 @@ impl ChangeManagementSystem for JiraIntegration {
         }
     }
 
-    async fn check_freeze_window(&self, _start: DateTime<Utc>, _end: DateTime<Utc>) -> Result<bool, String> {
+    async fn check_freeze_window(
+        &self,
+        _start: DateTime<Utc>,
+        _end: DateTime<Utc>,
+    ) -> Result<bool, String> {
         // JIRA doesn't have built-in freeze windows, would need custom implementation
         Ok(false)
     }
 
     async fn get_active_changes(&self) -> Result<Vec<ChangeRequest>, String> {
         let url = format!("{}/rest/api/3/search", self.base_url);
-        
+
         let jql = format!("project = {} AND status = 'In Progress'", self.project_key);
-        
-        let response = self.client
+
+        let response = self
+            .client
             .get(&url)
             .bearer_auth(&self.api_token)
             .query(&[("jql", &jql)])
             .send()
             .await
             .map_err(|e| format!("Failed to search JIRA issues: {}", e))?;
-        
+
         if response.status().is_success() {
             // Map results - simplified
             Ok(vec![])
@@ -651,12 +718,12 @@ impl ChangeManagementOrchestrator {
         // Calculate risk score
         request.metadata.insert(
             "risk_score".to_string(),
-            self.calculate_risk_score(&request).to_string()
+            self.calculate_risk_score(&request).to_string(),
         );
 
         // Create in external system
         let id = self.system.create_change(&request).await?;
-        
+
         Ok(id)
     }
 
@@ -671,7 +738,9 @@ impl ChangeManagementOrchestrator {
         }
 
         // Check external system
-        self.system.check_freeze_window(request.scheduled_start, request.scheduled_end).await
+        self.system
+            .check_freeze_window(request.scheduled_start, request.scheduled_end)
+            .await
     }
 
     fn validate_change(&self, request: &ChangeRequest) -> Result<(), String> {
@@ -729,11 +798,13 @@ impl ChangeManagementOrchestrator {
 
     pub async fn auto_approve_standard_changes(&self, id: &str) -> Result<(), String> {
         let change = self.system.get_change(id).await?;
-        
+
         if change.category == ChangeCategory::Standard {
-            self.system.approve_change(id, "system", "Auto-approved standard change").await?;
+            self.system
+                .approve_change(id, "system", "Auto-approved standard change")
+                .await?;
         }
-        
+
         Ok(())
     }
 }
@@ -744,9 +815,7 @@ mod tests {
 
     #[test]
     fn test_risk_calculation() {
-        let orchestrator = ChangeManagementOrchestrator::new(
-            Box::new(MockChangeSystem {})
-        );
+        let orchestrator = ChangeManagementOrchestrator::new(Box::new(MockChangeSystem {}));
 
         let request = ChangeRequest {
             id: "test".to_string(),
@@ -815,7 +884,11 @@ mod tests {
         async fn reject_change(&self, _: &str, _: &str, _: &str) -> Result<(), String> {
             Ok(())
         }
-        async fn check_freeze_window(&self, _: DateTime<Utc>, _: DateTime<Utc>) -> Result<bool, String> {
+        async fn check_freeze_window(
+            &self,
+            _: DateTime<Utc>,
+            _: DateTime<Utc>,
+        ) -> Result<bool, String> {
             Ok(false)
         }
         async fn get_active_changes(&self) -> Result<Vec<ChangeRequest>, String> {

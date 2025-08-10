@@ -1,8 +1,8 @@
 use axum::{
     extract::{Request, State},
+    http::StatusCode,
     middleware::Next,
     response::Response,
-    http::StatusCode,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -19,10 +19,12 @@ pub struct TenantContext {
 impl TenantContext {
     pub fn from_token_claims(claims: &crate::auth::Claims) -> Self {
         // Extract tenant from token claims
-        let tenant_id = claims.tid.clone()
+        let tenant_id = claims
+            .tid
+            .clone()
             .or_else(|| claims.tenant_id.clone())
             .unwrap_or_else(|| "default".to_string());
-        
+
         TenantContext {
             tenant_id: tenant_id.clone(),
             azure_tenant_id: Some(tenant_id),
@@ -72,10 +74,12 @@ pub async fn tenant_middleware(
     };
 
     info!("Request tenant context: {:?}", tenant.tenant_id);
-    
+
     // Store in request extensions for handlers
-    request.extensions_mut().insert(TenantExtension(tenant.clone()));
-    
+    request
+        .extensions_mut()
+        .insert(TenantExtension(tenant.clone()));
+
     // Set database session variable for RLS
     if let Ok(pool) = sqlx::PgPool::try_from(&state.database_url) {
         if let Ok(mut conn) = pool.acquire().await {
@@ -86,14 +90,15 @@ pub async fn tenant_middleware(
                 .await;
         }
     }
-    
+
     let response = next.run(request).await;
     Ok(response)
 }
 
 // Helper to extract tenant from request
 pub fn get_tenant(request: &Request) -> Option<TenantContext> {
-    request.extensions()
+    request
+        .extensions()
         .get::<TenantExtension>()
         .map(|ext| ext.0.clone())
 }
@@ -119,7 +124,7 @@ impl TenantAwareDb {
 
     pub async fn query_policies(&self) -> Result<Vec<Policy>, sqlx::Error> {
         self.set_tenant_context().await?;
-        
+
         let policies = sqlx::query_as!(
             Policy,
             r#"
@@ -131,13 +136,13 @@ impl TenantAwareDb {
         )
         .fetch_all(&self.pool)
         .await?;
-        
+
         Ok(policies)
     }
 
     pub async fn query_resources(&self) -> Result<Vec<Resource>, sqlx::Error> {
         self.set_tenant_context().await?;
-        
+
         let resources = sqlx::query_as!(
             Resource,
             r#"
@@ -149,7 +154,7 @@ impl TenantAwareDb {
         )
         .fetch_all(&self.pool)
         .await?;
-        
+
         Ok(resources)
     }
 }
@@ -198,7 +203,7 @@ mod tests {
             roles: vec![],
             scp: None,
         };
-        
+
         let ctx = TenantContext::from_token_claims(&claims);
         assert_eq!(ctx.tenant_id, "tenant456");
     }

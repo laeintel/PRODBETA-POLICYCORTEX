@@ -2,8 +2,8 @@ use redis::aio::ConnectionManager;
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use tracing::{debug, error, warn};
 use tokio::time::{sleep, timeout};
+use tracing::{debug, error, warn};
 
 // High-performance caching layer for Azure data
 #[derive(Clone)]
@@ -32,7 +32,8 @@ pub struct CacheConfig {
 impl Default for CacheConfig {
     fn default() -> Self {
         Self {
-            redis_url: std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string()),
+            redis_url: std::env::var("REDIS_URL")
+                .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
             default_ttl_seconds: 300, // 5 minutes default
             max_connections: 20,
             connection_timeout_ms: 5000,
@@ -42,7 +43,9 @@ impl Default for CacheConfig {
 }
 
 impl CacheManager {
-    pub async fn new(config: CacheConfig) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(
+        config: CacheConfig,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let client = redis::Client::open(config.redis_url.clone())?;
         let connection_manager = ConnectionManager::new(client).await?;
 
@@ -54,7 +57,10 @@ impl CacheManager {
     }
 
     // Hot data cache - ultra-fast access for critical governance data
-    pub async fn get_hot<T>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
+    pub async fn get_hot<T>(
+        &mut self,
+        key: &str,
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
     where
         T: for<'de> Deserialize<'de>,
     {
@@ -62,7 +68,12 @@ impl CacheManager {
         self.get_with_retry(&hot_key).await
     }
 
-    pub async fn set_hot<T>(&mut self, key: &str, value: &T, ttl: Option<Duration>) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    pub async fn set_hot<T>(
+        &mut self,
+        key: &str,
+        value: &T,
+        ttl: Option<Duration>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         T: Serialize,
     {
@@ -72,7 +83,10 @@ impl CacheManager {
     }
 
     // Warm data cache - frequently accessed data
-    pub async fn get_warm<T>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
+    pub async fn get_warm<T>(
+        &mut self,
+        key: &str,
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
     where
         T: for<'de> Deserialize<'de>,
     {
@@ -80,7 +94,12 @@ impl CacheManager {
         self.get_with_retry(&warm_key).await
     }
 
-    pub async fn set_warm<T>(&mut self, key: &str, value: &T, ttl: Option<Duration>) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    pub async fn set_warm<T>(
+        &mut self,
+        key: &str,
+        value: &T,
+        ttl: Option<Duration>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         T: Serialize,
     {
@@ -90,7 +109,10 @@ impl CacheManager {
     }
 
     // Cold data cache - infrequently accessed historical data
-    pub async fn get_cold<T>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
+    pub async fn get_cold<T>(
+        &mut self,
+        key: &str,
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
     where
         T: for<'de> Deserialize<'de>,
     {
@@ -98,7 +120,12 @@ impl CacheManager {
         self.get_with_retry(&cold_key).await
     }
 
-    pub async fn set_cold<T>(&mut self, key: &str, value: &T, ttl: Option<Duration>) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    pub async fn set_cold<T>(
+        &mut self,
+        key: &str,
+        value: &T,
+        ttl: Option<Duration>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         T: Serialize,
     {
@@ -108,7 +135,10 @@ impl CacheManager {
     }
 
     // Smart cache with automatic tiering based on access patterns
-    pub async fn get_smart<T>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
+    pub async fn get_smart<T>(
+        &mut self,
+        key: &str,
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
     where
         T: for<'de> Deserialize<'de> + Clone + Serialize,
     {
@@ -121,24 +151,24 @@ impl CacheManager {
         // Try warm cache
         if let Some(data) = self.get_warm::<T>(key).await? {
             debug!("Cache HIT (warm): {}", key);
-            
+
             // Promote to hot cache on access
             if let Err(e) = self.set_hot(key, &data, None).await {
                 warn!("Failed to promote to hot cache: {}", e);
             }
-            
+
             return Ok(Some(data));
         }
 
         // Try cold cache
         if let Some(data) = self.get_cold::<T>(key).await? {
             debug!("Cache HIT (cold): {}", key);
-            
+
             // Promote to warm cache on access
             if let Err(e) = self.set_warm(key, &data, None).await {
                 warn!("Failed to promote to warm cache: {}", e);
             }
-            
+
             return Ok(Some(data));
         }
 
@@ -146,41 +176,60 @@ impl CacheManager {
         Ok(None)
     }
 
-    pub async fn set_smart<T>(&mut self, key: &str, value: &T, access_pattern: CacheAccessPattern) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    pub async fn set_smart<T>(
+        &mut self,
+        key: &str,
+        value: &T,
+        access_pattern: CacheAccessPattern,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         T: Serialize,
     {
         match access_pattern {
-            CacheAccessPattern::RealTime => self.set_hot(key, value, Some(Duration::from_secs(10))).await,
-            CacheAccessPattern::Frequent => self.set_warm(key, value, Some(Duration::from_secs(300))).await,
-            CacheAccessPattern::Occasional => self.set_cold(key, value, Some(Duration::from_secs(1800))).await,
-            CacheAccessPattern::Rare => self.set_cold(key, value, Some(Duration::from_secs(7200))).await,
+            CacheAccessPattern::RealTime => {
+                self.set_hot(key, value, Some(Duration::from_secs(10)))
+                    .await
+            }
+            CacheAccessPattern::Frequent => {
+                self.set_warm(key, value, Some(Duration::from_secs(300)))
+                    .await
+            }
+            CacheAccessPattern::Occasional => {
+                self.set_cold(key, value, Some(Duration::from_secs(1800)))
+                    .await
+            }
+            CacheAccessPattern::Rare => {
+                self.set_cold(key, value, Some(Duration::from_secs(7200)))
+                    .await
+            }
         }
     }
 
     // Batch operations for high-performance bulk caching
-    pub async fn get_batch<T>(&mut self, keys: &[String]) -> Result<Vec<Option<T>>, Box<dyn std::error::Error + Send + Sync>>
+    pub async fn get_batch<T>(
+        &mut self,
+        keys: &[String],
+    ) -> Result<Vec<Option<T>>, Box<dyn std::error::Error + Send + Sync>>
     where
         T: for<'de> Deserialize<'de>,
     {
         let mut results = Vec::with_capacity(keys.len());
-        
+
         // Use Redis pipeline for batch operations
         let mut pipe = redis::pipe();
         for key in keys {
             pipe.get(key);
         }
 
-        let batch_results: Vec<Option<String>> = pipe.query_async(&mut self.connection_pool.clone()).await?;
-        
+        let batch_results: Vec<Option<String>> =
+            pipe.query_async(&mut self.connection_pool.clone()).await?;
+
         for result in batch_results {
             match result {
-                Some(json_str) => {
-                    match serde_json::from_str::<CacheEntry<T>>(&json_str) {
-                        Ok(entry) => results.push(Some(entry.data)),
-                        Err(_) => results.push(None),
-                    }
-                }
+                Some(json_str) => match serde_json::from_str::<CacheEntry<T>>(&json_str) {
+                    Ok(entry) => results.push(Some(entry.data)),
+                    Err(_) => results.push(None),
+                },
                 None => results.push(None),
             }
         }
@@ -188,19 +237,22 @@ impl CacheManager {
         Ok(results)
     }
 
-    pub async fn set_batch<T>(&mut self, entries: &[(String, T, Duration)]) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    pub async fn set_batch<T>(
+        &mut self,
+        entries: &[(String, T, Duration)],
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         T: Serialize,
     {
         let mut pipe = redis::pipe();
-        
+
         for (key, value, ttl) in entries {
             let entry = CacheEntry {
                 data: value,
                 timestamp: chrono::Utc::now().timestamp(),
                 version: "1.0".to_string(),
             };
-            
+
             let json_str = serde_json::to_string(&entry)?;
             pipe.set_ex(key, json_str, ttl.as_secs() as usize);
         }
@@ -210,7 +262,10 @@ impl CacheManager {
     }
 
     // Intelligent cache invalidation
-    pub async fn invalidate_pattern(&mut self, pattern: &str) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn invalidate_pattern(
+        &mut self,
+        pattern: &str,
+    ) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
         let mut conn = self.connection_pool.clone();
         let keys: Vec<String> = conn.keys(pattern).await?;
         if keys.is_empty() {
@@ -218,13 +273,19 @@ impl CacheManager {
         }
 
         let deleted: u64 = conn.del(&keys).await?;
-        debug!("Invalidated {} cache entries matching pattern: {}", deleted, pattern);
+        debug!(
+            "Invalidated {} cache entries matching pattern: {}",
+            deleted, pattern
+        );
         Ok(deleted)
     }
 
-    pub async fn invalidate_by_tags(&mut self, tags: &[String]) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn invalidate_by_tags(
+        &mut self,
+        tags: &[String],
+    ) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
         let mut total_deleted = 0u64;
-        
+
         for tag in tags {
             let pattern = format!("*:{}:*", tag);
             total_deleted += self.invalidate_pattern(&pattern).await?;
@@ -234,7 +295,9 @@ impl CacheManager {
     }
 
     // Cache statistics for monitoring
-    pub async fn get_stats(&mut self) -> Result<CacheStats, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_stats(
+        &mut self,
+    ) -> Result<CacheStats, Box<dyn std::error::Error + Send + Sync>> {
         let mut conn = self.connection_pool.clone();
         let info: String = redis::cmd("INFO")
             .arg("memory")
@@ -254,7 +317,10 @@ impl CacheManager {
     }
 
     // Private helper methods
-    async fn get_with_retry<T>(&mut self, key: &str) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
+    async fn get_with_retry<T>(
+        &mut self,
+        key: &str,
+    ) -> Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>
     where
         T: for<'de> Deserialize<'de>,
     {
@@ -262,17 +328,17 @@ impl CacheManager {
             let mut conn = self.connection_pool.clone();
             match timeout(
                 Duration::from_millis(5000),
-                conn.get::<&str, Option<String>>(key)
-            ).await {
-                Ok(Ok(Some(json_str))) => {
-                    match serde_json::from_str::<CacheEntry<T>>(&json_str) {
-                        Ok(entry) => return Ok(Some(entry.data)),
-                        Err(e) => {
-                            error!("Failed to deserialize cache entry: {}", e);
-                            return Ok(None);
-                        }
+                conn.get::<&str, Option<String>>(key),
+            )
+            .await
+            {
+                Ok(Ok(Some(json_str))) => match serde_json::from_str::<CacheEntry<T>>(&json_str) {
+                    Ok(entry) => return Ok(Some(entry.data)),
+                    Err(e) => {
+                        error!("Failed to deserialize cache entry: {}", e);
+                        return Ok(None);
                     }
-                }
+                },
                 Ok(Ok(None)) => return Ok(None),
                 Ok(Err(e)) => {
                     error!("Redis error on attempt {}: {}", attempt + 1, e);
@@ -288,11 +354,16 @@ impl CacheManager {
                 }
             }
         }
-        
+
         Ok(None)
     }
 
-    async fn set_with_retry<T>(&mut self, key: &str, value: &T, ttl: Duration) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    async fn set_with_retry<T>(
+        &mut self,
+        key: &str,
+        value: &T,
+        ttl: Duration,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     where
         T: Serialize,
     {
@@ -301,15 +372,17 @@ impl CacheManager {
             timestamp: chrono::Utc::now().timestamp(),
             version: "1.0".to_string(),
         };
-        
+
         let json_str = serde_json::to_string(&entry)?;
 
         for attempt in 0..3 {
             let mut conn = self.connection_pool.clone();
             match timeout(
                 Duration::from_millis(5000),
-                conn.set_ex::<&str, String, ()>(key, json_str.clone(), ttl.as_secs() as usize)
-            ).await {
+                conn.set_ex::<&str, String, ()>(key, json_str.clone(), ttl.as_secs() as usize),
+            )
+            .await
+            {
                 Ok(Ok(_)) => return Ok(()),
                 Ok(Err(e)) => {
                     error!("Redis set error on attempt {}: {}", attempt + 1, e);

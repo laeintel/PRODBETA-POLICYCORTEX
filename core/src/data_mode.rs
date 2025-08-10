@@ -138,10 +138,10 @@ impl DataModeGuard {
 pub enum DataModeError {
     #[error("Write operations are not allowed in simulated mode")]
     WriteNotAllowedInSimulatedMode,
-    
+
     #[error("This operation requires real data mode")]
     RealDataRequired,
-    
+
     #[error("Failed to connect to cloud provider: {0}")]
     ConnectionFailed(String),
 }
@@ -154,20 +154,24 @@ mod tests {
     fn test_data_mode_from_env() {
         env::set_var("USE_REAL_DATA", "true");
         assert_eq!(DataMode::from_env(), DataMode::Real);
-        
+
         env::set_var("USE_REAL_DATA", "false");
         assert_eq!(DataMode::from_env(), DataMode::Simulated);
-        
+
         env::remove_var("USE_REAL_DATA");
         assert_eq!(DataMode::from_env(), DataMode::Simulated);
     }
 
     #[test]
     fn test_write_operations_blocked_in_simulated() {
-        let guard = DataModeGuard { mode: DataMode::Simulated };
+        let guard = DataModeGuard {
+            mode: DataMode::Simulated,
+        };
         assert!(guard.ensure_write_allowed().is_err());
-        
-        let guard = DataModeGuard { mode: DataMode::Real };
+
+        let guard = DataModeGuard {
+            mode: DataMode::Real,
+        };
         assert!(guard.ensure_write_allowed().is_ok());
     }
 }

@@ -1,16 +1,18 @@
-use axum::{
-    extract::{Query, State, Path},
-    Json,
-    http::StatusCode,
-    response::{IntoResponse, sse::{Event, Sse}},
-};
 use crate::auth::{AuthUser, OptionalAuthUser, TenantContext};
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::{RwLock, broadcast};
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    response::{
+        sse::{Event, Sse},
+        IntoResponse,
+    },
+    Json,
+};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
+use std::sync::Arc;
+use tokio::sync::{broadcast, RwLock};
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -228,7 +230,9 @@ impl AppState {
                 recommendation_type: "cost_optimization".to_string(),
                 severity: "high".to_string(),
                 title: "VM Right-Sizing Opportunity".to_string(),
-                description: "AI detected $12,450/month savings by right-sizing 47 VMs in production".to_string(),
+                description:
+                    "AI detected $12,450/month savings by right-sizing 47 VMs in production"
+                        .to_string(),
                 potential_savings: Some(12450.0),
                 risk_reduction: None,
                 automation_available: true,
@@ -239,7 +243,9 @@ impl AppState {
                 recommendation_type: "security".to_string(),
                 severity: "critical".to_string(),
                 title: "Unencrypted Storage Detected".to_string(),
-                description: "Found 3 storage accounts without encryption in production environment".to_string(),
+                description:
+                    "Found 3 storage accounts without encryption in production environment"
+                        .to_string(),
                 potential_savings: None,
                 risk_reduction: Some(85.0),
                 automation_available: true,
@@ -263,7 +269,7 @@ impl AppState {
             predictions: Arc::new(RwLock::new(Vec::new())),
             recommendations: Arc::new(RwLock::new(recommendations)),
             start_time: std::time::Instant::now(),
-            azure_client: None, // Will be initialized in main
+            azure_client: None,       // Will be initialized in main
             async_azure_client: None, // Will be initialized in main
             actions: Arc::new(RwLock::new(std::collections::HashMap::new())),
             action_events: Arc::new(RwLock::new(std::collections::HashMap::new())),
@@ -274,30 +280,40 @@ impl AppState {
 // API Handlers
 pub async fn get_metrics(
     auth_user: AuthUser,
-    State(state): State<Arc<AppState>>
+    State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // Log authenticated request
-    tracing::info!("Authenticated request for metrics from user: {:?}", auth_user.claims.preferred_username);
-    
+    tracing::info!(
+        "Authenticated request for metrics from user: {:?}",
+        auth_user.claims.preferred_username
+    );
+
     // Get tenant context for multi-tenant data access
     let tenant_context = match TenantContext::from_user(&auth_user).await {
         Ok(context) => {
-            tracing::debug!("User has access to tenant: {} with {} subscriptions", 
-                          context.tenant_id, context.subscription_ids.len());
+            tracing::debug!(
+                "User has access to tenant: {} with {} subscriptions",
+                context.tenant_id,
+                context.subscription_ids.len()
+            );
             context
         }
         Err(e) => {
             tracing::error!("Failed to get tenant context: {:?}", e);
-            return (StatusCode::FORBIDDEN, Json(serde_json::json!({
-                "error": "tenant_access_denied",
-                "message": "Unable to determine tenant access"
-            }))).into_response();
+            return (
+                StatusCode::FORBIDDEN,
+                Json(serde_json::json!({
+                    "error": "tenant_access_denied",
+                    "message": "Unable to determine tenant access"
+                })),
+            )
+                .into_response();
         }
     };
 
     // Always try to get real Azure data when Azure client is available
     // This works for local development with Azure CLI authentication
-    
+
     // Try high-performance async client first
     if let Some(ref async_azure_client) = state.async_azure_client {
         match async_azure_client.get_governance_metrics().await {
@@ -383,7 +399,7 @@ pub async fn get_metrics(
             learning_progress: 85.0,
         },
     };
-    
+
     // Add metadata to indicate this is simulated data
     let response = serde_json::json!({
         "data": simulated_metrics,
@@ -393,48 +409,59 @@ pub async fn get_metrics(
             "message": "Using simulated data. Connect Azure for real-time metrics."
         }
     });
-    
+
     Json(response).into_response()
 }
 
 pub async fn get_predictions(
     auth_user: AuthUser,
-    State(state): State<Arc<AppState>>
+    State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // Verify authentication and tenant access
-    tracing::info!("Authenticated request for predictions from user: {:?}", auth_user.claims.preferred_username);
-    
+    tracing::info!(
+        "Authenticated request for predictions from user: {:?}",
+        auth_user.claims.preferred_username
+    );
+
     let _tenant_context = match TenantContext::from_user(&auth_user).await {
         Ok(context) => context,
         Err(e) => {
             tracing::error!("Failed to get tenant context: {:?}", e);
-            return (StatusCode::FORBIDDEN, Json(serde_json::json!({
-                "error": "tenant_access_denied",
-                "message": "Unable to determine tenant access"
-            }))).into_response();
+            return (
+                StatusCode::FORBIDDEN,
+                Json(serde_json::json!({
+                    "error": "tenant_access_denied",
+                    "message": "Unable to determine tenant access"
+                })),
+            )
+                .into_response();
         }
     };
-    
+
     let predictions = state.predictions.read().await;
     Json(predictions.clone()).into_response()
 }
 
 pub async fn get_recommendations(
     auth_user: AuthUser,
-    State(state): State<Arc<AppState>>
+    State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // Verify authentication
-    tracing::info!("Authenticated request for recommendations from user: {:?}", auth_user.claims.preferred_username);
+    tracing::info!(
+        "Authenticated request for recommendations from user: {:?}",
+        auth_user.claims.preferred_username
+    );
     // If we have an Azure client, fetch real recommendations based on actual Azure data
     if let Some(ref async_azure_client) = state.async_azure_client {
         match async_azure_client.get_governance_metrics().await {
             Ok(metrics) => {
                 // Generate recommendations based on real metrics
                 let mut recommendations = Vec::new();
-                
+
                 // Cost recommendations based on actual spend
                 if metrics.costs.current_spend > 50.0 {
-                    let savings_percentage = (metrics.costs.savings_identified / metrics.costs.current_spend) * 100.0;
+                    let savings_percentage =
+                        (metrics.costs.savings_identified / metrics.costs.current_spend) * 100.0;
                     recommendations.push(ProactiveRecommendation {
                         id: "cost-001".to_string(),
                         recommendation_type: "cost_optimization".to_string(),
@@ -452,7 +479,7 @@ pub async fn get_recommendations(
                         confidence: 95.0,
                     });
                 }
-                
+
                 // Resource optimization recommendations
                 if metrics.resources.idle > 0 {
                     recommendations.push(ProactiveRecommendation {
@@ -470,7 +497,7 @@ pub async fn get_recommendations(
                         confidence: 98.0,
                     });
                 }
-                
+
                 // Over-provisioned resources
                 if metrics.resources.overprovisioned > 0 {
                     recommendations.push(ProactiveRecommendation {
@@ -488,7 +515,7 @@ pub async fn get_recommendations(
                         confidence: 92.0,
                     });
                 }
-                
+
                 // Policy compliance recommendations
                 if metrics.policies.violations > 0 {
                     recommendations.push(ProactiveRecommendation {
@@ -506,7 +533,7 @@ pub async fn get_recommendations(
                         confidence: 99.9,
                     });
                 }
-                
+
                 // RBAC recommendations
                 if metrics.rbac.risk_score > 20.0 {
                     recommendations.push(ProactiveRecommendation {
@@ -525,7 +552,7 @@ pub async fn get_recommendations(
                         confidence: 88.0,
                     });
                 }
-                
+
                 // Network security recommendations
                 if metrics.network.active_threats > 0 {
                     recommendations.push(ProactiveRecommendation {
@@ -544,7 +571,7 @@ pub async fn get_recommendations(
                         confidence: 99.5,
                     });
                 }
-                
+
                 return Json(recommendations);
             }
             Err(e) => {
@@ -552,7 +579,7 @@ pub async fn get_recommendations(
             }
         }
     }
-    
+
     // Fallback to cached recommendations
     let recommendations = state.recommendations.read().await;
     Json(recommendations.clone())
@@ -561,13 +588,22 @@ pub async fn get_recommendations(
 pub async fn process_conversation(
     auth_user: AuthUser,
     State(_state): State<Arc<AppState>>,
-    Json(request): Json<ConversationRequest>
+    Json(request): Json<ConversationRequest>,
 ) -> impl IntoResponse {
     // Verify authentication and get user context for personalized responses
-    tracing::info!("Authenticated conversation request from user: {:?}", auth_user.claims.preferred_username);
-    
-    let user_context = format!(" (authenticated as {})", 
-        auth_user.claims.preferred_username.as_deref().unwrap_or("unknown user"));
+    tracing::info!(
+        "Authenticated conversation request from user: {:?}",
+        auth_user.claims.preferred_username
+    );
+
+    let user_context = format!(
+        " (authenticated as {})",
+        auth_user
+            .claims
+            .preferred_username
+            .as_deref()
+            .unwrap_or("unknown user")
+    );
 
     // Simulate NLP processing with user context
     let response = ConversationResponse {
@@ -592,13 +628,16 @@ pub async fn process_conversation(
             }
         }"#.to_string()),
     };
-    
+
     Json(response)
 }
 
 pub async fn get_correlations(auth_user: AuthUser) -> impl IntoResponse {
     // Verify authentication
-    tracing::info!("Authenticated request for correlations from user: {:?}", auth_user.claims.preferred_username);
+    tracing::info!(
+        "Authenticated request for correlations from user: {:?}",
+        auth_user.claims.preferred_username
+    );
     let correlation = CrossDomainCorrelation {
         correlation_id: "corr-001".to_string(),
         domains: vec!["cost".to_string(), "resources".to_string()],
@@ -609,16 +648,14 @@ pub async fn get_correlations(auth_user: AuthUser) -> impl IntoResponse {
             lag_time_hours: 24.0,
             confidence: 89.5,
         }),
-        impact_predictions: vec![
-            ImpactPrediction {
-                domain: "cost".to_string(),
-                metric: "monthly_spend".to_string(),
-                predicted_change: -8.5,
-                time_to_impact_hours: 72.0,
-            },
-        ],
+        impact_predictions: vec![ImpactPrediction {
+            domain: "cost".to_string(),
+            metric: "monthly_spend".to_string(),
+            predicted_change: -8.5,
+            time_to_impact_hours: 72.0,
+        }],
     };
-    
+
     Json(vec![correlation])
 }
 
@@ -641,18 +678,21 @@ pub struct CreateExceptionRequest {
 pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     use crate::data_mode::{DataMode, DataResponse};
     use crate::simulated_data::SimulatedDataProvider;
-    
+
     let mode = DataMode::from_env();
-    
+
     // Try to get real data if available and mode is Real
     if mode.is_real() {
         if let Some(ref async_azure_client) = state.async_azure_client {
             match async_azure_client.get_policies().await {
                 Ok(policies) => {
-                    return Json(DataResponse::new(serde_json::json!({
-                        "policies": policies,
-                        "total": policies.len(),
-                    }), DataMode::Real));
+                    return Json(DataResponse::new(
+                        serde_json::json!({
+                            "policies": policies,
+                            "total": policies.len(),
+                        }),
+                        DataMode::Real,
+                    ));
                 }
                 Err(e) => {
                     tracing::warn!("Failed to get real policies: {}", e);
@@ -660,13 +700,16 @@ pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoRespon
             }
         }
     }
-    
+
     // Use simulated data as fallback or when in simulated mode
     let simulated_policies = SimulatedDataProvider::get_policies();
-    Json(DataResponse::new(serde_json::json!({
-        "policies": simulated_policies,
-        "total": simulated_policies.len(),
-    }), DataMode::Simulated))
+    Json(DataResponse::new(
+        serde_json::json!({
+            "policies": simulated_policies,
+            "total": simulated_policies.len(),
+        }),
+        DataMode::Simulated,
+    ))
 }
 
 // Policies Deep Compliance
@@ -777,7 +820,8 @@ pub async fn create_exception(Json(payload): Json<CreateExceptionRequest>) -> im
 
 // Helper: Proxy deep GET to Python service (Phase 3). Base from DEEP_API_BASE or http://localhost:8090
 async fn proxy_deep_get(path: &str) -> Option<serde_json::Value> {
-    let base = std::env::var("DEEP_API_BASE").unwrap_or_else(|_| "http://localhost:8090".to_string());
+    let base =
+        std::env::var("DEEP_API_BASE").unwrap_or_else(|_| "http://localhost:8090".to_string());
     let url = format!("{}{}", base, path);
     let client = reqwest::Client::new();
     match client.get(&url).send().await {
@@ -789,10 +833,10 @@ async fn proxy_deep_get(path: &str) -> Option<serde_json::Value> {
 // Additional deep endpoints with REAL Azure data
 pub async fn get_rbac_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     // Try Python service first for AI-enhanced analysis
-    if let Some(json) = proxy_deep_get("/api/v1/rbac/deep").await { 
-        return Json(json); 
+    if let Some(json) = proxy_deep_get("/api/v1/rbac/deep").await {
+        return Json(json);
     }
-    
+
     // Fallback to direct Azure API
     if let Some(ref client) = state.async_azure_client {
         match client.get_rbac_analysis().await {
@@ -814,7 +858,7 @@ pub async fn get_rbac_deep(State(state): State<Arc<AppState>>) -> impl IntoRespo
             }
         }
     }
-    
+
     // No Azure connection available
     Json(serde_json::json!({
         "error": "Azure connection not available",
@@ -823,10 +867,10 @@ pub async fn get_rbac_deep(State(state): State<Arc<AppState>>) -> impl IntoRespo
 }
 
 pub async fn get_costs_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    if let Some(json) = proxy_deep_get("/api/v1/costs/deep").await { 
-        return Json(json); 
+    if let Some(json) = proxy_deep_get("/api/v1/costs/deep").await {
+        return Json(json);
     }
-    
+
     // Get REAL cost data from Azure Cost Management
     if let Some(ref client) = state.async_azure_client {
         match client.get_cost_analysis().await {
@@ -847,7 +891,7 @@ pub async fn get_costs_deep(State(state): State<Arc<AppState>>) -> impl IntoResp
             }
         }
     }
-    
+
     Json(serde_json::json!({
         "error": "Azure Cost Management API not available",
         "status": "unavailable"
@@ -855,10 +899,10 @@ pub async fn get_costs_deep(State(state): State<Arc<AppState>>) -> impl IntoResp
 }
 
 pub async fn get_network_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    if let Some(json) = proxy_deep_get("/api/v1/network/deep").await { 
-        return Json(json); 
+    if let Some(json) = proxy_deep_get("/api/v1/network/deep").await {
+        return Json(json);
     }
-    
+
     // Get REAL network topology from Azure
     if let Some(ref client) = state.async_azure_client {
         match client.get_network_topology().await {
@@ -878,7 +922,7 @@ pub async fn get_network_deep(State(state): State<Arc<AppState>>) -> impl IntoRe
             }
         }
     }
-    
+
     Json(serde_json::json!({
         "error": "Azure Network API not available",
         "status": "unavailable"
@@ -886,10 +930,10 @@ pub async fn get_network_deep(State(state): State<Arc<AppState>>) -> impl IntoRe
 }
 
 pub async fn get_resources_deep(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    if let Some(json) = proxy_deep_get("/api/v1/resources/deep").await { 
-        return Json(json); 
+    if let Some(json) = proxy_deep_get("/api/v1/resources/deep").await {
+        return Json(json);
     }
-    
+
     // Get REAL resources from Azure Resource Graph
     if let Some(ref client) = state.async_azure_client {
         match client.get_all_resources_with_health().await {
@@ -909,7 +953,7 @@ pub async fn get_resources_deep(State(state): State<Arc<AppState>>) -> impl Into
             }
         }
     }
-    
+
     Json(serde_json::json!({
         "error": "Azure Resource Graph not available",
         "status": "unavailable"
@@ -943,7 +987,7 @@ pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResp
             }
         }
     }
-    
+
     // Return default compliance data
     Json(serde_json::json!({
         "status": "compliant",
@@ -985,7 +1029,7 @@ pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoRespo
             }
         }
     }
-    
+
     // Return default resource data
     Json(serde_json::json!({
         "resources": {
@@ -1026,7 +1070,7 @@ pub struct ActionRecord {
 
 pub async fn create_action(
     State(state): State<Arc<AppState>>,
-    Json(payload): Json<CreateActionRequest>
+    Json(payload): Json<CreateActionRequest>,
 ) -> impl IntoResponse {
     use chrono::Utc;
     use uuid::Uuid;
@@ -1081,7 +1125,9 @@ pub async fn create_action(
             if let Some(a) = actions.get_mut(&id_clone) {
                 a.status = "completed".to_string();
                 a.updated_at = chrono::Utc::now();
-                a.result = Some(serde_json::json!({"message": "Action executed successfully", "changes": 1}));
+                a.result = Some(
+                    serde_json::json!({"message": "Action executed successfully", "changes": 1}),
+                );
             }
         }
         send_step("completed");
@@ -1092,7 +1138,7 @@ pub async fn create_action(
 
 pub async fn get_action(
     State(state): State<Arc<AppState>>,
-    Path(action_id): Path<String>
+    Path(action_id): Path<String>,
 ) -> impl IntoResponse {
     let actions = state.actions.read().await;
     if let Some(a) = actions.get(&action_id) {
@@ -1103,7 +1149,7 @@ pub async fn get_action(
 
 pub async fn stream_action_events(
     State(state): State<Arc<AppState>>,
-    Path(action_id): Path<String>
+    Path(action_id): Path<String>,
 ) -> impl IntoResponse {
     let rx_opt = {
         let events = state.action_events.read().await;
@@ -1118,6 +1164,10 @@ pub async fn stream_action_events(
         };
         Sse::new(stream).into_response()
     } else {
-        (StatusCode::NOT_FOUND, Json(serde_json::json!({"error": "action not found"}))).into_response()
+        (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({"error": "action not found"})),
+        )
+            .into_response()
     }
 }

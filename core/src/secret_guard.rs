@@ -1,7 +1,7 @@
+use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use lazy_static::lazy_static;
 
 /// Secret detection and redaction system
 #[derive(Debug, Clone)]
@@ -185,7 +185,9 @@ impl SecretGuard {
 
         for pattern in &self.patterns {
             if let Ok(regex) = Regex::new(&pattern.pattern) {
-                redacted = regex.replace_all(&redacted, pattern.redaction_text.as_str()).to_string();
+                redacted = regex
+                    .replace_all(&redacted, pattern.redaction_text.as_str())
+                    .to_string();
             }
         }
 
@@ -195,15 +197,16 @@ impl SecretGuard {
     /// Redact secrets in structured logs
     pub fn redact_json(&self, json: &serde_json::Value) -> serde_json::Value {
         match json {
-            serde_json::Value::String(s) => {
-                serde_json::Value::String(self.redact(s))
-            }
+            serde_json::Value::String(s) => serde_json::Value::String(self.redact(s)),
             serde_json::Value::Object(map) => {
                 let mut redacted_map = serde_json::Map::new();
                 for (key, value) in map {
                     // Redact common secret field names
                     if self.is_secret_field(key) {
-                        redacted_map.insert(key.clone(), serde_json::Value::String("[REDACTED]".to_string()));
+                        redacted_map.insert(
+                            key.clone(),
+                            serde_json::Value::String("[REDACTED]".to_string()),
+                        );
                     } else {
                         redacted_map.insert(key.clone(), self.redact_json(value));
                     }
@@ -219,11 +222,23 @@ impl SecretGuard {
 
     fn is_secret_field(&self, field_name: &str) -> bool {
         let secret_fields = vec![
-            "password", "secret", "key", "token", "api_key", "apikey",
-            "client_secret", "private_key", "access_token", "refresh_token",
-            "authorization", "auth", "credential", "cert", "certificate"
+            "password",
+            "secret",
+            "key",
+            "token",
+            "api_key",
+            "apikey",
+            "client_secret",
+            "private_key",
+            "access_token",
+            "refresh_token",
+            "authorization",
+            "auth",
+            "credential",
+            "cert",
+            "certificate",
         ];
-        
+
         let lower = field_name.to_lowercase();
         secret_fields.iter().any(|&field| lower.contains(field))
     }
@@ -253,7 +268,7 @@ impl SecretGuard {
         let context_size = 20;
         let snippet_start = start.saturating_sub(context_size);
         let snippet_end = (end + context_size).min(text.len());
-        
+
         format!(
             "...{}...",
             &text[snippet_start..snippet_end]
@@ -315,16 +330,20 @@ impl StaticSecretAnalyzer {
 
     pub async fn scan_directory(&self, path: &std::path::Path) -> Vec<SecretViolation> {
         let mut all_violations = Vec::new();
-        
+
         if let Ok(entries) = std::fs::read_dir(path) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                
+
                 // Skip excluded paths
-                if self.exclude_paths.iter().any(|ex| path.to_string_lossy().contains(ex)) {
+                if self
+                    .exclude_paths
+                    .iter()
+                    .any(|ex| path.to_string_lossy().contains(ex))
+                {
                     continue;
                 }
-                
+
                 if path.is_file() {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         let violations = self.guard.scan(&content, &path.to_string_lossy());
@@ -336,19 +355,22 @@ impl StaticSecretAnalyzer {
                 }
             }
         }
-        
+
         all_violations
     }
 
     pub fn generate_report(&self, violations: &[SecretViolation]) -> String {
         let mut report = String::from("Secret Detection Report\n");
         report.push_str("========================\n\n");
-        
+
         if violations.is_empty() {
             report.push_str("✅ No secrets detected\n");
         } else {
-            report.push_str(&format!("⚠️ Found {} potential secrets\n\n", violations.len()));
-            
+            report.push_str(&format!(
+                "⚠️ Found {} potential secrets\n\n",
+                violations.len()
+            ));
+
             for (i, violation) in violations.iter().enumerate() {
                 report.push_str(&format!(
                     "{}. [{}] {} in {}\n   Context: {}\n   Action: {}\n\n",
@@ -366,7 +388,7 @@ impl StaticSecretAnalyzer {
                 ));
             }
         }
-        
+
         report
     }
 }
@@ -378,10 +400,10 @@ mod tests {
     #[test]
     fn test_secret_detection() {
         let guard = SecretGuard::new();
-        
+
         let text = "My AWS key is AKIAIOSFODNN7EXAMPLE and my token is ghp_1234567890abcdef1234567890abcdef123456";
         let violations = guard.scan(text, "test.txt");
-        
+
         assert!(violations.len() >= 2);
         assert!(violations.iter().any(|v| v.pattern_name.contains("AWS")));
         assert!(violations.iter().any(|v| v.pattern_name.contains("GitHub")));
@@ -390,10 +412,10 @@ mod tests {
     #[test]
     fn test_redaction() {
         let guard = SecretGuard::new();
-        
+
         let text = "Connection: postgresql://user:password123@localhost/db";
         let redacted = guard.redact(text);
-        
+
         assert!(redacted.contains("[DB_CONNECTION_REDACTED]"));
         assert!(!redacted.contains("password123"));
     }
@@ -401,7 +423,7 @@ mod tests {
     #[test]
     fn test_json_redaction() {
         let guard = SecretGuard::new();
-        
+
         let json = serde_json::json!({
             "username": "user",
             "password": "secret123",
@@ -410,22 +432,25 @@ mod tests {
                 "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature"
             }
         });
-        
+
         let redacted = guard.redact_json(&json);
-        
+
         assert_eq!(redacted["password"], "[REDACTED]");
         assert_eq!(redacted["api_key"], "[REDACTED]");
-        assert!(redacted["data"]["token"].as_str().unwrap().contains("REDACTED"));
+        assert!(redacted["data"]["token"]
+            .as_str()
+            .unwrap()
+            .contains("REDACTED"));
     }
 
     #[test]
     fn test_entropy_calculation() {
         let guard = SecretGuard::new();
-        
+
         // High entropy (random)
         let high_entropy = "a8B3x9Z2m5K7p1Q4";
         assert!(guard.calculate_shannon_entropy(high_entropy) > 3.5);
-        
+
         // Low entropy (repetitive)
         let low_entropy = "aaaaaaaaaaaaaaaa";
         assert!(guard.calculate_shannon_entropy(low_entropy) < 1.0);

@@ -24,13 +24,16 @@ impl AzureADConfig {
     pub fn new() -> Self {
         let tenant_id = std::env::var("AZURE_TENANT_ID")
             .unwrap_or_else(|_| "9ef5b184-d371-462a-bc75-5024ce8baff7".to_string());
-        
+
         let client_id = std::env::var("AZURE_CLIENT_ID")
             .unwrap_or_else(|_| "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c".to_string());
-            
+
         Self {
             issuer: format!("https://login.microsoftonline.com/{}/v2.0", tenant_id),
-            jwks_uri: format!("https://login.microsoftonline.com/{}/discovery/v2.0/keys", tenant_id),
+            jwks_uri: format!(
+                "https://login.microsoftonline.com/{}/discovery/v2.0/keys",
+                tenant_id
+            ),
             tenant_id,
             client_id,
         }
@@ -40,19 +43,19 @@ impl AzureADConfig {
 // JWT Claims structure
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String,                    // Subject (user ID)
-    pub aud: String,                    // Audience (client ID)
-    pub iss: String,                    // Issuer
-    pub iat: i64,                       // Issued at
-    pub exp: i64,                       // Expiration
-    pub nbf: Option<i64>,               // Not before
-    pub name: Option<String>,           // User name
+    pub sub: String,                        // Subject (user ID)
+    pub aud: String,                        // Audience (client ID)
+    pub iss: String,                        // Issuer
+    pub iat: i64,                           // Issued at
+    pub exp: i64,                           // Expiration
+    pub nbf: Option<i64>,                   // Not before
+    pub name: Option<String>,               // User name
     pub preferred_username: Option<String>, // User email
-    pub oid: Option<String>,            // Object ID
-    pub tid: Option<String>,            // Tenant ID
-    pub roles: Option<Vec<String>>,     // Application roles
-    pub scp: Option<String>,            // Scopes (space-separated)
-    pub groups: Option<Vec<String>>,    // Group memberships
+    pub oid: Option<String>,                // Object ID
+    pub tid: Option<String>,                // Tenant ID
+    pub roles: Option<Vec<String>>,         // Application roles
+    pub scp: Option<String>,                // Scopes (space-separated)
+    pub groups: Option<Vec<String>>,        // Group memberships
 }
 
 // JWKS (JSON Web Key Set) structures
@@ -98,8 +101,9 @@ impl TokenValidator {
     async fn fetch_jwks(&mut self) -> Result<&JwksResponse, AuthError> {
         if self.jwks_cache.is_none() {
             debug!("Fetching JWKS from Azure AD: {}", self.config.jwks_uri);
-            
-            let response = self.client
+
+            let response = self
+                .client
                 .get(&self.config.jwks_uri)
                 .send()
                 .await
@@ -108,13 +112,10 @@ impl TokenValidator {
                     AuthError::JwksFetchError
                 })?;
 
-            let jwks: JwksResponse = response
-                .json()
-                .await
-                .map_err(|e| {
-                    error!("Failed to parse JWKS response: {}", e);
-                    AuthError::JwksParseError
-                })?;
+            let jwks: JwksResponse = response.json().await.map_err(|e| {
+                error!("Failed to parse JWKS response: {}", e);
+                AuthError::JwksParseError
+            })?;
 
             debug!("Successfully fetched {} keys from JWKS", jwks.keys.len());
             self.jwks_cache = Some(jwks);
@@ -134,18 +135,16 @@ impl TokenValidator {
             return Err(AuthError::UnsupportedKeyType);
         }
 
-        DecodingKey::from_rsa_components(&jwk.n, &jwk.e)
-            .map_err(|_| AuthError::InvalidKey)
+        DecodingKey::from_rsa_components(&jwk.n, &jwk.e).map_err(|_| AuthError::InvalidKey)
     }
 
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
         // Decode header to get the key ID
-        let header = decode_header(token)
-            .map_err(|e| {
-                error!("Failed to decode JWT header: {}", e);
-                AuthError::InvalidToken
-            })?;
+        let header = decode_header(token).map_err(|e| {
+            error!("Failed to decode JWT header: {}", e);
+            AuthError::InvalidToken
+        })?;
 
         let kid = header.kid.ok_or_else(|| {
             error!("JWT header missing 'kid' field");
@@ -154,13 +153,12 @@ impl TokenValidator {
 
         // Fetch JWKS
         let jwks = self.fetch_jwks().await?;
-        
+
         // Find the appropriate key
-        let jwk = jwks.keys.iter().find(|key| key.kid == kid)
-            .ok_or_else(|| {
-                error!("Key with ID '{}' not found in JWKS", kid);
-                AuthError::KeyNotFound
-            })?;
+        let jwk = jwks.keys.iter().find(|key| key.kid == kid).ok_or_else(|| {
+            error!("Key with ID '{}' not found in JWKS", kid);
+            AuthError::KeyNotFound
+        })?;
 
         // Convert JWK to decoding key
         let decoding_key = Self::jwk_to_decoding_key(jwk)?;
@@ -173,18 +171,20 @@ impl TokenValidator {
         validation.validate_nbf = true;
 
         // Decode and validate the token
-        let token_data = decode::<Claims>(token, &decoding_key, &validation)
-            .map_err(|e| {
-                error!("JWT validation failed: {}", e);
-                match e.kind() {
-                    jsonwebtoken::errors::ErrorKind::ExpiredSignature => AuthError::TokenExpired,
-                    jsonwebtoken::errors::ErrorKind::InvalidAudience => AuthError::InvalidAudience,
-                    jsonwebtoken::errors::ErrorKind::InvalidIssuer => AuthError::InvalidIssuer,
-                    _ => AuthError::InvalidToken,
-                }
-            })?;
+        let token_data = decode::<Claims>(token, &decoding_key, &validation).map_err(|e| {
+            error!("JWT validation failed: {}", e);
+            match e.kind() {
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => AuthError::TokenExpired,
+                jsonwebtoken::errors::ErrorKind::InvalidAudience => AuthError::InvalidAudience,
+                jsonwebtoken::errors::ErrorKind::InvalidIssuer => AuthError::InvalidIssuer,
+                _ => AuthError::InvalidToken,
+            }
+        })?;
 
-        debug!("Successfully validated token for user: {:?}", token_data.claims.preferred_username);
+        debug!(
+            "Successfully validated token for user: {:?}",
+            token_data.claims.preferred_username
+        );
         Ok(token_data.claims)
     }
 
@@ -194,7 +194,7 @@ impl TokenValidator {
         if let Some(scope_str) = &claims.scp {
             let user_scopes: HashSet<&str> = scope_str.split_whitespace().collect();
             let required_scopes_set: HashSet<&str> = required_scopes.iter().copied().collect();
-            
+
             if required_scopes_set.is_subset(&user_scopes) {
                 return true;
             }
@@ -203,10 +203,14 @@ impl TokenValidator {
         // Check roles
         if let Some(user_roles) = &claims.roles {
             let user_roles_set: HashSet<String> = user_roles.iter().cloned().collect();
-            
+
             // Define role-based permissions
-            let admin_roles = ["Global Administrator", "Security Administrator", "Compliance Administrator"];
-            
+            let admin_roles = [
+                "Global Administrator",
+                "Security Administrator",
+                "Compliance Administrator",
+            ];
+
             for role in &admin_roles {
                 if user_roles_set.contains(*role) {
                     debug!("User has admin role: {}", role);
@@ -215,8 +219,10 @@ impl TokenValidator {
             }
         }
 
-        debug!("User lacks required permissions. Required: {:?}, User scopes: {:?}, User roles: {:?}", 
-               required_scopes, claims.scp, claims.roles);
+        debug!(
+            "User lacks required permissions. Required: {:?}, User scopes: {:?}, User roles: {:?}",
+            required_scopes, claims.scp, claims.roles
+        );
         false
     }
 }
@@ -245,12 +251,20 @@ impl IntoResponse for AuthError {
             AuthError::TokenExpired => (StatusCode::UNAUTHORIZED, "Authorization token expired"),
             AuthError::InvalidAudience => (StatusCode::UNAUTHORIZED, "Invalid token audience"),
             AuthError::InvalidIssuer => (StatusCode::UNAUTHORIZED, "Invalid token issuer"),
-            AuthError::JwksFetchError => (StatusCode::SERVICE_UNAVAILABLE, "Failed to fetch signing keys"),
-            AuthError::JwksParseError => (StatusCode::SERVICE_UNAVAILABLE, "Failed to parse signing keys"),
+            AuthError::JwksFetchError => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Failed to fetch signing keys",
+            ),
+            AuthError::JwksParseError => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "Failed to parse signing keys",
+            ),
             AuthError::KeyNotFound => (StatusCode::UNAUTHORIZED, "Signing key not found"),
             AuthError::UnsupportedKeyType => (StatusCode::UNAUTHORIZED, "Unsupported key type"),
             AuthError::InvalidKey => (StatusCode::UNAUTHORIZED, "Invalid signing key"),
-            AuthError::InsufficientPermissions => (StatusCode::FORBIDDEN, "Insufficient permissions"),
+            AuthError::InsufficientPermissions => {
+                (StatusCode::FORBIDDEN, "Insufficient permissions")
+            }
         };
 
         let body = Json(serde_json::json!({
@@ -309,7 +323,7 @@ impl RequirePermissions {
     pub fn check(&self, user: &AuthUser) -> Result<(), AuthError> {
         let validator = TokenValidator::new();
         let required_scopes: Vec<&str> = self.scopes.iter().map(|s| s.as_str()).collect();
-        
+
         if validator.check_permissions(&user.claims, &required_scopes) {
             Ok(())
         } else {
@@ -345,7 +359,9 @@ pub struct TenantContext {
 
 impl TenantContext {
     pub async fn from_user(user: &AuthUser) -> Result<Self, AuthError> {
-        let tenant_id = user.claims.tid
+        let tenant_id = user
+            .claims
+            .tid
             .as_ref()
             .ok_or(AuthError::InvalidToken)?
             .clone();

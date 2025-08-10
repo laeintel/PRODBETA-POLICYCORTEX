@@ -1,12 +1,12 @@
+use base64::{engine::general_purpose, Engine as _};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing::{error, info, warn};
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
-use sha2::{Sha256, Digest};
-use base64::{Engine as _, engine::general_purpose};
 
 /// Evidence Pipeline for collecting, signing, and storing compliance artifacts
 /// Provides cryptographically signed evidence for audits and compliance verification
@@ -144,9 +144,12 @@ struct S3Config {
 }
 
 impl EvidencePipeline {
-    pub async fn new(storage_backend: StorageBackend, db_pool: Option<sqlx::PgPool>) -> Result<Self, String> {
+    pub async fn new(
+        storage_backend: StorageBackend,
+        db_pool: Option<sqlx::PgPool>,
+    ) -> Result<Self, String> {
         let signing_keys = Self::initialize_signing_keys().await?;
-        
+
         Ok(Self {
             evidence_store: Arc::new(RwLock::new(HashMap::new())),
             signing_keys: Arc::new(RwLock::new(signing_keys)),
@@ -168,19 +171,19 @@ impl EvidencePipeline {
     ) -> Result<Evidence, String> {
         // Generate evidence ID
         let id = Uuid::new_v4();
-        
+
         // Calculate hash of the data
         let data_str = serde_json::to_string(&data).map_err(|e| e.to_string())?;
         let hash = self.calculate_hash(&data_str);
-        
+
         // Sign the evidence
         let signature = self.sign_evidence(&hash).await?;
-        
+
         // Get signing key ID
         let signing_keys = self.signing_keys.read().await;
         let signing_key_id = signing_keys.active_key_id.clone();
         drop(signing_keys);
-        
+
         // Create initial custody entry
         let custody_entry = CustodyEntry {
             timestamp: Utc::now(),
@@ -189,7 +192,7 @@ impl EvidencePipeline {
             location: self.get_storage_location(&id),
             hash: hash.clone(),
         };
-        
+
         // Create evidence record
         let evidence = Evidence {
             id,
@@ -198,7 +201,8 @@ impl EvidencePipeline {
                 system: "PolicyCortex".to_string(),
                 component: "EvidencePipeline".to_string(),
                 version: "2.0.0".to_string(),
-                environment: std::env::var("ENVIRONMENT").unwrap_or_else(|_| "production".to_string()),
+                environment: std::env::var("ENVIRONMENT")
+                    .unwrap_or_else(|_| "production".to_string()),
             },
             subject,
             description: format!("Evidence collected at {}", Utc::now()),
@@ -213,20 +217,20 @@ impl EvidencePipeline {
             expires_at: None,
             verification_status: VerificationStatus::Verified,
         };
-        
+
         // Store evidence
         self.store_evidence(evidence.clone()).await?;
-        
+
         // Persist to storage backend
         self.persist_to_storage(&evidence).await?;
-        
+
         // Log to database if available
         if let Some(ref pool) = self.db_pool {
             self.persist_to_database(pool, &evidence).await?;
         }
-        
+
         info!("Evidence {} collected and signed", evidence.id);
-        
+
         Ok(evidence)
     }
 
@@ -240,49 +244,59 @@ impl EvidencePipeline {
             }
         }
         drop(cache);
-        
+
         // Get evidence
         let store = self.evidence_store.read().await;
-        let evidence = store.get(&evidence_id)
+        let evidence = store
+            .get(&evidence_id)
             .ok_or_else(|| "Evidence not found".to_string())?
             .clone();
         drop(store);
-        
+
         // Verify hash
         let data_str = serde_json::to_string(&evidence.data).map_err(|e| e.to_string())?;
         let calculated_hash = self.calculate_hash(&data_str);
-        
+
         if calculated_hash != evidence.hash {
             warn!("Evidence {} hash mismatch", evidence_id);
             return Ok(VerificationStatus::Tampered);
         }
-        
+
         // Verify signature
-        let signature_valid = self.verify_signature(&evidence.hash, &evidence.signature, &evidence.signing_key_id).await?;
-        
+        let signature_valid = self
+            .verify_signature(
+                &evidence.hash,
+                &evidence.signature,
+                &evidence.signing_key_id,
+            )
+            .await?;
+
         if !signature_valid {
             warn!("Evidence {} signature invalid", evidence_id);
             return Ok(VerificationStatus::Failed);
         }
-        
+
         // Check expiration
         if let Some(expires_at) = evidence.expires_at {
             if expires_at < Utc::now() {
                 return Ok(VerificationStatus::Expired);
             }
         }
-        
+
         // Verify chain of custody
         for (i, entry) in evidence.chain_of_custody.iter().enumerate() {
             if i > 0 {
                 let prev_entry = &evidence.chain_of_custody[i - 1];
                 if entry.timestamp < prev_entry.timestamp {
-                    warn!("Evidence {} chain of custody timeline violation", evidence_id);
+                    warn!(
+                        "Evidence {} chain of custody timeline violation",
+                        evidence_id
+                    );
                     return Ok(VerificationStatus::Tampered);
                 }
             }
         }
-        
+
         // Cache verification result
         let result = VerificationResult {
             evidence_id,
@@ -290,10 +304,10 @@ impl EvidencePipeline {
             verified_at: Utc::now(),
             details: "All verification checks passed".to_string(),
         };
-        
+
         let mut cache = self.verification_cache.write().await;
         cache.insert(evidence_id.to_string(), result);
-        
+
         Ok(VerificationStatus::Verified)
     }
 
@@ -305,13 +319,15 @@ impl EvidencePipeline {
         action: String,
     ) -> Result<(), String> {
         let mut store = self.evidence_store.write().await;
-        let evidence = store.get_mut(&evidence_id)
+        let evidence = store
+            .get_mut(&evidence_id)
             .ok_or_else(|| "Evidence not found".to_string())?;
-        
+
         // Calculate new hash including custody chain
-        let custody_str = serde_json::to_string(&evidence.chain_of_custody).map_err(|e| e.to_string())?;
+        let custody_str =
+            serde_json::to_string(&evidence.chain_of_custody).map_err(|e| e.to_string())?;
         let new_hash = self.calculate_hash(&format!("{}{}", evidence.hash, custody_str));
-        
+
         let entry = CustodyEntry {
             timestamp: Utc::now(),
             actor,
@@ -319,9 +335,9 @@ impl EvidencePipeline {
             location: self.get_storage_location(&evidence_id),
             hash: new_hash,
         };
-        
+
         evidence.chain_of_custody.push(entry);
-        
+
         Ok(())
     }
 
@@ -332,7 +348,7 @@ impl EvidencePipeline {
         format: ExportFormat,
     ) -> Result<Vec<u8>, String> {
         let mut evidence_list = Vec::new();
-        
+
         let store = self.evidence_store.read().await;
         for id in evidence_ids {
             if let Some(evidence) = store.get(&id) {
@@ -340,10 +356,11 @@ impl EvidencePipeline {
             }
         }
         drop(store);
-        
+
         match format {
             ExportFormat::Json => {
-                let json = serde_json::to_string_pretty(&evidence_list).map_err(|e| e.to_string())?;
+                let json =
+                    serde_json::to_string_pretty(&evidence_list).map_err(|e| e.to_string())?;
                 Ok(json.into_bytes())
             }
             ExportFormat::Csv => {
@@ -361,12 +378,13 @@ impl EvidencePipeline {
     pub async fn archive_evidence(&self, older_than: DateTime<Utc>) -> Result<u32, String> {
         let mut store = self.evidence_store.write().await;
         let mut archived_count = 0;
-        
-        let evidence_to_archive: Vec<Uuid> = store.iter()
+
+        let evidence_to_archive: Vec<Uuid> = store
+            .iter()
             .filter(|(_, e)| e.created_at < older_than)
             .map(|(id, _)| *id)
             .collect();
-        
+
         for id in evidence_to_archive {
             if let Some(evidence) = store.remove(&id) {
                 // Archive to long-term storage
@@ -374,29 +392,26 @@ impl EvidencePipeline {
                 archived_count += 1;
             }
         }
-        
+
         info!("Archived {} evidence records", archived_count);
-        
+
         Ok(archived_count)
     }
 
     /// Search evidence by criteria
-    pub async fn search_evidence(
-        &self,
-        criteria: SearchCriteria,
-    ) -> Result<Vec<Evidence>, String> {
+    pub async fn search_evidence(&self, criteria: SearchCriteria) -> Result<Vec<Evidence>, String> {
         let store = self.evidence_store.read().await;
         let mut results = Vec::new();
-        
+
         for evidence in store.values() {
             if self.matches_criteria(evidence, &criteria) {
                 results.push(evidence.clone());
             }
         }
-        
+
         // Sort by creation date (newest first)
         results.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-        
+
         Ok(results)
     }
 
@@ -413,30 +428,37 @@ impl EvidencePipeline {
         // For now, create a simple signature
         let signing_keys = self.signing_keys.read().await;
         let key_id = &signing_keys.active_key_id;
-        
+
         let signature = format!("{}:{}:{}", key_id, hash, Utc::now().timestamp());
         Ok(general_purpose::STANDARD.encode(signature))
     }
 
-    async fn verify_signature(&self, hash: &str, signature: &str, key_id: &str) -> Result<bool, String> {
+    async fn verify_signature(
+        &self,
+        hash: &str,
+        signature: &str,
+        key_id: &str,
+    ) -> Result<bool, String> {
         // TODO: Implement actual signature verification
         // For now, do basic validation
-        
-        let decoded = general_purpose::STANDARD.decode(signature).map_err(|e| e.to_string())?;
+
+        let decoded = general_purpose::STANDARD
+            .decode(signature)
+            .map_err(|e| e.to_string())?;
         let signature_str = String::from_utf8(decoded).map_err(|e| e.to_string())?;
-        
+
         let parts: Vec<&str> = signature_str.split(':').collect();
         if parts.len() != 3 {
             return Ok(false);
         }
-        
+
         Ok(parts[0] == key_id && parts[1] == hash)
     }
 
     async fn initialize_signing_keys() -> Result<SigningKeys, String> {
         // TODO: Load or generate actual signing keys
         // For now, create dummy keys
-        
+
         let key_id = Uuid::new_v4().to_string();
         let key = SigningKey {
             id: key_id.clone(),
@@ -447,10 +469,10 @@ impl EvidencePipeline {
             expires_at: Some(Utc::now() + chrono::Duration::days(365)),
             revoked: false,
         };
-        
+
         let mut keys = HashMap::new();
         keys.insert(key_id.clone(), key);
-        
+
         Ok(SigningKeys {
             active_key_id: key_id,
             keys,
@@ -461,8 +483,10 @@ impl EvidencePipeline {
         match &self.storage_backend {
             StorageBackend::Local(path) => format!("{}/{}.json", path, evidence_id),
             StorageBackend::AzureBlob(config) => {
-                format!("https://{}.blob.core.windows.net/{}/{}.json", 
-                    config.account_name, config.container_name, evidence_id)
+                format!(
+                    "https://{}.blob.core.windows.net/{}/{}.json",
+                    config.account_name, config.container_name, evidence_id
+                )
             }
             StorageBackend::S3(config) => {
                 format!("s3://{}/{}.json", config.bucket_name, evidence_id)
@@ -482,7 +506,11 @@ impl EvidencePipeline {
         Ok(())
     }
 
-    async fn persist_to_database(&self, pool: &sqlx::PgPool, evidence: &Evidence) -> Result<(), String> {
+    async fn persist_to_database(
+        &self,
+        pool: &sqlx::PgPool,
+        evidence: &Evidence,
+    ) -> Result<(), String> {
         // TODO: Implement database persistence
         info!("Persisting evidence {} to database", evidence.id);
         Ok(())
@@ -501,48 +529,51 @@ impl EvidencePipeline {
                 return false;
             }
         }
-        
+
         // Check date range
         if let Some(ref from) = criteria.from_date {
             if evidence.created_at < *from {
                 return false;
             }
         }
-        
+
         if let Some(ref to) = criteria.to_date {
             if evidence.created_at > *to {
                 return false;
             }
         }
-        
+
         // Check tenant
         if let Some(ref tenant_id) = criteria.tenant_id {
             if evidence.tenant_id != *tenant_id {
                 return false;
             }
         }
-        
+
         // Check subject
         if let Some(ref subject) = criteria.subject_contains {
             if !evidence.subject.contains(subject) {
                 return false;
             }
         }
-        
+
         // Check compliance frameworks
         if let Some(ref frameworks) = criteria.compliance_frameworks {
-            if !frameworks.iter().any(|f| evidence.metadata.compliance_frameworks.contains(f)) {
+            if !frameworks
+                .iter()
+                .any(|f| evidence.metadata.compliance_frameworks.contains(f))
+            {
                 return false;
             }
         }
-        
+
         // Check verification status
         if let Some(ref status) = criteria.verification_status {
             if evidence.verification_status != *status {
                 return false;
             }
         }
-        
+
         true
     }
 }

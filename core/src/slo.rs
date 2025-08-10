@@ -1,8 +1,8 @@
+use chrono::{DateTime, Datelike, Duration, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc, Duration, Datelike};
-use serde::{Deserialize, Serialize};
 
 /// Service Level Objective (SLO) management
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,7 +12,7 @@ pub struct SLO {
     pub description: String,
     pub service: String,
     pub endpoint: Option<String>,
-    pub target_percentage: f64,  // e.g., 99.9
+    pub target_percentage: f64, // e.g., 99.9
     pub window: SLOWindow,
     pub sli: SLI,
     pub error_budget: ErrorBudget,
@@ -57,8 +57,8 @@ pub enum SLIType {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LatencyTarget {
-    pub percentile: f64,    // e.g., 95.0 for p95
-    pub threshold_ms: u64,  // e.g., 200ms
+    pub percentile: f64,   // e.g., 95.0 for p95
+    pub threshold_ms: u64, // e.g., 200ms
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,10 +74,10 @@ pub enum Aggregation {
 /// Error budget tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorBudget {
-    pub total_budget: f64,      // Total allowed errors (1 - SLO target)
-    pub consumed: f64,          // Budget consumed so far
-    pub remaining: f64,         // Remaining budget
-    pub burn_rate: f64,         // Current burn rate
+    pub total_budget: f64,                // Total allowed errors (1 - SLO target)
+    pub consumed: f64,                    // Budget consumed so far
+    pub remaining: f64,                   // Remaining budget
+    pub burn_rate: f64,                   // Current burn rate
     pub time_remaining: Option<Duration>, // Estimated time until budget exhausted
     pub reset_at: DateTime<Utc>,
 }
@@ -98,17 +98,19 @@ impl ErrorBudget {
     pub fn update(&mut self, error_rate: f64, time_elapsed: Duration) {
         self.consumed += error_rate * (time_elapsed.num_seconds() as f64 / 3600.0);
         self.remaining = (self.total_budget - self.consumed).max(0.0);
-        
+
         // Calculate burn rate (errors per hour)
         self.burn_rate = if time_elapsed.num_seconds() > 0 {
             self.consumed / (time_elapsed.num_seconds() as f64 / 3600.0)
         } else {
             0.0
         };
-        
+
         // Estimate time remaining
         self.time_remaining = if self.burn_rate > 0.0 && self.remaining > 0.0 {
-            Some(Duration::seconds((self.remaining / self.burn_rate * 3600.0) as i64))
+            Some(Duration::seconds(
+                (self.remaining / self.burn_rate * 3600.0) as i64,
+            ))
         } else {
             None
         };
@@ -126,10 +128,10 @@ impl ErrorBudget {
 /// SLO alerts configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SLOAlert {
-    pub threshold: f64,         // Budget consumption percentage
+    pub threshold: f64, // Budget consumption percentage
     pub severity: AlertSeverity,
-    pub channels: Vec<String>,   // Notification channels
-    pub cooldown: Duration,      // Time between alerts
+    pub channels: Vec<String>, // Notification channels
+    pub cooldown: Duration,    // Time between alerts
     pub last_fired: Option<DateTime<Utc>>,
 }
 
@@ -138,7 +140,7 @@ pub enum AlertSeverity {
     Info,
     Warning,
     Critical,
-    Page,  // Wake someone up
+    Page, // Wake someone up
 }
 
 /// SLO measurement data point
@@ -187,7 +189,7 @@ pub struct SLOStatus {
 pub struct BurnRateAlert {
     pub severity: AlertSeverity,
     pub message: String,
-    pub burn_rate_multiplier: f64,  // How many times faster than sustainable
+    pub burn_rate_multiplier: f64, // How many times faster than sustainable
 }
 
 /// SLO Manager for tracking and alerting
@@ -209,42 +211,48 @@ impl SLOManager {
     pub async fn create_slo(&self, slo: SLO) -> Result<String, String> {
         let mut slos = self.slos.write().await;
         let id = slo.id.clone();
-        
+
         if slos.contains_key(&id) {
             return Err(format!("SLO with id {} already exists", id));
         }
-        
+
         slos.insert(id.clone(), slo);
         Ok(id)
     }
 
-    pub async fn record_measurement(&self, slo_id: &str, measurement: SLOMeasurement) -> Result<(), String> {
+    pub async fn record_measurement(
+        &self,
+        slo_id: &str,
+        measurement: SLOMeasurement,
+    ) -> Result<(), String> {
         let slos = self.slos.read().await;
-        
+
         if !slos.contains_key(slo_id) {
             return Err(format!("SLO {} not found", slo_id));
         }
-        
+
         let mut measurements = self.measurements.write().await;
         measurements
             .entry(slo_id.to_string())
             .or_insert_with(Vec::new)
             .push(measurement.clone());
-        
+
         // Update status
         drop(measurements);
         self.update_status(slo_id).await?;
-        
+
         Ok(())
     }
 
     async fn update_status(&self, slo_id: &str) -> Result<(), String> {
         let slos = self.slos.read().await;
-        let slo = slos.get(slo_id).ok_or_else(|| format!("SLO {} not found", slo_id))?;
-        
+        let slo = slos
+            .get(slo_id)
+            .ok_or_else(|| format!("SLO {} not found", slo_id))?;
+
         let measurements = self.measurements.read().await;
         let slo_measurements = measurements.get(slo_id).cloned().unwrap_or_default();
-        
+
         // Calculate current SLI value based on window
         let window_start = self.get_window_start(&slo.window);
         let window_measurements: Vec<_> = slo_measurements
@@ -252,23 +260,23 @@ impl SLOManager {
             .filter(|m| m.timestamp >= window_start)
             .cloned()
             .collect();
-        
+
         if window_measurements.is_empty() {
             return Ok(());
         }
-        
+
         let current_value = self.calculate_sli(&slo.sli, &window_measurements);
         let is_meeting = current_value >= slo.target_percentage;
-        
+
         // Update error budget
         let mut error_budget = slo.error_budget.clone();
         let time_elapsed = Utc::now() - window_start;
         let error_rate = 100.0 - current_value;
         error_budget.update(error_rate / 100.0, time_elapsed);
-        
+
         // Check for burn rate alerts
         let burn_rate_alert = self.check_burn_rate(&error_budget, &slo.window);
-        
+
         let status = SLOStatus {
             slo_id: slo_id.to_string(),
             current_value,
@@ -279,15 +287,15 @@ impl SLOManager {
             burn_rate_alert,
             last_updated: Utc::now(),
         };
-        
+
         let mut status_cache = self.status_cache.write().await;
         status_cache.insert(slo_id.to_string(), status.clone());
-        
+
         // Check and fire alerts
         drop(status_cache);
         drop(slos);
         self.check_alerts(slo_id, &status).await;
-        
+
         Ok(())
     }
 
@@ -297,27 +305,44 @@ impl SLOManager {
             SLOWindow::Calendar { period } => {
                 let now = Utc::now();
                 match period {
-                    CalendarPeriod::Daily => now.date_naive().and_hms_opt(0, 0, 0)
-                        .unwrap().and_utc(),
+                    CalendarPeriod::Daily => {
+                        now.date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc()
+                    }
                     CalendarPeriod::Weekly => {
                         let days_since_monday = now.weekday().num_days_from_monday();
                         (now - Duration::days(days_since_monday as i64))
-                            .date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc()
+                            .date_naive()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap()
+                            .and_utc()
                     }
-                    CalendarPeriod::Monthly => now.date_naive()
-                        .with_day(1).unwrap()
-                        .and_hms_opt(0, 0, 0).unwrap().and_utc(),
+                    CalendarPeriod::Monthly => now
+                        .date_naive()
+                        .with_day(1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                        .and_utc(),
                     CalendarPeriod::Quarterly => {
                         let quarter_start_month = ((now.month() - 1) / 3) * 3 + 1;
                         now.date_naive()
-                            .with_month(quarter_start_month).unwrap()
-                            .with_day(1).unwrap()
-                            .and_hms_opt(0, 0, 0).unwrap().and_utc()
+                            .with_month(quarter_start_month)
+                            .unwrap()
+                            .with_day(1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap()
+                            .and_utc()
                     }
-                    CalendarPeriod::Yearly => now.date_naive()
-                        .with_month(1).unwrap()
-                        .with_day(1).unwrap()
-                        .and_hms_opt(0, 0, 0).unwrap().and_utc(),
+                    CalendarPeriod::Yearly => now
+                        .date_naive()
+                        .with_month(1)
+                        .unwrap()
+                        .with_day(1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                        .and_utc(),
                 }
             }
         }
@@ -327,7 +352,7 @@ impl SLOManager {
         if measurements.is_empty() {
             return 100.0;
         }
-        
+
         match &sli.metric_type {
             SLIType::Availability => {
                 let total: u64 = measurements.iter().map(|m| m.total_count).sum();
@@ -339,12 +364,10 @@ impl SLOManager {
                 }
             }
             SLIType::Latency(target) => {
-                let mut latencies: Vec<f64> = measurements
-                    .iter()
-                    .filter_map(|m| m.latency_ms)
-                    .collect();
+                let mut latencies: Vec<f64> =
+                    measurements.iter().filter_map(|m| m.latency_ms).collect();
                 latencies.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                
+
                 if latencies.is_empty() {
                     100.0
                 } else {
@@ -388,28 +411,37 @@ impl SLOManager {
                 CalendarPeriod::Monthly => 720.0,
                 CalendarPeriod::Quarterly => 2160.0,
                 CalendarPeriod::Yearly => 8760.0,
-            }
+            },
         };
-        
+
         let sustainable_burn_rate = budget.total_budget / window_hours;
         let burn_rate_multiplier = budget.burn_rate / sustainable_burn_rate;
-        
+
         if burn_rate_multiplier > 10.0 {
             Some(BurnRateAlert {
                 severity: AlertSeverity::Page,
-                message: format!("Error budget burn rate is {}x sustainable rate - immediate action required!", burn_rate_multiplier as u32),
+                message: format!(
+                    "Error budget burn rate is {}x sustainable rate - immediate action required!",
+                    burn_rate_multiplier as u32
+                ),
                 burn_rate_multiplier,
             })
         } else if burn_rate_multiplier > 5.0 {
             Some(BurnRateAlert {
                 severity: AlertSeverity::Critical,
-                message: format!("Error budget burn rate is {}x sustainable rate", burn_rate_multiplier as u32),
+                message: format!(
+                    "Error budget burn rate is {}x sustainable rate",
+                    burn_rate_multiplier as u32
+                ),
                 burn_rate_multiplier,
             })
         } else if burn_rate_multiplier > 2.0 {
             Some(BurnRateAlert {
                 severity: AlertSeverity::Warning,
-                message: format!("Error budget burn rate is {:.1}x sustainable rate", burn_rate_multiplier),
+                message: format!(
+                    "Error budget burn rate is {:.1}x sustainable rate",
+                    burn_rate_multiplier
+                ),
                 burn_rate_multiplier,
             })
         } else {
@@ -423,9 +455,9 @@ impl SLOManager {
             Some(s) => s,
             None => return,
         };
-        
+
         let consumption = status.error_budget.consumption_percentage();
-        
+
         for alert in &mut slo.alerts {
             if consumption >= alert.threshold {
                 // Check cooldown
@@ -434,7 +466,7 @@ impl SLOManager {
                         continue;
                     }
                 }
-                
+
                 // Fire alert
                 alert.last_fired = Some(Utc::now());
                 self.send_alert(slo, alert, status).await;
@@ -450,9 +482,9 @@ impl SLOManager {
             status.error_budget.consumption_percentage() as u32,
             alert.threshold as u32
         );
-        
+
         eprintln!("[{}] {}", alert.severity_string(), message);
-        
+
         // Here you would send to:
         // - PagerDuty for Page severity
         // - Slack/Teams for Warning/Critical
@@ -471,14 +503,14 @@ impl SLOManager {
 
     pub async fn should_block_release(&self, critical_slos: &[String]) -> bool {
         let status_cache = self.status_cache.read().await;
-        
+
         for slo_id in critical_slos {
             if let Some(status) = status_cache.get(slo_id) {
                 // Block if error budget is exhausted or nearly exhausted (>95% consumed)
                 if status.error_budget.consumption_percentage() > 95.0 {
                     return true;
                 }
-                
+
                 // Block if there's a page-level burn rate alert
                 if let Some(ref alert) = status.burn_rate_alert {
                     if alert.severity == AlertSeverity::Page {
@@ -487,7 +519,7 @@ impl SLOManager {
                 }
             }
         }
-        
+
         false
     }
 }
@@ -567,7 +599,7 @@ mod tests {
     async fn test_error_budget_calculation() {
         let mut budget = ErrorBudget::new(99.9, 30);
         assert_eq!(budget.total_budget, 0.001);
-        
+
         // Simulate 0.05% error rate for 1 hour
         budget.update(0.0005, Duration::hours(1));
         assert!(budget.remaining > 0.0);
@@ -577,7 +609,7 @@ mod tests {
     #[tokio::test]
     async fn test_slo_manager() {
         let manager = SLOManager::new();
-        
+
         let slo = SLO {
             id: "api-availability".to_string(),
             name: "API Availability".to_string(),
@@ -612,9 +644,9 @@ mod tests {
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
-        
+
         let id = manager.create_slo(slo).await.unwrap();
-        
+
         // Record successful measurements
         for _ in 0..100 {
             let measurement = SLOMeasurement {
@@ -627,7 +659,7 @@ mod tests {
             };
             manager.record_measurement(&id, measurement).await.unwrap();
         }
-        
+
         let status = manager.get_status(&id).await.unwrap();
         assert!(status.is_meeting);
         assert!(status.current_value >= 99.9);

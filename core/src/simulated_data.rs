@@ -1,6 +1,6 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 /// Simulated data provider for development and testing
@@ -46,7 +46,8 @@ impl SimulatedDataProvider {
             Policy {
                 id: "pol-003".to_string(),
                 name: "Tag Compliance".to_string(),
-                description: "Resources must have required tags: Environment, Owner, CostCenter".to_string(),
+                description: "Resources must have required tags: Environment, Owner, CostCenter"
+                    .to_string(),
                 category: "Governance".to_string(),
                 severity: "Low".to_string(),
                 cloud_provider: "Azure".to_string(),

@@ -1,11 +1,11 @@
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing::{error, info, warn};
 use uuid::Uuid;
-use chrono::{DateTime, Utc, Duration};
-use serde::{Deserialize, Serialize};
-use tracing::{info, warn, error};
-use sha2::{Sha256, Digest};
 
 /// Idempotent Action Orchestrator with retry logic and state management
 /// Ensures actions are executed exactly once with proper error handling
@@ -144,7 +144,10 @@ impl ActionOrchestrator {
 
         // Check idempotency cache
         if let Some(existing) = self.check_idempotency(&action.idempotency_key).await? {
-            info!("Action with idempotency key {} already exists", action.idempotency_key);
+            info!(
+                "Action with idempotency key {} already exists",
+                action.idempotency_key
+            );
             return Ok(existing.action_id);
         }
 
@@ -197,10 +200,14 @@ impl ActionOrchestrator {
 
         loop {
             attempts += 1;
-            info!("Executing action {} (attempt {}/{})", action.id, attempts, self.retry_policy.max_attempts);
+            info!(
+                "Executing action {} (attempt {}/{})",
+                action.id, attempts, self.retry_policy.max_attempts
+            );
 
             // Update action state
-            self.update_action_status(&action.idempotency_key, ActionStatus::Running).await;
+            self.update_action_status(&action.idempotency_key, ActionStatus::Running)
+                .await;
 
             // Execute based on action type
             let result = if action.dry_run {
@@ -217,9 +224,10 @@ impl ActionOrchestrator {
                 }
                 Err(e) => {
                     error!("Action {} failed: {}", action.id, e);
-                    
+
                     // Update error state
-                    self.update_action_error(&action.idempotency_key, e.clone()).await;
+                    self.update_action_error(&action.idempotency_key, e.clone())
+                        .await;
 
                     // Check if we should retry
                     if attempts >= self.retry_policy.max_attempts {
@@ -238,7 +246,7 @@ impl ActionOrchestrator {
                     // Wait before retry with exponential backoff
                     info!("Retrying action {} after {:?}", action.id, delay);
                     tokio::time::sleep(delay.to_std().unwrap()).await;
-                    
+
                     // Calculate next delay
                     delay = self.calculate_next_delay(delay);
                 }
@@ -266,10 +274,10 @@ impl ActionOrchestrator {
     /// Simulate action execution for dry-run mode
     async fn simulate_action(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Simulating action {} in dry-run mode", action.id);
-        
+
         // Simulate processing time
         tokio::time::sleep(Duration::seconds(1).to_std().unwrap()).await;
-        
+
         // Return simulated success result
         Ok(ActionResult::Success(serde_json::json!({
             "simulated": true,
@@ -282,10 +290,10 @@ impl ActionOrchestrator {
     /// Create a new resource
     async fn create_resource(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Creating resource: {}", action.target_resource);
-        
+
         // TODO: Implement actual resource creation logic
         // This would integrate with Azure Resource Manager or other cloud providers
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": Uuid::new_v4().to_string(),
             "status": "created"
@@ -295,9 +303,9 @@ impl ActionOrchestrator {
     /// Update an existing resource
     async fn update_resource(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Updating resource: {}", action.target_resource);
-        
+
         // TODO: Implement actual resource update logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": action.target_resource,
             "status": "updated"
@@ -307,9 +315,9 @@ impl ActionOrchestrator {
     /// Delete a resource
     async fn delete_resource(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Deleting resource: {}", action.target_resource);
-        
+
         // TODO: Implement actual resource deletion logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": action.target_resource,
             "status": "deleted"
@@ -319,9 +327,9 @@ impl ActionOrchestrator {
     /// Modify policy settings
     async fn modify_policy(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Modifying policy for: {}", action.target_resource);
-        
+
         // TODO: Implement actual policy modification logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "policy_id": action.target_resource,
             "status": "modified"
@@ -331,9 +339,9 @@ impl ActionOrchestrator {
     /// Grant access to a resource
     async fn grant_access(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Granting access to: {}", action.target_resource);
-        
+
         // TODO: Implement actual access grant logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": action.target_resource,
             "access_granted": true
@@ -343,9 +351,9 @@ impl ActionOrchestrator {
     /// Revoke access from a resource
     async fn revoke_access(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Revoking access from: {}", action.target_resource);
-        
+
         // TODO: Implement actual access revocation logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": action.target_resource,
             "access_revoked": true
@@ -355,9 +363,9 @@ impl ActionOrchestrator {
     /// Restart a service
     async fn restart_service(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Restarting service: {}", action.target_resource);
-        
+
         // TODO: Implement actual service restart logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "service_id": action.target_resource,
             "status": "restarted"
@@ -367,13 +375,15 @@ impl ActionOrchestrator {
     /// Scale a resource
     async fn scale_resource(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Scaling resource: {}", action.target_resource);
-        
-        let scale_to = action.parameters.get("scale_to")
+
+        let scale_to = action
+            .parameters
+            .get("scale_to")
             .and_then(|v| v.as_u64())
             .unwrap_or(1);
-        
+
         // TODO: Implement actual scaling logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": action.target_resource,
             "scaled_to": scale_to
@@ -383,9 +393,9 @@ impl ActionOrchestrator {
     /// Apply configuration changes
     async fn apply_configuration(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Applying configuration to: {}", action.target_resource);
-        
+
         // TODO: Implement actual configuration application logic
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": action.target_resource,
             "configuration_applied": true
@@ -395,10 +405,10 @@ impl ActionOrchestrator {
     /// Execute a script
     async fn execute_script(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Executing script on: {}", action.target_resource);
-        
+
         // TODO: Implement actual script execution logic
         // This should include proper sandboxing and security measures
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "target": action.target_resource,
             "script_executed": true
@@ -408,9 +418,9 @@ impl ActionOrchestrator {
     /// Remediate an issue
     async fn remediate(&self, action: &Action) -> Result<ActionResult, String> {
         info!("Remediating issue on: {}", action.target_resource);
-        
+
         // TODO: Implement actual remediation logic based on issue type
-        
+
         Ok(ActionResult::Success(serde_json::json!({
             "resource_id": action.target_resource,
             "remediated": true
@@ -423,25 +433,29 @@ impl ActionOrchestrator {
         hasher.update(action.action_type.to_string().as_bytes());
         hasher.update(action.target_resource.as_bytes());
         hasher.update(action.tenant_id.as_bytes());
-        hasher.update(serde_json::to_string(&action.parameters).unwrap_or_default().as_bytes());
+        hasher.update(
+            serde_json::to_string(&action.parameters)
+                .unwrap_or_default()
+                .as_bytes(),
+        );
         format!("{:x}", hasher.finalize())
     }
 
     /// Check if an action with the given idempotency key exists
     async fn check_idempotency(&self, key: &str) -> Result<Option<IdempotencyRecord>, String> {
         let cache = self.idempotency_cache.read().await;
-        
+
         if let Some(record) = cache.get(key) {
             if record.expires_at > Utc::now() {
                 return Ok(Some(record.clone()));
             }
         }
-        
+
         // Check database if available
         if let Some(ref pool) = self.db_pool {
             // TODO: Query database for idempotency record
         }
-        
+
         Ok(None)
     }
 
@@ -454,15 +468,15 @@ impl ActionOrchestrator {
             created_at: Utc::now(),
             expires_at: Utc::now() + Duration::hours(24),
         };
-        
+
         let mut cache = self.idempotency_cache.write().await;
         cache.insert(action.idempotency_key.clone(), record);
-        
+
         // Persist to database if available
         if let Some(ref pool) = self.db_pool {
             // TODO: Insert idempotency record into database
         }
-        
+
         Ok(())
     }
 
@@ -471,13 +485,13 @@ impl ActionOrchestrator {
         if action.target_resource.is_empty() {
             return Err("Target resource cannot be empty".to_string());
         }
-        
+
         if action.timeout < Duration::seconds(1) {
             return Err("Timeout must be at least 1 second".to_string());
         }
-        
+
         // TODO: Add more validation based on action type
-        
+
         Ok(())
     }
 
@@ -491,7 +505,7 @@ impl ActionOrchestrator {
     /// Generate rollback actions for an action
     fn generate_rollback_actions(&self, action: &Action) -> Vec<Action> {
         let mut rollback_actions = Vec::new();
-        
+
         match action.action_type {
             ActionType::CreateResource => {
                 // Rollback: Delete the created resource
@@ -521,7 +535,7 @@ impl ActionOrchestrator {
                 // Other action types may have specific rollback logic
             }
         }
-        
+
         rollback_actions
     }
 
@@ -549,7 +563,7 @@ impl ActionOrchestrator {
         // Remove from pending
         let mut pending = self.pending_actions.write().await;
         pending.remove(&action.idempotency_key);
-        
+
         // Add to completed
         let completed = CompletedAction {
             action: action.clone(),
@@ -557,10 +571,10 @@ impl ActionOrchestrator {
             execution_time: Utc::now().signed_duration_since(action.id.get_timestamp().unwrap()),
             completed_at: Utc::now(),
         };
-        
+
         let mut completed_actions = self.completed_actions.write().await;
         completed_actions.insert(action.idempotency_key.clone(), completed);
-        
+
         // Update idempotency cache
         let mut cache = self.idempotency_cache.write().await;
         if let Some(record) = cache.get_mut(&action.idempotency_key) {
@@ -570,32 +584,34 @@ impl ActionOrchestrator {
 
     /// Mark an action as failed
     async fn fail_action(&self, action: Action, error: String) {
-        self.complete_action(action, ActionResult::Failure(error)).await;
+        self.complete_action(action, ActionResult::Failure(error))
+            .await;
     }
 
     /// Check if an error is retryable
     fn is_retryable_error(&self, error: &str) -> bool {
         // Network errors, timeouts, and rate limits are retryable
-        error.contains("timeout") ||
-        error.contains("network") ||
-        error.contains("rate limit") ||
-        error.contains("throttled") ||
-        error.contains("temporary")
+        error.contains("timeout")
+            || error.contains("network")
+            || error.contains("rate limit")
+            || error.contains("throttled")
+            || error.contains("temporary")
     }
 
     /// Calculate next retry delay with exponential backoff
     fn calculate_next_delay(&self, current_delay: Duration) -> Duration {
         let next = current_delay.num_milliseconds() as f32 * self.retry_policy.exponential_base;
         let next_ms = next.min(self.retry_policy.max_delay.num_milliseconds() as f32) as i64;
-        
+
         let mut delay = Duration::milliseconds(next_ms);
-        
+
         // Add jitter if enabled
         if self.retry_policy.jitter {
             let jitter = rand::random::<f32>() * 0.3; // Up to 30% jitter
-            delay = delay + Duration::milliseconds((delay.num_milliseconds() as f32 * jitter) as i64);
+            delay =
+                delay + Duration::milliseconds((delay.num_milliseconds() as f32 * jitter) as i64);
         }
-        
+
         delay
     }
 
@@ -614,7 +630,7 @@ impl ActionOrchestrator {
                 return Some(state.status.clone());
             }
         }
-        
+
         // Check completed actions
         let completed = self.completed_actions.read().await;
         for (_, completed_action) in completed.iter() {
@@ -622,7 +638,7 @@ impl ActionOrchestrator {
                 return Some(ActionStatus::Completed);
             }
         }
-        
+
         None
     }
 
@@ -630,18 +646,19 @@ impl ActionOrchestrator {
     pub async fn rollback_action(&self, action_id: Uuid) -> Result<(), String> {
         // Find the action
         let pending = self.pending_actions.read().await;
-        let action_state = pending.values()
+        let action_state = pending
+            .values()
             .find(|s| s.action.id == action_id)
             .ok_or("Action not found")?
             .clone();
-        
+
         drop(pending);
-        
+
         // Execute rollback actions
         for rollback_action in action_state.rollback_actions {
             self.submit_action(rollback_action).await?;
         }
-        
+
         Ok(())
     }
 }

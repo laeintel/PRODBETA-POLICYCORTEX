@@ -1,7 +1,7 @@
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc, Duration};
-use uuid::Uuid;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ApprovalStatus {
@@ -197,8 +197,14 @@ impl ApprovalEngine {
         self.policies.push(policy);
     }
 
-    pub fn requires_approval(&self, tenant_id: &str, action_type: &str, resource_id: &str) -> Option<ApprovalPolicy> {
-        self.policies.iter()
+    pub fn requires_approval(
+        &self,
+        tenant_id: &str,
+        action_type: &str,
+        resource_id: &str,
+    ) -> Option<ApprovalPolicy> {
+        self.policies
+            .iter()
             .filter(|p| p.is_active && p.tenant_id == tenant_id)
             .filter(|p| p.action_types.contains(&action_type.to_string()))
             .find(|p| {
@@ -223,7 +229,7 @@ impl ApprovalEngine {
         impact_analysis: ImpactAnalysis,
     ) -> ApprovalRequest {
         let required_approvers = self.get_required_approvers(policy, &requester_id);
-        
+
         ApprovalRequest {
             id: Uuid::new_v4(),
             tenant_id: policy.tenant_id.clone(),
@@ -233,7 +239,10 @@ impl ApprovalEngine {
             requester_id,
             requester_email,
             title: format!("Approval required for {} on {}", action_type, resource_id),
-            description: format!("Impact: {:?}, Reversible: {}", impact_analysis.risk_level, impact_analysis.is_reversible),
+            description: format!(
+                "Impact: {:?}, Reversible: {}",
+                impact_analysis.risk_level, impact_analysis.is_reversible
+            ),
             impact_analysis,
             approval_type: policy.approval_type.clone(),
             required_approvers,
@@ -248,22 +257,29 @@ impl ApprovalEngine {
 
     fn get_required_approvers(&self, policy: &ApprovalPolicy, requester_id: &str) -> Vec<String> {
         let mut approvers = Vec::new();
-        
+
         for group in &policy.approver_groups {
             // Apply SoD rules - exclude conflicting roles
-            let eligible_approvers: Vec<String> = group.members.iter()
+            let eligible_approvers: Vec<String> = group
+                .members
+                .iter()
                 .filter(|member| *member != requester_id) // Can't approve own request
                 .filter(|member| self.check_sod_compliance(policy, requester_id, member))
                 .cloned()
                 .collect();
-            
+
             approvers.extend(eligible_approvers);
         }
-        
+
         approvers
     }
 
-    fn check_sod_compliance(&self, policy: &ApprovalPolicy, requester_id: &str, approver_id: &str) -> bool {
+    fn check_sod_compliance(
+        &self,
+        policy: &ApprovalPolicy,
+        requester_id: &str,
+        approver_id: &str,
+    ) -> bool {
         // Check separation of duty rules
         for rule in &policy.sod_rules {
             // This would check against actual role assignments
@@ -287,7 +303,11 @@ impl ApprovalEngine {
         }
 
         // Check if already approved by this user
-        if request.approvals.iter().any(|a| a.approver_id == approver_id) {
+        if request
+            .approvals
+            .iter()
+            .any(|a| a.approver_id == approver_id)
+        {
             return Err("Already processed by this approver".to_string());
         }
 
@@ -316,21 +336,29 @@ impl ApprovalEngine {
                 }
             }
             ApprovalType::AllApprovers => {
-                let approved_count = request.approvals.iter()
+                let approved_count = request
+                    .approvals
+                    .iter()
                     .filter(|a| a.decision == ApprovalDecision::Approved)
                     .count();
-                
+
                 if approved_count == request.required_approvers.len() {
                     request.status = ApprovalStatus::Approved;
-                } else if request.approvals.iter().any(|a| a.decision == ApprovalDecision::Rejected) {
+                } else if request
+                    .approvals
+                    .iter()
+                    .any(|a| a.decision == ApprovalDecision::Rejected)
+                {
                     request.status = ApprovalStatus::Rejected;
                 }
             }
             ApprovalType::MinimumApprovers(min) => {
-                let approved_count = request.approvals.iter()
+                let approved_count = request
+                    .approvals
+                    .iter()
                     .filter(|a| a.decision == ApprovalDecision::Approved)
                     .count();
-                
+
                 if approved_count >= *min {
                     request.status = ApprovalStatus::Approved;
                 }
@@ -359,15 +387,13 @@ impl ApprovalEngine {
             expires_at: Utc::now() + Duration::hours(duration_hours),
             resources_accessed: Vec::new(),
             actions_taken: Vec::new(),
-            audit_trail: vec![
-                AuditEntry {
-                    timestamp: Utc::now(),
-                    action: "BREAK_GLASS_ACTIVATED".to_string(),
-                    details: justification.clone(),
-                    ip_address: None,
-                    user_agent: None,
-                }
-            ],
+            audit_trail: vec![AuditEntry {
+                timestamp: Utc::now(),
+                action: "BREAK_GLASS_ACTIVATED".to_string(),
+                details: justification.clone(),
+                ip_address: None,
+                user_agent: None,
+            }],
             post_incident_review_required: true,
             review_status: None,
         }
@@ -381,7 +407,7 @@ mod tests {
     #[test]
     fn test_approval_workflow() {
         let mut engine = ApprovalEngine::new();
-        
+
         let policy = ApprovalPolicy {
             id: Uuid::new_v4(),
             tenant_id: "test-tenant".to_string(),
@@ -389,25 +415,27 @@ mod tests {
             resource_pattern: "prod-.*".to_string(),
             action_types: vec!["DELETE".to_string(), "MODIFY".to_string()],
             approval_type: ApprovalType::MinimumApprovers(2),
-            approver_groups: vec![
-                ApproverGroup {
-                    name: "Admins".to_string(),
-                    members: vec!["admin1".to_string(), "admin2".to_string(), "admin3".to_string()],
-                    minimum_approvals: 2,
-                }
-            ],
+            approver_groups: vec![ApproverGroup {
+                name: "Admins".to_string(),
+                members: vec![
+                    "admin1".to_string(),
+                    "admin2".to_string(),
+                    "admin3".to_string(),
+                ],
+                minimum_approvals: 2,
+            }],
             auto_approve_conditions: Vec::new(),
             sod_rules: Vec::new(),
             escalation_policy: None,
             is_active: true,
         };
-        
+
         engine.add_policy(policy.clone());
-        
+
         // Check if approval is required
         let requires = engine.requires_approval("test-tenant", "DELETE", "prod-database");
         assert!(requires.is_some());
-        
+
         // Create approval request
         let impact = ImpactAnalysis {
             affected_resources: vec!["prod-database".to_string()],
@@ -418,7 +446,7 @@ mod tests {
             business_impact: "High".to_string(),
             compliance_impact: Vec::new(),
         };
-        
+
         let mut request = engine.create_approval_request(
             &policy,
             Uuid::new_v4(),
@@ -428,7 +456,7 @@ mod tests {
             "user1@example.com".to_string(),
             impact,
         );
-        
+
         // Process approvals
         let _ = engine.process_approval(
             &mut request,
@@ -437,9 +465,9 @@ mod tests {
             ApprovalDecision::Approved,
             Some("Looks good".to_string()),
         );
-        
+
         assert_eq!(request.status, ApprovalStatus::Pending);
-        
+
         let _ = engine.process_approval(
             &mut request,
             "admin2".to_string(),
@@ -447,7 +475,7 @@ mod tests {
             ApprovalDecision::Approved,
             None,
         );
-        
+
         assert_eq!(request.status, ApprovalStatus::Approved);
     }
 }
