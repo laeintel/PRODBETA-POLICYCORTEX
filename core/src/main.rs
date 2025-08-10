@@ -39,6 +39,7 @@ mod security_graph;
 mod simulated_data;
 mod slo;
 mod tenant;
+mod tenant_isolation;
 
 use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
@@ -48,6 +49,7 @@ use api::{
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
+use tenant_isolation::{TenantContext, TenantDatabase, tenant_isolation_middleware};
 use azure_client_async::AsyncAzureClient;
 
 #[derive(Serialize)]

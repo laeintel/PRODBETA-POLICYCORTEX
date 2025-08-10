@@ -296,16 +296,63 @@ export function useAzureResources() {
   const [resources, setResources] = useState<AzureResource[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isUsingFallback, setIsUsingFallback] = useState(false)
   const authenticatedFetch = useAuthenticatedFetch()
   
   useEffect(() => {
-    fetchAzureResources(authenticatedFetch as any)
-      .then(setResources)
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
+    const load = async () => {
+      try {
+        // Try deep first for richer data
+        try {
+          const resp = await (authenticatedFetch as any)(`${API_BASE}/api/v1/resources/deep`, { cache: 'no-store' })
+          if (resp && resp.ok) {
+            const data = await resp.json()
+            const raw = (data && (data.resources ?? data)) as any
+            const items: any[] = Array.isArray(raw) ? raw : (raw ? [raw] : [])
+            const mapped = items.map((r) => ({
+              id: r.id,
+              name: r.name,
+              type: r.type,
+              resourceGroup: r.resourceGroup || (r.id?.split('/')?.[4] ?? ''),
+              location: r.location,
+              tags: r.tags || {},
+              status: r.healthStatus || 'Unknown',
+              compliance: r.complianceStatus || 'Unknown',
+              monthlyCost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) : 0,
+              cost: typeof r.costEstimate === 'number' ? Number(r.costEstimate) / 720 : 0,
+              savings: 0,
+              cpu: r.utilization?.cpu ?? 0,
+              memory: r.utilization?.memory ?? 0,
+              storage: r.utilization?.disk ?? 0,
+              createdDate: r.createdDate || undefined,
+              lastModified: r.lastModified || undefined,
+              recommendations: r.recommendations || [],
+            })) as AzureResource[]
+            setResources(mapped)
+            setIsUsingFallback(false)
+            return
+          }
+        } catch (_) {
+          // fall through to basic
+        }
+
+        // Fallback to basic resources endpoint
+        setIsUsingFallback(true)
+        const resp2 = await (authenticatedFetch as any)(`${API_BASE}/api/v1/resources`, { cache: 'no-store' })
+        const data2 = await resp2.json()
+        const raw2 = (data2 && (data2.resources ?? data2)) as any
+        const items2: any[] = Array.isArray(raw2) ? raw2 : (raw2 ? [raw2] : [])
+        setResources(items2 as AzureResource[])
+      } catch (err: any) {
+        setError(err?.message || 'Failed to load resources')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
   
-  return { resources, loading, error }
+  return { resources, loading, error, isUsingFallback }
 }
 
 // Hook to fetch Azure policies

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
+import MockDataIndicator, { useMockDataStatus } from '@/components/MockDataIndicator'
 import VirtualizedTable from '@/components/VirtualizedTable'
 import ServerPagination from '@/components/ServerPagination'
 import { useServerPagination } from '@/hooks/useServerPagination'
@@ -41,7 +42,8 @@ import type { CreateActionRequest } from '../../lib/actions-api'
 import Pagination from '../../components/Pagination'
 
 export default function ResourcesPage() {
-  const { resources: azureResources, loading, error } = useAzureResources()
+  const { resources: azureResources, loading, error, isUsingFallback } = useAzureResources()
+  const { isMockData } = useMockDataStatus()
   // Read initial filters from query string
   const initialParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
   const initialType = initialParams?.get('type') || 'all'
@@ -122,10 +124,26 @@ export default function ResourcesPage() {
     <AppLayout>
       <div className="p-8">
         <div className="max-w-7xl mx-auto">
+          {/* Mock Data Indicator */}
+          {(isMockData || isUsingFallback || error) && (
+            <MockDataIndicator 
+              type="banner" 
+              dataSource={error ? "Cached Resources (API Error)" : isUsingFallback ? "Sample Resources" : "Mock Resources"}
+              className="mb-6"
+            />
+          )}
+          
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Resource Management</h1>
-            <p className="text-gray-400">Complete visibility and control over all Azure resources</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">Resource Management</h1>
+                <p className="text-gray-400">Complete visibility and control over all Azure resources</p>
+              </div>
+              {!isMockData && !isUsingFallback && !error && (
+                <MockDataIndicator type="badge" />
+              )}
+            </div>
           </div>
 
           {/* Summary Cards */}
