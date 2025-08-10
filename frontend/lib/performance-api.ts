@@ -164,8 +164,7 @@ class PerformanceApiClient {
     try {
       // Pre-fetch critical data that's likely to be needed
       await Promise.allSettled([
-        this.get('/api/v1/metrics', { cache: 'hot' }),
-        this.get('/api/v1/compliance', { cache: 'warm' }),
+        // Avoid warming protected endpoints here (may require auth); warm only health
         this.get('/health', { cache: 'cold' })
       ])
     } catch (error) {
