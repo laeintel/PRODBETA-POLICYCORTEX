@@ -30,6 +30,7 @@ env:
   TARGET_ENV: ${{ github.event.inputs.target_env || 'dev' }}
 
 # Permissions for GitHub Actions
+# Updated to include Cargo.lock in repository
 permissions:
   contents: read
   security-events: write  # Required for uploading SARIF results
