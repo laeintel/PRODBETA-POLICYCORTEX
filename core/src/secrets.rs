@@ -39,6 +39,7 @@ impl SecretsManager {
     /// Create a new SecretsManager with Azure Key Vault integration
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let vault_url = std::env::var("KEY_VAULT_URL")
+            .or_else(|_| std::env::var("KEY_VAULT_URI"))
             .unwrap_or_else(|_| "https://policycortex-kv.vault.azure.net/".to_string());
 
         // Try to create Key Vault client
