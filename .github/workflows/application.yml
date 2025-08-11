@@ -32,6 +32,8 @@ env:
 # Permissions for GitHub Actions
 permissions:
   contents: read
+  security-events: write  # Required for uploading SARIF results
+  actions: read           # Required for workflow run information
 
 jobs:
   changes:
@@ -185,6 +187,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
