@@ -419,6 +419,10 @@ jobs:
         env:
           # Use secret if available, otherwise use the known dev subscription ID
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
+          # Expose SP credentials for Terraform (parsed from AZURE_CREDENTIALS JSON)
+          AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
+          AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
+          AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
         run: |
           chmod +x infrastructure/terraform/ci-deploy.sh
           ./infrastructure/terraform/ci-deploy.sh dev "$AZURE_SUBSCRIPTION_ID"
@@ -483,6 +487,10 @@ jobs:
         env:
           # Use secret if available, otherwise use the known prod subscription ID (same as dev for now)
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_PROD || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
+          # Expose SP credentials for Terraform (parsed from AZURE_CREDENTIALS JSON)
+          AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
+          AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
+          AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
         run: |
           chmod +x infrastructure/terraform/ci-deploy.sh
           ./infrastructure/terraform/ci-deploy.sh prod "$AZURE_SUBSCRIPTION_ID"
