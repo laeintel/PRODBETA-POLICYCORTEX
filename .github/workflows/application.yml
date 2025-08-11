@@ -184,6 +184,8 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     if: github.event.inputs.force_deploy != 'true'
+    # Note: Code Scanning must be enabled in repository settings for SARIF upload to work
+    # Settings -> Security -> Code security and analysis -> Code scanning
     permissions:
       contents: read
       security-events: write
@@ -204,6 +206,7 @@ jobs:
       - name: Upload Trivy results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true  # Code Scanning may not be enabled for the repository
         with:
           sarif_file: 'trivy-results.sarif'
 
