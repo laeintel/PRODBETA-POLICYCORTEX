@@ -47,7 +47,7 @@ use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
     get_metrics, get_network_deep, get_policies, get_policies_deep, get_predictions, get_rbac_deep,
     get_recommendations, get_resources, get_resources_deep, process_conversation, remediate,
-    stream_action_events, stream_events, AppState,
+    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -189,6 +189,12 @@ async fn main() {
         .route("/api/v1/actions", post(create_action))
         .route("/api/v1/actions/:id", get(get_action))
         .route("/api/v1/actions/:id/events", get(stream_action_events))
+        // Approvals flow
+        .route("/api/v1/approvals", post(create_approval))
+        .route("/api/v1/approvals", get(list_approvals))
+        .route("/api/v1/approvals/:id", post(approve_request))
+        // Policy-as-code generate
+        .route("/api/v1/policies/generate", post(generate_policy))
         // Global SSE events stream
         .route("/api/v1/events", get(stream_events))
         // Legacy endpoints for compatibility

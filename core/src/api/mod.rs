@@ -179,6 +179,7 @@ pub struct AppState {
     pub actions: Arc<RwLock<std::collections::HashMap<String, ActionRecord>>>,
     pub action_events: Arc<RwLock<std::collections::HashMap<String, broadcast::Sender<String>>>>,
     pub config: crate::config::AppConfig,
+    pub approvals: Arc<RwLock<std::collections::HashMap<String, ApprovalRequest>>>,
 }
 
 impl AppState {
@@ -275,6 +276,7 @@ impl AppState {
             actions: Arc::new(RwLock::new(std::collections::HashMap::new())),
             action_events: Arc::new(RwLock::new(std::collections::HashMap::new())),
             config: crate::config::AppConfig::load(),
+            approvals: Arc::new(RwLock::new(std::collections::HashMap::new())),
         }
     }
 }
@@ -604,6 +606,106 @@ pub async fn get_recommendations(
     // Fallback to cached recommendations
     let recommendations = state.recommendations.read().await;
     Json(recommendations.clone())
+}
+
+// ===================== Approvals (Phase 1) =====================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApprovalRequest {
+    pub id: String,
+    pub requested_by: Option<String>,
+    pub resource_id: String,
+    pub action: String,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateApprovalPayload {
+    pub resource_id: String,
+    pub action: String,
+}
+
+pub async fn create_approval(
+    auth_user: OptionalAuthUser,
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<CreateApprovalPayload>,
+) -> impl IntoResponse {
+    use chrono::Utc;
+    use uuid::Uuid;
+    let id = Uuid::new_v4().to_string();
+    let now = Utc::now();
+    let requested_by = auth_user
+        .0
+        .and_then(|u| u.claims.preferred_username)
+        .or(Some("anonymous".to_string()));
+
+    let req = ApprovalRequest {
+        id: id.clone(),
+        requested_by,
+        resource_id: payload.resource_id,
+        action: payload.action,
+        status: "Pending".to_string(),
+        created_at: now,
+        updated_at: now,
+    };
+    {
+        let mut approvals = state.approvals.write().await;
+        approvals.insert(id.clone(), req.clone());
+    }
+    Json(serde_json::json!({"success": true, "approval": req}))
+}
+
+pub async fn list_approvals(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let approvals = state.approvals.read().await;
+    let mut items: Vec<_> = approvals.values().cloned().collect();
+    items.sort_by_key(|a| a.created_at);
+    Json(items)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApprovePayload { pub approve: bool }
+
+pub async fn approve_request(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    Json(payload): Json<ApprovePayload>,
+) -> impl IntoResponse {
+    let mut approvals = state.approvals.write().await;
+    if let Some(a) = approvals.get_mut(&id) {
+        a.status = if payload.approve { "Approved" } else { "Rejected" }.to_string();
+        a.updated_at = chrono::Utc::now();
+        return Json(serde_json::json!({"success": true, "approval": a}));
+    }
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error": "approval not found"})),
+    )
+        .into_response()
+}
+
+// ===================== Policy-as-code scaffolding =====================
+
+#[derive(Debug, Deserialize)]
+pub struct GeneratePolicyPayload { pub requirement: String, pub provider: Option<String>, pub framework: Option<String> }
+
+pub async fn generate_policy(Json(payload): Json<GeneratePolicyPayload>) -> impl IntoResponse {
+    // Provide a minimal Azure policy skeleton based on a requirement string (stub)
+    let policy = serde_json::json!({
+        "mode": "All",
+        "parameters": {},
+        "policyRule": {
+            "if": {
+                "allOf": [
+                    {"field": "type", "equals": "Microsoft.Compute/virtualMachines"}
+                ]
+            },
+            "then": {"effect": "audit"}
+        },
+        "metadata": {"generatedFrom": payload.requirement, "provider": payload.provider, "framework": payload.framework}
+    });
+    Json(serde_json::json!({ "policy": policy }))
 }
 
 pub async fn process_conversation(
