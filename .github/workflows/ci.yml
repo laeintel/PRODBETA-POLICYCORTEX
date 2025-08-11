@@ -13,9 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Update apt cache (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update -y
+      # Removed apt-get update to avoid runner hangs
 
       - name: Setup Node.js
       # Self-hosted runner can skip if Node is preinstalled; this ensures version
