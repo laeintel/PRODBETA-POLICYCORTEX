@@ -15,8 +15,22 @@ fi
 echo "Environment: ${ENVIRONMENT}"
 echo "Subscription: ${SUBSCRIPTION_ID}"
 
-# Ensure correct subscription context
-az account set --subscription "${SUBSCRIPTION_ID}"
+# Ensure correct subscription context (noop if already logged in by CI)
+az account set --subscription "${SUBSCRIPTION_ID}" 2>/dev/null || true
+
+# Terraform AzureRM auth via Service Principal or OIDC (avoid CLI user-only auth)
+# If CI provides AZURE_CLIENT_ID/TENANT_ID, wire them to ARM_* so both backend and provider use SP/OIDC
+if [[ -n "${AZURE_CLIENT_ID:-}" && -n "${AZURE_TENANT_ID:-}" ]]; then
+  export ARM_CLIENT_ID="${AZURE_CLIENT_ID}"
+  export ARM_TENANT_ID="${AZURE_TENANT_ID}"
+  export ARM_SUBSCRIPTION_ID="${SUBSCRIPTION_ID}"
+  if [[ -n "${AZURE_CLIENT_SECRET:-}" ]]; then
+    export ARM_CLIENT_SECRET="${AZURE_CLIENT_SECRET}"
+  elif [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    # Enable OIDC when running under GitHub Actions with azure/login OIDC
+    export ARM_USE_OIDC=true
+  fi
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
@@ -54,7 +68,6 @@ terraform init \
   -backend-config="storage_account_name=${BACKEND_SA}" \
   -backend-config="container_name=${BACKEND_CONTAINER}" \
   -backend-config="key=${BACKEND_KEY}" \
-  -backend-config="use_azuread_auth=true" \
   -reconfigure
 
 # Reconcile state: import existing resources if they exist
