@@ -56,10 +56,18 @@ if ! az storage account show --name "${BACKEND_SA}" --resource-group "${BACKEND_
     --encryption-services blob \
     --output none
 fi
+# Obtain a storage access key for backend auth (avoids AAD data-plane permissions)
+ACCESS_KEY=$(az storage account keys list \
+  --resource-group "${BACKEND_RG}" \
+  --account-name "${BACKEND_SA}" \
+  --query "[0].value" -o tsv)
+
+# Ensure backend container exists using key auth
 az storage container create \
   --name "${BACKEND_CONTAINER}" \
   --account-name "${BACKEND_SA}" \
-  --auth-mode login \
+  --account-key "${ACCESS_KEY}" \
+  --public-access off \
   --output none 2>/dev/null || true
 
 # Init Terraform
@@ -68,6 +76,7 @@ terraform init \
   -backend-config="storage_account_name=${BACKEND_SA}" \
   -backend-config="container_name=${BACKEND_CONTAINER}" \
   -backend-config="key=${BACKEND_KEY}" \
+  -backend-config="access_key=${ACCESS_KEY}" \
   -reconfigure
 
 # Reconcile state: import existing resources if they exist
