@@ -25,7 +25,9 @@ impl AzureADConfig {
     pub fn new() -> Self {
         let tenant_id = std::env::var("AZURE_TENANT_ID").unwrap_or_default();
         let client_id = std::env::var("AZURE_CLIENT_ID").unwrap_or_default();
-        let allow_any_audience = std::env::var("ALLOW_ANY_AUDIENCE").map(|v| v == "true").unwrap_or(false);
+        let allow_any_audience = std::env::var("ALLOW_ANY_AUDIENCE")
+            .map(|v| v == "true")
+            .unwrap_or(false);
 
         Self {
             issuer: format!("https://login.microsoftonline.com/{}/v2.0", tenant_id),
