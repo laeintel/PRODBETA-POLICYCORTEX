@@ -196,7 +196,7 @@ export default function PoliciesDeepView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     )
   }
@@ -205,21 +205,21 @@ export default function PoliciesDeepView() {
     <div className="space-y-6">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl p-6 border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Policies</p>
-              <p className="text-2xl font-bold">{complianceResults.length}</p>
+              <p className="text-sm text-gray-300">Total Policies</p>
+              <p className="text-2xl font-bold text-white">{complianceResults.length}</p>
             </div>
             <Shield className="h-8 w-8 text-blue-500" />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl p-6 border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Resources</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-300">Total Resources</p>
+              <p className="text-2xl font-bold text-white">
                 {complianceResults.reduce((sum, r) => sum + r.summary.totalResources, 0)}
               </p>
             </div>
@@ -227,11 +227,11 @@ export default function PoliciesDeepView() {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl p-6 border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Non-Compliant</p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-sm text-gray-300">Non-Compliant</p>
+              <p className="text-2xl font-bold text-red-400">
                 {complianceResults.reduce((sum, r) => sum + r.summary.nonCompliantResources, 0)}
               </p>
             </div>
@@ -239,11 +239,11 @@ export default function PoliciesDeepView() {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl p-6 border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Avg Compliance</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-300">Avg Compliance</p>
+              <p className="text-2xl font-bold text-white">
                 {(complianceResults.reduce((sum, r) => sum + r.summary.compliancePercentage, 0) / complianceResults.length).toFixed(1)}%
               </p>
             </div>
@@ -253,41 +253,41 @@ export default function PoliciesDeepView() {
       </div>
 
       {/* Policy List */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold">Policy Compliance Details</h2>
+      <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md">
+        <div className="px-6 py-4 border-b border-white/10">
+          <h2 className="text-lg font-semibold text-white">Policy Compliance Details</h2>
         </div>
-        <div className="divide-y">
+        <div className="divide-y divide-white/10">
           {complianceResults.map((result, index) => (
             <div
               key={index}
-              className="p-6 hover:bg-gray-50 cursor-pointer transition-colors"
+              className="p-6 hover:bg-white/5 cursor-pointer transition-colors"
               onClick={() => setSelectedPolicy(result)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-medium">{result.assignment.displayName}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{result.assignment.name}</p>
+                  <h3 className="text-lg font-medium text-white">{result.assignment.displayName}</h3>
+                  <p className="text-sm text-gray-400 mt-1">{result.assignment.name}</p>
                   
                   <div className="mt-4 grid grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Total Resources</p>
-                      <p className="text-lg font-semibold">{result.summary.totalResources}</p>
+                      <p className="text-sm text-gray-400">Total Resources</p>
+                      <p className="text-lg font-semibold text-white">{result.summary.totalResources}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Compliant</p>
-                      <p className="text-lg font-semibold text-green-600">
+                      <p className="text-sm text-gray-400">Compliant</p>
+                      <p className="text-lg font-semibold text-green-400">
                         {result.summary.compliantResources}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Non-Compliant</p>
-                      <p className="text-lg font-semibold text-red-600">
+                      <p className="text-sm text-gray-400">Non-Compliant</p>
+                      <p className="text-lg font-semibold text-red-400">
                         {result.summary.nonCompliantResources}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Compliance Rate</p>
+                      <p className="text-sm text-gray-400">Compliance Rate</p>
                       <div className="flex items-center">
                         <p className={`text-lg font-semibold ${getComplianceColor(result.summary.compliancePercentage)}`}>
                           {result.summary.compliancePercentage.toFixed(1)}%
@@ -298,7 +298,7 @@ export default function PoliciesDeepView() {
                   
                   {/* Compliance Bar */}
                   <div className="mt-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-white/10 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${
                           result.summary.compliancePercentage >= 90 ? 'bg-green-500' :
@@ -318,19 +318,19 @@ export default function PoliciesDeepView() {
 
       {/* Selected Policy Detail Modal */}
       {selectedPolicy && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white/5 border-b border-white/10 px-6 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">{selectedPolicy.assignment.displayName}</h2>
-                <p className="text-sm text-gray-500">{selectedPolicy.assignment.name}</p>
+                <h2 className="text-xl font-semibold text-white">{selectedPolicy.assignment.displayName}</h2>
+                <p className="text-sm text-gray-400">{selectedPolicy.assignment.name}</p>
               </div>
               <button
                 onClick={() => {
                   setSelectedPolicy(null)
                   setSelectedResource(null)
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-white"
               >
                 <XCircle className="h-6 w-6" />
               </button>
@@ -339,25 +339,25 @@ export default function PoliciesDeepView() {
             <div className="p-6">
               {/* Summary Stats */}
               <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className={`p-4 rounded-lg ${getComplianceBgColor(selectedPolicy.summary.compliancePercentage)}`}>
-                  <p className="text-sm text-gray-600">Compliance Rate</p>
+                <div className={`p-4 rounded-lg bg-white/5 border border-white/10`}>
+                  <p className="text-sm text-gray-300">Compliance Rate</p>
                   <p className={`text-2xl font-bold ${getComplianceColor(selectedPolicy.summary.compliancePercentage)}`}>
                     {selectedPolicy.summary.compliancePercentage.toFixed(1)}%
                   </p>
                 </div>
-                <div className="p-4 rounded-lg bg-gray-100">
-                  <p className="text-sm text-gray-600">Total Resources</p>
-                  <p className="text-2xl font-bold">{selectedPolicy.summary.totalResources}</p>
+                <div className="p-4 rounded-lg bg-white/5 border border-white/10">
+                  <p className="text-sm text-gray-300">Total Resources</p>
+                  <p className="text-2xl font-bold text-white">{selectedPolicy.summary.totalResources}</p>
                 </div>
-                <div className="p-4 rounded-lg bg-green-100">
-                  <p className="text-sm text-gray-600">Compliant</p>
-                  <p className="text-2xl font-bold text-green-600">
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <p className="text-sm text-gray-300">Compliant</p>
+                  <p className="text-2xl font-bold text-green-400">
                     {selectedPolicy.summary.compliantResources}
                   </p>
                 </div>
-                <div className="p-4 rounded-lg bg-red-100">
-                  <p className="text-sm text-gray-600">Non-Compliant</p>
-                  <p className="text-2xl font-bold text-red-600">
+                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <p className="text-sm text-gray-300">Non-Compliant</p>
+                  <p className="text-2xl font-bold text-red-400">
                     {selectedPolicy.summary.nonCompliantResources}
                   </p>
                 </div>
@@ -368,23 +368,23 @@ export default function PoliciesDeepView() {
                 <h3 className="text-lg font-semibold mb-4">Non-Compliant Resources</h3>
                 <div className="space-y-4">
                   {selectedPolicy.nonCompliantResources.map((resource, idx) => (
-                    <div key={idx} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div key={idx} className="border border-white/10 rounded-lg p-4 hover:bg-white/5">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center">
                             <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                            <h4 className="font-medium">{resource.resourceName}</h4>
+                            <h4 className="font-medium text-white">{resource.resourceName}</h4>
                           </div>
-                          <p className="text-sm text-gray-500 mt-1">{resource.resourceType}</p>
-                          <div className="mt-2 p-3 bg-red-50 rounded">
-                            <p className="text-sm text-red-800">
+                          <p className="text-sm text-gray-400 mt-1">{resource.resourceType}</p>
+                          <div className="mt-2 p-3 bg-red-500/10 rounded border border-red-500/20">
+                            <p className="text-sm text-red-300">
                               <strong>Issue:</strong> {resource.complianceReason}
                             </p>
                           </div>
                           
                           {/* Remediation Options */}
                           <div className="mt-4">
-                            <p className="text-sm font-medium mb-2">Remediation Options:</p>
+                            <p className="text-sm font-medium text-white mb-2">Remediation Options:</p>
                             <div className="flex flex-wrap gap-2">
                               {resource.remediationOptions.map((option, optIdx) => (
                                 <button
@@ -399,10 +399,10 @@ export default function PoliciesDeepView() {
                                   disabled={remediating}
                                   className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                                     option.action === 'auto-remediate'
-                                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                      ? 'bg-green-500/15 text-green-300 hover:bg-green-500/25 border border-green-500/20'
                                       : option.action === 'create-exception'
-                                      ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                      ? 'bg-yellow-500/15 text-yellow-300 hover:bg-yellow-500/25 border border-yellow-500/20'
+                                      : 'bg-white/5 text-gray-200 hover:bg-white/10 border border-white/10'
                                   } ${remediating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                   {option.action === 'auto-remediate' && <Zap className="inline h-3 w-3 mr-1" />}
@@ -420,12 +420,12 @@ export default function PoliciesDeepView() {
               </div>
               
               {/* AI Recommendations */}
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <div className="flex items-start">
-                  <Info className="h-5 w-5 text-blue-500 mt-0.5 mr-2" />
+                  <Info className="h-5 w-5 text-blue-400 mt-0.5 mr-2" />
                   <div>
-                    <h4 className="font-medium text-blue-900">AI Recommendations</h4>
-                    <ul className="mt-2 text-sm text-blue-800 space-y-1">
+                    <h4 className="font-medium text-white">AI Recommendations</h4>
+                    <ul className="mt-2 text-sm text-blue-200 space-y-1">
                       <li>• Enable auto-remediation for tag compliance to maintain 95%+ compliance</li>
                       <li>• Create a scheduled task to review exceptions monthly</li>
                       <li>• Consider implementing preventive controls at resource creation</li>

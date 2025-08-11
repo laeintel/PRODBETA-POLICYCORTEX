@@ -352,7 +352,7 @@ export function DashboardGrid() {
       {/* Secondary Metrics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
         {/* Quick Stats */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="rounded-2xl p-6 border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)] transition-shadow">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
             Quick Stats
           </h3>
@@ -377,7 +377,7 @@ export function DashboardGrid() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="rounded-2xl p-6 border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)] transition-shadow">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
             Recent Activity
           </h3>
@@ -406,7 +406,7 @@ export function DashboardGrid() {
         </div>
 
         {/* AI Learning Status */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div className="rounded-2xl p-6 border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)] transition-shadow">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
             AI Learning Status
           </h3>

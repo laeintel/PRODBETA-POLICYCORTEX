@@ -179,11 +179,11 @@ export default function DataGrid<T extends Record<string, any>>({
   }, [filters, search])
 
   return (
-    <div className={`flex flex-col h-full bg-white rounded-lg shadow ${className}`}>
+    <div className={`flex flex-col h-full rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] ${className}`}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
-          {title && <h2 className="text-xl font-semibold text-gray-900">{title}</h2>}
+          {title && <h2 className="text-xl font-semibold text-white">{title}</h2>}
           
           <div className="flex items-center space-x-2">
             {allowRefresh && (
@@ -220,7 +220,7 @@ export default function DataGrid<T extends Record<string, any>>({
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/5 border border-white/20 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
             </div>
           )}
@@ -228,16 +228,16 @@ export default function DataGrid<T extends Record<string, any>>({
           {showFilters && (
             <button
               onClick={() => setShowFilterPanel(!showFilterPanel)}
-              className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors border ${
                 activeFilterCount > 0
-                  ? 'bg-blue-50 border-blue-300 text-blue-700'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'bg-purple-500/20 border-purple-400/40 text-purple-200'
+                  : 'border-white/20 text-gray-200 hover:bg-white/10'
               }`}
             >
               <Filter className="w-5 h-5" />
               <span>Filters</span>
               {activeFilterCount > 0 && (
-                <span className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-purple-600 text-white rounded-full">
                   {activeFilterCount}
                 </span>
               )}
@@ -247,7 +247,7 @@ export default function DataGrid<T extends Record<string, any>>({
           {activeFilterCount > 0 && (
             <button
               onClick={clearFilters}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-gray-300 hover:text-white"
             >
               Clear all
             </button>
@@ -256,13 +256,13 @@ export default function DataGrid<T extends Record<string, any>>({
 
         {/* Filter Panel */}
         {showFilterPanel && showFilters && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {columns
                 .filter(col => col.filterable)
                 .map(col => (
                   <div key={col.key as string}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-200 mb-1">
                       {col.label}
                     </label>
                     
@@ -270,7 +270,7 @@ export default function DataGrid<T extends Record<string, any>>({
                       <select
                         value={filters[col.key as string] ?? ''}
                         onChange={(e) => handleFilterChange(col.key as string, e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/20 text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                       >
                         <option value="">All</option>
                         {col.filterOptions.map(option => (
@@ -285,14 +285,14 @@ export default function DataGrid<T extends Record<string, any>>({
                         value={filters[col.key as string] ?? ''}
                         onChange={(e) => handleFilterChange(col.key as string, e.target.value)}
                         placeholder={`Filter ${col.label}...`}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/20 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                       />
                     ) : col.filterType === 'date' ? (
                       <input
                         type="date"
                         value={filters[col.key as string] ?? ''}
                         onChange={(e) => handleFilterChange(col.key as string, e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/20 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                       />
                     ) : (
                       <input
@@ -300,7 +300,7 @@ export default function DataGrid<T extends Record<string, any>>({
                         value={filters[col.key as string] ?? ''}
                         onChange={(e) => handleFilterChange(col.key as string, e.target.value)}
                         placeholder={`Filter ${col.label}...`}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 rounded-md bg-white/5 border border-white/20 text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                       />
                     )}
                   </div>

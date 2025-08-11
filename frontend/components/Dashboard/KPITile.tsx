@@ -79,8 +79,12 @@ export function KPITile({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        'relative p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700',
-        'hover:shadow-md transition-all duration-200',
+        'relative p-6 rounded-2xl border border-gray-200/60 dark:border-white/10',
+        'bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800',
+        'shadow-[0_10px_30px_-10px_rgba(0,0,0,0.15)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.25)]',
+        'transition-all duration-300 backdrop-blur-sm',
+        'before:content-[""] before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-br before:from-white/40 before:to-transparent before:pointer-events-none',
+        'after:content-[""] after:absolute after:-inset-px after:rounded-2xl after:bg-gradient-to-br after:from-white/10 after:to-transparent after:opacity-0 hover:after:opacity-100 after:pointer-events-none',
         onClick || deepLink ? 'cursor-pointer' : '',
         loading && 'animate-pulse'
       )}
@@ -119,7 +123,7 @@ export function KPITile({
         {loading ? (
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24" />
         ) : (
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white drop-shadow-sm">
             {value}
           </div>
         )}
@@ -149,7 +153,7 @@ export function KPITile({
 
       {/* Deep link indicator */}
       {deepLink && (
-        <div className="absolute bottom-2 right-2">
+        <div className="absolute bottom-2 right-2 opacity-70 hover:opacity-100 transition-opacity">
           <svg
             className="w-4 h-4 text-gray-400"
             fill="none"
