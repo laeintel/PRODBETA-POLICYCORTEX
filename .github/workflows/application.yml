@@ -215,7 +215,7 @@ jobs:
     name: Build Core Service
     runs-on: ubuntu-latest
     needs: [test-core, security-scan]
-    if: always() && (needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    if: github.event.inputs.force_deploy == 'true' || ((needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
     permissions:
       contents: read
       packages: write
@@ -253,7 +253,7 @@ jobs:
     name: Build Frontend
     runs-on: ubuntu-latest
     needs: [test-frontend, security-scan]
-    if: always() && (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    if: github.event.inputs.force_deploy == 'true' || ((needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
     permissions:
       contents: read
       packages: write
@@ -291,7 +291,7 @@ jobs:
     name: Build GraphQL Gateway
     runs-on: ubuntu-latest
     needs: [test-graphql, security-scan]
-    if: always() && (needs.test-graphql.result == 'success' || needs.test-graphql.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    if: github.event.inputs.force_deploy == 'true' || ((needs.test-graphql.result == 'success' || needs.test-graphql.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
     permissions:
       contents: read
       packages: write
@@ -329,7 +329,7 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [build-core, build-frontend, build-graphql]
-    if: always() && github.event.inputs.run_tests == 'true'
+    if: github.event.inputs.force_deploy != 'true' && github.event.inputs.run_tests == 'true'
     services:
       postgres:
         image: postgres:15-alpine
@@ -517,7 +517,11 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target_env == 'prod'
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.target_env == 'prod') &&
+      (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
+      (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped') &&
+      (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'skipped')
     environment: production
     permissions:
       contents: read
