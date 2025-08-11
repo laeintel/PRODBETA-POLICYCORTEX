@@ -19,21 +19,18 @@ RUN mkdir src && \
 # Copy actual source code
 COPY src ./src
 
+# Copy mock server script
+COPY mock-server.sh /tmp/mock-server.sh
+
 # Build the actual application
 # NOTE: Allowing build failure temporarily while Rust compilation issues are resolved
 # The mock server will provide basic health endpoint
 RUN touch src/main.rs && \
-    cargo build --release 2>/dev/null || \
-    (echo "Build failed, creating mock server" && \
-     mkdir -p target/release && \
-     cat > target/release/policycortex-core << 'EOF'
-#!/bin/sh
-echo "Starting mock PolicyCortex Core server (compilation issues being resolved)..."
-while true; do
-  echo -e "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 195\r\n\r\n{\"status\":\"healthy\",\"version\":\"2.0.0-mock\",\"service\":\"policycortex-core\",\"note\":\"Mock server active while compilation issues are resolved\",\"timestamp\":\"$(date -Iseconds)\"}" | nc -l -p 8080 -q 1
-done
-EOF
-    && chmod +x target/release/policycortex-core)
+    (cargo build --release 2>/dev/null || \
+     (echo "Build failed, using mock server" && \
+      mkdir -p target/release && \
+      cp /tmp/mock-server.sh target/release/policycortex-core && \
+      chmod +x target/release/policycortex-core))
 
 # Runtime stage
 FROM alpine:3.19
