@@ -121,7 +121,8 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
         const response = await instance.acquireTokenPopup(apiRequest)
         return response.accessToken
       }
-      throw error
+      // Graceful dev fallback: no token
+      return ''
     }
   }
 

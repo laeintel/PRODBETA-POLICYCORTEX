@@ -1,3 +1,30 @@
+PolicyCortex v2 – Current Edits Summary
+
+1) Core API dev-friendly access and flat metrics
+- `core/src/api/mod.rs::get_metrics` now allows unauthenticated access (OptionalAuthUser) and returns a flat `GovernanceMetrics` object. Fallback simulated metrics returned for unauthenticated dev.
+- Similar OptionalAuthUser handling applied to `get_predictions`, `get_recommendations`, and `get_correlations`.
+- Deep proxy base now reads `DEEP_API_BASE` or `API_GATEWAY_URL`.
+
+2) Core auth config hardened
+- `core/src/auth.rs` no longer defaults to hard-coded tenant/client IDs. If unset, validation errors out (allowing OptionalAuthUser to bypass in dev).
+
+3) Core robustness
+- `core/src/main.rs` no longer panics on bind/serve errors; logs warnings instead.
+
+4) Frontend API client and dashboard
+- `frontend/lib/api.ts` unwraps either flat or `{data: ...}` metrics, fixes default type, and batch getter unwrap.
+- `frontend/components/Dashboard/DashboardGrid.tsx` now uses the typed `api.getUnifiedMetrics()` instead of raw fetch.
+- `frontend/contexts/AuthContext.tsx` returns empty string on non-interactive token failures to avoid breaking dev flows.
+
+5) Next.js rewrites and GraphQL envs
+- `frontend/next.config.js` dynamically targets `backend`/`graphql` in Docker via `IN_DOCKER`.
+- `frontend/lib/apollo-client.ts` accepts `NEXT_PUBLIC_GRAPHQL_ENDPOINT` or `NEXT_PUBLIC_GRAPHQL_URL`.
+
+6) Docker compose alignment
+- `docker-compose.local.yml` frontend envs now use service names, and `DEEP_API_BASE` is passed to core.
+- Added `api-gateway` service (FastAPI) in `docker-compose.local.yml` with `backend/services/api_gateway/Dockerfile`.
+- `docker-compose.yml` sets `NEXT_PUBLIC_GRAPHQL_ENDPOINT` and `IN_DOCKER=true` for production compose.
+
 # PolicyCortex Critical Fixes Implementation Summary
 
 ## Completed Implementations (4 Critical Issues Fixed)

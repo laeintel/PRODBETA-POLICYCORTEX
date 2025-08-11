@@ -22,11 +22,8 @@ pub struct AzureADConfig {
 
 impl AzureADConfig {
     pub fn new() -> Self {
-        let tenant_id = std::env::var("AZURE_TENANT_ID")
-            .unwrap_or_else(|_| "9ef5b184-d371-462a-bc75-5024ce8baff7".to_string());
-
-        let client_id = std::env::var("AZURE_CLIENT_ID")
-            .unwrap_or_else(|_| "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c".to_string());
+        let tenant_id = std::env::var("AZURE_TENANT_ID").unwrap_or_default();
+        let client_id = std::env::var("AZURE_CLIENT_ID").unwrap_or_default();
 
         Self {
             issuer: format!("https://login.microsoftonline.com/{}/v2.0", tenant_id),
@@ -140,6 +137,10 @@ impl TokenValidator {
 
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
+        if self.config.tenant_id.is_empty() || self.config.client_id.is_empty() {
+            // In dev, fail gracefully so callers can opt into OptionalAuthUser
+            return Err(AuthError::InvalidIssuer);
+        }
         // Decode header to get the key ID
         let header = decode_header(token).map_err(|e| {
             error!("Failed to decode JWT header: {}", e);
