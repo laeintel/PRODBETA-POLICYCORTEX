@@ -137,7 +137,8 @@ class PolicyCortexAPI {
         };
       }
     } catch (error) {
-      console.debug('No authentication available:', error);
+      // Local/dev: proceed without auth header
+      console.debug('No authentication available (dev):', error);
     }
     
     return {};

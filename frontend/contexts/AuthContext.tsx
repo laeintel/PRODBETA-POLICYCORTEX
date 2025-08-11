@@ -104,7 +104,8 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
 
   const getAccessToken = async (): Promise<string> => {
     if (!account) {
-      throw new Error('No account found')
+      // Local/dev: return empty string so backend can allow optional auth
+      return ''
     }
 
     const silentRequest: SilentRequest = {
