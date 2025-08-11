@@ -707,6 +707,65 @@ pub async fn export_policies(State(state): State<Arc<AppState>>) -> impl IntoRes
     Json(serde_json::json!({"items": items, "count": items.len()}))
 }
 
+// ===================== Actions Preflight (UI support) =====================
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PreflightChange {
+    pub resource: String,
+    pub additions: u32,
+    pub deletions: u32,
+    pub diff: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PreflightResponse {
+    pub status: String,
+    pub message: String,
+    pub changes: Vec<PreflightChange>,
+    pub validations: Vec<serde_json::Value>,
+}
+
+pub async fn get_action_preflight(Path(_id): Path<String>) -> impl IntoResponse {
+    // Stub preflight with deterministic payload for UI
+    let changes = vec![PreflightChange {
+        resource: "Microsoft.Compute/virtualMachines/vm-prod-001".to_string(),
+        additions: 1,
+        deletions: 0,
+        diff: vec![serde_json::json!({"type":"add","lineNumber":42,"content":"tags.owner = 'FinOps'"})],
+    }];
+    let validations = vec![
+        serde_json::json!({"name":"Policy evaluation","passed":true}),
+        serde_json::json!({"name":"RBAC permission check","passed":true}),
+    ];
+    Json(PreflightResponse {
+        status: "passed".to_string(),
+        message: "Preflight checks passed".to_string(),
+        changes,
+        validations,
+    })
+}
+
+// ===================== Compliance Frameworks =====================
+
+#[derive(Debug, Serialize)]
+pub struct FrameworkInfo { pub id: String, pub name: String, pub version: String, pub controls: usize }
+
+pub async fn list_frameworks() -> impl IntoResponse {
+    Json(vec![
+        FrameworkInfo { id: "cis-azure".into(), name: "CIS Microsoft Azure Foundations Benchmark".into(), version: "1.4".into(), controls: 92 },
+        FrameworkInfo { id: "nist-800-53".into(), name: "NIST SP 800-53".into(), version: "rev5".into(), controls: 110 },
+    ])
+}
+
+pub async fn get_framework(Path(id): Path<String>) -> impl IntoResponse {
+    // Minimal mapping sample
+    let controls = vec![
+        serde_json::json!({"id":"AZ-1","title":"Ensure Storage Accounts have secure transfer required","policyId":"/providers/Microsoft.Authorization/policyDefinitions/secureTransfer"}),
+        serde_json::json!({"id":"AZ-2","title":"Ensure VMs use managed disks","policyId":"/providers/Microsoft.Authorization/policyDefinitions/managedDisks"}),
+    ];
+    Json(serde_json::json!({"id": id, "controls": controls}))
+}
+
 // ===================== Approvals (Phase 1) =====================
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
