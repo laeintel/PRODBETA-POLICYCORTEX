@@ -757,6 +757,25 @@ pub async fn list_frameworks() -> impl IntoResponse {
     ])
 }
 
+// ===================== Policy Drift (GitOps scaffolding) =====================
+
+#[derive(Debug, Serialize)]
+pub struct DriftItem { pub id: String, pub type_name: String, pub expected: serde_json::Value, pub actual: serde_json::Value }
+
+#[derive(Debug, Serialize)]
+pub struct DriftReport { pub drifted: usize, pub items: Vec<DriftItem>, pub generated_at: chrono::DateTime<chrono::Utc> }
+
+pub async fn get_policy_drift() -> impl IntoResponse {
+    // Stub drift report for UI integration; later compare desired (Git) vs. current (Azure)
+    let items = vec![DriftItem{
+        id: "policy:require-tags".into(),
+        type_name: "AzurePolicy".into(),
+        expected: serde_json::json!({"effect":"deny","requiredTags":["Owner","CostCenter"]}),
+        actual: serde_json::json!({"effect":"audit","requiredTags":["Owner"]}),
+    }];
+    Json(DriftReport{ drifted: items.len(), items, generated_at: chrono::Utc::now() })
+}
+
 pub async fn get_framework(Path(id): Path<String>) -> impl IntoResponse {
     // Minimal mapping sample
     let controls = vec![
