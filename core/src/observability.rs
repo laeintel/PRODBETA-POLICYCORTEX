@@ -56,7 +56,7 @@ where
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = S::Future;
+    type Future = ResponseFuture<S::Future>;
 
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
@@ -86,10 +86,51 @@ where
         describe_counter!("http_requests_total", "Total number of HTTP requests.");
         describe_histogram!("http_request_duration_seconds", "HTTP request latencies in seconds.");
         counter!("http_requests_total", 1, "method" => method.to_string(), "path" => path.clone());
-        // Note: we cannot easily record status here without mapping the future; minimal latency recording
-        let _elapsed = start.elapsed();
-        // Not blocking; returning inner future
-        fut
+        ResponseFuture { inner: fut, start, method: method.to_string(), path: path.clone() }
+    }
+}
+
+pub struct ResponseFuture<F> {
+    inner: F,
+    start: Instant,
+    method: String,
+    path: String,
+}
+
+impl<F, ResBody, E> std::future::Future for ResponseFuture<F>
+where
+    F: std::future::Future<Output = Result<axum::http::Response<ResBody>, E>>,
+{
+    type Output = Result<axum::http::Response<ResBody>, E>;
+
+    fn poll(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        let poll = unsafe { std::pin::Pin::new_unchecked(&mut self.as_mut().get_unchecked_mut().inner) }.poll(cx);
+        if let std::task::Poll::Ready(out) = &poll {
+            // Record latency and status if available
+            let elapsed = self.start.elapsed().as_secs_f64();
+            if let Ok(resp) = out {
+                let status = resp.status().as_u16().to_string();
+                histogram!(
+                    "http_request_duration_seconds",
+                    elapsed,
+                    "method" => self.method.clone(),
+                    "path" => self.path.clone(),
+                    "status" => status
+                );
+            } else {
+                histogram!(
+                    "http_request_duration_seconds",
+                    elapsed,
+                    "method" => self.method.clone(),
+                    "path" => self.path.clone(),
+                    "status" => "error".to_string()
+                );
+            }
+        }
+        poll
     }
 }
 
