@@ -47,7 +47,7 @@ use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
     get_metrics, get_network_deep, get_policies, get_policies_deep, get_predictions, get_rbac_deep,
     get_recommendations, get_resources, get_resources_deep, process_conversation, remediate,
-    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status, export_prometheus, reload_secrets, get_evidence_pack, export_policies, get_action_preflight, list_frameworks, get_framework,
+    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status, export_prometheus, reload_secrets, get_evidence_pack, export_policies, get_action_preflight, list_frameworks, get_framework, get_policy_drift,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -218,6 +218,7 @@ async fn main() {
         .route("/api/v1/evidence", get(get_evidence_pack))
         .route("/api/v1/frameworks", get(list_frameworks))
         .route("/api/v1/frameworks/:id", get(get_framework))
+        .route("/api/v1/policies/drift", get(get_policy_drift))
         // Global SSE events stream
         .route("/api/v1/events", get(stream_events))
         // Legacy endpoints for compatibility
