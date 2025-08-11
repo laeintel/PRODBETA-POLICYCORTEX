@@ -116,17 +116,17 @@ class PolicyCortexAPI {
     try {
       // If we have MSAL context, get the access token
       const { PublicClientApplication } = await import('@azure/msal-browser');
-      const { msalConfig } = await import('./auth-config');
+      const { msalConfig, coreApiRequest, azureManagementRequest } = await import('./auth-config');
       
       const msalInstance = new PublicClientApplication(msalConfig);
       await msalInstance.initialize();
       const accounts = msalInstance.getAllAccounts();
       
       if (accounts.length > 0) {
-        const tokenResponse = await msalInstance.acquireTokenSilent({
-          scopes: ['https://management.azure.com/user_impersonation'],
-          account: accounts[0]
-        });
+        // Prefer core API scope if configured; fall back to Azure Management
+        const request = (coreApiRequest || azureManagementRequest) as any;
+        request.account = accounts[0];
+        const tokenResponse = await msalInstance.acquireTokenSilent(request);
         const tenantId = (accounts[0] as any)?.idTokenClaims?.tid as string | undefined
           || (typeof process !== 'undefined' ? (process as any).env?.NEXT_PUBLIC_AZURE_TENANT_ID : undefined)
           || (typeof window !== 'undefined' ? window.localStorage.getItem('tenantId') || undefined : undefined);

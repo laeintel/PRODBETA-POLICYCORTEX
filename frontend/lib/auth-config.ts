@@ -14,6 +14,9 @@ const redirectUri = typeof window !== 'undefined'
 const postLogoutRedirectUri = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI || window.location.origin)
   : undefined
+// Optional: strict audience scope for Core API
+export const coreApiScope = process.env.NEXT_PUBLIC_CORE_API_SCOPE
+  || (clientId ? `api://${clientId}/access_as_user` : '')
 
 // In local/dev without Azure config, we allow running without MSAL blocking the UI
 if (typeof window !== 'undefined' && (!clientId || !tenantId)) {
@@ -75,6 +78,11 @@ export const azureManagementRequest = {
     'https://management.azure.com/user_impersonation'
   ]
 }
+
+// Core API request (strict audience) – only if scope configured
+export const coreApiRequest = coreApiScope
+  ? { scopes: [coreApiScope] }
+  : null as any
 
 // Microsoft Graph API request (separate from Azure Management)
 export const graphApiRequest = {
