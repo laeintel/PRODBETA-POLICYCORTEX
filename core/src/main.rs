@@ -45,7 +45,7 @@ use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
     get_metrics, get_network_deep, get_policies, get_policies_deep, get_predictions, get_rbac_deep,
     get_recommendations, get_resources, get_resources_deep, process_conversation, remediate,
-    stream_action_events, AppState,
+    stream_action_events, stream_events, AppState,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -174,6 +174,8 @@ async fn main() {
         .route("/api/v1/actions", post(create_action))
         .route("/api/v1/actions/:id", get(get_action))
         .route("/api/v1/actions/:id/events", get(stream_action_events))
+        // Global SSE events stream
+        .route("/api/v1/events", get(stream_events))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         .layer(ServiceBuilder::new().layer(cors))

@@ -1195,3 +1195,33 @@ pub async fn stream_action_events(
             .into_response()
     }
 }
+
+// Global SSE stream for lightweight real-time updates (heartbeat + metric snapshots)
+pub async fn stream_events(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let stream = async_stream::stream! {
+        // Send initial hello
+        let hello = serde_json::json!({
+            "type": "connected",
+            "timestamp": chrono::Utc::now(),
+        });
+        yield Ok::<Event, std::convert::Infallible>(Event::default().data(hello.to_string()));
+
+        // Periodic updates
+        loop {
+            // Snapshot a small subset of metrics to keep payload small
+            let metrics = state.metrics.read().await.clone();
+            let snapshot = serde_json::json!({
+                "type": "metric_update",
+                "timestamp": chrono::Utc::now(),
+                "data": {
+                    "policies": { "total": metrics.policies.total, "violations": metrics.policies.violations, "compliance_rate": metrics.policies.compliance_rate },
+                    "costs": { "current_spend": metrics.costs.current_spend, "savings_identified": metrics.costs.savings_identified },
+                    "security": { "risk_score": metrics.rbac.risk_score, "anomalies_detected": metrics.rbac.anomalies_detected }
+                }
+            });
+            yield Ok::<Event, std::convert::Infallible>(Event::default().data(snapshot.to_string()));
+            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+        }
+    };
+    Sse::new(stream).into_response()
+}
