@@ -18,6 +18,7 @@ import {
 import PoliciesDeepView from './PoliciesDeepView'
 import AppLayout from './AppLayout'
 import { ChartCard, ComplianceTrend, CostTrend, RiskSurface } from './ChartCards'
+import RoadmapStatusWidget from './RoadmapStatusWidget'
 import { 
   Shield, 
   AlertCircle, 
@@ -394,6 +395,11 @@ export default function DashboardContent() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Roadmap Status */}
+            <div className="mt-6">
+              <RoadmapStatusWidget />
+            </div>
           </>
         ) : (
           /* Module-specific view */

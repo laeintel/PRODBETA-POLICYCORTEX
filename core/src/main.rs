@@ -47,7 +47,7 @@ use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
     get_metrics, get_network_deep, get_policies, get_policies_deep, get_predictions, get_rbac_deep,
     get_recommendations, get_resources, get_resources_deep, process_conversation, remediate,
-    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status, export_prometheus, reload_secrets, get_evidence_pack, export_policies, get_action_preflight, list_frameworks, get_framework, get_policy_drift,
+    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status, export_prometheus, reload_secrets, get_evidence_pack, export_policies, get_action_preflight, list_frameworks, get_framework, get_policy_drift, get_roadmap_status,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -185,6 +185,7 @@ async fn main() {
         .route("/api/v1/health", get(health_check))
         .route("/api/v1/config", get(get_config))
         .route("/api/v1/secrets/status", get(get_secrets_status))
+        .route("/api/v1/roadmap", get(get_roadmap_status))
         .route("/metrics", get(export_prometheus))
         .route("/api/v1/secrets/reload", post(reload_secrets))
         // Patent 1: Unified AI Platform endpoints
