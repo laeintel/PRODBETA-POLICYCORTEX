@@ -158,6 +158,12 @@ impl TokenValidator {
 
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
+        // Dev shortcut: allow HS256 tokens signed with JWT_HS256_SECRET if present
+        if std::env::var("JWT_HS256_SECRET").ok().filter(|v| !v.is_empty()).is_some() {
+            if let Ok(claims) = Self::validate_hs256(token).await {
+                return Ok(claims);
+            }
+        }
         // Optionally enforce strict audience based on app config
         let require_strict_aud = std::env::var("REQUIRE_STRICT_AUDIENCE")
             .map(|v| v == "true" || v == "1")
@@ -270,6 +276,23 @@ impl TokenValidator {
             required_scopes, claims.scp, claims.roles
         );
         false
+    }
+
+    async fn validate_hs256(token: &str) -> Result<Claims, AuthError> {
+        let secret = std::env::var("JWT_HS256_SECRET").map_err(|_| AuthError::InvalidToken)?;
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.validate_exp = true;
+        // Relax audience in dev unless strict requested
+        if !matches!(std::env::var("REQUIRE_STRICT_AUDIENCE").as_deref(), Ok("true") | Ok("1")) {
+            validation.validate_aud = false;
+        }
+        jsonwebtoken::decode::<Claims>(
+            token,
+            &DecodingKey::from_secret(secret.as_bytes()),
+            &validation,
+        )
+        .map(|d| d.claims)
+        .map_err(|_| AuthError::InvalidToken)
     }
 }
 
