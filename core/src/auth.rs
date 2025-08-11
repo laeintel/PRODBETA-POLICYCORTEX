@@ -18,12 +18,14 @@ pub struct AzureADConfig {
     pub client_id: String,
     pub issuer: String,
     pub jwks_uri: String,
+    pub allow_any_audience: bool,
 }
 
 impl AzureADConfig {
     pub fn new() -> Self {
         let tenant_id = std::env::var("AZURE_TENANT_ID").unwrap_or_default();
         let client_id = std::env::var("AZURE_CLIENT_ID").unwrap_or_default();
+        let allow_any_audience = std::env::var("ALLOW_ANY_AUDIENCE").map(|v| v == "true").unwrap_or(false);
 
         Self {
             issuer: format!("https://login.microsoftonline.com/{}/v2.0", tenant_id),
@@ -33,6 +35,7 @@ impl AzureADConfig {
             ),
             tenant_id,
             client_id,
+            allow_any_audience,
         }
     }
 }
@@ -121,6 +124,22 @@ impl TokenValidator {
         Ok(self.jwks_cache.as_ref().unwrap())
     }
 
+    async fn fetch_jwks_for_issuer(&mut self, issuer: &str) -> Result<&JwksResponse, AuthError> {
+        // issuer like https://login.microsoftonline.com/{tenant}/v2.0
+        let jwks_uri = issuer.replace("/v2.0", "/discovery/v2.0/keys");
+        debug!("Fetching JWKS for issuer: {}", jwks_uri);
+        let response = self.client.get(&jwks_uri).send().await.map_err(|e| {
+            error!("Failed to fetch JWKS: {}", e);
+            AuthError::JwksFetchError
+        })?;
+        let jwks: JwksResponse = response.json().await.map_err(|e| {
+            error!("Failed to parse JWKS response: {}", e);
+            AuthError::JwksParseError
+        })?;
+        self.jwks_cache = Some(jwks);
+        Ok(self.jwks_cache.as_ref().unwrap())
+    }
+
     // Find the appropriate key for token validation
     fn find_key<'a>(&self, kid: &str, jwks: &'a JwksResponse) -> Option<&'a Jwk> {
         jwks.keys.iter().find(|key| key.kid == kid)
@@ -137,10 +156,6 @@ impl TokenValidator {
 
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
-        if self.config.tenant_id.is_empty() || self.config.client_id.is_empty() {
-            // In dev, fail gracefully so callers can opt into OptionalAuthUser
-            return Err(AuthError::InvalidIssuer);
-        }
         // Decode header to get the key ID
         let header = decode_header(token).map_err(|e| {
             error!("Failed to decode JWT header: {}", e);
@@ -152,8 +167,28 @@ impl TokenValidator {
             AuthError::InvalidToken
         })?;
 
-        // Fetch JWKS
-        let jwks = self.fetch_jwks().await?;
+        // Determine issuer/tenant dynamically when not configured
+        let mut issuer = self.config.issuer.clone();
+        let mut client_id = self.config.client_id.clone();
+        if self.config.tenant_id.is_empty() || self.config.client_id.is_empty() {
+            if let Ok(unverified) = jsonwebtoken::dangerous_insecure_decode::<Claims>(token) {
+                issuer = unverified.claims.iss.clone();
+                // Accept audience present in token when client_id not configured
+                if client_id.is_empty() {
+                    client_id = unverified.claims.aud.clone();
+                }
+            } else {
+                error!("Failed to decode token claims to determine issuer");
+                return Err(AuthError::InvalidIssuer);
+            }
+        }
+
+        // Fetch JWKS for issuer
+        let jwks = if issuer == self.config.issuer {
+            self.fetch_jwks().await?
+        } else {
+            self.fetch_jwks_for_issuer(&issuer).await?
+        };
 
         // Find the appropriate key
         let jwk = jwks.keys.iter().find(|key| key.kid == kid).ok_or_else(|| {
@@ -166,8 +201,12 @@ impl TokenValidator {
 
         // Setup validation parameters
         let mut validation = Validation::new(Algorithm::RS256);
-        validation.set_audience(&[&self.config.client_id]);
-        validation.set_issuer(&[&self.config.issuer]);
+        if !self.config.allow_any_audience && !client_id.is_empty() {
+            validation.set_audience(&[&client_id]);
+        } else {
+            validation.validate_aud = false;
+        }
+        validation.set_issuer(&[&issuer]);
         validation.validate_exp = true;
         validation.validate_nbf = true;
 
