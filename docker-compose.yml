@@ -141,6 +141,7 @@ services:
       - NEXT_PUBLIC_AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
       - NEXT_PUBLIC_MSAL_REDIRECT_URI=https://policycortex.com
       - NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI=https://policycortex.com
+      - NEXT_PUBLIC_CORE_API_SCOPE=api://1ecc95d1-e5bb-43e2-9324-30a17cb6b01c/access_as_user
       - BACKEND_SERVICE_NAME=backend
       - IN_DOCKER=true
       - NODE_ENV=production
