@@ -234,6 +234,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./core
+          file: ./core/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY_DEV }}/policycortex-core:${{ env.IMAGE_TAG }}
@@ -309,6 +310,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./graphql
+          file: ./graphql/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY_DEV }}/policycortex-graphql:${{ env.IMAGE_TAG }}

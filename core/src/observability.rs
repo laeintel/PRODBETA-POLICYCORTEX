@@ -3,8 +3,8 @@ use opentelemetry::{
     global,
     trace::{TraceError, Tracer, TracerProvider},
 };
-use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::propagation::TraceContextPropagator;
 use prometheus::{Counter, Encoder, Gauge, Histogram, HistogramOpts, Registry, TextEncoder};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
