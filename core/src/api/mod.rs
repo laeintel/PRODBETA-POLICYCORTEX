@@ -178,6 +178,7 @@ pub struct AppState {
     // Phase 2 action orchestrator (in-memory)
     pub actions: Arc<RwLock<std::collections::HashMap<String, ActionRecord>>>,
     pub action_events: Arc<RwLock<std::collections::HashMap<String, broadcast::Sender<String>>>>,
+    pub config: crate::config::AppConfig,
 }
 
 impl AppState {
@@ -273,6 +274,7 @@ impl AppState {
             async_azure_client: None, // Will be initialized in main
             actions: Arc::new(RwLock::new(std::collections::HashMap::new())),
             action_events: Arc::new(RwLock::new(std::collections::HashMap::new())),
+            config: crate::config::AppConfig::load(),
         }
     }
 }

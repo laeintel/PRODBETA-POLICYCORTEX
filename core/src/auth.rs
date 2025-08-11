@@ -158,6 +158,10 @@ impl TokenValidator {
 
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
+        // Optionally enforce strict audience based on app config
+        let require_strict_aud = std::env::var("REQUIRE_STRICT_AUDIENCE")
+            .map(|v| v == "true" || v == "1")
+            .unwrap_or(false);
         // Decode header to get the key ID
         let header = decode_header(token).map_err(|e| {
             error!("Failed to decode JWT header: {}", e);
@@ -203,7 +207,7 @@ impl TokenValidator {
 
         // Setup validation parameters
         let mut validation = Validation::new(Algorithm::RS256);
-        if !self.config.allow_any_audience && !client_id.is_empty() {
+        if (require_strict_aud || !self.config.allow_any_audience) && !client_id.is_empty() {
             validation.set_audience(&[&client_id]);
         } else {
             validation.validate_aud = false;
