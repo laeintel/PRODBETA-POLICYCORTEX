@@ -17,6 +17,8 @@ use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBud
 use metrics_exporter_prometheus::PrometheusHandle;
 use crate::secrets::SecretsManager;
 use metrics::counter;
+use flate2::{write::GzEncoder, Compression};
+use tar::Builder as TarBuilder;
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -693,16 +695,48 @@ pub async fn reload_secrets(State(state): State<Arc<AppState>>) -> impl IntoResp
 
 // Evidence pack and policy export stubs
 pub async fn get_evidence_pack() -> impl IntoResponse {
-    Json(serde_json::json!({
-        "framework": "CIS Azure",
-        "version": "1.4",
-        "generated_at": chrono::Utc::now(),
-        "artifacts": [
-            {"name": "policy_snapshot.json", "size": 10240},
-            {"name": "rbac_assignments.csv", "size": 4096},
-            {"name": "cost_anomalies.csv", "size": 2048}
-        ]
-    }))
+    // Build a small tar.gz evidence pack on the fly with sample artifacts
+    let mut buf = Vec::new();
+    let enc = GzEncoder::new(&mut buf, Compression::default());
+    let mut tar = TarBuilder::new(enc);
+    let now = chrono::Utc::now().to_rfc3339();
+
+    // policy_snapshot.json
+    let policy = serde_json::json!({"snapshot_at": now, "items": [{"id":"require-tags","status":"noncompliant","count":58}]});
+    let policy_bytes = serde_json::to_vec_pretty(&policy).unwrap();
+    let mut header = tar::Header::new_gnu();
+    header.set_size(policy_bytes.len() as u64);
+    header.set_mode(0o644);
+    header.set_mtime(chrono::Utc::now().timestamp() as u64);
+    header.set_cksum();
+    tar.append_data(&mut header, "policy_snapshot.json", &policy_bytes[..]).unwrap();
+
+    // rbac_assignments.csv
+    let rbac_csv = b"principal,role,scope\nuser@contoso.com,Owner,/subscriptions/xxx\n";
+    let mut header2 = tar::Header::new_gnu();
+    header2.set_size(rbac_csv.len() as u64);
+    header2.set_mode(0o644);
+    header2.set_mtime(chrono::Utc::now().timestamp() as u64);
+    header2.set_cksum();
+    tar.append_data(&mut header2, "rbac_assignments.csv", &rbac_csv[..]).unwrap();
+
+    // cost_anomalies.csv
+    let cost_csv = b"service,anomaly_usd,date\nStorage,2450.13,2025-08-01\n";
+    let mut header3 = tar::Header::new_gnu();
+    header3.set_size(cost_csv.len() as u64);
+    header3.set_mode(0o644);
+    header3.set_mtime(chrono::Utc::now().timestamp() as u64);
+    header3.set_cksum();
+    tar.append_data(&mut header3, "cost_anomalies.csv", &cost_csv[..]).unwrap();
+
+    tar.finish().unwrap();
+    let enc = tar.into_inner().unwrap();
+    let body = enc.finish().unwrap();
+    (
+        StatusCode::OK,
+        [(axum::http::header::CONTENT_TYPE, "application/gzip"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=evidence.tar.gz")],
+        body,
+    )
 }
 
 pub async fn export_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
