@@ -6,16 +6,23 @@ on:
   pull_request:
     types: [opened, ready_for_review, closed]
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  projects: write
+
 jobs:
   add-to-project:
     name: Add to project
     runs-on: ubuntu-latest
     steps:
       - name: Add to project
-        uses: actions/add-to-project@v0.5.0
+        uses: actions/add-to-project@v0.6.1
         with:
           project-url: https://github.com/orgs/laeintel/projects/1
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Prefer a fine-grained PAT with Projects: Read/Write on the org project
+          github-token: ${{ secrets.PROJECTS_TOKEN || secrets.GITHUB_TOKEN }}
           
   label-issues:
     name: Auto-label issues
@@ -35,5 +42,5 @@ jobs:
     steps:
       - name: Assign PR to author
         uses: technote-space/assign-author@v1
-        with:
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
