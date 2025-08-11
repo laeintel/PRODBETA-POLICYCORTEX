@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { api } from '@/lib/api'
 import { KPITile } from './KPITile';
 import { ActionDrawer } from '../ActionDrawer/ActionDrawer';
 import { useGovernanceStore } from '@/store/governanceStore';
@@ -91,12 +92,8 @@ export function DashboardGrid() {
 
   const fetchDashboardMetrics = async () => {
     try {
-      const response = await fetch('/api/v1/metrics');
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const data = await response.json();
-      setMetrics(data);
+      const data = await api.getUnifiedMetrics();
+      setMetrics(data as any);
       setIsUsingFallback(false);
     } catch (error) {
       console.error('Failed to fetch dashboard metrics:', error);

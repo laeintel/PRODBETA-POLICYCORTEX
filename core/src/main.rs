@@ -182,6 +182,14 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     info!("PolicyCortex Core API listening on {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = match tokio::net::TcpListener::bind(addr).await {
+        Ok(l) => l,
+        Err(e) => {
+            warn!("Failed to bind {}: {}", addr, e);
+            return;
+        }
+    };
+    if let Err(e) = axum::serve(listener, app).await {
+        warn!("Server exited with error: {}", e);
+    }
 }

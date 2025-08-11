@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000",
+    "start": "IN_DOCKER=${IN_DOCKER:-false} next start -p 3000",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "echo \"Warning: No tests configured yet\" && exit 0",

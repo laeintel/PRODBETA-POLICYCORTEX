@@ -7,28 +7,15 @@ const nextConfig = {
     domains: ['localhost'],
   },
   async rewrites() {
+    const isDocker = process.env.IN_DOCKER === 'true' || process.env.DOCKER === 'true';
+    const backendHost = isDocker ? 'http://backend:8080' : 'http://localhost:8080';
+    const graphqlHost = isDocker ? 'http://graphql:4000' : 'http://localhost:4000';
     return [
-      // Route all API v1 calls to the Rust API
-      {
-        source: '/api/v1/:path*',
-        destination: 'http://localhost:8080/api/v1/:path*',
-      },
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:8080/api/:path*',
-      },
-      {
-        source: '/actions/:path*',
-        destination: 'http://localhost:8080/api/v1/actions/:path*',
-      },
-      {
-        source: '/api/deep/:path*',
-        destination: 'http://localhost:8080/api/v1/:path*',
-      },
-      {
-        source: '/graphql',
-        destination: 'http://localhost:4000/graphql',
-      },
+      { source: '/api/v1/:path*', destination: `${backendHost}/api/v1/:path*` },
+      { source: '/api/:path*', destination: `${backendHost}/api/:path*` },
+      { source: '/actions/:path*', destination: `${backendHost}/api/v1/actions/:path*` },
+      { source: '/api/deep/:path*', destination: `${backendHost}/api/v1/:path*` },
+      { source: '/graphql', destination: `${graphqlHost}/graphql` },
     ];
   },
   webpack: (config, { isServer }) => {

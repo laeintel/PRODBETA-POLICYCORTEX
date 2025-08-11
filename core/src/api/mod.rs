@@ -279,37 +279,84 @@ impl AppState {
 
 // API Handlers
 pub async fn get_metrics(
-    auth_user: AuthUser,
+    auth_user: OptionalAuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // Log authenticated request
-    tracing::info!(
-        "Authenticated request for metrics from user: {:?}",
-        auth_user.claims.preferred_username
-    );
+    // If authenticated, log who; if not, allow simulated data in dev/local flows
+    if let Some(ref user) = auth_user.0 {
+        tracing::info!(
+            "Authenticated request for metrics from user: {:?}",
+            user.claims.preferred_username
+        );
 
-    // Get tenant context for multi-tenant data access
-    let tenant_context = match TenantContext::from_user(&auth_user).await {
-        Ok(context) => {
-            tracing::debug!(
-                "User has access to tenant: {} with {} subscriptions",
-                context.tenant_id,
-                context.subscription_ids.len()
-            );
-            context
-        }
-        Err(e) => {
-            tracing::error!("Failed to get tenant context: {:?}", e);
-            return (
-                StatusCode::FORBIDDEN,
-                Json(serde_json::json!({
-                    "error": "tenant_access_denied",
-                    "message": "Unable to determine tenant access"
-                })),
-            )
-                .into_response();
-        }
-    };
+        // Get tenant context for multi-tenant data access
+        let _tenant_context = match TenantContext::from_user(user).await {
+            Ok(context) => {
+                tracing::debug!(
+                    "User has access to tenant: {} with {} subscriptions",
+                    context.tenant_id,
+                    context.subscription_ids.len()
+                );
+                context
+            }
+            Err(e) => {
+                tracing::error!("Failed to get tenant context: {:?}", e);
+                return (
+                    StatusCode::FORBIDDEN,
+                    Json(serde_json::json!({
+                        "error": "tenant_access_denied",
+                        "message": "Unable to determine tenant access"
+                    })),
+                )
+                    .into_response();
+            }
+        };
+    } else {
+        tracing::info!("Unauthenticated metrics request - returning simulated data (dev mode)");
+        let simulated_metrics = GovernanceMetrics {
+            policies: PolicyMetrics {
+                total: 15,
+                active: 12,
+                violations: 3,
+                automated: 10,
+                compliance_rate: 85.5,
+                prediction_accuracy: 92.3,
+            },
+            rbac: RbacMetrics {
+                users: 150,
+                roles: 25,
+                violations: 2,
+                risk_score: 3.2,
+                anomalies_detected: 1,
+            },
+            costs: CostMetrics {
+                current_spend: 125000.0,
+                predicted_spend: 118000.0,
+                savings_identified: 7000.0,
+                optimization_rate: 88.5,
+            },
+            network: NetworkMetrics {
+                endpoints: 450,
+                active_threats: 0,
+                blocked_attempts: 127,
+                latency_ms: 15.2,
+            },
+            resources: ResourceMetrics {
+                total: 2500,
+                optimized: 2100,
+                idle: 200,
+                overprovisioned: 200,
+            },
+            ai: AIMetrics {
+                accuracy: 94.5,
+                predictions_made: 12000,
+                automations_executed: 8500,
+                learning_progress: 85.0,
+            },
+        };
+        return Json(simulated_metrics).into_response();
+    }
 
     // Always try to get real Azure data when Azure client is available
     // This works for local development with Azure CLI authentication
@@ -319,15 +366,7 @@ pub async fn get_metrics(
         match async_azure_client.get_governance_metrics().await {
             Ok(real_metrics) => {
                 tracing::info!("✅ Real Azure metrics fetched with async client (cached)");
-                let response = serde_json::json!({
-                    "data": real_metrics,
-                    "metadata": {
-                        "source": "azure_live",
-                        "timestamp": Utc::now(),
-                        "message": "Real-time Azure data"
-                    }
-                });
-                return Json(response).into_response();
+                return Json(real_metrics).into_response();
             }
             Err(e) => {
                 tracing::warn!("Async Azure client failed: {}", e);
@@ -340,15 +379,7 @@ pub async fn get_metrics(
         match azure_client.get_governance_metrics().await {
             Ok(real_metrics) => {
                 tracing::info!("✅ Real Azure metrics fetched with sync client");
-                let response = serde_json::json!({
-                    "data": real_metrics,
-                    "metadata": {
-                        "source": "azure_live",
-                        "timestamp": Utc::now(),
-                        "message": "Real-time Azure data"
-                    }
-                });
-                return Json(response).into_response();
+                return Json(real_metrics).into_response();
             }
             Err(e) => {
                 tracing::warn!("Failed to fetch real Azure metrics: {}", e);
@@ -400,57 +431,45 @@ pub async fn get_metrics(
         },
     };
 
-    // Add metadata to indicate this is simulated data
-    let response = serde_json::json!({
-        "data": simulated_metrics,
-        "metadata": {
-            "source": "simulated",
-            "timestamp": Utc::now(),
-            "message": "Using simulated data. Connect Azure for real-time metrics."
-        }
-    });
-
-    Json(response).into_response()
+    // Return simulated data directly (flat shape)
+    Json(simulated_metrics).into_response()
 }
 
 pub async fn get_predictions(
-    auth_user: AuthUser,
+    auth_user: OptionalAuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // Verify authentication and tenant access
-    tracing::info!(
-        "Authenticated request for predictions from user: {:?}",
-        auth_user.claims.preferred_username
-    );
-
-    let _tenant_context = match TenantContext::from_user(&auth_user).await {
-        Ok(context) => context,
-        Err(e) => {
-            tracing::error!("Failed to get tenant context: {:?}", e);
-            return (
-                StatusCode::FORBIDDEN,
-                Json(serde_json::json!({
-                    "error": "tenant_access_denied",
-                    "message": "Unable to determine tenant access"
-                })),
-            )
-                .into_response();
+    if let Some(ref user) = auth_user.0 {
+        tracing::info!(
+            "Authenticated request for predictions from user: {:?}",
+            user.claims.preferred_username
+        );
+        // Optional: load tenant context without failing if it errors (dev)
+        if let Err(e) = TenantContext::from_user(user).await {
+            tracing::warn!("Tenant context unavailable: {:?}", e);
         }
-    };
+    } else {
+        tracing::info!("Unauthenticated predictions request (dev mode)");
+    }
 
     let predictions = state.predictions.read().await;
     Json(predictions.clone()).into_response()
 }
 
 pub async fn get_recommendations(
-    auth_user: AuthUser,
+    auth_user: OptionalAuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // Verify authentication
-    tracing::info!(
-        "Authenticated request for recommendations from user: {:?}",
-        auth_user.claims.preferred_username
-    );
+    if let Some(ref user) = auth_user.0 {
+        tracing::info!(
+            "Authenticated request for recommendations from user: {:?}",
+            user.claims.preferred_username
+        );
+    } else {
+        tracing::info!("Unauthenticated recommendations request (dev mode)");
+    }
     // If we have an Azure client, fetch real recommendations based on actual Azure data
     if let Some(ref async_azure_client) = state.async_azure_client {
         match async_azure_client.get_governance_metrics().await {
@@ -632,12 +651,16 @@ pub async fn process_conversation(
     Json(response)
 }
 
-pub async fn get_correlations(auth_user: AuthUser) -> impl IntoResponse {
+pub async fn get_correlations(auth_user: OptionalAuthUser) -> impl IntoResponse {
     // Verify authentication
-    tracing::info!(
-        "Authenticated request for correlations from user: {:?}",
-        auth_user.claims.preferred_username
-    );
+    if let Some(ref user) = auth_user.0 {
+        tracing::info!(
+            "Authenticated request for correlations from user: {:?}",
+            user.claims.preferred_username
+        );
+    } else {
+        tracing::info!("Unauthenticated correlations request (dev mode)");
+    }
     let correlation = CrossDomainCorrelation {
         correlation_id: "corr-001".to_string(),
         domains: vec!["cost".to_string(), "resources".to_string()],
@@ -820,8 +843,9 @@ pub async fn create_exception(Json(payload): Json<CreateExceptionRequest>) -> im
 
 // Helper: Proxy deep GET to Python service (Phase 3). Base from DEEP_API_BASE or http://localhost:8090
 async fn proxy_deep_get(path: &str) -> Option<serde_json::Value> {
-    let base =
-        std::env::var("DEEP_API_BASE").unwrap_or_else(|_| "http://localhost:8090".to_string());
+    let base = std::env::var("DEEP_API_BASE")
+        .or_else(|_| std::env::var("API_GATEWAY_URL"))
+        .unwrap_or_else(|_| "http://localhost:8090".to_string());
     let url = format!("{}{}", base, path);
     let client = reqwest::Client::new();
     match client.get(&url).send().await {

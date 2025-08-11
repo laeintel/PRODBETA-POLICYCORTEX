@@ -134,7 +134,8 @@ services:
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8080
-      - NEXT_PUBLIC_GRAPHQL_URL=http://graphql:4000
+      - NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://graphql:4000/graphql
+      - IN_DOCKER=true
       - NODE_ENV=production
     ports:
       - "3005:3000"

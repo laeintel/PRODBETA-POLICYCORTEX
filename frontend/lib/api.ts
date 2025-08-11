@@ -145,7 +145,9 @@ class PolicyCortexAPI {
 
   // Patent 1: Unified AI Platform - Hot cached for real-time governance
   async getUnifiedMetrics(): Promise<GovernanceMetrics> {
-    return performanceApi.get('/api/v1/metrics', { cache: 'hot', ttl: 30000, headers: await this.getAuthHeaders() });
+    const res = await performanceApi.get<any>('/api/v1/metrics', { cache: 'hot', ttl: 30000, headers: await this.getAuthHeaders() });
+    // Accept either flat object or { data: {...} }
+    return (res?.data ?? res) as GovernanceMetrics;
   }
 
   // Patent 2: Predictive Compliance - Warm cached for frequent access
@@ -257,16 +259,17 @@ class PolicyCortexAPI {
     }
 
     const defaultMetrics: GovernanceMetrics = {
-      policies: { total: 0, active: 0, violations: 0, automated: 0 as any, compliance_rate: 0, prediction_accuracy: 0 },
+      policies: { total: 0, active: 0, violations: 0, automated: 0, compliance_rate: 0, prediction_accuracy: 0 },
       rbac: { users: 0, roles: 0, violations: 0, risk_score: 0, anomalies_detected: 0 },
       costs: { current_spend: 0, predicted_spend: 0, savings_identified: 0, optimization_rate: 0 },
       network: { endpoints: 0, active_threats: 0, blocked_attempts: 0, latency_ms: 0 },
       resources: { total: 0, optimized: 0, idle: 0, overprovisioned: 0 },
       ai: { accuracy: 0, predictions_made: 0, automations_executed: 0, learning_progress: 0 }
-    } as unknown as GovernanceMetrics;
+    } as GovernanceMetrics;
 
+    const metricsPayload = results[0] instanceof Error ? defaultMetrics : results[0];
     return {
-      metrics: results[0] instanceof Error ? defaultMetrics : (results[0] as GovernanceMetrics),
+      metrics: (metricsPayload as any)?.data ?? (metricsPayload as GovernanceMetrics),
       recommendations: results[1] instanceof Error ? [] : ((results[1] as any)?.recommendations || results[1] || []),
       correlations: results[2] instanceof Error ? [] : results[2] as CrossDomainCorrelation[],
       predictions: results[3] instanceof Error ? [] : results[3] as any[]
