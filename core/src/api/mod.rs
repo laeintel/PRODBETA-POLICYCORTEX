@@ -14,6 +14,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
+use metrics_exporter_prometheus::PrometheusHandle;
 use crate::secrets::SecretsManager;
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
@@ -184,6 +185,7 @@ pub struct AppState {
     pub approvals: Arc<RwLock<std::collections::HashMap<String, ApprovalRequest>>>,
     pub slo_manager: SLOManager,
     pub secrets: Option<SecretsManager>,
+    pub prometheus: Option<PrometheusHandle>,
 }
 
 impl AppState {
@@ -283,6 +285,7 @@ impl AppState {
             approvals: Arc::new(RwLock::new(std::collections::HashMap::new())),
             slo_manager: SLOManager::new(),
             secrets: None,
+            prometheus: None,
         }
     }
 }
@@ -651,6 +654,57 @@ pub async fn get_secrets_status(State(state): State<Arc<AppState>>) -> impl Into
         Json(serde_json::json!({"error": "secrets manager unavailable"})),
     )
         .into_response()
+}
+
+pub async fn export_prometheus(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(ref h) = state.prometheus {
+        let body = h.render();
+        return (
+            StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "text/plain; version=0.0.4")],
+            body,
+        )
+            .into_response();
+    }
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(serde_json::json!({"error": "prometheus not initialized"})),
+    )
+        .into_response()
+}
+
+// Secrets cache control
+pub async fn reload_secrets(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(ref sm) = state.secrets {
+        sm.clear_cache().await;
+        return Json(serde_json::json!({"success": true}));
+    }
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(serde_json::json!({"error": "secrets manager unavailable"})),
+    )
+        .into_response()
+}
+
+// Evidence pack and policy export stubs
+pub async fn get_evidence_pack() -> impl IntoResponse {
+    Json(serde_json::json!({
+        "framework": "CIS Azure",
+        "version": "1.4",
+        "generated_at": chrono::Utc::now(),
+        "artifacts": [
+            {"name": "policy_snapshot.json", "size": 10240},
+            {"name": "rbac_assignments.csv", "size": 4096},
+            {"name": "cost_anomalies.csv", "size": 2048}
+        ]
+    }))
+}
+
+pub async fn export_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // For now, return the same simulated policies used in get_policies
+    use crate::simulated_data::SimulatedDataProvider;
+    let items = SimulatedDataProvider::get_policies();
+    Json(serde_json::json!({"items": items, "count": items.len()}))
 }
 
 // ===================== Approvals (Phase 1) =====================

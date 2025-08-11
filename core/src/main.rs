@@ -47,7 +47,7 @@ use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
     get_metrics, get_network_deep, get_policies, get_policies_deep, get_predictions, get_rbac_deep,
     get_recommendations, get_resources, get_resources_deep, process_conversation, remediate,
-    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status,
+    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status, export_prometheus, reload_secrets, get_evidence_pack, export_policies,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -140,6 +140,7 @@ async fn main() {
             None
         }
     };
+    app_state.prometheus = Some(recorder);
     let app_state = Arc::new(app_state);
 
     // Configure CORS
@@ -156,6 +157,11 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
+    // Initialize Prometheus exporter (in-memory handle)
+    let recorder = metrics_exporter_prometheus::PrometheusBuilder::new()
+        .install_recorder()
+        .expect("failed to install Prometheus recorder");
+
     // Build the application router
     let app = Router::new()
         // Health check
@@ -163,6 +169,8 @@ async fn main() {
         .route("/api/v1/health", get(health_check))
         .route("/api/v1/config", get(get_config))
         .route("/api/v1/secrets/status", get(get_secrets_status))
+        .route("/metrics", get(export_prometheus))
+        .route("/api/v1/secrets/reload", post(reload_secrets))
         // Patent 1: Unified AI Platform endpoints
         .route("/api/v1/metrics", get(get_metrics))
         .route("/api/v1/governance/unified", get(get_metrics))
@@ -205,6 +213,8 @@ async fn main() {
         .route("/api/v1/approvals/:id", post(approve_request))
         // Policy-as-code generate
         .route("/api/v1/policies/generate", post(generate_policy))
+        .route("/api/v1/policies/export", get(export_policies))
+        .route("/api/v1/evidence", get(get_evidence_pack))
         // Global SSE events stream
         .route("/api/v1/events", get(stream_events))
         // Legacy endpoints for compatibility
