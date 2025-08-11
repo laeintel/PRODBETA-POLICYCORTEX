@@ -107,6 +107,7 @@ services:
       - RUST_LOG=info
       - PORT=8080
       - ALLOWED_ORIGINS=https://policycortex.com,https://www.policycortex.com
+      - DEEP_API_BASE=http://api-gateway:8090
     volumes:
       - ${USERPROFILE}/.azure:/home/policycortex/.azure:ro
     ports:
@@ -169,6 +170,20 @@ services:
       - PORT=4000
     ports:
       - "4001:4000"
+    depends_on:
+      - backend
+    networks:
+      - policycortex-network
+
+  # Python API Gateway (Deep Insights) - production
+  api-gateway:
+    build:
+      context: ./backend/services/api_gateway
+      dockerfile: Dockerfile
+    container_name: policycortex-api-gateway
+    restart: unless-stopped
+    environment:
+      - REQUIRE_AUTH=false
     depends_on:
       - backend
     networks:
