@@ -28,6 +28,9 @@ env:
   REGISTRY_PROD: crcortexprodvb9v2h.azurecr.io
   IMAGE_TAG: ${{ github.sha }}
   TARGET_ENV: ${{ github.event.inputs.target_env || 'dev' }}
+  # Explicit subscriptions for dev/prod operations (defaults to requested prod subscription)
+  SUBSCRIPTION_DEV: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
+  SUBSCRIPTION_PROD: ${{ secrets.AZURE_SUBSCRIPTION_ID_PROD || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
 
 # Permissions for GitHub Actions
 # Updated to include Cargo.lock in repository
@@ -233,9 +236,10 @@ jobs:
 
       - name: Login to Container Registry
         run: |
-          echo "Logging into Azure Container Registry"
-          # Use dev registry for now, can be made conditional based on environment
-          az acr login --name crpcxdev
+          echo "Logging into Azure Container Registry (dev)"
+          # Ensure we operate against the dev subscription when accessing dev ACR
+          az account set --subscription "$SUBSCRIPTION_DEV"
+          az acr login --name crpcxdev --subscription "$SUBSCRIPTION_DEV"
 
       - name: Build and Push Core Image
         uses: docker/build-push-action@v5
@@ -271,9 +275,9 @@ jobs:
 
       - name: Login to Container Registry
         run: |
-          echo "Logging into Azure Container Registry"
-          # Use dev registry for now, can be made conditional based on environment
-          az acr login --name crpcxdev
+          echo "Logging into Azure Container Registry (dev)"
+          az account set --subscription "$SUBSCRIPTION_DEV"
+          az acr login --name crpcxdev --subscription "$SUBSCRIPTION_DEV"
 
       - name: Build and Push Frontend Image
         uses: docker/build-push-action@v5
@@ -309,9 +313,9 @@ jobs:
 
       - name: Login to Container Registry
         run: |
-          echo "Logging into Azure Container Registry"
-          # Use dev registry for now, can be made conditional based on environment
-          az acr login --name crpcxdev
+          echo "Logging into Azure Container Registry (dev)"
+          az account set --subscription "$SUBSCRIPTION_DEV"
+          az acr login --name crpcxdev --subscription "$SUBSCRIPTION_DEV"
 
       - name: Build and Push GraphQL Image
         uses: docker/build-push-action@v5
@@ -455,6 +459,7 @@ jobs:
         env:
           ACR_SERVER: ${{ env.REGISTRY_DEV }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        AZURE_SUBSCRIPTION_ID: ${{ env.SUBSCRIPTION_DEV }}
           # Runtime config
           NEXT_PUBLIC_GRAPHQL_ENDPOINT: ${{ secrets.NEXT_PUBLIC_GRAPHQL_ENDPOINT_DEV || '' }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL_DEV || '' }}
@@ -464,6 +469,7 @@ jobs:
           NEXT_PUBLIC_AZURE_SCOPES: ${{ secrets.NEXT_PUBLIC_AZURE_SCOPES_DEV || '' }}
         run: |
           set -e
+          az account set --subscription "$AZURE_SUBSCRIPTION_ID"
           echo "🔐 Fetching ACR credentials for $ACR_SERVER"
           ACR_NAME=$(echo "$ACR_SERVER" | cut -d'.' -f1)
           ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv)
@@ -570,10 +576,15 @@ jobs:
           DEV_ACR_SERVER: ${{ env.REGISTRY_DEV }}
           PROD_ACR_SERVER: ${{ env.REGISTRY_PROD }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        SUBSCRIPTION_DEV: ${{ env.SUBSCRIPTION_DEV }}
+        SUBSCRIPTION_PROD: ${{ env.SUBSCRIPTION_PROD }}
         run: |
           set -e
-          DEV_ACR_NAME=$(echo "$DEV_ACR_SERVER" | cut -d'.' -f1)
-          PROD_ACR_NAME=$(echo "$PROD_ACR_SERVER" | cut -d'.' -f1)
+        DEV_ACR_NAME=$(echo "$DEV_ACR_SERVER" | cut -d'.' -f1)
+        PROD_ACR_NAME=$(echo "$PROD_ACR_SERVER" | cut -d'.' -f1)
+
+        # Ensure we're operating in the prod subscription for PROD ACR checks
+        az account set --subscription "$SUBSCRIPTION_PROD"
 
           echo "🔎 Checking if images exist in PROD ACR: $PROD_ACR_SERVER"
           set +e
@@ -587,8 +598,12 @@ jobs:
 
           if [ $CORE_EXISTS -ne 0 ] || [ $FE_EXISTS -ne 0 ] || [ $GQL_EXISTS -ne 0 ]; then
             echo "🔐 Fetching ACR credentials"
-            DEV_USER=$(az acr credential show -n "$DEV_ACR_NAME" --query username -o tsv)
-            DEV_PASS=$(az acr credential show -n "$DEV_ACR_NAME" --query passwords[0].value -o tsv)
+          # Switch to DEV subscription to read dev ACR credentials
+          az account set --subscription "$SUBSCRIPTION_DEV"
+          DEV_USER=$(az acr credential show -n "$DEV_ACR_NAME" --query username -o tsv)
+          DEV_PASS=$(az acr credential show -n "$DEV_ACR_NAME" --query passwords[0].value -o tsv)
+          # Switch back to PROD subscription for import operations
+          az account set --subscription "$SUBSCRIPTION_PROD"
 
             echo "📦 Importing missing images from DEV to PROD"
             if [ $CORE_EXISTS -ne 0 ]; then
@@ -617,6 +632,7 @@ jobs:
         env:
           ACR_SERVER: ${{ env.REGISTRY_PROD }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        SUBSCRIPTION_PROD: ${{ env.SUBSCRIPTION_PROD }}
           # Runtime config
           NEXT_PUBLIC_GRAPHQL_ENDPOINT: ${{ secrets.NEXT_PUBLIC_GRAPHQL_ENDPOINT_PROD || '' }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL_PROD || '' }}
@@ -626,6 +642,7 @@ jobs:
           NEXT_PUBLIC_AZURE_SCOPES: ${{ secrets.NEXT_PUBLIC_AZURE_SCOPES_PROD || '' }}
         run: |
           set -e
+          az account set --subscription "$SUBSCRIPTION_PROD"
           echo "🔐 Fetching ACR credentials for $ACR_SERVER"
           ACR_NAME=$(echo "$ACR_SERVER" | cut -d'.' -f1)
           ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv)
