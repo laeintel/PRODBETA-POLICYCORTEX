@@ -7,6 +7,13 @@ module.exports = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
+  safelist: [
+    // Ensure dynamic color utilities are included in production
+    { pattern: /(text|bg|border)-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(100|200|300|400|500|600|700)/ },
+    // Pseudo-element content utilities used in components
+    'before:content-[""]',
+    'after:content-[""]',
+  ],
   theme: {
     container: {
       center: true,
