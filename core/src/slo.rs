@@ -366,7 +366,8 @@ impl SLOManager {
             SLIType::Latency(target) => {
                 let mut latencies: Vec<f64> =
                     measurements.iter().filter_map(|m| m.latency_ms).collect();
-                latencies.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                use std::cmp::Ordering;
+                latencies.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
                 if latencies.is_empty() {
                     100.0

@@ -47,6 +47,10 @@ services:
       - NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://graphql:4000/graphql
       - NEXT_PUBLIC_WEBSOCKET_ENDPOINT=ws://graphql:4000/subscriptions
       - NEXT_PUBLIC_API_URL=http://core:8080
+      - NEXT_PUBLIC_AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
+      - NEXT_PUBLIC_AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+      - NEXT_PUBLIC_MSAL_REDIRECT_URI=http://localhost:3000
+      - NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI=http://localhost:3000
 
   # Python API Gateway (Deep Insights)
   api-gateway:

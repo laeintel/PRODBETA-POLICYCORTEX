@@ -41,7 +41,7 @@ mod simulated_data;
 mod slo;
 mod tenant;
 mod tenant_isolation;
-mod observability;
+// (removed duplicate observability mod)
 
 use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,

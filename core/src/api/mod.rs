@@ -1453,6 +1453,9 @@ pub struct ActionRecord {
     pub updated_at: chrono::DateTime<chrono::Utc>,
     pub params: serde_json::Value,
     pub result: Option<serde_json::Value>,
+    pub stage: u8,
+    pub total_stages: u8,
+    pub rollback_available: bool,
 }
 
 pub async fn create_action(
@@ -1474,6 +1477,9 @@ pub async fn create_action(
         updated_at: now,
         params: payload.params.clone(),
         result: None,
+        stage: 0,
+        total_stages: 3,
+        rollback_available: false,
     };
 
     {
@@ -1503,8 +1509,23 @@ pub async fn create_action(
         }
         send_step("in_progress: preflight");
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        {
+            let mut actions = state_clone.actions.write().await;
+            if let Some(a) = actions.get_mut(&id_clone) {
+                a.stage = 1;
+                a.updated_at = chrono::Utc::now();
+            }
+        }
         send_step("in_progress: executing");
         tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+        {
+            let mut actions = state_clone.actions.write().await;
+            if let Some(a) = actions.get_mut(&id_clone) {
+                a.stage = 2;
+                a.updated_at = chrono::Utc::now();
+                a.rollback_available = true;
+            }
+        }
         send_step("in_progress: verifying");
         tokio::time::sleep(std::time::Duration::from_millis(600)).await;
         {
@@ -1515,6 +1536,7 @@ pub async fn create_action(
                 a.result = Some(
                     serde_json::json!({"message": "Action executed successfully", "changes": 1}),
                 );
+                a.stage = 3;
             }
         }
         send_step("completed");
@@ -1532,6 +1554,72 @@ pub async fn get_action(
         return Json(serde_json::json!(a));
     }
     Json(serde_json::json!({"error": "action not found"}))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StageAdvance { pub stage: Option<u8> }
+
+pub async fn advance_stage(
+    State(state): State<Arc<AppState>>,
+    Path(action_id): Path<String>,
+    Json(payload): Json<StageAdvance>,
+) -> impl IntoResponse {
+    let mut actions = state.actions.write().await;
+    if let Some(a) = actions.get_mut(&action_id) {
+        let new_stage = payload.stage.unwrap_or(a.stage.saturating_add(1));
+        a.stage = new_stage.min(a.total_stages);
+        a.updated_at = chrono::Utc::now();
+        if a.stage >= a.total_stages { a.status = "completed".to_string(); }
+        return Json(serde_json::json!({"success": true, "action": a}));
+    }
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error": "action not found"})),
+    ).into_response()
+}
+
+pub async fn rollback_action(
+    State(state): State<Arc<AppState>>,
+    Path(action_id): Path<String>,
+) -> impl IntoResponse {
+    let mut actions = state.actions.write().await;
+    if let Some(a) = actions.get_mut(&action_id) {
+        if a.rollback_available {
+            a.status = "rolled_back".to_string();
+            a.updated_at = chrono::Utc::now();
+            a.result = Some(serde_json::json!({"message":"Rollback executed","reverted": true}));
+            return Json(serde_json::json!({"success": true, "action": a}));
+        } else {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error": "rollback not available"})),
+            ).into_response();
+        }
+    }
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error": "action not found"})),
+    ).into_response()
+}
+
+pub async fn get_action_impact(
+    State(state): State<Arc<AppState>>,
+    Path(action_id): Path<String>,
+) -> impl IntoResponse {
+    let actions = state.actions.read().await;
+    if actions.get(&action_id).is_none() {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({"error": "action not found"})),
+        ).into_response();
+    }
+    Json(serde_json::json!({
+        "resourceChanges": [
+            {"resource":"Microsoft.Compute/virtualMachines/vm-prod-001","changes":[{"op":"add","path":"/tags/Owner","value":"FinOps"}]} 
+        ],
+        "blastRadius": {"resources": 1, "dependencies": 0},
+        "riskScore": 15
+    }))
 }
 
 pub async fn stream_action_events(
