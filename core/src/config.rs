@@ -6,6 +6,8 @@ pub struct AppConfig {
     pub service_version: String,
     pub allowed_origins: Vec<String>,
     pub require_strict_audience: bool,
+    pub require_approvals: bool,
+    pub key_vault_uri: Option<String>,
 }
 
 impl AppConfig {
@@ -32,11 +34,20 @@ impl AppConfig {
             Err(_) => environment != "dev",
         };
 
+        let require_approvals = match env::var("REQUIRE_APPROVALS") {
+            Ok(val) => matches!(val.as_str(), "1" | "true" | "TRUE"),
+            Err(_) => environment != "dev",
+        };
+
+        let key_vault_uri = env::var("KEY_VAULT_URI").ok().filter(|v| !v.is_empty());
+
         Self {
             environment,
             service_version,
             allowed_origins,
             require_strict_audience,
+            require_approvals,
+            key_vault_uri,
         }
     }
 }

@@ -818,6 +818,17 @@ pub async fn get_policies_deep() -> impl IntoResponse {
 
 // Initiate remediation (stub – Phase 1). Later, orchestrate jobs and stream progress.
 pub async fn remediate(Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
+    // Enforce approvals in non-dev environments
+    let require_approvals = crate::config::AppConfig::load().require_approvals;
+    if require_approvals {
+        return Json(serde_json::json!({
+            "success": false,
+            "status": "PendingApproval",
+            "message": "Remediation requires approval before execution",
+            "next": "Submit approval via /api/v1/approvals"
+        }));
+    }
+
     Json(serde_json::json!({
         "success": true,
         "resourceId": payload.resource_id,

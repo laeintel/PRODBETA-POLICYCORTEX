@@ -1,3 +1,85 @@
+use axum::{extract::FromRequestParts, http::request::Parts};
+use std::task::{Context, Poll};
+use tower::{Layer, Service};
+use uuid::Uuid;
+
+#[derive(Clone, Debug)]
+pub struct CorrelationId(pub String);
+
+impl Default for CorrelationId {
+    fn default() -> Self {
+        Self(Uuid::new_v4().to_string())
+    }
+}
+
+// Extractor to read or create x-correlation-id
+#[async_trait::async_trait]
+impl<S> FromRequestParts<S> for CorrelationId
+where
+    S: Send + Sync,
+{
+    type Rejection = std::convert::Infallible;
+
+    async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {
+        const HDR: &str = "x-correlation-id";
+        if let Some(value) = parts.headers.get(HDR) {
+            if let Ok(s) = value.to_str() {
+                return Ok(CorrelationId(s.to_string()));
+            }
+        }
+        Ok(CorrelationId::default())
+    }
+}
+
+// Tower layer to inject correlation id into tracing spans
+#[derive(Clone)]
+pub struct CorrelationLayer;
+
+impl<S> Layer<S> for CorrelationLayer {
+    type Service = CorrelationService<S>;
+    fn layer(&self, inner: S) -> Self::Service {
+        CorrelationService { inner }
+    }
+}
+
+#[derive(Clone)]
+pub struct CorrelationService<S> {
+    inner: S,
+}
+
+impl<ReqBody, ResBody, S> Service<axum::http::Request<ReqBody>> for CorrelationService<S>
+where
+    S: Service<axum::http::Request<ReqBody>, Response = axum::http::Response<ResBody>> + Clone + Send + 'static,
+    S::Future: Send + 'static,
+{
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = S::Future;
+
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, mut req: axum::http::Request<ReqBody>) -> Self::Future {
+        const HDR: &str = "x-correlation-id";
+        let corr = req
+            .headers()
+            .get(HDR)
+            .and_then(|h| h.to_str().ok())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
+        // ensure response will have it too (via extensions for handlers)
+        req.extensions_mut().insert(CorrelationId(corr.clone()));
+        // add header if missing so downstreams see it
+        if !req.headers().contains_key(HDR) {
+            req.headers_mut()
+                .insert(HDR, axum::http::HeaderValue::from_str(&corr).unwrap());
+        }
+        tracing::info!(correlation_id = %corr, method = %req.method(), path = %req.uri().path(), "incoming request");
+        self.inner.call(req)
+    }
+}
+
 use chrono::{DateTime, Utc};
 use opentelemetry::{
     global,
