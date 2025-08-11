@@ -74,6 +74,8 @@ opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
 
 # Prometheus metrics
 prometheus = "0.13"
+tar = "0.4"
+flate2 = "1.0"
 
 # Environment Variables
 dotenv = "0.15"
