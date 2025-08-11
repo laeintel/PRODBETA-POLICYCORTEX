@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
+use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -180,6 +181,7 @@ pub struct AppState {
     pub action_events: Arc<RwLock<std::collections::HashMap<String, broadcast::Sender<String>>>>,
     pub config: crate::config::AppConfig,
     pub approvals: Arc<RwLock<std::collections::HashMap<String, ApprovalRequest>>>,
+    pub slo_manager: SLOManager,
 }
 
 impl AppState {
@@ -277,6 +279,7 @@ impl AppState {
             action_events: Arc::new(RwLock::new(std::collections::HashMap::new())),
             config: crate::config::AppConfig::load(),
             approvals: Arc::new(RwLock::new(std::collections::HashMap::new())),
+            slo_manager: SLOManager::new(),
         }
     }
 }
