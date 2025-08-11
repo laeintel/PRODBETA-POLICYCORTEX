@@ -20,6 +20,7 @@ mod approval_workflow;
 mod approvals;
 mod audit_chain;
 mod auth;
+mod config;
 mod azure_client;
 mod azure_client_async;
 mod cache;
@@ -68,7 +69,7 @@ async fn health_check(State(state): State<Arc<AppState>>) -> Json<HealthResponse
 
     Json(HealthResponse {
         status: "healthy".to_string(),
-        version: "2.0.0".to_string(),
+        version: state.config.service_version.clone(),
         service: "policycortex-core".to_string(),
         patents: vec![
             "Unified AI-Driven Cloud Governance Platform".to_string(),
@@ -94,6 +95,9 @@ async fn main() {
 
     info!("Starting PolicyCortex v2 Core Service");
     info!("Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation");
+
+    // Load app configuration
+    let config = config::AppConfig::load();
 
     // Initialize high-performance async Azure client first
     let async_azure_client = match AsyncAzureClient::new().await {
@@ -124,13 +128,22 @@ async fn main() {
 
     // Initialize application state with both clients
     let mut app_state = AppState::new();
+    app_state.config = config.clone();
     app_state.async_azure_client = async_azure_client;
     app_state.azure_client = azure_client;
     let app_state = Arc::new(app_state);
 
     // Configure CORS
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
+    let cors = if config.allowed_origins.is_empty() {
+        CorsLayer::new().allow_origin(Any)
+    } else {
+        let origins = config
+            .allowed_origins
+            .iter()
+            .filter_map(|o| o.parse().ok())
+            .collect::<Vec<_>>();
+        CorsLayer::new().allow_origin(origins)
+    }
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
