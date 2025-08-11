@@ -138,6 +138,7 @@ async fn main() {
     let app = Router::new()
         // Health check
         .route("/health", get(health_check))
+        .route("/api/v1/health", get(health_check))
         // Patent 1: Unified AI Platform endpoints
         .route("/api/v1/metrics", get(get_metrics))
         .route("/api/v1/governance/unified", get(get_metrics))

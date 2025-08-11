@@ -77,14 +77,14 @@ export default function ServerPagination({
   }
 
   return (
-    <div className={`flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 ${className}`}>
+    <div className={`flex items-center justify-between px-4 py-3 bg-white/5 backdrop-blur-md border-t border-white/10 sm:px-6 ${className}`}>
       <div className="flex items-center justify-between flex-1">
         {/* Mobile view */}
         <div className="flex justify-between flex-1 sm:hidden">
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page === 1}
-            className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-200 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -94,7 +94,7 @@ export default function ServerPagination({
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page === totalPages}
-            className="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-200 bg-white/10 border border-white/20 rounded-md hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>
@@ -104,7 +104,7 @@ export default function ServerPagination({
         <div className="hidden sm:flex sm:items-center sm:justify-between sm:flex-1">
           <div className="flex items-center space-x-4">
             {showItemRange && (
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-gray-300">
                 Showing <span className="font-medium">{startItem}</span> to{' '}
                 <span className="font-medium">{endItem}</span> of{' '}
                 <span className="font-medium">{total}</span> results
@@ -113,14 +113,14 @@ export default function ServerPagination({
             
             {showPageSizeSelector && (
               <div className="flex items-center space-x-2">
-                <label htmlFor="page-size" className="text-sm text-gray-700">
+                <label htmlFor="page-size" className="text-sm text-gray-300">
                   Show
                 </label>
                 <select
                   id="page-size"
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                  className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2 py-1 text-sm bg-white/10 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-gray-100"
                 >
                   {pageSizeOptions.map((size) => (
                     <option key={size} value={size}>
@@ -128,7 +128,7 @@ export default function ServerPagination({
                     </option>
                   ))}
                 </select>
-                <span className="text-sm text-gray-700">per page</span>
+                <span className="text-sm text-gray-300">per page</span>
               </div>
             )}
           </div>
@@ -139,7 +139,7 @@ export default function ServerPagination({
               <button
                 onClick={() => onPageChange(1)}
                 disabled={page === 1}
-                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white/10 border border-white/20 rounded-l-md hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="First page"
               >
                 <ChevronsLeft className="w-5 h-5" />
@@ -149,7 +149,7 @@ export default function ServerPagination({
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page === 1}
-                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white/10 border border-white/20 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Previous page"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -159,9 +159,9 @@ export default function ServerPagination({
               {getPageNumbers().map((pageNum, index) => {
                 if (pageNum === '...') {
                   return (
-                    <span
+                  <span
                       key={`ellipsis-${index}`}
-                      className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300"
+                      className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-white/10 border border-white/20"
                     >
                       ...
                     </span>
@@ -174,8 +174,8 @@ export default function ServerPagination({
                     onClick={() => onPageChange(pageNum as number)}
                     className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border ${
                       page === pageNum
-                        ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        ? 'z-10 bg-purple-600/30 border-purple-500/50 text-white'
+                        : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20'
                     }`}
                     aria-current={page === pageNum ? 'page' : undefined}
                   >
@@ -188,7 +188,7 @@ export default function ServerPagination({
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page === totalPages}
-                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white/10 border border-white/20 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Next page"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -198,7 +198,7 @@ export default function ServerPagination({
               <button
                 onClick={() => onPageChange(totalPages)}
                 disabled={page === totalPages}
-                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white/10 border border-white/20 rounded-r-md hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Last page"
               >
                 <ChevronsRight className="w-5 h-5" />

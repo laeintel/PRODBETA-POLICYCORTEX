@@ -116,7 +116,7 @@ export default function VirtualizedTable<T extends Record<string, any>>({
     return (
       <div
         style={style}
-        className={`flex items-center border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+        className={`flex items-center border-b border-white/10 hover:bg-white/5 transition-colors text-gray-100 ${
           onRowClick ? 'cursor-pointer' : ''
         }`}
         onClick={() => onRowClick?.(item, index)}
@@ -150,14 +150,14 @@ export default function VirtualizedTable<T extends Record<string, any>>({
       {/* Header */}
       <div
         ref={headerRef}
-        className="flex items-center bg-gray-100 border-b border-gray-300 font-semibold text-sm sticky top-0 z-10"
+        className="flex items-center bg-white/5 border-b border-white/10 text-gray-100 font-semibold text-sm sticky top-0 z-10 backdrop-blur-sm"
         style={{ minHeight: rowHeight }}
       >
         {columns.map((column, index) => (
           <div
             key={column.key as string}
-            className={`px-4 py-2 flex items-center justify-between ${
-              column.sortable ? 'cursor-pointer hover:bg-gray-200' : ''
+              className={`px-4 py-2 flex items-center justify-between ${
+              column.sortable ? 'cursor-pointer hover:bg-white/10' : ''
             }`}
             style={{ width: columnWidths[index] || 'auto' }}
             onClick={() => column.sortable && handleSort(column.key as string)}
@@ -200,9 +200,9 @@ export default function VirtualizedTable<T extends Record<string, any>>({
 
       {/* Loading indicator */}
       {loading && (
-        <div className="flex items-center justify-center p-4 border-t border-gray-200">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Loading more...</span>
+        <div className="flex items-center justify-center p-4 border-t border-white/10">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+          <span className="ml-2 text-gray-300">Loading more...</span>
         </div>
       )}
     </div>

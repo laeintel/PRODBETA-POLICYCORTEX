@@ -30,14 +30,14 @@ export function OfflineIndicator() {
       {/* Status bar indicator */}
       <div className="fixed top-4 right-4 z-50 flex items-center space-x-2">
         {!isOnline && (
-          <div className="flex items-center space-x-2 px-3 py-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-lg shadow-lg">
+          <div className="flex items-center space-x-2 px-3 py-2 bg-yellow-100/90 dark:bg-yellow-900/60 backdrop-blur-md text-yellow-800 dark:text-yellow-200 rounded-lg shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)]">
             <WifiOff className="w-4 h-4" />
             <span className="text-sm font-medium">Offline Mode</span>
           </div>
         )}
         
         {queueSize > 0 && (
-          <div className="flex items-center space-x-2 px-3 py-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg shadow-lg">
+          <div className="flex items-center space-x-2 px-3 py-2 bg-blue-100/90 dark:bg-blue-900/60 backdrop-blur-md text-blue-800 dark:text-blue-200 rounded-lg shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)]">
             <CloudOff className="w-4 h-4" />
             <span className="text-sm font-medium">{queueSize} pending</span>
           </div>
@@ -47,10 +47,10 @@ export function OfflineIndicator() {
       {/* Notification toast */}
       {showNotification && (
         <div 
-          className={`fixed bottom-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg transition-all duration-300 ${
+          className={`fixed bottom-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-300 ${
             isOnline 
-              ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
-              : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+              ? 'bg-green-100/90 dark:bg-green-900/60 text-green-800 dark:text-green-200' 
+              : 'bg-yellow-100/90 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-200'
           }`}
           role="alert"
           aria-live="polite"

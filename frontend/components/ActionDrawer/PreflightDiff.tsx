@@ -34,8 +34,8 @@ export function PreflightDiff({ actionId }: PreflightDiffProps) {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded" />
-        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="h-12 bg-white/10 rounded border border-white/10" />
+        <div className="h-64 bg-white/10 rounded border border-white/10" />
       </div>
     );
   }
@@ -45,9 +45,9 @@ export function PreflightDiff({ actionId }: PreflightDiffProps) {
       {/* Preflight Status */}
       <div className={cn(
         'p-4 rounded-lg border',
-        diffData?.status === 'passed' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' :
-        diffData?.status === 'failed' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
-        'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+        diffData?.status === 'passed' ? 'bg-green-500/10 border-green-500/20' :
+        diffData?.status === 'failed' ? 'bg-red-500/10 border-red-500/20' :
+        'bg-yellow-500/10 border-yellow-500/20'
       )}>
         <div className="flex items-start gap-3">
           {diffData?.status === 'passed' ? (
@@ -70,15 +70,15 @@ export function PreflightDiff({ actionId }: PreflightDiffProps) {
 
       {/* View Mode Toggle */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Configuration Changes</h3>
+        <h3 className="text-lg font-semibold text-white">Configuration Changes</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode('unified')}
             className={cn(
               'px-3 py-1 text-sm rounded',
               viewMode === 'unified' 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                ? 'bg-purple-600/30 text-white border border-purple-500/40'
+                : 'text-gray-300 hover:text-white'
             )}
           >
             Unified
@@ -88,8 +88,8 @@ export function PreflightDiff({ actionId }: PreflightDiffProps) {
             className={cn(
               'px-3 py-1 text-sm rounded',
               viewMode === 'split'
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                ? 'bg-purple-600/30 text-white border border-purple-500/40'
+                : 'text-gray-300 hover:text-white'
             )}
           >
             Split
@@ -98,7 +98,7 @@ export function PreflightDiff({ actionId }: PreflightDiffProps) {
       </div>
 
       {/* Diff Display */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+      <div className="border border-white/10 rounded-lg overflow-hidden bg-white/5">
         {diffData?.changes?.map((change: any, index: number) => (
           <DiffSection key={index} change={change} viewMode={viewMode} />
         ))}
