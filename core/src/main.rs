@@ -41,6 +41,7 @@ mod simulated_data;
 mod slo;
 mod tenant;
 mod tenant_isolation;
+mod observability;
 
 use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
@@ -192,7 +193,7 @@ async fn main() {
         .route("/api/v1/events", get(stream_events))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
-        .layer(ServiceBuilder::new().layer(cors))
+        .layer(ServiceBuilder::new().layer(cors).layer(observability::CorrelationLayer))
         .with_state(app_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
