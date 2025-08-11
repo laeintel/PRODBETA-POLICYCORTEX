@@ -38,6 +38,21 @@ chmod +x start-local.sh
 ./start-local.sh
 ```
 
+### No Docker (All services locally)
+
+```bash
+chmod +x scripts/start-no-docker.sh
+./scripts/start-no-docker.sh
+```
+
+Prerequisites (no Docker): Rust (cargo), Node.js (npm), Python 3.10+ (pip/venv). The script installs Node/Python deps and starts:
+- API Gateway (FastAPI) on :8090
+- GraphQL Gateway (Node) on :4000
+- Core API (Rust) on :8080
+- Frontend (Next.js) on :3000
+
+Logs are written to the `logs/` directory.
+
 ## Service Endpoints
 
 Once started, the following services will be available:
