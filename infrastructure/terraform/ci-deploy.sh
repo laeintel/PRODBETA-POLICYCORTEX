@@ -81,7 +81,8 @@ terraform init \
 
 # Reconcile state: import existing resources if they exist
 export AZURE_SUBSCRIPTION_ID="${SUBSCRIPTION_ID}"
-"${SCRIPT_DIR}/import-existing.sh" "${ENVIRONMENT}" "${SUBSCRIPTION_ID}"
+# Invoke import script with bash to avoid execute-bit dependency in CI
+bash "${SCRIPT_DIR}/import-existing.sh" "${ENVIRONMENT}" "${SUBSCRIPTION_ID}"
 
 # Verify resource group existence after import (create-on-missing safety)
 RG_NAME="rg-cortex-${ENVIRONMENT}"
