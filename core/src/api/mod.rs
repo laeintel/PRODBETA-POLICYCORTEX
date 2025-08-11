@@ -815,6 +815,27 @@ pub async fn get_policy_drift() -> impl IntoResponse {
     Json(DriftReport{ drifted: items.len(), items, generated_at: chrono::Utc::now() })
 }
 
+// ===================== Roadmap Status =====================
+
+#[derive(Debug, Serialize)]
+pub struct RoadmapItem { pub id: String, pub name: String, pub progress: u8, pub description: String }
+
+#[derive(Debug, Serialize)]
+pub struct RoadmapStatus { pub last_updated: chrono::DateTime<chrono::Utc>, pub items: Vec<RoadmapItem> }
+
+pub async fn get_roadmap_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    // Estimate based on implemented features; keep aligned with backend capabilities
+    let items = vec![
+        RoadmapItem{ id: "kv_secrets".into(), name: "KV-backed secrets for DB/JWT".into(), progress: 25, description: "Secrets manager wired; DB pool via KV/env implemented; JWT key pending.".into() },
+        RoadmapItem{ id: "metrics".into(), name: "Status/latency histograms + /metrics".into(), progress: 80, description: "Prometheus exporter, counters, latency histograms with status; more business metrics TBD.".into() },
+        RoadmapItem{ id: "compliance_evidence".into(), name: "Compliance mapping & evidence packs".into(), progress: 40, description: "Frameworks endpoints and downloadable evidence tar.gz (sample). Real artifacts mapping pending.".into() },
+        RoadmapItem{ id: "gitops".into(), name: "GitOps PR flows & drift/rollback".into(), progress: 20, description: "Drift and policy generator stubs; PR creation & rollback logic TBD.".into() },
+        RoadmapItem{ id: "guardrails".into(), name: "Auto-remediation guardrails".into(), progress: 40, description: "Approvals required in non-dev; preflight diff endpoint; staged rollout/rollback pending.".into() },
+        RoadmapItem{ id: "sso_multicloud".into(), name: "SSO/RBAC breadth & multi-cloud".into(), progress: 10, description: "Scaffolding only; providers/adapters TBD.".into() },
+    ];
+    Json(RoadmapStatus { last_updated: chrono::Utc::now(), items })
+}
+
 pub async fn get_framework(Path(id): Path<String>) -> impl IntoResponse {
     // Minimal mapping sample
     let controls = vec![
