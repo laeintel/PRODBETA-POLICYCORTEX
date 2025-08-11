@@ -53,6 +53,7 @@ use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
 use azure_client_async::AsyncAzureClient;
 use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
+use sqlx::postgres::PgPoolOptions;
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -141,6 +142,21 @@ async fn main() {
         }
     };
     app_state.prometheus = Some(recorder);
+    // Initialize DB pool using Key Vault or env DATABASE_URL
+    let database_url = if let Some(ref sm) = app_state.secrets {
+        sm.get_secret("DATABASE_URL").await.unwrap_or_else(|_| std::env::var("DATABASE_URL").unwrap_or_default())
+    } else {
+        std::env::var("DATABASE_URL").unwrap_or_default()
+    };
+    if !database_url.is_empty() {
+        match PgPoolOptions::new().max_connections(5).connect(&database_url).await {
+            Ok(pool) => {
+                info!("Connected DB pool");
+                app_state.db_pool = Some(pool);
+            }
+            Err(e) => warn!("DB pool connection failed: {}", e),
+        }
+    }
     let app_state = Arc::new(app_state);
 
     // Configure CORS

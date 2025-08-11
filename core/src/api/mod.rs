@@ -16,6 +16,7 @@ use tokio::sync::{broadcast, RwLock};
 use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
 use metrics_exporter_prometheus::PrometheusHandle;
 use crate::secrets::SecretsManager;
+use metrics::counter;
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -186,6 +187,7 @@ pub struct AppState {
     pub slo_manager: SLOManager,
     pub secrets: Option<SecretsManager>,
     pub prometheus: Option<PrometheusHandle>,
+    pub db_pool: Option<sqlx::Pool<sqlx::Postgres>>,
 }
 
 impl AppState {
@@ -286,6 +288,7 @@ impl AppState {
             slo_manager: SLOManager::new(),
             secrets: None,
             prometheus: None,
+            db_pool: None,
         }
     }
 }
@@ -295,6 +298,7 @@ pub async fn get_metrics(
     auth_user: OptionalAuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
+    counter!("api_requests_total", 1, "endpoint" => "metrics");
     // Log authenticated request
     // If authenticated, log who; if not, allow simulated data in dev/local flows
     if let Some(ref user) = auth_user.0 {
@@ -474,6 +478,7 @@ pub async fn get_recommendations(
     auth_user: OptionalAuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
+    counter!("api_requests_total", 1, "endpoint" => "recommendations");
     // Verify authentication
     if let Some(ref user) = auth_user.0 {
         tracing::info!(
@@ -890,6 +895,7 @@ pub async fn process_conversation(
     State(_state): State<Arc<AppState>>,
     Json(request): Json<ConversationRequest>,
 ) -> impl IntoResponse {
+    counter!("api_requests_total", 1, "endpoint" => "conversation");
     // Verify authentication and get user context for personalized responses
     tracing::info!(
         "Authenticated conversation request from user: {:?}",
@@ -933,6 +939,7 @@ pub async fn process_conversation(
 }
 
 pub async fn get_correlations(auth_user: OptionalAuthUser) -> impl IntoResponse {
+    counter!("api_requests_total", 1, "endpoint" => "correlations");
     // Verify authentication
     if let Some(ref user) = auth_user.0 {
         tracing::info!(
@@ -980,6 +987,7 @@ pub struct CreateExceptionRequest {
 
 // Get policies with data mode support
 pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    counter!("api_requests_total", 1, "endpoint" => "policies");
     use crate::data_mode::{DataMode, DataResponse};
     use crate::simulated_data::SimulatedDataProvider;
 
@@ -1285,6 +1293,7 @@ pub async fn get_resources_deep(State(state): State<Arc<AppState>>) -> impl Into
 // ===================== Additional Endpoints =====================
 
 pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    counter!("api_requests_total", 1, "endpoint" => "compliance");
     // Try to get real compliance data from Azure
     if let Some(ref async_client) = state.async_azure_client {
         match async_client.get_governance_metrics().await {
@@ -1328,6 +1337,7 @@ pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResp
 }
 
 pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    counter!("api_requests_total", 1, "endpoint" => "resources");
     // Try to get real resource data from Azure
     if let Some(ref async_client) = state.async_azure_client {
         match async_client.get_governance_metrics().await {
