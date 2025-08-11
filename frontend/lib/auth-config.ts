@@ -15,10 +15,9 @@ const postLogoutRedirectUri = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI || window.location.origin)
   : undefined
 
+// In local/dev without Azure config, we allow running without MSAL blocking the UI
 if (typeof window !== 'undefined' && (!clientId || !tenantId)) {
-  // Surface a clear console error instead of silently using wrong defaults
-  // This prevents AADSTS9002326 caused by misconfigured client type / redirect origin
-  console.error('MSAL configuration missing NEXT_PUBLIC_AZURE_CLIENT_ID or NEXT_PUBLIC_AZURE_TENANT_ID. Configure your SPA app in Azure AD and set .env vars.')
+  console.warn('MSAL config missing client/tenant; running in local dev without Azure auth.')
 }
 
 export const msalConfig: Configuration = {
