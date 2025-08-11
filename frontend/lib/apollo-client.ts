@@ -1,7 +1,8 @@
 import { ApolloClient, InMemoryCache } from '@apollo/client'
 
 export const client = new ApolloClient({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
+  // Prefer same-origin GraphQL path so nginx/Next rewrites can route appropriately
+  uri: process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || process.env.NEXT_PUBLIC_GRAPHQL_URL || '/graphql',
   cache: new InMemoryCache(),
   // Ensure Apollo Server CSRF prevention passes in browsers
   // Forces a CORS preflight instead of a "simple" request
