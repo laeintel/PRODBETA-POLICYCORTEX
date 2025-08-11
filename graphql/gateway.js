@@ -148,6 +148,8 @@ async function startGateway() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    // Dev: disable CSRF prevention to ease local testing
+    csrfPrevention: false,
   });
 
   // Start the server
