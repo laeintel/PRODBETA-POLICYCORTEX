@@ -41,7 +41,7 @@ coverage/
 
 # Rust
 target/
-Cargo.lock
+# Cargo.lock - should be committed for binary applications
 **/*.rs.bk
 
 # Python
@@ -135,4 +135,6 @@ graphql/generated/
 
 # Core service
 core/target/
-core/Cargo.lockmodels/continuous_learning/*.pt
+
+# Machine learning models
+models/continuous_learning/*.pt
