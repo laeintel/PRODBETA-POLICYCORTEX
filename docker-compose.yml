@@ -94,11 +94,13 @@ services:
     container_name: policycortex-backend
     restart: unless-stopped
     environment:
-      - AZURE_TENANT_ID=${AZURE_TENANT_ID:-9ef5b184-d371-462a-bc75-5024ce8baff7}
-      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-1ecc95d1-e5bb-43e2-9324-30a17cb6b01c}
+      # PROD Azure App Registration (separate from dev). Provide via env/secrets at deploy time.
+      - AZURE_TENANT_ID=${PROD_AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${PROD_AZURE_CLIENT_ID}
       - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
       - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
       - ENVIRONMENT=prod
+      - REQUIRE_STRICT_AUDIENCE=${REQUIRE_STRICT_AUDIENCE:-true}
       - USE_REAL_DATA=true
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/policycortex
       - REDIS_URL=redis://redis:6379
@@ -137,11 +139,12 @@ services:
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_GRAPHQL_ENDPOINT=/graphql
-      - NEXT_PUBLIC_AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
-      - NEXT_PUBLIC_AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+      # PROD SPA App Registration (separate from dev). Provide via env/secrets at deploy time.
+      - NEXT_PUBLIC_AZURE_CLIENT_ID=${PROD_AZURE_CLIENT_ID}
+      - NEXT_PUBLIC_AZURE_TENANT_ID=${PROD_AZURE_TENANT_ID}
       - NEXT_PUBLIC_MSAL_REDIRECT_URI=https://policycortex.com
       - NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI=https://policycortex.com
-      - NEXT_PUBLIC_CORE_API_SCOPE=api://1ecc95d1-e5bb-43e2-9324-30a17cb6b01c/access_as_user
+      - NEXT_PUBLIC_CORE_API_SCOPE=${PROD_CORE_API_SCOPE}
       - BACKEND_SERVICE_NAME=backend
       - IN_DOCKER=true
       - NODE_ENV=production
