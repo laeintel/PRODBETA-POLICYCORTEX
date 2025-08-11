@@ -703,13 +703,24 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
 
     // policy_snapshot.json
     let policy = serde_json::json!({"snapshot_at": now, "items": [{"id":"require-tags","status":"noncompliant","count":58}]});
-    let policy_bytes = serde_json::to_vec_pretty(&policy).unwrap();
+    let policy_bytes = match serde_json::to_vec_pretty(&policy) {
+        Ok(bytes) => bytes,
+        Err(_) => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"failed_to_generate_policy_snapshot"}))
+        ).into_response(),
+    };
     let mut header = tar::Header::new_gnu();
     header.set_size(policy_bytes.len() as u64);
     header.set_mode(0o644);
     header.set_mtime(chrono::Utc::now().timestamp() as u64);
     header.set_cksum();
-    tar.append_data(&mut header, "policy_snapshot.json", &policy_bytes[..]).unwrap();
+    if tar.append_data(&mut header, "policy_snapshot.json", &policy_bytes[..]).is_err() {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"failed_to_append_policy_snapshot"}))
+        ).into_response();
+    }
 
     // rbac_assignments.csv
     let rbac_csv = b"principal,role,scope\nuser@contoso.com,Owner,/subscriptions/xxx\n";
@@ -718,7 +729,12 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
     header2.set_mode(0o644);
     header2.set_mtime(chrono::Utc::now().timestamp() as u64);
     header2.set_cksum();
-    tar.append_data(&mut header2, "rbac_assignments.csv", &rbac_csv[..]).unwrap();
+    if tar.append_data(&mut header2, "rbac_assignments.csv", &rbac_csv[..]).is_err() {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"failed_to_append_rbac"}))
+        ).into_response();
+    }
 
     // cost_anomalies.csv
     let cost_csv = b"service,anomaly_usd,date\nStorage,2450.13,2025-08-01\n";
@@ -727,11 +743,33 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
     header3.set_mode(0o644);
     header3.set_mtime(chrono::Utc::now().timestamp() as u64);
     header3.set_cksum();
-    tar.append_data(&mut header3, "cost_anomalies.csv", &cost_csv[..]).unwrap();
+    if tar.append_data(&mut header3, "cost_anomalies.csv", &cost_csv[..]).is_err() {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"failed_to_append_costs"}))
+        ).into_response();
+    }
 
-    tar.finish().unwrap();
-    let enc = tar.into_inner().unwrap();
-    let body = enc.finish().unwrap();
+    if let Err(_) = tar.finish() {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"failed_to_finalize_tar"}))
+        ).into_response();
+    }
+    let enc = match tar.into_inner() {
+        Ok(enc) => enc,
+        Err(_) => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"failed_to_get_encoder"}))
+        ).into_response(),
+    };
+    let body = match enc.finish() {
+        Ok(body) => body,
+        Err(_) => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"failed_to_finish_encoding"}))
+        ).into_response(),
+    };
     (
         StatusCode::OK,
         [(axum::http::header::CONTENT_TYPE, "application/gzip"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=evidence.tar.gz")],
