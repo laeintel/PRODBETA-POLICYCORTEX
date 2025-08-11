@@ -14,6 +14,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{broadcast, RwLock};
 use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
+use crate::secrets::SecretsManager;
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -182,6 +183,7 @@ pub struct AppState {
     pub config: crate::config::AppConfig,
     pub approvals: Arc<RwLock<std::collections::HashMap<String, ApprovalRequest>>>,
     pub slo_manager: SLOManager,
+    pub secrets: Option<SecretsManager>,
 }
 
 impl AppState {
@@ -280,6 +282,7 @@ impl AppState {
             config: crate::config::AppConfig::load(),
             approvals: Arc::new(RwLock::new(std::collections::HashMap::new())),
             slo_manager: SLOManager::new(),
+            secrets: None,
         }
     }
 }
@@ -609,6 +612,45 @@ pub async fn get_recommendations(
     // Fallback to cached recommendations
     let recommendations = state.recommendations.read().await;
     Json(recommendations.clone())
+}
+
+// ===================== Config & Secrets Status =====================
+
+#[derive(Debug, Serialize)]
+pub struct ConfigResponse {
+    environment: String,
+    version: String,
+    approvals_required: bool,
+    strict_audience: bool,
+    allowed_origins: usize,
+}
+
+pub async fn get_config(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let cfg = &state.config;
+    Json(ConfigResponse {
+        environment: cfg.environment.clone(),
+        version: cfg.service_version.clone(),
+        approvals_required: cfg.require_approvals,
+        strict_audience: cfg.require_strict_audience,
+        allowed_origins: cfg.allowed_origins.len(),
+    })
+}
+
+#[derive(Debug, Serialize)]
+pub struct SecretsStatus { ok: bool, missing: Vec<String> }
+
+pub async fn get_secrets_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(ref sm) = state.secrets {
+        match sm.validate_secrets().await {
+            Ok(_) => return Json(SecretsStatus { ok: true, missing: vec![] }),
+            Err(missing) => return Json(SecretsStatus { ok: false, missing }),
+        }
+    }
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(serde_json::json!({"error": "secrets manager unavailable"})),
+    )
+        .into_response()
 }
 
 // ===================== Approvals (Phase 1) =====================

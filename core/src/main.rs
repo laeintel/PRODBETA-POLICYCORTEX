@@ -47,7 +47,7 @@ use api::{
     create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
     get_metrics, get_network_deep, get_policies, get_policies_deep, get_predictions, get_rbac_deep,
     get_recommendations, get_resources, get_resources_deep, process_conversation, remediate,
-    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy,
+    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -132,6 +132,14 @@ async fn main() {
     app_state.config = config.clone();
     app_state.async_azure_client = async_azure_client;
     app_state.azure_client = azure_client;
+    // Initialize secrets manager (optional)
+    app_state.secrets = match crate::secrets::SecretsManager::new().await {
+        Ok(sm) => Some(sm),
+        Err(e) => {
+            warn!("Secrets manager unavailable: {}", e);
+            None
+        }
+    };
     let app_state = Arc::new(app_state);
 
     // Configure CORS
@@ -153,6 +161,8 @@ async fn main() {
         // Health check
         .route("/health", get(health_check))
         .route("/api/v1/health", get(health_check))
+        .route("/api/v1/config", get(get_config))
+        .route("/api/v1/secrets/status", get(get_secrets_status))
         // Patent 1: Unified AI Platform endpoints
         .route("/api/v1/metrics", get(get_metrics))
         .route("/api/v1/governance/unified", get(get_metrics))
