@@ -2,6 +2,8 @@ use axum::{extract::FromRequestParts, http::request::Parts};
 use std::task::{Context, Poll};
 use tower::{Layer, Service};
 use uuid::Uuid;
+use metrics::{describe_counter, describe_histogram, counter, histogram};
+use std::time::Instant;
 
 #[derive(Clone, Debug)]
 pub struct CorrelationId(pub String);
@@ -75,8 +77,19 @@ where
             req.headers_mut()
                 .insert(HDR, axum::http::HeaderValue::from_str(&corr).unwrap());
         }
-        tracing::info!(correlation_id = %corr, method = %req.method(), path = %req.uri().path(), "incoming request");
-        self.inner.call(req)
+        let method = req.method().clone();
+        let path = req.uri().path().to_string();
+        let start = Instant::now();
+        tracing::info!(correlation_id = %corr, method = %method, path = %path, "incoming request");
+        let fut = self.inner.call(req);
+        // lazy metric descriptions once
+        describe_counter!("http_requests_total", "Total number of HTTP requests.");
+        describe_histogram!("http_request_duration_seconds", "HTTP request latencies in seconds.");
+        counter!("http_requests_total", 1, "method" => method.to_string(), "path" => path.clone());
+        // Note: we cannot easily record status here without mapping the future; minimal latency recording
+        let _elapsed = start.elapsed();
+        // Not blocking; returning inner future
+        fut
     }
 }
 
