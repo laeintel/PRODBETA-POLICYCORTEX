@@ -64,7 +64,9 @@ where
             .unwrap_or_else(|| Uuid::new_v4().to_string());
         req.extensions_mut().insert(CorrelationId(corr.clone()));
         if !req.headers().contains_key(HDR) {
-            if let Ok(val) = axum::http::HeaderValue::from_str(&corr) { req.headers_mut().insert(HDR, val); }
+            if let Ok(val) = axum::http::HeaderValue::from_str(&corr) {
+                req.headers_mut().insert(HDR, val);
+            }
         }
 
         let method = req.method().to_string();
@@ -75,7 +77,10 @@ where
 
         // Describe metrics once (idempotent)
         describe_counter!("http_requests_total", "Total number of HTTP requests.");
-        describe_histogram!("http_request_duration_seconds", "HTTP request latencies in seconds.");
+        describe_histogram!(
+            "http_request_duration_seconds",
+            "HTTP request latencies in seconds."
+        );
         counter!("http_requests_total", 1, "method" => method.clone(), "path" => path.clone());
 
         Box::pin(async move {
