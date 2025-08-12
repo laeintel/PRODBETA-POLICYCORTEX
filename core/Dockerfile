@@ -2,7 +2,7 @@
 FROM rust:alpine AS builder
 
 # Install build dependencies
-RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static pkgconfig
+RUN apk add --no-cache musl-dev
 
 # Create app directory
 WORKDIR /app
@@ -30,7 +30,6 @@ FROM alpine:3.19
 # Install runtime dependencies
 RUN apk add --no-cache \
     ca-certificates \
-    openssl \
     libgcc \
     netcat-openbsd
 
