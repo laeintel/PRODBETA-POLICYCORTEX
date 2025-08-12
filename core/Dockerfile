@@ -1,8 +1,12 @@
 # Multi-stage build for Rust backend
 FROM rust:alpine AS builder
 
-# Install build dependencies
-RUN apk add --no-cache musl-dev
+# Install build dependencies (for openssl-sys vendored and general build tools)
+# - build-base: gcc, make, libc-dev (musl)
+# - perl: required by OpenSSL build scripts
+# - pkgconfig: used by many -sys crates to discover libs
+# - openssl-dev: fallback headers/libs when vendored is disabled
+RUN apk add --no-cache build-base perl pkgconfig openssl-dev
 
 # Create app directory
 WORKDIR /app
@@ -31,7 +35,8 @@ FROM alpine:3.19
 RUN apk add --no-cache \
     ca-certificates \
     libgcc \
-    netcat-openbsd
+    netcat-openbsd \
+    openssl
 
 # Create non-root user with home directory
 RUN addgroup -g 1000 policycortex && \
