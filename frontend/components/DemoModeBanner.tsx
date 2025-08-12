@@ -8,7 +8,8 @@ export default function DemoModeBanner() {
   const [message, setMessage] = useState<string>('')
 
   useEffect(() => {
-    const envDemo = process.env.NEXT_PUBLIC_DISABLE_DEEP === 'true' || process.env.NEXT_PUBLIC_USE_REAL_DATA !== 'true'
+    // Default demo banner ON unless explicitly using real data
+    const envDemo = process.env.NEXT_PUBLIC_USE_REAL_DATA !== 'true'
     setDemoMode(!!envDemo)
     if (envDemo) {
       setMessage('Simulated Mode: Read-only experience with mock data. Connect Azure to enable live data and remediation.')
