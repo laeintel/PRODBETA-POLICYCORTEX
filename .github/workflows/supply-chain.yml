@@ -2,8 +2,10 @@ name: Supply chain security
 
 on:
   pull_request:
+    branches: [ '**' ]
   push:
-    branches: [ main ]
+    branches: [ '**' ]
+  workflow_dispatch:
 
 jobs:
   scan:
