@@ -303,8 +303,8 @@ export default function SettingsPage() {
                   <div className="p-4 bg-white/5 rounded-lg">
                     <h3 className="text-white font-medium mb-2">Export Data</h3>
                     <p className="text-sm text-gray-400 mb-3">Download all your PolicyCortex data</p>
-                    <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                      Export as JSON
+                    <button disabled className="px-4 py-2 bg-gray-400 text-white rounded-lg disabled:opacity-60 cursor-not-allowed" title="Disabled in demo">
+                      Export as JSON (Disabled)
                     </button>
                   </div>
                   

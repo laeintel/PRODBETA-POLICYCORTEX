@@ -617,9 +617,9 @@ export default function PoliciesPage() {
                     <button className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">
                       View in Azure Portal
                     </button>
-                    <button className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center gap-2">
+                    <button disabled title="Disabled in demo" className="px-4 py-2 bg-gray-400 text-white rounded-lg disabled:opacity-60 cursor-not-allowed flex items-center gap-2">
                       <Download className="w-4 h-4" />
-                      Export Definition
+                      Export Definition (Disabled)
                     </button>
                     <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
                       <Edit className="w-4 h-4" />
