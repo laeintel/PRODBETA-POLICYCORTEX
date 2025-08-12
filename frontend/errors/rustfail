@@ -1,650 +1,598 @@
-Run cd core
-  
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-   --> src/action_orchestrator.rs:465:30
-    |
-465 |               if let Ok(row) = sqlx::query!(
-    |  ______________________________^
-466 | |                 r#"SELECT action_id, created_at, expires_at, result FROM idempotency_records WHERE key = $1"#,
-467 | |                 key
-468 | |             )
-    | |_____________^
-    |
-    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-   --> src/action_orchestrator.rs:506:21
-    |
-506 |               let _ = sqlx::query!(
-    |  _____________________^
-507 | |                 r#"INSERT INTO idempotency_records (key, action_id, result, created_at, expires_at)
-508 | |                    VALUES ($1, $2, $3, NOW(), NOW() + INTERVAL '24 hours')
-509 | |                    ON CONFLICT (key) DO NOTHING"#,
-...   |
-512 | |                 Option::<serde_json::Value>::None,
-513 | |             )
-    | |_____________^
-    |
-    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-   --> src/action_orchestrator.rs:541:23
-    |
-541 |               let row = sqlx::query!(
-    |  _______________________^
-542 | |                 r#"SELECT COUNT(1) as count FROM approval_requests
-543 | |                    WHERE tenant_id = $1 AND action_type = $2 AND resource_id = $3
-544 | |                      AND status::text = 'Approved' AND expires_at > NOW()"#,
-...   |
-547 | |                 action.target_resource
-548 | |             )
-    | |_____________^
-    |
-    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-   --> src/action_orchestrator.rs:672:9
-    |
-672 | /         sqlx::query!(
-673 | |             r#"
-674 | |             INSERT INTO commands (
-675 | |               command_id, command_type, command_data, aggregate_id, tenant_id, user_id,
-...   |
-690 | |             action.idempotency_key
-691 | |         )
-    | |_________^
-    |
-    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-    --> src/api/mod.rs:1281:17
-     |
-1281 |           let _ = sqlx::query!(
-     |  _________________^
-1282 | |             r#"INSERT INTO exceptions (
-1283 | |                 id, tenant_id, resource_id, policy_id, reason, status, created_by, created_at, expires_at, recertify_at, evidence, metadata
-1284 | |             ) VALUES ($1,$2,$3,$4,$5,'Approved',$6,NOW(),$7,$8,$9,$10)"#,
-...    |
-1294 | |             serde_json::json!({})
-1295 | |         )
-     | |_________^
-     |
-     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-    --> src/api/mod.rs:1827:27
-     |
-1827 |   ...   if let Ok(rows) = sqlx::query!(
-     |  _________________________^
-1828 | | ...       r#"SELECT id, resource_id, policy_id, reason, status, expires_at, recertify_at, created_at FROM exceptions ORDER BY created_at ...
-1829 | | ...   )
-     | |_______^
-     |
-     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-    --> src/api/mod.rs:1857:15
-     |
-1857 |           match sqlx::query!(
-     |  _______________^
-1858 | |             r#"UPDATE exceptions SET status = 'Expired' WHERE expires_at < NOW() AND status <> 'Expired' RETURNING 1"#
-1859 | |         )
-     | |_________^
-     |
-     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
-   --> src/evidence_pipeline.rs:513:9
-    |
-513 | /         sqlx::query!(
-514 | |             r#"INSERT INTO evidence_store (
-515 | |                 id, evidence_type, source, subject, description, data, hash, signature,
-516 | |                 signing_key_id, chain_of_custody, metadata, tenant_id, created_at, expires_at, verification_status
-...   |
-535 | |             format!("{:?}", evidence.verification_status)
-536 | |         )
-    | |_________^
-    |
-    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error[E0432]: unresolved import `crate::auth::user_has_scopes`
- --> src/api/mod.rs:1:62
-  |
-1 | use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, user_has_scopes};
-  |                                                              ^^^^^^^^^^^^^^^ no `user_has_scopes` in `auth`
-error[E0432]: unresolved import `hmac`
-   --> src/evidence_pipeline.rs:430:13
-    |
-430 |         use hmac::{Hmac, Mac};
-    |             ^^^^ help: a similar path exists: `azure_core::hmac`
-error[E0432]: unresolved import `hmac`
-   --> src/evidence_pipeline.rs:449:13
-    |
-449 |         use hmac::{Hmac, Mac};
-    |             ^^^^ help: a similar path exists: `azure_core::hmac`
-error[E0423]: expected value, found module `config`
-  --> src/main.rs:98:46
-   |
-98 |             KeyValue::new("service.version", config.service_version.clone()),
-   |                                              ^^^^^^
-   |
-help: use the path separator to refer to an item
-   |
-98 -             KeyValue::new("service.version", config.service_version.clone()),
-98 +             KeyValue::new("service.version", config::service_version.clone()),
-   |
-help: consider importing this function instead
-   |
-1  + use opentelemetry_sdk::trace::config;
-   |
-error[E0425]: cannot find value `list_exceptions` in this scope
-   --> src/main.rs:269:42
-    |
-269 |         .route("/api/v1/exceptions", get(list_exceptions))
-    |                                          ^^^^^^^^^^^^^^^ not found in this scope
-    |
-help: consider importing this function
-    |
-1   + use crate::api::list_exceptions;
-    |
-error[E0425]: cannot find value `expire_exceptions` in this scope
-   --> src/main.rs:270:50
-    |
-270 |         .route("/api/v1/exceptions/expire", post(expire_exceptions))
-    |                                                  ^^^^^^^^^^^^^^^^^ not found in this scope
-    |
-help: consider importing this function
-    |
-1   + use crate::api::expire_exceptions;
-    |
-error[E0433]: failed to resolve: could not find `LayerFn` in `tower`
-   --> src/main.rs:277:23
-    |
-277 |         .layer(tower::LayerFn::new(|service| {
-    |                       ^^^^^^^ could not find `LayerFn` in `tower`
-    |
-help: a trait with a similar name exists
-    |
-277 -         .layer(tower::LayerFn::new(|service| {
-277 +         .layer(tower::Layer::new(|service| {
-    |
-help: consider importing this struct
-    |
-1   + use tower::layer::LayerFn;
-    |
-help: if you import `LayerFn`, refer to it directly
-    |
-277 -         .layer(tower::LayerFn::new(|service| {
-277 +         .layer(LayerFn::new(|service| {
-    |
-warning: unused imports: `StatusCode` and `response::IntoResponse`
- --> src/main.rs:3:28
-  |
-3 |     http::{header, Method, StatusCode},
-  |                            ^^^^^^^^^^
-4 |     response::IntoResponse,
-  |     ^^^^^^^^^^^^^^^^^^^^^^
-  |
-  = note: `#[warn(unused_imports)]` on by default
-warning: unused import: `Deserialize`
- --> src/main.rs:8:13
-  |
-8 | use serde::{Deserialize, Serialize};
-  |             ^^^^^^^^^^^
-warning: unused import: `warn`
- --> src/action_orchestrator.rs:7:28
-  |
-7 | use tracing::{error, info, warn};
-  |                            ^^^^
-warning: unused imports: `EvaluationHarness`, `EvaluationReport`, `ModelCard`, `ModelMetrics`, `ModelRegistry`, `ModelType`, and `TrainingDataLineage`
- --> src/ai/mod.rs:4:5
-  |
-4 |     EvaluationHarness, EvaluationReport, ModelCard, ModelMetrics, ModelRegistry, ModelType,
-  |     ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^
-5 |     TrainingDataLineage,
-  |     ^^^^^^^^^^^^^^^^^^^
-warning: unused import: `Query`
- --> src/api/mod.rs:4:21
-  |
-4 |     extract::{Path, Query, State},
-  |                     ^^^^^
-warning: unused import: `std::collections::HashMap`
-  --> src/api/mod.rs:15:5
-   |
-15 | use std::collections::HashMap;
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
-warning: unused imports: `Aggregation`, `ErrorBudget`, `SLIType`, `SLI`, `SLOWindow`, and `SLO`
-  --> src/api/mod.rs:18:30
-   |
-18 | use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
-   |                              ^^^  ^^^^^^^^^  ^^^  ^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^
-warning: unused imports: `DataMode` and `DataResponse`
-    --> src/api/mod.rs:1228:28
-     |
-1228 |     use crate::data_mode::{DataMode, DataResponse, DataModeGuard};
-     |                            ^^^^^^^^  ^^^^^^^^^^^^
-warning: unused import: `DateTime`
- --> src/approval_workflow.rs:5:14
-  |
-5 | use chrono::{DateTime, Duration, Utc};
-  |              ^^^^^^^^
-warning: unused import: `error`
-  --> src/approval_workflow.rs:10:15
-   |
-10 | use tracing::{error, info, warn};
-   |               ^^^^^
-warning: unused imports: `AuthUser` and `Claims`
- --> src/auth_middleware.rs:6:19
-  |
-6 | use crate::auth::{AuthUser, Claims, TokenValidator};
-  |                   ^^^^^^^^  ^^^^^^
-warning: unused import: `Serialize`
- --> src/azure_client.rs:5:26
-  |
-5 | use serde::{Deserialize, Serialize};
-  |                          ^^^^^^^^^
-warning: unused import: `RequestBuilder`
- --> src/azure_client_async.rs:6:23
-  |
-6 | use reqwest::{Client, RequestBuilder};
-  |                       ^^^^^^^^^^^^^^
-warning: unused imports: `Deserialize` and `Serialize`
- --> src/collectors/gcp_collector.rs:2:13
-  |
-2 | use serde::{Deserialize, Serialize};
-  |             ^^^^^^^^^^^  ^^^^^^^^^
-warning: unused imports: `CloudProvider`, `ComplianceStatus`, and `ResourceType`
- --> src/collectors/gcp_collector.rs:4:52
-  |
-4 | use super::{AuditLog, CloudCollector, CloudPolicy, CloudProvider, CloudResource, ComplianceStatus, ResourceType};
-  |                                                    ^^^^^^^^^^^^^                 ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^
-warning: unused import: `AwsCollector`
- --> src/collectors/mod.rs:5:15
-  |
-5 |     AuditLog, AwsCollector, CloudCollector, CloudPolicy, CloudProvider, CloudResource,
-  |               ^^^^^^^^^^^^
-warning: unused import: `gcp_collector::GcpCollector`
- --> src/collectors/mod.rs:8:9
-  |
-8 | pub use gcp_collector::GcpCollector;
-  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-warning: unused import: `futures_lite::stream::StreamExt`
- --> src/events/mod.rs:7:5
-  |
-7 | use futures_lite::stream::StreamExt;
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-warning: unused import: `error`
- --> src/evidence_pipeline.rs:8:15
-  |
-8 | use tracing::{error, info, warn};
-  |               ^^^^^
-warning: unused import: `Duration`
- --> src/finops/mod.rs:5:24
-  |
-5 | use chrono::{DateTime, Duration, Utc};
-  |                        ^^^^^^^^
-warning: unused import: `error`
- --> src/secrets.rs:8:15
-  |
-8 | use tracing::{error, info, warn};
-  |               ^^^^^
-warning: unused import: `async_trait::async_trait`
- --> src/security_graph/mod.rs:5:5
-  |
-5 | use async_trait::async_trait;
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^
-warning: unused import: `dijkstra`
- --> src/security_graph/mod.rs:6:40
-  |
-6 | use petgraph::algo::{all_simple_paths, dijkstra};
-  |                                        ^^^^^^^^
-warning: unused import: `HashSet`
- --> src/security_graph/mod.rs:9:33
-  |
-9 | use std::collections::{HashMap, HashSet};
-  |                                 ^^^^^^^
-warning: unused import: `uuid::Uuid`
- --> src/simulated_data.rs:4:5
-  |
-4 | use uuid::Uuid;
-  |     ^^^^^^^^^^
-warning: unused import: `warn`
- --> src/tenant.rs:9:21
-  |
-9 | use tracing::{info, warn};
-  |                     ^^^^
-warning: unused import: `error`
-  --> src/tenant_isolation.rs:11:15
-   |
-11 | use tracing::{error, info, warn};
-   |               ^^^^^
-warning: unused imports: `AuthUser` and `OptionalAuthUser`
-  --> src/main.rs:55:12
-   |
-55 | use auth::{AuthUser, OptionalAuthUser};
-   |            ^^^^^^^^  ^^^^^^^^^^^^^^^^
-warning: unused imports: `TenantContext`, `TenantDatabase`, and `tenant_isolation_middleware`
-  --> src/main.rs:58:24
-   |
-58 | use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
-   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
-error[E0609]: no field `0` on type `AuthUser`
-   --> src/api/mod.rs:926:10
-    |
-926 |         .0
-    |          ^ unknown field
-    |
-    = note: available field is: `claims`
-error[E0308]: mismatched types
-   --> src/api/mod.rs:943:5
-    |
-913 | ) -> impl IntoResponse {
-    |      ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
-...
-943 |     Json(serde_json::json!({"success": true, "approval": req}))
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Response<Body>`, found `Json<Value>`
-    |
-    = note: expected struct `axum::http::Response<axum::body::Body>`
-               found struct `axum::Json<JsonValue>`
-note: return type inferred to be `axum::http::Response<axum::body::Body>` here
-   --> src/api/mod.rs:915:16
-    |
-915 |           return (
-    |  ________________^
-916 | |             StatusCode::FORBIDDEN,
-917 | |             Json(serde_json::json!({"error":"insufficient_scope"})),
-918 | |         )
-919 | |             .into_response();
-    | |____________________________^
-error[E0308]: mismatched types
-    --> src/api/mod.rs:1249:20
-     |
-1219 |   pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
-     |                                                                                                                             ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
-...
-1249 |               return Json(serde_json::json!({
-     |  ____________________^
-1250 | |                 "success": false,
-1251 | |                 "status": "PendingApproval",
-1252 | |                 "message": "Remediation requires approval before execution",
-1253 | |                 "next": "Submit approval via /api/v1/approvals"
-1254 | |             }));
-     | |_______________^ expected `Response<Body>`, found `Json<Value>`
-     |
-     = note: expected struct `axum::http::Response<axum::body::Body>`
-                found struct `axum::Json<JsonValue>`
-note: return type inferred to be `axum::http::Response<axum::body::Body>` here
-    --> src/api/mod.rs:1221:16
-     |
-1221 |           return (
-     |  ________________^
-1222 | |             StatusCode::FORBIDDEN,
-1223 | |             Json(serde_json::json!({"error":"insufficient_scope"})),
-1224 | |         )
-1225 | |             .into_response();
-     | |____________________________^
-error[E0308]: mismatched types
-    --> src/api/mod.rs:1258:5
-     |
-1219 |   pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
-     |                                                                                                                             ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
-...
-1258 | /     Json(serde_json::json!({
-1259 | |         "success": true,
-1260 | |         "resourceId": payload.resource_id,
-1261 | |         "action": payload.action,
-...    |
-1264 | |         "message": format!("Remediation '{}' initiated for resource {}", payload.action, payload.resource_id)
-1265 | |     }))
-     | |_______^ expected `Response<Body>`, found `Json<Value>`
-     |
-     = note: expected struct `axum::http::Response<axum::body::Body>`
-                found struct `axum::Json<JsonValue>`
-note: return type inferred to be `axum::http::Response<axum::body::Body>` here
-    --> src/api/mod.rs:1221:16
-     |
-1221 |           return (
-     |  ________________^
-1222 | |             StatusCode::FORBIDDEN,
-1223 | |             Json(serde_json::json!({"error":"insufficient_scope"})),
-1224 | |         )
-1225 | |             .into_response();
-     | |____________________________^
-error[E0308]: mismatched types
-    --> src/api/mod.rs:1299:5
-     |
-1269 |   pub async fn create_exception(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<CreateExceptionRequest>) -> impl IntoResponse {
-     |                                                                                                                                          ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
-...
-1299 | /     Json(serde_json::json!({
-1300 | |         "success": true,
-1301 | |         "exceptionId": id,
-1302 | |         "resourceId": payload.resource_id,
-...    |
-1308 | |         "evidenceRequired": true
-1309 | |     }))
-     | |_______^ expected `Response<Body>`, found `Json<Value>`
-     |
-     = note: expected struct `axum::http::Response<axum::body::Body>`
-                found struct `axum::Json<JsonValue>`
-note: return type inferred to be `axum::http::Response<axum::body::Body>` here
-    --> src/api/mod.rs:1271:16
-     |
-1271 |           return (
-     |  ________________^
-1272 | |             StatusCode::FORBIDDEN,
-1273 | |             Json(serde_json::json!({"error":"insufficient_scope"})),
-1274 | |         )
-1275 | |             .into_response();
-     | |____________________________^
-warning: unused variable: `mode`
-    --> src/api/mod.rs:1460:9
-     |
-1460 |     let mode = DataMode::from_env();
-     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_mode`
-     |
-     = note: `#[warn(unused_variables)]` on by default
-warning: unused variable: `mode`
-    --> src/api/mod.rs:1512:9
-     |
-1512 |     let mode = DataMode::from_env();
-     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_mode`
-error[E0308]: mismatched types
-    --> src/api/mod.rs:1676:5
-     |
-1588 | ) -> impl IntoResponse {
-     |      ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
-...
-1676 |     Json(serde_json::json!({"action_id": id}))
-     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Response<Body>`, found `Json<Value>`
-     |
-     = note: expected struct `axum::http::Response<axum::body::Body>`
-                found struct `axum::Json<JsonValue>`
-note: return type inferred to be `axum::http::Response<axum::body::Body>` here
-    --> src/api/mod.rs:1590:16
-     |
-1590 |           return (
-     |  ________________^
-1591 | |             StatusCode::FORBIDDEN,
-1592 | |             Json(serde_json::json!({"error":"insufficient_scope"})),
-1593 | |         )
-1594 | |             .into_response();
-     | |____________________________^
-error[E0308]: mismatched types
-    --> src/api/mod.rs:1864:30
-     |
-1855 | pub async fn expire_exceptions(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-     |                                                                       ----------------- expected `axum::Json<ExpireResult>` because of return type
-...
-1864 |             Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e.to_string()}))).into_response(),
-     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Json<ExpireResult>`, found `Response<Body>`
-     |
-     = note: expected struct `axum::Json<ExpireResult>`
-                found struct `axum::http::Response<axum::body::Body>`
-note: return type inferred to be `axum::Json<ExpireResult>` here
-    --> src/api/mod.rs:1863:32
-     |
-1863 |             Ok(rows) => return Json(ExpireResult { expired: rows.len() as i64 }),
-     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-warning: unused variable: `message`
-   --> src/approval_workflow.rs:439:17
-    |
-439 |             let message = rule.notification_message.clone();
-    |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_message`
-warning: unused variable: `query`
-   --> src/audit_chain.rs:359:13
-    |
-359 |         let query = r#"
-    |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
-warning: unused variable: `header`
-   --> src/auth.rs:194:23
-    |
-194 |             if let Ok(header) = jsonwebtoken::decode_header(token) {
-    |                       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_header`
-warning: variable does not need to be mutable
-  --> src/azure_client_async.rs:90:13
-   |
-90 |         let mut config = AzureClientConfig::default();
-   |             ----^^^^^^
-   |             |
-   |             help: remove this `mut`
-   |
-   = note: `#[warn(unused_mut)]` on by default
-warning: unused variable: `control`
-   --> src/compliance/mod.rs:431:9
-    |
-431 |         control: &ComplianceControl,
-    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_control`
-error[E0599]: no method named `into_response` found for tuple `(axum::http::StatusCode, axum::Json<JsonValue>)` in the current scope
-   --> src/auth_middleware.rs:63:85
-    |
-63  | ...                   let res = (axum::http::StatusCode::FORBIDDEN, body).into_response();
-    |                                                                           ^^^^^^^^^^^^^ method not found in `(axum::http::StatusCode, axum::Json<JsonValue>)`
-    |
-   ::: /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-core-0.4.5/src/response/into_response.rs:115:8
-    |
-115 |     fn into_response(self) -> Response;
-    |        ------------- the method is available for `(axum::http::StatusCode, axum::Json<JsonValue>)` here
-    |
-    = help: items from traits can only be used if the trait is in scope
-help: trait `IntoResponse` which provides `into_response` is implemented but not in scope; perhaps you want to import it
-    |
-1   + use axum::response::IntoResponse;
-    |
-error[E0599]: no method named `into_response` found for tuple `(axum::http::StatusCode, axum::Json<JsonValue>)` in the current scope
-   --> src/auth_middleware.rs:73:84
-    |
-73  | ...                   let res = (axum::http::StatusCode::UNAUTHORIZED, body).into_response();
-    |                                                                              ^^^^^^^^^^^^^ method not found in `(axum::http::StatusCode, axum::Json<JsonValue>)`
-    |
-   ::: /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-core-0.4.5/src/response/into_response.rs:115:8
-    |
-115 |     fn into_response(self) -> Response;
-    |        ------------- the method is available for `(axum::http::StatusCode, axum::Json<JsonValue>)` here
-    |
-    = help: items from traits can only be used if the trait is in scope
-help: trait `IntoResponse` which provides `into_response` is implemented but not in scope; perhaps you want to import it
-    |
-1   + use axum::response::IntoResponse;
-    |
-error[E0599]: no method named `into_response` found for tuple `(axum::http::StatusCode, axum::Json<JsonValue>)` in the current scope
-   --> src/auth_middleware.rs:82:76
-    |
-82  |                     let res = (axum::http::StatusCode::UNAUTHORIZED, body).into_response();
-    |                                                                            ^^^^^^^^^^^^^ method not found in `(axum::http::StatusCode, axum::Json<JsonValue>)`
-    |
-   ::: /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-core-0.4.5/src/response/into_response.rs:115:8
-    |
-115 |     fn into_response(self) -> Response;
-    |        ------------- the method is available for `(axum::http::StatusCode, axum::Json<JsonValue>)` here
-    |
-    = help: items from traits can only be used if the trait is in scope
-help: trait `IntoResponse` which provides `into_response` is implemented but not in scope; perhaps you want to import it
-    |
-1   + use axum::response::IntoResponse;
-    |
-error[E0560]: struct `Claims` has no field named `tenant_id`
-   --> src/tenant.rs:196:13
-    |
-196 |             tenant_id: None,
-    |             ^^^^^^^^^ `Claims` does not have this field
-    |
-    = note: available fields are: `iss`, `name`, `preferred_username`, `oid`, `groups`
-error[E0308]: mismatched types
-   --> src/tenant.rs:197:18
-    |
-197 |             aud: vec![],
-    |                  ^^^^^^ expected `String`, found `Vec<_>`
-    |
-    = note: expected struct `std::string::String`
-               found struct `Vec<_>`
-    = note: this error originates in the macro `vec` (in Nightly builds, run with -Z macro-backtrace for more info)
-error[E0308]: mismatched types
-   --> src/tenant.rs:200:18
-    |
-200 |             nbf: 0,
-    |                  ^ expected `Option<i64>`, found integer
-    |
-    = note: expected enum `std::option::Option<i64>`
-               found type `{integer}`
-help: try wrapping the expression in `Some`
-    |
-200 |             nbf: Some(0),
-    |                  +++++ +
-error[E0308]: mismatched types
-   --> src/tenant.rs:201:20
-    |
-201 |             roles: vec![],
-    |                    ^^^^^^ expected `Option<Vec<String>>`, found `Vec<_>`
-    |
-    = note: expected enum `std::option::Option<Vec<std::string::String>>`
-             found struct `Vec<_>`
-    = note: this error originates in the macro `vec` (in Nightly builds, run with -Z macro-backtrace for more info)
-help: call `Into::into` on this expression to convert `Vec<_>` into `std::option::Option<Vec<std::string::String>>`
-    |
-201 |             roles: vec![].into(),
-    |                          +++++++
-warning: unused variable: `model`
-   --> src/ai/model_registry.rs:211:13
-    |
-211 |         let model = self
-    |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_model`
-warning: unused variable: `rule`
-   --> src/approvals.rs:284:13
-    |
-284 |         for rule in &policy.sod_rules {
-    |             ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
-warning: unused variable: `requester_id`
-   --> src/approvals.rs:280:9
-    |
-280 |         requester_id: &str,
-    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_requester_id`
-warning: unused variable: `approver_id`
-   --> src/approvals.rs:281:9
-    |
-281 |         approver_id: &str,
-    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_approver_id`
-warning: unused variable: `result`
-   --> src/change_management.rs:437:17
-    |
-437 |             let result: serde_json::Value = response
-    |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
-warning: unused variable: `pricing`
-   --> src/finops/mod.rs:287:9
-    |
-287 |         pricing: &serde_json::Value,
-    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pricing`
-warning: unused variable: `current`
-   --> src/finops/mod.rs:343:37
-    |
-343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
-    |                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current`
-warning: unused variable: `metrics`
-   --> src/finops/mod.rs:343:54
-    |
-343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
-    |                                                      ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
-warning: value assigned to `savings_achieved` is never read
-   --> src/finops/mod.rs:954:17
-    |
-954 |         let mut savings_achieved = 0.0;
-    |                 ^^^^^^^^^^^^^^^^
-    |
-    = help: maybe it is overwritten before being read?
-    = note: `#[warn(unused_assignments)]` on by default
-Some errors have detailed explanations: E0308, E0423, E0425, E0432, E0433, E0560, E0599, E0609.
-For more information about an error, try `rustc --explain E0308`.
-error: could not compile `policycortex-core` (bin "policycortex-core" test) due to 29 previous errors; 45 warnings emitted
-Error: Process completed with exit code 101.
+#16 699.7    Compiling policycortex-core v2.0.0 (/app)
+#16 699.9     Finished `release` profile [optimized] target(s) in 11m 39s
+#16 699.9 warning: the following packages contain code that will be rejected by a future version of Rust: redis v0.23.3, sqlx-postgres v0.7.4
+#16 699.9 note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+#16 DONE 700.1s
+#17 [builder 6/7] COPY src ./src
+#17 DONE 0.2s
+#18 [builder 7/7] RUN touch src/main.rs && cargo build --release
+#18 0.501    Compiling policycortex-core v2.0.0 (/app)
+#18 0.711 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 0.711    --> src/action_orchestrator.rs:465:30
+#18 0.711     |
+#18 0.711 465 |               if let Ok(row) = sqlx::query!(
+#18 0.711     |  ______________________________^
+#18 0.711 466 | |                 r#"SELECT action_id, created_at, expires_at, result FROM idempotency_records WHERE key = $1"#,
+#18 0.711 467 | |                 key
+#18 0.711 468 | |             )
+#18 0.711     | |_____________^
+#18 0.711     |
+#18 0.711     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 0.711 
+#18 0.713 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 0.713    --> src/action_orchestrator.rs:506:21
+#18 0.714     |
+#18 0.714 506 |               let _ = sqlx::query!(
+#18 0.714     |  _____________________^
+#18 0.714 507 | |                 r#"INSERT INTO idempotency_records (key, action_id, result, created_at, expires_at)
+#18 0.715 508 | |                    VALUES ($1, $2, $3, NOW(), NOW() + INTERVAL '24 hours')
+#18 0.715 509 | |                    ON CONFLICT (key) DO NOTHING"#,
+#18 0.715 ...   |
+#18 0.715 512 | |                 Option::<serde_json::Value>::None,
+#18 0.715 513 | |             )
+#18 0.715     | |_____________^
+#18 0.715     |
+#18 0.715     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 0.715 
+#18 0.715 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 0.715    --> src/action_orchestrator.rs:543:23
+#18 0.715     |
+#18 0.715 543 |               let row = sqlx::query!(
+#18 0.715     |  _______________________^
+#18 0.715 544 | |                 r#"SELECT COUNT(1) as count FROM approval_requests
+#18 0.715 545 | |                    WHERE tenant_id = $1 AND action_type = $2 AND resource_id = $3
+#18 0.715 546 | |                      AND status::text = 'Approved' AND expires_at > NOW()"#,
+#18 0.715 ...   |
+#18 0.715 549 | |                 action.target_resource
+#18 0.716 550 | |             )
+#18 0.716     | |_____________^
+#18 0.716     |
+#18 0.716     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 0.717 
+#18 0.717 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 0.717    --> src/action_orchestrator.rs:674:9
+#18 0.717     |
+#18 0.717 674 | /         sqlx::query!(
+#18 0.717 675 | |             r#"
+#18 0.717 676 | |             INSERT INTO commands (
+#18 0.717 677 | |               command_id, command_type, command_data, aggregate_id, tenant_id, user_id,
+#18 0.717 ...   |
+#18 0.717 692 | |             action.idempotency_key
+#18 0.717 693 | |         )
+#18 0.717     | |_________^
+#18 0.717     |
+#18 0.717     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 0.717 
+#18 0.904 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 0.905     --> src/api/mod.rs:1390:17
+#18 0.905      |
+#18 0.905 1390 |           let _ = sqlx::query!(
+#18 0.905      |  _________________^
+#18 0.905 1391 | |             r#"INSERT INTO exceptions (
+#18 0.905 1392 | |                 id, tenant_id, resource_id, policy_id, reason, status, created_by, created_at, expires_at, recertify_at, evidence, metadata
+#18 0.905 1393 | |             ) VALUES ($1,$2,$3,$4,$5,'Approved',$6,NOW(),$7,$8,$9,$10)"#,
+#18 0.905 ...    |
+#18 0.905 1403 | |             serde_json::json!(***)
+#18 0.905 1404 | |         )
+#18 0.905      | |_________^
+#18 0.905      |
+#18 0.905      = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 0.905 
+#18 0.945 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 0.946     --> src/api/mod.rs:1944:27
+#18 0.946      |
+#18 0.946 1944 |   ...   if let Ok(rows) = sqlx::query!(
+#18 0.946      |  _________________________^
+#18 0.946 1945 | | ...       r#"SELECT id, resource_id, policy_id, reason, status, expires_at, recertify_at, created_at FROM exceptions ORDER BY created_at ...
+#18 0.946 1946 | | ...   )
+#18 0.946      | |_______^
+#18 0.946      |
+#18 0.946      = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 0.946 
+#18 0.947 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 0.948     --> src/api/mod.rs:1976:15
+#18 0.948      |
+#18 0.948 1976 |           match sqlx::query!(
+#18 0.948      |  _______________^
+#18 0.948 1977 | |             r#"UPDATE exceptions SET status = 'Expired' WHERE expires_at < NOW() AND status <> 'Expired' RETURNING 1"#
+#18 0.948 1978 | |         )
+#18 0.948      | |_________^
+#18 0.948      |
+#18 0.948      = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 0.948 
+#18 1.578 error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+#18 1.578    --> src/evidence_pipeline.rs:513:9
+#18 1.578     |
+#18 1.578 513 | /         sqlx::query!(
+#18 1.578 514 | |             r#"INSERT INTO evidence_store (
+#18 1.578 515 | |                 id, evidence_type, source, subject, description, data, hash, signature,
+#18 1.578 516 | |                 signing_key_id, chain_of_custody, metadata, tenant_id, created_at, expires_at, verification_status
+#18 1.578 ...   |
+#18 1.578 535 | |             format!("***:?***", evidence.verification_status)
+#18 1.578 536 | |         )
+#18 1.578     | |_________^
+#18 1.578     |
+#18 1.578     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+#18 1.578 
+#18 2.263 error[E0433]: failed to resolve: could not find `LayerFn` in `util`
+#18 2.263    --> src/main.rs:289:36
+#18 2.263     |
+#18 2.263 289 |         .layer(tower::layer::util::LayerFn::new(|service| ***
+#18 2.263     |                                    ^^^^^^^ could not find `LayerFn` in `util`
+#18 2.263     |
+#18 2.263 help: consider importing this struct
+#18 2.263     |
+#18 2.263 1   + use tower::layer::LayerFn;
+#18 2.263     |
+#18 2.263 help: if you import `LayerFn`, refer to it directly
+#18 2.263     |
+#18 2.263 289 -         .layer(tower::layer::util::LayerFn::new(|service| ***
+#18 2.263 289 +         .layer(LayerFn::new(|service| ***
+#18 2.263     |
+#18 2.263 
+#18 2.330 warning: unused imports: `StatusCode` and `response::IntoResponse`
+#18 2.330  --> src/main.rs:3:28
+#18 2.330   |
+#18 2.330 3 |     http::***header, Method, StatusCode***,
+#18 2.330   |                            ^^^^^^^^^^
+#18 2.330 4 |     response::IntoResponse,
+#18 2.330   |     ^^^^^^^^^^^^^^^^^^^^^^
+#18 2.330   |
+#18 2.330   = note: `#[warn(unused_imports)]` on by default
+#18 2.330 
+#18 2.330 warning: unused import: `Deserialize`
+#18 2.330   --> src/main.rs:10:13
+#18 2.330    |
+#18 2.330 10 | use serde::***Deserialize, Serialize***;
+#18 2.330    |             ^^^^^^^^^^^
+#18 2.330 
+#18 2.330 warning: unused import: `warn`
+#18 2.330  --> src/action_orchestrator.rs:7:28
+#18 2.330   |
+#18 2.330 7 | use tracing::***error, info, warn***;
+#18 2.330   |                            ^^^^
+#18 2.330 
+#18 2.337 warning: unused imports: `EvaluationHarness`, `EvaluationReport`, `ModelCard`, `ModelMetrics`, `ModelRegistry`, `ModelType`, and `TrainingDataLineage`
+#18 2.337  --> src/ai/mod.rs:4:5
+#18 2.337   |
+#18 2.337 4 |     EvaluationHarness, EvaluationReport, ModelCard, ModelMetrics, ModelRegistry, ModelType,
+#18 2.337   |     ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^
+#18 2.337 5 |     TrainingDataLineage,
+#18 2.337   |     ^^^^^^^^^^^^^^^^^^^
+#18 2.337 
+#18 2.338 warning: unused imports: `Aggregation`, `ErrorBudget`, `SLIType`, `SLI`, `SLOWindow`, and `SLO`
+#18 2.338  --> src/api/mod.rs:3:18
+#18 2.338   |
+#18 2.338 3 | use crate::slo::***Aggregation, ErrorBudget, SLIType, SLOManager, SLOWindow, SLI, SLO***;
+#18 2.338   |                  ^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^              ^^^^^^^^^  ^^^  ^^^
+#18 2.338 
+#18 2.338 warning: unused import: `Query`
+#18 2.338  --> src/api/mod.rs:6:21
+#18 2.338   |
+#18 2.338 6 |     extract::***Path, Query, State***,
+#18 2.338   |                     ^^^^^
+#18 2.338 
+#18 2.339 warning: unused import: `std::collections::HashMap`
+#18 2.339   --> src/api/mod.rs:19:5
+#18 2.339    |
+#18 2.339 19 | use std::collections::HashMap;
+#18 2.339    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+#18 2.339 
+#18 2.345 warning: unused imports: `DataMode` and `DataResponse`
+#18 2.345     --> src/api/mod.rs:1330:28
+#18 2.345      |
+#18 2.345 1330 |     use crate::data_mode::***DataMode, DataModeGuard, DataResponse***;
+#18 2.345      |                            ^^^^^^^^                 ^^^^^^^^^^^^
+#18 2.345 
+#18 2.347 warning: unused import: `DateTime`
+#18 2.348  --> src/approval_workflow.rs:5:14
+#18 2.348   |
+#18 2.348 5 | use chrono::***DateTime, Duration, Utc***;
+#18 2.348   |              ^^^^^^^^
+#18 2.348 
+#18 2.348 warning: unused import: `error`
+#18 2.348   --> src/approval_workflow.rs:10:15
+#18 2.348    |
+#18 2.348 10 | use tracing::***error, info, warn***;
+#18 2.348    |               ^^^^^
+#18 2.348 
+#18 2.356 warning: unused imports: `AuthUser` and `Claims`
+#18 2.356  --> src/auth_middleware.rs:1:19
+#18 2.356   |
+#18 2.356 1 | use crate::auth::***AuthUser, Claims, TokenValidator***;
+#18 2.356   |                   ^^^^^^^^  ^^^^^^
+#18 2.356 
+#18 2.357 warning: unused import: `Serialize`
+#18 2.357  --> src/azure_client.rs:5:26
+#18 2.357   |
+#18 2.357 5 | use serde::***Deserialize, Serialize***;
+#18 2.357   |                          ^^^^^^^^^
+#18 2.357 
+#18 2.358 warning: unused import: `RequestBuilder`
+#18 2.358  --> src/azure_client_async.rs:6:23
+#18 2.358   |
+#18 2.358 6 | use reqwest::***Client, RequestBuilder***;
+#18 2.358   |                       ^^^^^^^^^^^^^^
+#18 2.358 
+#18 2.370 warning: unused imports: `Deserialize` and `Serialize`
+#18 2.370  --> src/collectors/gcp_collector.rs:2:13
+#18 2.370   |
+#18 2.370 2 | use serde::***Deserialize, Serialize***;
+#18 2.370   |             ^^^^^^^^^^^  ^^^^^^^^^
+#18 2.370 
+#18 2.372 warning: unused imports: `CloudProvider`, `ComplianceStatus`, and `ResourceType`
+#18 2.372  --> src/collectors/gcp_collector.rs:5:44
+#18 2.372   |
+#18 2.372 5 |     AuditLog, CloudCollector, CloudPolicy, CloudProvider, CloudResource, ComplianceStatus,
+#18 2.373   |                                            ^^^^^^^^^^^^^                 ^^^^^^^^^^^^^^^^
+#18 2.373 6 |     ResourceType,
+#18 2.373   |     ^^^^^^^^^^^^
+#18 2.373 
+#18 2.373 warning: unused import: `AwsCollector`
+#18 2.373  --> src/collectors/mod.rs:5:15
+#18 2.373   |
+#18 2.373 5 |     AuditLog, AwsCollector, CloudCollector, CloudPolicy, CloudProvider, CloudResource,
+#18 2.373   |               ^^^^^^^^^^^^
+#18 2.373 
+#18 2.373 warning: unused import: `gcp_collector::GcpCollector`
+#18 2.373  --> src/collectors/mod.rs:8:9
+#18 2.373   |
+#18 2.373 8 | pub use gcp_collector::GcpCollector;
+#18 2.373   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#18 2.373 
+#18 2.382 warning: unused import: `futures_lite::stream::StreamExt`
+#18 2.382  --> src/events/mod.rs:7:5
+#18 2.382   |
+#18 2.382 7 | use futures_lite::stream::StreamExt;
+#18 2.382   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#18 2.382 
+#18 2.385 warning: unused import: `error`
+#18 2.385  --> src/evidence_pipeline.rs:8:15
+#18 2.385   |
+#18 2.385 8 | use tracing::***error, info, warn***;
+#18 2.385   |               ^^^^^
+#18 2.385 
+#18 2.387 warning: unused import: `Duration`
+#18 2.387  --> src/finops/mod.rs:5:24
+#18 2.387   |
+#18 2.387 5 | use chrono::***DateTime, Duration, Utc***;
+#18 2.387   |                        ^^^^^^^^
+#18 2.387 
+#18 2.395 warning: unused import: `error`
+#18 2.395  --> src/secrets.rs:8:15
+#18 2.395   |
+#18 2.395 8 | use tracing::***error, info, warn***;
+#18 2.395   |               ^^^^^
+#18 2.395 
+#18 2.397 warning: unused import: `async_trait::async_trait`
+#18 2.397  --> src/security_graph/mod.rs:5:5
+#18 2.397   |
+#18 2.397 5 | use async_trait::async_trait;
+#18 2.397   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+#18 2.397 
+#18 2.397 warning: unused import: `dijkstra`
+#18 2.397  --> src/security_graph/mod.rs:6:40
+#18 2.397   |
+#18 2.397 6 | use petgraph::algo::***all_simple_paths, dijkstra***;
+#18 2.397   |                                        ^^^^^^^^
+#18 2.397 
+#18 2.397 warning: unused import: `HashSet`
+#18 2.397  --> src/security_graph/mod.rs:9:33
+#18 2.397   |
+#18 2.397 9 | use std::collections::***HashMap, HashSet***;
+#18 2.397   |                                 ^^^^^^^
+#18 2.397 
+#18 2.401 warning: unused import: `uuid::Uuid`
+#18 2.401  --> src/simulated_data.rs:4:5
+#18 2.401   |
+#18 2.401 4 | use uuid::Uuid;
+#18 2.401   |     ^^^^^^^^^^
+#18 2.401 
+#18 2.406 warning: unused import: `warn`
+#18 2.407  --> src/tenant.rs:9:21
+#18 2.407   |
+#18 2.407 9 | use tracing::***info, warn***;
+#18 2.407   |                     ^^^^
+#18 2.407 
+#18 2.408 warning: unused import: `error`
+#18 2.408   --> src/tenant_isolation.rs:11:15
+#18 2.408    |
+#18 2.408 11 | use tracing::***error, info, warn***;
+#18 2.408    |               ^^^^^
+#18 2.408 
+#18 2.410 warning: unused imports: `AuthUser` and `OptionalAuthUser`
+#18 2.411   --> src/main.rs:58:12
+#18 2.411    |
+#18 2.411 58 | use auth::***AuthUser, OptionalAuthUser***;
+#18 2.411    |            ^^^^^^^^  ^^^^^^^^^^^^^^^^
+#18 2.411 
+#18 2.411 warning: unused imports: `TenantContext`, `TenantDatabase`, and `tenant_isolation_middleware`
+#18 2.411   --> src/main.rs:62:24
+#18 2.411    |
+#18 2.411 62 | use tenant_isolation::***tenant_isolation_middleware, TenantContext, TenantDatabase***;
+#18 2.411    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+#18 2.411 
+#18 4.014 error[E0308]: mismatched types
+#18 4.014     --> src/api/mod.rs:1026:5
+#18 4.014      |
+#18 4.014 995  | ) -> impl IntoResponse ***
+#18 4.014      |      ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
+#18 4.014 ...
+#18 4.014 1026 |     Json(serde_json::json!(***"success": true, "approval": req***))
+#18 4.014      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Response<Body>`, found `Json<Value>`
+#18 4.014      |
+#18 4.014      = note: expected struct `axum::http::Response<axum::body::Body>`
+#18 4.014                 found struct `axum::Json<JsonValue>`
+#18 4.014 note: return type inferred to be `axum::http::Response<axum::body::Body>` here
+#18 4.014     --> src/api/mod.rs:997:16
+#18 4.014      |
+#18 4.014 997  |           return (
+#18 4.014      |  ________________^
+#18 4.014 998  | |             StatusCode::FORBIDDEN,
+#18 4.014 999  | |             Json(serde_json::json!(***"error":"insufficient_scope"***)),
+#18 4.014 1000 | |         )
+#18 4.014 1001 | |             .into_response();
+#18 4.015      | |____________________________^
+#18 4.015 
+#18 4.098 error[E0308]: mismatched types
+#18 4.098     --> src/api/mod.rs:1354:20
+#18 4.098      |
+#18 4.098 1321 |   ) -> impl IntoResponse ***
+#18 4.098      |        ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
+#18 4.098 ...
+#18 4.098 1354 |               return Json(serde_json::json!(***
+#18 4.098      |  ____________________^
+#18 4.098 1355 | |                 "success": false,
+#18 4.098 1356 | |                 "status": "PendingApproval",
+#18 4.098 1357 | |                 "message": "Remediation requires approval before execution",
+#18 4.098 1358 | |                 "next": "Submit approval via /api/v1/approvals"
+#18 4.098 1359 | |             ***));
+#18 4.098      | |_______________^ expected `Response<Body>`, found `Json<Value>`
+#18 4.098      |
+#18 4.098      = note: expected struct `axum::http::Response<axum::body::Body>`
+#18 4.098                 found struct `axum::Json<JsonValue>`
+#18 4.098 note: return type inferred to be `axum::http::Response<axum::body::Body>` here
+#18 4.098     --> src/api/mod.rs:1323:16
+#18 4.098      |
+#18 4.098 1323 |           return (
+#18 4.098      |  ________________^
+#18 4.098 1324 | |             StatusCode::FORBIDDEN,
+#18 4.098 1325 | |             Json(serde_json::json!(***"error":"insufficient_scope"***)),
+#18 4.098 1326 | |         )
+#18 4.098 1327 | |             .into_response();
+#18 4.098      | |____________________________^
+#18 4.098 
+#18 4.103 error[E0308]: mismatched types
+#18 4.103     --> src/api/mod.rs:1363:5
+#18 4.104      |
+#18 4.104 1321 |   ) -> impl IntoResponse ***
+#18 4.104      |        ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
+#18 4.104 ...
+#18 4.104 1363 | /     Json(serde_json::json!(***
+#18 4.104 1364 | |         "success": true,
+#18 4.104 1365 | |         "resourceId": payload.resource_id,
+#18 4.104 1366 | |         "action": payload.action,
+#18 4.104 ...    |
+#18 4.104 1369 | |         "message": format!("Remediation '***' initiated for resource ***", payload.action, payload.resource_id)
+#18 4.104 1370 | |     ***))
+#18 4.104      | |_______^ expected `Response<Body>`, found `Json<Value>`
+#18 4.104      |
+#18 4.104      = note: expected struct `axum::http::Response<axum::body::Body>`
+#18 4.104                 found struct `axum::Json<JsonValue>`
+#18 4.104 note: return type inferred to be `axum::http::Response<axum::body::Body>` here
+#18 4.104     --> src/api/mod.rs:1323:16
+#18 4.104      |
+#18 4.104 1323 |           return (
+#18 4.104      |  ________________^
+#18 4.104 1324 | |             StatusCode::FORBIDDEN,
+#18 4.104 1325 | |             Json(serde_json::json!(***"error":"insufficient_scope"***)),
+#18 4.104 1326 | |         )
+#18 4.104 1327 | |             .into_response();
+#18 4.104      | |____________________________^
+#18 4.104 
+#18 4.111 error[E0308]: mismatched types
+#18 4.111     --> src/api/mod.rs:1408:5
+#18 4.111      |
+#18 4.111 1378 |   ) -> impl IntoResponse ***
+#18 4.111      |        ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
+#18 4.111 ...
+#18 4.111 1408 | /     Json(serde_json::json!(***
+#18 4.111 1409 | |         "success": true,
+#18 4.111 1410 | |         "exceptionId": id,
+#18 4.111 1411 | |         "resourceId": payload.resource_id,
+#18 4.111 ...    |
+#18 4.111 1417 | |         "evidenceRequired": true
+#18 4.111 1418 | |     ***))
+#18 4.111      | |_______^ expected `Response<Body>`, found `Json<Value>`
+#18 4.111      |
+#18 4.111      = note: expected struct `axum::http::Response<axum::body::Body>`
+#18 4.111                 found struct `axum::Json<JsonValue>`
+#18 4.111 note: return type inferred to be `axum::http::Response<axum::body::Body>` here
+#18 4.111     --> src/api/mod.rs:1380:16
+#18 4.111      |
+#18 4.111 1380 |           return (
+#18 4.111      |  ________________^
+#18 4.111 1381 | |             StatusCode::FORBIDDEN,
+#18 4.111 1382 | |             Json(serde_json::json!(***"error":"insufficient_scope"***)),
+#18 4.111 1383 | |         )
+#18 4.111 1384 | |             .into_response();
+#18 4.111      | |____________________________^
+#18 4.111 
+#18 4.191 warning: unused variable: `mode`
+#18 4.192     --> src/api/mod.rs:1569:9
+#18 4.192      |
+#18 4.192 1569 |     let mode = DataMode::from_env();
+#18 4.192      |         ^^^^ help: if this is intentional, prefix it with an underscore: `_mode`
+#18 4.192      |
+#18 4.192      = note: `#[warn(unused_variables)]` on by default
+#18 4.192 
+#18 4.213 warning: unused variable: `mode`
+#18 4.213     --> src/api/mod.rs:1621:9
+#18 4.213      |
+#18 4.213 1621 |     let mode = DataMode::from_env();
+#18 4.213      |         ^^^^ help: if this is intentional, prefix it with an underscore: `_mode`
+#18 4.213 
+#18 4.233 error[E0308]: mismatched types
+#18 4.234     --> src/api/mod.rs:1785:5
+#18 4.234      |
+#18 4.234 1697 | ) -> impl IntoResponse ***
+#18 4.234      |      ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
+#18 4.234 ...
+#18 4.234 1785 |     Json(serde_json::json!(***"action_id": id***))
+#18 4.234      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Response<Body>`, found `Json<Value>`
+#18 4.234      |
+#18 4.234      = note: expected struct `axum::http::Response<axum::body::Body>`
+#18 4.234                 found struct `axum::Json<JsonValue>`
+#18 4.234 note: return type inferred to be `axum::http::Response<axum::body::Body>` here
+#18 4.234     --> src/api/mod.rs:1699:16
+#18 4.234      |
+#18 4.234 1699 |           return (
+#18 4.234      |  ________________^
+#18 4.234 1700 | |             StatusCode::FORBIDDEN,
+#18 4.234 1701 | |             Json(serde_json::json!(***"error":"insufficient_scope"***)),
+#18 4.234 1702 | |         )
+#18 4.234 1703 | |             .into_response();
+#18 4.234      | |____________________________^
+#18 4.234 
+#18 4.301 error[E0308]: mismatched types
+#18 4.301     --> src/api/mod.rs:1983:30
+#18 4.301      |
+#18 4.301 1974 | pub async fn expire_exceptions(State(state): State<Arc<AppState>>) -> impl IntoResponse ***
+#18 4.301      |                                                                       ----------------- expected `axum::Json<ExpireResult>` because of return type
+#18 4.301 ...
+#18 4.301 1983 |             Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!(***"error": e.to_string()***))).into_response(),
+#18 4.301      |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Json<ExpireResult>`, found `Response<Body>`
+#18 4.301      |
+#18 4.301      = note: expected struct `axum::Json<ExpireResult>`
+#18 4.301                 found struct `axum::http::Response<axum::body::Body>`
+#18 4.301 note: return type inferred to be `axum::Json<ExpireResult>` here
+#18 4.301     --> src/api/mod.rs:1982:32
+#18 4.301      |
+#18 4.301 1982 |             Ok(rows) => return Json(ExpireResult *** expired: rows.len() as i64 ***),
+#18 4.301      |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#18 4.301 
+#18 4.415 warning: unused variable: `message`
+#18 4.415    --> src/approval_workflow.rs:439:17
+#18 4.415     |
+#18 4.415 439 |             let message = rule.notification_message.clone();
+#18 4.415     |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_message`
+#18 4.415 
+#18 4.458 warning: unused variable: `query`
+#18 4.458    --> src/audit_chain.rs:359:13
+#18 4.458     |
+#18 4.458 359 |         let query = r#"
+#18 4.458     |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+#18 4.458 
+#18 4.564 warning: unused variable: `header`
+#18 4.564    --> src/auth.rs:201:23
+#18 4.564     |
+#18 4.564 201 |             if let Ok(header) = jsonwebtoken::decode_header(token) ***
+#18 4.564     |                       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_header`
+#18 4.564 
+#18 4.837 warning: variable does not need to be mutable
+#18 4.837   --> src/azure_client_async.rs:90:13
+#18 4.837    |
+#18 4.837 90 |         let mut config = AzureClientConfig::default();
+#18 4.837    |             ----^^^^^^
+#18 4.837    |             |
+#18 4.837    |             help: remove this `mut`
+#18 4.837    |
+#18 4.837    = note: `#[warn(unused_mut)]` on by default
+#18 4.837 
+#18 5.251 warning: unused variable: `control`
+#18 5.251    --> src/compliance/mod.rs:431:9
+#18 5.251     |
+#18 5.251 431 |         control: &ComplianceControl,
+#18 5.251     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_control`
+#18 5.251 
+#18 5.446 warning: unused variable: `key_id`
+#18 5.447    --> src/evidence_pipeline.rs:442:9
+#18 5.447     |
+#18 5.447 442 |         key_id: &str,
+#18 5.447     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_key_id`
+#18 5.447 
+#18 11.06 warning: unused variable: `model`
+#18 11.06    --> src/ai/model_registry.rs:211:13
+#18 11.06     |
+#18 11.06 211 |         let model = self
+#18 11.06     |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_model`
+#18 11.06 
+#18 12.15 warning: unused variable: `rule`
+#18 12.15    --> src/approvals.rs:284:13
+#18 12.15     |
+#18 12.15 284 |         for rule in &policy.sod_rules ***
+#18 12.15     |             ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
+#18 12.15 
+#18 12.15 warning: unused variable: `requester_id`
+#18 12.15    --> src/approvals.rs:280:9
+#18 12.15     |
+#18 12.15 280 |         requester_id: &str,
+#18 12.15     |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_requester_id`
+#18 12.15 
+#18 12.15 warning: unused variable: `approver_id`
+#18 12.15    --> src/approvals.rs:281:9
+#18 12.15     |
+#18 12.15 281 |         approver_id: &str,
+#18 12.15     |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_approver_id`
+#18 12.15 
+#18 13.18 warning: unused variable: `result`
+#18 13.18    --> src/change_management.rs:437:17
+#18 13.18     |
+#18 13.18 437 |             let result: serde_json::Value = response
+#18 13.18     |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+#18 13.18 
+#18 14.80 warning: unused variable: `pricing`
+#18 14.80    --> src/finops/mod.rs:287:9
+#18 14.80     |
+#18 14.80 287 |         pricing: &serde_json::Value,
+#18 14.80     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pricing`
+#18 14.80 
+#18 14.81 warning: unused variable: `current`
+#18 14.81    --> src/finops/mod.rs:343:37
+#18 14.81     |
+#18 14.81 343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> ***
+#18 14.81     |                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current`
+#18 14.81 
+#18 14.81 warning: unused variable: `metrics`
+#18 14.81    --> src/finops/mod.rs:343:54
+#18 14.81     |
+#18 14.81 343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> ***
+#18 14.81     |                                                      ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+#18 14.81 
+#18 14.94 warning: value assigned to `savings_achieved` is never read
+#18 14.94    --> src/finops/mod.rs:954:17
+#18 14.94     |
+#18 14.94 954 |         let mut savings_achieved = 0.0;
+#18 14.94     |                 ^^^^^^^^^^^^^^^^
+#18 14.94     |
+#18 14.94     = help: maybe it is overwritten before being read?
+#18 14.94     = note: `#[warn(unused_assignments)]` on by default
+#18 14.94 
+#18 16.45 Some errors have detailed explanations: E0308, E0433.
+#18 16.45 For more information about an error, try `rustc --explain E0308`.
+#18 16.48 warning: `policycortex-core` (bin "policycortex-core") generated 46 warnings
+#18 16.48 error: could not compile `policycortex-core` (bin "policycortex-core") due to 15 previous errors; 46 warnings emitted
+#18 ERROR: process "/bin/sh -c touch src/main.rs && cargo build --release" did not complete successfully: exit code: 101
+------
+ > [builder 7/7] RUN touch src/main.rs && cargo build --release:
+14.94 954 |         let mut savings_achieved = 0.0;
+14.94     |                 ^^^^^^^^^^^^^^^^
+14.94     |
+14.94     = help: maybe it is overwritten before being read?
+14.94     = note: `#[warn(unused_assignments)]` on by default
+14.94 
+16.45 Some errors have detailed explanations: E0308, E0433.
+16.45 For more information about an error, try `rustc --explain E0308`.
+16.48 warning: `policycortex-core` (bin "policycortex-core") generated 46 warnings
+16.48 error: could not compile `policycortex-core` (bin "policycortex-core") due to 15 previous errors; 46 warnings emitted
+------
+Dockerfile:29
+--------------------
+  27 |     # Build the actual application
+  28 |     ENV SQLX_OFFLINE=true
+  29 | >>> RUN touch src/main.rs && cargo build --release
+  30 |     
+  31 |     # Runtime stage
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c touch src/main.rs && cargo build --release" did not complete successfully: exit code: 101
+Error: buildx failed with: ERROR: failed to build: failed to solve: process "/bin/sh -c touch src/main.rs && cargo build --release" did not complete successfully: exit code: 101

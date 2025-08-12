@@ -510,30 +510,30 @@ impl EvidencePipeline {
         evidence: &Evidence,
     ) -> Result<(), String> {
         info!("Persisting evidence {} to database", evidence.id);
-        sqlx::query!(
+        sqlx::query(
             r#"INSERT INTO evidence_store (
                 id, evidence_type, source, subject, description, data, hash, signature,
                 signing_key_id, chain_of_custody, metadata, tenant_id, created_at, expires_at, verification_status
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8,
                 $9, $10, $11, $12, $13, $14, $15
-            ) ON CONFLICT (id) DO NOTHING"#,
-            evidence.id,
-            format!("{:?}", evidence.evidence_type),
-            serde_json::to_value(&evidence.source).map_err(|e| e.to_string())?,
-            evidence.subject,
-            evidence.description,
-            evidence.data,
-            evidence.hash,
-            evidence.signature,
-            evidence.signing_key_id,
-            serde_json::to_value(&evidence.chain_of_custody).map_err(|e| e.to_string())?,
-            serde_json::to_value(&evidence.metadata).map_err(|e| e.to_string())?,
-            evidence.tenant_id,
-            evidence.created_at,
-            evidence.expires_at,
-            format!("{:?}", evidence.verification_status)
+            ) ON CONFLICT (id) DO NOTHING"#
         )
+        .bind(&evidence.id)
+        .bind(format!("{:?}", evidence.evidence_type))
+        .bind(serde_json::to_value(&evidence.source).map_err(|e| e.to_string())?)
+        .bind(&evidence.subject)
+        .bind(&evidence.description)
+        .bind(&evidence.data)
+        .bind(&evidence.hash)
+        .bind(&evidence.signature)
+        .bind(&evidence.signing_key_id)
+        .bind(serde_json::to_value(&evidence.chain_of_custody).map_err(|e| e.to_string())?)
+        .bind(serde_json::to_value(&evidence.metadata).map_err(|e| e.to_string())?)
+        .bind(&evidence.tenant_id)
+        .bind(&evidence.created_at)
+        .bind(&evidence.expires_at)
+        .bind(format!("{:?}", evidence.verification_status))
         .execute(pool)
         .await
         .map_err(|e| format!("Failed to persist evidence: {}", e))?;

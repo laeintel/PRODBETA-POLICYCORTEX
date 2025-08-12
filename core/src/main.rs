@@ -1,13 +1,12 @@
 use axum::{
     extract::State,
-    http::{header, Method, StatusCode},
-    response::IntoResponse,
+    http::{header, Method},
     routing::{get, post},
     Json, Router,
 };
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
@@ -285,22 +284,7 @@ async fn main() {
         .layer(ServiceBuilder::new().layer(cors).layer(observability::CorrelationLayer))
         // Enforce auth for write operations (scopes/roles)
         .layer(auth_middleware::AuthEnforcementLayer)
-        // Disallow write endpoints when running in simulated mode
-        .layer(tower::layer::util::LayerFn::new(|service| {
-            tower::service_fn(move |req: axum::http::Request<axum::body::Body>| {
-                let is_write = matches!(req.method(), &Method::POST | &Method::PUT | &Method::DELETE | &Method::PATCH);
-                let simulated = !matches!(std::env::var("USE_REAL_DATA").as_deref(), Ok("true") | Ok("1"));
-                if simulated && is_write && !req.uri().path().contains("/approvals") {
-                    let resp = axum::response::Response::builder()
-                        .status(axum::http::StatusCode::FORBIDDEN)
-                        .header(axum::http::header::CONTENT_TYPE, "application/json")
-                        .body(axum::body::Body::from("{\"error\":\"read_only_mode\",\"message\":\"Writes disabled in simulated mode\"}"))
-                        .unwrap();
-                    return std::future::ready(Ok::<_, std::convert::Infallible>(resp));
-                }
-                service.call(req)
-            })
-        }))
+        // Data mode enforcement is handled by individual endpoints
         .with_state(app_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
