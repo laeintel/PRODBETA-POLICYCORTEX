@@ -108,7 +108,11 @@
       "Bash(set SQLX_OFFLINE=)",
       "Bash(git fetch:*)",
       "Bash(git restore:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(gh workflow:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run:*)"
     ],
     "deny": []
   }

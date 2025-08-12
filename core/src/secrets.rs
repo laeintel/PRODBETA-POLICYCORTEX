@@ -69,7 +69,7 @@ impl SecretsManager {
     async fn create_keyvault_client(
         vault_url: &str,
     ) -> Result<SecretClient, Box<dyn std::error::Error>> {
-        let credential = DefaultAzureCredential::default();
+        let credential = DefaultAzureCredential::create(Default::default())?;
         Ok(SecretClient::new(vault_url, Arc::new(credential))?)
     }
 
@@ -89,7 +89,7 @@ impl SecretsManager {
         if let Some(ref client) = self.client {
             match client.get(name).await {
                 Ok(secret) => {
-                    let value = secret.value().to_string();
+                    let value = secret.value.to_string();
 
                     // Update cache
                     let mut cache = self.cache.write().await;
@@ -144,7 +144,7 @@ impl SecretsManager {
     /// Delete a secret
     pub async fn delete_secret(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(ref client) = self.client {
-            client.start_delete(name).await?;
+            client.delete(name).await?;
 
             // Remove from cache
             let mut cache = self.cache.write().await;
