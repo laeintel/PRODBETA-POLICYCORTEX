@@ -25,7 +25,6 @@ COPY src ./src
 
 
 # Build the actual application
-ENV SQLX_OFFLINE=true
 RUN touch src/main.rs && cargo build --release
 
 # Runtime stage

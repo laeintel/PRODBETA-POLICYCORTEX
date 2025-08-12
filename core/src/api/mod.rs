@@ -16,6 +16,7 @@ use flate2::{write::GzEncoder, Compression};
 use metrics::counter;
 use metrics_exporter_prometheus::PrometheusHandle;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tar::Builder as TarBuilder;
@@ -1023,7 +1024,7 @@ pub async fn create_approval(
         let mut approvals = state.approvals.write().await;
         approvals.insert(id.clone(), req.clone());
     }
-    Json(serde_json::json!({"success": true, "approval": req}))
+    Json(serde_json::json!({"success": true, "approval": req})).into_response()
 }
 
 pub async fn list_approvals(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -1356,7 +1357,7 @@ pub async fn remediate(
                 "status": "PendingApproval",
                 "message": "Remediation requires approval before execution",
                 "next": "Submit approval via /api/v1/approvals"
-            }));
+            })).into_response();
         }
     }
 
@@ -1367,7 +1368,7 @@ pub async fn remediate(
         "status": "Initiated",
         "estimatedCompletion": "5 minutes",
         "message": format!("Remediation '{}' initiated for resource {}", payload.action, payload.resource_id)
-    }))
+    })).into_response()
 }
 
 // Create a policy exception (stub – Phase 1)
@@ -1387,21 +1388,21 @@ pub async fn create_exception(
     let id = Uuid::new_v4();
     let expires_at = Utc::now() + chrono::Duration::days(30);
     if let Some(ref pool) = state.db_pool {
-        let _ = sqlx::query!(
+        let _ = sqlx::query(
             r#"INSERT INTO exceptions (
                 id, tenant_id, resource_id, policy_id, reason, status, created_by, created_at, expires_at, recertify_at, evidence, metadata
-            ) VALUES ($1,$2,$3,$4,$5,'Approved',$6,NOW(),$7,$8,$9,$10)"#,
-            id,
-            auth_user.claims.tid.clone().unwrap_or_else(|| "default".to_string()),
-            payload.resource_id,
-            payload.policy_id,
-            payload.reason,
-            auth_user.claims.preferred_username.clone().unwrap_or_default(),
-            expires_at,
-            expires_at,
-            serde_json::json!({"requested_by": auth_user.claims.preferred_username}),
-            serde_json::json!({})
+            ) VALUES ($1,$2,$3,$4,$5,'Approved',$6,NOW(),$7,$8,$9,$10)"#
         )
+        .bind(&id)
+        .bind(auth_user.claims.tid.clone().unwrap_or_else(|| "default".to_string()))
+        .bind(&payload.resource_id)
+        .bind(&payload.policy_id)
+        .bind(&payload.reason)
+        .bind(auth_user.claims.preferred_username.clone().unwrap_or_default())
+        .bind(&expires_at)
+        .bind(&expires_at)
+        .bind(serde_json::json!({"requested_by": auth_user.claims.preferred_username}))
+        .bind(serde_json::json!({}))
         .execute(pool)
         .await;
     }
@@ -1415,7 +1416,7 @@ pub async fn create_exception(
         "status": "Approved",
         "recertifyAt": expires_at.to_rfc3339(),
         "evidenceRequired": true
-    }))
+    })).into_response()
 }
 
 // Helper: Proxy deep GET to Python service (Phase 3). Base from DEEP_API_BASE or http://localhost:8090
@@ -1782,7 +1783,7 @@ pub async fn create_action(
         send_step("completed");
     });
 
-    Json(serde_json::json!({"action_id": id}))
+    Json(serde_json::json!({"action_id": id})).into_response()
 }
 
 pub async fn get_action(
@@ -1941,7 +1942,7 @@ pub struct ExceptionRecord {
 
 pub async fn list_exceptions(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     if let Some(ref pool) = state.db_pool {
-        if let Ok(rows) = sqlx::query!(
+        if let Ok(rows) = sqlx::query(
             r#"SELECT id, resource_id, policy_id, reason, status, expires_at, recertify_at, created_at FROM exceptions ORDER BY created_at DESC LIMIT 100"#
         )
         .fetch_all(pool)
@@ -1949,15 +1950,25 @@ pub async fn list_exceptions(State(state): State<Arc<AppState>>) -> impl IntoRes
         {
             let items: Vec<ExceptionRecord> = rows
                 .into_iter()
-                .map(|r| ExceptionRecord {
-                    id: r.id,
-                    resource_id: r.resource_id.unwrap_or_default(),
-                    policy_id: r.policy_id.unwrap_or_default(),
-                    reason: r.reason.unwrap_or_default(),
-                    status: r.status.unwrap_or_else(|| "Approved".to_string()),
-                    expires_at: r.expires_at.unwrap_or(chrono::Utc::now()),
-                    recertify_at: r.recertify_at,
-                    created_at: r.created_at.unwrap_or(chrono::Utc::now()),
+                .map(|r| {
+                    let id: uuid::Uuid = r.try_get("id").unwrap_or_else(|_| uuid::Uuid::new_v4());
+                    let resource_id: String = r.try_get("resource_id").unwrap_or_default();
+                    let policy_id: String = r.try_get("policy_id").unwrap_or_default();
+                    let reason: String = r.try_get("reason").unwrap_or_default();
+                    let status: String = r.try_get("status").unwrap_or_else(|_| "Approved".to_string());
+                    let expires_at: chrono::DateTime<chrono::Utc> = r.try_get("expires_at").unwrap_or(chrono::Utc::now());
+                    let recertify_at: Option<chrono::DateTime<chrono::Utc>> = r.try_get("recertify_at").ok();
+                    let created_at: chrono::DateTime<chrono::Utc> = r.try_get("created_at").unwrap_or(chrono::Utc::now());
+                    ExceptionRecord {
+                        id,
+                        resource_id,
+                        policy_id,
+                        reason,
+                        status,
+                        expires_at,
+                        recertify_at,
+                        created_at,
+                    }
                 })
                 .collect();
             return Json(serde_json::json!({"items": items}));
@@ -1973,15 +1984,15 @@ pub struct ExpireResult {
 
 pub async fn expire_exceptions(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     if let Some(ref pool) = state.db_pool {
-        match sqlx::query!(
+        match sqlx::query(
             r#"UPDATE exceptions SET status = 'Expired' WHERE expires_at < NOW() AND status <> 'Expired' RETURNING 1"#
         )
         .fetch_all(pool)
         .await
         {
-            Ok(rows) => return Json(ExpireResult { expired: rows.len() as i64 }),
+            Ok(rows) => return Json(ExpireResult { expired: rows.len() as i64 }).into_response(),
             Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e.to_string()}))).into_response(),
         }
     }
-    Json(ExpireResult { expired: 0 })
+    Json(ExpireResult { expired: 0 }).into_response()
 }

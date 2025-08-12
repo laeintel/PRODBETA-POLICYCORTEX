@@ -1,10 +1,11 @@
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use sqlx::Row;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 use uuid::Uuid;
 
 /// Idempotent Action Orchestrator with retry logic and state management
@@ -462,24 +463,27 @@ impl ActionOrchestrator {
 
         // Check database if available
         if let Some(ref pool) = self.db_pool {
-            if let Ok(row) = sqlx::query!(
-                r#"SELECT action_id, created_at, expires_at, result FROM idempotency_records WHERE key = $1"#,
-                key
+            if let Ok(row) = sqlx::query(
+                r#"SELECT action_id, created_at, expires_at, result FROM idempotency_records WHERE key = $1"#
             )
+            .bind(key)
             .fetch_optional(pool)
             .await
             {
                 if let Some(row) = row {
-                    let result: Option<ActionResult> = row
-                        .result
+                    let action_id: Option<uuid::Uuid> = row.try_get("action_id").ok();
+                    let created_at: Option<chrono::DateTime<chrono::Utc>> = row.try_get("created_at").ok();
+                    let expires_at: Option<chrono::DateTime<chrono::Utc>> = row.try_get("expires_at").ok();
+                    let result_value: Option<serde_json::Value> = row.try_get("result").ok();
+                    let result: Option<ActionResult> = result_value
                         .as_ref()
                         .and_then(|v| serde_json::from_value(v.clone()).ok());
                     return Ok(Some(IdempotencyRecord {
                         key: key.to_string(),
-                        action_id: row.action_id.unwrap_or_else(|| uuid::Uuid::nil()),
+                        action_id: action_id.unwrap_or_else(|| uuid::Uuid::nil()),
                         result,
-                        created_at: row.created_at.unwrap_or(chrono::Utc::now()),
-                        expires_at: row.expires_at.unwrap_or(chrono::Utc::now()),
+                        created_at: created_at.unwrap_or(chrono::Utc::now()),
+                        expires_at: expires_at.unwrap_or(chrono::Utc::now()),
                     }));
                 }
             }
@@ -503,14 +507,14 @@ impl ActionOrchestrator {
 
         // Persist to database if available
         if let Some(ref pool) = self.db_pool {
-            let _ = sqlx::query!(
+            let _ = sqlx::query(
                 r#"INSERT INTO idempotency_records (key, action_id, result, created_at, expires_at)
                    VALUES ($1, $2, $3, NOW(), NOW() + INTERVAL '24 hours')
-                   ON CONFLICT (key) DO NOTHING"#,
-                action.idempotency_key,
-                action.id,
-                Option::<serde_json::Value>::None,
+                   ON CONFLICT (key) DO NOTHING"#
             )
+            .bind(&action.idempotency_key)
+            .bind(&action.id)
+            .bind(Option::<serde_json::Value>::None)
             .execute(pool)
             .await
             .map_err(|e| format!("Failed to persist idempotency record: {}", e))?;
@@ -540,18 +544,19 @@ impl ActionOrchestrator {
             return Ok(true);
         }
         if let Some(ref pool) = self.db_pool {
-            let row = sqlx::query!(
+            let row = sqlx::query(
                 r#"SELECT COUNT(1) as count FROM approval_requests
                    WHERE tenant_id = $1 AND action_type = $2 AND resource_id = $3
-                     AND status::text = 'Approved' AND expires_at > NOW()"#,
-                action.tenant_id,
-                format!("{:?}", action.action_type),
-                action.target_resource
+                     AND status::text = 'Approved' AND expires_at > NOW()"#
             )
+            .bind(&action.tenant_id)
+            .bind(format!("{:?}", action.action_type))
+            .bind(&action.target_resource)
             .fetch_one(pool)
             .await
             .map_err(|e| format!("Failed to query approvals: {}", e))?;
-            return Ok(row.count.unwrap_or(0) > 0);
+            let count: i64 = row.try_get("count").unwrap_or(0);
+            return Ok(count > 0);
         }
         Ok(false)
     }
@@ -671,26 +676,26 @@ impl ActionOrchestrator {
 
     /// Persist action to database
     async fn persist_action(&self, pool: &sqlx::PgPool, action: &Action) -> Result<(), String> {
-        sqlx::query!(
+        sqlx::query(
             r#"
             INSERT INTO commands (
               command_id, command_type, command_data, aggregate_id, tenant_id, user_id,
               status, idempotency_key, created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NOW())
             ON CONFLICT (idempotency_key) DO NOTHING
-            "#,
-            Uuid::new_v4(),
-            format!("{:?}", action.action_type),
-            serde_json::json!({
-                "target": action.target_resource,
-                "params": action.parameters,
-                "dry_run": action.dry_run,
-            }),
-            action.correlation_id,
-            action.tenant_id,
-            action.user_id,
-            action.idempotency_key
+            "#
         )
+        .bind(Uuid::new_v4())
+        .bind(format!("{:?}", action.action_type))
+        .bind(serde_json::json!({
+            "target": action.target_resource,
+            "params": action.parameters,
+            "dry_run": action.dry_run,
+        }))
+        .bind(action.correlation_id)
+        .bind(&action.tenant_id)
+        .bind(&action.user_id)
+        .bind(&action.idempotency_key)
         .execute(pool)
         .await
         .map_err(|e| format!("Failed to persist action command: {}", e))?;
