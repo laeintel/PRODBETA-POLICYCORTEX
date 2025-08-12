@@ -138,3 +138,4 @@ core/target/
 
 # Machine learning models
 models/continuous_learning/*.pt
+.claude/settings.local.json
