@@ -1,0 +1,135 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { useAuth } from '../contexts/AuthContext'
+import { motion } from 'framer-motion'
+import { Shield, LogIn, Loader2 } from 'lucide-react'
+
+interface AuthGuardProps {
+  children: React.ReactNode
+  requireAuth?: boolean
+}
+
+export default function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
+  const { isAuthenticated, login, loading: authLoading, user } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+  const [checking, setChecking] = useState(true)
+  const [loginAttempted, setLoginAttempted] = useState(false)
+
+  useEffect(() => {
+    // Allow a brief moment for auth to initialize
+    const checkAuth = async () => {
+      // Wait for auth to initialize
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      if (!requireAuth) {
+        setChecking(false)
+        return
+      }
+
+      // If not authenticated and auth is required
+      if (!isAuthenticated && !authLoading) {
+        // Store current path for redirect after login
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('returnUrl', pathname)
+        }
+        setChecking(false)
+      } else {
+        setChecking(false)
+      }
+    }
+
+    checkAuth()
+  }, [isAuthenticated, authLoading, requireAuth, pathname])
+
+  const handleLogin = async () => {
+    setLoginAttempted(true)
+    try {
+      await login()
+      // After successful login, redirect to stored URL or dashboard
+      const returnUrl = sessionStorage.getItem('returnUrl') || '/dashboard'
+      sessionStorage.removeItem('returnUrl')
+      router.push(returnUrl)
+    } catch (error) {
+      console.error('Login failed:', error)
+      setLoginAttempted(false)
+    }
+  }
+
+  // Show loading state while checking authentication
+  if (checking || authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-purple-400 mx-auto mb-4 animate-spin" />
+          <p className="text-white text-lg">Verifying authentication...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If authentication is required but user is not authenticated
+  if (requireAuth && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full mx-4 border border-white/20"
+        >
+          <div className="text-center">
+            <Shield className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
+            <p className="text-gray-300 mb-6">
+              Please sign in with your Azure AD account to access PolicyCortex
+            </p>
+            
+            <button
+              onClick={handleLogin}
+              disabled={loginAttempted}
+              className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loginAttempted ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5" />
+                  Sign in with Azure AD
+                </>
+              )}
+            </button>
+
+            <div className="mt-6 p-4 bg-white/5 rounded-lg">
+              <p className="text-sm text-gray-400">
+                <strong>Note:</strong> You need appropriate Azure AD permissions to access this application.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
+
+  // User is authenticated or auth is not required
+  return <>{children}</>
+}
+
+// Higher-order component to wrap pages with auth guard
+export function withAuth<P extends object>(
+  Component: React.ComponentType<P>,
+  requireAuth: boolean = true
+) {
+  return function AuthenticatedComponent(props: P) {
+    return (
+      <AuthGuard requireAuth={requireAuth}>
+        <Component {...props} />
+      </AuthGuard>
+    )
+  }
+}
