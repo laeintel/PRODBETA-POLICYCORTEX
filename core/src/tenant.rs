@@ -194,11 +194,11 @@ mod tests {
             sub: "user123".to_string(),
             tid: Some("tenant456".to_string()),
             tenant_id: None,
-            aud: vec![],
+            aud: String::new(),
             exp: 0,
             iat: 0,
-            nbf: 0,
-            roles: vec![],
+            nbf: Some(0),
+            roles: Vec::<String>::new().into(),
             scp: None,
         };
 

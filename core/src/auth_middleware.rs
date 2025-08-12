@@ -4,6 +4,7 @@ use std::task::{Context, Poll};
 use std::future::Future;
 use std::pin::Pin;
 use crate::auth::{AuthUser, Claims, TokenValidator};
+use axum::response::IntoResponse;
 use tracing::warn;
 
 #[derive(Clone)]

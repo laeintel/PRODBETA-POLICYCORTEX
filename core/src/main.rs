@@ -266,8 +266,8 @@ async fn main() {
         // Global SSE events stream
         .route("/api/v1/events", get(stream_events))
         // Exceptions management
-        .route("/api/v1/exceptions", get(list_exceptions))
-        .route("/api/v1/exceptions/expire", post(expire_exceptions))
+        .route("/api/v1/exceptions", get(api::list_exceptions))
+        .route("/api/v1/exceptions/expire", post(api::expire_exceptions))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         .layer(ServiceBuilder::new().layer(cors).layer(observability::CorrelationLayer))
