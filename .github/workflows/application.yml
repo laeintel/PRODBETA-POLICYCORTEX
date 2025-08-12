@@ -345,7 +345,8 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [build-core, build-frontend, build-graphql]
-    if: github.event.inputs.force_deploy != 'true' && env.RUN_TESTS == 'true'
+    # Always run on push; on manual dispatch respect inputs
+    if: github.event_name == 'push' || (github.event.inputs.force_deploy != 'true' && github.event.inputs.run_tests == 'true')
     services:
       postgres:
         image: postgres:15-alpine
@@ -410,7 +411,7 @@ jobs:
     name: Deploy to Development
     runs-on: ubuntu-latest
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: always() && ((github.event_name == 'push') || (env.TARGET_ENV == 'dev')) &&
+    if: always() && ((github.event_name == 'push') || (github.event.inputs.target_env == 'dev')) &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
       (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
       (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped')
