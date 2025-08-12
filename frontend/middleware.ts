@@ -1,37 +1,74 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  const url = request.nextUrl.clone()
-  // Enforce read-only UI in simulated mode by adding header flag
-  if (process.env.NEXT_PUBLIC_USE_REAL_DATA !== 'true') {
-    const res = NextResponse.next({ request: { headers: request.headers } })
-    res.headers.set('x-data-mode', 'simulated')
-    return res
-  }
-  
-  // Dev hint: ensure MSAL redirect origin matches current origin to avoid AADSTS9002326
-  try {
-    const configured = process.env.NEXT_PUBLIC_MSAL_REDIRECT_URI
-    if (configured && process.env.NODE_ENV !== 'production') {
-      const cfg = new URL(configured)
-      if (cfg.origin !== url.origin) {
-        console.warn(`MSAL redirect origin mismatch. Current: ${url.origin} Configured: ${cfg.origin}`)
-      }
-    }
-  } catch {}
+// Protected routes that require authentication
+const protectedRoutes = [
+  '/dashboard',
+  '/ai-expert',
+  '/chat',
+  '/policies',
+  '/rbac',
+  '/costs',
+  '/network',
+  '/resources',
+  '/settings',
+  '/security',
+  '/training',
+  '/anomalies',
+  '/roadmap'
+]
 
-  // Let next.config.js handle /api and /actions rewrites to avoid env coupling.
-  // Only handle /health here for local development convenience.
-  if (url.pathname === '/health') {
-    const healthBase = (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
-      ? 'http://localhost:8080'
-      : (process.env.NEXT_PUBLIC_API_URL || 'http://backend:8080')
-    url.href = `${healthBase}${url.pathname}${url.search}`
-    return NextResponse.rewrite(url)
+// Public routes that don't require authentication
+const publicRoutes = [
+  '/',
+  '/login',
+  '/features',
+  '/about',
+  '/api/health'
+]
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Allow public routes
+  if (publicRoutes.some(route => pathname === route || pathname.startsWith('/api/health'))) {
+    return NextResponse.next()
   }
+
+  // Check if the route is protected
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+
+  if (isProtectedRoute) {
+    // Check for authentication in cookies/session
+    const sessionCookie = request.cookies.get('msal.session')
+    const tokenCache = request.cookies.get('msal.token.cache')
+    
+    // Also check sessionStorage keys for MSAL authentication
+    // Note: We can't directly access sessionStorage from middleware
+    // but we can check for the presence of MSAL cookies or headers
+    
+    // If no authentication evidence found, redirect to login
+    if (!sessionCookie && !tokenCache) {
+      // Store the original URL to redirect back after login
+      const loginUrl = new URL('/', request.url)
+      loginUrl.searchParams.set('returnUrl', pathname)
+      
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/health']
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files with extensions
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*|api/health).*)',
+  ],
 }
