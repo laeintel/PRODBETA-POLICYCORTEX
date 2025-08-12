@@ -30,29 +30,17 @@ PolicyCortex v2 is an AI-powered Azure governance platform with four patented te
 # Start with Docker Compose (Linux/Mac)
 ./start-local.sh
 
-# Restart all services (Windows)
-.\restart-services.bat
-
-# Frontend only (runs on port 3000 in dev mode, port 3005 with custom dev)
+# Frontend only (runs on port 3000)
 cd frontend && npm run dev
 
-# Backend only (Rust) with auto-reload
+# Backend only (Rust)
 cd core && cargo watch -x run
-
-# Backend only (Rust) without auto-reload
-cd core && cargo run
 
 # GraphQL gateway
 cd graphql && npm run dev
 
 # API Gateway (Python)
-cd backend/services/api_gateway && uvicorn main:app --reload --port 8000
-
-# API Gateway without Docker (Windows)
-.\start-api-only.bat
-
-# AI Engine (Python)
-cd backend/services/ai_engine && python app.py
+cd backend/services/api_gateway && uvicorn main:app --reload
 ```
 
 ### Building & Testing
@@ -63,20 +51,22 @@ npm run build
 npm run lint
 npm run type-check
 
-# Rust backend  
+# Rust backend
 cd core
 cargo build --release
 cargo test
-cargo clippy
+cargo clippy -- -D warnings
+cargo fmt --all -- --check
 
 # Run full test suite
 ./scripts/test-workflow.sh  # Linux/Mac
+.\scripts\test-workflow.bat  # Windows
 
-# Run single Rust test
+# Run specific Rust test
 cd core && cargo test test_name
 
-# Run Python tests
-cd backend && pytest
+# Format Rust code
+cd core && cargo fmt --all
 ```
 
 ### Database Operations
@@ -93,12 +83,11 @@ redis-cli -h localhost -p 6379
 ```
 
 ## Service Endpoints
-- **Frontend**: http://localhost:3000 (docker/production) or http://localhost:3005 (dev mode)
-- **Core API**: http://localhost:8080
-- **GraphQL**: http://localhost:4000/graphql
-- **API Gateway**: http://localhost:8000 (Python FastAPI)
-- **AI Engine**: http://localhost:8001
+- **Frontend**: http://localhost:3000 (dev mode) or http://localhost:3005 (docker)
+- **Core API**: http://localhost:8080 (local) or http://localhost:8085 (docker)
+- **GraphQL**: http://localhost:4000/graphql (local) or http://localhost:4001 (docker)
 - **EventStore UI**: http://localhost:2113 (admin/changeit)
+- **Adminer DB UI**: http://localhost:8081
 
 ## Key API Routes
 - `/api/v1/metrics` - Unified governance metrics (Patent 1)
@@ -124,11 +113,7 @@ The AI engine uses a domain expert architecture (NOT generic AI) with specialize
 - Security threat detection
 - Cost optimization
 
-Training configuration is in `training/` with Azure AI Foundry integration. Key AI components:
-- `backend/services/ai_engine/domain_expert.py` - Core domain-specific AI engine
-- `backend/services/ai_engine/continuous_learning.py` - Real-time learning system
-- `backend/services/ai_engine/advanced_learning_integration.py` - Advanced learning features
-- `backend/services/ai_engine/meta_learning_system.py` - Meta-learning capabilities
+Training configuration is in `training/` with Azure AI Foundry integration.
 
 ## State Management
 - Frontend uses Zustand (not Redux) for state management
@@ -148,26 +133,32 @@ Training configuration is in `training/` with Azure AI Foundry integration. Key 
 - End-to-end encryption
 - RBAC with fine-grained permissions
 
+## Current Known Issues
+- **Rust Compilation**: The core service has unresolved compilation errors related to missing Copy trait implementations and borrowing issues. A mock server is used in Docker builds as a temporary workaround.
+- **SQLx Offline Mode**: When running locally, you may need to unset `SQLX_OFFLINE` environment variable.
+- **MSAL Authentication**: SSR issues have been resolved by providing default AuthContext values during server-side rendering.
+
+## CI/CD Pipeline
+GitHub Actions workflow (`application.yml`) includes:
+- Linux runners (ubuntu-latest) for better performance
+- Azure Container Registry: `crpcxdev.azurecr.io` (dev), `crcortexprodvb9v2h.azurecr.io` (prod)
+- Terraform 1.6.0 for infrastructure deployment
+- Security scanning with Trivy (non-blocking if Code Scanning not enabled)
+
 ## Development Workflow
 1. Check Azure authentication: `az account show`
-2. Start services with appropriate script (start-dev.bat, start-local.bat, or restart-services.bat)
+2. Start services with appropriate script (start-dev.bat or start-local.bat)
 3. Frontend hot-reloads automatically
-4. Backend requires restart for Rust changes (use `cargo watch` for auto-reload)
-5. Python services auto-reload with uvicorn --reload flag
-6. Test patent features with `scripts/test-workflow.sh`
+4. Backend requires restart for Rust changes (use cargo watch for auto-reload)
+5. Test patent features with `scripts/test-workflow.sh`
 
 ## Important Files
 - `core/src/main.rs` - Rust API entry point
 - `core/src/api/mod.rs` - API route handlers
-- `core/src/services/` - Core business logic services
 - `frontend/app/layout.tsx` - Next.js root layout
 - `frontend/components/AppLayout.tsx` - Main app layout with navigation
-- `frontend/components/Dashboard/` - Dashboard components
 - `backend/services/ai_engine/domain_expert.py` - Core AI engine
-- `backend/services/api_gateway/main.py` - Python API gateway
 - `graphql/gateway.js` - GraphQL federation gateway
-- `docker-compose.local.yml` - Local Docker configuration
-- `docker-compose.dev.yml` - Development Docker configuration
 
 ## Testing Patent Features
 The system includes four patented technologies that can be tested via their respective APIs:
@@ -175,31 +166,3 @@ The system includes four patented technologies that can be tested via their resp
 2. Predictive Compliance - Test via `/api/v1/predictions` for drift predictions
 3. Conversational Intelligence - Test via `/api/v1/conversation` with natural language queries
 4. Cross-Domain Correlation - Test via `/api/v1/correlations` for pattern detection
-
-## Frontend Package Scripts
-- `npm run dev` - Start development server on port 3000
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run type-check` - TypeScript type checking
-
-## Rust Cargo Commands
-- `cargo build` - Build debug version
-- `cargo build --release` - Build optimized release version
-- `cargo test` - Run all tests
-- `cargo clippy` - Run linter
-- `cargo watch -x run` - Auto-reload on file changes
-
-## Docker Operations
-- `docker-compose -f docker-compose.local.yml up -d` - Start all services
-- `docker-compose -f docker-compose.local.yml down` - Stop all services
-- `docker-compose -f docker-compose.local.yml logs -f [service]` - View logs
-- `docker ps` - List running containers
-- `docker exec -it [container] /bin/sh` - Shell into container
-
-## Troubleshooting
-- If frontend port 3000 is in use, it runs on 3005 in dev mode
-- Clear Redis cache: `redis-cli FLUSHALL`
-- Reset PostgreSQL: Drop and recreate the database
-- Check service health: `curl http://localhost:8080/health`
-- View Rust logs: Set `RUST_LOG=debug` environment variable
-- Python debugging: Check uvicorn output in API gateway window

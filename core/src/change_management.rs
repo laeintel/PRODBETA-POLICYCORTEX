@@ -31,7 +31,7 @@ pub struct ChangeRequest {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ChangeCategory {
     Standard,  // Pre-approved, low risk
     Normal,    // Requires CAB approval
@@ -39,7 +39,7 @@ pub enum ChangeCategory {
     Major,     // High impact, executive approval
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Priority {
     Critical,
     High,
@@ -47,7 +47,7 @@ pub enum Priority {
     Low,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Impact {
     Enterprise, // Affects entire organization
     Department, // Affects specific department
@@ -55,7 +55,7 @@ pub enum Impact {
     User,       // Affects individual users
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RiskLevel {
     VeryHigh,
     High,
@@ -64,7 +64,7 @@ pub enum RiskLevel {
     VeryLow,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Environment {
     Production,
     Staging,
@@ -72,7 +72,7 @@ pub enum Environment {
     DR, // Disaster Recovery
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ApprovalStatus {
     Pending,
     Approved,
@@ -81,7 +81,7 @@ pub enum ApprovalStatus {
     Cancelled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ImplementationStatus {
     NotStarted,
     InProgress,

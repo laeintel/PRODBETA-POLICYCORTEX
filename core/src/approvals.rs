@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ApprovalStatus {
     Pending,
     Approved,
@@ -12,7 +12,7 @@ pub enum ApprovalStatus {
     Cancelled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ApprovalType {
     SingleApprover,
     AllApprovers,
@@ -55,7 +55,7 @@ pub struct Approval {
     pub signature: Option<String>, // Digital signature for non-repudiation
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ApprovalDecision {
     Approved,
     Rejected,
@@ -81,7 +81,7 @@ pub struct ImpactAnalysis {
     pub compliance_impact: Vec<ComplianceImpact>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RiskLevel {
     Low,
     Medium,
