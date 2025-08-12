@@ -680,7 +680,20 @@ pub async fn get_secrets_status(State(state): State<Arc<AppState>>) -> impl Into
         .into_response()
 }
 
-pub async fn export_prometheus(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn export_prometheus(State(state): State<Arc<AppState>>, auth: OptionalAuthUser) -> impl IntoResponse {
+    // In production, require auth for metrics to avoid exposing internals
+    let is_prod = matches!(
+        std::env::var("ENVIRONMENT").as_deref(),
+        Ok("production") | Ok("prod")
+    );
+    if is_prod && auth.0.is_none() {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({"error":"unauthorized"})),
+        )
+            .into_response();
+    }
+
     if let Some(ref h) = state.prometheus {
         let body = h.render();
         return (
@@ -1421,11 +1434,17 @@ pub async fn create_exception(
     .into_response()
 }
 
-// Helper: Proxy deep GET to Python service (Phase 3). Base from DEEP_API_BASE or http://localhost:8090
+// Helper: Proxy deep GET to Python service (Phase 3). Require DEEP_API_BASE in prod; no localhost fallback
 async fn proxy_deep_get(path: &str) -> Option<serde_json::Value> {
-    let base = std::env::var("DEEP_API_BASE")
-        .or_else(|_| std::env::var("API_GATEWAY_URL"))
-        .unwrap_or_else(|_| "http://localhost:8090".to_string());
+    let is_prod = matches!(
+        std::env::var("ENVIRONMENT").as_deref(),
+        Ok("production") | Ok("prod")
+    );
+    let base = match std::env::var("DEEP_API_BASE").or_else(|_| std::env::var("API_GATEWAY_URL")) {
+        Ok(v) => v,
+        Err(_) if is_prod => return None,
+        Err(_) => "http://localhost:8090".to_string(),
+    };
     let url = format!("{}{}", base, path);
     let client = reqwest::Client::new();
     match client.get(&url).send().await {
