@@ -1005,8 +1005,9 @@ pub async fn create_approval(
     let id = Uuid::new_v4().to_string();
     let now = Utc::now();
     let requested_by = auth_user
-        .0
-        .and_then(|u| u.claims.preferred_username)
+        .claims
+        .preferred_username
+        .clone()
         .or(Some("anonymous".to_string()));
 
     let req = ApprovalRequest {

@@ -427,7 +427,7 @@ impl EvidencePipeline {
         // HMAC-SHA256 signature using an environment-provided secret
         let secret = std::env::var("EVIDENCE_SIGNING_SECRET")
             .map_err(|_| "EVIDENCE_SIGNING_SECRET not configured".to_string())?;
-        use azure_core::hmac::{Hmac, Mac};
+        use hmac::{Hmac, Mac};
         type HmacSha256 = Hmac<sha2::Sha256>;
         let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).map_err(|e| e.to_string())?;
         mac.update(hash.as_bytes());
@@ -446,7 +446,7 @@ impl EvidencePipeline {
         let decoded = general_purpose::STANDARD
             .decode(signature)
             .map_err(|e| e.to_string())?;
-        use azure_core::hmac::{Hmac, Mac};
+        use hmac::{Hmac, Mac};
         type HmacSha256 = Hmac<sha2::Sha256>;
         let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).map_err(|e| e.to_string())?;
         mac.update(hash.as_bytes());

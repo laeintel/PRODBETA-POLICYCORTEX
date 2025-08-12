@@ -98,7 +98,7 @@ async fn main() {
     if let Ok(otlp) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
         let resource = opentelemetry_sdk::Resource::new(vec![
             KeyValue::new("service.name", "policycortex-core"),
-            KeyValue::new("service.version", config.service_version.clone()),
+            KeyValue::new("service.version", config::AppConfig::load().service_version.clone()),
         ]);
         let tracer = opentelemetry_otlp::new_pipeline()
             .tracing()
@@ -283,7 +283,7 @@ async fn main() {
         // Enforce auth for write operations (scopes/roles)
         .layer(auth_middleware::AuthEnforcementLayer)
         // Disallow write endpoints when running in simulated mode
-        .layer(tower::LayerFn::new(|service| {
+        .layer(tower::layer::util::LayerFn::new(|service| {
             tower::service_fn(move |req: axum::http::Request<axum::body::Body>| {
                 let is_write = matches!(req.method(), &Method::POST | &Method::PUT | &Method::DELETE | &Method::PATCH);
                 let simulated = !matches!(std::env::var("USE_REAL_DATA").as_deref(), Ok("true") | Ok("1"));
