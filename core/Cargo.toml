@@ -93,8 +93,6 @@ petgraph = "0.6"
 
 # Cryptography
 sha2 = "0.10"
-openssl = { version = "0.10", features = ["vendored"] }
-openssl-sys = { version = "0.9", features = ["vendored"] }
 ## (removed duplicate regex dependency; defined above at version 1.10)
 
 # AWS SDK (optional, for multi-cloud)
