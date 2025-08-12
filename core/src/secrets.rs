@@ -167,7 +167,8 @@ impl SecretsManager {
             let mut stream = Box::pin(pages);
             
             while let Some(page) = stream.next().await {
-                for secret in page? {
+                let secrets_page = page?;
+                for secret in &secrets_page.value {
                     secrets.push(SecretMetadata {
                         name: secret.id().name().to_string(),
                         version: secret.id().version().map(|v| v.to_string()),

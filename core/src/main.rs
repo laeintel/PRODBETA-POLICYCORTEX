@@ -128,6 +128,11 @@ async fn main() {
         }
     };
 
+    // Initialize Prometheus exporter (in-memory handle) BEFORE creating app_state
+    let recorder = metrics_exporter_prometheus::PrometheusBuilder::new()
+        .install_recorder()
+        .expect("failed to install Prometheus recorder");
+
     // Initialize application state with both clients
     let mut app_state = AppState::new();
     app_state.config = config.clone();
@@ -173,10 +178,7 @@ async fn main() {
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
-    // Initialize Prometheus exporter (in-memory handle)
-    let recorder = metrics_exporter_prometheus::PrometheusBuilder::new()
-        .install_recorder()
-        .expect("failed to install Prometheus recorder");
+    // Prometheus exporter already initialized above
 
     // Build the application router
     let app = Router::new()
