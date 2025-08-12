@@ -1357,7 +1357,8 @@ pub async fn remediate(
                 "status": "PendingApproval",
                 "message": "Remediation requires approval before execution",
                 "next": "Submit approval via /api/v1/approvals"
-            })).into_response();
+            }))
+            .into_response();
         }
     }
 
@@ -1416,7 +1417,8 @@ pub async fn create_exception(
         "status": "Approved",
         "recertifyAt": expires_at.to_rfc3339(),
         "evidenceRequired": true
-    })).into_response()
+    }))
+    .into_response()
 }
 
 // Helper: Proxy deep GET to Python service (Phase 3). Base from DEEP_API_BASE or http://localhost:8090

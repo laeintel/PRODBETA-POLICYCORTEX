@@ -510,7 +510,7 @@ impl ActionOrchestrator {
             let _ = sqlx::query(
                 r#"INSERT INTO idempotency_records (key, action_id, result, created_at, expires_at)
                    VALUES ($1, $2, $3, NOW(), NOW() + INTERVAL '24 hours')
-                   ON CONFLICT (key) DO NOTHING"#
+                   ON CONFLICT (key) DO NOTHING"#,
             )
             .bind(&action.idempotency_key)
             .bind(&action.id)
@@ -547,7 +547,7 @@ impl ActionOrchestrator {
             let row = sqlx::query(
                 r#"SELECT COUNT(1) as count FROM approval_requests
                    WHERE tenant_id = $1 AND action_type = $2 AND resource_id = $3
-                     AND status::text = 'Approved' AND expires_at > NOW()"#
+                     AND status::text = 'Approved' AND expires_at > NOW()"#,
             )
             .bind(&action.tenant_id)
             .bind(format!("{:?}", action.action_type))
@@ -683,7 +683,7 @@ impl ActionOrchestrator {
               status, idempotency_key, created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NOW())
             ON CONFLICT (idempotency_key) DO NOTHING
-            "#
+            "#,
         )
         .bind(Uuid::new_v4())
         .bind(format!("{:?}", action.action_type))
