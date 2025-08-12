@@ -33,6 +33,8 @@ jobs:
 
       - name: Rust build and clippy
         working-directory: core
+        env:
+          SQLX_OFFLINE: true
         run: |
           cargo build
           cargo clippy -- -D warnings
