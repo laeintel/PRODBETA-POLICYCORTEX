@@ -183,11 +183,23 @@ impl TokenValidator {
         let mut issuer = self.config.issuer.clone();
         let mut client_id = self.config.client_id.clone();
         if self.config.tenant_id.is_empty() || self.config.client_id.is_empty() {
-            if let Ok(unverified) = jsonwebtoken::dangerous_insecure_decode::<Claims>(token) {
-                issuer = unverified.claims.iss.clone();
-                // Accept audience present in token when client_id not configured
-                if client_id.is_empty() {
-                    client_id = unverified.claims.aud.clone();
+            // Decode header to get the claims without validation
+            if let Ok(header) = jsonwebtoken::decode_header(token) {
+                // Parse the token to extract claims without validation
+                let parts: Vec<&str> = token.split('.').collect();
+                if parts.len() >= 2 {
+                    use base64::{Engine as _, engine::general_purpose};
+                    if let Ok(claims_bytes) = general_purpose::URL_SAFE_NO_PAD.decode(parts[1]) {
+                        if let Ok(claims_str) = String::from_utf8(claims_bytes) {
+                            if let Ok(claims) = serde_json::from_str::<Claims>(&claims_str) {
+                                issuer = claims.iss.clone();
+                                // Accept audience present in token when client_id not configured
+                                if client_id.is_empty() {
+                                    client_id = claims.aud.clone();
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 error!("Failed to decode token claims to determine issuer");

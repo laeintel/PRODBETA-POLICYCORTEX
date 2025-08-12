@@ -388,7 +388,9 @@ impl EnforcementEngine for DefaultEnforcementEngine {
         // In production, query from database
         Ok(Vec::new())
     }
+}
 
+impl DefaultEnforcementEngine {
     fn determine_priority(&self, violations: &[Violation]) -> Priority {
         violations
             .iter()

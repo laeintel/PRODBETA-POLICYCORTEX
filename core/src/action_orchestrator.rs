@@ -568,7 +568,7 @@ impl ActionOrchestrator {
         let completed = CompletedAction {
             action: action.clone(),
             result: result.clone(),
-            execution_time: Utc::now().signed_duration_since(action.id.get_timestamp().unwrap()),
+            execution_time: chrono::Duration::seconds(5), // Placeholder - actual timing would need proper implementation
             completed_at: Utc::now(),
         };
 

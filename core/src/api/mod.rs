@@ -684,7 +684,7 @@ pub async fn export_prometheus(State(state): State<Arc<AppState>>) -> impl IntoR
 pub async fn reload_secrets(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     if let Some(ref sm) = state.secrets {
         sm.clear_cache().await;
-        return Json(serde_json::json!({"success": true}));
+        return Json(serde_json::json!({"success": true})).into_response();
     }
     (
         StatusCode::SERVICE_UNAVAILABLE,
@@ -694,7 +694,9 @@ pub async fn reload_secrets(State(state): State<Arc<AppState>>) -> impl IntoResp
 }
 
 // Evidence pack and policy export stubs
-pub async fn get_evidence_pack() -> impl IntoResponse {
+pub async fn get_evidence_pack() -> Response<Body> {
+    use axum::body::Body;
+    use axum::response::Response;
     // Build a small tar.gz evidence pack on the fly with sample artifacts
     let mut buf = Vec::new();
     let enc = GzEncoder::new(&mut buf, Compression::default());
@@ -770,11 +772,12 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
             Json(serde_json::json!({"error":"failed_to_finish_encoding"}))
         ).into_response(),
     };
-    (
-        StatusCode::OK,
-        [(axum::http::header::CONTENT_TYPE, "application/gzip"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=evidence.tar.gz")],
-        body,
-    )
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(axum::http::header::CONTENT_TYPE, "application/gzip")
+        .header(axum::http::header::CONTENT_DISPOSITION, "attachment; filename=evidence.tar.gz")
+        .body(Body::from(body.clone()))
+        .unwrap()
 }
 
 pub async fn export_policies(State(_state): State<Arc<AppState>>) -> impl IntoResponse {

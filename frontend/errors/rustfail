@@ -1,0 +1,557 @@
+   Compiling tokio-native-tls v0.3.1
+   Compiling hyper-tls v0.6.0
+   Compiling reqwest v0.12.22
+   Compiling azure_security_keyvault v0.20.0
+   Compiling azure_identity v0.20.0
+   Compiling policycortex-core v2.0.0 (/home/aeolitech/actions-runner/_work/policycortex/policycortex/core)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant.rs:128:24
+    |
+128 |           let policies = sqlx::query_as!(
+    |  ________________________^
+129 | |             Policy,
+130 | |             r#"
+131 | |             SELECT id, name, description, category, severity, is_active
+...   |
+135 | |             &self.tenant_id
+136 | |         )
+    | |_________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query_as` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant.rs:146:25
+    |
+146 |           let resources = sqlx::query_as!(
+    |  _________________________^
+147 | |             Resource,
+148 | |             r#"
+149 | |             SELECT id, azure_resource_id, name, type, location, compliance_status
+...   |
+153 | |             &self.tenant_id
+154 | |         )
+    | |_________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query_as` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:178:9
+    |
+178 | /         sqlx::query!(
+179 | |             r#"
+180 | |             INSERT INTO resources (id, tenant_id, resource_type, name, data, created_at, created_by)
+181 | |             VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+...   |
+188 | |             tenant.user_id
+189 | |         )
+    | |_________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:206:13
+    |
+206 | /             sqlx::query!(
+207 | |                 r#"
+208 | |                 UPDATE resources 
+209 | |                 SET data = $1, updated_at = NOW(), updated_by = $2
+...   |
+214 | |                 resource_id
+215 | |             )
+    | |_____________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:220:13
+    |
+220 | /             sqlx::query!(
+221 | |                 r#"
+222 | |                 UPDATE resources 
+223 | |                 SET data = $1, updated_at = NOW(), updated_by = $2
+...   |
+229 | |                 tenant.tenant_id
+230 | |             )
+    | |_____________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:246:13
+    |
+246 |             sqlx::query!("DELETE FROM resources WHERE id = $1", resource_id)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:251:13
+    |
+251 | /             sqlx::query!(
+252 | |                 "DELETE FROM resources WHERE id = $1 AND tenant_id = $2",
+253 | |                 resource_id,
+254 | |                 tenant.tenant_id
+255 | |             )
+    | |_____________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:269:13
+    |
+269 |             sqlx::query!("SELECT * FROM policies ORDER BY created_at DESC")
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:273:13
+    |
+273 | /             sqlx::query!(
+274 | |                 "SELECT * FROM policies WHERE tenant_id = $1 ORDER BY created_at DESC",
+275 | |                 tenant.tenant_id
+276 | |             )
+    | |_____________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:302:13
+    |
+302 | /             sqlx::query!(
+303 | |                 r#"
+304 | |                 SELECT 
+305 | |                     COUNT(*) as total_resources,
+...   |
+309 | |                 "#
+310 | |             )
+    | |_____________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:312:13
+    |
+312 | /             sqlx::query!(
+313 | |                 r#"
+314 | |                 SELECT 
+315 | |                     COUNT(*) as total_resources,
+...   |
+321 | |                 tenant.tenant_id
+322 | |             )
+    | |_____________^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+   --> src/tenant_isolation.rs:349:5
+    |
+349 | /     sqlx::query!(
+350 | |         r#"
+351 | |         INSERT INTO audit_logs (id, tenant_id, user_id, action, resource_type, resource_id, details, created_at)
+352 | |         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+...   |
+360 | |         details
+361 | |     )
+    | |_____^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
+error[E0407]: method `determine_priority` is not a member of trait `EnforcementEngine`
+   --> src/enforcement.rs:392:5
+    |
+392 | /     fn determine_priority(&self, violations: &[Violation]) -> Priority {
+393 | |         violations
+394 | |             .iter()
+395 | |             .map(|v| match v.severity {
+...   |
+403 | |             .unwrap_or(Priority::Low)
+404 | |     }
+    | |_____^ not a member of trait `EnforcementEngine`
+error[E0425]: cannot find function `dangerous_insecure_decode` in crate `jsonwebtoken`
+   --> src/auth.rs:186:51
+    |
+186 |             if let Ok(unverified) = jsonwebtoken::dangerous_insecure_decode::<Claims>(token) {
+    |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `jsonwebtoken`
+error[E0425]: cannot find value `recorder` in this scope
+   --> src/main.rs:144:33
+    |
+144 |     app_state.prometheus = Some(recorder);
+    |                                 ^^^^^^^^ not found in this scope
+    |
+help: consider importing this function
+    |
+1   + use metrics::recorder;
+    |
+warning: unused imports: `StatusCode` and `response::IntoResponse`
+ --> src/main.rs:3:28
+  |
+3 |     http::{header, Method, StatusCode},
+  |                            ^^^^^^^^^^
+4 |     response::IntoResponse,
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+warning: unused import: `Deserialize`
+ --> src/main.rs:8:13
+  |
+8 | use serde::{Deserialize, Serialize};
+  |             ^^^^^^^^^^^
+warning: unused import: `warn`
+ --> src/action_orchestrator.rs:7:28
+  |
+7 | use tracing::{error, info, warn};
+  |                            ^^^^
+warning: unused imports: `EvaluationHarness`, `EvaluationReport`, `ModelCard`, `ModelMetrics`, `ModelRegistry`, `ModelType`, and `TrainingDataLineage`
+ --> src/ai/mod.rs:4:5
+  |
+4 |     EvaluationHarness, EvaluationReport, ModelCard, ModelMetrics, ModelRegistry, ModelType,
+  |     ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^
+5 |     TrainingDataLineage,
+  |     ^^^^^^^^^^^^^^^^^^^
+warning: unused import: `Query`
+ --> src/api/mod.rs:3:21
+  |
+3 |     extract::{Path, Query, State},
+  |                     ^^^^^
+warning: unused import: `std::collections::HashMap`
+  --> src/api/mod.rs:13:5
+   |
+13 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+warning: unused imports: `Aggregation`, `ErrorBudget`, `SLIType`, `SLI`, `SLOWindow`, and `SLO`
+  --> src/api/mod.rs:16:30
+   |
+16 | use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
+   |                              ^^^  ^^^^^^^^^  ^^^  ^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^
+warning: unused import: `DateTime`
+ --> src/approval_workflow.rs:5:14
+  |
+5 | use chrono::{DateTime, Duration, Utc};
+  |              ^^^^^^^^
+warning: unused import: `error`
+  --> src/approval_workflow.rs:10:15
+   |
+10 | use tracing::{error, info, warn};
+   |               ^^^^^
+warning: unused import: `Serialize`
+ --> src/azure_client.rs:5:26
+  |
+5 | use serde::{Deserialize, Serialize};
+  |                          ^^^^^^^^^
+warning: unused import: `RequestBuilder`
+ --> src/azure_client_async.rs:6:23
+  |
+6 | use reqwest::{Client, RequestBuilder};
+  |                       ^^^^^^^^^^^^^^
+warning: unused imports: `AuditLog`, `AwsCollector`, `CloudCollector`, `CloudPolicy`, `CloudProvider`, `CloudResource`, `ComplianceStatus`, and `ResourceType`
+ --> src/collectors/mod.rs:4:5
+  |
+4 |     AuditLog, AwsCollector, CloudCollector, CloudPolicy, CloudProvider, CloudResource,
+  |     ^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^
+5 |     ComplianceStatus, ResourceType,
+  |     ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^
+warning: unused import: `error`
+ --> src/evidence_pipeline.rs:8:15
+  |
+8 | use tracing::{error, info, warn};
+  |               ^^^^^
+warning: unused import: `Duration`
+ --> src/finops/mod.rs:5:24
+  |
+5 | use chrono::{DateTime, Duration, Utc};
+  |                        ^^^^^^^^
+warning: unused import: `error`
+ --> src/secrets.rs:8:15
+  |
+8 | use tracing::{error, info, warn};
+  |               ^^^^^
+warning: unused import: `async_trait::async_trait`
+ --> src/security_graph/mod.rs:5:5
+  |
+5 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+warning: unused import: `dijkstra`
+ --> src/security_graph/mod.rs:6:40
+  |
+6 | use petgraph::algo::{all_simple_paths, dijkstra};
+  |                                        ^^^^^^^^
+warning: unused import: `HashSet`
+ --> src/security_graph/mod.rs:9:33
+  |
+9 | use std::collections::{HashMap, HashSet};
+  |                                 ^^^^^^^
+warning: unused import: `uuid::Uuid`
+ --> src/simulated_data.rs:4:5
+  |
+4 | use uuid::Uuid;
+  |     ^^^^^^^^^^
+warning: unused import: `warn`
+ --> src/tenant.rs:9:21
+  |
+9 | use tracing::{info, warn};
+  |                     ^^^^
+warning: unused import: `error`
+  --> src/tenant_isolation.rs:11:15
+   |
+11 | use tracing::{error, info, warn};
+   |               ^^^^^
+warning: unused imports: `AuthUser` and `OptionalAuthUser`
+  --> src/main.rs:52:12
+   |
+52 | use auth::{AuthUser, OptionalAuthUser};
+   |            ^^^^^^^^  ^^^^^^^^^^^^^^^^
+warning: unused imports: `TenantContext`, `TenantDatabase`, and `tenant_isolation_middleware`
+  --> src/main.rs:55:24
+   |
+55 | use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
+error[E0277]: the trait bound `uuid::Timestamp: Borrow<DateTime<_>>` is not satisfied
+   --> src/action_orchestrator.rs:571:62
+    |
+571 |             execution_time: Utc::now().signed_duration_since(action.id.get_timestamp().unwrap()),
+    |                                        --------------------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Borrow<DateTime<_>>` is not implemented for `uuid::Timestamp`
+    |                                        |
+    |                                        required by a bound introduced by this call
+    |
+note: required by a bound in `DateTime::<Tz>::signed_duration_since`
+   --> /home/aeolitech/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-0.4.41/src/datetime/mod.rs:555:19
+    |
+553 |     pub fn signed_duration_since<Tz2: TimeZone>(
+    |            --------------------- required by a bound in this associated function
+554 |         self,
+555 |         rhs: impl Borrow<DateTime<Tz2>>,
+    |                   ^^^^^^^^^^^^^^^^^^^^^ required by this bound in `DateTime::<Tz>::signed_duration_since`
+warning: unused variable: `pool`
+   --> src/action_orchestrator.rs:455:25
+    |
+455 |         if let Some(ref pool) = self.db_pool {
+    |                         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+warning: unused variable: `pool`
+   --> src/action_orchestrator.rs:476:25
+    |
+476 |         if let Some(ref pool) = self.db_pool {
+    |                         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+warning: unused variable: `pool`
+   --> src/action_orchestrator.rs:619:36
+    |
+619 |     async fn persist_action(&self, pool: &sqlx::PgPool, action: &Action) -> Result<(), String> {
+    |                                    ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+warning: unused variable: `action`
+   --> src/action_orchestrator.rs:619:57
+    |
+619 |     async fn persist_action(&self, pool: &sqlx::PgPool, action: &Action) -> Result<(), String> {
+    |                                                         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_action`
+error[E0308]: mismatched types
+   --> src/api/mod.rs:689:5
+    |
+684 |   pub async fn reload_secrets(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    |                                                                      ----------------- expected `axum::Json<JsonValue>` because of return type
+...
+689 | /     (
+690 | |         StatusCode::SERVICE_UNAVAILABLE,
+691 | |         Json(serde_json::json!({"error": "secrets manager unavailable"})),
+692 | |     )
+693 | |         .into_response()
+    | |________________________^ expected `Json<Value>`, found `Response<Body>`
+    |
+    = note: expected struct `axum::Json<JsonValue>`
+               found struct `axum::http::Response<axum::body::Body>`
+note: return type inferred to be `axum::Json<JsonValue>` here
+   --> src/api/mod.rs:687:16
+    |
+687 |         return Json(serde_json::json!({"success": true}));
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+error[E0308]: mismatched types
+   --> src/api/mod.rs:773:5
+    |
+697 |   pub async fn get_evidence_pack() -> impl IntoResponse {
+    |                                       ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
+...
+773 | /     (
+774 | |         StatusCode::OK,
+775 | |         [(axum::http::header::CONTENT_TYPE, "application/gzip"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=evidence...
+776 | |         body,
+777 | |     )
+    | |_____^ expected `Response<Body>`, found `(StatusCode, [(..., ...); 2], ...)`
+    |
+    = note: expected struct `axum::http::Response<axum::body::Body>`
+                found tuple `(axum::http::StatusCode, [(axum::http::HeaderName, &str); 2], &mut Vec<u8>)`
+note: return type inferred to be `axum::http::Response<axum::body::Body>` here
+   --> src/api/mod.rs:708:26
+    |
+708 |           Err(_) => return (
+    |  __________________________^
+709 | |             StatusCode::INTERNAL_SERVER_ERROR,
+710 | |             Json(serde_json::json!({"error":"failed_to_generate_policy_snapshot"}))
+711 | |         ).into_response(),
+    | |_________________________^
+error[E0308]: mismatched types
+    --> src/api/mod.rs:1613:5
+     |
+1604 |   ) -> impl IntoResponse {
+     |        ----------------- expected `axum::Json<JsonValue>` because of return type
+...
+1613 | /     (
+1614 | |         StatusCode::NOT_FOUND,
+1615 | |         Json(serde_json::json!({"error": "action not found"})),
+1616 | |     ).into_response()
+     | |_____________________^ expected `Json<Value>`, found `Response<Body>`
+     |
+     = note: expected struct `axum::Json<JsonValue>`
+                found struct `axum::http::Response<axum::body::Body>`
+note: return type inferred to be `axum::Json<JsonValue>` here
+    --> src/api/mod.rs:1611:16
+     |
+1611 |         return Json(serde_json::json!({"success": true, "action": a}));
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+error[E0308]: mismatched types
+    --> src/api/mod.rs:1631:20
+     |
+1622 |   ) -> impl IntoResponse {
+     |        ----------------- expected `axum::Json<JsonValue>` because of return type
+...
+1631 |               return (
+     |  ____________________^
+1632 | |                 StatusCode::BAD_REQUEST,
+1633 | |                 Json(serde_json::json!({"error": "rollback not available"})),
+1634 | |             ).into_response();
+     | |_____________________________^ expected `Json<Value>`, found `Response<Body>`
+     |
+     = note: expected struct `axum::Json<JsonValue>`
+                found struct `axum::http::Response<axum::body::Body>`
+note: return type inferred to be `axum::Json<JsonValue>` here
+    --> src/api/mod.rs:1629:20
+     |
+1629 |             return Json(serde_json::json!({"success": true, "action": a}));
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+error[E0308]: mismatched types
+    --> src/api/mod.rs:1637:5
+     |
+1622 |   ) -> impl IntoResponse {
+     |        ----------------- expected `axum::Json<JsonValue>` because of return type
+...
+1637 | /     (
+1638 | |         StatusCode::NOT_FOUND,
+1639 | |         Json(serde_json::json!({"error": "action not found"})),
+1640 | |     ).into_response()
+     | |_____________________^ expected `Json<Value>`, found `Response<Body>`
+     |
+     = note: expected struct `axum::Json<JsonValue>`
+                found struct `axum::http::Response<axum::body::Body>`
+note: return type inferred to be `axum::Json<JsonValue>` here
+    --> src/api/mod.rs:1629:20
+     |
+1629 |             return Json(serde_json::json!({"success": true, "action": a}));
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+error[E0308]: mismatched types
+    --> src/api/mod.rs:1654:5
+     |
+1646 |   ) -> impl IntoResponse {
+     |        ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
+...
+1654 | /     Json(serde_json::json!({
+1655 | |         "resourceChanges": [
+1656 | |             {"resource":"Microsoft.Compute/virtualMachines/vm-prod-001","changes":[{"op":"add","path":"/tags/Owner","value":"FinOps"}]} 
+1657 | |         ],
+1658 | |         "blastRadius": {"resources": 1, "dependencies": 0},
+1659 | |         "riskScore": 15
+1660 | |     }))
+     | |_______^ expected `Response<Body>`, found `Json<Value>`
+     |
+     = note: expected struct `axum::http::Response<axum::body::Body>`
+                found struct `axum::Json<JsonValue>`
+note: return type inferred to be `axum::http::Response<axum::body::Body>` here
+    --> src/api/mod.rs:1649:16
+     |
+1649 |           return (
+     |  ________________^
+1650 | |             StatusCode::NOT_FOUND,
+1651 | |             Json(serde_json::json!({"error": "action not found"})),
+1652 | |         ).into_response();
+     | |_________________________^
+warning: unused variable: `message`
+   --> src/approval_workflow.rs:439:17
+    |
+439 |             let message = rule.notification_message.clone();
+    |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_message`
+warning: unused variable: `query`
+   --> src/audit_chain.rs:359:13
+    |
+359 |         let query = r#"
+    |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+warning: variable does not need to be mutable
+  --> src/azure_client_async.rs:90:13
+   |
+90 |         let mut config = AzureClientConfig::default();
+   |             ----^^^^^^
+   |             |
+   |             help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` on by default
+warning: unused variable: `control`
+   --> src/compliance/mod.rs:431:9
+    |
+431 |         control: &ComplianceControl,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_control`
+warning: unused variable: `pool`
+   --> src/evidence_pipeline.rs:511:9
+    |
+511 |         pool: &sqlx::PgPool,
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+error[E0277]: `KeyVaultGetSecretsResponse` is not an iterator
+   --> src/secrets.rs:170:31
+    |
+170 |                 for secret in page? {
+    |                               ^^^^^ `KeyVaultGetSecretsResponse` is not an iterator
+    |
+    = help: the trait `Iterator` is not implemented for `KeyVaultGetSecretsResponse`
+    = note: required for `KeyVaultGetSecretsResponse` to implement `IntoIterator`
+error[E0599]: no method named `determine_priority` found for reference `&DefaultEnforcementEngine` in the current scope
+   --> src/enforcement.rs:261:28
+    |
+261 |             priority: self.determine_priority(&evaluation.violations),
+    |                            ^^^^^^^^^^^^^^^^^^ method not found in `&DefaultEnforcementEngine`
+warning: unused variable: `model`
+   --> src/ai/model_registry.rs:211:13
+    |
+211 |         let model = self
+    |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_model`
+warning: unused variable: `rule`
+   --> src/approvals.rs:284:13
+    |
+284 |         for rule in &policy.sod_rules {
+    |             ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
+warning: unused variable: `requester_id`
+   --> src/approvals.rs:280:9
+    |
+280 |         requester_id: &str,
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_requester_id`
+warning: unused variable: `approver_id`
+   --> src/approvals.rs:281:9
+    |
+281 |         approver_id: &str,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_approver_id`
+warning: unused variable: `result`
+   --> src/change_management.rs:437:17
+    |
+437 |             let result: serde_json::Value = response
+    |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+warning: unused variable: `pricing`
+   --> src/finops/mod.rs:287:9
+    |
+287 |         pricing: &serde_json::Value,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pricing`
+warning: unused variable: `current`
+   --> src/finops/mod.rs:343:37
+    |
+343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
+    |                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current`
+warning: unused variable: `metrics`
+   --> src/finops/mod.rs:343:54
+    |
+343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
+    |                                                      ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+warning: value assigned to `savings_achieved` is never read
+   --> src/finops/mod.rs:954:17
+    |
+954 |         let mut savings_achieved = 0.0;
+    |                 ^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` on by default
+Some errors have detailed explanations: E0277, E0308, E0407, E0425, E0599.
+For more information about an error, try `rustc --explain E0277`.
+warning: `policycortex-core` (bin "policycortex-core") generated 41 warnings
+error: could not compile `policycortex-core` (bin "policycortex-core") due to 24 previous errors; 41 warnings emitted
+Error: Process completed with exit code 101.
