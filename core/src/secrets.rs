@@ -161,9 +161,12 @@ impl SecretsManager {
     pub async fn list_secrets(&self) -> Result<Vec<SecretMetadata>, Box<dyn std::error::Error>> {
         if let Some(ref client) = self.client {
             let mut secrets = Vec::new();
-            let mut pages = client.list_secrets();
-
-            while let Some(page) = pages.next().await {
+            let pages = client.list_secrets().into_stream();
+            
+            use futures_lite::StreamExt;
+            let mut stream = Box::pin(pages);
+            
+            while let Some(page) = stream.next().await {
                 for secret in page? {
                     secrets.push(SecretMetadata {
                         name: secret.id().name().to_string(),
