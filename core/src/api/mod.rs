@@ -1,4 +1,4 @@
-use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, user_has_scopes};
+use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, TokenValidator};
 use axum::{
     body::Body,
     extract::{Path, Query, State},
@@ -911,7 +911,7 @@ pub async fn create_approval(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<CreateApprovalPayload>,
 ) -> impl IntoResponse {
-    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Approve"]) {
+    if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Approve"]) {
         return (
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({"error":"insufficient_scope"})),
@@ -959,7 +959,7 @@ pub async fn approve_request(
     Path(id): Path<String>,
     Json(payload): Json<ApprovePayload>,
 ) -> impl IntoResponse {
-    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Approve"]) {
+    if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Approve"]) {
         return (
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({"error":"insufficient_scope"})),
@@ -1217,7 +1217,7 @@ pub async fn get_policies_deep() -> impl IntoResponse {
 
 // Initiate remediation (stub – Phase 1). Later, orchestrate jobs and stream progress.
 pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
-    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Write"]) {
+    if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Write"]) {
         return (
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({"error":"insufficient_scope"})),
@@ -1267,7 +1267,7 @@ pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, 
 
 // Create a policy exception (stub – Phase 1)
 pub async fn create_exception(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<CreateExceptionRequest>) -> impl IntoResponse {
-    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Write"]) {
+    if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Write"]) {
         return (
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({"error":"insufficient_scope"})),
@@ -1586,7 +1586,7 @@ pub async fn create_action(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<CreateActionRequest>,
 ) -> impl IntoResponse {
-    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Write"]) {
+    if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Write"]) {
         return (
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({"error":"insufficient_scope"})),
