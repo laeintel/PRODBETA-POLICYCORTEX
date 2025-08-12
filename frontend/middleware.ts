@@ -3,6 +3,12 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
+  // Enforce read-only UI in simulated mode by adding header flag
+  if (process.env.NEXT_PUBLIC_USE_REAL_DATA !== 'true') {
+    const res = NextResponse.next({ request: { headers: request.headers } })
+    res.headers.set('x-data-mode', 'simulated')
+    return res
+  }
   
   // Dev hint: ensure MSAL redirect origin matches current origin to avoid AADSTS9002326
   try {

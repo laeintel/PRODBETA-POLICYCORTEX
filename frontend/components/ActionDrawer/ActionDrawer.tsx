@@ -15,6 +15,7 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
   const [action, setAction] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('summary');
   const [isExecuting, setIsExecuting] = useState(false);
+  const isSimMode = process.env.NEXT_PUBLIC_USE_REAL_DATA !== 'true'
   const lastFocusedRef = useRef<HTMLElement | null>(null)
   const headingRef = useRef<HTMLHeadingElement | null>(null)
   
@@ -184,13 +185,19 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
                 </button>
                 <button
                   onClick={() => executeAction(false)}
-                  disabled={isExecuting}
+                  disabled={isExecuting || isSimMode}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                   <CheckCircle className="w-4 h-4 inline mr-2" />
                   Execute
                 </button>
               </div>
+              {isSimMode && (
+                <div className="mt-2 text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Writes are disabled in simulated mode. Connect Azure to enable remediation.
+                </div>
+              )}
             </div>
           </motion.div>
         </>

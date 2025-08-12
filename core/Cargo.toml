@@ -71,6 +71,7 @@ metrics-exporter-prometheus = "0.12"
 opentelemetry = { version = "0.21", features = ["trace"] }
 opentelemetry-otlp = "0.14"
 opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
+tracing-opentelemetry = "0.22"
 
 # Prometheus metrics
 prometheus = "0.13"

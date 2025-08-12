@@ -138,6 +138,14 @@ function AppLayoutInner({ children }: AppLayoutProps) {
         { id: 'resources-k8s', title: 'Kubernetes', path: '/resources?type=managedClusters' },
         { id: 'resources-web', title: 'Web Apps', path: '/resources?type=Web' },
       ]
+    },
+    {
+      id: 'exceptions',
+      title: 'Exceptions',
+      icon: Shield,
+      path: '/exceptions',
+      description: 'GRC Exceptions',
+      color: 'rose'
     }
   ]
 

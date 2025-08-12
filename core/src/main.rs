@@ -12,6 +12,8 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::{info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use opentelemetry::KeyValue;
+use opentelemetry_otlp::WithExportConfig;
 
 mod action_orchestrator;
 mod ai;
@@ -20,6 +22,7 @@ mod approval_workflow;
 mod approvals;
 mod audit_chain;
 mod auth;
+mod auth_middleware;
 mod config;
 mod azure_client;
 mod azure_client_async;
@@ -86,14 +89,36 @@ async fn health_check(State(state): State<Arc<AppState>>) -> Json<HealthResponse
 
 #[tokio::main]
 async fn main() {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "policycortex_core=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize tracing + OpenTelemetry if OTLP endpoint configured
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| "policycortex_core=debug,tower_http=info".into());
+    if let Ok(otlp) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
+        let resource = opentelemetry_sdk::Resource::new(vec![
+            KeyValue::new("service.name", "policycortex-core"),
+            KeyValue::new("service.version", config.service_version.clone()),
+        ]);
+        let tracer = opentelemetry_otlp::new_pipeline()
+            .tracing()
+            .with_exporter(
+                opentelemetry_otlp::new_exporter()
+                    .tonic()
+                    .with_endpoint(otlp),
+            )
+            .with_trace_config(opentelemetry_sdk::trace::Config::default().with_resource(resource))
+            .install_batch(opentelemetry_sdk::runtime::Tokio)
+            .expect("failed to install OTLP tracer");
+        let otel_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(tracing_subscriber::fmt::layer())
+            .with(otel_layer)
+            .init();
+    } else {
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(tracing_subscriber::fmt::layer())
+            .init();
+    }
 
     info!("Starting PolicyCortex v2 Core Service");
     info!("Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation");
@@ -240,9 +265,30 @@ async fn main() {
         .route("/api/v1/policies/drift", get(get_policy_drift))
         // Global SSE events stream
         .route("/api/v1/events", get(stream_events))
+        // Exceptions management
+        .route("/api/v1/exceptions", get(list_exceptions))
+        .route("/api/v1/exceptions/expire", post(expire_exceptions))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         .layer(ServiceBuilder::new().layer(cors).layer(observability::CorrelationLayer))
+        // Enforce auth for write operations (scopes/roles)
+        .layer(auth_middleware::AuthEnforcementLayer)
+        // Disallow write endpoints when running in simulated mode
+        .layer(tower::LayerFn::new(|service| {
+            tower::service_fn(move |req: axum::http::Request<axum::body::Body>| {
+                let is_write = matches!(req.method(), &Method::POST | &Method::PUT | &Method::DELETE | &Method::PATCH);
+                let simulated = !matches!(std::env::var("USE_REAL_DATA").as_deref(), Ok("true") | Ok("1"));
+                if simulated && is_write && !req.uri().path().contains("/approvals") {
+                    let resp = axum::response::Response::builder()
+                        .status(axum::http::StatusCode::FORBIDDEN)
+                        .header(axum::http::header::CONTENT_TYPE, "application/json")
+                        .body(axum::body::Body::from("{\"error\":\"read_only_mode\",\"message\":\"Writes disabled in simulated mode\"}"))
+                        .unwrap();
+                    return std::future::ready(Ok::<_, std::convert::Infallible>(resp));
+                }
+                service.call(req)
+            })
+        }))
         .with_state(app_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));

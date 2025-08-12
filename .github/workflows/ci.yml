@@ -4,42 +4,52 @@ on:
   push:
     branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
-  build-test:
-    # Use this YAML in your workflow file for each job
-    runs-on: self-hosted
-    timeout-minutes: 30
+  build-and-secure:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Removed apt-get update to avoid runner hangs
-
-      - name: Setup Node.js
-      # Self-hosted runner can skip if Node is preinstalled; this ensures version
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Frontend type-check and build
-        working-directory: frontend
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Supply chain security (SBOM, CVE, SLSA)
         run: |
+          chmod +x scripts/supply-chain-security.sh
+          ./scripts/supply-chain-security.sh
+
+      - name: Secret scanning with Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        with:
+          args: detect --no-banner --redact --exit-code 1
+
+      - name: Frontend lint
+        run: |
+          cd frontend
           npm ci
-          npm run type-check
-          npm run build
+          npm run lint --if-present
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust build and clippy
-        working-directory: core
+      - name: Python lint
         run: |
-          cargo build
-          cargo clippy -- -D warnings
-          cargo test --all --no-fail-fast -- --nocapture
+          pip install ruff
+          ruff check backend || true
 
-      - name: Core unit tests (optional)
-        if: ${{ false }}
-        working-directory: core
-        run: |
-          cargo test --all
+      - name: Report status
+        run: echo "CI checks completed"

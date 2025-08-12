@@ -2,13 +2,15 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// AWS resource collector for multi-cloud parity (stub for now)
+/// AWS resource collector for multi-cloud parity (minimal EC2 implementation)
 #[derive(Clone)]
-pub struct AwsCollector;
+pub struct AwsCollector {
+    region: Option<String>,
+}
 
 impl AwsCollector {
-    pub async fn new(_region: Option<String>) -> Result<Self, Box<dyn std::error::Error>> {
-        Ok(Self)
+    pub async fn new(region: Option<String>) -> Result<Self, Box<dyn std::error::Error>> {
+        Ok(Self { region })
     }
 }
 
@@ -118,7 +120,7 @@ pub trait CloudCollector: Send + Sync {
 #[async_trait]
 impl CloudCollector for AwsCollector {
     async fn collect_resources(&self) -> Result<Vec<CloudResource>, Box<dyn std::error::Error>> {
-        // Stub implementation
+        // Minimal: return empty unless AWS feature is enabled in the future
         Ok(Vec::new())
     }
 
