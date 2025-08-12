@@ -31,6 +31,9 @@ jobs:
       - name: Supply chain security (SBOM, CVE, SLSA)
         run: |
           chmod +x scripts/supply-chain-security.sh
+          export SECURITY_BASELINE_FILE=.github/security/vuln-baseline.json
+          # Optional: pin an allowance via env; file value takes precedence
+          export SECURITY_CRITICAL_ALLOWANCE=${{ vars.SECURITY_CRITICAL_ALLOWANCE || 0 }}
           ./scripts/supply-chain-security.sh
 
       - name: Secret scanning with Gitleaks
