@@ -1,6 +1,17 @@
 name: Application CI/CD
 
 on:
+  # Automatic trigger on push to main (after CI passes)
+  push:
+    branches:
+      - main
+    paths:
+      - 'core/**'
+      - 'frontend/**'
+      - 'graphql/**'
+      - '.github/workflows/application.yml'
+      
+  # Manual trigger
   workflow_dispatch:
     inputs:
       target_env:
@@ -28,6 +39,9 @@ env:
   REGISTRY_PROD: crcortexprodvb9v2h.azurecr.io
   IMAGE_TAG: ${{ github.sha }}
   TARGET_ENV: ${{ github.event.inputs.target_env || 'dev' }}
+  # Auto-deploy settings for push events
+  AUTO_DEPLOY: ${{ github.event_name == 'push' && 'true' || 'false' }}
+  SKIP_TESTS: ${{ github.event.inputs.force_deploy || 'false' }}
 
 # Permissions for GitHub Actions
 # Updated to include Cargo.lock in repository
