@@ -93,6 +93,7 @@ petgraph = "0.6"
 
 # Cryptography
 sha2 = "0.10"
+hmac = "0.12"
 ## (removed duplicate regex dependency; defined above at version 1.10)
 
 # AWS SDK (optional, for multi-cloud)

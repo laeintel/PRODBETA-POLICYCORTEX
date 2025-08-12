@@ -25,8 +25,8 @@ COPY src ./src
 
 
 # Build the actual application
-RUN touch src/main.rs && \
-    cargo build --release
+ENV SQLX_OFFLINE=true
+RUN touch src/main.rs && cargo build --release
 
 # Runtime stage
 FROM alpine:3.19
