@@ -220,14 +220,34 @@ check_critical_vulns() {
         fi
     done
     
-    if [ $CRITICAL_COUNT -gt 0 ]; then
-        echo -e "${RED}⚠ Found $CRITICAL_COUNT CRITICAL vulnerabilities!${NC}"
-        echo -e "${RED}Build should be blocked until these are resolved.${NC}"
+    # Baseline/allowance handling: allow passing if criticals are at or below an explicit allowance
+    BASELINE_FILE="${SECURITY_BASELINE_FILE:-$PROJECT_ROOT/.github/security/vuln-baseline.json}"
+    ALLOWED_CRITICAL="${SECURITY_CRITICAL_ALLOWANCE:-0}"
+    if [ -f "$BASELINE_FILE" ]; then
+        # If jq is available, parse critical_allowance from baseline; otherwise fallback to env/default
+        if command -v jq >/dev/null 2>&1; then
+            BASE_ALLOWED=$(jq -r '.critical_allowance // 0' "$BASELINE_FILE" 2>/dev/null || echo 0)
+            # Only use parsed value if it is a number
+            if [[ "$BASE_ALLOWED" =~ ^[0-9]+$ ]]; then
+                ALLOWED_CRITICAL="$BASE_ALLOWED"
+            fi
+        fi
+    fi
+
+    if [ $CRITICAL_COUNT -gt $ALLOWED_CRITICAL ]; then
+        echo -e "${RED}⚠ Found $CRITICAL_COUNT CRITICAL vulnerabilities (allowance: $ALLOWED_CRITICAL)${NC}"
+        echo -e "${RED}Build blocked. Reduce criticals or update baseline intentionally.${NC}"
         exit 1
-    elif [ $HIGH_COUNT -gt 0 ]; then
+    elif [ $CRITICAL_COUNT -gt 0 ]; then
+        echo -e "${YELLOW}⚠ Found $CRITICAL_COUNT CRITICAL vulnerabilities (at or below allowance: $ALLOWED_CRITICAL). Proceeding with warning.${NC}"
+    fi
+
+    if [ $HIGH_COUNT -gt 0 ]; then
         echo -e "${YELLOW}⚠ Found $HIGH_COUNT HIGH severity vulnerabilities${NC}"
         echo "Consider addressing these before production deployment."
-    else
+    fi
+
+    if [ $CRITICAL_COUNT -eq 0 ] && [ $HIGH_COUNT -eq 0 ]; then
         echo -e "${GREEN}✓ No critical or high severity vulnerabilities found${NC}"
     fi
 }

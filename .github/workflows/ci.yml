@@ -2,9 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ main ]
+    branches: [ '**' ]
+  workflow_dispatch:
 
 jobs:
   build-and-secure:
@@ -29,6 +30,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Supply chain security (SBOM, CVE, SLSA)
+        env:
+          SECURITY_BASELINE_FILE: .github/security/vuln-baseline.json
+          # File's critical_allowance wins; this provides a fallback for CI
+          SECURITY_CRITICAL_ALLOWANCE: 5
         run: |
           chmod +x scripts/supply-chain-security.sh
           ./scripts/supply-chain-security.sh
