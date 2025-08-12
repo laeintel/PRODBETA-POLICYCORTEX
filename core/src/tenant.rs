@@ -22,7 +22,6 @@ impl TenantContext {
         let tenant_id = claims
             .tid
             .clone()
-            .or_else(|| claims.tenant_id.clone())
             .unwrap_or_else(|| "default".to_string());
 
         TenantContext {
@@ -44,6 +43,7 @@ impl TenantContext {
 }
 
 // Extension trait for Request to store tenant context
+#[derive(Clone)]
 pub struct TenantExtension(pub TenantContext);
 
 // Middleware to extract and propagate tenant context
@@ -81,7 +81,7 @@ pub async fn tenant_middleware(
         .insert(TenantExtension(tenant.clone()));
 
     // Set database session variable for RLS
-    if let Ok(pool) = sqlx::PgPool::try_from(&state.database_url) {
+    if let Some(ref pool) = state.db_pool {
         if let Ok(mut conn) = pool.acquire().await {
             let query = format!("SELECT set_tenant_context($1)");
             let _ = sqlx::query(&query)
