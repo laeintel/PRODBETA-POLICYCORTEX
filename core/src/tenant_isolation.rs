@@ -175,18 +175,18 @@ impl TenantDatabase {
     ) -> Result<Uuid, sqlx::Error> {
         let id = Uuid::new_v4();
 
-        sqlx::query!(
+        sqlx::query(
             r#"
             INSERT INTO resources (id, tenant_id, resource_type, name, data, created_at, created_by)
             VALUES ($1, $2, $3, $4, $5, NOW(), $6)
-            "#,
-            id,
-            tenant.tenant_id,
-            resource_type,
-            name,
-            data,
-            tenant.user_id
+            "#
         )
+        .bind(id)
+        .bind(&tenant.tenant_id)
+        .bind(resource_type)
+        .bind(name)
+        .bind(&data)
+        .bind(&tenant.user_id)
         .execute(&*self.pool)
         .await?;
 
@@ -203,31 +203,31 @@ impl TenantDatabase {
     ) -> Result<bool, sqlx::Error> {
         let result = if tenant.is_admin {
             // Admin can update any resource
-            sqlx::query!(
+            sqlx::query(
                 r#"
                 UPDATE resources 
                 SET data = $1, updated_at = NOW(), updated_by = $2
                 WHERE id = $3
-                "#,
-                data,
-                tenant.user_id,
-                resource_id
+                "#
             )
+            .bind(&data)
+            .bind(&tenant.user_id)
+            .bind(resource_id)
             .execute(&*self.pool)
             .await?
         } else {
             // Regular user can only update their tenant's resources
-            sqlx::query!(
+            sqlx::query(
                 r#"
                 UPDATE resources 
                 SET data = $1, updated_at = NOW(), updated_by = $2
                 WHERE id = $3 AND tenant_id = $4
-                "#,
-                data,
-                tenant.user_id,
-                resource_id,
-                tenant.tenant_id
+                "#
             )
+            .bind(&data)
+            .bind(&tenant.user_id)
+            .bind(resource_id)
+            .bind(&tenant.tenant_id)
             .execute(&*self.pool)
             .await?
         };
@@ -243,16 +243,17 @@ impl TenantDatabase {
     ) -> Result<bool, sqlx::Error> {
         let result = if tenant.is_admin {
             // Admin can delete any resource
-            sqlx::query!("DELETE FROM resources WHERE id = $1", resource_id)
+            sqlx::query("DELETE FROM resources WHERE id = $1")
+                .bind(resource_id)
                 .execute(&*self.pool)
                 .await?
         } else {
             // Regular user can only delete their tenant's resources
-            sqlx::query!(
-                "DELETE FROM resources WHERE id = $1 AND tenant_id = $2",
-                resource_id,
-                tenant.tenant_id
+            sqlx::query(
+                "DELETE FROM resources WHERE id = $1 AND tenant_id = $2"
             )
+            .bind(resource_id)
+            .bind(&tenant.tenant_id)
             .execute(&*self.pool)
             .await?
         };
@@ -266,14 +267,14 @@ impl TenantDatabase {
         tenant: &TenantContext,
     ) -> Result<Vec<serde_json::Value>, sqlx::Error> {
         let rows = if tenant.is_admin {
-            sqlx::query!("SELECT * FROM policies ORDER BY created_at DESC")
+            sqlx::query("SELECT * FROM policies ORDER BY created_at DESC")
                 .fetch_all(&*self.pool)
                 .await?
         } else {
-            sqlx::query!(
-                "SELECT * FROM policies WHERE tenant_id = $1 ORDER BY created_at DESC",
-                tenant.tenant_id
+            sqlx::query(
+                "SELECT * FROM policies WHERE tenant_id = $1 ORDER BY created_at DESC"
             )
+            .bind(&tenant.tenant_id)
             .fetch_all(&*self.pool)
             .await?
         };
@@ -282,12 +283,12 @@ impl TenantDatabase {
             .into_iter()
             .map(|row| {
                 serde_json::json!({
-                    "id": row.id,
-                    "tenant_id": row.tenant_id,
-                    "name": row.name,
-                    "description": row.description,
-                    "rules": row.rules,
-                    "enabled": row.enabled,
+                    "id": row.try_get::<uuid::Uuid, _>("id").unwrap_or_default(),
+                    "tenant_id": row.try_get::<uuid::Uuid, _>("tenant_id").unwrap_or_default(),
+                    "name": row.try_get::<String, _>("name").unwrap_or_default(),
+                    "description": row.try_get::<Option<String>, _>("description").unwrap_or_default(),
+                    "rules": row.try_get::<Option<serde_json::Value>, _>("rules").unwrap_or_default(),
+                    "enabled": row.try_get::<bool, _>("enabled").unwrap_or_default(),
                 })
             })
             .collect())
@@ -298,8 +299,8 @@ impl TenantDatabase {
         &self,
         tenant: &TenantContext,
     ) -> Result<serde_json::Value, sqlx::Error> {
-        let query = if tenant.is_admin {
-            sqlx::query!(
+        let rows = if tenant.is_admin {
+            sqlx::query(
                 r#"
                 SELECT 
                     COUNT(*) as total_resources,
@@ -308,8 +309,10 @@ impl TenantDatabase {
                 FROM resources
                 "#
             )
+            .fetch_one(&*self.pool)
+            .await?
         } else {
-            sqlx::query!(
+            sqlx::query(
                 r#"
                 SELECT 
                     COUNT(*) as total_resources,
@@ -317,19 +320,23 @@ impl TenantDatabase {
                     SUM(CASE WHEN compliance_status = 'non_compliant' THEN 1 ELSE 0 END) as non_compliant
                 FROM resources
                 WHERE tenant_id = $1
-                "#,
-                tenant.tenant_id
+                "#
             )
+            .bind(&tenant.tenant_id)
+            .fetch_one(&*self.pool)
+            .await?
         };
 
-        let row = query.fetch_one(&*self.pool).await?;
+        let total_resources: i64 = rows.try_get("total_resources")?;
+        let compliant: i64 = rows.try_get("compliant")?;
+        let non_compliant: i64 = rows.try_get("non_compliant")?;
 
         Ok(serde_json::json!({
-            "total": row.total_resources,
-            "compliant": row.compliant,
-            "non_compliant": row.non_compliant,
-            "compliance_rate": if row.total_resources.unwrap_or(0) > 0 {
-                (row.compliant.unwrap_or(0) as f64 / row.total_resources.unwrap_or(1) as f64) * 100.0
+            "total": total_resources,
+            "compliant": compliant,
+            "non_compliant": non_compliant,
+            "compliance_rate": if total_resources > 0 {
+                (compliant as f64 / total_resources as f64) * 100.0
             } else {
                 0.0
             }
@@ -346,19 +353,19 @@ pub async fn audit_log(
     resource_id: Option<Uuid>,
     details: Option<serde_json::Value>,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO audit_logs (id, tenant_id, user_id, action, resource_type, resource_id, details, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-        "#,
-        Uuid::new_v4(),
-        tenant.tenant_id,
-        tenant.user_id,
-        action,
-        resource_type,
-        resource_id,
-        details
+        "#
     )
+    .bind(Uuid::new_v4())
+    .bind(&tenant.tenant_id)
+    .bind(&tenant.user_id)
+    .bind(action)
+    .bind(resource_type)
+    .bind(resource_id)
+    .bind(details)
     .execute(pool)
     .await?;
 
