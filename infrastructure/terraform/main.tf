@@ -161,8 +161,8 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Cosmos DB - Free Tier Account
-# Free: 25GB storage, 1000 RU/s
+  # Cosmos DB - Free Tier Account
+  # Free: 25GB storage, 1000 RU/s
 resource "azurerm_cosmosdb_account" "main" {
   name                = "cosmos-cortex-${local.env_suffix}-${local.unique_suffix}"
   location            = azurerm_resource_group.main.location
@@ -171,7 +171,7 @@ resource "azurerm_cosmosdb_account" "main" {
   kind                = "GlobalDocumentDB"
 
   # Enable free tier (only one per subscription)
-  enable_free_tier = var.environment == "dev" ? true : false
+  free_tier_enabled = var.environment == "dev" ? true : false
 
   consistency_policy {
     consistency_level       = "Session"
@@ -385,7 +385,8 @@ resource "azurerm_container_app" "frontend" {
 
       env {
         name  = "NEXT_PUBLIC_API_URL"
-        value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
+        # Use stable app FQDN (not revision-specific) to avoid provider plan drift
+        value = "https://${azurerm_container_app.core.ingress[0].fqdn}"
       }
     }
 
