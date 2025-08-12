@@ -1,12 +1,11 @@
 # Multi-stage build for Rust backend
 FROM rust:alpine AS builder
 
-# Install build dependencies (for openssl-sys vendored and general build tools)
+# Install build dependencies
 # - build-base: gcc, make, libc-dev (musl)
-# - perl: required by OpenSSL build scripts
+# - openssl-dev and openssl-libs-static: required for Azure SDK dependencies
 # - pkgconfig: used by many -sys crates to discover libs
-# - openssl-dev: fallback headers/libs when vendored is disabled
-RUN apk add --no-cache build-base perl pkgconfig openssl-dev
+RUN apk add --no-cache build-base openssl-dev openssl-libs-static pkgconfig
 
 # Create app directory
 WORKDIR /app
@@ -34,8 +33,7 @@ FROM alpine:3.19
 RUN apk add --no-cache \
     ca-certificates \
     libgcc \
-    netcat-openbsd \
-    openssl
+    netcat-openbsd
 
 # Create non-root user with home directory
 RUN addgroup -g 1000 policycortex && \
