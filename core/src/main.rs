@@ -98,7 +98,10 @@ async fn main() {
     if let Ok(otlp) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
         let resource = opentelemetry_sdk::Resource::new(vec![
             KeyValue::new("service.name", "policycortex-core"),
-            KeyValue::new("service.version", config::AppConfig::load().service_version.clone()),
+            KeyValue::new(
+                "service.version",
+                config::AppConfig::load().service_version.clone(),
+            ),
         ]);
         let tracer = opentelemetry_otlp::new_pipeline()
             .tracing()
