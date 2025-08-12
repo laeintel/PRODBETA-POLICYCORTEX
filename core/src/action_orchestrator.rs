@@ -536,7 +536,9 @@ impl ActionOrchestrator {
 
     /// Check if action has required approvals
     async fn has_approval(&self, action: &Action) -> Result<bool, String> {
-        if action.dry_run { return Ok(true); }
+        if action.dry_run {
+            return Ok(true);
+        }
         if let Some(ref pool) = self.db_pool {
             let row = sqlx::query!(
                 r#"SELECT COUNT(1) as count FROM approval_requests

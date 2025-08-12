@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use super::{AuditLog, CloudCollector, CloudPolicy, CloudProvider, CloudResource, ComplianceStatus, ResourceType};
+use super::{
+    AuditLog, CloudCollector, CloudPolicy, CloudProvider, CloudResource, ComplianceStatus,
+    ResourceType,
+};
 
 /// GCP resource collector for multi-cloud parity (stub implementation)
 #[derive(Clone)]

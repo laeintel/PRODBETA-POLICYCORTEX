@@ -396,12 +396,27 @@ impl PersistentAuditChain {
             .bind(entry.sequence as i64)
             .bind(&entry.timestamp)
             .bind(&entry.tenant_id)
-            .bind(serde_json::to_value(&entry.event_type).map_err(|e| sqlx::Error::Protocol(e.to_string()))?)
-            .bind(serde_json::to_value(&entry.actor).map_err(|e| sqlx::Error::Protocol(e.to_string()))?)
-            .bind(serde_json::to_value(&entry.resource).map_err(|e| sqlx::Error::Protocol(e.to_string()))?)
+            .bind(
+                serde_json::to_value(&entry.event_type)
+                    .map_err(|e| sqlx::Error::Protocol(e.to_string()))?,
+            )
+            .bind(
+                serde_json::to_value(&entry.actor)
+                    .map_err(|e| sqlx::Error::Protocol(e.to_string()))?,
+            )
+            .bind(
+                serde_json::to_value(&entry.resource)
+                    .map_err(|e| sqlx::Error::Protocol(e.to_string()))?,
+            )
             .bind(&entry.action)
-            .bind(serde_json::to_value(&entry.outcome).map_err(|e| sqlx::Error::Protocol(e.to_string()))?)
-            .bind(serde_json::to_value(&entry.details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?)
+            .bind(
+                serde_json::to_value(&entry.outcome)
+                    .map_err(|e| sqlx::Error::Protocol(e.to_string()))?,
+            )
+            .bind(
+                serde_json::to_value(&entry.details)
+                    .map_err(|e| sqlx::Error::Protocol(e.to_string()))?,
+            )
             .bind(&entry.previous_hash)
             .bind(&entry.hash)
             .bind(&entry.signature)

@@ -159,9 +159,16 @@ impl TokenValidator {
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
         // Dev shortcut: allow HS256 tokens only outside production
-        let is_production = matches!(std::env::var("ENVIRONMENT").as_deref(), Ok("production") | Ok("prod"));
+        let is_production = matches!(
+            std::env::var("ENVIRONMENT").as_deref(),
+            Ok("production") | Ok("prod")
+        );
         if !is_production {
-            if std::env::var("JWT_HS256_SECRET").ok().filter(|v| !v.is_empty()).is_some() {
+            if std::env::var("JWT_HS256_SECRET")
+                .ok()
+                .filter(|v| !v.is_empty())
+                .is_some()
+            {
                 if let Ok(claims) = Self::validate_hs256(token).await {
                     return Ok(claims);
                 }
@@ -195,7 +202,7 @@ impl TokenValidator {
                 // Parse the token to extract claims without validation
                 let parts: Vec<&str> = token.split('.').collect();
                 if parts.len() >= 2 {
-                    use base64::{Engine as _, engine::general_purpose};
+                    use base64::{engine::general_purpose, Engine as _};
                     if let Ok(claims_bytes) = general_purpose::URL_SAFE_NO_PAD.decode(parts[1]) {
                         if let Ok(claims_str) = String::from_utf8(claims_bytes) {
                             if let Ok(claims) = serde_json::from_str::<Claims>(&claims_str) {
@@ -304,7 +311,10 @@ impl TokenValidator {
         let mut validation = Validation::new(Algorithm::HS256);
         validation.validate_exp = true;
         // Relax audience in dev unless strict requested
-        if !matches!(std::env::var("REQUIRE_STRICT_AUDIENCE").as_deref(), Ok("true") | Ok("1")) {
+        if !matches!(
+            std::env::var("REQUIRE_STRICT_AUDIENCE").as_deref(),
+            Ok("true") | Ok("1")
+        ) {
             validation.validate_aud = false;
         }
         jsonwebtoken::decode::<Claims>(

@@ -461,7 +461,7 @@ impl SLOManager {
 
         for i in 0..slo.alerts.len() {
             let should_fire = consumption >= slo.alerts[i].threshold;
-            
+
             if should_fire {
                 // Check cooldown
                 if let Some(last_fired) = slo.alerts[i].last_fired {

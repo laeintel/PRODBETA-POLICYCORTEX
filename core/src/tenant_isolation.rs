@@ -179,7 +179,7 @@ impl TenantDatabase {
             r#"
             INSERT INTO resources (id, tenant_id, resource_type, name, data, created_at, created_by)
             VALUES ($1, $2, $3, $4, $5, NOW(), $6)
-            "#
+            "#,
         )
         .bind(id)
         .bind(&tenant.tenant_id)
@@ -208,7 +208,7 @@ impl TenantDatabase {
                 UPDATE resources 
                 SET data = $1, updated_at = NOW(), updated_by = $2
                 WHERE id = $3
-                "#
+                "#,
             )
             .bind(&data)
             .bind(&tenant.user_id)
@@ -222,7 +222,7 @@ impl TenantDatabase {
                 UPDATE resources 
                 SET data = $1, updated_at = NOW(), updated_by = $2
                 WHERE id = $3 AND tenant_id = $4
-                "#
+                "#,
             )
             .bind(&data)
             .bind(&tenant.user_id)
@@ -249,13 +249,11 @@ impl TenantDatabase {
                 .await?
         } else {
             // Regular user can only delete their tenant's resources
-            sqlx::query(
-                "DELETE FROM resources WHERE id = $1 AND tenant_id = $2"
-            )
-            .bind(resource_id)
-            .bind(&tenant.tenant_id)
-            .execute(&*self.pool)
-            .await?
+            sqlx::query("DELETE FROM resources WHERE id = $1 AND tenant_id = $2")
+                .bind(resource_id)
+                .bind(&tenant.tenant_id)
+                .execute(&*self.pool)
+                .await?
         };
 
         Ok(result.rows_affected() > 0)
@@ -271,12 +269,10 @@ impl TenantDatabase {
                 .fetch_all(&*self.pool)
                 .await?
         } else {
-            sqlx::query(
-                "SELECT * FROM policies WHERE tenant_id = $1 ORDER BY created_at DESC"
-            )
-            .bind(&tenant.tenant_id)
-            .fetch_all(&*self.pool)
-            .await?
+            sqlx::query("SELECT * FROM policies WHERE tenant_id = $1 ORDER BY created_at DESC")
+                .bind(&tenant.tenant_id)
+                .fetch_all(&*self.pool)
+                .await?
         };
 
         Ok(rows

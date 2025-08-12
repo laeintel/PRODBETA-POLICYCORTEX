@@ -1,10 +1,10 @@
-use axum::{http::Request, response::Response};
-use tower::{Layer, Service};
-use std::task::{Context, Poll};
-use std::future::Future;
-use std::pin::Pin;
 use crate::auth::{AuthUser, Claims, TokenValidator};
 use axum::response::IntoResponse;
+use axum::{http::Request, response::Response};
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+use tower::{Layer, Service};
 use tracing::warn;
 
 #[derive(Clone)]
@@ -19,7 +19,9 @@ impl<S> Layer<S> for AuthEnforcementLayer {
 }
 
 #[derive(Clone)]
-pub struct AuthEnforcementService<S> { inner: S }
+pub struct AuthEnforcementService<S> {
+    inner: S,
+}
 
 impl<S, B> Service<Request<B>> for AuthEnforcementService<S>
 where
@@ -41,10 +43,18 @@ where
         let path = req.uri().path().to_string();
         let mut inner = self.inner.clone();
         Box::pin(async move {
-            let is_write = matches!(method, axum::http::Method::POST | axum::http::Method::PUT | axum::http::Method::DELETE | axum::http::Method::PATCH);
+            let is_write = matches!(
+                method,
+                axum::http::Method::POST
+                    | axum::http::Method::PUT
+                    | axum::http::Method::DELETE
+                    | axum::http::Method::PATCH
+            );
             if is_write {
                 // Extract bearer token manually
-                let maybe_auth = req.headers().get(axum::http::header::AUTHORIZATION)
+                let maybe_auth = req
+                    .headers()
+                    .get(axum::http::header::AUTHORIZATION)
                     .and_then(|h| h.to_str().ok())
                     .filter(|v| v.starts_with("Bearer "))
                     .map(|v| v.trim_start_matches("Bearer "));
@@ -53,9 +63,17 @@ where
                     match validator.validate_token(token).await {
                         Ok(claims) => {
                             // Minimal scope enforcement: require write scope
-                            let has_scope = claims.scp.as_deref().unwrap_or("")
-                                .split_whitespace().any(|s| s == "policycortex.write" || s == ".default");
-                            let has_admin_role = claims.roles.unwrap_or_default().iter().any(|r| r.to_lowercase().contains("admin"));
+                            let has_scope = claims
+                                .scp
+                                .as_deref()
+                                .unwrap_or("")
+                                .split_whitespace()
+                                .any(|s| s == "policycortex.write" || s == ".default");
+                            let has_admin_role = claims
+                                .roles
+                                .unwrap_or_default()
+                                .iter()
+                                .any(|r| r.to_lowercase().contains("admin"));
                             if !has_scope && !has_admin_role {
                                 let body = axum::Json(serde_json::json!({
                                     "error": "insufficient_scope",

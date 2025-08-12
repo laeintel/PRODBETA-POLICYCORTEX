@@ -162,10 +162,10 @@ impl SecretsManager {
         if let Some(ref client) = self.client {
             let mut secrets = Vec::new();
             let pages = client.list_secrets().into_stream();
-            
+
             use futures_lite::StreamExt;
             let mut stream = Box::pin(pages);
-            
+
             while let Some(page) = stream.next().await {
                 let secrets_page = page?;
                 for secret in &secrets_page.value {
