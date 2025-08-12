@@ -269,7 +269,8 @@ jobs:
     name: Build Frontend
     runs-on: ubuntu-latest
     needs: [test-frontend, security-scan]
-    if: github.event.inputs.force_deploy == 'true' || ((needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
+    # Always build/push on push to ensure tag exists; on manual runs require security scan or force
+    if: github.event_name == 'push' || github.event.inputs.force_deploy == 'true' || (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -307,7 +308,8 @@ jobs:
     name: Build GraphQL Gateway
     runs-on: ubuntu-latest
     needs: [test-graphql, security-scan]
-    if: github.event.inputs.force_deploy == 'true' || ((needs.test-graphql.result == 'success' || needs.test-graphql.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
+    # Always build/push on push to ensure tag exists; on manual runs require security scan or force
+    if: github.event_name == 'push' || github.event.inputs.force_deploy == 'true' || (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
       contents: read
       packages: write
