@@ -281,7 +281,11 @@ async fn main() {
         .route("/api/v1/exceptions/expire", post(api::expire_exceptions))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
-        .layer(ServiceBuilder::new().layer(cors).layer(observability::CorrelationLayer))
+        .layer(
+            ServiceBuilder::new()
+                .layer(cors)
+                .layer(observability::CorrelationLayer),
+        )
         // Enforce auth for write operations (scopes/roles)
         .layer(auth_middleware::AuthEnforcementLayer)
         // Data mode enforcement is handled by individual endpoints
