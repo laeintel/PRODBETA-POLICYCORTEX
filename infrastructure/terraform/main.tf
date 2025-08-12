@@ -161,8 +161,8 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure" {
   end_ip_address   = "0.0.0.0"
 }
 
-  # Cosmos DB - Free Tier Account
-  # Free: 25GB storage, 1000 RU/s
+# Cosmos DB - Free Tier Account
+# Free: 25GB storage, 1000 RU/s
 resource "azurerm_cosmosdb_account" "main" {
   name                = "cosmos-cortex-${local.env_suffix}-${local.unique_suffix}"
   location            = azurerm_resource_group.main.location
@@ -384,7 +384,7 @@ resource "azurerm_container_app" "frontend" {
       memory = "0.5Gi"
 
       env {
-        name  = "NEXT_PUBLIC_API_URL"
+        name = "NEXT_PUBLIC_API_URL"
         # Use stable app FQDN (not revision-specific) to avoid provider plan drift
         value = "https://${azurerm_container_app.core.ingress[0].fqdn}"
       }
