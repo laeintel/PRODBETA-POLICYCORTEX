@@ -1,4 +1,4 @@
-use crate::auth::{AuthUser, OptionalAuthUser, TenantContext};
+use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, user_has_scopes};
 use axum::{
     body::Body,
     extract::{Path, Query, State},
@@ -21,6 +21,7 @@ use crate::secrets::SecretsManager;
 use metrics::counter;
 use flate2::{write::GzEncoder, Compression};
 use tar::Builder as TarBuilder;
+use uuid::Uuid;
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -906,10 +907,17 @@ pub struct CreateApprovalPayload {
 }
 
 pub async fn create_approval(
-    auth_user: OptionalAuthUser,
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>,
     Json(payload): Json<CreateApprovalPayload>,
 ) -> impl IntoResponse {
+    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Approve"]) {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"error":"insufficient_scope"})),
+        )
+            .into_response();
+    }
     use chrono::Utc;
     use uuid::Uuid;
     let id = Uuid::new_v4().to_string();
@@ -947,9 +955,17 @@ pub struct ApprovePayload { pub approve: bool }
 
 pub async fn approve_request(
     State(state): State<Arc<AppState>>,
+    auth_user: AuthUser,
     Path(id): Path<String>,
     Json(payload): Json<ApprovePayload>,
 ) -> impl IntoResponse {
+    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Approve"]) {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"error":"insufficient_scope"})),
+        )
+            .into_response();
+    }
     let mut approvals = state.approvals.write().await;
     if let Some(a) = approvals.get_mut(&id) {
         a.status = if payload.approve { "Approved" } else { "Rejected" }.to_string();
@@ -1200,7 +1216,28 @@ pub async fn get_policies_deep() -> impl IntoResponse {
 }
 
 // Initiate remediation (stub – Phase 1). Later, orchestrate jobs and stream progress.
-pub async fn remediate(State(state): State<Arc<AppState>>, Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
+pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
+    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Write"]) {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"error":"insufficient_scope"})),
+        )
+            .into_response();
+    }
+    // Enforce write safety: block writes in simulated mode
+    use crate::data_mode::{DataMode, DataResponse, DataModeGuard};
+    let guard = DataModeGuard::new();
+    if let Err(e) = guard.ensure_write_allowed() {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({
+                "success": false,
+                "status": "ReadOnlyMode",
+                "message": e.to_string()
+            }))
+        ).into_response();
+    }
+
     // Enforce approvals in non-dev environments
     let require_approvals = crate::config::AppConfig::load().require_approvals;
     if require_approvals {
@@ -1229,17 +1266,46 @@ pub async fn remediate(State(state): State<Arc<AppState>>, Json(payload): Json<R
 }
 
 // Create a policy exception (stub – Phase 1)
-pub async fn create_exception(Json(payload): Json<CreateExceptionRequest>) -> impl IntoResponse {
+pub async fn create_exception(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<CreateExceptionRequest>) -> impl IntoResponse {
+    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Write"]) {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"error":"insufficient_scope"})),
+        )
+            .into_response();
+    }
     use chrono::Utc;
-    let id = format!("exc-{}", Utc::now().format("%Y%m%d%H%M%S"));
+    let id = Uuid::new_v4();
+    let expires_at = Utc::now() + chrono::Duration::days(30);
+    if let Some(ref pool) = state.db_pool {
+        let _ = sqlx::query!(
+            r#"INSERT INTO exceptions (
+                id, tenant_id, resource_id, policy_id, reason, status, created_by, created_at, expires_at, recertify_at, evidence, metadata
+            ) VALUES ($1,$2,$3,$4,$5,'Approved',$6,NOW(),$7,$8,$9,$10)"#,
+            id,
+            auth_user.claims.tid.clone().unwrap_or_else(|| "default".to_string()),
+            payload.resource_id,
+            payload.policy_id,
+            payload.reason,
+            auth_user.claims.preferred_username.clone().unwrap_or_default(),
+            expires_at,
+            expires_at,
+            serde_json::json!({"requested_by": auth_user.claims.preferred_username}),
+            serde_json::json!({})
+        )
+        .execute(pool)
+        .await;
+    }
     Json(serde_json::json!({
         "success": true,
         "exceptionId": id,
         "resourceId": payload.resource_id,
         "policyId": payload.policy_id,
         "reason": payload.reason,
-        "expiresIn": "30 days",
-        "status": "Approved"
+        "expiresAt": expires_at.to_rfc3339(),
+        "status": "Approved",
+        "recertifyAt": expires_at.to_rfc3339(),
+        "evidenceRequired": true
     }))
 }
 
@@ -1390,24 +1456,29 @@ pub async fn get_resources_deep(State(state): State<Arc<AppState>>) -> impl Into
 
 pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     counter!("api_requests_total", 1, "endpoint" => "compliance");
+    use crate::data_mode::{DataMode, DataResponse};
+    let mode = DataMode::from_env();
     // Try to get real compliance data from Azure
     if let Some(ref async_client) = state.async_azure_client {
         match async_client.get_governance_metrics().await {
             Ok(metrics) => {
-                return Json(serde_json::json!({
-                    "status": "compliant",
-                    "policies": {
-                        "total": metrics.policies.total,
-                        "compliant": metrics.policies.active,
-                        "non_compliant": metrics.policies.violations,
-                        "compliance_rate": metrics.policies.compliance_rate
-                    },
-                    "rbac": {
-                        "violations": metrics.rbac.violations,
-                        "risk_score": metrics.rbac.risk_score
-                    },
-                    "timestamp": chrono::Utc::now()
-                }));
+                return Json(DataResponse::new(
+                    serde_json::json!({
+                        "status": "compliant",
+                        "policies": {
+                            "total": metrics.policies.total,
+                            "compliant": metrics.policies.active,
+                            "non_compliant": metrics.policies.violations,
+                            "compliance_rate": metrics.policies.compliance_rate
+                        },
+                        "rbac": {
+                            "violations": metrics.rbac.violations,
+                            "risk_score": metrics.rbac.risk_score
+                        },
+                        "timestamp": chrono::Utc::now()
+                    }),
+                    DataMode::Real,
+                ));
             }
             Err(e) => {
                 tracing::warn!("Failed to get compliance data: {}", e);
@@ -1415,42 +1486,50 @@ pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResp
         }
     }
 
-    // Return default compliance data
-    Json(serde_json::json!({
-        "status": "compliant",
-        "policies": {
-            "total": 15,
-            "compliant": 12,
-            "non_compliant": 3,
-            "compliance_rate": 80.0
-        },
-        "rbac": {
-            "violations": 2,
-            "risk_score": 3.2
-        },
-        "timestamp": chrono::Utc::now()
-    }))
+    // Return default compliance data wrapped with source info
+    Json(DataResponse::new(
+        serde_json::json!({
+            "status": "compliant",
+            "policies": {
+                "total": 15,
+                "compliant": 12,
+                "non_compliant": 3,
+                "compliance_rate": 80.0
+            },
+            "rbac": {
+                "violations": 2,
+                "risk_score": 3.2
+            },
+            "timestamp": chrono::Utc::now()
+        }),
+        DataMode::Simulated,
+    ))
 }
 
 pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     counter!("api_requests_total", 1, "endpoint" => "resources");
+    use crate::data_mode::{DataMode, DataResponse};
+    let mode = DataMode::from_env();
     // Try to get real resource data from Azure
     if let Some(ref async_client) = state.async_azure_client {
         match async_client.get_governance_metrics().await {
             Ok(metrics) => {
-                return Json(serde_json::json!({
-                    "resources": {
-                        "total": metrics.resources.total,
-                        "optimized": metrics.resources.optimized,
-                        "idle": metrics.resources.idle,
-                        "overprovisioned": metrics.resources.overprovisioned
-                    },
-                    "costs": {
-                        "current_spend": metrics.costs.current_spend,
-                        "savings_identified": metrics.costs.savings_identified
-                    },
-                    "timestamp": chrono::Utc::now()
-                }));
+                return Json(DataResponse::new(
+                    serde_json::json!({
+                        "resources": {
+                            "total": metrics.resources.total,
+                            "optimized": metrics.resources.optimized,
+                            "idle": metrics.resources.idle,
+                            "overprovisioned": metrics.resources.overprovisioned
+                        },
+                        "costs": {
+                            "current_spend": metrics.costs.current_spend,
+                            "savings_identified": metrics.costs.savings_identified
+                        },
+                        "timestamp": chrono::Utc::now()
+                    }),
+                    DataMode::Real,
+                ));
             }
             Err(e) => {
                 tracing::warn!("Failed to get resource data: {}", e);
@@ -1458,20 +1537,23 @@ pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoRespo
         }
     }
 
-    // Return default resource data
-    Json(serde_json::json!({
-        "resources": {
-            "total": 2500,
-            "optimized": 1875,
-            "idle": 125,
-            "overprovisioned": 50
-        },
-        "costs": {
-            "current_spend": 125000.0,
-            "savings_identified": 7000.0
-        },
-        "timestamp": chrono::Utc::now()
-    }))
+    // Return default resource data wrapped
+    Json(DataResponse::new(
+        serde_json::json!({
+            "resources": {
+                "total": 2500,
+                "optimized": 1875,
+                "idle": 125,
+                "overprovisioned": 50
+            },
+            "costs": {
+                "current_spend": 125000.0,
+                "savings_identified": 7000.0
+            },
+            "timestamp": chrono::Utc::now()
+        }),
+        DataMode::Simulated,
+    ))
 }
 
 // ===================== Action Orchestrator (Phase 2) =====================
@@ -1500,9 +1582,17 @@ pub struct ActionRecord {
 }
 
 pub async fn create_action(
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>,
     Json(payload): Json<CreateActionRequest>,
 ) -> impl IntoResponse {
+    if !user_has_scopes(&auth_user.claims, &["PolicyCortex.Write"]) {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"error":"insufficient_scope"})),
+        )
+            .into_response();
+    }
     use chrono::Utc;
     use uuid::Uuid;
 
@@ -1716,4 +1806,63 @@ pub async fn stream_events(State(state): State<Arc<AppState>>) -> impl IntoRespo
         }
     };
     Sse::new(stream).into_response()
+}
+
+// ===================== Exceptions Management =====================
+
+#[derive(Debug, Serialize)]
+pub struct ExceptionRecord {
+    pub id: Uuid,
+    pub resource_id: String,
+    pub policy_id: String,
+    pub reason: String,
+    pub status: String,
+    pub expires_at: chrono::DateTime<chrono::Utc>,
+    pub recertify_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+pub async fn list_exceptions(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(ref pool) = state.db_pool {
+        if let Ok(rows) = sqlx::query!(
+            r#"SELECT id, resource_id, policy_id, reason, status, expires_at, recertify_at, created_at FROM exceptions ORDER BY created_at DESC LIMIT 100"#
+        )
+        .fetch_all(pool)
+        .await
+        {
+            let items: Vec<ExceptionRecord> = rows
+                .into_iter()
+                .map(|r| ExceptionRecord {
+                    id: r.id,
+                    resource_id: r.resource_id.unwrap_or_default(),
+                    policy_id: r.policy_id.unwrap_or_default(),
+                    reason: r.reason.unwrap_or_default(),
+                    status: r.status.unwrap_or_else(|| "Approved".to_string()),
+                    expires_at: r.expires_at.unwrap_or(chrono::Utc::now()),
+                    recertify_at: r.recertify_at,
+                    created_at: r.created_at.unwrap_or(chrono::Utc::now()),
+                })
+                .collect();
+            return Json(serde_json::json!({"items": items}));
+        }
+    }
+    Json(serde_json::json!({"items": []}))
+}
+
+#[derive(Debug, Serialize)]
+pub struct ExpireResult { pub expired: i64 }
+
+pub async fn expire_exceptions(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    if let Some(ref pool) = state.db_pool {
+        match sqlx::query!(
+            r#"UPDATE exceptions SET status = 'Expired' WHERE expires_at < NOW() AND status <> 'Expired' RETURNING 1"#
+        )
+        .fetch_all(pool)
+        .await
+        {
+            Ok(rows) => return Json(ExpireResult { expired: rows.len() as i64 }),
+            Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e.to_string()}))).into_response(),
+        }
+    }
+    Json(ExpireResult { expired: 0 })
 }

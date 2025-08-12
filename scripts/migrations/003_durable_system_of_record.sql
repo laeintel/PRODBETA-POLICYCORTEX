@@ -135,6 +135,81 @@ CREATE INDEX idx_audit_trail_action ON audit_trail(action);
 CREATE INDEX idx_audit_trail_created_at ON audit_trail(created_at DESC);
 CREATE INDEX idx_audit_trail_hash ON audit_trail(hash);
 
+-- Evidence store for WORM-like persistence of artifacts
+CREATE TABLE IF NOT EXISTS evidence_store (
+    id UUID PRIMARY KEY,
+    evidence_type VARCHAR(64) NOT NULL,
+    source JSONB NOT NULL,
+    subject TEXT NOT NULL,
+    description TEXT,
+    data JSONB NOT NULL,
+    hash VARCHAR(128) NOT NULL,
+    signature TEXT NOT NULL,
+    signing_key_id TEXT,
+    chain_of_custody JSONB NOT NULL,
+    metadata JSONB NOT NULL,
+    tenant_id VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    verification_status VARCHAR(32) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_evidence_tenant ON evidence_store(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_created_at ON evidence_store(created_at DESC);
+
+-- Idempotency records for action deduplication
+CREATE TABLE IF NOT EXISTS idempotency_records (
+    key VARCHAR(255) PRIMARY KEY,
+    action_id UUID NOT NULL,
+    result JSONB,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_idempotency_expires ON idempotency_records(expires_at);
+
+-- Approval requests table
+CREATE TABLE IF NOT EXISTS approval_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id VARCHAR(255) NOT NULL,
+    action_id UUID,
+    action_type TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
+    requester_id TEXT,
+    requester_email TEXT,
+    title TEXT,
+    description TEXT,
+    impact_analysis JSONB,
+    approval_type JSONB,
+    required_approvers TEXT[],
+    status TEXT NOT NULL,
+    approvals JSONB,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    metadata JSONB
+);
+CREATE INDEX IF NOT EXISTS idx_approval_req_tenant ON approval_requests(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_approval_req_status ON approval_requests(status);
+
+-- Exceptions lifecycle table (GRC-managed exceptions)
+CREATE TABLE IF NOT EXISTS exceptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id VARCHAR(255) NOT NULL,
+    resource_id TEXT NOT NULL,
+    policy_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Approved',
+    created_by TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    recertify_at TIMESTAMP WITH TIME ZONE,
+    evidence JSONB,
+    metadata JSONB
+);
+CREATE INDEX IF NOT EXISTS idx_exceptions_tenant ON exceptions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_exceptions_status ON exceptions(status);
+CREATE INDEX IF NOT EXISTS idx_exceptions_expires ON exceptions(expires_at);
+
 -- Function to calculate audit record hash
 CREATE OR REPLACE FUNCTION calculate_audit_hash(
     p_entity_id UUID,

@@ -1,0 +1,34 @@
+name: Supply chain security
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Run supply chain script
+        run: |
+          chmod +x scripts/supply-chain-security.sh
+          ./scripts/supply-chain-security.sh
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: security-reports/**

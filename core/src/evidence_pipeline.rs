@@ -424,13 +424,15 @@ impl EvidencePipeline {
     }
 
     async fn sign_evidence(&self, hash: &str) -> Result<String, String> {
-        // TODO: Implement actual cryptographic signing
-        // For now, create a simple signature
-        let signing_keys = self.signing_keys.read().await;
-        let key_id = &signing_keys.active_key_id;
-
-        let signature = format!("{}:{}:{}", key_id, hash, Utc::now().timestamp());
-        Ok(general_purpose::STANDARD.encode(signature))
+        // HMAC-SHA256 signature using an environment-provided secret
+        let secret = std::env::var("EVIDENCE_SIGNING_SECRET")
+            .map_err(|_| "EVIDENCE_SIGNING_SECRET not configured".to_string())?;
+        use hmac::{Hmac, Mac};
+        type HmacSha256 = Hmac<sha2::Sha256>;
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).map_err(|e| e.to_string())?;
+        mac.update(hash.as_bytes());
+        let sig = mac.finalize().into_bytes();
+        Ok(general_purpose::STANDARD.encode(sig))
     }
 
     async fn verify_signature(
@@ -439,20 +441,16 @@ impl EvidencePipeline {
         signature: &str,
         key_id: &str,
     ) -> Result<bool, String> {
-        // TODO: Implement actual signature verification
-        // For now, do basic validation
-
+        let secret = std::env::var("EVIDENCE_SIGNING_SECRET")
+            .map_err(|_| "EVIDENCE_SIGNING_SECRET not configured".to_string())?;
         let decoded = general_purpose::STANDARD
             .decode(signature)
             .map_err(|e| e.to_string())?;
-        let signature_str = String::from_utf8(decoded).map_err(|e| e.to_string())?;
-
-        let parts: Vec<&str> = signature_str.split(':').collect();
-        if parts.len() != 3 {
-            return Ok(false);
-        }
-
-        Ok(parts[0] == key_id && parts[1] == hash)
+        use hmac::{Hmac, Mac};
+        type HmacSha256 = Hmac<sha2::Sha256>;
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).map_err(|e| e.to_string())?;
+        mac.update(hash.as_bytes());
+        Ok(mac.verify_slice(&decoded).is_ok())
     }
 
     async fn initialize_signing_keys() -> Result<SigningKeys, String> {
@@ -511,8 +509,34 @@ impl EvidencePipeline {
         pool: &sqlx::PgPool,
         evidence: &Evidence,
     ) -> Result<(), String> {
-        // TODO: Implement database persistence
         info!("Persisting evidence {} to database", evidence.id);
+        sqlx::query!(
+            r#"INSERT INTO evidence_store (
+                id, evidence_type, source, subject, description, data, hash, signature,
+                signing_key_id, chain_of_custody, metadata, tenant_id, created_at, expires_at, verification_status
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8,
+                $9, $10, $11, $12, $13, $14, $15
+            ) ON CONFLICT (id) DO NOTHING"#,
+            evidence.id,
+            format!("{:?}", evidence.evidence_type),
+            serde_json::to_value(&evidence.source).map_err(|e| e.to_string())?,
+            evidence.subject,
+            evidence.description,
+            evidence.data,
+            evidence.hash,
+            evidence.signature,
+            evidence.signing_key_id,
+            serde_json::to_value(&evidence.chain_of_custody).map_err(|e| e.to_string())?,
+            serde_json::to_value(&evidence.metadata).map_err(|e| e.to_string())?,
+            evidence.tenant_id,
+            evidence.created_at,
+            evidence.expires_at,
+            format!("{:?}", evidence.verification_status)
+        )
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to persist evidence: {}", e))?;
         Ok(())
     }
 

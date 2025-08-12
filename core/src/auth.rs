@@ -158,16 +158,23 @@ impl TokenValidator {
 
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
-        // Dev shortcut: allow HS256 tokens signed with JWT_HS256_SECRET if present
-        if std::env::var("JWT_HS256_SECRET").ok().filter(|v| !v.is_empty()).is_some() {
-            if let Ok(claims) = Self::validate_hs256(token).await {
-                return Ok(claims);
+        // Dev shortcut: allow HS256 tokens only outside production
+        let is_production = matches!(std::env::var("ENVIRONMENT").as_deref(), Ok("production") | Ok("prod"));
+        if !is_production {
+            if std::env::var("JWT_HS256_SECRET").ok().filter(|v| !v.is_empty()).is_some() {
+                if let Ok(claims) = Self::validate_hs256(token).await {
+                    return Ok(claims);
+                }
             }
         }
-        // Optionally enforce strict audience based on app config
+        // Optionally enforce strict audience based on app config and environment
+        let env_requires_strict = matches!(
+            std::env::var("ENVIRONMENT").as_deref(),
+            Ok("production") | Ok("prod")
+        );
         let require_strict_aud = std::env::var("REQUIRE_STRICT_AUDIENCE")
             .map(|v| v == "true" || v == "1")
-            .unwrap_or(false);
+            .unwrap_or(env_requires_strict);
         // Decode header to get the key ID
         let header = decode_header(token).map_err(|e| {
             error!("Failed to decode JWT header: {}", e);
@@ -225,6 +232,8 @@ impl TokenValidator {
 
         // Setup validation parameters
         let mut validation = Validation::new(Algorithm::RS256);
+        // Allow small clock skew for enterprise IdPs
+        validation.leeway = 60; // seconds
         if (require_strict_aud || !self.config.allow_any_audience) && !client_id.is_empty() {
             validation.set_audience(&[&client_id]);
         } else {

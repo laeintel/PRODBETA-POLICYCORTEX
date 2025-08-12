@@ -137,6 +137,10 @@ impl ActionOrchestrator {
 
     /// Submit an action for execution with idempotency guarantee
     pub async fn submit_action(&self, mut action: Action) -> Result<Uuid, String> {
+        // Enforce approval gate before any non-dry-run destructive operations
+        if !action.dry_run && action.requires_approval && !self.has_approval(&action).await? {
+            return Err("Action requires approval".to_string());
+        }
         // Generate idempotency key if not provided
         if action.idempotency_key.is_empty() {
             action.idempotency_key = self.generate_idempotency_key(&action);
@@ -154,9 +158,9 @@ impl ActionOrchestrator {
         // Validate action
         self.validate_action(&action)?;
 
-        // Check if approval is required
-        if action.requires_approval && !self.has_approval(&action).await? {
-            return Err("Action requires approval".to_string());
+        // In simulated mode block all writes
+        if !self.data_mode_allows_write()? {
+            return Err("Write operations are not allowed in simulated mode".to_string());
         }
 
         // Store idempotency record
@@ -252,6 +256,11 @@ impl ActionOrchestrator {
                 }
             }
         }
+    }
+
+    fn data_mode_allows_write(&self) -> Result<bool, String> {
+        use crate::data_mode::DataMode;
+        Ok(DataMode::from_env().allow_write_operations())
     }
 
     /// Execute the actual action based on its type
@@ -453,7 +462,27 @@ impl ActionOrchestrator {
 
         // Check database if available
         if let Some(ref pool) = self.db_pool {
-            // TODO: Query database for idempotency record
+            if let Ok(row) = sqlx::query!(
+                r#"SELECT action_id, created_at, expires_at, result FROM idempotency_records WHERE key = $1"#,
+                key
+            )
+            .fetch_optional(pool)
+            .await
+            {
+                if let Some(row) = row {
+                    let result: Option<ActionResult> = row
+                        .result
+                        .as_ref()
+                        .and_then(|v| serde_json::from_value(v.clone()).ok());
+                    return Ok(Some(IdempotencyRecord {
+                        key: key.to_string(),
+                        action_id: row.action_id.unwrap_or_else(|| uuid::Uuid::nil()),
+                        result,
+                        created_at: row.created_at.unwrap_or(chrono::Utc::now()),
+                        expires_at: row.expires_at.unwrap_or(chrono::Utc::now()),
+                    }));
+                }
+            }
         }
 
         Ok(None)
@@ -474,7 +503,17 @@ impl ActionOrchestrator {
 
         // Persist to database if available
         if let Some(ref pool) = self.db_pool {
-            // TODO: Insert idempotency record into database
+            let _ = sqlx::query!(
+                r#"INSERT INTO idempotency_records (key, action_id, result, created_at, expires_at)
+                   VALUES ($1, $2, $3, NOW(), NOW() + INTERVAL '24 hours')
+                   ON CONFLICT (key) DO NOTHING"#,
+                action.idempotency_key,
+                action.id,
+                Option::<serde_json::Value>::None,
+            )
+            .execute(pool)
+            .await
+            .map_err(|e| format!("Failed to persist idempotency record: {}", e))?;
         }
 
         Ok(())
@@ -497,9 +536,22 @@ impl ActionOrchestrator {
 
     /// Check if action has required approvals
     async fn has_approval(&self, action: &Action) -> Result<bool, String> {
-        // TODO: Check approval system for this action
-        // For now, return true for dry-run mode
-        Ok(action.dry_run)
+        if action.dry_run { return Ok(true); }
+        if let Some(ref pool) = self.db_pool {
+            let row = sqlx::query!(
+                r#"SELECT COUNT(1) as count FROM approval_requests
+                   WHERE tenant_id = $1 AND action_type = $2 AND resource_id = $3
+                     AND status::text = 'Approved' AND expires_at > NOW()"#,
+                action.tenant_id,
+                format!("{:?}", action.action_type),
+                action.target_resource
+            )
+            .fetch_one(pool)
+            .await
+            .map_err(|e| format!("Failed to query approvals: {}", e))?;
+            return Ok(row.count.unwrap_or(0) > 0);
+        }
+        Ok(false)
     }
 
     /// Generate rollback actions for an action
@@ -617,7 +669,30 @@ impl ActionOrchestrator {
 
     /// Persist action to database
     async fn persist_action(&self, pool: &sqlx::PgPool, action: &Action) -> Result<(), String> {
-        // TODO: Implement database persistence
+        sqlx::query!(
+            r#"
+            INSERT INTO commands (
+              command_id, command_type, command_data, aggregate_id, tenant_id, user_id,
+              status, idempotency_key, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NOW())
+            ON CONFLICT (idempotency_key) DO NOTHING
+            "#,
+            Uuid::new_v4(),
+            format!("{:?}", action.action_type),
+            serde_json::json!({
+                "target": action.target_resource,
+                "params": action.parameters,
+                "dry_run": action.dry_run,
+            }),
+            action.correlation_id,
+            action.tenant_id,
+            action.user_id,
+            action.idempotency_key
+        )
+        .execute(pool)
+        .await
+        .map_err(|e| format!("Failed to persist action command: {}", e))?;
+
         Ok(())
     }
 
