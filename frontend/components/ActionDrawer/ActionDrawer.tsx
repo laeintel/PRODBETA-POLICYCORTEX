@@ -185,11 +185,12 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
                 </button>
                 <button
                   onClick={() => executeAction(false)}
-                  disabled={isExecuting || isSimMode}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  disabled={true}
+                  title={isSimMode ? 'Disabled in demo mode' : 'Temporarily disabled for demo'}
+                  className="flex-1 px-4 py-2 bg-gray-400 text-white rounded-lg disabled:opacity-60 cursor-not-allowed"
                 >
                   <CheckCircle className="w-4 h-4 inline mr-2" />
-                  Execute
+                  Execute (Disabled)
                 </button>
               </div>
               {isSimMode && (

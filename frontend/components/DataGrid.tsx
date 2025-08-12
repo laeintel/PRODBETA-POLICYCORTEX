@@ -43,7 +43,7 @@ export default function DataGrid<T extends Record<string, any>>({
   fetchData,
   onRowClick,
   title,
-  allowExport = true,
+  allowExport = false,
   allowRefresh = true,
   showSearch = true,
   showFilters = true,

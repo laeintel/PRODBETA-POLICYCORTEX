@@ -218,7 +218,9 @@ class PerformanceApiClient {
     return this.deduplicator.dedupe(cacheKey, async () => {
       return this.executeWithBackpressure(async () => {
         return this.circuitBreaker.execute(async () => {
-          console.debug(`API CALL (${cache}):`, endpoint)
+          if (process.env.NODE_ENV === 'development') {
+            console.debug(`API CALL (${cache}):`, endpoint)
+          }
           
           const controller = new AbortController()
           const timeoutId = setTimeout(() => controller.abort(), timeout)
