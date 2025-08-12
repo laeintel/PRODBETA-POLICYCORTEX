@@ -1,10 +1,12 @@
 use crate::auth::{AuthUser, OptionalAuthUser, TenantContext};
 use axum::{
+    body::Body,
     extract::{Path, Query, State},
     http::StatusCode,
     response::{
         sse::{Event, Sse},
         IntoResponse,
+        Response,
     },
     Json,
 };
@@ -694,9 +696,7 @@ pub async fn reload_secrets(State(state): State<Arc<AppState>>) -> impl IntoResp
 }
 
 // Evidence pack and policy export stubs
-pub async fn get_evidence_pack() -> Response<Body> {
-    use axum::body::Body;
-    use axum::response::Response;
+pub async fn get_evidence_pack() -> impl IntoResponse {
     // Build a small tar.gz evidence pack on the fly with sample artifacts
     let mut buf = Vec::new();
     let enc = GzEncoder::new(&mut buf, Compression::default());
@@ -1611,7 +1611,7 @@ pub async fn advance_stage(
         a.stage = new_stage.min(a.total_stages);
         a.updated_at = chrono::Utc::now();
         if a.stage >= a.total_stages { a.status = "completed".to_string(); }
-        return Json(serde_json::json!({"success": true, "action": a}));
+        return Json(serde_json::json!({"success": true, "action": a})).into_response();
     }
     (
         StatusCode::NOT_FOUND,
@@ -1629,7 +1629,7 @@ pub async fn rollback_action(
             a.status = "rolled_back".to_string();
             a.updated_at = chrono::Utc::now();
             a.result = Some(serde_json::json!({"message":"Rollback executed","reverted": true}));
-            return Json(serde_json::json!({"success": true, "action": a}));
+            return Json(serde_json::json!({"success": true, "action": a})).into_response();
         } else {
             return (
                 StatusCode::BAD_REQUEST,
@@ -1660,7 +1660,7 @@ pub async fn get_action_impact(
         ],
         "blastRadius": {"resources": 1, "dependencies": 0},
         "riskScore": 15
-    }))
+    })).into_response()
 }
 
 pub async fn stream_action_events(

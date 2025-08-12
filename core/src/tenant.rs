@@ -125,15 +125,14 @@ impl TenantAwareDb {
     pub async fn query_policies(&self) -> Result<Vec<Policy>, sqlx::Error> {
         self.set_tenant_context().await?;
 
-        let policies = sqlx::query_as!(
-            Policy,
+        let policies = sqlx::query_as::<_, Policy>(
             r#"
             SELECT id, name, description, category, severity, is_active
             FROM governance.policies
             WHERE tenant_id = $1
-            "#,
-            &self.tenant_id
+            "#
         )
+        .bind(&self.tenant_id)
         .fetch_all(&self.pool)
         .await?;
 
@@ -143,15 +142,14 @@ impl TenantAwareDb {
     pub async fn query_resources(&self) -> Result<Vec<Resource>, sqlx::Error> {
         self.set_tenant_context().await?;
 
-        let resources = sqlx::query_as!(
-            Resource,
+        let resources = sqlx::query_as::<_, Resource>(
             r#"
             SELECT id, azure_resource_id, name, type, location, compliance_status
             FROM governance.resources
             WHERE tenant_id = $1
-            "#,
-            &self.tenant_id
+            "#
         )
+        .bind(&self.tenant_id)
         .fetch_all(&self.pool)
         .await?;
 
@@ -159,7 +157,7 @@ impl TenantAwareDb {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Policy {
     pub id: uuid::Uuid,
     pub name: String,
@@ -169,7 +167,7 @@ pub struct Policy {
     pub is_active: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Resource {
     pub id: uuid::Uuid,
     pub azure_resource_id: String,

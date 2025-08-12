@@ -170,20 +170,12 @@ impl SecretsManager {
                 let secrets_page = page?;
                 for secret in &secrets_page.value {
                     secrets.push(SecretMetadata {
-                        name: secret.id().name().to_string(),
-                        version: secret.id().version().map(|v| v.to_string()),
-                        enabled: secret.attributes().enabled().unwrap_or(true),
-                        expires: secret.attributes().expires().map(|e| e.to_string()),
-                        created: secret
-                            .attributes()
-                            .created()
-                            .map(|c| c.to_string())
-                            .unwrap_or_default(),
-                        updated: secret
-                            .attributes()
-                            .updated()
-                            .map(|u| u.to_string())
-                            .unwrap_or_default(),
+                        name: secret.id.clone(),
+                        version: None, // version not available in this version
+                        enabled: secret.attributes.enabled,
+                        expires: None, // expires field not available in this version
+                        created: format!("{}", secret.attributes.created),
+                        updated: format!("{}", secret.attributes.updated),
                     });
                 }
             }

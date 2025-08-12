@@ -10,6 +10,9 @@ use std::collections::HashMap;
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
+#[cfg(feature = "events")]
+use async_nats;
+
 // Core event types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "event_type")]
@@ -160,11 +163,13 @@ pub trait EventBus: Send + Sync {
 }
 
 // NATS implementation
+#[cfg(feature = "events")]
 pub struct NatsEventBus {
     client: async_nats::Client,
     jetstream: async_nats::jetstream::Context,
 }
 
+#[cfg(feature = "events")]
 impl NatsEventBus {
     pub async fn new(urls: Vec<String>) -> Result<Self, EventError> {
         let client = async_nats::connect(&urls.join(","))
@@ -240,6 +245,7 @@ impl NatsEventBus {
 }
 
 #[async_trait]
+#[cfg(feature = "events")]
 impl EventBus for NatsEventBus {
     async fn publish(&self, event: EventEnvelope) -> Result<(), EventError> {
         let subject = Self::get_subject(&event.event);
@@ -319,6 +325,7 @@ impl EventBus for InMemoryEventBus {
 
 // Event subscription handler
 pub struct EventSubscription {
+    #[cfg(feature = "events")]
     nats_subs: Vec<async_nats::Subscriber>,
     broadcast_receivers: Vec<broadcast::Receiver<EventEnvelope>>,
 }
@@ -326,11 +333,13 @@ pub struct EventSubscription {
 impl EventSubscription {
     fn new() -> Self {
         Self {
+            #[cfg(feature = "events")]
             nats_subs: Vec::new(),
             broadcast_receivers: Vec::new(),
         }
     }
 
+    #[cfg(feature = "events")]
     fn add_subscription(&mut self, sub: async_nats::Subscriber) {
         self.nats_subs.push(sub);
     }
@@ -341,10 +350,13 @@ impl EventSubscription {
 
     pub async fn next(&mut self) -> Option<EventEnvelope> {
         // Try NATS subscriptions first
-        for sub in &mut self.nats_subs {
-            if let Some(msg) = sub.next().await {
-                if let Ok(event) = serde_json::from_slice::<EventEnvelope>(&msg.payload) {
-                    return Some(event);
+        #[cfg(feature = "events")]
+        {
+            for sub in &mut self.nats_subs {
+                if let Some(msg) = sub.next().await {
+                    if let Ok(event) = serde_json::from_slice::<EventEnvelope>(&msg.payload) {
+                        return Some(event);
+                    }
                 }
             }
         }

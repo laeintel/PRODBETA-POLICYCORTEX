@@ -69,7 +69,7 @@ metrics-exporter-prometheus = "0.12"
 
 # OpenTelemetry for distributed tracing
 opentelemetry = { version = "0.21", features = ["trace"] }
-opentelemetry-otlp = "0.14"
+opentelemetry-otlp = "0.16"
 opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
 
 # Prometheus metrics
@@ -92,7 +92,7 @@ petgraph = "0.6"
 
 # Cryptography
 sha2 = "0.10"
-openssl = { version = "0.10", features = ["vendored"] }
+# openssl = { version = "0.10", features = ["vendored"] }  # Removed to avoid OpenSSL dependency
 
 ## (removed duplicate regex dependency; defined above at version 1.10)
 
@@ -110,6 +110,6 @@ async-nats = { version = "0.33", optional = true }
 futures-lite = "2.6.1"
 
 [features]
-default = ["events"]
+default = []
 aws = ["aws-config", "aws-sdk-iam", "aws-sdk-organizations", "aws-sdk-ec2", "aws-sdk-s3", "aws-sdk-cloudtrail", "aws-sdk-config"]
 events = ["async-nats"]

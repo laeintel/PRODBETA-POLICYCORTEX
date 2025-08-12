@@ -1,10 +1,345 @@
+2s
+1m 51s
+Run cargo build
+   Compiling proc-macro2 v1.0.95
+   Compiling unicode-ident v1.0.18
+   Compiling libc v0.2.174
+   Compiling cfg-if v1.0.1
+   Compiling serde v1.0.219
+   Compiling pin-project-lite v0.2.16
+   Compiling autocfg v1.5.0
+   Compiling futures-core v0.3.31
+   Compiling memchr v2.7.5
+   Compiling once_cell v1.21.3
+   Compiling parking_lot_core v0.9.11
+   Compiling smallvec v1.15.1
+   Compiling itoa v1.0.15
+   Compiling scopeguard v1.2.0
+   Compiling futures-io v0.3.31
+   Compiling shlex v1.3.0
+   Compiling slab v0.4.11
+   Compiling zerocopy v0.8.26
+   Compiling lock_api v0.4.13
+   Compiling futures-sink v0.3.31
+   Compiling cc v1.2.32
+   Compiling futures-task v0.3.31
+   Compiling pin-utils v0.1.0
+   Compiling version_check v0.9.5
+   Compiling log v0.4.27
+   Compiling stable_deref_trait v1.2.0
+   Compiling quote v1.0.40
+   Compiling futures-channel v0.3.31
+   Compiling fnv v1.0.7
+   Compiling percent-encoding v2.3.1
+   Compiling tracing-core v0.1.34
+   Compiling syn v2.0.104
+   Compiling typenum v1.18.0
+   Compiling generic-array v0.14.7
+   Compiling crossbeam-utils v0.8.21
+   Compiling socket2 v0.6.0
+   Compiling mio v1.0.4
+   Compiling getrandom v0.2.16
+   Compiling signal-hook-registry v1.4.6
+   Compiling parking_lot v0.12.4
+   Compiling writeable v0.6.1
+   Compiling litemap v0.8.0
+   Compiling icu_normalizer_data v2.0.0
+   Compiling icu_properties_data v2.0.1
+   Compiling rand_core v0.6.4
+   Compiling bitflags v2.9.1
+   Compiling thiserror v1.0.69
+   Compiling subtle v2.6.1
+   Compiling equivalent v1.0.2
+   Compiling hashbrown v0.15.5
+   Compiling tower-service v0.3.3
+   Compiling getrandom v0.3.3
+   Compiling untrusted v0.9.0
+   Compiling utf8_iter v1.0.4
+   Compiling ppv-lite86 v0.2.21
+   Compiling ryu v1.0.20
+   Compiling httparse v1.10.1
+   Compiling serde_json v1.0.142
+   Compiling try-lock v0.2.5
+   Compiling httpdate v1.0.3
+   Compiling want v0.3.1
+   Compiling num-traits v0.2.19
+   Compiling rand_chacha v0.3.1
+   Compiling indexmap v2.10.0
+   Compiling base64 v0.21.7
+   Compiling cpufeatures v0.2.17
+   Compiling form_urlencoded v1.2.1
+   Compiling crypto-common v0.1.6
+   Compiling block-buffer v0.10.4
+   Compiling rand v0.8.5
+   Compiling digest v0.10.7
+   Compiling ahash v0.8.12
+   Compiling tower-layer v0.3.3
+   Compiling ring v0.17.14
+   Compiling semver v1.0.26
+   Compiling openssl-src v300.5.2+3.5.2
+   Compiling pkg-config v0.3.32
+   Compiling vcpkg v0.2.15
+   Compiling rustversion v1.0.22
+   Compiling parking v2.2.1
+   Compiling sha2 v0.10.9
+   Compiling concurrent-queue v2.5.0
+   Compiling paste v1.0.15
+   Compiling event-listener v2.5.3
+   Compiling rustc_version v0.4.1
+   Compiling iana-time-zone v0.1.63
+   Compiling zeroize v1.8.1
+   Compiling openssl-sys v0.9.109
+   Compiling anyhow v1.0.98
+   Compiling rustls-pemfile v1.0.4
+   Compiling syn v1.0.109
+   Compiling socket2 v0.5.10
+   Compiling synstructure v0.13.2
+   Compiling ipnet v2.11.0
+   Compiling base64 v0.22.1
+   Compiling mime v0.3.17
+   Compiling allocator-api2 v0.2.21
+   Compiling getrandom v0.1.16
+   Compiling openssl v0.10.73
+   Compiling rustls v0.21.12
+   Compiling rustix v1.0.8
+   Compiling minimal-lexical v0.2.1
+   Compiling foreign-types-shared v0.1.1
+   Compiling openssl-probe v0.1.6
+   Compiling foreign-types v0.3.2
+   Compiling hashbrown v0.14.5
+   Compiling nom v7.1.3
+   Compiling indexmap v1.9.3
+   Compiling sync_wrapper v1.0.2
+   Compiling num-conv v0.1.0
+   Compiling crc-catalog v2.4.0
+   Compiling powerfmt v0.2.0
+   Compiling unicode_categories v0.1.1
+   Compiling serde_derive v1.0.219
+   Compiling tokio-macros v2.5.0
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.0
+   Compiling futures-macro v0.3.31
+   Compiling tracing-attributes v0.1.30
+   Compiling zerovec-derive v0.11.1
+   Compiling zerofrom v0.1.6
+   Compiling displaydoc v0.2.5
+   Compiling futures-util v0.3.31
+   Compiling yoke v0.8.0
+   Compiling thiserror-impl v1.0.69
+   Compiling zerovec v0.11.4
+   Compiling tracing v0.1.41
+   Compiling zerotrie v0.2.2
+   Compiling pin-project-internal v1.1.10
+   Compiling async-trait v0.1.88
+   Compiling tinystr v0.8.1
+   Compiling icu_locale_core v2.0.0
+   Compiling potential_utf v0.1.2
+   Compiling icu_collections v2.0.0
+   Compiling pin-project v1.1.10
+   Compiling openssl-macros v0.1.1
+   Compiling icu_provider v2.0.0
+   Compiling futures-executor v0.3.31
+   Compiling icu_properties v2.0.1
+   Compiling icu_normalizer v2.0.0
+   Compiling webpki-roots v0.25.4
+   Compiling native-tls v0.2.14
+   Compiling linux-raw-sys v0.9.4
+   Compiling tinyvec_macros v0.1.1
+   Compiling time-core v0.1.4
+   Compiling bitflags v1.3.2
+   Compiling sct v0.7.1
+   Compiling rustls-webpki v0.101.7
+   Compiling time-macros v0.2.22
+   Compiling idna_adapter v1.2.1
+   Compiling idna v1.0.3
+   Compiling bytes v1.10.1
+   Compiling either v1.15.0
+   Compiling url v2.5.4
+   Compiling tokio v1.47.1
+   Compiling http v0.2.12
+   Compiling http v1.3.1
+   Compiling serde_urlencoded v0.7.1
+   Compiling http-body v0.4.6
+   Compiling deranged v0.4.0
+   Compiling tinyvec v1.9.0
+   Compiling sqlformat v0.2.6
+   Compiling http-body v1.0.1
+   Compiling http-body-util v0.1.3
+   Compiling hashlink v0.8.4
+   Compiling crc v3.3.0
+   Compiling event-listener v5.4.1
+   Compiling num_threads v0.1.7
+   Compiling hashbrown v0.12.3
+   Compiling hex v0.4.3
+   Compiling base64ct v1.8.0
+   Compiling pem-rfc7468 v0.7.0
+   Compiling event-listener-strategy v0.5.4
+   Compiling time v0.3.41
+   Compiling rand_core v0.5.1
+   Compiling unicode-normalization v0.1.24
+   Compiling uuid v1.17.0
+   Compiling tokio-util v0.7.16
+   Compiling hyper v1.6.0
+   Compiling tower v0.5.2
+   Compiling h2 v0.3.27
+   Compiling tokio-stream v0.1.17
+   Compiling hyper-util v0.1.16
+   Compiling axum-core v0.3.4
+   Compiling hmac v0.12.1
+   Compiling unicode-bidi v0.3.18
+   Compiling unicode-properties v0.1.3
+   Compiling const-oid v0.9.6
+   Compiling stringprep v0.1.5
+   Compiling der v0.7.10
+   Compiling hkdf v0.12.4
+   Compiling crossbeam-queue v0.3.12
+   Compiling rand_chacha v0.2.2
+   Compiling futures-intrusive v0.5.0
+   Compiling atoi v2.0.0
+   Compiling chrono v0.4.41
+   Compiling itertools v0.10.5
+   Compiling futures v0.3.31
+   Compiling axum v0.6.20
+   Compiling curve25519-dalek v4.1.3
+   Compiling hyper v0.14.32
+   Compiling signature v2.2.0
+   Compiling md-5 v0.10.6
+   Compiling base64 v0.13.1
+   Compiling home v0.5.11
+   Compiling iri-string v0.7.8
+   Compiling sync_wrapper v0.1.2
+   Compiling http-types v2.12.0
+   Compiling matchit v0.7.3
+   Compiling whoami v1.6.0
+   Compiling dotenvy v0.15.7
+   Compiling fastrand v1.9.0
+   Compiling byteorder v1.5.0
+   Compiling urlencoding v2.1.3
+   Compiling waker-fn v1.2.0
+   Compiling fastrand v2.3.0
+   Compiling sqlx-core v0.7.4
+   Compiling futures-lite v1.13.0
+   Compiling futures-lite v2.6.1
+   Compiling opentelemetry v0.21.0
+   Compiling tower-http v0.6.6
+   Compiling prost-derive v0.11.9
+   Compiling spki v0.7.3
+   Compiling rand v0.7.3
+   Compiling tower v0.4.13
+   Compiling tokio-io-timeout v1.2.1
+   Compiling async-lock v3.4.1
+   Compiling polling v3.10.0
+   Compiling serde_qs v0.8.5
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling rustls-pki-types v1.12.0
+   Compiling azure_core v0.20.0
+   Compiling async-channel v1.9.0
+   Compiling aho-corasick v1.1.3
+   Compiling unicode-segmentation v1.12.0
+   Compiling const_fn v0.4.11
+   Compiling regex-syntax v0.8.5
+   Compiling infer v0.2.3
+   Compiling thiserror v2.0.12
+   Compiling heck v0.4.1
+   Compiling sqlx-postgres v0.7.4
+   Compiling tempfile v3.20.0
+   Compiling prost v0.11.9
+   Compiling async-io v2.5.0
+   Compiling hyper-timeout v0.4.1
+   Compiling pkcs8 v0.10.2
+   Compiling regex-automata v0.4.9
+   Compiling ed25519 v2.2.3
+   Compiling tokio-rustls v0.24.1
+   Compiling serde_path_to_error v0.1.17
+   Compiling raw-cpuid v10.7.0
+   Compiling metrics-macros v0.7.1
+   Compiling thiserror-impl v2.0.12
+   Compiling ordered-float v4.6.0
+   Compiling num-integer v0.1.46
+   Compiling crossbeam-channel v0.5.15
+   Compiling protobuf v2.28.0
+   Compiling regex-syntax v0.6.29
+   Compiling dyn-clone v1.0.20
+   Compiling crc32fast v1.5.0
+   Compiling lazy_static v1.5.0
+   Compiling tonic v0.9.2
+   Compiling regex v1.11.1
+   Compiling opentelemetry_sdk v0.21.2
+   Compiling num-bigint v0.4.6
+   Compiling metrics v0.21.1
+   Compiling regex-automata v0.1.10
+   Compiling sqlx-macros-core v0.7.4
+   Compiling quanta v0.11.1
+   Compiling ed25519-dalek v2.2.0
+   Compiling signatory v0.27.1
+   Compiling async-signal v0.2.12
+   Compiling tokio-retry v0.3.0
+   Compiling async-channel v2.5.0
+   Compiling hashbrown v0.13.1
+   Compiling crossbeam-epoch v0.9.18
+   Compiling num_cpus v1.17.0
+   Compiling prometheus v0.13.4
+   Compiling sketches-ddsketch v0.2.2
+   Compiling adler2 v2.0.1
+   Compiling data-encoding v2.9.0
+   Compiling async-task v4.7.1
+   Compiling overload v0.1.1
+   Compiling miniz_oxide v0.8.9
+   Compiling nu-ansi-term v0.46.0
+   Compiling async-process v2.4.0
+   Compiling metrics-util v0.15.1
+   Compiling nkeys v0.3.2
+   Compiling tz-rs v0.6.14
+   Compiling matchers v0.1.0
+   Compiling opentelemetry-proto v0.4.0
+   Compiling sqlx-macros v0.7.4
+   Compiling simple_asn1 v0.6.3
+   Compiling sharded-slab v0.1.7
+   Compiling oauth2 v4.4.2
+   Compiling hyper-rustls v0.24.2
+   Compiling opentelemetry-semantic-conventions v0.13.0
+   Compiling combine v4.6.7
+   Compiling xattr v1.5.1
+   Compiling axum-core v0.4.5
+   Compiling headers-core v0.2.0
+   Compiling serde_nanos v0.1.4
+   Compiling serde_repr v0.1.20
+   Compiling async-stream-impl v0.3.6
+   Compiling rustls-native-certs v0.6.3
+   Compiling pem v3.0.5
+   Compiling nuid v0.5.0
+   Compiling sha1 v0.10.6
+   Compiling tracing-log v0.2.0
+   Compiling socket2 v0.4.10
+   Compiling filetime v0.2.25
+   Compiling thread_local v1.1.9
+   Compiling encoding_rs v0.8.35
+   Compiling arc-swap v1.7.1
+   Compiling sha1_smol v1.0.1
+   Compiling fixedbitset v0.4.2
+   Compiling tracing-subscriber v0.3.19
+   Compiling axum v0.7.9
+   Compiling petgraph v0.6.5
+   Compiling redis v0.23.3
+   Compiling reqwest v0.11.27
+   Compiling tar v0.4.44
+   Compiling sqlx v0.7.4
+   Compiling headers v0.3.9
+   Compiling async-nats v0.33.0
+   Compiling async-stream v0.3.6
+   Compiling jsonwebtoken v9.3.1
+   Compiling opentelemetry-otlp v0.14.0
+   Compiling flate2 v1.1.2
+   Compiling metrics-exporter-prometheus v0.12.2
+   Compiling tower-http v0.5.2
+   Compiling dotenv v0.15.0
    Compiling tokio-native-tls v0.3.1
    Compiling hyper-tls v0.6.0
    Compiling reqwest v0.12.22
    Compiling azure_security_keyvault v0.20.0
    Compiling azure_identity v0.20.0
    Compiling policycortex-core v2.0.0 (/home/aeolitech/actions-runner/_work/policycortex/policycortex/core)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant.rs:128:24
     |
 128 |           let policies = sqlx::query_as!(
@@ -18,7 +353,8 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query_as` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant.rs:146:25
     |
 146 |           let resources = sqlx::query_as!(
@@ -32,7 +368,8 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query_as` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:178:9
     |
 178 | /         sqlx::query!(
@@ -45,7 +382,8 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:206:13
     |
 206 | /             sqlx::query!(
@@ -58,7 +396,8 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_____________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:220:13
     |
 220 | /             sqlx::query!(
@@ -71,14 +410,16 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_____________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:246:13
     |
 246 |             sqlx::query!("DELETE FROM resources WHERE id = $1", resource_id)
     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:251:13
     |
 251 | /             sqlx::query!(
@@ -89,14 +430,16 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_____________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:269:13
     |
 269 |             sqlx::query!("SELECT * FROM policies ORDER BY created_at DESC")
     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:273:13
     |
 273 | /             sqlx::query!(
@@ -106,7 +449,8 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_____________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:302:13
     |
 302 | /             sqlx::query!(
@@ -119,7 +463,8 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_____________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:312:13
     |
 312 | /             sqlx::query!(
@@ -132,7 +477,8 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_____________^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `cargo sqlx prepare` to update the query cache or unset `SQLX_OFFLINE`
+
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
    --> src/tenant_isolation.rs:349:5
     |
 349 | /     sqlx::query!(
@@ -145,32 +491,39 @@ error: `SQLX_OFFLINE=true` but there is no cached data for this query, run `carg
     | |_____^
     |
     = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query` (in Nightly builds, run with -Z macro-backtrace for more info)
-error[E0407]: method `determine_priority` is not a member of trait `EnforcementEngine`
-   --> src/enforcement.rs:392:5
+
+error[E0412]: cannot find type `Response` in this scope
+   --> src/api/mod.rs:697:37
     |
-392 | /     fn determine_priority(&self, violations: &[Violation]) -> Priority {
-393 | |         violations
-394 | |             .iter()
-395 | |             .map(|v| match v.severity {
-...   |
-403 | |             .unwrap_or(Priority::Low)
-404 | |     }
-    | |_____^ not a member of trait `EnforcementEngine`
-error[E0425]: cannot find function `dangerous_insecure_decode` in crate `jsonwebtoken`
-   --> src/auth.rs:186:51
+697 | pub async fn get_evidence_pack() -> Response<Body> {
+    |                                     ^^^^^^^^ not found in this scope
     |
-186 |             if let Ok(unverified) = jsonwebtoken::dangerous_insecure_decode::<Claims>(token) {
-    |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `jsonwebtoken`
-error[E0425]: cannot find value `recorder` in this scope
-   --> src/main.rs:144:33
+help: consider importing one of these items
     |
-144 |     app_state.prometheus = Some(recorder);
-    |                                 ^^^^^^^^ not found in this scope
+1   + use async_nats::jetstream::response::Response;
     |
-help: consider importing this function
+1   + use axum::response::Response;
     |
-1   + use metrics::recorder;
+1   + use azure_core::Response;
     |
+1   + use reqwest::Response;
+    |
+
+error[E0412]: cannot find type `Body` in this scope
+   --> src/api/mod.rs:697:46
+    |
+697 | pub async fn get_evidence_pack() -> Response<Body> {
+    |                                              ^^^^ not found in this scope
+    |
+help: consider importing one of these items
+    |
+1   + use axum::body::Body;
+    |
+1   + use azure_core::Body;
+    |
+1   + use reqwest::Body;
+    |
+
 warning: unused imports: `StatusCode` and `response::IntoResponse`
  --> src/main.rs:3:28
   |
@@ -180,16 +533,19 @@ warning: unused imports: `StatusCode` and `response::IntoResponse`
   |     ^^^^^^^^^^^^^^^^^^^^^^
   |
   = note: `#[warn(unused_imports)]` on by default
+
 warning: unused import: `Deserialize`
  --> src/main.rs:8:13
   |
 8 | use serde::{Deserialize, Serialize};
   |             ^^^^^^^^^^^
+
 warning: unused import: `warn`
  --> src/action_orchestrator.rs:7:28
   |
 7 | use tracing::{error, info, warn};
   |                            ^^^^
+
 warning: unused imports: `EvaluationHarness`, `EvaluationReport`, `ModelCard`, `ModelMetrics`, `ModelRegistry`, `ModelType`, and `TrainingDataLineage`
  --> src/ai/mod.rs:4:5
   |
@@ -197,41 +553,49 @@ warning: unused imports: `EvaluationHarness`, `EvaluationReport`, `ModelCard`, `
   |     ^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^  ^^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^
 5 |     TrainingDataLineage,
   |     ^^^^^^^^^^^^^^^^^^^
+
 warning: unused import: `Query`
  --> src/api/mod.rs:3:21
   |
 3 |     extract::{Path, Query, State},
   |                     ^^^^^
+
 warning: unused import: `std::collections::HashMap`
   --> src/api/mod.rs:13:5
    |
 13 | use std::collections::HashMap;
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 warning: unused imports: `Aggregation`, `ErrorBudget`, `SLIType`, `SLI`, `SLOWindow`, and `SLO`
   --> src/api/mod.rs:16:30
    |
 16 | use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
    |                              ^^^  ^^^^^^^^^  ^^^  ^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^
+
 warning: unused import: `DateTime`
  --> src/approval_workflow.rs:5:14
   |
 5 | use chrono::{DateTime, Duration, Utc};
   |              ^^^^^^^^
+
 warning: unused import: `error`
   --> src/approval_workflow.rs:10:15
    |
 10 | use tracing::{error, info, warn};
    |               ^^^^^
+
 warning: unused import: `Serialize`
  --> src/azure_client.rs:5:26
   |
 5 | use serde::{Deserialize, Serialize};
   |                          ^^^^^^^^^
+
 warning: unused import: `RequestBuilder`
  --> src/azure_client_async.rs:6:23
   |
 6 | use reqwest::{Client, RequestBuilder};
   |                       ^^^^^^^^^^^^^^
+
 warning: unused imports: `AuditLog`, `AwsCollector`, `CloudCollector`, `CloudPolicy`, `CloudProvider`, `CloudResource`, `ComplianceStatus`, and `ResourceType`
  --> src/collectors/mod.rs:4:5
   |
@@ -239,77 +603,73 @@ warning: unused imports: `AuditLog`, `AwsCollector`, `CloudCollector`, `CloudPol
   |     ^^^^^^^^  ^^^^^^^^^^^^  ^^^^^^^^^^^^^^  ^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^
 5 |     ComplianceStatus, ResourceType,
   |     ^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^
+
 warning: unused import: `error`
  --> src/evidence_pipeline.rs:8:15
   |
 8 | use tracing::{error, info, warn};
   |               ^^^^^
+
 warning: unused import: `Duration`
  --> src/finops/mod.rs:5:24
   |
 5 | use chrono::{DateTime, Duration, Utc};
   |                        ^^^^^^^^
+
 warning: unused import: `error`
  --> src/secrets.rs:8:15
   |
 8 | use tracing::{error, info, warn};
   |               ^^^^^
+
 warning: unused import: `async_trait::async_trait`
  --> src/security_graph/mod.rs:5:5
   |
 5 | use async_trait::async_trait;
   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
 warning: unused import: `dijkstra`
  --> src/security_graph/mod.rs:6:40
   |
 6 | use petgraph::algo::{all_simple_paths, dijkstra};
   |                                        ^^^^^^^^
+
 warning: unused import: `HashSet`
  --> src/security_graph/mod.rs:9:33
   |
 9 | use std::collections::{HashMap, HashSet};
   |                                 ^^^^^^^
+
 warning: unused import: `uuid::Uuid`
  --> src/simulated_data.rs:4:5
   |
 4 | use uuid::Uuid;
   |     ^^^^^^^^^^
+
 warning: unused import: `warn`
  --> src/tenant.rs:9:21
   |
 9 | use tracing::{info, warn};
   |                     ^^^^
+
 warning: unused import: `error`
   --> src/tenant_isolation.rs:11:15
    |
 11 | use tracing::{error, info, warn};
    |               ^^^^^
+
 warning: unused imports: `AuthUser` and `OptionalAuthUser`
   --> src/main.rs:52:12
    |
 52 | use auth::{AuthUser, OptionalAuthUser};
    |            ^^^^^^^^  ^^^^^^^^^^^^^^^^
+
 warning: unused imports: `TenantContext`, `TenantDatabase`, and `tenant_isolation_middleware`
   --> src/main.rs:55:24
    |
 55 | use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^
-error[E0277]: the trait bound `uuid::Timestamp: Borrow<DateTime<_>>` is not satisfied
-   --> src/action_orchestrator.rs:571:62
-    |
-571 |             execution_time: Utc::now().signed_duration_since(action.id.get_timestamp().unwrap()),
-    |                                        --------------------- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Borrow<DateTime<_>>` is not implemented for `uuid::Timestamp`
-    |                                        |
-    |                                        required by a bound introduced by this call
-    |
-note: required by a bound in `DateTime::<Tz>::signed_duration_since`
-   --> /home/aeolitech/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/chrono-0.4.41/src/datetime/mod.rs:555:19
-    |
-553 |     pub fn signed_duration_since<Tz2: TimeZone>(
-    |            --------------------- required by a bound in this associated function
-554 |         self,
-555 |         rhs: impl Borrow<DateTime<Tz2>>,
-    |                   ^^^^^^^^^^^^^^^^^^^^^ required by this bound in `DateTime::<Tz>::signed_duration_since`
+
 warning: unused variable: `pool`
    --> src/action_orchestrator.rs:455:25
     |
@@ -317,159 +677,131 @@ warning: unused variable: `pool`
     |                         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
     |
     = note: `#[warn(unused_variables)]` on by default
+
 warning: unused variable: `pool`
    --> src/action_orchestrator.rs:476:25
     |
 476 |         if let Some(ref pool) = self.db_pool {
     |                         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+
 warning: unused variable: `pool`
    --> src/action_orchestrator.rs:619:36
     |
 619 |     async fn persist_action(&self, pool: &sqlx::PgPool, action: &Action) -> Result<(), String> {
     |                                    ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
+
 warning: unused variable: `action`
    --> src/action_orchestrator.rs:619:57
     |
 619 |     async fn persist_action(&self, pool: &sqlx::PgPool, action: &Action) -> Result<(), String> {
     |                                                         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_action`
+
 error[E0308]: mismatched types
-   --> src/api/mod.rs:689:5
-    |
-684 |   pub async fn reload_secrets(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    |                                                                      ----------------- expected `axum::Json<JsonValue>` because of return type
-...
-689 | /     (
-690 | |         StatusCode::SERVICE_UNAVAILABLE,
-691 | |         Json(serde_json::json!({"error": "secrets manager unavailable"})),
-692 | |     )
-693 | |         .into_response()
-    | |________________________^ expected `Json<Value>`, found `Response<Body>`
-    |
-    = note: expected struct `axum::Json<JsonValue>`
-               found struct `axum::http::Response<axum::body::Body>`
-note: return type inferred to be `axum::Json<JsonValue>` here
-   --> src/api/mod.rs:687:16
-    |
-687 |         return Json(serde_json::json!({"success": true}));
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-error[E0308]: mismatched types
-   --> src/api/mod.rs:773:5
-    |
-697 |   pub async fn get_evidence_pack() -> impl IntoResponse {
-    |                                       ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
-...
-773 | /     (
-774 | |         StatusCode::OK,
-775 | |         [(axum::http::header::CONTENT_TYPE, "application/gzip"), (axum::http::header::CONTENT_DISPOSITION, "attachment; filename=evidence...
-776 | |         body,
-777 | |     )
-    | |_____^ expected `Response<Body>`, found `(StatusCode, [(..., ...); 2], ...)`
-    |
-    = note: expected struct `axum::http::Response<axum::body::Body>`
-                found tuple `(axum::http::StatusCode, [(axum::http::HeaderName, &str); 2], &mut Vec<u8>)`
-note: return type inferred to be `axum::http::Response<axum::body::Body>` here
-   --> src/api/mod.rs:708:26
-    |
-708 |           Err(_) => return (
-    |  __________________________^
-709 | |             StatusCode::INTERNAL_SERVER_ERROR,
-710 | |             Json(serde_json::json!({"error":"failed_to_generate_policy_snapshot"}))
-711 | |         ).into_response(),
-    | |_________________________^
-error[E0308]: mismatched types
-    --> src/api/mod.rs:1613:5
+    --> src/api/mod.rs:1616:5
      |
-1604 |   ) -> impl IntoResponse {
+1607 |   ) -> impl IntoResponse {
      |        ----------------- expected `axum::Json<JsonValue>` because of return type
 ...
-1613 | /     (
-1614 | |         StatusCode::NOT_FOUND,
-1615 | |         Json(serde_json::json!({"error": "action not found"})),
-1616 | |     ).into_response()
+1616 | /     (
+1617 | |         StatusCode::NOT_FOUND,
+1618 | |         Json(serde_json::json!({"error": "action not found"})),
+1619 | |     ).into_response()
      | |_____________________^ expected `Json<Value>`, found `Response<Body>`
      |
      = note: expected struct `axum::Json<JsonValue>`
                 found struct `axum::http::Response<axum::body::Body>`
 note: return type inferred to be `axum::Json<JsonValue>` here
-    --> src/api/mod.rs:1611:16
+    --> src/api/mod.rs:1614:16
      |
-1611 |         return Json(serde_json::json!({"success": true, "action": a}));
+1614 |         return Json(serde_json::json!({"success": true, "action": a}));
      |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 error[E0308]: mismatched types
-    --> src/api/mod.rs:1631:20
+    --> src/api/mod.rs:1634:20
      |
-1622 |   ) -> impl IntoResponse {
+1625 |   ) -> impl IntoResponse {
      |        ----------------- expected `axum::Json<JsonValue>` because of return type
 ...
-1631 |               return (
+1634 |               return (
      |  ____________________^
-1632 | |                 StatusCode::BAD_REQUEST,
-1633 | |                 Json(serde_json::json!({"error": "rollback not available"})),
-1634 | |             ).into_response();
+1635 | |                 StatusCode::BAD_REQUEST,
+1636 | |                 Json(serde_json::json!({"error": "rollback not available"})),
+1637 | |             ).into_response();
      | |_____________________________^ expected `Json<Value>`, found `Response<Body>`
      |
      = note: expected struct `axum::Json<JsonValue>`
                 found struct `axum::http::Response<axum::body::Body>`
 note: return type inferred to be `axum::Json<JsonValue>` here
-    --> src/api/mod.rs:1629:20
+    --> src/api/mod.rs:1632:20
      |
-1629 |             return Json(serde_json::json!({"success": true, "action": a}));
+1632 |             return Json(serde_json::json!({"success": true, "action": a}));
      |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 error[E0308]: mismatched types
-    --> src/api/mod.rs:1637:5
+    --> src/api/mod.rs:1640:5
      |
-1622 |   ) -> impl IntoResponse {
+1625 |   ) -> impl IntoResponse {
      |        ----------------- expected `axum::Json<JsonValue>` because of return type
 ...
-1637 | /     (
-1638 | |         StatusCode::NOT_FOUND,
-1639 | |         Json(serde_json::json!({"error": "action not found"})),
-1640 | |     ).into_response()
+1640 | /     (
+1641 | |         StatusCode::NOT_FOUND,
+1642 | |         Json(serde_json::json!({"error": "action not found"})),
+1643 | |     ).into_response()
      | |_____________________^ expected `Json<Value>`, found `Response<Body>`
      |
      = note: expected struct `axum::Json<JsonValue>`
                 found struct `axum::http::Response<axum::body::Body>`
 note: return type inferred to be `axum::Json<JsonValue>` here
-    --> src/api/mod.rs:1629:20
+    --> src/api/mod.rs:1632:20
      |
-1629 |             return Json(serde_json::json!({"success": true, "action": a}));
+1632 |             return Json(serde_json::json!({"success": true, "action": a}));
      |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 error[E0308]: mismatched types
-    --> src/api/mod.rs:1654:5
+    --> src/api/mod.rs:1657:5
      |
-1646 |   ) -> impl IntoResponse {
+1649 |   ) -> impl IntoResponse {
      |        ----------------- expected `axum::http::Response<axum::body::Body>` because of return type
 ...
-1654 | /     Json(serde_json::json!({
-1655 | |         "resourceChanges": [
-1656 | |             {"resource":"Microsoft.Compute/virtualMachines/vm-prod-001","changes":[{"op":"add","path":"/tags/Owner","value":"FinOps"}]} 
-1657 | |         ],
-1658 | |         "blastRadius": {"resources": 1, "dependencies": 0},
-1659 | |         "riskScore": 15
-1660 | |     }))
+1657 | /     Json(serde_json::json!({
+1658 | |         "resourceChanges": [
+1659 | |             {"resource":"Microsoft.Compute/virtualMachines/vm-prod-001","changes":[{"op":"add","path":"/tags/Owner","value":"FinOps"}]} 
+1660 | |         ],
+1661 | |         "blastRadius": {"resources": 1, "dependencies": 0},
+1662 | |         "riskScore": 15
+1663 | |     }))
      | |_______^ expected `Response<Body>`, found `Json<Value>`
      |
      = note: expected struct `axum::http::Response<axum::body::Body>`
                 found struct `axum::Json<JsonValue>`
 note: return type inferred to be `axum::http::Response<axum::body::Body>` here
-    --> src/api/mod.rs:1649:16
+    --> src/api/mod.rs:1652:16
      |
-1649 |           return (
+1652 |           return (
      |  ________________^
-1650 | |             StatusCode::NOT_FOUND,
-1651 | |             Json(serde_json::json!({"error": "action not found"})),
-1652 | |         ).into_response();
+1653 | |             StatusCode::NOT_FOUND,
+1654 | |             Json(serde_json::json!({"error": "action not found"})),
+1655 | |         ).into_response();
      | |_________________________^
+
 warning: unused variable: `message`
    --> src/approval_workflow.rs:439:17
     |
 439 |             let message = rule.notification_message.clone();
     |                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_message`
+
 warning: unused variable: `query`
    --> src/audit_chain.rs:359:13
     |
 359 |         let query = r#"
     |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: unused variable: `header`
+   --> src/auth.rs:187:23
+    |
+187 |             if let Ok(header) = jsonwebtoken::decode_header(token) {
+    |                       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_header`
+
 warning: variable does not need to be mutable
   --> src/azure_client_async.rs:90:13
    |
@@ -479,69 +811,156 @@ warning: variable does not need to be mutable
    |             help: remove this `mut`
    |
    = note: `#[warn(unused_mut)]` on by default
+
 warning: unused variable: `control`
    --> src/compliance/mod.rs:431:9
     |
 431 |         control: &ComplianceControl,
     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_control`
+
 warning: unused variable: `pool`
    --> src/evidence_pipeline.rs:511:9
     |
 511 |         pool: &sqlx::PgPool,
     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_pool`
-error[E0277]: `KeyVaultGetSecretsResponse` is not an iterator
-   --> src/secrets.rs:170:31
+
+error[E0599]: no method named `id` found for reference `&KeyVaultSecretBaseIdentifierRaw` in the current scope
+   --> src/secrets.rs:173:38
     |
-170 |                 for secret in page? {
-    |                               ^^^^^ `KeyVaultGetSecretsResponse` is not an iterator
+173 |                         name: secret.id().name().to_string(),
+    |                                      ^^-- help: remove the arguments
+    |                                      |
+    |                                      field, not a method
+
+error[E0599]: no method named `id` found for reference `&KeyVaultSecretBaseIdentifierRaw` in the current scope
+   --> src/secrets.rs:174:41
     |
-    = help: the trait `Iterator` is not implemented for `KeyVaultGetSecretsResponse`
-    = note: required for `KeyVaultGetSecretsResponse` to implement `IntoIterator`
-error[E0599]: no method named `determine_priority` found for reference `&DefaultEnforcementEngine` in the current scope
-   --> src/enforcement.rs:261:28
+174 |                         version: secret.id().version().map(|v| v.to_string()),
+    |                                         ^^-- help: remove the arguments
+    |                                         |
+    |                                         field, not a method
+
+error[E0599]: no method named `attributes` found for reference `&KeyVaultSecretBaseIdentifierRaw` in the current scope
+   --> src/secrets.rs:175:41
     |
-261 |             priority: self.determine_priority(&evaluation.violations),
-    |                            ^^^^^^^^^^^^^^^^^^ method not found in `&DefaultEnforcementEngine`
+175 |                         enabled: secret.attributes().enabled().unwrap_or(true),
+    |                                         ^^^^^^^^^^-- help: remove the arguments
+    |                                         |
+    |                                         field, not a method
+
+error[E0599]: no method named `attributes` found for reference `&KeyVaultSecretBaseIdentifierRaw` in the current scope
+   --> src/secrets.rs:176:41
+    |
+176 |                         expires: secret.attributes().expires().map(|e| e.to_string()),
+    |                                         ^^^^^^^^^^-- help: remove the arguments
+    |                                         |
+    |                                         field, not a method
+
+error[E0599]: no method named `attributes` found for reference `&KeyVaultSecretBaseIdentifierRaw` in the current scope
+   --> src/secrets.rs:178:30
+    |
+177 |                           created: secret
+    |  __________________________________-
+178 | |                             .attributes()
+    | |                             -^^^^^^^^^^-- help: remove the arguments
+    | |                             ||
+    | |_____________________________|field, not a method
+    |
+
+error[E0599]: no method named `attributes` found for reference `&KeyVaultSecretBaseIdentifierRaw` in the current scope
+   --> src/secrets.rs:183:30
+    |
+182 |                           updated: secret
+    |  __________________________________-
+183 | |                             .attributes()
+    | |                             -^^^^^^^^^^-- help: remove the arguments
+    | |                             ||
+    | |_____________________________|field, not a method
+    |
+
+error[E0277]: the trait bound `fn() -> impl futures_lite::Future<Output = {type error}> {get_evidence_pack}: Handler<_, _>` is not satisfied
+   --> src/main.rs:237:40
+    |
+237 |         .route("/api/v1/evidence", get(get_evidence_pack))
+    |                                    --- ^^^^^^^^^^^^^^^^^ the trait `Handler<_, _>` is not implemented for fn item `fn() -> impl futures_lite::Future<Output = {type error}> {get_evidence_pack}`
+    |                                    |
+    |                                    required by a bound introduced by this call
+    |
+    = note: Consider using `#[axum::debug_handler]` to improve the error message
+note: there are multiple different versions of crate `axum` in the dependency graph
+   --> /home/aeolitech/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/handler/mod.rs:134:1
+    |
+134 | pub trait Handler<T, S>: Clone + Send + Sized + 'static {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this is the required trait
+    |
+   ::: src/main.rs:1:5
+    |
+1   | use axum::{
+    |     ---- one version of crate `axum` used here, as a direct dependency of the current crate
+    |
+   ::: /home/aeolitech/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.6.20/src/boxed.rs:66:1
+    |
+66  | pub(crate) trait ErasedIntoRoute<S, B, E>: Send {
+    | ----------------------------------------------- this is the found trait
+    = help: you can use `cargo tree` to explore your dependency tree
+note: required by a bound in `axum::routing::get`
+   --> /home/aeolitech/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:439:1
+    |
+439 | top_level_handler_fn!(get, GET);
+    | ^^^^^^^^^^^^^^^^^^^^^^---^^^^^^
+    | |                     |
+    | |                     required by a bound in this function
+    | required by this bound in `get`
+    = note: this error originates in the macro `top_level_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
 warning: unused variable: `model`
    --> src/ai/model_registry.rs:211:13
     |
 211 |         let model = self
     |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_model`
+
 warning: unused variable: `rule`
    --> src/approvals.rs:284:13
     |
 284 |         for rule in &policy.sod_rules {
     |             ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
+
 warning: unused variable: `requester_id`
    --> src/approvals.rs:280:9
     |
 280 |         requester_id: &str,
     |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_requester_id`
+
 warning: unused variable: `approver_id`
    --> src/approvals.rs:281:9
     |
 281 |         approver_id: &str,
     |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_approver_id`
+
 warning: unused variable: `result`
    --> src/change_management.rs:437:17
     |
 437 |             let result: serde_json::Value = response
     |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
+
 warning: unused variable: `pricing`
    --> src/finops/mod.rs:287:9
     |
 287 |         pricing: &serde_json::Value,
     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pricing`
+
 warning: unused variable: `current`
    --> src/finops/mod.rs:343:37
     |
 343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
     |                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current`
+
 warning: unused variable: `metrics`
    --> src/finops/mod.rs:343:54
     |
 343 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
     |                                                      ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
 warning: value assigned to `savings_achieved` is never read
    --> src/finops/mod.rs:954:17
     |
@@ -550,8 +969,9 @@ warning: value assigned to `savings_achieved` is never read
     |
     = help: maybe it is overwritten before being read?
     = note: `#[warn(unused_assignments)]` on by default
-Some errors have detailed explanations: E0277, E0308, E0407, E0425, E0599.
+
+Some errors have detailed explanations: E0277, E0308, E0412, E0599.
 For more information about an error, try `rustc --explain E0277`.
-warning: `policycortex-core` (bin "policycortex-core") generated 41 warnings
-error: could not compile `policycortex-core` (bin "policycortex-core") due to 24 previous errors; 41 warnings emitted
+warning: `policycortex-core` (bin "policycortex-core") generated 42 warnings
+error: could not compile `policycortex-core` (bin "policycortex-core") due to 25 previous errors; 42 warnings emitted
 Error: Process completed with exit code 101.
