@@ -652,8 +652,8 @@ pub struct SecretsStatus { ok: bool, missing: Vec<String> }
 pub async fn get_secrets_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     if let Some(ref sm) = state.secrets {
         match sm.validate_secrets().await {
-            Ok(_) => return Json(SecretsStatus { ok: true, missing: vec![] }),
-            Err(missing) => return Json(SecretsStatus { ok: false, missing }),
+            Ok(_) => return (StatusCode::OK, Json(SecretsStatus { ok: true, missing: vec![] })).into_response(),
+            Err(missing) => return (StatusCode::OK, Json(SecretsStatus { ok: false, missing })).into_response(),
         }
     }
     (
@@ -777,7 +777,7 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
     )
 }
 
-pub async fn export_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn export_policies(State(_state): State<Arc<AppState>>) -> impl IntoResponse {
     // For now, return the same simulated policies used in get_policies
     use crate::simulated_data::SimulatedDataProvider;
     let items = SimulatedDataProvider::get_policies();
@@ -861,7 +861,7 @@ pub struct RoadmapItem { pub id: String, pub name: String, pub progress: u8, pub
 #[derive(Debug, Serialize)]
 pub struct RoadmapStatus { pub last_updated: chrono::DateTime<chrono::Utc>, pub items: Vec<RoadmapItem> }
 
-pub async fn get_roadmap_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn get_roadmap_status(State(_state): State<Arc<AppState>>) -> impl IntoResponse {
     // Estimate based on implemented features; keep aligned with backend capabilities
     let items = vec![
         RoadmapItem{ id: "kv_secrets".into(), name: "KV-backed secrets for DB/JWT".into(), progress: 25, description: "Secrets manager wired; DB pool via KV/env implemented; JWT key pending.".into() },
@@ -951,7 +951,7 @@ pub async fn approve_request(
     if let Some(a) = approvals.get_mut(&id) {
         a.status = if payload.approve { "Approved" } else { "Rejected" }.to_string();
         a.updated_at = chrono::Utc::now();
-        return Json(serde_json::json!({"success": true, "approval": a}));
+        return (StatusCode::OK, Json(serde_json::json!({"success": true, "approval": a}))).into_response();
     }
     (
         StatusCode::NOT_FOUND,

@@ -475,6 +475,12 @@ impl ApprovalWorkflowEngine {
             name: "Default Resource Deletion Policy".to_string(),
             description: "Approval policy for resource deletion operations".to_string(),
             operation_types: vec!["DELETE_RESOURCE".to_string()],
+            approval_requirements: ApprovalRequirements {
+                approval_type: ApprovalType::SingleApprover,
+                required_approvers: vec!["resource_owner".to_string()],
+                min_approvers: 1,
+                timeout_hours: 24,
+            },
             risk_thresholds: RiskThresholds {
                 low: ApprovalRequirements {
                     approval_type: ApprovalType::SingleApprover,
