@@ -19,10 +19,7 @@ pub struct TenantContext {
 impl TenantContext {
     pub fn from_token_claims(claims: &crate::auth::Claims) -> Self {
         // Extract tenant from token claims
-        let tenant_id = claims
-            .tid
-            .clone()
-            .unwrap_or_else(|| "default".to_string());
+        let tenant_id = claims.tid.clone().unwrap_or_else(|| "default".to_string());
 
         TenantContext {
             tenant_id: tenant_id.clone(),
@@ -130,7 +127,7 @@ impl TenantAwareDb {
             SELECT id, name, description, category, severity, is_active
             FROM governance.policies
             WHERE tenant_id = $1
-            "#
+            "#,
         )
         .bind(&self.tenant_id)
         .fetch_all(&self.pool)
@@ -147,7 +144,7 @@ impl TenantAwareDb {
             SELECT id, azure_resource_id, name, type, location, compliance_status
             FROM governance.resources
             WHERE tenant_id = $1
-            "#
+            "#,
         )
         .bind(&self.tenant_id)
         .fetch_all(&self.pool)

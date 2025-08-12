@@ -1,7 +1,11 @@
 use axum::{extract::FromRequestParts, http::request::Parts};
 use metrics::{counter, describe_counter, describe_histogram, histogram};
-use std::{future::Future, pin::Pin, task::{Context, Poll}};
 use std::time::Instant;
+use std::{
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+};
 use tower::{Layer, Service};
 use uuid::Uuid;
 
@@ -39,26 +43,38 @@ pub struct CorrelationLayer;
 
 impl<S> Layer<S> for CorrelationLayer {
     type Service = CorrelationService<S>;
-    fn layer(&self, inner: S) -> Self::Service { CorrelationService { inner } }
+    fn layer(&self, inner: S) -> Self::Service {
+        CorrelationService { inner }
+    }
 }
 
 #[derive(Clone)]
-pub struct CorrelationService<S> { inner: S }
+pub struct CorrelationService<S> {
+    inner: S,
+}
 
 impl<ReqBody, ResBody, S> Service<axum::http::Request<ReqBody>> for CorrelationService<S>
 where
-    S: Service<axum::http::Request<ReqBody>, Response = axum::http::Response<ResBody>> + Clone + Send + 'static,
+    S: Service<axum::http::Request<ReqBody>, Response = axum::http::Response<ResBody>>
+        + Clone
+        + Send
+        + 'static,
     S::Future: Send + 'static,
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = Pin<Box<dyn Future<Output = Result<axum::http::Response<ResBody>, S::Error>> + Send>>;
+    type Future =
+        Pin<Box<dyn Future<Output = Result<axum::http::Response<ResBody>, S::Error>> + Send>>;
 
-    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> { self.inner.poll_ready(cx) }
+    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
+    }
 
     fn call(&mut self, mut req: axum::http::Request<ReqBody>) -> Self::Future {
         const HDR: &str = "x-correlation-id";
-        let corr = req.headers().get(HDR)
+        let corr = req
+            .headers()
+            .get(HDR)
             .and_then(|h| h.to_str().ok())
             .map(|s| s.to_string())
             .unwrap_or_else(|| Uuid::new_v4().to_string());
@@ -99,4 +115,3 @@ where
         })
     }
 }
-

@@ -1,26 +1,25 @@
 use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, TokenValidator};
+use crate::secrets::SecretsManager;
+use crate::slo::{Aggregation, ErrorBudget, SLIType, SLOManager, SLOWindow, SLI, SLO};
 use axum::{
     body::Body,
     extract::{Path, Query, State},
     http::StatusCode,
     response::{
         sse::{Event, Sse},
-        IntoResponse,
-        Response,
+        IntoResponse, Response,
     },
     Json,
 };
 use chrono::{DateTime, Utc};
+use flate2::{write::GzEncoder, Compression};
+use metrics::counter;
+use metrics_exporter_prometheus::PrometheusHandle;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{broadcast, RwLock};
-use crate::slo::{SLOManager, SLO, SLOWindow, SLI, SLIType, Aggregation, ErrorBudget};
-use metrics_exporter_prometheus::PrometheusHandle;
-use crate::secrets::SecretsManager;
-use metrics::counter;
-use flate2::{write::GzEncoder, Compression};
 use tar::Builder as TarBuilder;
+use tokio::sync::{broadcast, RwLock};
 use uuid::Uuid;
 
 // Patent 1: Unified AI Platform - Multi-service data aggregation
@@ -650,13 +649,27 @@ pub async fn get_config(State(state): State<Arc<AppState>>) -> impl IntoResponse
 }
 
 #[derive(Debug, Serialize)]
-pub struct SecretsStatus { ok: bool, missing: Vec<String> }
+pub struct SecretsStatus {
+    ok: bool,
+    missing: Vec<String>,
+}
 
 pub async fn get_secrets_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     if let Some(ref sm) = state.secrets {
         match sm.validate_secrets().await {
-            Ok(_) => return (StatusCode::OK, Json(SecretsStatus { ok: true, missing: vec![] })).into_response(),
-            Err(missing) => return (StatusCode::OK, Json(SecretsStatus { ok: false, missing })).into_response(),
+            Ok(_) => {
+                return (
+                    StatusCode::OK,
+                    Json(SecretsStatus {
+                        ok: true,
+                        missing: vec![],
+                    }),
+                )
+                    .into_response()
+            }
+            Err(missing) => {
+                return (StatusCode::OK, Json(SecretsStatus { ok: false, missing })).into_response()
+            }
         }
     }
     (
@@ -671,7 +684,10 @@ pub async fn export_prometheus(State(state): State<Arc<AppState>>) -> impl IntoR
         let body = h.render();
         return (
             StatusCode::OK,
-            [(axum::http::header::CONTENT_TYPE, "text/plain; version=0.0.4")],
+            [(
+                axum::http::header::CONTENT_TYPE,
+                "text/plain; version=0.0.4",
+            )],
             body,
         )
             .into_response();
@@ -708,21 +724,28 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
     let policy = serde_json::json!({"snapshot_at": now, "items": [{"id":"require-tags","status":"noncompliant","count":58}]});
     let policy_bytes = match serde_json::to_vec_pretty(&policy) {
         Ok(bytes) => bytes,
-        Err(_) => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error":"failed_to_generate_policy_snapshot"}))
-        ).into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error":"failed_to_generate_policy_snapshot"})),
+            )
+                .into_response()
+        }
     };
     let mut header = tar::Header::new_gnu();
     header.set_size(policy_bytes.len() as u64);
     header.set_mode(0o644);
     header.set_mtime(chrono::Utc::now().timestamp() as u64);
     header.set_cksum();
-    if tar.append_data(&mut header, "policy_snapshot.json", &policy_bytes[..]).is_err() {
+    if tar
+        .append_data(&mut header, "policy_snapshot.json", &policy_bytes[..])
+        .is_err()
+    {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error":"failed_to_append_policy_snapshot"}))
-        ).into_response();
+            Json(serde_json::json!({"error":"failed_to_append_policy_snapshot"})),
+        )
+            .into_response();
     }
 
     // rbac_assignments.csv
@@ -732,11 +755,15 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
     header2.set_mode(0o644);
     header2.set_mtime(chrono::Utc::now().timestamp() as u64);
     header2.set_cksum();
-    if tar.append_data(&mut header2, "rbac_assignments.csv", &rbac_csv[..]).is_err() {
+    if tar
+        .append_data(&mut header2, "rbac_assignments.csv", &rbac_csv[..])
+        .is_err()
+    {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error":"failed_to_append_rbac"}))
-        ).into_response();
+            Json(serde_json::json!({"error":"failed_to_append_rbac"})),
+        )
+            .into_response();
     }
 
     // cost_anomalies.csv
@@ -746,37 +773,51 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
     header3.set_mode(0o644);
     header3.set_mtime(chrono::Utc::now().timestamp() as u64);
     header3.set_cksum();
-    if tar.append_data(&mut header3, "cost_anomalies.csv", &cost_csv[..]).is_err() {
+    if tar
+        .append_data(&mut header3, "cost_anomalies.csv", &cost_csv[..])
+        .is_err()
+    {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error":"failed_to_append_costs"}))
-        ).into_response();
+            Json(serde_json::json!({"error":"failed_to_append_costs"})),
+        )
+            .into_response();
     }
 
     if let Err(_) = tar.finish() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error":"failed_to_finalize_tar"}))
-        ).into_response();
+            Json(serde_json::json!({"error":"failed_to_finalize_tar"})),
+        )
+            .into_response();
     }
     let enc = match tar.into_inner() {
         Ok(enc) => enc,
-        Err(_) => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error":"failed_to_get_encoder"}))
-        ).into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error":"failed_to_get_encoder"})),
+            )
+                .into_response()
+        }
     };
     let body = match enc.finish() {
         Ok(body) => body,
-        Err(_) => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error":"failed_to_finish_encoding"}))
-        ).into_response(),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error":"failed_to_finish_encoding"})),
+            )
+                .into_response()
+        }
     };
     Response::builder()
         .status(StatusCode::OK)
         .header(axum::http::header::CONTENT_TYPE, "application/gzip")
-        .header(axum::http::header::CONTENT_DISPOSITION, "attachment; filename=evidence.tar.gz")
+        .header(
+            axum::http::header::CONTENT_DISPOSITION,
+            "attachment; filename=evidence.tar.gz",
+        )
         .body(Body::from(body.clone()))
         .unwrap()
 }
@@ -812,7 +853,9 @@ pub async fn get_action_preflight(Path(_id): Path<String>) -> impl IntoResponse 
         resource: "Microsoft.Compute/virtualMachines/vm-prod-001".to_string(),
         additions: 1,
         deletions: 0,
-        diff: vec![serde_json::json!({"type":"add","lineNumber":42,"content":"tags.owner = 'FinOps'"})],
+        diff: vec![
+            serde_json::json!({"type":"add","lineNumber":42,"content":"tags.owner = 'FinOps'"}),
+        ],
     }];
     let validations = vec![
         serde_json::json!({"name":"Policy evaluation","passed":true}),
@@ -829,41 +872,77 @@ pub async fn get_action_preflight(Path(_id): Path<String>) -> impl IntoResponse 
 // ===================== Compliance Frameworks =====================
 
 #[derive(Debug, Serialize)]
-pub struct FrameworkInfo { pub id: String, pub name: String, pub version: String, pub controls: usize }
+pub struct FrameworkInfo {
+    pub id: String,
+    pub name: String,
+    pub version: String,
+    pub controls: usize,
+}
 
 pub async fn list_frameworks() -> impl IntoResponse {
     Json(vec![
-        FrameworkInfo { id: "cis-azure".into(), name: "CIS Microsoft Azure Foundations Benchmark".into(), version: "1.4".into(), controls: 92 },
-        FrameworkInfo { id: "nist-800-53".into(), name: "NIST SP 800-53".into(), version: "rev5".into(), controls: 110 },
+        FrameworkInfo {
+            id: "cis-azure".into(),
+            name: "CIS Microsoft Azure Foundations Benchmark".into(),
+            version: "1.4".into(),
+            controls: 92,
+        },
+        FrameworkInfo {
+            id: "nist-800-53".into(),
+            name: "NIST SP 800-53".into(),
+            version: "rev5".into(),
+            controls: 110,
+        },
     ])
 }
 
 // ===================== Policy Drift (GitOps scaffolding) =====================
 
 #[derive(Debug, Serialize)]
-pub struct DriftItem { pub id: String, pub type_name: String, pub expected: serde_json::Value, pub actual: serde_json::Value }
+pub struct DriftItem {
+    pub id: String,
+    pub type_name: String,
+    pub expected: serde_json::Value,
+    pub actual: serde_json::Value,
+}
 
 #[derive(Debug, Serialize)]
-pub struct DriftReport { pub drifted: usize, pub items: Vec<DriftItem>, pub generated_at: chrono::DateTime<chrono::Utc> }
+pub struct DriftReport {
+    pub drifted: usize,
+    pub items: Vec<DriftItem>,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
+}
 
 pub async fn get_policy_drift() -> impl IntoResponse {
     // Stub drift report for UI integration; later compare desired (Git) vs. current (Azure)
-    let items = vec![DriftItem{
+    let items = vec![DriftItem {
         id: "policy:require-tags".into(),
         type_name: "AzurePolicy".into(),
         expected: serde_json::json!({"effect":"deny","requiredTags":["Owner","CostCenter"]}),
         actual: serde_json::json!({"effect":"audit","requiredTags":["Owner"]}),
     }];
-    Json(DriftReport{ drifted: items.len(), items, generated_at: chrono::Utc::now() })
+    Json(DriftReport {
+        drifted: items.len(),
+        items,
+        generated_at: chrono::Utc::now(),
+    })
 }
 
 // ===================== Roadmap Status =====================
 
 #[derive(Debug, Serialize)]
-pub struct RoadmapItem { pub id: String, pub name: String, pub progress: u8, pub description: String }
+pub struct RoadmapItem {
+    pub id: String,
+    pub name: String,
+    pub progress: u8,
+    pub description: String,
+}
 
 #[derive(Debug, Serialize)]
-pub struct RoadmapStatus { pub last_updated: chrono::DateTime<chrono::Utc>, pub items: Vec<RoadmapItem> }
+pub struct RoadmapStatus {
+    pub last_updated: chrono::DateTime<chrono::Utc>,
+    pub items: Vec<RoadmapItem>,
+}
 
 pub async fn get_roadmap_status(State(_state): State<Arc<AppState>>) -> impl IntoResponse {
     // Estimate based on implemented features; keep aligned with backend capabilities
@@ -875,7 +954,10 @@ pub async fn get_roadmap_status(State(_state): State<Arc<AppState>>) -> impl Int
         RoadmapItem{ id: "guardrails".into(), name: "Auto-remediation guardrails".into(), progress: 40, description: "Approvals required in non-dev; preflight diff endpoint; staged rollout/rollback pending.".into() },
         RoadmapItem{ id: "sso_multicloud".into(), name: "SSO/RBAC breadth & multi-cloud".into(), progress: 10, description: "Scaffolding only; providers/adapters TBD.".into() },
     ];
-    Json(RoadmapStatus { last_updated: chrono::Utc::now(), items })
+    Json(RoadmapStatus {
+        last_updated: chrono::Utc::now(),
+        items,
+    })
 }
 
 pub async fn get_framework(Path(id): Path<String>) -> impl IntoResponse {
@@ -951,7 +1033,9 @@ pub async fn list_approvals(State(state): State<Arc<AppState>>) -> impl IntoResp
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ApprovePayload { pub approve: bool }
+pub struct ApprovePayload {
+    pub approve: bool,
+}
 
 pub async fn approve_request(
     State(state): State<Arc<AppState>>,
@@ -968,9 +1052,18 @@ pub async fn approve_request(
     }
     let mut approvals = state.approvals.write().await;
     if let Some(a) = approvals.get_mut(&id) {
-        a.status = if payload.approve { "Approved" } else { "Rejected" }.to_string();
+        a.status = if payload.approve {
+            "Approved"
+        } else {
+            "Rejected"
+        }
+        .to_string();
         a.updated_at = chrono::Utc::now();
-        return (StatusCode::OK, Json(serde_json::json!({"success": true, "approval": a}))).into_response();
+        return (
+            StatusCode::OK,
+            Json(serde_json::json!({"success": true, "approval": a})),
+        )
+            .into_response();
     }
     (
         StatusCode::NOT_FOUND,
@@ -982,7 +1075,11 @@ pub async fn approve_request(
 // ===================== Policy-as-code scaffolding =====================
 
 #[derive(Debug, Deserialize)]
-pub struct GeneratePolicyPayload { pub requirement: String, pub provider: Option<String>, pub framework: Option<String> }
+pub struct GeneratePolicyPayload {
+    pub requirement: String,
+    pub provider: Option<String>,
+    pub framework: Option<String>,
+}
 
 pub async fn generate_policy(Json(payload): Json<GeneratePolicyPayload>) -> impl IntoResponse {
     // Provide a minimal Azure policy skeleton based on a requirement string (stub)
@@ -1216,7 +1313,11 @@ pub async fn get_policies_deep() -> impl IntoResponse {
 }
 
 // Initiate remediation (stub – Phase 1). Later, orchestrate jobs and stream progress.
-pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<RemediateRequest>) -> impl IntoResponse {
+pub async fn remediate(
+    auth_user: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<RemediateRequest>,
+) -> impl IntoResponse {
     if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Write"]) {
         return (
             StatusCode::FORBIDDEN,
@@ -1225,7 +1326,7 @@ pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, 
             .into_response();
     }
     // Enforce write safety: block writes in simulated mode
-    use crate::data_mode::{DataMode, DataResponse, DataModeGuard};
+    use crate::data_mode::{DataMode, DataModeGuard, DataResponse};
     let guard = DataModeGuard::new();
     if let Err(e) = guard.ensure_write_allowed() {
         return (
@@ -1234,17 +1335,20 @@ pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, 
                 "success": false,
                 "status": "ReadOnlyMode",
                 "message": e.to_string()
-            }))
-        ).into_response();
+            })),
+        )
+            .into_response();
     }
 
     // Enforce approvals in non-dev environments
     let require_approvals = crate::config::AppConfig::load().require_approvals;
     if require_approvals {
         let approvals = state.approvals.read().await;
-        let approved = approvals.values().any(|a|
-            a.status == "Approved" && a.resource_id == payload.resource_id && a.action == payload.action
-        );
+        let approved = approvals.values().any(|a| {
+            a.status == "Approved"
+                && a.resource_id == payload.resource_id
+                && a.action == payload.action
+        });
         if !approved {
             return Json(serde_json::json!({
                 "success": false,
@@ -1266,7 +1370,11 @@ pub async fn remediate(auth_user: AuthUser, State(state): State<Arc<AppState>>, 
 }
 
 // Create a policy exception (stub – Phase 1)
-pub async fn create_exception(auth_user: AuthUser, State(state): State<Arc<AppState>>, Json(payload): Json<CreateExceptionRequest>) -> impl IntoResponse {
+pub async fn create_exception(
+    auth_user: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<CreateExceptionRequest>,
+) -> impl IntoResponse {
     if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Write"]) {
         return (
             StatusCode::FORBIDDEN,
@@ -1688,7 +1796,9 @@ pub async fn get_action(
 }
 
 #[derive(Debug, Deserialize)]
-pub struct StageAdvance { pub stage: Option<u8> }
+pub struct StageAdvance {
+    pub stage: Option<u8>,
+}
 
 pub async fn advance_stage(
     State(state): State<Arc<AppState>>,
@@ -1700,13 +1810,16 @@ pub async fn advance_stage(
         let new_stage = payload.stage.unwrap_or(a.stage.saturating_add(1));
         a.stage = new_stage.min(a.total_stages);
         a.updated_at = chrono::Utc::now();
-        if a.stage >= a.total_stages { a.status = "completed".to_string(); }
+        if a.stage >= a.total_stages {
+            a.status = "completed".to_string();
+        }
         return Json(serde_json::json!({"success": true, "action": a})).into_response();
     }
     (
         StatusCode::NOT_FOUND,
         Json(serde_json::json!({"error": "action not found"})),
-    ).into_response()
+    )
+        .into_response()
 }
 
 pub async fn rollback_action(
@@ -1724,13 +1837,15 @@ pub async fn rollback_action(
             return (
                 StatusCode::BAD_REQUEST,
                 Json(serde_json::json!({"error": "rollback not available"})),
-            ).into_response();
+            )
+                .into_response();
         }
     }
     (
         StatusCode::NOT_FOUND,
         Json(serde_json::json!({"error": "action not found"})),
-    ).into_response()
+    )
+        .into_response()
 }
 
 pub async fn get_action_impact(
@@ -1742,7 +1857,8 @@ pub async fn get_action_impact(
         return (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({"error": "action not found"})),
-        ).into_response();
+        )
+            .into_response();
     }
     Json(serde_json::json!({
         "resourceChanges": [
@@ -1850,7 +1966,9 @@ pub async fn list_exceptions(State(state): State<Arc<AppState>>) -> impl IntoRes
 }
 
 #[derive(Debug, Serialize)]
-pub struct ExpireResult { pub expired: i64 }
+pub struct ExpireResult {
+    pub expired: i64,
+}
 
 pub async fn expire_exceptions(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     if let Some(ref pool) = state.db_pool {

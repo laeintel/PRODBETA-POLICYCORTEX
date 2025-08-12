@@ -5,6 +5,8 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use opentelemetry::KeyValue;
+use opentelemetry_otlp::WithExportConfig;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -12,8 +14,6 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::{info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use opentelemetry::KeyValue;
-use opentelemetry_otlp::WithExportConfig;
 
 mod action_orchestrator;
 mod ai;
@@ -23,13 +23,13 @@ mod approvals;
 mod audit_chain;
 mod auth;
 mod auth_middleware;
-mod config;
 mod azure_client;
 mod azure_client_async;
 mod cache;
 mod change_management;
 mod collectors;
 mod compliance;
+mod config;
 mod data_mode;
 mod enforcement;
 mod events;
@@ -47,16 +47,19 @@ mod tenant_isolation;
 // (removed duplicate observability mod)
 
 use api::{
-    create_action, create_exception, get_action, get_compliance, get_correlations, get_costs_deep,
-    get_metrics, get_network_deep, get_policies, get_policies_deep, get_predictions, get_rbac_deep,
-    get_recommendations, get_resources, get_resources_deep, process_conversation, remediate,
-    stream_action_events, stream_events, AppState, approve_request, create_approval, list_approvals, generate_policy, get_config, get_secrets_status, export_prometheus, reload_secrets, get_evidence_pack, export_policies, get_action_preflight, list_frameworks, get_framework, get_policy_drift, get_roadmap_status,
+    approve_request, create_action, create_approval, create_exception, export_policies,
+    export_prometheus, generate_policy, get_action, get_action_preflight, get_compliance,
+    get_config, get_correlations, get_costs_deep, get_evidence_pack, get_framework, get_metrics,
+    get_network_deep, get_policies, get_policies_deep, get_policy_drift, get_predictions,
+    get_rbac_deep, get_recommendations, get_resources, get_resources_deep, get_roadmap_status,
+    get_secrets_status, list_approvals, list_frameworks, process_conversation, reload_secrets,
+    remediate, stream_action_events, stream_events, AppState,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
 use azure_client_async::AsyncAzureClient;
-use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
 use sqlx::postgres::PgPoolOptions;
+use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -174,12 +177,18 @@ async fn main() {
     app_state.prometheus = Some(recorder);
     // Initialize DB pool using Key Vault or env DATABASE_URL
     let database_url = if let Some(ref sm) = app_state.secrets {
-        sm.get_secret("DATABASE_URL").await.unwrap_or_else(|_| std::env::var("DATABASE_URL").unwrap_or_default())
+        sm.get_secret("DATABASE_URL")
+            .await
+            .unwrap_or_else(|_| std::env::var("DATABASE_URL").unwrap_or_default())
     } else {
         std::env::var("DATABASE_URL").unwrap_or_default()
     };
     if !database_url.is_empty() {
-        match PgPoolOptions::new().max_connections(5).connect(&database_url).await {
+        match PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&database_url)
+            .await
+        {
             Ok(pool) => {
                 info!("Connected DB pool");
                 app_state.db_pool = Some(pool);
@@ -200,8 +209,8 @@ async fn main() {
             .collect::<Vec<_>>();
         CorsLayer::new().allow_origin(origins)
     }
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
+    .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+    .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
     // Prometheus exporter already initialized above
 
