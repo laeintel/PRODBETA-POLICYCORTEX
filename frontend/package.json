@@ -8,8 +8,9 @@
     "start": "IN_DOCKER=${IN_DOCKER:-false} next start -p 3000",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "echo \"Warning: No tests configured yet\" && exit 0",
-    "test:e2e": "echo \"Warning: E2E tests not configured yet\" && exit 0"
+    "test": "playwright test --reporter=list",
+    "test:e2e": "playwright test --reporter=list",
+    "test:install": "npx playwright install --with-deps"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
@@ -47,6 +48,7 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
