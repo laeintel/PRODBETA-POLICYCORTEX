@@ -52,7 +52,7 @@ pub enum EnforcementType {
 }
 
 /// Enforcement status
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum EnforcementStatus {
     Pending,
     AwaitingApproval,
@@ -65,7 +65,7 @@ pub enum EnforcementStatus {
 }
 
 /// Priority levels
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Priority {
     Critical = 0,
     High = 1,
@@ -94,7 +94,7 @@ pub struct Change {
 }
 
 /// Change types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ChangeType {
     Added,
     Modified,

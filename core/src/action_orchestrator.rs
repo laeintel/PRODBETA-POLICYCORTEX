@@ -32,7 +32,7 @@ pub struct Action {
     pub dry_run: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ActionType {
     CreateResource,
     UpdateResource,
@@ -59,7 +59,7 @@ pub struct ActionState {
     pub rollback_actions: Vec<Action>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ActionStatus {
     Pending,
     Running,

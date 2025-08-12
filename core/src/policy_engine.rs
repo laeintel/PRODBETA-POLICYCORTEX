@@ -103,7 +103,7 @@ pub struct Violation {
 }
 
 /// Severity levels
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Severity {
     Critical,
     High,

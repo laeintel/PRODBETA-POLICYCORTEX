@@ -104,7 +104,11 @@
       "Bash(./create-backup.bat)",
       "Bash(set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/policycortex)",
       "Bash(git rm:*)",
-      "Bash(set SQLX_OFFLINE=true)"
+      "Bash(set SQLX_OFFLINE=true)",
+      "Bash(set SQLX_OFFLINE=)",
+      "Bash(git fetch:*)",
+      "Bash(git restore:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
