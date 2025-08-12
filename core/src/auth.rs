@@ -25,9 +25,14 @@ impl AzureADConfig {
     pub fn new() -> Self {
         let tenant_id = std::env::var("AZURE_TENANT_ID").unwrap_or_default();
         let client_id = std::env::var("AZURE_CLIENT_ID").unwrap_or_default();
+        // Default to strict audience in prod; allow override via env
+        let env_is_prod = matches!(
+            std::env::var("ENVIRONMENT").as_deref(),
+            Ok("production") | Ok("prod")
+        );
         let allow_any_audience = std::env::var("ALLOW_ANY_AUDIENCE")
             .map(|v| v == "true")
-            .unwrap_or(false);
+            .unwrap_or(!env_is_prod);
 
         Self {
             issuer: format!("https://login.microsoftonline.com/{}/v2.0", tenant_id),

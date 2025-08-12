@@ -306,42 +306,45 @@ impl SLOManager {
                 let now = Utc::now();
                 match period {
                     CalendarPeriod::Daily => {
-                        now.date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc()
+                        now.date_naive()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap_or_else(|| now.date_naive().and_hms_milli_opt(0, 0, 0, 0).expect("valid time"))
+                            .and_utc()
                     }
                     CalendarPeriod::Weekly => {
                         let days_since_monday = now.weekday().num_days_from_monday();
                         (now - Duration::days(days_since_monday as i64))
                             .date_naive()
                             .and_hms_opt(0, 0, 0)
-                            .unwrap()
+                            .unwrap_or_else(|| now.date_naive().and_hms_milli_opt(0, 0, 0, 0).expect("valid time"))
                             .and_utc()
                     }
                     CalendarPeriod::Monthly => now
                         .date_naive()
                         .with_day(1)
-                        .unwrap()
+                        .unwrap_or_else(|| now.date_naive())
                         .and_hms_opt(0, 0, 0)
-                        .unwrap()
+                        .unwrap_or_else(|| now.date_naive().and_hms_milli_opt(0, 0, 0, 0).expect("valid time"))
                         .and_utc(),
                     CalendarPeriod::Quarterly => {
                         let quarter_start_month = ((now.month() - 1) / 3) * 3 + 1;
                         now.date_naive()
                             .with_month(quarter_start_month)
-                            .unwrap()
+                            .unwrap_or_else(|| now.date_naive())
                             .with_day(1)
-                            .unwrap()
+                            .unwrap_or_else(|| now.date_naive())
                             .and_hms_opt(0, 0, 0)
-                            .unwrap()
+                            .unwrap_or_else(|| now.date_naive().and_hms_milli_opt(0, 0, 0, 0).expect("valid time"))
                             .and_utc()
                     }
                     CalendarPeriod::Yearly => now
                         .date_naive()
                         .with_month(1)
-                        .unwrap()
+                        .unwrap_or_else(|| now.date_naive())
                         .with_day(1)
-                        .unwrap()
+                        .unwrap_or_else(|| now.date_naive())
                         .and_hms_opt(0, 0, 0)
-                        .unwrap()
+                        .unwrap_or_else(|| now.date_naive().and_hms_milli_opt(0, 0, 0, 0).expect("valid time"))
                         .and_utc(),
                 }
             }

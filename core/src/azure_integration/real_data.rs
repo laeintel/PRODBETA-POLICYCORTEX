@@ -384,7 +384,8 @@ impl RealAzureDataClient {
             return 0.0;
         }
         
-        values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        use std::cmp::Ordering;
+        values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
         let index = (percentile as f64 / 100.0 * values.len() as f64) as usize;
         values[index.min(values.len() - 1)]
     }

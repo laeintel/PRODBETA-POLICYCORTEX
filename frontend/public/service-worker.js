@@ -25,7 +25,9 @@ const CACHEABLE_API_PATTERNS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching static assets');
+      if (self && self.origin && (self.origin.includes('localhost') || self.origin.includes('127.0.0.1'))) {
+        console.log('[SW] Caching static assets');
+      }
       return cache.addAll(STATIC_ASSETS.filter(url => !url.includes('.')));
     })
   );
@@ -91,7 +93,9 @@ async function handleApiRequest(request) {
     // Network failed, try cache
     const cachedResponse = await caches.match(safeRequest);
     if (cachedResponse) {
-      console.log('[SW] Serving API from cache:', request.url);
+      if (self && self.origin && (self.origin.includes('localhost') || self.origin.includes('127.0.0.1'))) {
+        console.log('[SW] Serving API from cache:', request.url);
+      }
       return cachedResponse;
     }
     
@@ -164,7 +168,9 @@ async function syncOfflineQueue() {
         await notifyClient(item.id, 'error', response);
       }
     } catch (error) {
-      console.error('[SW] Sync failed for:', item.id, error);
+      if (self && self.origin && (self.origin.includes('localhost') || self.origin.includes('127.0.0.1'))) {
+        console.error('[SW] Sync failed for:', item.id, error);
+      }
     }
   }
 }

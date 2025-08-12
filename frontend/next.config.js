@@ -6,6 +6,37 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
+  compiler: {
+    // Remove console logs in production builds except warn/error
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
+  async headers() {
+    // Security headers suitable for demo/prod; adjust CSP as needed for integrations
+    const ContentSecurityPolicy = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https: wss: ws:",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+    ].join('; ');
+
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+          { key: 'Content-Security-Policy', value: ContentSecurityPolicy },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     const isDocker = process.env.IN_DOCKER === 'true' || process.env.DOCKER === 'true';
     // In local docker-compose, core service is named 'core'; in production compose it's 'backend'
