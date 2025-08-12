@@ -19,18 +19,10 @@ RUN mkdir src && \
 # Copy actual source code
 COPY src ./src
 
-# Copy mock server script
-COPY mock-server.sh /tmp/mock-server.sh
 
 # Build the actual application
-# NOTE: Allowing build failure temporarily while Rust compilation issues are resolved
-# The mock server will provide basic health endpoint
 RUN touch src/main.rs && \
-    (cargo build --release 2>/dev/null || \
-     (echo "Build failed, using mock server" && \
-      mkdir -p target/release && \
-      cp /tmp/mock-server.sh target/release/policycortex-core && \
-      chmod +x target/release/policycortex-core))
+    cargo build --release
 
 # Runtime stage
 FROM alpine:3.19
