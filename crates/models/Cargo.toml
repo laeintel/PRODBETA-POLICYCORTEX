@@ -1,0 +1,12 @@
+[package]
+name = "policycortex-models"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+policycortex-shared = { path = "../shared" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }

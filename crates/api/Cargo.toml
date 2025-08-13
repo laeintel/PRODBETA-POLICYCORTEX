@@ -1,0 +1,23 @@
+[package]
+name = "policycortex-api"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "policycortex"
+path = "src/main.rs"
+
+[dependencies]
+policycortex-shared = { path = "../shared" }
+policycortex-models = { path = "../models" }
+policycortex-auth = { path = "../auth" }
+policycortex-evidence = { path = "../evidence" }
+policycortex-orchestration = { path = "../orchestration" }
+
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+dotenv = { workspace = true }

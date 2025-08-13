@@ -1,0 +1,11 @@
+[package]
+name = "policycortex-evidence"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+policycortex-shared = { path = "../shared" }
+policycortex-models = { path = "../models" }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
