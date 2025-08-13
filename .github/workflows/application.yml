@@ -235,6 +235,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      docker_built: ${{ steps.docker_check.outputs.docker_available }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -316,6 +318,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      docker_built: ${{ steps.docker_check.outputs.docker_available }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -397,6 +401,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      docker_built: ${{ steps.docker_check.outputs.docker_available }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -547,20 +553,44 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Check Docker Build Status
+        id: check_images
+        run: |
+          echo "Core Docker built: ${{ needs.build-core.outputs.docker_built }}"
+          echo "Frontend Docker built: ${{ needs.build-frontend.outputs.docker_built }}"
+          echo "GraphQL Docker built: ${{ needs.build-graphql.outputs.docker_built }}"
+          
+          if [[ "${{ needs.build-core.outputs.docker_built }}" == "true" && \
+                "${{ needs.build-frontend.outputs.docker_built }}" == "true" && \
+                "${{ needs.build-graphql.outputs.docker_built }}" == "true" ]]; then
+            echo "images_available=true" >> $GITHUB_OUTPUT
+            echo "✅ All Docker images were built successfully"
+          else
+            echo "images_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Docker images were not built - skipping deployment"
+            echo "### ⚠️ Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Docker images were not built because Docker is not available on the self-hosted runner." >> $GITHUB_STEP_SUMMARY
+            echo "To enable deployment, please install Docker on the runner." >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Checkout
+        if: steps.check_images.outputs.images_available == 'true'
         uses: actions/checkout@v4
 
       - name: Azure Login
+        if: steps.check_images.outputs.images_available == 'true'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Setup Terraform
+        if: steps.check_images.outputs.images_available == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
 
       - name: Terraform Deploy (Dev)
+        if: steps.check_images.outputs.images_available == 'true'
         env:
           # Use secret if available, otherwise use the known dev subscription ID
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
@@ -575,6 +605,7 @@ jobs:
           ./infrastructure/terraform/ci-deploy.sh dev "$AZURE_SUBSCRIPTION_ID"
 
       - name: Verify Deployment (Dev)
+        if: steps.check_images.outputs.images_available == 'true'
         run: |
           echo "🔍 Checking Container Apps status..."
           
@@ -671,15 +702,38 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Check Docker Build Status
+        id: check_images
+        run: |
+          echo "Core Docker built: ${{ needs.build-core.outputs.docker_built }}"
+          echo "Frontend Docker built: ${{ needs.build-frontend.outputs.docker_built }}"
+          echo "GraphQL Docker built: ${{ needs.build-graphql.outputs.docker_built }}"
+          
+          if [[ "${{ needs.build-core.outputs.docker_built }}" == "true" && \
+                "${{ needs.build-frontend.outputs.docker_built }}" == "true" && \
+                "${{ needs.build-graphql.outputs.docker_built }}" == "true" ]]; then
+            echo "images_available=true" >> $GITHUB_OUTPUT
+            echo "✅ All Docker images were built successfully"
+          else
+            echo "images_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Docker images were not built - skipping deployment"
+            echo "### ⚠️ Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Docker images were not built because Docker is not available on the self-hosted runner." >> $GITHUB_STEP_SUMMARY
+            echo "To enable deployment, please install Docker on the runner." >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Checkout
+        if: steps.check_images.outputs.images_available == 'true'
         uses: actions/checkout@v4
 
       - name: Azure Login
+        if: steps.check_images.outputs.images_available == 'true'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Setup Terraform
+        if: steps.check_images.outputs.images_available == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
@@ -759,6 +813,7 @@ jobs:
           fi
 
       - name: Configure Registry and Deploy Application Images (Prod)
+        if: steps.check_images.outputs.images_available == 'true'
         env:
           ACR_SERVER: ${{ env.REGISTRY_PROD }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
