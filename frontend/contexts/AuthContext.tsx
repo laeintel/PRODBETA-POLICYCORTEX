@@ -75,12 +75,42 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     setError(null)
     
     try {
+      // Demo mode bypass for local development
+      if (!process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+        const demoAccount: AccountInfo = {
+          username: 'demo@policycortex.local',
+          name: 'Demo User',
+          homeAccountId: 'demo-account',
+          environment: 'demo',
+          tenantId: 'demo-tenant',
+          localAccountId: 'demo-local'
+        }
+        instance.setActiveAccount(demoAccount)
+        console.log('Demo mode: Login bypassed')
+        return
+      }
+      
       const loginResponse = await instance.loginPopup(loginRequest)
       instance.setActiveAccount(loginResponse.account)
       console.log('Login successful:', loginResponse)
     } catch (err: any) {
       console.error('Login failed:', err)
       setError(err.message || 'Login failed')
+      
+      // Fallback to demo mode on error in development
+      if (process.env.NODE_ENV === 'development') {
+        const demoAccount: AccountInfo = {
+          username: 'demo@policycortex.local',
+          name: 'Demo User (Auth Failed)',
+          homeAccountId: 'demo-account',
+          environment: 'demo',
+          tenantId: 'demo-tenant',
+          localAccountId: 'demo-local'
+        }
+        instance.setActiveAccount(demoAccount)
+        console.log('Auth failed - using demo mode')
+        setError(null) // Clear error for demo mode
+      }
     } finally {
       setLoading(false)
     }
