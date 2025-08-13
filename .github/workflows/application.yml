@@ -55,7 +55,7 @@ permissions:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       core: ${{ steps.changes.outputs.core }}
       frontend: ${{ steps.changes.outputs.frontend }}
@@ -79,7 +79,7 @@ jobs:
 
   test-core:
     name: Test Rust Core
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: changes
     if: (needs.changes.outputs.core == 'true' && github.event.inputs.run_tests == 'true') || github.event.inputs.force_deploy != 'true'
     steps:
@@ -123,7 +123,7 @@ jobs:
 
   test-frontend:
     name: Test Frontend
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -170,7 +170,7 @@ jobs:
 
   test-graphql:
     name: Test GraphQL Gateway
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: changes
     if: needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true'
     steps:
@@ -199,7 +199,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event.inputs.force_deploy != 'true'
     # Note: Code Scanning must be enabled in repository settings for SARIF upload to work
     # Settings -> Security -> Code security and analysis -> Code scanning
@@ -229,7 +229,7 @@ jobs:
 
   build-core:
     name: Build Core Service
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [test-core, security-scan]
     if: github.event.inputs.force_deploy == 'true' || ((needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
     permissions:
@@ -267,7 +267,7 @@ jobs:
 
   build-frontend:
     name: Build Frontend
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [test-frontend, security-scan]
     # Always build/push on push to ensure tag exists; on manual runs require security scan or force
     if: github.event_name == 'push' || github.event.inputs.force_deploy == 'true' || (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
@@ -306,7 +306,7 @@ jobs:
 
   build-graphql:
     name: Build GraphQL Gateway
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [test-graphql, security-scan]
     # Always build/push on push to ensure tag exists; on manual runs require security scan or force
     if: github.event_name == 'push' || github.event.inputs.force_deploy == 'true' || (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
@@ -345,7 +345,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql]
     # Always run on push; on manual dispatch respect inputs
     if: github.event_name == 'push' || (github.event.inputs.force_deploy != 'true' && github.event.inputs.run_tests == 'true')
@@ -411,7 +411,7 @@ jobs:
 
   deploy-dev:
     name: Deploy to Development
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: always() && ((github.event_name == 'push') || (github.event.inputs.target_env == 'dev')) &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
@@ -534,7 +534,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to Production
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.target_env == 'prod') &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
@@ -716,7 +716,7 @@ jobs:
 
   notify:
     name: Notify Deployment Status
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [deploy-dev, deploy-prod]
     if: always()
     steps:
