@@ -77,11 +77,13 @@ Thumbs.db
 # Build artifacts
 *.tsbuildinfo
 *.d.ts.map
+tsconfig.tsbuildinfo
 
 # Database
 *.sqlite
 *.sqlite3
 *.db
+policycortex.db
 
 # Certificates
 *.pem
@@ -160,3 +162,17 @@ training_instructions/
 /training instructions/**
 /frontend/errors/**
 /training/**
+
+# Executables and installers
+*.exe
+rustup-init.exe
+
+# Mock and temporary files
+mock-server.sh
+frontendmiddleware.ts
+
+# Backup files
+*.backup
+*.bak
+*.old
+policycortex-backup-*.zip
