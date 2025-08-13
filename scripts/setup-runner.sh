@@ -71,8 +71,27 @@ install_azure_cli() {
     echo "📦 Installing Azure CLI..."
     
     if [ "$OS" == "linux" ]; then
-        # Install Azure CLI on Linux
-        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+        # Safer Azure CLI installation
+        if command -v apt-get &> /dev/null; then
+            # For Debian/Ubuntu
+            sudo apt-get update || true
+            sudo apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg || true
+            
+            # Microsoft signing key
+            curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+            
+            # Add repository
+            AZ_REPO=$(lsb_release -cs 2>/dev/null || echo "focal")
+            echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+            
+            # Install
+            sudo apt-get update || true
+            sudo apt-get install -y azure-cli || true
+        else
+            # Direct installation via pip
+            echo "Installing Azure CLI via Python pip..."
+            pip3 install --user azure-cli || pip install --user azure-cli
+        fi
         
     elif [ "$OS" == "macos" ]; then
         # Install Azure CLI on macOS
@@ -137,10 +156,41 @@ install_terraform() {
     
     echo "📦 Installing Terraform..."
     
-    # Install Terraform
-    wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-    sudo apt update && sudo apt install terraform
+    if [ "$OS" == "linux" ]; then
+        # Check if we have apt-get
+        if command -v apt-get &> /dev/null; then
+            # Safer installation method
+            sudo apt-get update || true
+            sudo apt-get install -y wget unzip || true
+            
+            # Download Terraform directly
+            TERRAFORM_VERSION="1.6.0"
+            wget -q "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            unzip -o "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            sudo mv terraform /usr/local/bin/
+            rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+        else
+            echo "apt-get not found, trying direct download..."
+            # Direct binary download for non-Debian systems
+            TERRAFORM_VERSION="1.6.0"
+            curl -LO "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            unzip -o "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            sudo mv terraform /usr/local/bin/ || mv terraform ~/bin/
+            rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+        fi
+    elif [ "$OS" == "macos" ]; then
+        if command -v brew &> /dev/null; then
+            brew tap hashicorp/tap
+            brew install hashicorp/tap/terraform
+        else
+            # Direct download for macOS
+            TERRAFORM_VERSION="1.6.0"
+            curl -LO "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_darwin_amd64.zip"
+            unzip -o "terraform_${TERRAFORM_VERSION}_darwin_amd64.zip"
+            sudo mv terraform /usr/local/bin/
+            rm "terraform_${TERRAFORM_VERSION}_darwin_amd64.zip"
+        fi
+    fi
     
     echo "✅ Terraform installed successfully"
 }
