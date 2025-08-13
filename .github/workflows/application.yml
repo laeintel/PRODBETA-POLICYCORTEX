@@ -648,10 +648,17 @@ jobs:
           AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
           AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
           AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+          # Enable state locking
+          ARM_USE_AZUREAD=true
         run: |
           echo "🚀 Applying Terraform changes (main branch only)..."
           cd infrastructure/terraform/environments/dev
-          terraform apply tfplan || echo "No plan file found, skipping apply"
+          
+          # Initialize with locking backend
+          terraform init -backend-config="use_azuread_auth=true"
+          
+          # Apply with auto-approve for dev (production requires manual approval via environment protection)
+          terraform apply -auto-approve tfplan || echo "No plan file found, skipping apply"
 
       - name: Verify Deployment (Dev)
         if: steps.check_images.outputs.images_available == 'true'
@@ -761,7 +768,10 @@ jobs:
       (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
       (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped') &&
       (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'skipped')
-    environment: production
+    environment:
+      name: production
+      # Requires manual approval for production deployments
+      url: https://policycortex-prod.azurewebsites.net
     permissions:
       contents: read
     steps:

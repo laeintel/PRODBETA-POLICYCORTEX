@@ -27,11 +27,11 @@ This document captures the key technical shortcomings, bottlenecks, and architec
 
 | Area | Observation | Impact |
 |------|-------------|--------|
-| **Monolithic Rust Core** | Single crate (`core`) mixes API, auth, evidence, orchestration. | Compile times spike, cognitive load high. |
-| **CI Matrix Explosion** | Multiple jobs build every image on every push. | Longer feedback (> 15 min) for small FE change. |
-| **Terraform Apply in CI** | Full infra apply on every push. | Expensive, slow, risks lock contention. |
-| **Demo Mode Toggle** | Mock data injection sprinkled across components. | Hard to untangle for prod vs demo. |
-| **SBOM+SLSA+Trivy** scans | All run in one lengthy script. | Slow; fails whole pipeline on network flakes. |
+| **Rust Modular Workspace** | Now using workspace with `crates/{api,auth,evidence,orchestration,shared,models}`. | Better compile times and separation; add per-crate CI/cache next. |
+| **CI Matrix Explosion** | Path-based filters and conditional builds now active; still relies on Docker on self-hosted runner. | Faster feedback when areas unchanged; ensure runner has Docker to avoid skips. |
+| **Terraform Apply in CI** | Plan on PR; Apply on main push (dev). Azure infra workflow supports manual apply. | Lower cost/drift; add remote state locking and apply approvals. |
+| **Demo Mode Toggle** | `DemoModeBanner`, `MockDataIndicator`, `useMockDataStatus` exist; not yet centralized provider. | Partially improved; create `DemoDataProvider` to eliminate scattering. |
+| **SBOM+SLSA+Trivy** scans | Baseline gating in CI; application workflow runs parallel security jobs; supply-chain script remains sequential. | Duration reduced; consider full parallelization and caching across jobs. |
 
 ---
 
