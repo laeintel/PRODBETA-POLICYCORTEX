@@ -1,8 +1,0 @@
-{"prompt": "Create an Azure RBAC policy for developers", "completion": "Here's a comprehensive Azure RBAC policy for developers with least privilege access..."}
-{"prompt": "How to optimize cloud costs in Azure?", "completion": "To optimize Azure costs: 1) Use Reserved Instances for predictable workloads 2) Implement auto-scaling 3) Use Azure Cost Management tools..."}
-{"prompt": "SOC 2 compliance checklist for cloud", "completion": "SOC 2 Type II compliance requires: Security controls, Availability monitoring, Processing integrity, Confidentiality measures, Privacy protection..."}
-{"prompt": "Network security best practices for multi-cloud", "completion": "Multi-cloud network security requires: Zero-trust architecture, Micro-segmentation, Encrypted tunnels, WAF deployment, DDoS protection..."}
-{"prompt": "Implement GDPR compliance in cloud", "completion": "GDPR compliance in cloud: Data minimization, Encryption at rest and in transit, Right to erasure implementation, Data portability APIs..."}
-{"prompt": "Azure Policy for cost management", "completion": "Azure Policy for cost control: Tag enforcement, Resource limits, Allowed SKUs, Auto-shutdown schedules, Budget alerts..."}
-{"prompt": "Kubernetes RBAC configuration", "completion": "K8s RBAC setup: Define Roles and ClusterRoles, Create RoleBindings, Implement ServiceAccounts, Use namespace isolation..."}
-{"prompt": "Cloud security posture assessment", "completion": "Security assessment includes: Identity management review, Network security analysis, Data protection audit, Compliance validation..."}
