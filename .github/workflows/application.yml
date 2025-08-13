@@ -564,13 +564,15 @@ jobs:
                 "${{ needs.build-frontend.outputs.docker_built }}" == "true" && \
                 "${{ needs.build-graphql.outputs.docker_built }}" == "true" ]]; then
             echo "images_available=true" >> $GITHUB_OUTPUT
-            echo "✅ All Docker images were built successfully"
+            echo "✅ All Docker images were built successfully - proceeding with deployment"
           else
             echo "images_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Docker images were not built - skipping deployment"
+            echo "⚠️ Docker images were not built - deployment steps will be skipped"
             echo "### ⚠️ Deployment Skipped" >> $GITHUB_STEP_SUMMARY
             echo "Docker images were not built because Docker is not available on the self-hosted runner." >> $GITHUB_STEP_SUMMARY
             echo "To enable deployment, please install Docker on the runner." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This is expected behavior when Docker is not available. The workflow will continue but skip actual deployment steps." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Checkout
@@ -726,13 +728,15 @@ jobs:
                 "${{ needs.build-frontend.outputs.docker_built }}" == "true" && \
                 "${{ needs.build-graphql.outputs.docker_built }}" == "true" ]]; then
             echo "images_available=true" >> $GITHUB_OUTPUT
-            echo "✅ All Docker images were built successfully"
+            echo "✅ All Docker images were built successfully - proceeding with deployment"
           else
             echo "images_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Docker images were not built - skipping deployment"
+            echo "⚠️ Docker images were not built - deployment steps will be skipped"
             echo "### ⚠️ Deployment Skipped" >> $GITHUB_STEP_SUMMARY
             echo "Docker images were not built because Docker is not available on the self-hosted runner." >> $GITHUB_STEP_SUMMARY
             echo "To enable deployment, please install Docker on the runner." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This is expected behavior when Docker is not available. The workflow will continue but skip actual deployment steps." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Checkout
