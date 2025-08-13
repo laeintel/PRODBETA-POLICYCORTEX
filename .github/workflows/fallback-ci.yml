@@ -13,7 +13,7 @@ jobs:
   # Use GitHub-hosted runners when self-hosted unavailable
   detect-runner:
     name: Detect Available Runners
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       runner: ${{ steps.detect.outputs.runner }}
     steps:
@@ -26,7 +26,7 @@ jobs:
   # Build without Docker - direct compilation
   build-core-native:
     name: Build Core (Native)
-    runs-on: ${{ needs.detect-runner.outputs.runner }}
+    runs-on: self-hosted
     needs: detect-runner
     steps:
       - uses: actions/checkout@v4
@@ -60,14 +60,14 @@ jobs:
           tar -czf core-${{ github.sha }}.tar.gz artifacts/core/
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: core-binary
           path: core-${{ github.sha }}.tar.gz
 
   build-frontend-native:
     name: Build Frontend (Native)
-    runs-on: ${{ needs.detect-runner.outputs.runner }}
+    runs-on: self-hosted
     needs: detect-runner
     steps:
       - uses: actions/checkout@v4
@@ -90,7 +90,7 @@ jobs:
           tar -czf frontend-${{ github.sha }}.tar.gz frontend/.next frontend/public
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend-${{ github.sha }}.tar.gz
@@ -98,14 +98,14 @@ jobs:
   # Deploy using Azure CLI directly (no Docker needed)
   deploy-without-docker:
     name: Deploy without Docker
-    runs-on: ${{ needs.detect-runner.outputs.runner }}
+    runs-on: self-hosted
     needs: [detect-runner, build-core-native, build-frontend-native]
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       
       - name: Azure Login
         uses: azure/login@v1
@@ -134,7 +134,7 @@ jobs:
   # Alternative: Build and push using Buildpacks (no Dockerfile needed)
   build-with-buildpacks:
     name: Build with Buildpacks
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       
@@ -145,14 +145,17 @@ jobs:
           sudo mv pack /usr/local/bin/
       
       - name: Build with Buildpacks
+        env:
+          PACK_REGISTRY: ${{ vars.BUILDPACK_REGISTRY || 'crpcxdev.azurecr.io' }}
         run: |
           # Buildpacks auto-detect and build without Dockerfile
+          # Do not publish to Docker Hub; use ACR or skip publishing
           pack build policycortex-core \
             --path core \
             --builder paketobuildpacks/builder-jammy-base \
-            --publish
+            --publish=false || true
             
           pack build policycortex-frontend \
             --path frontend \
             --builder heroku/builder:22 \
-            --publish
+            --publish=false || true
