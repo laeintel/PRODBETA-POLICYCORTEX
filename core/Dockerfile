@@ -5,7 +5,15 @@ FROM rust:alpine AS builder
 # - build-base: gcc, make, libc-dev (musl)
 # - openssl-dev and openssl-libs-static: required for Azure SDK dependencies
 # - pkgconfig: used by many -sys crates to discover libs
-RUN apk add --no-cache build-base openssl-dev openssl-libs-static pkgconfig
+# - perl: required for building OpenSSL from source
+RUN apk add --no-cache build-base openssl-dev openssl-libs-static pkgconfig perl
+
+# Set OpenSSL environment variables to use system OpenSSL
+ENV OPENSSL_DIR=/usr
+ENV OPENSSL_LIB_DIR=/usr/lib
+ENV OPENSSL_INCLUDE_DIR=/usr/include
+ENV OPENSSL_STATIC=1
+ENV PKG_CONFIG_ALLOW_CROSS=1
 
 # Create app directory
 WORKDIR /app
