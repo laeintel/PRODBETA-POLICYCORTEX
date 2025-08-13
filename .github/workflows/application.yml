@@ -112,14 +112,12 @@ jobs:
       - name: Run Tests
         run: |
           # Skip tests that require database for now
-          cargo test --verbose || true
-        working-directory: ./core
+          cargo test --workspace --verbose || true
 
       - name: Security Audit
         run: |
           cargo install cargo-audit --locked
           cargo audit || true
-        working-directory: ./core
 
   test-frontend:
     name: Test Frontend
