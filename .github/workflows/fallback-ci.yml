@@ -21,7 +21,7 @@ jobs:
         run: |
           # Check if self-hosted runners are available
           # Fallback to GitHub-hosted if not
-          echo "runner=ubuntu-latest" >> $GITHUB_OUTPUT
+          echo "runner=self-hosted" >> $GITHUB_OUTPUT
 
   # Build without Docker - direct compilation
   build-core-native:
