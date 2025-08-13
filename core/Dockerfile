@@ -16,7 +16,8 @@ ENV SQLX_OFFLINE=true
 # Build with cache mounts
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/target \
-    cargo build --release
+    cargo build --release && \
+    (test -f target/release/policycortex-core && cp target/release/policycortex-core /app/policycortex-core || cp target/release/policycortex_core /app/policycortex-core)
 
 # Runtime stage
 FROM alpine:3.19
@@ -31,8 +32,8 @@ RUN apk add --no-cache \
 RUN addgroup -g 1000 policycortex && \
     adduser -D -u 1000 -G policycortex -h /home/policycortex policycortex
 
-# Copy binary from builder (crate name: policycortex-core)
-COPY --from=builder /app/target/release/policycortex-core /usr/local/bin/policycortex-core
+# Copy binary from builder (normalized path)
+COPY --from=builder /app/policycortex-core /usr/local/bin/policycortex-core
 
 RUN chown policycortex:policycortex /usr/local/bin/policycortex-core && \
     mkdir -p /home/policycortex/.azure && \
