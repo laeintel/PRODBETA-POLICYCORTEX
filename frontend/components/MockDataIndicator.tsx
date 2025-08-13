@@ -2,6 +2,7 @@
 
 import { AlertCircle, Database, CloudOff, TestTube } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useDemoDataFlags } from '@/contexts/DemoDataProvider'
 
 interface MockDataIndicatorProps {
   type?: 'badge' | 'banner' | 'inline' | 'floating'
@@ -17,6 +18,8 @@ export default function MockDataIndicator({
   const [isRealData, setIsRealData] = useState<boolean>(true)
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'mock'>('connected')
 
+  const flags = useDemoDataFlags()
+
   useEffect(() => {
     // Check if we're using real data
     const checkDataSource = async () => {
@@ -26,8 +29,7 @@ export default function MockDataIndicator({
         
         // Check for real Azure connection (default to true if unknown)
         const hasAzureConnection = typeof data.azure_connected === 'boolean' ? data.azure_connected : true
-        const isUsingMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || 
-                               process.env.NEXT_PUBLIC_DISABLE_DEEP === 'true'
+        const isUsingMockData = flags.useMockData
         
         if (isUsingMockData || !hasAzureConnection) {
           setIsRealData(false)

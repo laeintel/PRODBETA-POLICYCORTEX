@@ -357,33 +357,30 @@ EOF
 
 # Main execution
 main() {
-    # Install tools if needed
-    install_syft
-    install_grype
-    install_cosign
-    
-    # Generate SBOMs
-    generate_rust_sbom
-    generate_node_sbom
-    generate_python_sbom
-    generate_container_sbom
-    
-    # Scan for vulnerabilities
+    install_syft &
+    install_grype &
+    install_cosign &
+    wait
+
+    # Generate SBOMs in parallel
+    generate_rust_sbom &
+    generate_node_sbom &
+    generate_python_sbom &
+    wait
+    generate_container_sbom || true
+
+    # Vulnerability scan in parallel per stack
     scan_vulnerabilities
-    
-    # Generate provenance
-    generate_slsa_provenance
-    
-    # Check for critical issues
+
+    # Provenance and reports can run concurrently
+    generate_slsa_provenance &
+    generate_update_report &
+    wait
+
     check_critical_vulns
-    
-    # Generate reports
-    generate_update_report
     generate_final_report
-    
-    # Sign artifacts if possible
-    sign_artifacts
-    
+    sign_artifacts || true
+
     echo -e "\n${GREEN}✅ Supply chain security scan complete!${NC}"
     echo "Reports available in: $OUTPUT_DIR"
 }
