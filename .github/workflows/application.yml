@@ -649,7 +649,7 @@ jobs:
           AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
           AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
           # Enable state locking
-          ARM_USE_AZUREAD=true
+          ARM_USE_AZUREAD: 'true'
         run: |
           echo "🚀 Applying Terraform changes (main branch only)..."
           cd infrastructure/terraform/environments/dev

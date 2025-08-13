@@ -1,0 +1,284 @@
+name: Setup Self-Hosted Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner_name:
+        description: 'Runner identifier'
+        required: false
+        default: 'self-hosted'
+      install_docker:
+        description: 'Install Docker'
+        required: true
+        default: true
+        type: boolean
+      install_azure_cli:
+        description: 'Install Azure CLI'
+        required: true
+        default: true
+        type: boolean
+      install_terraform:
+        description: 'Install Terraform'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  check-runner:
+    name: Check Runner Status
+    runs-on: self-hosted
+    outputs:
+      docker_installed: ${{ steps.check.outputs.docker }}
+      azure_installed: ${{ steps.check.outputs.azure }}
+      terraform_installed: ${{ steps.check.outputs.terraform }}
+      runner_os: ${{ steps.check.outputs.os }}
+    steps:
+      - name: Check installed tools
+        id: check
+        run: |
+          echo "🔍 Checking runner environment..."
+          
+          # Detect OS
+          if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            echo "os=linux" >> $GITHUB_OUTPUT
+            OS="Linux"
+          elif [[ "$OSTYPE" == "darwin"* ]]; then
+            echo "os=macos" >> $GITHUB_OUTPUT
+            OS="macOS"
+          elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+            echo "os=windows" >> $GITHUB_OUTPUT
+            OS="Windows"
+          else
+            echo "os=unknown" >> $GITHUB_OUTPUT
+            OS="Unknown"
+          fi
+          
+          echo "### Runner Environment" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: $OS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner**: ${{ github.event.inputs.runner_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check Docker
+          if command -v docker &> /dev/null; then
+            echo "docker=true" >> $GITHUB_OUTPUT
+            DOCKER_VERSION=$(docker --version)
+            echo "✅ Docker: $DOCKER_VERSION" >> $GITHUB_STEP_SUMMARY
+            
+            # Check if Docker daemon is running
+            if docker info &> /dev/null; then
+              echo "  - Daemon: Running ✅" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  - Daemon: Not running ⚠️" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "docker=false" >> $GITHUB_OUTPUT
+            echo "❌ Docker: Not installed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check Azure CLI
+          if command -v az &> /dev/null; then
+            echo "azure=true" >> $GITHUB_OUTPUT
+            AZ_VERSION=$(az --version | head -1)
+            echo "✅ Azure CLI: $AZ_VERSION" >> $GITHUB_STEP_SUMMARY
+            
+            # Check if logged in
+            if az account show &> /dev/null; then
+              ACCOUNT=$(az account show --query name -o tsv)
+              echo "  - Logged in: $ACCOUNT ✅" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  - Logged in: No ⚠️" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "azure=false" >> $GITHUB_OUTPUT
+            echo "❌ Azure CLI: Not installed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check Terraform
+          if command -v terraform &> /dev/null; then
+            echo "terraform=true" >> $GITHUB_OUTPUT
+            TF_VERSION=$(terraform --version | head -1)
+            echo "✅ Terraform: $TF_VERSION" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "terraform=false" >> $GITHUB_OUTPUT
+            echo "❌ Terraform: Not installed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check Node.js
+          if command -v node &> /dev/null; then
+            NODE_VERSION=$(node --version)
+            echo "✅ Node.js: $NODE_VERSION" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Node.js: Not installed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check Rust
+          if command -v cargo &> /dev/null; then
+            RUST_VERSION=$(cargo --version)
+            echo "✅ Rust: $RUST_VERSION" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Rust: Not installed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  install-docker:
+    name: Install Docker
+    runs-on: self-hosted
+    needs: check-runner
+    if: github.event.inputs.install_docker == 'true' && needs.check-runner.outputs.docker_installed == 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Docker
+        run: |
+          echo "📦 Installing Docker on ${{ needs.check-runner.outputs.runner_os }}..."
+          
+          if [[ "${{ needs.check-runner.outputs.runner_os }}" == "linux" ]]; then
+            # Use the official Docker installation script
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            rm get-docker.sh
+            
+            # Add runner user to docker group
+            sudo usermod -aG docker $USER || true
+            sudo usermod -aG docker runner || true
+            
+            # Start Docker
+            sudo systemctl start docker || sudo service docker start || true
+            sudo systemctl enable docker || true
+            
+            echo "✅ Docker installed successfully"
+            echo "⚠️ Note: Runner may need to restart for group changes to take effect"
+            
+          elif [[ "${{ needs.check-runner.outputs.runner_os }}" == "windows" ]]; then
+            echo "For Windows, please run locally:"
+            echo "powershell -ExecutionPolicy Bypass .\\scripts\\install-docker-windows.ps1"
+            
+          elif [[ "${{ needs.check-runner.outputs.runner_os }}" == "macos" ]]; then
+            echo "For macOS, please install Docker Desktop from:"
+            echo "https://www.docker.com/products/docker-desktop"
+          fi
+
+  install-azure-cli:
+    name: Install Azure CLI
+    runs-on: self-hosted
+    needs: check-runner
+    if: github.event.inputs.install_azure_cli == 'true' && needs.check-runner.outputs.azure_installed == 'false'
+    steps:
+      - name: Install Azure CLI
+        run: |
+          echo "📦 Installing Azure CLI..."
+          
+          if [[ "${{ needs.check-runner.outputs.runner_os }}" == "linux" ]]; then
+            # Install via script
+            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash || {
+              # Fallback to manual installation
+              sudo apt-get update
+              sudo apt-get install -y ca-certificates curl apt-transport-https lsb-release gnupg
+              curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+              AZ_REPO=$(lsb_release -cs)
+              echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+              sudo apt-get update
+              sudo apt-get install -y azure-cli
+            }
+            
+          elif [[ "${{ needs.check-runner.outputs.runner_os }}" == "macos" ]]; then
+            brew install azure-cli
+          fi
+          
+          echo "✅ Azure CLI installed"
+
+  install-terraform:
+    name: Install Terraform
+    runs-on: self-hosted
+    needs: check-runner
+    if: github.event.inputs.install_terraform == 'true' && needs.check-runner.outputs.terraform_installed == 'false'
+    steps:
+      - name: Install Terraform
+        run: |
+          echo "📦 Installing Terraform..."
+          
+          TERRAFORM_VERSION="1.6.0"
+          
+          if [[ "${{ needs.check-runner.outputs.runner_os }}" == "linux" ]]; then
+            wget -q "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            unzip -o "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            sudo mv terraform /usr/local/bin/
+            rm "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+            
+          elif [[ "${{ needs.check-runner.outputs.runner_os }}" == "macos" ]]; then
+            wget -q "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_darwin_amd64.zip"
+            unzip -o "terraform_${TERRAFORM_VERSION}_darwin_amd64.zip"
+            sudo mv terraform /usr/local/bin/
+            rm "terraform_${TERRAFORM_VERSION}_darwin_amd64.zip"
+          fi
+          
+          echo "✅ Terraform installed"
+          terraform --version
+
+  configure-runner:
+    name: Configure Runner
+    runs-on: self-hosted
+    needs: [check-runner, install-docker, install-azure-cli, install-terraform]
+    if: always()
+    steps:
+      - name: Configure Azure credentials
+        if: needs.check-runner.outputs.azure_installed == 'true' || needs.install-azure-cli.result == 'success'
+        run: |
+          echo "🔐 Configuring Azure credentials..."
+          
+          # Check if already logged in
+          if az account show &> /dev/null; then
+            echo "Already logged in to Azure"
+          else
+            echo "Please run 'az login' on the runner to authenticate"
+            echo "Or set up a service principal for automated authentication"
+          fi
+      
+      - name: Test Docker
+        if: needs.check-runner.outputs.docker_installed == 'true' || needs.install-docker.result == 'success'
+        continue-on-error: true
+        run: |
+          echo "🐳 Testing Docker..."
+          
+          # Test Docker
+          if docker run --rm hello-world; then
+            echo "✅ Docker is working correctly"
+          else
+            echo "⚠️ Docker installed but not working properly"
+            echo "Try: sudo systemctl restart docker"
+            echo "Or: sudo service docker restart"
+          fi
+      
+      - name: Final status
+        if: always()
+        run: |
+          echo "### Runner Setup Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Installation Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker: ${{ needs.install-docker.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Azure CLI: ${{ needs.install-azure-cli.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Terraform: ${{ needs.install-terraform.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. If Docker was installed, restart the runner service" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run 'az login' if Azure CLI was installed" >> $GITHUB_STEP_SUMMARY
+          echo "3. Test the main workflow to verify everything works" >> $GITHUB_STEP_SUMMARY
+
+  restart-runner-service:
+    name: Restart Runner Service
+    runs-on: self-hosted
+    needs: [configure-runner]
+    if: needs.install-docker.result == 'success'
+    steps:
+      - name: Restart runner
+        run: |
+          echo "⚠️ Docker was installed. The runner service should be restarted."
+          echo ""
+          echo "To restart the GitHub Actions runner:"
+          echo "1. Stop the runner service"
+          echo "2. Log out and log back in (for Docker group changes)"
+          echo "3. Start the runner service again"
+          echo ""
+          echo "Commands:"
+          echo "  sudo ./svc.sh stop"
+          echo "  sudo ./svc.sh start"
