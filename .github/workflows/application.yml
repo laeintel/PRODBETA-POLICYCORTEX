@@ -100,19 +100,19 @@ jobs:
           workspaces: core
 
       - name: Format Check
-        run: cargo fmt --all -- --check
-        working-directory: ./core
+        run: |
+          # Check core directory (excluded from workspace)
+          cd core && cargo fmt --all -- --check
 
       - name: Clippy
         run: |
-          # Skip SQLx query checks in CI
-          cargo clippy --all-targets --all-features -- -D warnings -A clippy::all || true
-        working-directory: ./core
+          # Check core directory
+          cd core && cargo clippy --all-targets --all-features -- -D warnings -A clippy::all || true
 
       - name: Run Tests
         run: |
-          # Skip tests that require database for now
-          cargo test --workspace --verbose || true
+          # Test core directory
+          cd core && cargo test --verbose || true
 
       - name: Security Audit
         run: |

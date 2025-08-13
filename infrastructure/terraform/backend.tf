@@ -1,25 +1,5 @@
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "rg-terraform-state"
-    storage_account_name = "stterraformstate${var.environment}"
-    container_name       = "tfstate"
-    key                  = "policycortex.${var.environment}.tfstate"
-    
-    # Enable state locking with Azure Blob Storage
-    use_azuread_auth = true
-    # State locking is automatic with Azure Storage backend
-    # Each state file gets a lease that prevents concurrent modifications
-  }
-  
-  required_version = ">= 1.6.0"
-  
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-  }
-}
+# Backend configuration moved to environments/dev and environments/prod
+# This file now only contains the storage account resources for state management
 
 # Create storage account for Terraform state with locking enabled
 resource "azurerm_storage_account" "terraform_state" {
