@@ -79,7 +79,7 @@ test.describe('API Integration Tests', () => {
     
     // Verify Bearer token is sent
     if (authHeader) {
-      expect(authHeader).toMatch(/^Bearer .+/);
+      expect(authHeader as string).toMatch(/^Bearer .+/);
     }
   });
 
@@ -367,7 +367,7 @@ test.describe('API Integration Tests', () => {
     
     // Verify using v1 API
     if (apiVersion) {
-      expect(apiVersion).toBe('v1');
+      expect(apiVersion as string).toBe('v1');
     }
   });
 });
