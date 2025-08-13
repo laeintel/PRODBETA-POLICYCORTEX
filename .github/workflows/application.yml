@@ -209,7 +209,11 @@ jobs:
       - name: Run Trivy
         run: |
           echo "Running Trivy security scan..."
-          timeout 180 docker run --rm -v "$PWD":/src \
+          docker pull aquasec/trivy:latest || true
+          mkdir -p $HOME/.cache/trivy
+          timeout 300 docker run --rm \
+            -v "$PWD":/src \
+            -v $HOME/.cache/trivy:/root/.cache/ \
             aquasec/trivy:latest fs /src \
             --severity HIGH,CRITICAL \
             --exit-code 0 || echo "Trivy completed with warnings"
@@ -323,7 +327,7 @@ jobs:
         if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/build-push-action@v5
         with:
-          context: ./core
+          context: .
           file: ./core/Dockerfile
           push: true
           tags: |

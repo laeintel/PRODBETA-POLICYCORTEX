@@ -47,7 +47,7 @@ This Terraform configuration is optimized to maximize usage of Azure's free tier
 
 ## Deployment Steps
 
-### 1. Initialize Terraform Backend
+### 1. Initialize Terraform Backend (separate bootstrap)
 
 ```bash
 cd infrastructure/terraform
@@ -57,14 +57,16 @@ terraform init \
   -backend-config="resource_group_name=tfstate-pcx-dev" \
   -backend-config="storage_account_name=pcxtfdev<hash>" \
   -backend-config="container_name=tfstate" \
-  -backend-config="key=dev.tfstate"
+  -backend-config="key=dev.tfstate" \
+  -backend-config="use_azuread_auth=true"
 
 # For Production
 terraform init \
   -backend-config="resource_group_name=tfstate-pcx-prod" \
   -backend-config="storage_account_name=pcxtfprod<hash>" \
   -backend-config="container_name=tfstate" \
-  -backend-config="key=prod.tfstate"
+  -backend-config="key=prod.tfstate" \
+  -backend-config="use_azuread_auth=true"
 ```
 
 ### 2. Plan Deployment

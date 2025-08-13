@@ -18,21 +18,18 @@ ENV PKG_CONFIG_ALLOW_CROSS=1
 # Create app directory
 WORKDIR /app
 
-# Copy Cargo files first for better caching
+# Build workspace API crate instead of monolith core
+# Copy workspace manifest and crates
 COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
 
-# Create dummy main to cache dependencies
-RUN mkdir src && \
-    echo "fn main() {}" > src/main.rs && \
-    cargo build --release && \
-    rm -rf src
+# Use SQLX offline to avoid DB requirement during image build
+ENV SQLX_OFFLINE=true
 
-# Copy actual source code
-COPY src ./src
-
-
-# Build the actual application
-RUN touch src/main.rs && cargo build --release
+# Cache cargo registry and target for faster builds
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build -p policycortex-api --release
 
 # Runtime stage
 FROM alpine:3.19
@@ -47,8 +44,8 @@ RUN apk add --no-cache \
 RUN addgroup -g 1000 policycortex && \
     adduser -D -u 1000 -G policycortex -h /home/policycortex policycortex
 
-# Copy binary from builder
-COPY --from=builder /app/target/release/policycortex-core /usr/local/bin/policycortex-core
+# Copy binary from builder (api crate built as runtime binary)
+COPY --from=builder /app/target/release/policycortex-api /usr/local/bin/policycortex-core
 
 # Set ownership
 RUN chown policycortex:policycortex /usr/local/bin/policycortex-core
