@@ -5,6 +5,9 @@ edition = "2021"
 authors = ["AeoliTech"]
 description = "PolicyCortex v2 - AI-Powered Azure Governance Platform"
 
+# Explicitly declare this crate is not part of the parent workspace
+[workspace]
+
 [dependencies]
 # Web Framework
 axum = "0.7"

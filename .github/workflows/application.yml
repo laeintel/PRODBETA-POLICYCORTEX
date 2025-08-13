@@ -101,8 +101,8 @@ jobs:
 
       - name: Format Check
         run: |
-          # Check core directory (excluded from workspace)
-          cd core && cargo fmt --all -- --check
+          # Check core directory (standalone crate with own workspace)
+          cd core && cargo fmt -- --check
 
       - name: Clippy
         run: |
