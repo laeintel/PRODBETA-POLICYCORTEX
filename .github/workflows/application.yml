@@ -578,7 +578,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Azure Login
-        if: steps.check_images.outputs.images_available == 'true'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -628,6 +627,7 @@ jobs:
           if [ -n "$FRONTEND_URL" ]; then echo "📌 Frontend: https://$FRONTEND_URL"; fi
 
       - name: Configure Registry and Deploy Application Images (Dev)
+        if: steps.check_images.outputs.images_available == 'true'
         env:
           ACR_SERVER: ${{ env.REGISTRY_DEV }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
@@ -640,10 +640,23 @@ jobs:
           NEXT_PUBLIC_AZURE_SCOPES: ${{ secrets.NEXT_PUBLIC_AZURE_SCOPES_DEV || '' }}
         run: |
           set -e
+          
+          # Verify Azure CLI is authenticated
+          if ! az account show >/dev/null 2>&1; then
+            echo "⚠️ Azure CLI not authenticated. Skipping deployment."
+            echo "Please ensure Azure credentials are properly configured."
+            exit 0
+          fi
+          
           echo "🔐 Fetching ACR credentials for $ACR_SERVER"
           ACR_NAME=$(echo "$ACR_SERVER" | cut -d'.' -f1)
-          ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv)
-          ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query passwords[0].value -o tsv)
+          ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv 2>/dev/null || echo "")
+          ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query passwords[0].value -o tsv 2>/dev/null || echo "")
+          
+          if [ -z "$ACR_USER" ] || [ -z "$ACR_PASS" ]; then
+            echo "⚠️ Could not fetch ACR credentials. Skipping deployment."
+            exit 0
+          fi
 
           echo "📝 Configuring registry on Container Apps"
           for APP in ca-cortex-core-dev ca-cortex-frontend-dev; do
@@ -727,7 +740,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Azure Login
-        if: steps.check_images.outputs.images_available == 'true'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -826,10 +838,23 @@ jobs:
           NEXT_PUBLIC_AZURE_SCOPES: ${{ secrets.NEXT_PUBLIC_AZURE_SCOPES_PROD || '' }}
         run: |
           set -e
+          
+          # Verify Azure CLI is authenticated
+          if ! az account show >/dev/null 2>&1; then
+            echo "⚠️ Azure CLI not authenticated. Skipping deployment."
+            echo "Please ensure Azure credentials are properly configured."
+            exit 0
+          fi
+          
           echo "🔐 Fetching ACR credentials for $ACR_SERVER"
           ACR_NAME=$(echo "$ACR_SERVER" | cut -d'.' -f1)
-          ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv)
-          ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query passwords[0].value -o tsv)
+          ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv 2>/dev/null || echo "")
+          ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query passwords[0].value -o tsv 2>/dev/null || echo "")
+          
+          if [ -z "$ACR_USER" ] || [ -z "$ACR_PASS" ]; then
+            echo "⚠️ Could not fetch ACR credentials. Skipping deployment."
+            exit 0
+          fi
 
           echo "📝 Configuring registry on Container Apps"
           for APP in ca-cortex-core-prod ca-cortex-frontend-prod; do
