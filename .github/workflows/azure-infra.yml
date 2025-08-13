@@ -34,7 +34,7 @@ env:
 
 jobs:
   terraform:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.DEFAULT_RUNNER || 'ubuntu-latest' }}
     defaults:
       run:
         working-directory: infrastructure/terraform
