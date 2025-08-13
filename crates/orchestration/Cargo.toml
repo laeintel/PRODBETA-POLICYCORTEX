@@ -1,0 +1,11 @@
+[package]
+name = "policycortex-orchestration"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+policycortex-shared = { path = "../shared" }
+policycortex-models = { path = "../models" }
+policycortex-evidence = { path = "../evidence" }
+tokio = { workspace = true }
+anyhow = { workspace = true }

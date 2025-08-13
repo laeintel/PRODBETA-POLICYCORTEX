@@ -1,0 +1,12 @@
+[package]
+name = "policycortex-auth"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+policycortex-shared = { path = "../shared" }
+policycortex-models = { path = "../models" }
+axum = { workspace = true }
+tower = { workspace = true }
+azure_identity = { workspace = true }
+jsonwebtoken = "9.2"
