@@ -4,6 +4,27 @@ set -e
 echo "Starting Azure Self-Hosted Runner Image Setup for Ubuntu 24.04"
 echo "============================================================="
 
+# Pre-flight: ensure Docker APT source is valid and never contains stray characters
+repair_docker_apt_source() {
+    echo "Pre-flight: ensuring Docker APT source is valid..."
+    UBUNTU_CODENAME=$(. /etc/os-release 2>/dev/null && echo "$VERSION_CODENAME")
+    if [ -z "$UBUNTU_CODENAME" ]; then
+        UBUNTU_CODENAME=$(lsb_release -cs 2>/dev/null || true)
+    fi
+    sudo install -m 0755 -d /etc/apt/keyrings
+    if [ ! -f /etc/apt/keyrings/docker.asc ]; then
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
+    fi
+    if [ -n "$UBUNTU_CODENAME" ]; then
+        # Write as a single line to avoid accidental pipes/newlines in sources.list
+        printf "deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu %s stable\n" \
+          "$(dpkg --print-architecture)" "$UBUNTU_CODENAME" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+    fi
+}
+
+repair_docker_apt_source
+
 # Update system
 echo "Updating system packages..."
 sudo apt update && sudo apt upgrade -y
@@ -52,11 +73,10 @@ sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-# Add the repository to Apt sources
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# Add (or refresh) the Docker repository to Apt sources using a single line
+UBUNTU_CODENAME=$(. /etc/os-release 2>/dev/null && echo "$VERSION_CODENAME")
+printf "deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu %s stable\n" \
+  "$(dpkg --print-architecture)" "$UBUNTU_CODENAME" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 sudo apt-get update
 
 # Install Docker packages
