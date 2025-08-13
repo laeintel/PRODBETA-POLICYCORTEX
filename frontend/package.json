@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "IN_DOCKER=${IN_DOCKER:-false} next start -p 3000",
+    "start": "next start -p 3000",
+    "start:docker": "IN_DOCKER=true next start -p 3000",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "playwright test --reporter=list",
