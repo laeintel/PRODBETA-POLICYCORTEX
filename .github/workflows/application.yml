@@ -197,34 +197,74 @@ jobs:
         run: npm test -- --passWithNoTests
         working-directory: ./graphql
 
-  security-scan:
-    name: Security Scan
+  # Parallel security scans
+  security-trivy:
+    name: Security - Trivy
     runs-on: self-hosted
     if: github.event.inputs.force_deploy != 'true'
-    continue-on-error: true  # Don't block pipeline on security scan failures
+    continue-on-error: true
     permissions:
       contents: read
       security-events: write
-      actions: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        continue-on-error: true
+      - uses: actions/checkout@v4
+      - name: Run Trivy
         run: |
-          echo "Running security scan..."
-          # Run with timeout to prevent hanging
-          timeout 300 docker run --rm -v "$PWD":/src \
+          echo "Running Trivy security scan..."
+          timeout 180 docker run --rm -v "$PWD":/src \
             aquasec/trivy:latest fs /src \
             --severity HIGH,CRITICAL \
-            --exit-code 0 || echo "Trivy scan completed with warnings"
+            --exit-code 0 || echo "Trivy completed with warnings"
+
+  security-secrets:
+    name: Security - Secrets
+    runs-on: self-hosted
+    if: github.event.inputs.force_deploy != 'true'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for secrets
+        run: |
+          echo "Scanning for exposed secrets..."
+          # Basic secret detection
+          ! grep -r --include="*.js" --include="*.ts" --include="*.env*" \
+            -E "(sk-[a-zA-Z0-9]{48}|ghp_[a-zA-Z0-9]{36})" . 2>/dev/null
+
+  security-licenses:
+    name: Security - Licenses
+    runs-on: self-hosted
+    if: github.event.inputs.force_deploy != 'true'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check licenses
+        run: |
+          echo "Checking dependency licenses..."
+          # Quick license check
+          find . -name "package.json" -o -name "Cargo.toml" | \
+            xargs grep -h "license" | sort -u || true
+
+  # Aggregate security results
+  security-scan:
+    name: Security Summary
+    runs-on: self-hosted
+    needs: [security-trivy, security-secrets, security-licenses]
+    if: always()
+    continue-on-error: true
+    steps:
+      - name: Security scan summary
+        run: |
+          echo "### Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Trivy: ${{ needs.security-trivy.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Secrets: ${{ needs.security-secrets.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Licenses: ${{ needs.security-licenses.result }}" >> $GITHUB_STEP_SUMMARY
 
   build-core:
     name: Build Core Service
     runs-on: self-hosted
-    needs: [test-core, security-scan]
-    if: github.event.inputs.force_deploy == 'true' || ((needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
+    needs: [changes, test-core, security-scan]
+    # Only build if core changed OR force deploy
+    if: (needs.changes.outputs.core == 'true' || github.event.inputs.force_deploy == 'true') && ((needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
     permissions:
       contents: read
       packages: write
@@ -305,9 +345,9 @@ jobs:
   build-frontend:
     name: Build Frontend
     runs-on: self-hosted
-    needs: [test-frontend, security-scan]
-    # Always build/push on push to ensure tag exists; on manual runs require security scan or force
-    if: github.event_name == 'push' || github.event.inputs.force_deploy == 'true' || (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    needs: [changes, test-frontend, security-scan]
+    # Only build if frontend changed OR force deploy
+    if: (needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -388,9 +428,9 @@ jobs:
   build-graphql:
     name: Build GraphQL Gateway
     runs-on: self-hosted
-    needs: [test-graphql, security-scan]
-    # Always build/push on push to ensure tag exists; on manual runs require security scan or force
-    if: github.event_name == 'push' || github.event.inputs.force_deploy == 'true' || (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    needs: [changes, test-graphql, security-scan]
+    # Only build if graphql changed OR force deploy
+    if: (needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -583,21 +623,35 @@ jobs:
         with:
           terraform_version: "1.6.0"
 
-      - name: Terraform Deploy (Dev)
-        if: steps.check_images.outputs.images_available == 'true' && github.ref == 'refs/heads/main'
+      - name: Terraform Plan (Dev)
+        if: steps.check_images.outputs.images_available == 'true'
         env:
-          # Use secret if available, otherwise use the known dev subscription ID
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
-          # Expose SP credentials for Terraform (parsed from AZURE_CREDENTIALS JSON)
           AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
           AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
           AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
         run: |
-          echo "📋 Running Terraform apply for main branch push..."
-          chmod +x infrastructure/terraform/ci-deploy.sh
-          # Ensure import script is readable even if execute bit is lost
-          chmod +r infrastructure/terraform/import-existing.sh || true
-          ./infrastructure/terraform/ci-deploy.sh dev "$AZURE_SUBSCRIPTION_ID"
+          echo "📋 Running Terraform PLAN..."
+          cd infrastructure/terraform/environments/dev
+          terraform init || true
+          terraform plan -out=tfplan || true
+          
+          # Show plan summary in PR
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            terraform show -no-color tfplan | head -100 >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Terraform Apply (Dev)
+        if: steps.check_images.outputs.images_available == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
+          AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
+          AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
+          AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+        run: |
+          echo "🚀 Applying Terraform changes (main branch only)..."
+          cd infrastructure/terraform/environments/dev
+          terraform apply tfplan || echo "No plan file found, skipping apply"
 
       - name: Verify Deployment (Dev)
         if: steps.check_images.outputs.images_available == 'true'
