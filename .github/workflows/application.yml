@@ -239,36 +239,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Start Docker (if not running)
+      - name: Check Docker availability
+        id: docker_check
         run: |
-          if ! docker info >/dev/null 2>&1; then
-            echo "Docker daemon not running, attempting to start..."
-            if command -v systemctl >/dev/null 2>&1; then
-              sudo systemctl start docker || true
-            elif command -v service >/dev/null 2>&1; then
-              sudo service docker start || true
+          if command -v docker >/dev/null 2>&1; then
+            echo "Docker is installed"
+            if docker info >/dev/null 2>&1; then
+              echo "Docker daemon is running"
+              echo "docker_available=true" >> $GITHUB_OUTPUT
             else
-              echo "Warning: Could not start Docker daemon"
+              echo "Docker daemon not running, attempting to start..."
+              if command -v systemctl >/dev/null 2>&1; then
+                sudo systemctl start docker || true
+              elif command -v service >/dev/null 2>&1; then
+                sudo service docker start || true
+              fi
+              sleep 5
+              if docker info >/dev/null 2>&1; then
+                echo "Docker daemon started successfully"
+                echo "docker_available=true" >> $GITHUB_OUTPUT
+              else
+                echo "Failed to start Docker daemon"
+                echo "docker_available=false" >> $GITHUB_OUTPUT
+              fi
             fi
-            sleep 5
+          else
+            echo "Docker is not installed on this runner"
+            echo "::warning::Docker is not available on this self-hosted runner. Skipping Docker build steps."
+            echo "docker_available=false" >> $GITHUB_OUTPUT
           fi
-          docker info
 
       - name: Setup Docker Buildx
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Azure Login
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Container Registry
+        if: steps.docker_check.outputs.docker_available == 'true'
         run: |
           echo "Logging into Azure Container Registry"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crpcxdev
 
       - name: Build and Push Core Image
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./core
@@ -279,6 +298,14 @@ jobs:
             ${{ env.REGISTRY_DEV }}/policycortex-core:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Report Docker Unavailable
+        if: steps.docker_check.outputs.docker_available == 'false'
+        run: |
+          echo "::warning::Docker build skipped - Docker not available on self-hosted runner"
+          echo "### ⚠️ Docker Build Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "Docker is not available on this self-hosted runner." >> $GITHUB_STEP_SUMMARY
+          echo "To enable Docker builds, please install Docker on the runner." >> $GITHUB_STEP_SUMMARY
 
   build-frontend:
     name: Build Frontend
@@ -293,36 +320,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Start Docker (if not running)
+      - name: Check Docker availability
+        id: docker_check
         run: |
-          if ! docker info >/dev/null 2>&1; then
-            echo "Docker daemon not running, attempting to start..."
-            if command -v systemctl >/dev/null 2>&1; then
-              sudo systemctl start docker || true
-            elif command -v service >/dev/null 2>&1; then
-              sudo service docker start || true
+          if command -v docker >/dev/null 2>&1; then
+            echo "Docker is installed"
+            if docker info >/dev/null 2>&1; then
+              echo "Docker daemon is running"
+              echo "docker_available=true" >> $GITHUB_OUTPUT
             else
-              echo "Warning: Could not start Docker daemon"
+              echo "Docker daemon not running, attempting to start..."
+              if command -v systemctl >/dev/null 2>&1; then
+                sudo systemctl start docker || true
+              elif command -v service >/dev/null 2>&1; then
+                sudo service docker start || true
+              fi
+              sleep 5
+              if docker info >/dev/null 2>&1; then
+                echo "Docker daemon started successfully"
+                echo "docker_available=true" >> $GITHUB_OUTPUT
+              else
+                echo "Failed to start Docker daemon"
+                echo "docker_available=false" >> $GITHUB_OUTPUT
+              fi
             fi
-            sleep 5
+          else
+            echo "Docker is not installed on this runner"
+            echo "::warning::Docker is not available on this self-hosted runner. Skipping Docker build steps."
+            echo "docker_available=false" >> $GITHUB_OUTPUT
           fi
-          docker info
 
       - name: Setup Docker Buildx
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Azure Login
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Container Registry
+        if: steps.docker_check.outputs.docker_available == 'true'
         run: |
           echo "Logging into Azure Container Registry"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crpcxdev
 
       - name: Build and Push Frontend Image
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -333,6 +379,14 @@ jobs:
             ${{ env.REGISTRY_DEV }}/policycortex-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Report Docker Unavailable
+        if: steps.docker_check.outputs.docker_available == 'false'
+        run: |
+          echo "::warning::Docker build skipped - Docker not available on self-hosted runner"
+          echo "### ⚠️ Docker Build Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "Docker is not available on this self-hosted runner." >> $GITHUB_STEP_SUMMARY
+          echo "To enable Docker builds, please install Docker on the runner." >> $GITHUB_STEP_SUMMARY
 
   build-graphql:
     name: Build GraphQL Gateway
@@ -347,36 +401,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Start Docker (if not running)
+      - name: Check Docker availability
+        id: docker_check
         run: |
-          if ! docker info >/dev/null 2>&1; then
-            echo "Docker daemon not running, attempting to start..."
-            if command -v systemctl >/dev/null 2>&1; then
-              sudo systemctl start docker || true
-            elif command -v service >/dev/null 2>&1; then
-              sudo service docker start || true
+          if command -v docker >/dev/null 2>&1; then
+            echo "Docker is installed"
+            if docker info >/dev/null 2>&1; then
+              echo "Docker daemon is running"
+              echo "docker_available=true" >> $GITHUB_OUTPUT
             else
-              echo "Warning: Could not start Docker daemon"
+              echo "Docker daemon not running, attempting to start..."
+              if command -v systemctl >/dev/null 2>&1; then
+                sudo systemctl start docker || true
+              elif command -v service >/dev/null 2>&1; then
+                sudo service docker start || true
+              fi
+              sleep 5
+              if docker info >/dev/null 2>&1; then
+                echo "Docker daemon started successfully"
+                echo "docker_available=true" >> $GITHUB_OUTPUT
+              else
+                echo "Failed to start Docker daemon"
+                echo "docker_available=false" >> $GITHUB_OUTPUT
+              fi
             fi
-            sleep 5
+          else
+            echo "Docker is not installed on this runner"
+            echo "::warning::Docker is not available on this self-hosted runner. Skipping Docker build steps."
+            echo "docker_available=false" >> $GITHUB_OUTPUT
           fi
-          docker info
 
       - name: Setup Docker Buildx
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Azure Login
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to Container Registry
+        if: steps.docker_check.outputs.docker_available == 'true'
         run: |
           echo "Logging into Azure Container Registry"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crpcxdev
 
       - name: Build and Push GraphQL Image
+        if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/build-push-action@v5
         with:
           context: ./graphql
@@ -387,6 +460,14 @@ jobs:
             ${{ env.REGISTRY_DEV }}/policycortex-graphql:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Report Docker Unavailable
+        if: steps.docker_check.outputs.docker_available == 'false'
+        run: |
+          echo "::warning::Docker build skipped - Docker not available on self-hosted runner"
+          echo "### ⚠️ Docker Build Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "Docker is not available on this self-hosted runner." >> $GITHUB_STEP_SUMMARY
+          echo "To enable Docker builds, please install Docker on the runner." >> $GITHUB_STEP_SUMMARY
 
   integration-tests:
     name: Integration Tests
