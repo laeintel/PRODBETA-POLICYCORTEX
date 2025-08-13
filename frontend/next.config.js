@@ -2,7 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  output: 'standalone',
+  // Only use standalone for Docker builds
+  output: process.env.DOCKER === 'true' ? 'standalone' : undefined,
   images: {
     domains: ['localhost'],
   },
