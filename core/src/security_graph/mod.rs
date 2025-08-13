@@ -737,10 +737,11 @@ impl SecurityGraphEngine {
 
         // Sort by risk score (handle NaN safely)
         use std::cmp::Ordering;
-        paths.sort_by(|a, b| b
-            .risk_score
-            .partial_cmp(&a.risk_score)
-            .unwrap_or(Ordering::Equal));
+        paths.sort_by(|a, b| {
+            b.risk_score
+                .partial_cmp(&a.risk_score)
+                .unwrap_or(Ordering::Equal)
+        });
         paths
     }
 
@@ -1046,9 +1047,10 @@ fn generate_prioritized_mitigations(paths: &[AttackPath]) -> Vec<MitigationBundl
 
     let mut mitigations: Vec<MitigationBundle> = mitigation_map.into_values().collect();
     use std::cmp::Ordering;
-    mitigations.sort_by(|a, b| b
-        .effectiveness
-        .partial_cmp(&a.effectiveness)
-        .unwrap_or(Ordering::Equal));
+    mitigations.sort_by(|a, b| {
+        b.effectiveness
+            .partial_cmp(&a.effectiveness)
+            .unwrap_or(Ordering::Equal)
+    });
     mitigations.into_iter().take(10).collect()
 }

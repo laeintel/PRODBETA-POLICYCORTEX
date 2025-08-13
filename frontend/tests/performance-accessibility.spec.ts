@@ -360,7 +360,7 @@ test.describe('Accessibility Tests', () => {
     // Check for animation styles
     const animatedElements = await page.evaluate(() => {
       const elements = document.querySelectorAll('*');
-      const animated = [];
+      const animated: Array<{animation: string, transition: string}> = [];
       
       elements.forEach(el => {
         const styles = window.getComputedStyle(el);

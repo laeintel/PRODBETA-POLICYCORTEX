@@ -680,7 +680,10 @@ pub async fn get_secrets_status(State(state): State<Arc<AppState>>) -> impl Into
         .into_response()
 }
 
-pub async fn export_prometheus(State(state): State<Arc<AppState>>, auth: OptionalAuthUser) -> impl IntoResponse {
+pub async fn export_prometheus(
+    State(state): State<Arc<AppState>>,
+    auth: OptionalAuthUser,
+) -> impl IntoResponse {
     // In production, require auth for metrics to avoid exposing internals
     let is_prod = matches!(
         std::env::var("ENVIRONMENT").as_deref(),

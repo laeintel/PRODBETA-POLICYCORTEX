@@ -282,6 +282,7 @@ test.describe('Patent Features - Core Innovations', () => {
   });
 
   test('should verify all four patents are accessible via API', async ({ page }) => {
+    const apiURL = process.env.API_URL || 'http://localhost:8080';
     const patentEndpoints = [
       '/api/v1/metrics',        // Patent 1: Unified Platform
       '/api/v1/predictions',    // Patent 2: Predictive Compliance

@@ -104,13 +104,20 @@ async fn main() {
         ]);
         let tracer_opt = match opentelemetry_otlp::new_pipeline()
             .tracing()
-            .with_exporter(opentelemetry_otlp::new_exporter().tonic().with_endpoint(otlp))
+            .with_exporter(
+                opentelemetry_otlp::new_exporter()
+                    .tonic()
+                    .with_endpoint(otlp),
+            )
             .with_trace_config(opentelemetry_sdk::trace::Config::default().with_resource(resource))
             .install_batch(opentelemetry_sdk::runtime::Tokio)
         {
             Ok(t) => Some(t),
             Err(e) => {
-                warn!("OpenTelemetry tracer init failed: {}. Continuing without tracing.", e);
+                warn!(
+                    "OpenTelemetry tracer init failed: {}. Continuing without tracing.",
+                    e
+                );
                 // Fallback: initialize without otel layer
                 tracing_subscriber::registry()
                     .with(tracing_subscriber::EnvFilter::new(env_filter.to_string()))
@@ -174,7 +181,10 @@ async fn main() {
     let recorder = match metrics_exporter_prometheus::PrometheusBuilder::new().install_recorder() {
         Ok(r) => r,
         Err(e) => {
-            warn!("Prometheus recorder init failed: {}. Metrics endpoint disabled.", e);
+            warn!(
+                "Prometheus recorder init failed: {}. Metrics endpoint disabled.",
+                e
+            );
             // Create a dummy handle; export endpoint will 503 when None
             // We cannot create a real handle here; set later as None
             // For code structure, we'll track via Option below
