@@ -149,7 +149,6 @@ models/continuous_learning/*.pt
 
 # Project-specific ignores
 design docs/
-docs/
 frontend/errors/
 training instructions/
 training/
@@ -157,7 +156,6 @@ design_docs/
 training_instructions/
 
 # Documentation and design files (not for repo)
-/docs/**
 /design docs/**
 /training instructions/**
 /frontend/errors/**
