@@ -1,24 +1,32 @@
-name: Azure Infra Terraform
+name: Azure Infra Terraform (Reusable)
 
 on:
+  # Reusable; invoked by entry workflow or manually
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target environment (dev|prod)"
+        required: false
+        default: dev
+        type: string
+      apply:
+        description: "Apply changes (true/false)"
+        required: false
+        default: true
+        type: boolean
   workflow_dispatch:
     inputs:
       environment:
         description: "Target environment (dev|prod)"
         required: true
         default: dev
+        type: choice
+        options: [dev, prod]
       apply:
         description: "Apply changes (true/false)"
         required: true
         default: true
-  push:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/terraform/**'
-      - '.github/workflows/azure-infra.yml'
-  pull_request:
-    paths:
-      - 'infrastructure/terraform/**'
+        type: boolean
 
 concurrency:
   group: infra-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'matrix' }}

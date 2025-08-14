@@ -1,9 +1,13 @@
-name: Deploy
+name: Deploy (Reusable)
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  # Allow call from entry workflow and manual runs
+  workflow_call:
+    inputs:
+      from_tag:
+        description: 'Optional semver tag to deploy'
+        required: false
+        type: string
   workflow_dispatch:
 
 jobs:

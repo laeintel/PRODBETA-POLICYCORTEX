@@ -1,17 +1,25 @@
-name: Application CI/CD
+name: Application CI/CD (Reusable)
 
 on:
-  # Automatic trigger on push to main (after CI passes)
-  push:
-    branches:
-      - main
-    paths:
-      - 'core/**'
-      - 'frontend/**'
-      - 'graphql/**'
-      - '.github/workflows/application.yml'
-      
-  # Manual trigger
+  # Converted to reusable workflow; invoked from entry workflow
+  workflow_call:
+    inputs:
+      target_env:
+        description: 'Environment to deploy'
+        required: false
+        default: 'dev'
+        type: string
+      force_deploy:
+        description: 'Force deployment (skip tests)'
+        required: false
+        default: false
+        type: boolean
+      run_tests:
+        description: 'Run tests before deployment'
+        required: false
+        default: true
+        type: boolean
+  # Still allow manual dispatch for ad-hoc runs
   workflow_dispatch:
     inputs:
       target_env:

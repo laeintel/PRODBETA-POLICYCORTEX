@@ -1,13 +1,9 @@
 name: Fallback CI (No Docker Required)
 
 on:
+  # Converted to reusable; invoke from entry if desired, or run manually
+  workflow_call:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'core/**'
-      - 'frontend/**'
-      - 'graphql/**'
 
 jobs:
   # Use GitHub-hosted runners when self-hosted unavailable

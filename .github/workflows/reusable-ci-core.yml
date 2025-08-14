@@ -1,0 +1,47 @@
+name: Reusable Rust Core CI
+
+on:
+  workflow_call:
+    inputs:
+      rust-toolchain:
+        description: Rust toolchain version (toolchain spec)
+        required: false
+        default: stable
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+          components: clippy, rustfmt
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            core
+            crates
+      - name: Format check
+        run: cargo fmt --all -- --check
+        working-directory: core
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        working-directory: core
+      - name: Build
+        run: cargo build --workspace --all-features --locked
+        working-directory: core
+      - name: Test
+        run: cargo test --workspace --all-features --locked -- --nocapture
+        working-directory: core
+
+
