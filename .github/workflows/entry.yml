@@ -11,7 +11,7 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  actions: write
   security-events: write
   id-token: write
   packages: write
@@ -97,7 +97,7 @@ jobs:
     uses: ./.github/workflows/supply-chain.yml
     permissions:
       contents: read
-      actions: read
+      actions: write
       security-events: write
     secrets: inherit
 
