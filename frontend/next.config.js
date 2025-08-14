@@ -46,6 +46,8 @@ const nextConfig = {
     const backendHost = isDocker ? `http://${backendService}:${backendPort}` : 'http://localhost:8080';
     const graphqlHost = isDocker ? 'http://graphql:4000' : 'http://localhost:4000';
     return [
+      // Health passthrough so client-side calls to /health work in dev
+      { source: '/health', destination: `${backendHost}/health` },
       { source: '/api/v1/:path*', destination: `${backendHost}/api/v1/:path*` },
       { source: '/api/:path*', destination: `${backendHost}/api/:path*` },
       { source: '/actions/:path*', destination: `${backendHost}/api/v1/actions/:path*` },
