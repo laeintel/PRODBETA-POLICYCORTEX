@@ -16,7 +16,7 @@ resource "azurerm_resource_group" "terraform_state" {
 
 # Create storage account for Terraform state with locking enabled
 resource "azurerm_storage_account" "terraform_state" {
-  count                   = var.manage_state_storage ? 1 : 0
+  count                    = var.manage_state_storage ? 1 : 0
   name                     = "stterraformstate${var.environment}"
   resource_group_name      = azurerm_resource_group.terraform_state[0].name
   location                 = azurerm_resource_group.terraform_state[0].location
