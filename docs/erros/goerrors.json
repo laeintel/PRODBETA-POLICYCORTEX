@@ -1,0 +1,405 @@
+XHRPOST
+http://localhost:3000/api/v1/chat
+[HTTP/1.1 401 Unauthorized 8ms]
+
+[Fast Refresh] rebuilding hot-reloader-client.js:176:25
+[Fast Refresh] rebuilding hot-reloader-client.js:176:25
+[Thu, 14 Aug 2025 00:24:45 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token 2 auth-config.ts:47:21
+[Thu, 14 Aug 2025 00:24:45 GMT] : [0198a5f7-022a-7c11-bb3b-a7d25840e40a] : @azure/msal-common@15.11.0 : Info - CacheManager:getAccessToken - No token found auth-config.ts:47:21
+[Thu, 14 Aug 2025 00:24:45 GMT] : [0198a5f7-022a-7c11-bb3b-a7d25840e40a] : @azure/msal-common@15.11.0 : Info - Token refresh is required due to cache outcome: 2 auth-config.ts:47:21
+[Thu, 14 Aug 2025 00:24:45 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getRefreshToken - returning refresh token auth-config.ts:47:21
+[Thu, 14 Aug 2025 00:24:45 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token 3 auth-config.ts:47:21
+[Thu, 14 Aug 2025 00:24:45 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token auth-config.ts:47:21
+Warning: Cannot update a component (`HotReload`) while rendering a different component (`RbacPage`). To locate the bad setState() call inside `RbacPage`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+RbacPage@webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:31:104
+StaticGenerationSearchParamsBailoutProvider@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/static-generation-searchparams-bailout-provider.js:15:64
+InnerLayoutRouter@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:241:18
+RedirectErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:72:9
+RedirectBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:80:24
+NotFoundBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:62:62
+LoadingBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:315:76
+ErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:130:67
+InnerScrollAndFocusHandler@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:151:9
+ScrollAndFocusHandler@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:226:37
+RenderFromTemplateContext@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:15:44
+OuterLayoutRouter@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:325:209
+InnerLayoutRouter@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:241:18
+RedirectErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:72:9
+RedirectBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:80:24
+NotFoundErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:54:9
+NotFoundBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:62:62
+LoadingBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:315:76
+ErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:130:67
+InnerScrollAndFocusHandler@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:151:9
+ScrollAndFocusHandler@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:226:37
+RenderFromTemplateContext@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:15:44
+OuterLayoutRouter@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:325:209
+DemoDataProvider@webpack-internal:///(app-pages-browser)/./contexts/DemoDataProvider.tsx:19:24
+ApolloProvider@webpack-internal:///(app-pages-browser)/./node_modules/@apollo/client/react/context/ApolloProvider.js:14:18
+QueryClientProvider@webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:27
+I18nProvider@webpack-internal:///(app-pages-browser)/./lib/i18n.tsx:315:49
+AuthProviderInner@webpack-internal:///(app-pages-browser)/./contexts/AuthContext.tsx:59:24
+MsalProvider@webpack-internal:///(app-pages-browser)/./node_modules/@azure/msal-react/dist/MsalProvider.js:89:22
+AuthProvider@webpack-internal:///(app-pages-browser)/./contexts/AuthContext.tsx:172:24
+Providers@webpack-internal:///(app-pages-browser)/./app/providers.tsx:43:24
+body
+html
+RedirectErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:72:9
+RedirectBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:80:24
+NotFoundErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:54:9
+NotFoundBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:62:62
+DevRootNotFoundBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:32:24
+ReactDevOverlay@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/internal/ReactDevOverlay.js:66:9
+HotReload@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/hot-reloader-client.js:295:37
+Router@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:159:100
+ErrorBoundaryHandler@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:100:9
+ErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:130:67
+AppRouter@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:436:47
+ServerRoot@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:128:24
+RSCComponent
+Root@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:144:24 app-index.js:32:22
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 11
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 8
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 8
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 8
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 8
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 8
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 12
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 9
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 9
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 9
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 9
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+Uncaught TypeError: can't access property "toLowerCase", a.principalName is undefined
+    rows webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:37
+    RbacPage webpack-internal:///(app-pages-browser)/./app/rbac/page.tsx:35
+    React 9
+    workLoop webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:261
+    flushWork webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:230
+    performWorkUntilDeadline webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:534
+    EventHandlerNonNull* webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:569
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:630
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/scheduler/index.js:4
+    NextJS 4
+    React 2
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/index.js:32
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/client.js:3
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:16
+    NextJS 4
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:9
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:57
+    loadScriptsInSequence webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:23
+    appBootstrap webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-bootstrap.js:56
+    <anonymous> webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-next-dev.js:8
+    NextJS 7
+page.tsx:21:5
+The above error occurred in the <NotFoundErrorBoundary> component:
+
+NotFoundErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:54:9
+NotFoundBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:62:62
+DevRootNotFoundBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:32:24
+ReactDevOverlay@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/internal/ReactDevOverlay.js:66:9
+HotReload@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/hot-reloader-client.js:295:37
+Router@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:159:100
+ErrorBoundaryHandler@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:100:9
+ErrorBoundary@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:130:67
+AppRouter@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:436:47
+ServerRoot@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:128:24
+RSCComponent
+Root@webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:144:24
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ReactDevOverlay. app-index.js:32:22
+This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”.
+main-app.js:206:15
+This page is in Quirks Mode. Page layout may be impacted. For Standards Mode use “<!DOCTYPE html>”.
+main-app.js:485:24
+Content-Security-Policy: The page’s settings blocked the loading of a resource (object-src) at data:image/svg+xml;base64,PHN2ZyB4bWxucz… because it violates the following directive: “object-src 'none'”
