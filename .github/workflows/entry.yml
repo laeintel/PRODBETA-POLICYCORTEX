@@ -131,6 +131,8 @@ jobs:
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read
+      actions: read
+      security-events: write
       packages: write
     with:
       target_env: 'dev'
