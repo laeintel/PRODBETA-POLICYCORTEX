@@ -333,6 +333,8 @@ async fn main() {
         .route("/api/v1/evidence", get(get_evidence_pack))
         .route("/api/v1/frameworks", get(list_frameworks))
         .route("/api/v1/frameworks/:id", get(get_framework))
+        // Azure OpenAI Realtime (WebRTC) SDP exchange endpoint
+        .route("/api/v1/voice/realtime/sdp", post(crate::api::realtime_sdp))
         .route("/api/v1/policies/drift", get(get_policy_drift))
         // Global SSE events stream
         .route("/api/v1/events", get(stream_events))

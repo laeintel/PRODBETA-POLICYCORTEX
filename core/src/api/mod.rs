@@ -11,6 +11,8 @@ use axum::{
     },
     Json,
 };
+use axum::routing::post;
+use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use chrono::{DateTime, Utc};
 use flate2::{write::GzEncoder, Compression};
 use metrics::counter;
@@ -846,6 +848,101 @@ pub async fn export_policies(State(_state): State<Arc<AppState>>) -> impl IntoRe
     Json(serde_json::json!({"items": items, "count": items.len()}))
 }
 
+// ===================== Azure OpenAI Realtime (WebRTC SDP exchange) =====================
+/// Browser posts an SDP offer; we forward to Azure OpenAI Realtime and return the SDP answer.
+pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoResponse {
+    use axum::body::to_bytes;
+    let endpoint = match std::env::var("AZURE_OPENAI_ENDPOINT") {
+        Ok(v) => v,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error":"AZURE_OPENAI_ENDPOINT not set"})),
+            )
+                .into_response()
+        }
+    };
+    let api_key = match std::env::var("AZURE_OPENAI_API_KEY") {
+        Ok(v) => v,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error":"AZURE_OPENAI_API_KEY not set"})),
+            )
+                .into_response()
+        }
+    };
+    let deployment = match std::env::var("AZURE_OPENAI_REALTIME_DEPLOYMENT") {
+        Ok(v) => v,
+        Err(_) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error":"AZURE_OPENAI_REALTIME_DEPLOYMENT not set"})),
+            )
+                .into_response()
+        }
+    };
+    let api_version = std::env::var("AZURE_OPENAI_API_VERSION")
+        .ok()
+        .unwrap_or_else(|| "2024-05-01-preview".to_string());
+
+    let offer_sdp = match to_bytes(req.body_mut(), usize::MAX).await {
+        Ok(b) => b,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error":format!("invalid body: {}", e)})),
+            )
+                .into_response()
+        }
+    };
+
+    let url = format!(
+        "{}/openai/deployments/{}/realtime?api-version={}",
+        endpoint.trim_end_matches('/'),
+        deployment,
+        api_version
+    );
+
+    let client = reqwest::Client::new();
+    match client
+        .post(&url)
+        .header("api-key", api_key)
+        .header("OpenAI-Beta", "realtime=v1")
+        .header(axum::http::header::CONTENT_TYPE, "application/sdp")
+        .header(axum::http::header::ACCEPT, "application/sdp")
+        .body(offer_sdp)
+        .send()
+        .await
+    {
+        Ok(resp) => {
+            let status = resp.status();
+            let headers = resp.headers().clone();
+            match resp.bytes().await {
+                Ok(bytes) => {
+                    let mut builder = Response::builder().status(status);
+                    if let Some(ct) = headers.get(axum::http::header::CONTENT_TYPE) {
+                        builder = builder.header(axum::http::header::CONTENT_TYPE, ct);
+                    } else {
+                        builder = builder.header(axum::http::header::CONTENT_TYPE, "application/sdp");
+                    }
+                    builder.body(Body::from(bytes)).unwrap().into_response()
+                }
+                Err(e) => (
+                    StatusCode::BAD_GATEWAY,
+                    Json(serde_json::json!({"error": format!("upstream read failed: {}", e)})),
+                )
+                    .into_response(),
+            }
+        }
+        Err(e) => (
+            StatusCode::BAD_GATEWAY,
+            Json(serde_json::json!({"error": format!("upstream error: {}", e)})),
+        )
+            .into_response(),
+    }
+}
+
 // ===================== Basic API Tests (increase coverage) =====================
 #[cfg(test)]
 mod tests {
@@ -1167,10 +1264,74 @@ pub async fn process_conversation(
             .unwrap_or("unknown user")
     );
 
-    // Simulate NLP processing with user context
+    // If Azure AI Foundry / Azure OpenAI is configured, forward to it
+    let azure_endpoint = std::env::var("AZURE_OPENAI_ENDPOINT").ok();
+    let azure_api_key = std::env::var("AZURE_OPENAI_API_KEY").ok();
+    let azure_deployment = std::env::var("AZURE_OPENAI_DEPLOYMENT").ok();
+
+    if let (Some(endpoint), Some(api_key), Some(deployment)) =
+        (azure_endpoint.clone(), azure_api_key.clone(), azure_deployment.clone())
+    {
+        let api_version = std::env::var("AZURE_OPENAI_API_VERSION")
+            .ok()
+            .unwrap_or_else(|| "2024-05-01-preview".to_string());
+        let url = format!(
+            "{}/openai/deployments/{}/chat/completions?api-version={}",
+            endpoint.trim_end_matches('/'),
+            deployment,
+            api_version
+        );
+        let system_prompt = "You are PolicyCortex's governance AI. Be concise. Reply with suggested_actions as a list of action identifiers when applicable.";
+
+        let body = serde_json::json!({
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": format!("{}{}", request.query, user_context)}
+            ],
+            "temperature": 0.2,
+            "top_p": 0.9
+        });
+
+        match reqwest::Client::new()
+            .post(&url)
+            .header("api-key", api_key)
+            .header(CONTENT_TYPE, "application/json")
+            .json(&body)
+            .send()
+            .await
+        {
+            Ok(resp) if resp.status().is_success() => {
+                if let Ok(json) = resp.json::<serde_json::Value>().await {
+                    let content = json["choices"][0]["message"]["content"]
+                        .as_str()
+                        .unwrap_or("")
+                        .to_string();
+                    let response = ConversationResponse {
+                        response: content.clone(),
+                        intent: infer_intent(&request.query),
+                        confidence: 92.0,
+                        suggested_actions: extract_suggestions(&content),
+                        generated_policy: None,
+                    };
+                    return Json(response);
+                }
+            }
+            Ok(resp) => {
+                tracing::warn!(
+                    "Azure OpenAI returned non-success: {}",
+                    resp.status()
+                );
+            }
+            Err(e) => {
+                tracing::warn!("Azure OpenAI call failed: {}", e);
+            }
+        }
+    }
+
+    // Fallback simulated response
     let response = ConversationResponse {
         response: format!("I understand you're asking about: {}{}. Based on your environment analysis, I recommend reviewing the cost optimization opportunities that could save you $12,450/month.", request.query, user_context),
-        intent: "cost_inquiry".to_string(),
+        intent: infer_intent(&request.query),
         confidence: 92.5,
         suggested_actions: vec![
             "Review VM sizing recommendations".to_string(),
@@ -1192,6 +1353,30 @@ pub async fn process_conversation(
     };
 
     Json(response)
+}
+
+fn infer_intent(query: &str) -> String {
+    let q = query.to_lowercase();
+    if q.contains("cost") { "cost_inquiry".to_string() }
+    else if q.contains("security") { "security_insight".to_string() }
+    else if q.contains("compliance") || q.contains("policy") { "compliance_policy".to_string() }
+    else { "general".to_string() }
+}
+
+fn extract_suggestions(text: &str) -> Vec<String> {
+    // Very simple heuristic; in production parse structured tool output
+    let mut out = Vec::new();
+    for key in [
+        ("vm", "optimize_vm_sizing"),
+        ("tag", "enforce_resource_tags"),
+        ("rbac", "review_rbac_permissions"),
+        ("network", "review_nsg_rules"),
+    ] {
+        if text.to_lowercase().contains(key.0) {
+            out.push(key.1.to_string());
+        }
+    }
+    out
 }
 
 pub async fn get_correlations(auth_user: OptionalAuthUser) -> impl IntoResponse {
