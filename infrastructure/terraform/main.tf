@@ -162,9 +162,7 @@ resource "azurerm_cognitive_deployment" "openai_realtime" {
   }
 
   scale {
-    type     = "Standard"
-    tier     = "Standard"
-    capacity = 1
+    type = "Standard"
   }
 }
 
@@ -180,9 +178,7 @@ resource "azurerm_cognitive_deployment" "openai_chat" {
   }
 
   scale {
-    type     = "Standard"
-    tier     = "Standard"
-    capacity = 1
+    type = "Standard"
   }
 }
 
