@@ -146,6 +146,20 @@ variable "enable_openai_deployments" {
   default     = false
 }
 
+# Generic list of OpenAI deployments you want to create. If empty, none will
+# be created unless you use the legacy per-model variables above.
+variable "openai_deployments" {
+  description = "List of OpenAI deployments to create"
+  type = list(object({
+    deploy_name   = string
+    model_name    = string
+    model_version = string
+    format        = string
+    scale_type    = string
+  }))
+  default = []
+}
+
 resource "azurerm_cognitive_account" "openai" {
   name                          = local.openai_account_name
   location                      = azurerm_resource_group.main.location
@@ -158,37 +172,27 @@ resource "azurerm_cognitive_account" "openai" {
   tags = local.common_tags
 }
 
-resource "azurerm_cognitive_deployment" "openai_realtime" {
-  count                = var.enable_openai_deployments ? 1 : 0
-  name                 = local.openai_realtime_deploy_name
-  cognitive_account_id = azurerm_cognitive_account.openai.id
-  rai_policy_name      = null
-
-  model {
-    format  = "OpenAI"
-    name    = local.openai_realtime_model_name
-    version = local.openai_realtime_model_ver
-  }
-
-  scale {
-    type = "Standard"
-  }
+locals {
+  # Build the deployment list from either explicit list, or legacy defaults
+  _default_openai_deployments = []
+  effective_openai_deployments = length(var.openai_deployments) > 0 ? var.openai_deployments : local._default_openai_deployments
 }
 
-resource "azurerm_cognitive_deployment" "openai_chat" {
-  count                = var.enable_openai_deployments ? 1 : 0
-  name                 = local.openai_chat_deploy_name
+resource "azurerm_cognitive_deployment" "openai" {
+  for_each = var.enable_openai_deployments ? { for d in local.effective_openai_deployments : d.deploy_name => d } : {}
+
+  name                 = each.value.deploy_name
   cognitive_account_id = azurerm_cognitive_account.openai.id
   rai_policy_name      = null
 
   model {
-    format  = "OpenAI"
-    name    = local.openai_chat_model_name
-    version = local.openai_chat_model_ver
+    format  = each.value.format
+    name    = each.value.model_name
+    version = each.value.model_version
   }
 
   scale {
-    type = "Standard"
+    type = each.value.scale_type
   }
 }
 
@@ -553,6 +557,11 @@ output "postgresql_fqdn" {
 output "cosmosdb_endpoint" {
   description = "Cosmos DB endpoint"
   value       = azurerm_cosmosdb_account.main.endpoint
+}
+
+output "openai_endpoint" {
+  description = "Azure OpenAI endpoint"
+  value       = azurerm_cognitive_account.openai.endpoint
 }
 
 output "container_registry_login_server" {
