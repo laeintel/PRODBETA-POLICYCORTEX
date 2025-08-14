@@ -108,7 +108,8 @@ jobs:
     uses: ./.github/workflows/secret-scan.yml
     permissions:
       contents: read
-      security-events: write
+      # Only enable code scanning upload if license is provided
+      security-events: ${{ secrets.GITLEAKS_LICENSE != '' && 'write' || 'none' }}
     secrets: inherit
 
   infra:
