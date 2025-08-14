@@ -1,6 +1,12 @@
 # Backend configuration moved to environments/dev and environments/prod
 # This file now only contains the storage account resources for state management
 
+# Resource group to hold Terraform state resources
+resource "azurerm_resource_group" "terraform_state" {
+  name     = "rg-terraform-state-${var.environment}"
+  location = var.location
+}
+
 # Create storage account for Terraform state with locking enabled
 resource "azurerm_storage_account" "terraform_state" {
   name                     = "stterraformstate${var.environment}"
@@ -16,10 +22,7 @@ resource "azurerm_storage_account" "terraform_state" {
     delete_retention_policy {
       days = 30
     }
-  }
 
-  # Enable soft delete for accidental deletion protection
-  blob_properties {
     container_delete_retention_policy {
       days = 7
     }
