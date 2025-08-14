@@ -87,7 +87,7 @@ flate2 = "1.0"
 dotenv = "0.15"
 
 # UUID
-uuid = { version = "1.0", features = ["serde", "v4"] }
+uuid = { version = "1.18", features = ["serde", "v4"] }
 
 # Error handling
 thiserror = "1.0"
