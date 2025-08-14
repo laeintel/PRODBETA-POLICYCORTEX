@@ -493,10 +493,12 @@ output "container_app_environment_id" {
 
 output "container_app_core_url" {
   description = "Core API Container App URL"
-  value       = "https://${azurerm_container_app.core.latest_revision_fqdn}"
+  # Use stable ingress FQDN to avoid plan churn on new revisions
+  value = "https://${azurerm_container_app.core.ingress[0].fqdn}"
 }
 
 output "container_app_frontend_url" {
   description = "Frontend Container App URL"
-  value       = "https://${azurerm_container_app.frontend.latest_revision_fqdn}"
+  # Use stable ingress FQDN to avoid plan churn on new revisions
+  value = "https://${azurerm_container_app.frontend.ingress[0].fqdn}"
 }

@@ -1,8 +1,8 @@
 # Multi-stage build for Rust backend (single-crate layout)
 FROM rust:alpine AS builder
 
-# Build dependencies
-RUN apk add --no-cache build-base pkgconfig perl
+# Build dependencies (include OpenSSL headers for crates that need it)
+RUN apk add --no-cache build-base pkgconfig perl openssl-dev
 
 WORKDIR /app
 
@@ -26,7 +26,8 @@ RUN apk add --no-cache \
     ca-certificates \
     libgcc \
     wget \
-    netcat-openbsd
+    netcat-openbsd \
+    openssl
 
 # Create non-root user with home directory
 RUN addgroup -g 1000 policycortex && \

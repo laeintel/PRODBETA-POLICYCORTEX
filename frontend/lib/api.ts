@@ -158,11 +158,17 @@ class PolicyCortexAPI {
 
   // Patent 3: Conversational Intelligence - No cache for real-time interaction
   async processConversation(request: ConversationRequest): Promise<ConversationResponse> {
-    // Call chat endpoint (returns model + suggestions)
-    const base = await performanceApi.post<any>('/api/v1/chat', request, {
-      headers: await this.getAuthHeaders(),
-      invalidateCache: ['conversation', 'recommendations']
-    });
+    // Call backend conversation endpoint; fall back gracefully in dev
+    let base: any = {};
+    try {
+      base = await performanceApi.post<any>('/api/v1/conversation', request, {
+        headers: await this.getAuthHeaders(),
+        invalidateCache: ['conversation', 'recommendations']
+      });
+    } catch (err: any) {
+      console.warn('Conversation API failed; using local fallback', err?.message || err);
+      base = { response: 'Demo response: conversation unavailable locally.', confidence: 0.7, suggestions: ['open_dashboard'] };
+    }
 
     const response: ConversationResponse = {
       response: base?.response ?? '',

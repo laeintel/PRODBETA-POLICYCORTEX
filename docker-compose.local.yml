@@ -14,10 +14,12 @@ services:
       - REDIS_URL=redis://dragonfly:6379
       - EVENT_STORE_URL=http://eventstore:2113
       - DEEP_API_BASE=http://api-gateway:8090
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - postgres
       - dragonfly
       - eventstore
+      - otel-collector
 
   # GraphQL Gateway
   graphql:
@@ -31,8 +33,10 @@ services:
       - CORE_SERVICE_URL=http://core:8080
       - APOLLO_KEY=${APOLLO_KEY:-dev}
       - APOLLO_GRAPH_REF=${APOLLO_GRAPH_REF:-local}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - core
+      - otel-collector
 
   # Next.js Frontend
   frontend:
@@ -61,8 +65,10 @@ services:
       - "8090:8090"
     environment:
       - REQUIRE_AUTH=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     depends_on:
       - core
+      - otel-collector
 
   # PostgreSQL for event store
   postgres:
@@ -100,6 +106,16 @@ services:
       - EVENTSTORE_START_STANDARD_PROJECTIONS=true
     volumes:
       - eventstore_data:/var/lib/eventstore
+
+  # OpenTelemetry Collector for local tracing/metrics export
+  otel-collector:
+    image: otel/opentelemetry-collector:0.93.0
+    command: ["--config", "/etc/otelcol/config.yaml"]
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
 
 
 volumes:

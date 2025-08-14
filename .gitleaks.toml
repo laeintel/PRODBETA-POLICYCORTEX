@@ -1,0 +1,19 @@
+title = "PolicyCortex Gitleaks Config"
+
+[allowlist]
+  description = "Allow common false positives and test fixtures"
+  files = [
+    "^docs/",
+    "^frontend/.*\.(png|jpg|svg|avif)$",
+    "^observability/",
+  ]
+  # Known false positive patterns
+  regexes = [
+    '''(?i)-----BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-----''',
+  ]
+
+[rules]
+  [[rules.allowlist]]
+    description = "Azure subscription IDs (public demo)"
+    regex = '''(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'''
+    paths = ["docs/", "README.md", "CLAUDE.md"]

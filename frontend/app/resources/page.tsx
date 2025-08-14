@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+'use client'
+import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
 import MockDataIndicator, { useMockDataStatus } from '@/components/MockDataIndicator'
-import VirtualizedTable from '@/components/VirtualizedTable'
+const VirtualizedTable = dynamic(() => import('@/components/VirtualizedTable'), { ssr: false })
+const ActionDrawer = dynamic(() => import('../../components/ActionDrawer'), { ssr: false })
 import ServerPagination from '@/components/ServerPagination'
 import { useServerPagination } from '@/hooks/useServerPagination'
 import { useAzureResources, type AzureResource } from '../../lib/azure-api'
@@ -37,7 +40,7 @@ import {
   Layers,
   Zap
 } from 'lucide-react'
-import ActionDrawer from '../../components/ActionDrawer'
+// ActionDrawer dynamically imported above to reduce initial bundle size
 import type { CreateActionRequest } from '../../lib/actions-api'
 import Pagination from '../../components/Pagination'
 
@@ -249,170 +252,128 @@ export default function ResourcesPage() {
             </select>
           </div>
 
-          {/* Resources Table */}
+          {/* Resources Table (Virtualized) */}
           <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-white/5 border-b border-white/10">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Resource
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Location
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Compliance
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Cost/Month
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Utilization
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                   {pagedResources.map((resource) => (
-                    <tr 
-                      key={resource.id} 
-                      className="hover:bg-white/5 cursor-pointer transition-colors"
-                      onClick={() => {
-                        // Navigate to deep drill-in page for this resource
-                        if (typeof window !== 'undefined') {
-                          window.location.href = `/resources/${encodeURIComponent(resource.id)}`
-                        }
-                      }}
+            <VirtualizedTable
+              data={filteredResources}
+              rowHeight={56}
+              overscan={10}
+              onRowClick={(resource) => {
+                if (typeof window !== 'undefined') {
+                  // @ts-ignore dynamic resource typing
+                  window.location.href = `/resources/${encodeURIComponent(resource.id)}`
+                }
+              }}
+              columns={[
+                { key: 'name', label: 'Resource', render: (_: any, r: any) => (
+                  <div>
+                    <p className="text-sm font-medium text-white">{r.name}</p>
+                    <p className="text-xs text-gray-400">{r.resourceGroup}</p>
+                  </div>
+                ) },
+                { key: 'type', label: 'Type', render: (v: string) => {
+                  const typeStr = v || ''
+                  const seg = typeStr.includes('/') ? typeStr.split('/')[1] : typeStr
+                  return <p className="text-sm text-gray-300">{seg || 'Unknown'}</p>
+                } },
+                { key: 'location', label: 'Location', render: (v: string) => (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-gray-400" />
+                    <span className="text-sm text-gray-300">{v}</span>
+                  </div>
+                ) },
+                { key: 'status', label: 'Status', render: (v: string) => (
+                  <span className={`px-2 py-1 text-xs rounded-lg ${
+                    v === 'Running' ? 'bg-green-900/30 text-green-400' :
+                    v === 'Idle' ? 'bg-yellow-900/30 text-yellow-400' :
+                    v === 'Stopped' ? 'bg-gray-900/30 text-gray-400' :
+                    v === 'Optimized' ? 'bg-blue-900/30 text-blue-400' :
+                    'bg-orange-900/30 text-orange-400'
+                  }`}>
+                    {v}
+                  </span>
+                ) },
+                { key: 'compliance', label: 'Compliance', render: (v: string) => (
+                  <span className={`px-2 py-1 text-xs rounded-lg ${
+                    v === 'Compliant' ? 'bg-green-900/30 text-green-400' :
+                    v === 'Warning' ? 'bg-yellow-900/30 text-yellow-400' :
+                    'bg-red-900/30 text-red-400'
+                  }`}>
+                    {v}
+                  </span>
+                ) },
+                { key: 'monthlyCost', label: 'Cost/Month', render: (v: number, r: any) => (
+                  <div>
+                    <p className="text-sm text-white">${(v || 0).toFixed(2)}</p>
+                    {r.savings > 0 && (
+                      <p className="text-xs text-yellow-400">Save ${r.savings.toFixed(2)}</p>
+                    )}
+                  </div>
+                ) },
+                { key: 'cpu', label: 'Utilization', render: (_: any, r: any) => (
+                  <div className="flex gap-2">
+                    {r.cpu > 0 && (
+                      <div className="text-xs">
+                        <span className="text-gray-400">CPU:</span>
+                        <span className={`ml-1 ${r.cpu > 80 ? 'text-red-400' : r.cpu > 50 ? 'text-yellow-400' : 'text-green-400'}`}>{r.cpu}%</span>
+                      </div>
+                    )}
+                    {r.memory > 0 && (
+                      <div className="text-xs">
+                        <span className="text-gray-400">RAM:</span>
+                        <span className={`ml-1 ${r.memory > 80 ? 'text-red-400' : r.memory > 50 ? 'text-yellow-400' : 'text-green-400'}`}>{r.memory}%</span>
+                      </div>
+                    )}
+                  </div>
+                ) },
+                { key: 'actions', label: 'Actions', render: (_: any, r: any) => (
+                  <div className="flex items-center gap-2">
+                    {r.status === 'Running' ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleResourceAction(r, 'stop') }}
+                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                        title="Stop"
+                      >
+                        <Pause className="w-4 h-4 text-gray-400" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleResourceAction(r, 'start') }}
+                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                        title="Start"
+                      >
+                        <Play className="w-4 h-4 text-gray-400" />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleResourceAction(r, 'restart') }}
+                      className="p-1 hover:bg-white/10 rounded transition-colors"
+                      title="Restart"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <p className="text-sm font-medium text-white">{resource.name}</p>
-                          <p className="text-xs text-gray-400">{resource.resourceGroup}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {(() => {
-                          const typeStr = (resource?.type || '')
-                          const seg = typeStr.includes('/') ? typeStr.split('/')[1] : typeStr
-                          return <p className="text-sm text-gray-300">{seg || 'Unknown'}</p>
-                        })()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm text-gray-300">{resource.location}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-lg ${
-                          resource.status === 'Running' ? 'bg-green-900/30 text-green-400' :
-                          resource.status === 'Idle' ? 'bg-yellow-900/30 text-yellow-400' :
-                          resource.status === 'Stopped' ? 'bg-gray-900/30 text-gray-400' :
-                          resource.status === 'Optimized' ? 'bg-blue-900/30 text-blue-400' :
-                          'bg-orange-900/30 text-orange-400'
-                        }`}>
-                          {resource.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-lg ${
-                          resource.compliance === 'Compliant' ? 'bg-green-900/30 text-green-400' :
-                          resource.compliance === 'Warning' ? 'bg-yellow-900/30 text-yellow-400' :
-                          'bg-red-900/30 text-red-400'
-                        }`}>
-                          {resource.compliance}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <p className="text-sm text-white">${resource.monthlyCost.toFixed(2)}</p>
-                          {resource.savings > 0 && (
-                            <p className="text-xs text-yellow-400">Save ${resource.savings.toFixed(2)}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex gap-2">
-                          {resource.cpu > 0 && (
-                            <div className="text-xs">
-                              <span className="text-gray-400">CPU:</span>
-                              <span className={`ml-1 ${
-                                resource.cpu > 80 ? 'text-red-400' :
-                                resource.cpu > 50 ? 'text-yellow-400' :
-                                'text-green-400'
-                              }`}>{resource.cpu}%</span>
-                            </div>
-                          )}
-                          {resource.memory > 0 && (
-                            <div className="text-xs">
-                              <span className="text-gray-400">RAM:</span>
-                              <span className={`ml-1 ${
-                                resource.memory > 80 ? 'text-red-400' :
-                                resource.memory > 50 ? 'text-yellow-400' :
-                                'text-green-400'
-                              }`}>{resource.memory}%</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          {resource.status === 'Running' ? (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'stop') }}
-                              className="p-1 hover:bg-white/10 rounded transition-colors"
-                              title="Stop"
-                            >
-                              <Pause className="w-4 h-4 text-gray-400" />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'start') }}
-                              className="p-1 hover:bg-white/10 rounded transition-colors"
-                              title="Start"
-                            >
-                              <Play className="w-4 h-4 text-gray-400" />
-                            </button>
-                          )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'restart') }}
-                            className="p-1 hover:bg-white/10 rounded transition-colors"
-                            title="Restart"
-                          >
-                            <RefreshCw className="w-4 h-4 text-gray-400" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleResourceAction(resource, 'delete') }}
-                            className="p-1 hover:bg-white/10 rounded transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4 text-red-400" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-               </table>
+                      <RefreshCw className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleResourceAction(r, 'delete') }}
+                      className="p-1 hover:bg-white/10 rounded transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                ) },
+              ]}
+            />
+
+            {/* Optional: keep pagination UI for UX familiarity */}
+            <div className="sticky bottom-0">
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={filteredResources.length}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+              />
             </div>
-              <div className="sticky bottom-0">
-                <Pagination
-                  page={page}
-                  pageSize={pageSize}
-                  total={filteredResources.length}
-                  onPageChange={setPage}
-                  onPageSizeChange={setPageSize}
-                />
-              </div>
           </div>
 
           {/* Resource Details Modal */}

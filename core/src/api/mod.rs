@@ -846,6 +846,35 @@ pub async fn export_policies(State(_state): State<Arc<AppState>>) -> impl IntoRe
     Json(serde_json::json!({"items": items, "count": items.len()}))
 }
 
+// ===================== Basic API Tests (increase coverage) =====================
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::response::IntoResponse as _;
+
+    #[tokio::test]
+    async fn list_frameworks_returns_ok() {
+        let resp = crate::api::list_frameworks().await.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+        // Ensure body is non-empty JSON
+        let body = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+        let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(v.is_array());
+        assert!(v.as_array().unwrap().len() >= 2);
+    }
+
+    #[tokio::test]
+    async fn roadmap_status_returns_ok() {
+        // get_roadmap_status requires State but ignores it; provide minimal AppState
+        let state = Arc::new(AppState::new());
+        let resp = crate::api::get_roadmap_status(axum::extract::State(state)).await.into_response();
+        assert_eq!(resp.status(), axum::http::StatusCode::OK);
+        let body = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+        let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert!(v.get("items").is_some());
+    }
+}
+
 // ===================== Actions Preflight (UI support) =====================
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

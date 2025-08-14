@@ -14,6 +14,8 @@ interface ExceptionRecord {
   created_at: string
 }
 
+import AppLayout from '@/components/AppLayout'
+
 export default function ExceptionsPage() {
   const [items, setItems] = useState<ExceptionRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,22 +26,25 @@ export default function ExceptionsPage() {
   const authedFetch = useAuthenticatedFetch()
 
   useEffect(() => {
+    const controller = new AbortController()
     const load = async () => {
       try {
-        const res = await fetch('/api/v1/exceptions')
+        const res = await fetch('/api/v1/exceptions', { signal: controller.signal, headers: { 'Accept-Encoding': 'gzip, br' }})
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const json = await res.json()
         setItems(json.items || [])
       } catch (e: any) {
-        setError(e.message || 'Failed to load exceptions')
+        if (e.name !== 'AbortError') setError(e.message || 'Failed to load exceptions')
       } finally {
         setLoading(false)
       }
     }
     load()
+    return () => controller.abort()
   }, [])
 
   return (
+    <AppLayout>
     <div className="p-6">
       <h1 className="text-2xl font-semibold text-white mb-4">Exceptions</h1>
       <div className="mb-6 grid gap-3 grid-cols-1 md:grid-cols-4">
@@ -96,5 +101,6 @@ export default function ExceptionsPage() {
         </table>
       )}
     </div>
+    </AppLayout>
   )
 }
