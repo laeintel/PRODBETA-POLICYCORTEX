@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-'use client'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
