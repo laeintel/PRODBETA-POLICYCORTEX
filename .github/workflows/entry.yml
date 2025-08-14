@@ -62,7 +62,7 @@ jobs:
   frontend:
     name: Frontend CI
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true') || needs.detect-changes.outputs.frontend == 'true'
+    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.frontend == 'true'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     secrets: inherit
     with:
@@ -72,14 +72,14 @@ jobs:
   core:
     name: Core (Rust) CI
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true') || needs.detect-changes.outputs.rust_core == 'true'
+    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.rust_core == 'true'
     uses: ./.github/workflows/reusable-ci-core.yml
     secrets: inherit
 
   graphql:
     name: GraphQL gateway CI
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true') || needs.detect-changes.outputs.graphql == 'true'
+    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.graphql == 'true'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
@@ -89,7 +89,7 @@ jobs:
   security:
     name: Security & Secrets
     needs: detect-changes
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true')
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run)
     uses: ./.github/workflows/reusable-security.yml
     permissions:
       contents: read
@@ -99,7 +99,7 @@ jobs:
   supply_chain:
     name: Supply Chain Security
     needs: detect-changes
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true')
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run)
     uses: ./.github/workflows/supply-chain.yml
     permissions:
       contents: read
@@ -110,7 +110,7 @@ jobs:
   secret_scan:
     name: Secret Scan (Gitleaks)
     needs: detect-changes
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true')
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run)
     uses: ./.github/workflows/secret-scan.yml
     permissions:
       contents: read
@@ -120,7 +120,7 @@ jobs:
   infra:
     name: Azure Infrastructure
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true') || needs.detect-changes.outputs.infrastructure == 'true'
+    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.infrastructure == 'true'
     uses: ./.github/workflows/azure-infra.yml
     permissions:
       contents: read
@@ -133,7 +133,7 @@ jobs:
   app_pipeline:
     name: Application CI/CD
     needs: [frontend, core, graphql, security]
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.full_run == 'true')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.full_run)
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read
@@ -143,7 +143,7 @@ jobs:
       target_env: 'dev'
       run_tests: true
       force_deploy: false
-      full_run: ${{ inputs.full_run == 'true' }}
+      full_run: ${{ inputs.full_run }}
     secrets: inherit
 
   deploy_tag:
