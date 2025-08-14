@@ -42,7 +42,8 @@ export function BlastRadius({ actionId }: BlastRadiusProps) {
   };
 
   const getResourceIcon = (type: string) => {
-    switch (type.toLowerCase()) {
+    const t = (type || '').toLowerCase()
+    switch (t) {
       case 'vm':
       case 'compute':
         return <Server className="w-4 h-4" />;

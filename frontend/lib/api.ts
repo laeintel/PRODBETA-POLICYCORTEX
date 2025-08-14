@@ -171,7 +171,7 @@ class PolicyCortexAPI {
     };
 
     // Simple intent inference
-    const q = request.query.toLowerCase();
+    const q = (request?.query || '').toLowerCase();
     if (q.includes('cost')) response.intent = 'cost_inquiry';
     else if (q.includes('security')) response.intent = 'security_insight';
     else if (q.includes('compliance') || q.includes('policy')) response.intent = 'compliance_policy';
