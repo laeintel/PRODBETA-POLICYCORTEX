@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: read
+  security-events: write
+  id-token: write
 
 concurrency:
   group: monorepo-${{ github.workflow }}-${{ github.ref }}
