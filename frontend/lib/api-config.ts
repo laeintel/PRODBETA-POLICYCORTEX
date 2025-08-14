@@ -21,3 +21,10 @@ export function getHealthUrl(): string {
   }
   return '/health'
 }
+
+export const AZURE_OPENAI = {
+  endpoint: process.env.NEXT_PUBLIC_AOAI_ENDPOINT || '',
+  apiKey: process.env.NEXT_PUBLIC_AOAI_API_KEY || '',
+  apiVersion: process.env.NEXT_PUBLIC_AOAI_API_VERSION || '2024-08-01-preview',
+  deployment: process.env.NEXT_PUBLIC_AOAI_CHAT_DEPLOYMENT || 'chat-dev',
+} as const
