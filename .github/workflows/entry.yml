@@ -81,6 +81,9 @@ jobs:
     needs: detect-changes
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     uses: ./.github/workflows/reusable-security.yml
+    permissions:
+      contents: read
+      security-events: write
     secrets: inherit
 
   supply_chain:
@@ -88,6 +91,9 @@ jobs:
     needs: detect-changes
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     uses: ./.github/workflows/supply-chain.yml
+    permissions:
+      contents: read
+      security-events: write
     secrets: inherit
 
   secret_scan:
@@ -95,6 +101,9 @@ jobs:
     needs: detect-changes
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     uses: ./.github/workflows/secret-scan.yml
+    permissions:
+      contents: read
+      security-events: write
     secrets: inherit
 
   infra:
@@ -102,6 +111,9 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.infrastructure == 'true'
     uses: ./.github/workflows/azure-infra.yml
+    permissions:
+      contents: read
+      id-token: write
     with:
       environment: 'dev'
       apply: true
