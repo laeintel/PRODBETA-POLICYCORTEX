@@ -160,6 +160,62 @@ variable "openai_deployments" {
   default = []
 }
 
+## Frontend environment variables (injected into Container App)
+variable "frontend_next_public_azure_client_id" {
+  description = "Azure AD Application (Client) ID for frontend auth"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_next_public_azure_tenant_id" {
+  description = "Azure AD Tenant ID"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_next_public_msal_redirect_uri" {
+  description = "MSAL redirect URI"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_next_public_msal_post_logout_redirect_uri" {
+  description = "MSAL post logout redirect URI"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_next_public_aoai_endpoint" {
+  description = "Azure OpenAI endpoint"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_next_public_aoai_api_version" {
+  description = "Azure OpenAI API version"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_next_public_aoai_chat_deployment" {
+  description = "Azure OpenAI deployment name for chat"
+  type        = string
+  default     = ""
+}
+
+variable "frontend_next_public_aoai_api_key" {
+  description = "Azure OpenAI API key (sensitive)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "frontend_next_public_demo_mode" {
+  description = "Enable demo mode for frontend"
+  type        = bool
+  default     = false
+}
+
 resource "azurerm_cognitive_account" "openai" {
   name                          = local.openai_account_name
   location                      = azurerm_resource_group.main.location
@@ -477,6 +533,47 @@ resource "azurerm_container_app" "frontend" {
         # Use stable app FQDN (not revision-specific) to avoid provider plan drift
         value = "https://${azurerm_container_app.core.ingress[0].fqdn}"
       }
+
+      # Frontend auth configuration
+      env {
+        name  = "NEXT_PUBLIC_AZURE_CLIENT_ID"
+        value = var.frontend_next_public_azure_client_id
+      }
+      env {
+        name  = "NEXT_PUBLIC_AZURE_TENANT_ID"
+        value = var.frontend_next_public_azure_tenant_id
+      }
+      env {
+        name  = "NEXT_PUBLIC_MSAL_REDIRECT_URI"
+        value = var.frontend_next_public_msal_redirect_uri
+      }
+      env {
+        name  = "NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI"
+        value = var.frontend_next_public_msal_post_logout_redirect_uri
+      }
+
+      # Azure OpenAI configuration
+      env {
+        name  = "NEXT_PUBLIC_AOAI_ENDPOINT"
+        value = var.frontend_next_public_aoai_endpoint
+      }
+      env {
+        name  = "NEXT_PUBLIC_AOAI_API_VERSION"
+        value = var.frontend_next_public_aoai_api_version
+      }
+      env {
+        name  = "NEXT_PUBLIC_AOAI_CHAT_DEPLOYMENT"
+        value = var.frontend_next_public_aoai_chat_deployment
+      }
+      env {
+        name        = "NEXT_PUBLIC_AOAI_API_KEY"
+        secret_name = "aoai-api-key"
+      }
+
+      env {
+        name  = "NEXT_PUBLIC_DEMO_MODE"
+        value = tostring(var.frontend_next_public_demo_mode)
+      }
     }
 
     min_replicas = 0 # Scale to zero
@@ -504,6 +601,12 @@ resource "azurerm_container_app" "frontend" {
   #   name  = "registry-password"
   #   value = azurerm_container_registry.main.admin_password
   # }
+
+  # Secrets
+  secret {
+    name  = "aoai-api-key"
+    value = var.frontend_next_public_aoai_api_key
+  }
 
   tags = local.common_tags
 }

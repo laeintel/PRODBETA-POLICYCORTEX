@@ -24,3 +24,14 @@ openai_deployments = [
     scale_type    = "Standard"
   }
 ]
+
+# Frontend env wiring (optional for local; used in Container App)
+frontend_next_public_azure_client_id              = "${env("NEXT_PUBLIC_AZURE_CLIENT_ID", "")}"
+frontend_next_public_azure_tenant_id              = "${env("NEXT_PUBLIC_AZURE_TENANT_ID", "")}"
+frontend_next_public_msal_redirect_uri            = "http://localhost:3000"
+frontend_next_public_msal_post_logout_redirect_uri = "http://localhost:3000"
+frontend_next_public_aoai_endpoint                = "${env("NEXT_PUBLIC_AOAI_ENDPOINT", "")}"
+frontend_next_public_aoai_api_version             = "${env("NEXT_PUBLIC_AOAI_API_VERSION", "2024-08-01-preview")}"
+frontend_next_public_aoai_chat_deployment         = "${env("NEXT_PUBLIC_AOAI_CHAT_DEPLOYMENT", "gpt-4o")}"
+frontend_next_public_aoai_api_key                 = "${env("NEXT_PUBLIC_AOAI_API_KEY", "")}"
+frontend_next_public_demo_mode                    = true
