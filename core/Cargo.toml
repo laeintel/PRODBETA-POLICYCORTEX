@@ -102,7 +102,7 @@ hmac = "0.12"
 ## (removed duplicate regex dependency; defined above at version 1.10)
 
 # AWS SDK (optional, for multi-cloud)
-aws-config = { version = "1.0", optional = true }
+aws-config = { version = "1.8", optional = true }
 aws-sdk-iam = { version = "1.0", optional = true }
 aws-sdk-organizations = { version = "1.0", optional = true }
 aws-sdk-ec2 = { version = "1.0", optional = true }
