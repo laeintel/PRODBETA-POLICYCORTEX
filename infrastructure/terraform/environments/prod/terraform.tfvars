@@ -1,6 +1,6 @@
 # Production Environment Configuration - Optimized for Free Tier
 environment = "prod"
-location    = "eastus"  # Use consistent lowercase format
+location    = "eastus" # Use consistent lowercase format
 
 tags = {
   Owner       = "AeoliTech"

@@ -139,12 +139,12 @@ variable "openai_chat_model_version" {
 }
 
 resource "azurerm_cognitive_account" "openai" {
-  name                = local.openai_account_name
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  kind                = "OpenAI"
-  sku_name            = "S0"
-  custom_subdomain_name = local.openai_custom_subdomain
+  name                          = local.openai_account_name
+  location                      = azurerm_resource_group.main.location
+  resource_group_name           = azurerm_resource_group.main.name
+  kind                          = "OpenAI"
+  sku_name                      = "S0"
+  custom_subdomain_name         = local.openai_custom_subdomain
   public_network_access_enabled = true
 
   tags = local.common_tags
