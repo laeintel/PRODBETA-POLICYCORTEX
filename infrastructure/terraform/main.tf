@@ -174,7 +174,7 @@ resource "azurerm_cognitive_account" "openai" {
 
 locals {
   # Build the deployment list from either explicit list, or legacy defaults
-  _default_openai_deployments = []
+  _default_openai_deployments  = []
   effective_openai_deployments = length(var.openai_deployments) > 0 ? var.openai_deployments : local._default_openai_deployments
 }
 
