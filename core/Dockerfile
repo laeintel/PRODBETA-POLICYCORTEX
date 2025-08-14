@@ -9,6 +9,7 @@ WORKDIR /app
 # Copy manifest and source
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
+COPY migrations ./migrations
 
 # Use SQLX offline to avoid DB requirement during image build
 ENV SQLX_OFFLINE=true
