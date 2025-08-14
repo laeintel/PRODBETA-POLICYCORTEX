@@ -10,10 +10,10 @@ const clientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || ''
 const tenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID || ''
 const redirectUri = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_MSAL_REDIRECT_URI || window.location.origin)
-  : undefined
+  : process.env.NEXT_PUBLIC_MSAL_REDIRECT_URI
 const postLogoutRedirectUri = typeof window !== 'undefined'
   ? (process.env.NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI || window.location.origin)
-  : undefined
+  : process.env.NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI
 // Optional: strict audience scope for Core API
 export const coreApiScope = process.env.NEXT_PUBLIC_CORE_API_SCOPE
   || (clientId ? `api://${clientId}/access_as_user` : '')

@@ -66,7 +66,15 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
   const { instance, accounts } = useMsal()
   const isAuthenticated = useIsAuthenticated()
   const account = useAccount(accounts[0] || {})
-  
+
+  // Demo mode if Azure config is missing or explicitly enabled
+  const demoMode = typeof window !== 'undefined' && (
+    !process.env.NEXT_PUBLIC_AZURE_CLIENT_ID ||
+    !process.env.NEXT_PUBLIC_AZURE_TENANT_ID ||
+    process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  )
+
+  const [demoUser, setDemoUser] = useState<AccountInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,7 +84,7 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     
     try {
       // Demo mode bypass for local development
-      if (!process.env.NEXT_PUBLIC_AZURE_CLIENT_ID || process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      if (demoMode) {
         const demoAccount: AccountInfo = {
           username: 'demo@policycortex.local',
           name: 'Demo User',
@@ -85,7 +93,7 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
           tenantId: 'demo-tenant',
           localAccountId: 'demo-local'
         }
-        instance.setActiveAccount(demoAccount)
+        setDemoUser(demoAccount)
         console.log('Demo mode: Login bypassed')
         return
       }
@@ -98,7 +106,7 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
       setError(err.message || 'Login failed')
       
       // Fallback to demo mode on error in development
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development' || demoMode) {
         const demoAccount: AccountInfo = {
           username: 'demo@policycortex.local',
           name: 'Demo User (Auth Failed)',
@@ -107,7 +115,7 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
           tenantId: 'demo-tenant',
           localAccountId: 'demo-local'
         }
-        instance.setActiveAccount(demoAccount)
+        setDemoUser(demoAccount)
         console.log('Auth failed - using demo mode')
         setError(null) // Clear error for demo mode
       }
@@ -120,10 +128,14 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     setLoading(true)
     
     try {
-      await instance.logoutPopup({
-        postLogoutRedirectUri: window.location.origin,
-        mainWindowRedirectUri: window.location.origin
-      })
+      if (demoMode) {
+        setDemoUser(null)
+      } else {
+        await instance.logoutPopup({
+          postLogoutRedirectUri: window.location.origin,
+          mainWindowRedirectUri: window.location.origin
+        })
+      }
     } catch (err: any) {
       console.error('Logout failed:', err)
       setError(err.message || 'Logout failed')
@@ -133,6 +145,9 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
   }
 
   const getAccessToken = async (): Promise<string> => {
+    if (demoMode) {
+      return ''
+    }
     if (!account) {
       // Local/dev: return empty string so backend can allow optional auth
       return ''
@@ -158,8 +173,8 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
   }
 
   const contextValue: AuthContextType = {
-    isAuthenticated,
-    user: account,
+    isAuthenticated: demoMode ? !!demoUser : isAuthenticated,
+    user: demoMode ? demoUser : account,
     login,
     logout,
     getAccessToken,
