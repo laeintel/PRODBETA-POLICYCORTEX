@@ -38,6 +38,11 @@ jobs:
           if [ -f "eslint.config.js" ] || [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ]; then
             npm run -s lint || true
           fi
+      - name: Type check
+        run: |
+          if npm run | grep -q "type-check"; then
+            npm run -s type-check || true
+          fi
       - name: Build
         run: |
           if [ -f "next.config.js" ] || [ -f "next.config.docker.js" ]; then
