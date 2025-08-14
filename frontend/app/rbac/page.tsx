@@ -16,14 +16,19 @@ export default function RbacPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'User' | 'ServicePrincipal'>('all')
   const [onlyPrivileged, setOnlyPrivileged] = useState(false)
 
-  const rows = (assignments || []).filter(a => {
-    const q = query.toLowerCase()
-    return (
-      a.principalName.toLowerCase().includes(q) ||
-      a.roleName.toLowerCase().includes(q) ||
-      a.scope.toLowerCase().includes(q)
-    )
-  }).filter(a => (typeFilter === 'all' ? true : a.principalType === typeFilter))
+  const rows = (assignments || [])
+    .filter(a => {
+      const q = (query || '').toLowerCase()
+      const principalName = (a?.principalName || '').toLowerCase()
+      const roleName = (a?.roleName || '').toLowerCase()
+      const scope = (a?.scope || '').toLowerCase()
+      return (
+        principalName.includes(q) ||
+        roleName.includes(q) ||
+        scope.includes(q)
+      )
+    })
+    .filter(a => (typeFilter === 'all' ? true : (a?.principalType || '') === typeFilter))
 
   // Basic privileged-role heuristic
   const privilegedRoles = new Set(['Owner','User Access Administrator','Contributor'])
