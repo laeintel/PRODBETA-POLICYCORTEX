@@ -14,6 +14,7 @@ permissions:
   actions: read
   security-events: write
   id-token: write
+  packages: write
 
 concurrency:
   group: monorepo-${{ github.workflow }}-${{ github.ref }}
@@ -128,6 +129,9 @@ jobs:
     needs: [frontend, core, graphql, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/application.yml
+    permissions:
+      contents: read
+      packages: write
     with:
       target_env: 'dev'
       run_tests: true
