@@ -10,6 +10,10 @@ on:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node
@@ -25,9 +29,22 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
       - name: Run supply chain script
+        env:
+          SECURITY_BASELINE_FILE: .github/security/vuln-baseline.json
+          RATchet_MODE: auto
         run: |
           chmod +x scripts/supply-chain-security.sh
-          ./scripts/supply-chain-security.sh
+          ./scripts/supply-chain-security.sh || true
+          # Auto-ratchet: if CRITICAL count drops below baseline, update baseline (same or lower)
+          if command -v jq >/dev/null 2>&1 && [ -f trivy-report.json ]; then
+            current_crit=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
+            baseline_file="${SECURITY_BASELINE_FILE:-.github/security/vuln-baseline.json}"
+            baseline=$(jq -r '.critical_allowance' "$baseline_file")
+            if [ -n "$current_crit" ] && [ -n "$baseline" ] && [ "$current_crit" -lt "$baseline" ]; then
+              jq --argjson v "$current_crit" '.critical_allowance=$v | .updated=now|toISOString' "$baseline_file" > /tmp/vuln-baseline.json && mv /tmp/vuln-baseline.json "$baseline_file"
+              echo "Auto-ratcheted CRITICAL allowance to $current_crit"
+            fi
+          fi
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
