@@ -1,3 +1,24 @@
+export type AzureOpenAIConfig = {
+  endpoint: string;
+  apiKey?: string;
+  apiVersion?: string;
+  deployment: string; // e.g., 'chat-dev'
+};
+
+export async function callChat(config: AzureOpenAIConfig, messages: { role: string; content: string }[], options: { temperature?: number } = {}) {
+  const url = `${config.endpoint}/openai/deployments/${config.deployment}/chat/completions?api-version=${config.apiVersion || '2024-08-01-preview'}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(config.apiKey ? { 'api-key': config.apiKey } : {}),
+    },
+    body: JSON.stringify({ messages, temperature: options.temperature ?? 0.2 }),
+  });
+  if (!res.ok) throw new Error(`Azure OpenAI error: ${res.status}`);
+  const json = await res.json();
+  return json.choices?.[0]?.message?.content as string;
+}
 // Azure API integration for real data fetching
 import { useState, useEffect } from 'react'
 import { useAuthenticatedFetch } from '../contexts/AuthContext'

@@ -10,6 +10,7 @@ import { DemoDataProvider } from '../contexts/DemoDataProvider'
 import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration'
 import { OfflineIndicator, OfflineQueue, ConflictResolver } from '../components/OfflineIndicator'
 import { I18nProvider } from '../lib/i18n'
+import { AZURE_OPENAI } from '../lib/api-config'
 
 // Dynamically import VoiceProvider to avoid SSR issues
 const VoiceProvider = dynamic(
@@ -26,6 +27,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true)
+    // Optionally pre-warm Azure OpenAI endpoint (cheap no-op)
+    const endpoint = AZURE_OPENAI.endpoint
+    if (endpoint) {
+      fetch(endpoint, { method: 'HEAD' }).catch(() => {})
+    }
   }, [])
 
   return (
