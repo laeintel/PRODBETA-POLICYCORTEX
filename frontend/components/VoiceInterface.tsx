@@ -234,6 +234,38 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
     }
   }
 
+  // Experimental: Start Azure OpenAI Realtime via WebRTC using SDP exchange
+  const startRealtime = async () => {
+    try {
+      const pc = new RTCPeerConnection()
+      pc.ontrack = (event) => {
+        const audioEl = document.getElementById('cortex-audio') as HTMLAudioElement | null
+        if (audioEl) {
+          audioEl.srcObject = event.streams[0]
+          audioEl.play().catch(()=>{})
+        }
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream.getTracks().forEach(t => pc.addTrack(t, stream))
+
+      const offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
+      const resp = await fetch('/api/v1/voice/realtime/sdp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/sdp', 'Accept': 'application/sdp' },
+        body: offer.sdp || ''
+      })
+      if (!resp.ok) throw new Error(`SDP exchange failed: ${resp.status}`)
+      const answerSdp = await resp.text()
+      await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
+      setIsListening(true)
+      setPulse(true)
+    } catch (e) {
+      console.warn('Realtime setup failed; falling back to local STT', e)
+      startListening()
+    }
+  }
+
   const stopListening = () => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop()
@@ -257,6 +289,7 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
 
   return (
     <>
+      <audio id="cortex-audio" className="hidden" />
       {/* Floating Voice Button */}
       <motion.div
         className="fixed bottom-6 right-6 z-50"
@@ -385,7 +418,7 @@ export default function VoiceInterface({ onActionTrigger }: VoiceInterfaceProps)
             {/* Voice Controls */}
             <div className="flex gap-3">
               <button
-                onClick={isListening ? stopListening : startListening}
+                onClick={isListening ? stopListening : startRealtime}
                 disabled={isProcessing}
                 className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
                   isListening
