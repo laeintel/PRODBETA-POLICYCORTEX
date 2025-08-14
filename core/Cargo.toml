@@ -51,7 +51,7 @@ async-trait = "0.1"
 headers = "0.3"
 
 # Redis caching
-redis = { version = "0.23", features = ["tokio-comp", "connection-manager", "json"] }
+redis = { version = "0.32", features = ["tokio-comp", "connection-manager", "json"] }
 
 # SQL database support
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
