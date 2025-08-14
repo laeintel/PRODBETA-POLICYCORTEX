@@ -506,14 +506,14 @@ function ResourcesModule({ onOpenAll }: { onOpenAll: () => void }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {(loading ? [] : top).map((r) => (
-              <tr key={r.id} className="hover:bg-white/5">
-                <td className="px-6 py-3 text-white text-sm">{r.name}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">{r.type.split('/')[1]}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">{r.resourceGroup}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">{r.status}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">{r.compliance}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">${(r.monthlyCost || 0).toFixed(2)}</td>
+            {(loading ? [] : top).map((r, idx) => (
+              <tr key={r.id || `${r.resourceGroup || 'rg'}-${r.name || 'res'}-${idx}`} className="hover:bg-white/5">
+                <td className="px-6 py-3 text-white text-sm">{r.name || 'Unknown'}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{((r.type || '').includes('/') ? (r.type || '').split('/')[1] : (r.type || 'Unknown'))}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{r.resourceGroup || '-'}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{r.status || '-'}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{r.compliance || '-'}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">${((r.monthlyCost || 0)).toFixed(2)}</td>
               </tr>
             ))}
             {(!loading && top.length === 0) && (
@@ -545,12 +545,12 @@ function RbacModule() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/10">
-            {(loading ? [] : rows).map(a => (
-              <tr key={a.id} className="hover:bg-white/5">
-                <td className="px-6 py-3 text-white text-sm">{a.principalName}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">{a.roleName}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">{a.scope.split('/').slice(0,3).join('/')}</td>
-                <td className="px-6 py-3 text-gray-300 text-sm">{a.lastUsed || '-'}</td>
+            {(loading ? [] : rows).map((a, idx) => (
+              <tr key={a.id || `${a.principalId || 'p'}-${a.roleName || 'role'}-${idx}`} className="hover:bg-white/5">
+                <td className="px-6 py-3 text-white text-sm">{a?.principalName || 'Unknown'}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{a?.roleName || '-'}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{(a?.scope || '').split('/').slice(0,3).join('/') || '-'}</td>
+                <td className="px-6 py-3 text-gray-300 text-sm">{a?.lastUsed || '-'}</td>
               </tr>
             ))}
             {(!loading && rows.length === 0) && (
