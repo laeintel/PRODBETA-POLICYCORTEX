@@ -1,6 +1,6 @@
 # Development Environment Configuration - Optimized for Free Tier
 environment = "dev"
-location    = "eastus"  # Use consistent lowercase format
+location    = "eastus" # Use consistent lowercase format
 
 tags = {
   Owner       = "AeoliTech"

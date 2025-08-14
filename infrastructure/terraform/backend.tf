@@ -8,23 +8,23 @@ resource "azurerm_storage_account" "terraform_state" {
   location                 = azurerm_resource_group.terraform_state.location
   account_tier             = "Standard"
   account_replication_type = "GRS"
-  
+
   # Enable blob versioning for state history
   blob_properties {
     versioning_enabled = true
-    
+
     delete_retention_policy {
       days = 30
     }
   }
-  
+
   # Enable soft delete for accidental deletion protection
   blob_properties {
     container_delete_retention_policy {
       days = 7
     }
   }
-  
+
   tags = {
     purpose     = "terraform-state"
     environment = var.environment
