@@ -1,10 +1,14 @@
-name: Optimized CI/CD Pipeline
+name: Optimized CI/CD Pipeline (Reusable)
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # Reusable workflow to be invoked by entry workflow
+  workflow_call:
+    inputs:
+      deploy_env:
+        description: 'Environment to deploy'
+        required: false
+        default: 'none'
+        type: string
   workflow_dispatch:
     inputs:
       deploy_env:

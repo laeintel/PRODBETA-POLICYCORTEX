@@ -1,10 +1,14 @@
 name: Model evaluations
 
 on:
-  pull_request:
-    branches: [ '**' ]
-  push:
-    branches: [ '**' ]
+  # Make reusable and opt-in via dispatch only to avoid noise
+  workflow_call:
+    inputs:
+      run_evals:
+        description: 'Run model evals (compiles Rust core)'
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       run_evals:
@@ -15,8 +19,8 @@ on:
 
 jobs:
   evals:
-    # Only run when manually dispatched with run_evals=true. Skips on push/PR by default.
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_evals == 'true' }}
+    # Run only when explicitly requested via dispatch or workflow_call input
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.run_evals == 'true') || (github.event_name == 'workflow_call' && inputs.run_evals == true) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

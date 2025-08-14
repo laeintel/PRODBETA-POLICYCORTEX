@@ -1,10 +1,8 @@
-name: Supply chain security
+name: Supply chain security (Reusable)
 
 on:
-  pull_request:
-    branches: [ '**' ]
-  push:
-    branches: [ '**' ]
+  # Converted to reusable workflow; invoked by entry
+  workflow_call:
   workflow_dispatch:
 
 jobs:

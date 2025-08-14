@@ -1,0 +1,130 @@
+name: Monorepo CI Entry
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monorepo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      rust_core: ${{ steps.filter.outputs.rust_core }}
+      graphql: ${{ steps.filter.outputs.graphql }}
+      backend: ${{ steps.filter.outputs.backend }}
+      infrastructure: ${{ steps.filter.outputs.infrastructure }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Paths filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            frontend:
+              - 'frontend/**'
+            rust_core:
+              - 'core/**'
+              - 'crates/**'
+            graphql:
+              - 'graphql/**'
+            backend:
+              - 'backend/**'
+            infrastructure:
+              - 'infrastructure/**'
+
+  frontend:
+    name: Frontend CI
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    uses: ./.github/workflows/reusable-ci-frontend.yml
+    secrets: inherit
+    with:
+      node-version: '20'
+      working-directory: 'frontend'
+
+  core:
+    name: Core (Rust) CI
+    needs: detect-changes
+    if: needs.detect-changes.outputs.rust_core == 'true'
+    uses: ./.github/workflows/reusable-ci-core.yml
+    secrets: inherit
+
+  graphql:
+    name: GraphQL gateway CI
+    needs: detect-changes
+    if: needs.detect-changes.outputs.graphql == 'true'
+    uses: ./.github/workflows/reusable-ci-frontend.yml
+    with:
+      node-version: '20'
+      working-directory: 'graphql'
+    secrets: inherit
+
+  security:
+    name: Security & Secrets
+    needs: detect-changes
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/reusable-security.yml
+    secrets: inherit
+
+  supply_chain:
+    name: Supply Chain Security
+    needs: detect-changes
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/supply-chain.yml
+    secrets: inherit
+
+  secret_scan:
+    name: Secret Scan (Gitleaks)
+    needs: detect-changes
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/secret-scan.yml
+    secrets: inherit
+
+  infra:
+    name: Azure Infrastructure
+    needs: detect-changes
+    if: needs.detect-changes.outputs.infrastructure == 'true'
+    uses: ./.github/workflows/azure-infra.yml
+    with:
+      environment: 'dev'
+      apply: true
+    secrets: inherit
+
+  app_pipeline:
+    name: Application CI/CD
+    needs: [frontend, core, graphql, security]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/application.yml
+    with:
+      target_env: 'dev'
+      run_tests: true
+      force_deploy: false
+    secrets: inherit
+
+  deploy_tag:
+    name: Deploy from Tag
+    needs: [frontend, core, graphql]
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/deploy.yml
+    with:
+      from_tag: ${{ github.ref_name }}
+    secrets: inherit
+
+
