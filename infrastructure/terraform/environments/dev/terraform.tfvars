@@ -10,9 +10,17 @@ tags = {
   CostCenter  = "FreeTier"
 }
 
-# Enable Azure OpenAI deployments via Terraform (temporarily false until exact version is provided)
-enable_openai_deployments = false
+# Enable Azure OpenAI deployments via Terraform
+enable_openai_deployments = true
 
 # Provide the exact version string from the Azure portal for your region
 # Example: "2025-01-01-preview" (replace with the actual shown version)
-openai_deployments = []
+openai_deployments = [
+  {
+    deploy_name   = "gpt-4o"
+    model_name    = "gpt-4o"
+    model_version = "2024-11-20"
+    format        = "OpenAI"
+    scale_type    = "Standard"
+  }
+]
