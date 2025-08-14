@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
-    "@azure/msal-browser": "^4.19.0",
+    "@azure/msal-browser": "^4.20.0",
     "@azure/msal-react": "^3.0.17",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
