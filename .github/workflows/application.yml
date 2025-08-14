@@ -19,6 +19,11 @@ on:
         required: false
         default: true
         type: boolean
+      full_run:
+        description: 'Ignore path filters and run all stages'
+        required: false
+        default: false
+        type: boolean
   # Still allow manual dispatch for ad-hoc runs
   workflow_dispatch:
     inputs:
@@ -46,12 +51,11 @@ env:
   REGISTRY_DEV: crpcxdev.azurecr.io
   REGISTRY_PROD: crcortexprodvb9v2h.azurecr.io
   IMAGE_TAG: ${{ github.sha }}
-  TARGET_ENV: ${{ github.event.inputs.target_env || 'dev' }}
+  TARGET_ENV: ${{ inputs.target_env || github.event.inputs.target_env || 'dev' }}
   # Auto-deploy settings for push events
   AUTO_DEPLOY: ${{ github.event_name == 'push' && 'true' || 'false' }}
-  SKIP_TESTS: ${{ github.event.inputs.force_deploy || 'false' }}
-  # Determine whether to run tests (default true on push)
-  RUN_TESTS: ${{ github.event_name == 'push' && 'true' || (github.event.inputs.run_tests || 'false') }}
+  # Determine whether to run tests (default true on push or when full_run)
+  RUN_TESTS: ${{ inputs.full_run && 'true' || (github.event_name == 'push' && 'true' || (github.event.inputs.run_tests || (inputs.run_tests && 'true' || 'false'))) }}
 
 # Permissions for GitHub Actions
 # Updated to include Cargo.lock in repository
@@ -88,7 +92,7 @@ jobs:
     name: Test Rust Core
     runs-on: self-hosted
     needs: changes
-    if: (needs.changes.outputs.core == 'true' && github.event.inputs.run_tests == 'true') || github.event.inputs.force_deploy != 'true'
+    if: ((needs.changes.outputs.core == 'true') || inputs.full_run == true) && (inputs.run_tests == true || github.event.inputs.run_tests == 'true' || inputs.full_run == true) && (inputs.force_deploy != true && github.event.inputs.force_deploy != 'true')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -130,7 +134,7 @@ jobs:
     name: Test Frontend
     runs-on: self-hosted
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true'
+    if: (needs.changes.outputs.frontend == 'true' || inputs.full_run == true || inputs.force_deploy == true || github.event.inputs.force_deploy == 'true')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -177,7 +181,7 @@ jobs:
     name: Test GraphQL Gateway
     runs-on: self-hosted
     needs: changes
-    if: needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true'
+    if: (needs.changes.outputs.graphql == 'true' || inputs.full_run == true || inputs.force_deploy == true || github.event.inputs.force_deploy == 'true')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -206,7 +210,7 @@ jobs:
   security-trivy:
     name: Security - Trivy
     runs-on: self-hosted
-    if: github.event.inputs.force_deploy != 'true'
+    if: inputs.full_run == true || github.event.inputs.force_deploy != 'true'
     continue-on-error: true
     # No additional permissions required here to satisfy caller restrictions
     steps:
@@ -271,7 +275,7 @@ jobs:
     runs-on: self-hosted
     needs: [changes, test-core, security-scan]
     # Only build if core changed OR force deploy
-    if: (needs.changes.outputs.core == 'true' || github.event.inputs.force_deploy == 'true') && ((needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
+    if: ((needs.changes.outputs.core == 'true') || inputs.full_run == true || github.event.inputs.force_deploy == 'true') && ((needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
     permissions:
       contents: read
       packages: write
@@ -354,7 +358,7 @@ jobs:
     runs-on: self-hosted
     needs: [changes, test-frontend, security-scan]
     # Only build if frontend changed OR force deploy
-    if: (needs.changes.outputs.frontend == 'true' || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    if: ((needs.changes.outputs.frontend == 'true') || inputs.full_run == true || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -437,7 +441,7 @@ jobs:
     runs-on: self-hosted
     needs: [changes, test-graphql, security-scan]
     # Only build if graphql changed OR force deploy
-    if: (needs.changes.outputs.graphql == 'true' || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    if: ((needs.changes.outputs.graphql == 'true') || inputs.full_run == true || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -520,7 +524,7 @@ jobs:
     runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql]
     # Always run on push; on manual dispatch respect inputs
-    if: github.event_name == 'push' || (github.event.inputs.force_deploy != 'true' && github.event.inputs.run_tests == 'true')
+    if: github.event_name == 'push' || inputs.full_run == true || (inputs.force_deploy != true && (inputs.run_tests == true || github.event.inputs.run_tests == 'true'))
     services:
       postgres:
         image: postgres:15-alpine
@@ -585,7 +589,7 @@ jobs:
     name: Deploy to Development
     runs-on: self-hosted
     needs: [build-core, build-frontend, build-graphql, integration-tests]
-    if: always() && ((github.event_name == 'push') || (github.event.inputs.target_env == 'dev')) &&
+    if: always() && ((github.event_name == 'push') || (inputs.target_env == 'dev') || (github.event.inputs.target_env == 'dev')) &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
       (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
       (needs.build-graphql.result == 'success' || needs.build-graphql.result == 'skipped')

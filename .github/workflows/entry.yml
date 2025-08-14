@@ -143,6 +143,7 @@ jobs:
       target_env: 'dev'
       run_tests: true
       force_deploy: false
+      full_run: ${{ inputs.full_run == 'true' }}
     secrets: inherit
 
   deploy_tag:
