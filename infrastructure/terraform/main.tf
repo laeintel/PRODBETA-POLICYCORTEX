@@ -161,8 +161,9 @@ resource "azurerm_cognitive_deployment" "openai_realtime" {
     version = local.openai_realtime_model_ver
   }
 
-  sku {
-    name     = "Standard"
+  scale {
+    type     = "Standard"
+    tier     = "Standard"
     capacity = 1
   }
 }
@@ -178,8 +179,9 @@ resource "azurerm_cognitive_deployment" "openai_chat" {
     version = local.openai_chat_model_ver
   }
 
-  sku {
-    name     = "Standard"
+  scale {
+    type     = "Standard"
+    tier     = "Standard"
     capacity = 1
   }
 }
