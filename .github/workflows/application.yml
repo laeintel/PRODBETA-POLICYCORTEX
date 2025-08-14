@@ -57,8 +57,7 @@ env:
 # Updated to include Cargo.lock in repository
 permissions:
   contents: read
-  security-events: write  # Required for uploading SARIF results
-  actions: read           # Required for workflow run information
+  actions: read
 
 jobs:
   changes:
@@ -209,9 +208,7 @@ jobs:
     runs-on: self-hosted
     if: github.event.inputs.force_deploy != 'true'
     continue-on-error: true
-    permissions:
-      contents: read
-      security-events: write
+    # No additional permissions required here to satisfy caller restrictions
     steps:
       - uses: actions/checkout@v4
       - name: Run Trivy
