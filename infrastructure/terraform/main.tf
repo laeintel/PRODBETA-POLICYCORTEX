@@ -121,10 +121,22 @@ locals {
 }
 
 # Optional input override variables (declare with defaults when using a single file module)
-variable "openai_realtime_model_name" { type = string, default = null }
-variable "openai_realtime_model_version" { type = string, default = null }
-variable "openai_chat_model_name" { type = string, default = null }
-variable "openai_chat_model_version" { type = string, default = null }
+variable "openai_realtime_model_name" {
+  type    = string
+  default = null
+}
+variable "openai_realtime_model_version" {
+  type    = string
+  default = null
+}
+variable "openai_chat_model_name" {
+  type    = string
+  default = null
+}
+variable "openai_chat_model_version" {
+  type    = string
+  default = null
+}
 
 resource "azurerm_cognitive_account" "openai" {
   name                = local.openai_account_name
