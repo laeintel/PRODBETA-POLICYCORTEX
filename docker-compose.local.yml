@@ -10,11 +10,23 @@ services:
       - "8080:8080"
     environment:
       - RUST_LOG=debug
+      - ENVIRONMENT=dev
+      - USE_REAL_DATA=true
+      # Azure credentials (pull from your host env)
+      - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/policycortex
       - REDIS_URL=redis://dragonfly:6379
       - EVENT_STORE_URL=http://eventstore:2113
       - DEEP_API_BASE=http://api-gateway:8090
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      # Azure OpenAI (Foundry) for Realtime and Chat
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_REALTIME_DEPLOYMENT=${AZURE_OPENAI_REALTIME_DEPLOYMENT:-realtime-dev}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-05-01-preview}
     depends_on:
       - postgres
       - dragonfly
@@ -48,6 +60,7 @@ services:
     environment:
       - NODE_ENV=development
       - IN_DOCKER=true
+      - NEXT_PUBLIC_USE_REAL_DATA=true
       - NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://graphql:4000/graphql
       - NEXT_PUBLIC_WEBSOCKET_ENDPOINT=ws://graphql:4000/subscriptions
       - NEXT_PUBLIC_API_URL=http://core:8080

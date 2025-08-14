@@ -107,6 +107,71 @@ resource "azurerm_storage_account" "main" {
   tags = local.common_tags
 }
 
+# ===================== Azure OpenAI (Cognitive Services) =====================
+
+locals {
+  openai_account_name         = "cogao-cortex-${local.env_suffix}"
+  openai_custom_subdomain     = "cortexao-${local.env_suffix}"
+  openai_realtime_model_name  = var.openai_realtime_model_name != null ? var.openai_realtime_model_name : "gpt-4o-realtime-preview"
+  openai_realtime_model_ver   = var.openai_realtime_model_version != null ? var.openai_realtime_model_version : "2024-05-01-preview"
+  openai_chat_model_name      = var.openai_chat_model_name != null ? var.openai_chat_model_name : "gpt-4o-mini"
+  openai_chat_model_ver       = var.openai_chat_model_version != null ? var.openai_chat_model_version : "2024-05-01-preview"
+  openai_realtime_deploy_name = "realtime-${local.env_suffix}"
+  openai_chat_deploy_name     = "chat-${local.env_suffix}"
+}
+
+# Optional input override variables (declare with defaults when using a single file module)
+variable "openai_realtime_model_name" { type = string, default = null }
+variable "openai_realtime_model_version" { type = string, default = null }
+variable "openai_chat_model_name" { type = string, default = null }
+variable "openai_chat_model_version" { type = string, default = null }
+
+resource "azurerm_cognitive_account" "openai" {
+  name                = local.openai_account_name
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  kind                = "OpenAI"
+  sku_name            = "S0"
+  custom_subdomain_name = local.openai_custom_subdomain
+  public_network_access_enabled = true
+
+  tags = local.common_tags
+}
+
+resource "azurerm_cognitive_deployment" "openai_realtime" {
+  name                 = local.openai_realtime_deploy_name
+  cognitive_account_id = azurerm_cognitive_account.openai.id
+  rai_policy_name      = null
+
+  model {
+    format  = "OpenAI"
+    name    = local.openai_realtime_model_name
+    version = local.openai_realtime_model_ver
+  }
+
+  sku {
+    name     = "Standard"
+    capacity = 1
+  }
+}
+
+resource "azurerm_cognitive_deployment" "openai_chat" {
+  name                 = local.openai_chat_deploy_name
+  cognitive_account_id = azurerm_cognitive_account.openai.id
+  rai_policy_name      = null
+
+  model {
+    format  = "OpenAI"
+    name    = local.openai_chat_model_name
+    version = local.openai_chat_model_ver
+  }
+
+  sku {
+    name     = "Standard"
+    capacity = 1
+  }
+}
+
 # Storage containers for different purposes
 resource "azurerm_storage_container" "data" {
   name                  = "data"

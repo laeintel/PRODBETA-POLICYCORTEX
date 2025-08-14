@@ -10,11 +10,11 @@ This document captures the key technical shortcomings, bottlenecks, and architec
 
 ## Primary Problems (High-Level)
 
-1. **Shallow Domain Functionality** – Many features are stubbed or mocked (e.g., evidence generation, policy graph, remediation engine) which limits demo depth.
-2. **DX & Build Instability** – Docker/Rust builds require work-arounds (SQLX_OFFLINE, Alpine OpenSSL fixes) and often break on new crates.
+1. **Shallow Domain Functionality** – Many features are stubbed or mocked (e.g., evidence generation, policy graph, remediation engine), which limit demo depth.
+2. **DX & Build Instability** – Docker/Rust builds require workarounds (SQLX_OFFLINE, Alpine OpenSSL fixes) and often break on new crates.
 3. **Observability Gaps** – OTLP plumbing exists but metrics/traces/logs are not exported in dev or prod; no SLO dashboards.
-4. **Thin Test Coverage** – Unit and integration tests cover < 10 % of code paths; security-critical flows (auth, tenant isolation) untested.
-5. **Security Baseline Drift** – 5 CRITICAL CVEs tolerated; baseline file may rot without auto-ratcheting.
+4. **Thin Test Coverage** – Unit and integration tests cover <10% of code paths; security-critical flows (auth, tenant isolation) are untested.
+5. **Security Baseline Drift** – 5 critical CVEs tolerated; baseline file may rot without auto-ratcheting.
 6. **Frontend Performance** – No code-splitting, bundle > 1 MB, no list virtualisation or SSR caching.
 7. **Terraform Drift** – Container App revision FQDNs cause plan churn; remote-state locking not configured.
 8. **Secret Hygiene** – Push protection flagged embedded secrets; large binaries (MSI) also present in history.
