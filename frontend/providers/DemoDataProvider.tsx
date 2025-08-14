@@ -165,10 +165,19 @@ export function withDemoData<P extends object>(
     const { isDemoMode, getDemoData } = useDemoData();
     
     if (isDemoMode && mockProps) {
-      const demoProps = Object.keys(mockProps).reduce((acc, key) => {
-        acc[key] = getDemoData(key, mockProps[key]);
-        return acc;
-      }, {} as any);
+      const demoProps = (Object.keys(mockProps) as Array<keyof P>).reduce(
+        (acc, key) => {
+          // Use string key for lookup in demo store and preserve value type
+          const k = String(key);
+          const fallback = mockProps[key] as P[keyof P];
+          (acc as Partial<Record<keyof P, P[keyof P]>>)[key] = getDemoData(
+            k,
+            fallback as any
+          ) as P[keyof P];
+          return acc;
+        },
+        {} as Partial<P>
+      );
       
       return <Component {...props} {...demoProps} />;
     }
