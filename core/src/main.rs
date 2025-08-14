@@ -246,6 +246,14 @@ async fn main() {
             Ok(pool) => {
                 info!("Connected DB pool");
                 app_state.db_pool = Some(pool);
+                // Run migrations on startup (idempotent)
+                if let Some(ref pool) = app_state.db_pool {
+                    if let Err(e) = sqlx::migrate!("./core/migrations").run(pool).await {
+                        warn!("DB migrations failed: {}", e);
+                    } else {
+                        info!("DB migrations applied");
+                    }
+                }
             }
             Err(e) => warn!("DB pool connection failed: {}", e),
         }
