@@ -75,17 +75,22 @@ export default function ResourcesPage() {
   })) || []
 
   const filteredResources = useMemo(() => resources.filter(resource => {
-    const matchesSearch = resource.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         resource.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         resource.resourceGroup.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         resource.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const q = (searchQuery || '').toLowerCase()
+    const name = (resource?.name || '').toLowerCase()
+    const type = (resource?.type || '').toLowerCase()
+    const rg = (resource?.resourceGroup || '').toLowerCase()
+    const location = (resource?.location || '').toLowerCase()
+    const matchesSearch = name.includes(q) ||
+                         type.includes(q) ||
+                         rg.includes(q) ||
+                         location.includes(q) ||
                          Object.entries(resource.tags || {}).some(([key, value]) => 
-                           key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           value.toLowerCase().includes(searchQuery.toLowerCase())
+                           (key || '').toLowerCase().includes(q) ||
+                           String(value ?? '').toLowerCase().includes(q)
                          )
     
-    const matchesType = filterType === 'all' || resource.type.includes(filterType)
-    const matchesStatus = filterStatus === 'all' || resource.status === filterStatus
+    const matchesType = filterType === 'all' || (resource.type || '').includes(filterType)
+    const matchesStatus = filterStatus === 'all' || (resource.status || '') === filterStatus
     
     return matchesSearch && matchesType && matchesStatus
   }), [resources, searchQuery, filterType, filterStatus])
@@ -295,7 +300,11 @@ export default function ResourcesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-gray-300">{resource.type.split('/')[1]}</p>
+                        {(() => {
+                          const typeStr = (resource?.type || '')
+                          const seg = typeStr.includes('/') ? typeStr.split('/')[1] : typeStr
+                          return <p className="text-sm text-gray-300">{seg || 'Unknown'}</p>
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1">

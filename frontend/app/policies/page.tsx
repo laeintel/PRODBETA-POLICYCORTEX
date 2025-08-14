@@ -104,9 +104,13 @@ export default function PoliciesPage() {
   }, [searchQuery, filterCategory, filterStatus])
 
   const filteredPolicies = policies.filter(policy => {
-    const matchesSearch = policy.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         policy.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         policy.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const q = (searchQuery || '').toLowerCase()
+    const displayName = (policy?.displayName || '').toLowerCase()
+    const description = (policy?.description || '').toLowerCase()
+    const name = (policy?.name || '').toLowerCase()
+    const matchesSearch = displayName.includes(q) ||
+                         description.includes(q) ||
+                         name.includes(q)
     const matchesCategory = filterCategory === 'all' || policy.category === filterCategory
     const matchesStatus = filterStatus === 'all' || policy.status === filterStatus
     return matchesSearch && matchesCategory && matchesStatus
