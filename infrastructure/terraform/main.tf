@@ -138,6 +138,14 @@ variable "openai_chat_model_version" {
   default = null
 }
 
+# Toggle to create Azure OpenAI deployments. Default false to avoid
+# failures when models are not available in the selected region.
+variable "enable_openai_deployments" {
+  description = "Create Azure OpenAI deployments (set true only if models are supported in region)"
+  type        = bool
+  default     = false
+}
+
 resource "azurerm_cognitive_account" "openai" {
   name                          = local.openai_account_name
   location                      = azurerm_resource_group.main.location
@@ -151,6 +159,7 @@ resource "azurerm_cognitive_account" "openai" {
 }
 
 resource "azurerm_cognitive_deployment" "openai_realtime" {
+  count                = var.enable_openai_deployments ? 1 : 0
   name                 = local.openai_realtime_deploy_name
   cognitive_account_id = azurerm_cognitive_account.openai.id
   rai_policy_name      = null
@@ -167,6 +176,7 @@ resource "azurerm_cognitive_deployment" "openai_realtime" {
 }
 
 resource "azurerm_cognitive_deployment" "openai_chat" {
+  count                = var.enable_openai_deployments ? 1 : 0
   name                 = local.openai_chat_deploy_name
   cognitive_account_id = azurerm_cognitive_account.openai.id
   rai_policy_name      = null
