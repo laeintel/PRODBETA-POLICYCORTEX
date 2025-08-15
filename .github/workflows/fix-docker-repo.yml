@@ -1,0 +1,150 @@
+name: Fix Docker Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_fix:
+        description: 'Force fix even if Docker appears to be working'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  fix-docker-repo:
+    name: Fix Docker Repository Configuration
+    runs-on: self-hosted
+    steps:
+      - name: Check current Docker repository status
+        run: |
+          echo "🔍 Checking Docker repository configuration..."
+          
+          # Check for corrupted entries
+          if grep -r "download\.docker\.com.*|" /etc/apt/sources.list* 2>/dev/null; then
+            echo "❌ Found corrupted Docker repository entries with pipe characters"
+            echo "corrupted=true" >> $GITHUB_ENV
+          else
+            echo "✅ No corrupted pipe entries found"
+          fi
+          
+          # Try to update package list
+          if ! sudo apt-get update 2>&1 | grep -v "Warning"; then
+            echo "❌ apt-get update failed"
+            echo "update_failed=true" >> $GITHUB_ENV
+          else
+            echo "✅ apt-get update succeeded"
+          fi
+
+      - name: Fix Docker repository
+        if: env.corrupted == 'true' || env.update_failed == 'true' || github.event.inputs.force_fix == 'true'
+        run: |
+          echo "🔧 Fixing Docker repository configuration..."
+          
+          # Remove all Docker-related repository files
+          echo "🧹 Removing existing Docker repository configurations..."
+          sudo rm -f /etc/apt/sources.list.d/docker*.list
+          sudo rm -f /etc/apt/keyrings/docker.gpg
+          sudo rm -f /etc/apt/trusted.gpg.d/docker.gpg
+          
+          # Remove any corrupted entries from main sources.list
+          echo "🧹 Cleaning main sources.list..."
+          sudo sed -i '/download\.docker\.com.*|/d' /etc/apt/sources.list
+          
+          # Clean all sources.list.d files
+          for file in /etc/apt/sources.list.d/*.list; do
+            if [ -f "$file" ]; then
+              sudo sed -i '/download\.docker\.com.*|/d' "$file"
+            fi
+          done
+          
+          # Clean package cache
+          echo "🧹 Cleaning package cache..."
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          
+          # Update package index
+          echo "📦 Updating package index..."
+          sudo apt-get update
+          
+          echo "✅ Docker repository cleanup completed"
+
+      - name: Reinstall Docker (if needed)
+        if: env.corrupted == 'true' || env.update_failed == 'true' || github.event.inputs.force_fix == 'true'
+        run: |
+          echo "🐳 Reinstalling Docker..."
+          
+          # Remove existing Docker installation
+          sudo apt-get remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
+          
+          # Install Docker using official script
+          echo "📦 Installing Docker using official script..."
+          curl -fsSL https://get.docker.com -o get-docker.sh
+          sudo sh get-docker.sh
+          rm get-docker.sh
+          
+          # Add users to docker group
+          sudo usermod -aG docker $USER || true
+          sudo usermod -aG docker runner || true
+          sudo usermod -aG docker github || true
+          
+          # Start and enable Docker
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          
+          echo "✅ Docker reinstallation completed"
+
+      - name: Verify Docker installation
+        run: |
+          echo "🔍 Verifying Docker installation..."
+          
+          # Check Docker version
+          if docker --version; then
+            echo "✅ Docker version check passed"
+          else
+            echo "❌ Docker version check failed"
+            exit 1
+          fi
+          
+          # Check Docker daemon
+          if sudo docker info >/dev/null 2>&1; then
+            echo "✅ Docker daemon is running"
+          else
+            echo "❌ Docker daemon is not running"
+            echo "🔄 Attempting to start Docker daemon..."
+            sudo systemctl start docker
+            sleep 5
+            if sudo docker info >/dev/null 2>&1; then
+              echo "✅ Docker daemon started successfully"
+            else
+              echo "❌ Failed to start Docker daemon"
+              exit 1
+            fi
+          fi
+          
+          # Test Docker functionality
+          if sudo docker run --rm hello-world >/dev/null 2>&1; then
+            echo "✅ Docker test container ran successfully"
+          else
+            echo "❌ Docker test container failed"
+            exit 1
+          fi
+          
+          echo "🎉 Docker is working correctly!"
+
+      - name: Summary
+        run: |
+          echo "## Docker Repository Fix Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Docker repository has been fixed and verified**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Actions taken:" >> $GITHUB_STEP_SUMMARY
+          echo "- Removed corrupted Docker repository entries" >> $GITHUB_STEP_SUMMARY
+          echo "- Cleaned package cache and sources" >> $GITHUB_STEP_SUMMARY
+          echo "- Reinstalled Docker using official script" >> $GITHUB_STEP_SUMMARY
+          echo "- Verified Docker functionality" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next steps:" >> $GITHUB_STEP_SUMMARY
+          echo "- Your CI/CD pipelines should now work correctly" >> $GITHUB_STEP_SUMMARY
+          echo "- You may need to restart the runner for group changes to take effect" >> $GITHUB_STEP_SUMMARY

@@ -133,7 +133,20 @@ jobs:
           echo "📦 Installing Docker on ${{ needs.check-runner.outputs.runner_os }}..."
           
           if [[ "${{ needs.check-runner.outputs.runner_os }}" == "linux" ]]; then
+            # Clean up any corrupted Docker repository entries first
+            echo "🧹 Cleaning up corrupted Docker repository entries..."
+            sudo rm -f /etc/apt/sources.list.d/docker*.list 2>/dev/null || true
+            sudo rm -f /etc/apt/keyrings/docker.gpg 2>/dev/null || true
+            
+            # Remove any malformed entries containing pipes
+            sudo sed -i '/download\.docker\.com.*|/d' /etc/apt/sources.list 2>/dev/null || true
+            sudo sed -i '/download\.docker\.com.*|/d' /etc/apt/sources.list.d/*.list 2>/dev/null || true
+            
+            # Update package index to clear cache
+            sudo apt-get update || true
+            
             # Use the official Docker installation script
+            echo "📦 Installing Docker using official script..."
             curl -fsSL https://get.docker.com -o get-docker.sh
             sudo sh get-docker.sh
             rm get-docker.sh
