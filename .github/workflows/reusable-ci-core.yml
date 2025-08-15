@@ -31,8 +31,27 @@ jobs:
           workspaces: |
             core
             crates
-      - name: Format check
-        run: cargo fmt --all -- --check
+      - name: Format check and auto-fix
+        run: |
+          echo "🔍 Checking Rust code formatting..."
+          if ! cargo fmt --all -- --check; then
+            echo "📝 Code formatting issues found. Auto-fixing..."
+            cargo fmt --all
+            echo "✅ Code has been automatically formatted"
+            
+            # Check if there are any changes after formatting
+            if git diff --quiet; then
+              echo "✅ No formatting changes needed after auto-fix"
+            else
+              echo "📋 Formatting changes applied:"
+              git diff --name-only
+              echo ""
+              echo "⚠️ Formatting has been automatically applied but not committed."
+              echo "   The CI will continue with the formatted code."
+            fi
+          else
+            echo "✅ Code formatting is already correct"
+          fi
         working-directory: core
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings

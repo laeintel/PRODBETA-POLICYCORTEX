@@ -1,4 +1,4 @@
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -24,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
     // Start server
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     tracing::info!("Starting server on {}", addr);
-    
+
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
 
