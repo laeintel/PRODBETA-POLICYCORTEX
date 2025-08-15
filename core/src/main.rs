@@ -10,7 +10,7 @@ use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tracing::{info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -261,16 +261,32 @@ async fn main() {
     }
     let app_state = Arc::new(app_state);
 
-    // Configure CORS
+    // Configure CORS - secure defaults
     let cors = if config.allowed_origins.is_empty() {
-        CorsLayer::new().allow_origin(Any)
+        // Default to localhost origins only if no configuration provided
+        let default_origins = vec![
+            "http://localhost:3000".parse().unwrap(),
+            "http://localhost:3005".parse().unwrap(),
+            "https://localhost:3000".parse().unwrap(),
+            "https://localhost:3005".parse().unwrap(),
+        ];
+        CorsLayer::new().allow_origin(default_origins)
     } else {
         let origins = config
             .allowed_origins
             .iter()
             .filter_map(|o| o.parse().ok())
             .collect::<Vec<_>>();
-        CorsLayer::new().allow_origin(origins)
+        if origins.is_empty() {
+            // Fallback to localhost if parsing fails
+            let default_origins = vec![
+                "http://localhost:3000".parse().unwrap(),
+                "http://localhost:3005".parse().unwrap(),
+            ];
+            CorsLayer::new().allow_origin(default_origins)
+        } else {
+            CorsLayer::new().allow_origin(origins)
+        }
     }
     .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
     .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
@@ -352,7 +368,40 @@ async fn main() {
         // Enforce auth for write operations (scopes/roles)
         .layer(auth_middleware::AuthEnforcementLayer)
         // Data mode enforcement is handled by individual endpoints
-        .with_state(app_state);
+        .with_state(app_state.clone());
+
+    // Start periodic cleanup task for action event channels
+    let cleanup_state = app_state.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(300)); // 5 minutes
+        loop {
+            interval.tick().await;
+            
+            let actions_to_cleanup = {
+                let actions = cleanup_state.actions.read().await;
+                let now = chrono::Utc::now();
+                
+                // Find completed or old actions (older than 30 minutes)
+                actions
+                    .iter()
+                    .filter(|(_, action)| {
+                        action.status == "completed" || 
+                        action.status == "failed" ||
+                        (now - action.updated_at).num_minutes() > 30
+                    })
+                    .map(|(id, _)| id.clone())
+                    .collect::<Vec<_>>()
+            };
+            
+            if !actions_to_cleanup.is_empty() {
+                let mut events = cleanup_state.action_events.write().await;
+                for action_id in &actions_to_cleanup {
+                    events.remove(action_id);
+                }
+                tracing::info!("Cleaned up {} stale action event channels", actions_to_cleanup.len());
+            }
+        }
+    });
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     info!("PolicyCortex Core API listening on {}", addr);

@@ -67,12 +67,10 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
   const isAuthenticated = useIsAuthenticated()
   const account = useAccount(accounts[0] || {})
 
-  // Demo mode if Azure config is missing or explicitly enabled
-  const demoMode = typeof window !== 'undefined' && (
-    !process.env.NEXT_PUBLIC_AZURE_CLIENT_ID ||
-    !process.env.NEXT_PUBLIC_AZURE_TENANT_ID ||
+  // Demo mode only in development with explicit flag
+  const demoMode = typeof window !== 'undefined' && 
+    process.env.NODE_ENV === 'development' &&
     process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
-  )
 
   const [demoUser, setDemoUser] = useState<AccountInfo | null>(null)
   const [loading, setLoading] = useState(false)
@@ -83,18 +81,19 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     setError(null)
     
     try {
-      // Demo mode bypass for local development
+      // Demo mode bypass for development only
       if (demoMode) {
+        console.warn('🚨 SECURITY WARNING: Demo mode is active! This bypasses authentication and should NEVER be used in production!')
         const demoAccount: AccountInfo = {
           username: 'demo@policycortex.local',
-          name: 'Demo User',
+          name: 'Demo User (DEV)',
           homeAccountId: 'demo-account',
-          environment: 'demo',
+          environment: 'development',
           tenantId: 'demo-tenant',
           localAccountId: 'demo-local'
         }
         setDemoUser(demoAccount)
-        console.log('Demo mode: Login bypassed')
+        console.log('Demo mode: Authentication bypassed for development')
         return
       }
       
