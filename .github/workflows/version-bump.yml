@@ -8,6 +8,10 @@ on:
       - 'CHANGELOG.md'
       - 'core/Cargo.toml'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   version-bump:
     runs-on: ubuntu-latest
@@ -77,6 +81,7 @@ jobs:
 
     - name: Push changes
       run: |
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
         git push origin main
         git push origin "v${{ steps.new_version.outputs.version }}"
 
