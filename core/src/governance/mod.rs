@@ -87,7 +87,7 @@ impl GovernanceCoordinator {
             identity.clone(),
             monitoring.clone(),
             ai_engine.clone(),
-        ).await?);
+        ).await);
 
         Ok(Self {
             resource_graph,
@@ -117,7 +117,9 @@ impl GovernanceCoordinator {
             security_health,
             access_health,
             network_health,
-        ) = tokio::try_join!(
+            optimization_health,
+            blueprints_health,
+        ) = tokio::join!(
             self.resource_graph.health_check(),
             self.policy_engine.health_check(),
             self.identity.health_check(),
@@ -126,7 +128,9 @@ impl GovernanceCoordinator {
             self.security_posture.health_check(),
             self.access_control.health_check(),
             self.network.health_check(),
-        )?;
+            self.optimization.health_check(),
+            self.blueprints.health_check(),
+        );
 
         Ok(GovernanceHealthReport {
             overall_status: calculate_overall_health(&[
@@ -138,6 +142,8 @@ impl GovernanceCoordinator {
                 security_health.status,
                 access_health.status,
                 network_health.status,
+                optimization_health.status,
+                blueprints_health.status,
             ]),
             resource_graph: resource_health,
             policy_engine: policy_health,
@@ -147,6 +153,8 @@ impl GovernanceCoordinator {
             security_posture: security_health,
             access_control: access_health,
             network: network_health,
+            optimization: optimization_health,
+            blueprints: blueprints_health,
             timestamp: chrono::Utc::now(),
         })
     }
@@ -182,6 +190,12 @@ pub enum GovernanceError {
     #[error("AI governance error: {0}")]
     AI(String),
 
+    #[error("Not found: {0}")]
+    NotFound(String),
+
+    #[error("Not implemented: {0}")]
+    NotImplemented(String),
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
 
@@ -193,11 +207,21 @@ pub enum GovernanceError {
 }
 
 /// Health status for governance components
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum HealthStatus {
     Healthy,
     Degraded,
     Unhealthy,
+}
+
+impl std::fmt::Display for HealthStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HealthStatus::Healthy => write!(f, "Healthy"),
+            HealthStatus::Degraded => write!(f, "Degraded"),
+            HealthStatus::Unhealthy => write!(f, "Unhealthy"),
+        }
+    }
 }
 
 /// Individual component health report
@@ -222,6 +246,8 @@ pub struct GovernanceHealthReport {
     pub security_posture: ComponentHealth,
     pub access_control: ComponentHealth,
     pub network: ComponentHealth,
+    pub optimization: ComponentHealth,
+    pub blueprints: ComponentHealth,
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 

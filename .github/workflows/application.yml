@@ -97,6 +97,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install System Dependencies
+        run: |
+          # Install OpenSSL development libraries and pkg-config
+          echo "🔧 Installing system dependencies for Rust build..."
+          if command -v apt-get >/dev/null 2>&1; then
+            # Ubuntu/Debian
+            sudo apt-get update
+            sudo apt-get install -y libssl-dev pkg-config build-essential
+          elif command -v yum >/dev/null 2>&1; then
+            # CentOS/RHEL/Amazon Linux
+            sudo yum install -y openssl-devel pkgconfig gcc
+          elif command -v dnf >/dev/null 2>&1; then
+            # Fedora
+            sudo dnf install -y openssl-devel pkgconf gcc
+          elif command -v pacman >/dev/null 2>&1; then
+            # Arch Linux
+            sudo pacman -S --noconfirm openssl pkg-config base-devel
+          elif command -v zypper >/dev/null 2>&1; then
+            # openSUSE
+            sudo zypper install -y libopenssl-devel pkg-config gcc
+          else
+            echo "⚠️ Unknown package manager. Please install OpenSSL development libraries manually."
+            echo "Required packages: libssl-dev (or openssl-devel), pkg-config, build tools"
+          fi
+
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -110,6 +135,30 @@ jobs:
         with:
           workspaces: core
 
+      - name: Set OpenSSL Environment Variables
+        run: |
+          # Set environment variables to help with OpenSSL detection
+          echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
+          echo "OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=/usr/include/openssl" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+          # Force vendored OpenSSL as fallback
+          echo "OPENSSL_STATIC=1" >> $GITHUB_ENV
+          echo "OPENSSL_VENDORED=1" >> $GITHUB_ENV
+
+      - name: Verify OpenSSL Installation
+        run: |
+          echo "🔍 Verifying OpenSSL installation..."
+          echo "OpenSSL version:"
+          openssl version || echo "⚠️ OpenSSL not found"
+          echo "pkg-config OpenSSL check:"
+          pkg-config --modversion openssl || echo "⚠️ OpenSSL pkg-config not found"
+          echo "OpenSSL headers:"
+          ls -la /usr/include/openssl/ | head -5 || echo "⚠️ OpenSSL headers not found"
+          echo "OpenSSL libraries:"
+          ls -la /usr/lib/x86_64-linux-gnu/libssl* || ls -la /usr/lib/libssl* || echo "⚠️ OpenSSL libraries not found"
+          echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+
       - name: Format Check
         run: |
           # Check core directory (standalone crate with own workspace)
@@ -117,17 +166,29 @@ jobs:
 
       - name: Clippy
         run: |
-          # Check core directory
-          cd core && cargo clippy --all-targets --all-features -- -D warnings -A clippy::all || true
+          # Check core directory - try with system OpenSSL first, then vendored
+          cd core
+          if ! cargo clippy --all-targets --all-features -- -D warnings -A clippy::all; then
+            echo "⚠️ Clippy failed with system OpenSSL, trying with vendored OpenSSL..."
+            cargo clippy --all-targets --features vendored-openssl -- -D warnings -A clippy::all || true
+          fi
 
       - name: Run Tests
         run: |
-          # Test core directory
-          cd core && cargo test --verbose || true
+          # Test core directory - try with system OpenSSL first, then vendored
+          cd core
+          if ! cargo test --verbose; then
+            echo "⚠️ Tests failed with system OpenSSL, trying with vendored OpenSSL..."
+            cargo test --verbose --features vendored-openssl || true
+          fi
 
       - name: Security Audit
         run: |
-          cargo install cargo-audit --locked
+          # Install cargo-audit and run security audit
+          if ! cargo install cargo-audit --locked; then
+            echo "⚠️ Failed to install cargo-audit with system OpenSSL, trying with vendored..."
+            OPENSSL_VENDORED=1 cargo install cargo-audit --locked || echo "Failed to install cargo-audit"
+          fi
           cargo audit || true
 
   test-frontend:

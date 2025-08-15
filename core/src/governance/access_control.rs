@@ -72,6 +72,18 @@ pub enum PrincipalType {
     Device,
 }
 
+impl std::fmt::Display for PrincipalType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PrincipalType::User => write!(f, "User"),
+            PrincipalType::Group => write!(f, "Group"),
+            PrincipalType::ServicePrincipal => write!(f, "ServicePrincipal"),
+            PrincipalType::ForeignGroup => write!(f, "ForeignGroup"),
+            PrincipalType::Device => write!(f, "Device"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AssignmentType {
     Direct,
@@ -238,7 +250,7 @@ pub enum AnomalySeverity {
     Informational,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AnomalyStatus {
     Active,
     Investigating,

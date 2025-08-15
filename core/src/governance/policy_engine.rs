@@ -194,7 +194,7 @@ pub struct PolicyEvaluationResult {
 }
 
 /// Compliance state for policy evaluation
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ComplianceState {
     Compliant,
     NonCompliant,
@@ -416,12 +416,16 @@ impl PolicyEngine {
         // Execute request
         let response = self.azure_client
             .http_client()
-            .put(url, Some(request_body.to_string()))
+            .put(url)
+            .json(&request_body)
+            .send()
             .await
-            .map_err(GovernanceError::AzureApi)?;
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
 
         // Parse response to get the created policy ID
-        let created_policy: serde_json::Value = serde_json::from_str(&response.body)
+        let response_text = response.text().await
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
+        let created_policy: serde_json::Value = serde_json::from_str(&response_text)
             .map_err(GovernanceError::Serialization)?;
 
         let policy_id = created_policy["id"].as_str()
@@ -457,9 +461,11 @@ impl PolicyEngine {
         // Execute request
         let _response = self.azure_client
             .http_client()
-            .put(url, Some(request_body.to_string()))
+            .put(url)
+            .json(&request_body)
+            .send()
             .await
-            .map_err(GovernanceError::AzureApi)?;
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
 
         // Cache the assignment
         self.assignments.write().await.insert(assignment.id.clone(), assignment);
@@ -477,12 +483,15 @@ impl PolicyEngine {
         // Execute request
         let response = self.azure_client
             .http_client()
-            .post(url, None)
+            .post(url)
+            .send()
             .await
-            .map_err(GovernanceError::AzureApi)?;
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
 
         // Parse compliance data
-        let compliance_data: serde_json::Value = serde_json::from_str(&response.body)
+        let response_text = response.text().await
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
+        let compliance_data: serde_json::Value = serde_json::from_str(&response_text)
             .map_err(GovernanceError::Serialization)?;
 
         // Convert to ComplianceReport
@@ -524,12 +533,16 @@ impl PolicyEngine {
         // Execute request
         let response = self.azure_client
             .http_client()
-            .put(url, Some(request_body.to_string()))
+            .put(url)
+            .json(&request_body)
+            .send()
             .await
-            .map_err(GovernanceError::AzureApi)?;
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
 
         // Parse response
-        let task_data: serde_json::Value = serde_json::from_str(&response.body)
+        let response_text = response.text().await
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
+        let task_data: serde_json::Value = serde_json::from_str(&response_text)
             .map_err(GovernanceError::Serialization)?;
 
         let task = RemediationTask {
@@ -571,11 +584,15 @@ impl PolicyEngine {
         // Execute request
         let response = self.azure_client
             .http_client()
-            .put(url, Some(request_body.to_string()))
+            .put(url)
+            .json(&request_body)
+            .send()
             .await
-            .map_err(GovernanceError::AzureApi)?;
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
 
-        let exemption_data: serde_json::Value = serde_json::from_str(&response.body)
+        let response_text = response.text().await
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
+        let exemption_data: serde_json::Value = serde_json::from_str(&response_text)
             .map_err(GovernanceError::Serialization)?;
 
         let exemption_id = exemption_data["id"].as_str()
@@ -594,12 +611,15 @@ impl PolicyEngine {
         // Execute request
         let response = self.azure_client
             .http_client()
-            .post(url, None)
+            .post(url)
+            .send()
             .await
-            .map_err(GovernanceError::AzureApi)?;
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
 
         // Parse evaluation results
-        let evaluation_data: serde_json::Value = serde_json::from_str(&response.body)
+        let response_text = response.text().await
+            .map_err(|e| GovernanceError::AzureApi(azure_core::Error::new(azure_core::error::ErrorKind::Other, e)))?;
+        let evaluation_data: serde_json::Value = serde_json::from_str(&response_text)
             .map_err(GovernanceError::Serialization)?;
 
         let evaluations = self.parse_evaluation_results(evaluation_data)?;
@@ -755,7 +775,7 @@ impl PolicyEngine {
             self.config.default_scope
         );
 
-        match self.azure_client.http_client().get(test_url).await {
+        match self.azure_client.http_client().get(test_url).send().await {
             Ok(_) => {
                 let query_time = start_time.elapsed().as_millis() as f64;
                 let definitions_count = self.definitions.read().await.len();

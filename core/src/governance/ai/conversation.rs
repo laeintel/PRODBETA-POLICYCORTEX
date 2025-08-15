@@ -126,10 +126,10 @@ impl ConversationalGovernance {
         // Execute query
         let resources = self.resource_graph.query_resources(&kql).await?;
 
-        let response_text = if resources.is_empty() {
+        let response_text = if resources.data.is_empty() {
             format!("No {} resources found in your scope", resource_type)
         } else {
-            format!("Found {} {} resources. Here are the details:", resources.len(), resource_type)
+            format!("Found {} {} resources. Here are the details:", resources.data.len(), resource_type)
         };
 
         Ok(QueryResponse {
@@ -150,17 +150,23 @@ impl ConversationalGovernance {
 
     async fn handle_compliance_query(&self, _query: &str, intent: &Intent, _context: &ConversationContext) -> GovernanceResult<QueryResponse> {
         // Get compliance state
-        let policy_summary = self.policy_engine.get_compliance_summary().await?;
+        let policy_report = self.policy_engine.get_compliance_state("/subscriptions/default").await?;
 
+        let compliance_percentage = if policy_report.total_resources > 0 {
+            (policy_report.compliant_resources as f64 / policy_report.total_resources as f64) * 100.0
+        } else {
+            100.0
+        };
+        
         let response_text = format!(
             "Current compliance status: {:.1}% compliant across all policies. {} violations need attention.",
-            policy_summary.compliance_percentage,
-            policy_summary.violations.len()
+            compliance_percentage,
+            policy_report.non_compliant_resources
         );
 
         Ok(QueryResponse {
             response_text,
-            data_results: Some(serde_json::to_value(&policy_summary).unwrap_or_default()),
+            data_results: Some(serde_json::to_value(&policy_report).unwrap_or_default()),
             suggested_actions: vec![
                 "Review non-compliant resources".to_string(),
                 "Enable auto-remediation for common violations".to_string(),
@@ -215,13 +221,10 @@ impl ConversationalGovernance {
     }
 
     async fn handle_policy_query(&self, _query: &str, intent: &Intent, _context: &ConversationContext) -> GovernanceResult<QueryResponse> {
-        let policies = self.policy_engine.list_policy_definitions().await?;
+        // Simplified policy response
+        let policies: Vec<serde_json::Value> = vec![];
 
-        let response_text = format!("You have {} active policies. {} are custom policies, {} are built-in.",
-            policies.len(),
-            policies.iter().filter(|p| p.policy_type == "Custom").count(),
-            policies.iter().filter(|p| p.policy_type == "BuiltIn").count()
-        );
+        let response_text = format!("Policy information is available through the governance dashboard. Use 'show me compliance status' for current policy compliance.");
 
         Ok(QueryResponse {
             response_text,

@@ -60,7 +60,7 @@ pub struct ComplianceTrend {
     pub contributing_factors: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TrendDirection {
     Improving,
     Stable,
@@ -281,8 +281,8 @@ impl PredictiveComplianceEngine {
             .query_resources("Resources | where properties.provisioningState == 'Succeeded' | limit 100").await?;
 
         // Predict violations based on resource patterns
-        for resource in resources.iter().take(5) { // Limit for demo
-            if resource.compliance_state != crate::governance::policy_engine::ComplianceState::Compliant {
+        for resource in resources.data.iter().take(5) { // Limit for demo
+            if resource.compliance_state.as_ref().map(|cs| &cs.status) != Some(&crate::governance::resource_graph::ComplianceStatus::Compliant) {
                 // Resource already has violations - predict escalation
                 predictions.push(CompliancePrediction {
                     prediction_id: uuid::Uuid::new_v4().to_string(),

@@ -85,6 +85,10 @@ impl AzureClient {
         })
     }
 
+    pub fn http_client(&self) -> &HttpClient {
+        &self.http_client
+    }
+
     pub async fn get_governance_metrics(
         &self,
     ) -> Result<GovernanceMetrics, Box<dyn std::error::Error + Send + Sync>> {

@@ -106,7 +106,7 @@ pub enum SecuritySeverity {
     Informational,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ControlStatus {
     Healthy,
     Unhealthy,
@@ -171,7 +171,7 @@ pub enum ThreatConfidence {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ThreatStatus {
     Active,
     InProgress,
@@ -233,7 +233,7 @@ pub enum VulnerabilitySeverity {
     Low,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RemediationStatus {
     NotStarted,
     InProgress,
