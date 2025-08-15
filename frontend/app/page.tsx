@@ -269,7 +269,10 @@ export default function HomePage() {
                 className="bg-gradient-to-br from-white/10 to-white/5 p-8 rounded-3xl backdrop-blur-sm border border-white/20"
               >
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${features[currentFeature].color} flex items-center justify-center mb-6`}>
-                  <features[currentFeature].icon className="w-8 h-8 text-white" />
+                  {(() => {
+                    const IconComponent = features[currentFeature].icon;
+                    return <IconComponent className="w-8 h-8 text-white" />;
+                  })()}
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4">{features[currentFeature].title}</h3>
                 <p className="text-gray-300 text-lg leading-relaxed">{features[currentFeature].description}</p>
