@@ -41,6 +41,7 @@ mod finops;
 mod governance;
 mod observability;
 mod policy_engine;
+mod resources;
 mod secret_guard;
 mod secrets;
 mod security_graph;
@@ -58,6 +59,9 @@ use api::{
     get_rbac_deep, get_recommendations, get_resources, get_resources_deep, get_roadmap_status,
     get_secrets_status, list_approvals, list_frameworks, process_conversation, reload_secrets,
     remediate, stream_action_events, stream_events, AppState,
+    // New resource management functions
+    get_all_resources, get_resources_by_category, get_resource_by_id,
+    execute_resource_action, get_resource_insights, get_resource_health_summary,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -346,6 +350,13 @@ async fn main() {
         // Compliance and Resources endpoints
         .route("/api/v1/compliance", get(get_compliance))
         .route("/api/v1/resources", get(get_resources))
+        // New comprehensive resource management endpoints
+        .route("/api/v2/resources", get(get_all_resources))
+        .route("/api/v2/resources/category/:category", get(get_resources_by_category))
+        .route("/api/v2/resources/:id", get(get_resource_by_id))
+        .route("/api/v2/resources/:id/actions", post(execute_resource_action))
+        .route("/api/v2/resources/insights", get(get_resource_insights))
+        .route("/api/v2/resources/health", get(get_resource_health_summary))
         // Deep insights (Phase 1)
         .route("/api/v1/policies/deep", get(get_policies_deep))
         .route("/api/v1/rbac/deep", get(get_rbac_deep))

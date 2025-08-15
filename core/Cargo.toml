@@ -127,6 +127,7 @@ futures-lite = "2.6.1"
 
 # OpenSSL vendored fallback (optional, for CI environments)
 openssl = { version = "0.10", features = ["vendored"], optional = true }
+futures = "0.3.31"
 
 [features]
 default = []
