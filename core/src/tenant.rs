@@ -190,7 +190,6 @@ mod tests {
         let claims = crate::auth::Claims {
             sub: "user123".to_string(),
             tid: Some("tenant456".to_string()),
-            tenant_id: None,
             aud: String::new(),
             exp: 0,
             iat: 0,

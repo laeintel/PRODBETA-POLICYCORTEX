@@ -3,7 +3,7 @@ use crate::cache::{CacheAccessPattern, CacheKeys, CacheManager};
 use azure_core::auth::TokenCredential;
 use azure_identity::{DefaultAzureCredential, TokenCredentialOptions};
 use chrono::{DateTime, Utc};
-use reqwest::{Client, RequestBuilder};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;

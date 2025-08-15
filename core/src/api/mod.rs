@@ -1,10 +1,9 @@
 use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, TokenValidator};
 use crate::secrets::SecretsManager;
-use crate::slo::{Aggregation, ErrorBudget, SLIType, SLOManager, SLOWindow, SLI, SLO};
-use axum::routing::post;
+use crate::slo::SLOManager;
 use axum::{
     body::Body,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     response::{
         sse::{Event, Sse},
@@ -16,10 +15,9 @@ use chrono::{DateTime, Utc};
 use flate2::{write::GzEncoder, Compression};
 use metrics::counter;
 use metrics_exporter_prometheus::PrometheusHandle;
-use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
+use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tar::Builder as TarBuilder;
 use tokio::sync::{broadcast, RwLock};
@@ -949,14 +947,13 @@ pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoRespon
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::response::IntoResponse as _;
 
     #[tokio::test]
     async fn list_frameworks_returns_ok() {
         let resp = crate::api::list_frameworks().await.into_response();
         assert_eq!(resp.status(), axum::http::StatusCode::OK);
         // Ensure body is non-empty JSON
-        let body = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
         let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert!(v.is_array());
         assert!(v.as_array().unwrap().len() >= 2);
@@ -970,7 +967,7 @@ mod tests {
             .await
             .into_response();
         assert_eq!(resp.status(), axum::http::StatusCode::OK);
-        let body = hyper::body::to_bytes(resp.into_body()).await.unwrap();
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
         let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert!(v.get("items").is_some());
     }
@@ -1566,7 +1563,7 @@ pub async fn remediate(
             .into_response();
     }
     // Enforce write safety: block writes in simulated mode
-    use crate::data_mode::{DataMode, DataModeGuard, DataResponse};
+    use crate::data_mode::DataModeGuard;
     let guard = DataModeGuard::new();
     if let Err(e) = guard.ensure_write_allowed() {
         return (

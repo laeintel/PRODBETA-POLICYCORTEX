@@ -2,12 +2,12 @@ use crate::approvals::{
     Approval, ApprovalDecision, ApprovalRequest, ApprovalStatus, ApprovalType, RiskLevel,
 };
 use crate::auth::AuthUser;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 use uuid::Uuid;
 
 /// Comprehensive approval workflow engine for managing critical operations
