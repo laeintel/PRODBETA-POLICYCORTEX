@@ -8,12 +8,8 @@ name: Monorepo CI Entry
 # 4. Full pipeline available via "full_run" option
 
 on:
-  push:
-    branches: [ main, develop ]
-    tags:
-      - 'v*.*.*'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       full_run:

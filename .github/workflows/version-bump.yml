@@ -1,6 +1,7 @@
 name: Auto Version Bump
 
 on:
+  # Only run on successful merge to main (after PR approval)
   push:
     branches: [ main ]
     paths-ignore:

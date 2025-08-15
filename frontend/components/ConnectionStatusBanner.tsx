@@ -10,17 +10,29 @@ export default function ConnectionStatusBanner() {
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch('/api/v1/policies', { cache: 'no-store' })
-        if (!res.ok) throw new Error('Bad status')
-        setStatus('ok')
-        setMessage('')
-      } catch {
+        // Check the health endpoint using Next.js API route proxy
+        const res = await fetch('/api/health', { 
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        const data = await res.json()
+        
+        if (data.azure_connected) {
+          setStatus('ok')
+          setMessage('')
+        } else {
+          setStatus('degraded')
+          setMessage('Running in simulated mode. Azure connection not configured.')
+        }
+      } catch (err) {
         setStatus('down')
-        setMessage('Azure connection unavailable. Please ensure az login and USE_REAL_AZURE=true.')
+        setMessage('Backend service unavailable. Please start the backend with ./start-dev.bat')
       }
     }
     check()
-    const id = setInterval(check, 15000)
+    const id = setInterval(check, 30000) // Check every 30 seconds
     return () => clearInterval(id)
   }, [])
 

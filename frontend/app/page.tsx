@@ -16,20 +16,11 @@ export default function HomePage() {
   const { isAuthenticated, login, user, loading } = useAuth()
   const [currentFeature, setCurrentFeature] = useState(0)
 
-  const handleLogin = async () => {
-    try {
-      await login()
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('Login failed:', error)
-    }
-  }
-
   const handleGetStarted = () => {
     if (isAuthenticated) {
       router.push('/dashboard')
     } else {
-      handleLogin()
+      router.push('/login')
     }
   }
 
@@ -102,7 +93,7 @@ export default function HomePage() {
           <div className="flex items-center space-x-6">
             {!isAuthenticated ? (
               <button 
-                onClick={handleLogin}
+                onClick={() => router.push('/login')}
                 disabled={loading}
                 className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 hover:scale-105"
               >

@@ -56,7 +56,7 @@ export function middleware(request: NextRequest) {
     // If no authentication evidence found, redirect to login
     if (!sessionCookie && !tokenCache) {
       // Store the original URL to redirect back after login
-      const loginUrl = new URL('/', request.url)
+      const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('returnUrl', pathname)
       
       return NextResponse.redirect(loginUrl)
