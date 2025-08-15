@@ -1,9 +1,28 @@
 pub mod resources;
+pub mod predictions;
+pub mod conversation;
+pub mod correlations;
 
 // Re-export resource API functions
 pub use resources::{
     get_all_resources, get_resources_by_category, get_resource_by_id,
     execute_resource_action, get_resource_insights, get_resource_health_summary
+};
+
+// Re-export predictions API functions
+pub use predictions::{
+    get_violation_predictions, get_resource_predictions, get_risk_score, remediate_prediction
+};
+
+// Re-export conversation API functions
+pub use conversation::{
+    chat, translate_policy, get_suggestions, get_history
+};
+
+// Re-export correlations API functions
+pub use correlations::{
+    get_correlations, analyze_correlations, what_if_analysis, 
+    get_real_time_insights, get_correlation_graph
 };
 
 use crate::auth::{AuthUser, TenantContext, TokenValidator};
@@ -1337,7 +1356,7 @@ fn extract_suggestions(text: &str) -> Vec<String> {
     out
 }
 
-pub async fn get_correlations(auth_user: AuthUser) -> impl IntoResponse {
+pub async fn get_correlations_legacy(auth_user: AuthUser) -> impl IntoResponse {
     counter!("api_requests_total", 1, "endpoint" => "correlations");
     // Verify authentication - authentication required
     tracing::info!(
