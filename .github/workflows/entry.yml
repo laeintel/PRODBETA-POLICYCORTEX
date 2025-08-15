@@ -62,11 +62,8 @@ jobs:
         run: |
           echo "🔧 Checking runner sudo configuration..."
           
-          # Detect OS and skip sudo check on Windows
-          if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || command -v powershell >/dev/null 2>&1; then
-            echo "🪟 Windows runner detected - skipping sudo configuration"
-            echo "✅ Windows runners use different permission model"
-          elif command -v sudo >/dev/null 2>&1; then
+          # Check if sudo is available and configured
+          if command -v sudo >/dev/null 2>&1; then
             # Only check sudo if it exists (Linux/macOS)
             if timeout 10s sudo -n true 2>/dev/null; then
               echo "✅ Passwordless sudo already configured"
@@ -98,12 +95,8 @@ jobs:
         run: |
           echo "🔍 Checking Docker repository configuration..."
           
-          # Skip Linux-specific checks on Windows
-          if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || command -v powershell >/dev/null 2>&1; then
-            echo "🪟 Windows runner detected - skipping Linux repository checks"
-            echo "corrupted=false" >> $GITHUB_OUTPUT
-            echo "update_failed=false" >> $GITHUB_OUTPUT
-          elif [[ -d "/etc/apt" ]]; then
+          # Check if this is an apt-based system
+          if [[ -d "/etc/apt" ]]; then
             # Linux apt-based system
             # Check for corrupted entries with pipe characters
             if grep -r "download\.docker\.com.*|" /etc/apt/sources.list* 2>/dev/null; then
