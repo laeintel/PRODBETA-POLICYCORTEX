@@ -62,19 +62,29 @@ jobs:
         run: |
           echo "🔧 Checking runner sudo configuration..."
           
-          if sudo -n true 2>/dev/null; then
-            echo "✅ Passwordless sudo already configured"
+          # Detect OS and skip sudo check on Windows
+          if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || command -v powershell >/dev/null 2>&1; then
+            echo "🪟 Windows runner detected - skipping sudo configuration"
+            echo "✅ Windows runners use different permission model"
+          elif command -v sudo >/dev/null 2>&1; then
+            # Only check sudo if it exists (Linux/macOS)
+            if timeout 10s sudo -n true 2>/dev/null; then
+              echo "✅ Passwordless sudo already configured"
+            else
+              echo "⚠️ Passwordless sudo not configured or timed out"
+              echo "ℹ️ This is expected for self-hosted runners that need manual setup"
+              echo ""
+              echo "📋 To fix this manually, run on the runner machine:"
+              echo "   sudo visudo"
+              echo "   Add line: runner ALL=(ALL) NOPASSWD:ALL"
+              echo "   Or: echo 'runner ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/runner"
+              echo ""
+              echo "🔄 Continuing with limited permissions - some fixes may be skipped"
+              echo "⚠️ Manual intervention may be required for system-level repairs"
+            fi
           else
-            echo "⚠️ Passwordless sudo not configured"
-            echo "ℹ️ This is expected for self-hosted runners that need manual setup"
-            echo ""
-            echo "📋 To fix this manually, run on the runner machine:"
-            echo "   sudo visudo"
-            echo "   Add line: runner ALL=(ALL) NOPASSWD:ALL"
-            echo "   Or: echo 'runner ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/runner"
-            echo ""
-            echo "🔄 Continuing with limited permissions - some fixes may be skipped"
-            echo "⚠️ Manual intervention may be required for system-level repairs"
+            echo "ℹ️ sudo not available - likely containerized or restricted environment"
+            echo "✅ Continuing without sudo checks"
           fi
 
   docker-health-check:
@@ -88,27 +98,39 @@ jobs:
         run: |
           echo "🔍 Checking Docker repository configuration..."
           
-          # Check for corrupted entries with pipe characters
-          if grep -r "download\.docker\.com.*|" /etc/apt/sources.list* 2>/dev/null; then
-            echo "❌ Found corrupted Docker repository entries with pipe characters"
-            echo "corrupted=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ No corrupted pipe entries found"
+          # Skip Linux-specific checks on Windows
+          if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || command -v powershell >/dev/null 2>&1; then
+            echo "🪟 Windows runner detected - skipping Linux repository checks"
             echo "corrupted=false" >> $GITHUB_OUTPUT
-          fi
-          
-          # Also check for any docker.com entries that might be malformed
-          if grep -r "download\.docker\.com" /etc/apt/sources.list* 2>/dev/null | grep "|"; then
-            echo "❌ Found malformed Docker repository entries"
-            echo "corrupted=true" >> $GITHUB_OUTPUT
-          fi
-          
-          # Try to update package list
-          if ! sudo apt-get update 2>&1; then
-            echo "❌ apt-get update failed"
-            echo "update_failed=true" >> $GITHUB_OUTPUT
+            echo "update_failed=false" >> $GITHUB_OUTPUT
+          elif [[ -d "/etc/apt" ]]; then
+            # Linux apt-based system
+            # Check for corrupted entries with pipe characters
+            if grep -r "download\.docker\.com.*|" /etc/apt/sources.list* 2>/dev/null; then
+              echo "❌ Found corrupted Docker repository entries with pipe characters"
+              echo "corrupted=true" >> $GITHUB_OUTPUT
+            else
+              echo "✅ No corrupted pipe entries found"
+              echo "corrupted=false" >> $GITHUB_OUTPUT
+            fi
+            
+            # Also check for any docker.com entries that might be malformed
+            if grep -r "download\.docker\.com" /etc/apt/sources.list* 2>/dev/null | grep "|"; then
+              echo "❌ Found malformed Docker repository entries"
+              echo "corrupted=true" >> $GITHUB_OUTPUT
+            fi
+            
+            # Try to update package list (with timeout and sudo check)
+            if command -v sudo >/dev/null 2>&1 && timeout 30s sudo apt-get update 2>&1; then
+              echo "✅ Package list updated successfully"
+              echo "update_failed=false" >> $GITHUB_OUTPUT
+            else
+              echo "❌ apt-get update failed or timed out"
+              echo "update_failed=true" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "✅ apt-get update succeeded" 
+            echo "ℹ️ Non-apt system detected - skipping repository checks"
+            echo "corrupted=false" >> $GITHUB_OUTPUT
             echo "update_failed=false" >> $GITHUB_OUTPUT
           fi
 
