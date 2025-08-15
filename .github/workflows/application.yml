@@ -73,9 +73,10 @@ jobs:
       graphql: ${{ steps.changes.outputs.graphql }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: changes
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           filters: |
             core:
               - 'core/**'
@@ -380,11 +381,13 @@ jobs:
         if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         if: steps.docker_check.outputs.docker_available == 'true'
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Container Registry
         if: steps.docker_check.outputs.docker_available == 'true'
@@ -463,11 +466,13 @@ jobs:
         if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         if: steps.docker_check.outputs.docker_available == 'true'
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Container Registry
         if: steps.docker_check.outputs.docker_available == 'true'
@@ -546,11 +551,13 @@ jobs:
         if: steps.docker_check.outputs.docker_available == 'true'
         uses: docker/setup-buildx-action@v3
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         if: steps.docker_check.outputs.docker_available == 'true'
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Login to Container Registry
         if: steps.docker_check.outputs.docker_available == 'true'
@@ -684,10 +691,12 @@ jobs:
         if: steps.check_images.outputs.images_available == 'true'
         uses: actions/checkout@v4
 
-      - name: Azure Login
-        uses: azure/login@v1
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform
         if: steps.check_images.outputs.images_available == 'true'
@@ -921,10 +930,12 @@ jobs:
         if: steps.check_images.outputs.images_available == 'true'
         uses: actions/checkout@v4
 
-      - name: Azure Login
-        uses: azure/login@v1
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform
         if: steps.check_images.outputs.images_available == 'true'
