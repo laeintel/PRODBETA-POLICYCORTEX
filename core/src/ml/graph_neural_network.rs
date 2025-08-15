@@ -39,7 +39,7 @@ pub struct ResourceEdge {
     pub metadata: HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum GovernanceDomain {
     Security,
     Compliance,

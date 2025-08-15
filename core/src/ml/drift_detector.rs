@@ -222,13 +222,13 @@ impl DriftDetector {
         };
         
         // Adjust based on the nature of the change
-        match (baseline_value, current_value) {
+        let score = match (baseline_value, current_value) {
             (Some(b), Some(c)) if b == "Enabled" && c == "Disabled" => base_score * 1.2,
             (Some(b), Some(c)) if b == "Disabled" && c == "Enabled" => base_score * 0.8,
             (Some(_), None) | (None, Some(_)) => base_score * 1.1,
             _ => base_score,
-        }
-        .min(1.0)
+        };
+        f64::min(score, 1.0)
     }
 
     fn determine_impact(&self, drift_score: f64) -> DriftImpact {
