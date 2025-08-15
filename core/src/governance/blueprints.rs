@@ -1141,7 +1141,7 @@ impl GovernanceBlueprints {
                                 tags.insert("Environment".to_string(), "[parameters('environment')]".to_string());
                                 tags
                             },
-                            strongType: None,
+                            strong_type: None,
                         }
                     ],
                     policy_assignments: vec![],
