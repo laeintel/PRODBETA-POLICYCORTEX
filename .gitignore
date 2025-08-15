@@ -174,3 +174,4 @@ frontendmiddleware.ts
 *.bak
 *.old
 policycortex-backup-*.zip
+infrastructure/terraform/tfplan
