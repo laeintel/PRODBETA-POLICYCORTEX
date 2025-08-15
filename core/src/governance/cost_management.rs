@@ -246,7 +246,7 @@ pub struct CostOptimization {
     pub implementation_steps: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum OptimizationType {
     RightSizing,
     ReservedInstances,
@@ -728,7 +728,7 @@ impl CostGovernanceEngine {
                     actual_cost: trend.actual_cost,
                     expected_cost: mean,
                     anomaly_score: z_score.abs(),
-                    root_cause: if z_score > 0 {
+                    root_cause: if z_score > 0.0 {
                         "Unexpected resource scaling or new deployments".to_string()
                     } else {
                         "Resource deallocation or service interruption".to_string()
@@ -872,8 +872,8 @@ impl CostGovernanceEngine {
             currency: "USD".to_string(),
             time_grain: BudgetTimeGrain::Monthly,
             time_period: TimePeriod {
-                start: Utc::now().with_day(1).unwrap(),
-                end: Utc::now().with_day(28).unwrap(),
+                start: Utc::now() - Duration::days(30),
+                end: Utc::now(),
                 granularity: CostGranularity::Monthly,
             },
             filters: None,

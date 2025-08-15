@@ -40,6 +40,20 @@ pub enum CorrelationType {
     MultiDomainCascade,         // Changes in one domain cascading to others
 }
 
+impl std::fmt::Display for CorrelationType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CorrelationType::SecurityCostCorrelation => write!(f, "SecurityCostCorrelation"),
+            CorrelationType::CompliancePolicyDrift => write!(f, "CompliancePolicyDrift"),
+            CorrelationType::IdentityAccessAnomaly => write!(f, "IdentityAccessAnomaly"),
+            CorrelationType::CostPerformanceTradeoff => write!(f, "CostPerformanceTradeoff"),
+            CorrelationType::NetworkSecurityAlignment => write!(f, "NetworkSecurityAlignment"),
+            CorrelationType::ResourceLifecyclePattern => write!(f, "ResourceLifecyclePattern"),
+            CorrelationType::MultiDomainCascade => write!(f, "MultiDomainCascade"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BusinessImpact {
     pub impact_level: ImpactLevel,
@@ -146,7 +160,7 @@ impl CrossDomainCorrelationEngine {
         let resources = self.resource_graph
             .query_resources(&format!("Resources | where id startswith '{}'", scope)).await?;
 
-        for resource in resources {
+        for resource in resources.data {
             events.push(CrossDomainEvent {
                 event_id: uuid::Uuid::new_v4().to_string(),
                 timestamp: Utc::now() - Duration::hours(1), // Simulated timestamp
@@ -157,7 +171,8 @@ impl CrossDomainCorrelationEngine {
                     let mut details = HashMap::new();
                     details.insert("type".to_string(), serde_json::Value::String(resource.resource_type));
                     details.insert("location".to_string(), serde_json::Value::String(resource.location));
-                    details.insert("compliance".to_string(), serde_json::Value::String(resource.compliance_state.to_string()));
+                    let compliance_str = resource.compliance_state.as_ref().map(|cs| format!("{:?}", cs.status)).unwrap_or_else(|| "Unknown".to_string());
+                    details.insert("compliance".to_string(), serde_json::Value::String(compliance_str));
                     details
                 },
             });
@@ -209,7 +224,7 @@ impl CrossDomainCorrelationEngine {
             .collect();
 
         for security_event in security_events {
-            for cost_event in cost_events {
+            for cost_event in &cost_events {
                 if (cost_event.timestamp - security_event.timestamp).num_hours().abs() <= 24 {
                     patterns.push(CorrelationPattern {
                         pattern_id: uuid::Uuid::new_v4().to_string(),

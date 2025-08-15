@@ -118,27 +118,28 @@ impl UnifiedGovernanceAPI {
         let mut by_location = HashMap::new();
         let mut by_compliance_state = HashMap::new();
 
-        for resource in &resources {
+        for resource in &resources.data {
             *by_type.entry(resource.resource_type.clone()).or_insert(0) += 1;
             *by_location.entry(resource.location.clone()).or_insert(0) += 1;
-            *by_compliance_state.entry(resource.compliance_state.to_string()).or_insert(0) += 1;
+            let compliance_str = resource.compliance_state.as_ref().map(|cs| format!("{:?}", cs.status)).unwrap_or_else(|| "Unknown".to_string());
+            *by_compliance_state.entry(compliance_str).or_insert(0) += 1;
         }
 
         // Calculate policy compliance across all domains
         let total_policies = 50; // Placeholder - should query actual policies
-        let compliant_resources = resources.iter()
-            .filter(|r| r.compliance_state == crate::governance::policy_engine::ComplianceState::Compliant)
+        let compliant_resources = resources.data.iter()
+            .filter(|r| r.compliance_state.as_ref().map(|cs| &cs.status) == Some(&crate::governance::resource_graph::ComplianceStatus::Compliant))
             .count() as u32;
-        let non_compliant_resources = resources.len() as u32 - compliant_resources;
-        let compliance_percentage = if resources.is_empty() {
+        let non_compliant_resources = resources.data.len() as u32 - compliant_resources;
+        let compliance_percentage = if resources.data.is_empty() {
             100.0
         } else {
-            (compliant_resources as f64 / resources.len() as f64) * 100.0
+            (compliant_resources as f64 / resources.data.len() as f64) * 100.0
         };
 
         Ok(GovernanceDashboard {
             resource_summary: ResourceSummary {
-                total_resources: resources.len() as u32,
+                total_resources: resources.data.len() as u32,
                 by_type,
                 by_location,
                 by_compliance_state,
@@ -165,13 +166,15 @@ impl UnifiedGovernanceAPI {
     // Patent 1: Cross-Domain Governance Correlation Engine
     pub async fn analyze_cross_domain_correlations(&self, resource_id: &str) -> GovernanceResult<Vec<CrossDomainCorrelation>> {
         // Analyze correlations between governance domains
-        let resource = self.resource_graph
-            .get_resource_details(resource_id).await?;
+        let resource_query = format!("Resources | where id == '{}'", resource_id);
+        let resource_result = self.resource_graph.query_resources(&resource_query).await?;
+        let resource = resource_result.data.first()
+            .ok_or_else(|| GovernanceError::NotFound(format!("Resource not found: {}", resource_id)))?;
 
         let mut correlations = Vec::new();
 
         // Security-Cost correlation
-        if resource.compliance_state != ComplianceState::Compliant {
+        if resource.compliance_state.as_ref().map(|cs| &cs.status) != Some(&crate::governance::resource_graph::ComplianceStatus::Compliant) {
             correlations.push(CrossDomainCorrelation {
                 correlation_id: format!("sec-cost-{}", resource_id),
                 resource_id: resource_id.to_string(),
@@ -274,7 +277,7 @@ impl UnifiedGovernanceAPI {
         // Search resources
         if let Ok(resources) = self.resource_graph
             .query_resources(&format!("Resources | where name contains '{}' or type contains '{}'", query, query)).await {
-            for resource in resources {
+            for resource in resources.data {
                 let mut result = HashMap::new();
                 result.insert("type".to_string(), serde_json::Value::String("resource".to_string()));
                 result.insert("id".to_string(), serde_json::Value::String(resource.id));

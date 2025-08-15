@@ -115,7 +115,11 @@ aws-sdk-config = { version = "1.0", optional = true }
 async-nats = { version = "0.33", optional = true }
 futures-lite = "2.6.1"
 
+# OpenSSL vendored fallback (optional, for CI environments)
+openssl = { version = "0.10", features = ["vendored"], optional = true }
+
 [features]
 default = []
 aws = ["aws-config", "aws-sdk-iam", "aws-sdk-organizations", "aws-sdk-ec2", "aws-sdk-s3", "aws-sdk-cloudtrail", "aws-sdk-config"]
 events = ["async-nats"]
+vendored-openssl = ["openssl"]
