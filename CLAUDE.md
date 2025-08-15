@@ -19,6 +19,15 @@ PolicyCortex v2 is an AI-powered Azure governance platform with four patented te
 
 ## Essential Commands
 
+### Complete Testing (Recommended)
+```bash
+# Test everything on Windows
+.\test-all-windows.bat
+
+# Test everything on Linux/Mac  
+./test-all-linux.sh
+```
+
 ### Development
 ```bash
 # Start full stack (Windows)
@@ -44,6 +53,17 @@ cd backend/services/api_gateway && uvicorn main:app --reload
 ```
 
 ### Building & Testing
+
+**🚀 Recommended: Use the comprehensive test scripts**
+```bash
+# Complete test suite (Windows)
+.\test-all-windows.bat
+
+# Complete test suite (Linux/Mac)
+./test-all-linux.sh
+```
+
+**Manual component testing:**
 ```bash
 # Frontend
 cd frontend
@@ -57,10 +77,6 @@ cargo build --release
 cargo test
 cargo clippy -- -D warnings
 cargo fmt --all -- --check
-
-# Run full test suite
-./scripts/test-workflow.sh  # Linux/Mac
-.\scripts\test-workflow.bat  # Windows
 
 # Run specific Rust test
 cd core && cargo test test_name
