@@ -25,7 +25,7 @@ pub struct Intent {
     pub parameters: HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
 pub enum IntentType {
     QueryResources,
     CheckCompliance,
@@ -88,7 +88,7 @@ impl ConversationalGovernance {
     pub async fn process_query(&self, query: &str, context: &ConversationContext) -> GovernanceResult<String> {
         // Classify user intent
         let intent = self.intent_classifier.classify(query)?;
-        
+
         // Process based on intent
         let response = match intent.intent_type {
             IntentType::QueryResources => self.handle_resource_query(query, &intent, context).await?,
@@ -125,7 +125,7 @@ impl ConversationalGovernance {
 
         // Execute query
         let resources = self.resource_graph.query_resources(&kql).await?;
-        
+
         let response_text = if resources.is_empty() {
             format!("No {} resources found in your scope", resource_type)
         } else {
@@ -151,7 +151,7 @@ impl ConversationalGovernance {
     async fn handle_compliance_query(&self, _query: &str, intent: &Intent, _context: &ConversationContext) -> GovernanceResult<QueryResponse> {
         // Get compliance state
         let policy_summary = self.policy_engine.get_compliance_summary().await?;
-        
+
         let response_text = format!(
             "Current compliance status: {:.1}% compliant across all policies. {} violations need attention.",
             policy_summary.compliance_percentage,
@@ -216,9 +216,9 @@ impl ConversationalGovernance {
 
     async fn handle_policy_query(&self, _query: &str, intent: &Intent, _context: &ConversationContext) -> GovernanceResult<QueryResponse> {
         let policies = self.policy_engine.list_policy_definitions().await?;
-        
-        let response_text = format!("You have {} active policies. {} are custom policies, {} are built-in.", 
-            policies.len(), 
+
+        let response_text = format!("You have {} active policies. {} are custom policies, {} are built-in.",
+            policies.len(),
             policies.iter().filter(|p| p.policy_type == "Custom").count(),
             policies.iter().filter(|p| p.policy_type == "BuiltIn").count()
         );
@@ -323,7 +323,7 @@ impl ConversationalGovernance {
             • Cost analysis and optimization\n\
             • Security posture and findings\n\
             • Access management and reviews\n\
-            \nCould you rephrase your question about '{}'?", 
+            \nCould you rephrase your question about '{}'?",
             query
         );
 
@@ -346,22 +346,22 @@ impl ConversationalGovernance {
 impl IntentClassifier {
     fn new() -> Self {
         let mut patterns = HashMap::new();
-        
+
         patterns.insert(IntentType::QueryResources, vec![
             "show me".to_string(), "list".to_string(), "find".to_string(), "resources".to_string(),
             "virtual machines".to_string(), "storage".to_string(), "databases".to_string(),
         ]);
-        
+
         patterns.insert(IntentType::CheckCompliance, vec![
             "compliance".to_string(), "violations".to_string(), "policy".to_string(),
             "compliant".to_string(), "audit".to_string(), "standards".to_string(),
         ]);
-        
+
         patterns.insert(IntentType::AnalyzeCosts, vec![
             "cost".to_string(), "spending".to_string(), "budget".to_string(),
             "expensive".to_string(), "optimize".to_string(), "savings".to_string(),
         ]);
-        
+
         patterns.insert(IntentType::ReviewSecurity, vec![
             "security".to_string(), "vulnerabilities".to_string(), "threats".to_string(),
             "secure".to_string(), "risk".to_string(), "findings".to_string(),
@@ -373,12 +373,12 @@ impl IntentClassifier {
     fn classify(&self, query: &str) -> GovernanceResult<Intent> {
         let query_lower = query.to_lowercase();
         let mut best_match = (IntentType::Unknown, 0.0);
-        
+
         for (intent_type, keywords) in &self.patterns {
             let matches = keywords.iter()
                 .filter(|keyword| query_lower.contains(keyword.as_str()))
                 .count();
-            
+
             let confidence = matches as f64 / keywords.len() as f64;
             if confidence > best_match.1 {
                 best_match = (intent_type.clone(), confidence);

@@ -37,7 +37,7 @@ pub async fn get_security_exposure(
             } else {
                 report
             };
-            
+
             (StatusCode::OK, Json(filtered_report))
         }
         Err(e) => {
@@ -55,20 +55,20 @@ pub async fn get_attack_paths(
     State(state): State<Arc<crate::api::AppState>>,
 ) -> impl IntoResponse {
     let sensitivity = params.sensitivity_level.unwrap_or_else(|| "Critical".to_string());
-    
+
     if let Some(ref client) = state.async_azure_client {
         let mut engine = SecurityGraphEngine::new();
-        
+
         // Build graph from Azure
         if let Err(e) = engine.build_from_azure(client).await {
             tracing::error!("Failed to build security graph: {}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(vec![]));
         }
-        
+
         // Find attack paths
         let paths = engine.find_attack_paths(&sensitivity);
         let max_paths = params.max_paths.unwrap_or(10);
-        
+
         (StatusCode::OK, Json(paths.into_iter().take(max_paths).collect::<Vec<_>>()))
     } else {
         (StatusCode::SERVICE_UNAVAILABLE, Json(vec![]))
@@ -107,9 +107,9 @@ pub async fn apply_mitigation(
             implementation_cost: "Medium".to_string(),
             blast_radius: vec![],
         };
-        
+
         let engine = SecurityGraphEngine::new();
-        
+
         match engine.apply_mitigation(&bundle, client).await {
             Ok(result) => (StatusCode::OK, Json(result)),
             Err(e) => {
@@ -153,7 +153,7 @@ pub async fn get_risk_score(
         medium_risks: 15,
         low_risks: 42,
     };
-    
+
     (StatusCode::OK, Json(risk_score))
 }
 
@@ -213,7 +213,7 @@ pub async fn get_security_recommendations(
             automation_available: true,
         },
     ];
-    
+
     (StatusCode::OK, Json(recommendations))
 }
 

@@ -42,7 +42,7 @@ pub async fn get_compliance_dashboard(
             } else {
                 status
             };
-            
+
             (StatusCode::OK, Json(filtered_status))
         }
         Err(e) => {
@@ -110,7 +110,7 @@ pub async fn get_compliance_frameworks(
             compliance_score: 97.8,
         },
     ];
-    
+
     (StatusCode::OK, Json(frameworks))
 }
 
@@ -171,7 +171,7 @@ pub async fn generate_evidence_pack(
                     start: request.period_start,
                     end: request.period_end,
                 };
-                
+
                 match engine.assemble_evidence_pack(&request.framework, period).await {
                     Ok(pack) => {
                         tracing::info!("Generated evidence pack {} for {}", pack.pack_id, request.framework);
@@ -231,14 +231,14 @@ pub async fn list_evidence_packs(
             size_mb: 128.7,
         },
     ];
-    
+
     // Filter by framework if specified
     let filtered_packs = if let Some(framework) = params.framework {
         packs.into_iter().filter(|p| p.framework == framework).collect()
     } else {
         packs
     };
-    
+
     (StatusCode::OK, Json(filtered_packs))
 }
 
@@ -341,7 +341,7 @@ pub async fn get_audit_trail(
             details: "Manual compliance validation completed".to_string(),
         },
     ];
-    
+
     (StatusCode::OK, Json(trail))
 }
 

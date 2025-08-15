@@ -98,7 +98,7 @@ impl UnifiedGovernanceAPI {
         monitoring: Arc<crate::governance::monitoring::GovernanceMonitor>,
         ai_engine: Arc<crate::governance::ai::AIGovernanceEngine>,
     ) -> Self {
-        Self { 
+        Self {
             resource_graph,
             policy_engine,
             identity,
@@ -112,12 +112,12 @@ impl UnifiedGovernanceAPI {
         // Gather data from all governance domains
         let resources = self.resource_graph.query_resources("Resources | limit 1000").await?;
         let identity_state = self.identity.get_identity_governance_state().await?;
-        
+
         // Build resource summary with cross-domain correlations
         let mut by_type = HashMap::new();
         let mut by_location = HashMap::new();
         let mut by_compliance_state = HashMap::new();
-        
+
         for resource in &resources {
             *by_type.entry(resource.resource_type.clone()).or_insert(0) += 1;
             *by_location.entry(resource.location.clone()).or_insert(0) += 1;
@@ -130,10 +130,10 @@ impl UnifiedGovernanceAPI {
             .filter(|r| r.compliance_state == crate::governance::policy_engine::ComplianceState::Compliant)
             .count() as u32;
         let non_compliant_resources = resources.len() as u32 - compliant_resources;
-        let compliance_percentage = if resources.is_empty() { 
-            100.0 
-        } else { 
-            (compliant_resources as f64 / resources.len() as f64) * 100.0 
+        let compliance_percentage = if resources.is_empty() {
+            100.0
+        } else {
+            (compliant_resources as f64 / resources.len() as f64) * 100.0
         };
 
         Ok(GovernanceDashboard {
@@ -167,7 +167,7 @@ impl UnifiedGovernanceAPI {
         // Analyze correlations between governance domains
         let resource = self.resource_graph
             .get_resource_details(resource_id).await?;
-        
+
         let mut correlations = Vec::new();
 
         // Security-Cost correlation
@@ -299,12 +299,12 @@ impl UnifiedGovernanceAPI {
     pub async fn health_check(&self) -> GovernanceResult<HashMap<String, serde_json::Value>> {
         let health = self.resource_graph.health_check().await;
         let mut status = HashMap::new();
-        
-        status.insert("overall_status".to_string(), 
+
+        status.insert("overall_status".to_string(),
             serde_json::Value::String(health.status.to_string()));
-        status.insert("last_check".to_string(), 
+        status.insert("last_check".to_string(),
             serde_json::Value::String(health.last_check.to_rfc3339()));
-        status.insert("component_count".to_string(), 
+        status.insert("component_count".to_string(),
             serde_json::Value::Number(serde_json::Number::from(health.metrics.len())));
 
         Ok(status)

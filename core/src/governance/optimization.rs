@@ -36,7 +36,7 @@ impl OptimizationEngine {
     pub async fn new(azure_client: Arc<AzureClient>) -> GovernanceResult<Self> {
         Ok(Self { azure_client })
     }
-    
+
     pub async fn get_advisor_recommendations(&self) -> GovernanceResult<Vec<OptimizationRecommendation>> {
         // Placeholder implementation
         Ok(vec![
@@ -51,7 +51,7 @@ impl OptimizationEngine {
             }
         ])
     }
-    
+
     pub async fn get_optimization_summary(&self) -> GovernanceResult<OptimizationSummary> {
         // Placeholder implementation
         Ok(OptimizationSummary {
@@ -62,12 +62,12 @@ impl OptimizationEngine {
             potential_total_savings: 2500.00,
         })
     }
-    
+
     pub async fn apply_optimization(&self, _recommendation_id: &str) -> GovernanceResult<()> {
         // Placeholder implementation
         Ok(())
     }
-    
+
     pub async fn health_check(&self) -> ComponentHealth {
         ComponentHealth {
             component: "Optimization".to_string(),

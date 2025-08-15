@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use crate::finops::{
-    FinOpsMetrics, IdleResource, RightsizingOpportunity, 
+    FinOpsMetrics, IdleResource, RightsizingOpportunity,
     CommitmentRecommendation, CostAnomaly, OptimizationResult,
     get_finops_metrics, FinOpsEngine, AzureFinOpsEngine
 };
@@ -39,25 +39,25 @@ pub async fn get_finops_dashboard(
 
     // Filter based on query parameters
     let response = FinOpsMetrics {
-        idle_resources: if params.include_idle.unwrap_or(true) { 
-            metrics.idle_resources 
-        } else { 
-            vec![] 
+        idle_resources: if params.include_idle.unwrap_or(true) {
+            metrics.idle_resources
+        } else {
+            vec![]
         },
-        rightsizing_opportunities: if params.include_rightsizing.unwrap_or(true) { 
-            metrics.rightsizing_opportunities 
-        } else { 
-            vec![] 
+        rightsizing_opportunities: if params.include_rightsizing.unwrap_or(true) {
+            metrics.rightsizing_opportunities
+        } else {
+            vec![]
         },
-        commitment_recommendations: if params.include_commitments.unwrap_or(true) { 
-            metrics.commitment_recommendations 
-        } else { 
-            vec![] 
+        commitment_recommendations: if params.include_commitments.unwrap_or(true) {
+            metrics.commitment_recommendations
+        } else {
+            vec![]
         },
-        anomalies: if params.include_anomalies.unwrap_or(true) { 
-            metrics.anomalies 
-        } else { 
-            vec![] 
+        anomalies: if params.include_anomalies.unwrap_or(true) {
+            metrics.anomalies
+        } else {
+            vec![]
         },
         savings_summary: metrics.savings_summary,
     };
@@ -151,9 +151,9 @@ pub async fn execute_optimization(
 ) -> impl IntoResponse {
     if let Some(ref client) = state.async_azure_client {
         let engine = AzureFinOpsEngine::new(client.clone());
-        
+
         let optimization_id = format!("opt-{}", uuid::Uuid::new_v4());
-        
+
         // Execute optimization based on type
         match engine.execute_optimization(&optimization_id).await {
             Ok(result) => {

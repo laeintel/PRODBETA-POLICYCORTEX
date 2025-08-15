@@ -111,7 +111,7 @@ impl AzureResourceCollector {
         config: CollectorConfig,
     ) -> Result<Self, CollectorError> {
         let resource_graph_client = ResourceGraphClient::new(&client).await?;
-        
+
         Ok(Self {
             client: Arc::new(client),
             config,
@@ -125,11 +125,11 @@ impl AzureResourceCollector {
         subscriptions: Vec<String>,
     ) -> Vec<AzureResource> {
         use futures::stream::{self, StreamExt};
-        
+
         let tasks = subscriptions.into_iter().map(|sub_id| {
             let client = self.client.clone();
             let config = self.config.clone();
-            
+
             async move {
                 self.collect_subscription_resources(&sub_id).await.unwrap_or_default()
             }
@@ -155,16 +155,16 @@ impl AzureResourceCollector {
 
         // Filter and transform resources
         let filtered_resources = self.filter_resources(resources);
-        
+
         // Update cache
         self.update_cache(&filtered_resources).await;
-        
+
         Ok(filtered_resources)
     }
 
     fn build_resource_graph_query(&self) -> String {
         let mut query = String::from("Resources");
-        
+
         // Add resource type filters
         if !self.config.resource_types.is_empty() {
             let types = self.config.resource_types
@@ -192,7 +192,7 @@ impl AzureResourceCollector {
 
         // Project necessary fields
         query.push_str(" | project id, name, type, location, resourceGroup, subscriptionId, tags, properties, sku, kind, managedBy");
-        
+
         query
     }
 
@@ -268,7 +268,7 @@ impl ResourceCollector for AzureResourceCollector {
         let start_instant = std::time::Instant::now();
 
         let resources = self.collect_resources_parallel(subscriptions.clone()).await;
-        
+
         let end_time = Utc::now();
         let collection_time_ms = start_instant.elapsed().as_millis() as u64;
 
@@ -303,7 +303,7 @@ impl ResourceCollector for AzureResourceCollector {
             "Resources | where type =~ '{}' and subscriptionId == '{}'",
             resource_type, subscription_id
         );
-        
+
         self.resource_graph_client
             .query_resources(&query, subscription_id)
             .await
@@ -315,7 +315,7 @@ impl ResourceCollector for AzureResourceCollector {
 
         // Get resource changes since last sync
         let changes = self.collect_resource_changes(last_sync_token).await?;
-        
+
         // Fetch full resource details for changed resources
         let mut resources = Vec::new();
         for change in changes {
