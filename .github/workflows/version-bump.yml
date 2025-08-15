@@ -1,0 +1,102 @@
+name: Auto Version Bump
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'VERSION'
+      - 'CHANGELOG.md'
+      - 'core/Cargo.toml'
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip version]')"
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Get current version
+      id: current_version
+      run: |
+        if [ -f VERSION ]; then
+          VERSION=$(cat VERSION)
+        else
+          VERSION="2.2.0"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Determine version bump type
+      id: bump_type
+      run: |
+        if [[ "${{ github.event.head_commit.message }}" == *"BREAKING:"* ]] || [[ "${{ github.event.head_commit.message }}" == *"feat!"* ]]; then
+          echo "type=major" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.head_commit.message }}" == *"feat:"* ]]; then
+          echo "type=minor" >> $GITHUB_OUTPUT
+        else
+          echo "type=patch" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Bump version
+      id: new_version
+      run: |
+        IFS='.' read -ra VERSION_PARTS <<< "${{ steps.current_version.outputs.version }}"
+        MAJOR=${VERSION_PARTS[0]}
+        MINOR=${VERSION_PARTS[1]}
+        PATCH=${VERSION_PARTS[2]}
+        
+        if [ "${{ steps.bump_type.outputs.type }}" == "major" ]; then
+          MAJOR=$((MAJOR + 1))
+          MINOR=0
+          PATCH=0
+        elif [ "${{ steps.bump_type.outputs.type }}" == "minor" ]; then
+          MINOR=$((MINOR + 1))
+          PATCH=0
+        else
+          PATCH=$((PATCH + 1))
+        fi
+        
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo $NEW_VERSION > VERSION
+
+    - name: Update Cargo.toml
+      run: |
+        sed -i 's/version = "[^"]*"/version = "${{ steps.new_version.outputs.version }}"/' core/Cargo.toml
+
+    - name: Create Git tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add VERSION core/Cargo.toml
+        git commit -m "chore: bump version to v${{ steps.new_version.outputs.version }} [skip version]"
+        git tag -a "v${{ steps.new_version.outputs.version }}" -m "Version ${{ steps.new_version.outputs.version }}"
+
+    - name: Push changes
+      run: |
+        git push origin main
+        git push origin "v${{ steps.new_version.outputs.version }}"
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.new_version.outputs.version }}
+        release_name: PolicyCortex v${{ steps.new_version.outputs.version }}
+        body: |
+          ## PolicyCortex v${{ steps.new_version.outputs.version }}
+          
+          Auto-generated release from commit: ${{ github.event.head_commit.message }}
+          
+          ### Changes
+          - ${{ github.event.head_commit.message }}
+          
+          ### Commit
+          - Hash: ${{ github.sha }}
+          - Author: ${{ github.event.head_commit.author.name }}
+        draft: false
+        prerelease: false
