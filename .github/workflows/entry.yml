@@ -1,8 +1,11 @@
 name: Monorepo CI Entry
 
-# COMPLETE A-Z PIPELINE - ALL STEPS RUN EVERY TIME
-# This workflow ensures every component is built, tested, secured, and deployed
-# regardless of which files changed. No conditional skipping for complete coverage.
+# SMART CI/CD PIPELINE WITH SELECTIVE TESTING
+# This workflow runs components based on:
+# 1. Changed files (automatic detection)
+# 2. Manual switches (workflow_dispatch inputs)
+# 3. Security checks always run for safety
+# 4. Full pipeline available via "full_run" option
 
 on:
   push:
@@ -15,6 +18,26 @@ on:
     inputs:
       full_run:
         description: 'Run entire pipeline (ignore path filters and include app pipeline)'
+        required: false
+        default: false
+        type: boolean
+      test_frontend:
+        description: 'Run Frontend CI testing (Next.js build, test, lint)'
+        required: false
+        default: false
+        type: boolean
+      test_core:
+        description: 'Run Core CI testing (Rust build, test, fmt, clippy)'
+        required: false
+        default: false
+        type: boolean
+      test_graphql:
+        description: 'Run GraphQL gateway testing'
+        required: false
+        default: false
+        type: boolean
+      test_backend:
+        description: 'Run Backend services testing (Python)'
         required: false
         default: false
         type: boolean
@@ -66,8 +89,8 @@ jobs:
   frontend:
     name: Frontend CI
     needs: detect-changes
-    # ALWAYS RUN - Complete pipeline from A-Z
-    if: always()
+    # Only run if explicitly requested via workflow_dispatch or on push/PR when frontend files changed
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.frontend == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
     secrets: inherit
     with:
@@ -77,16 +100,16 @@ jobs:
   core:
     name: Core (Rust) CI
     needs: detect-changes
-    # ALWAYS RUN - Complete pipeline from A-Z
-    if: always()
+    # Only run if explicitly requested via workflow_dispatch or on push/PR when core files changed
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_core)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.rust_core == 'true')
     uses: ./.github/workflows/reusable-ci-core.yml
     secrets: inherit
 
   graphql:
     name: GraphQL gateway CI
     needs: detect-changes
-    # ALWAYS RUN - Complete pipeline from A-Z
-    if: always()
+    # Only run if explicitly requested via workflow_dispatch or on push/PR when graphql files changed
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.graphql == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
@@ -96,8 +119,8 @@ jobs:
   backend:
     name: Backend Services CI
     needs: detect-changes
-    # ALWAYS RUN - Complete pipeline from A-Z
-    if: always()
+    # Only run if explicitly requested via workflow_dispatch or on push/PR when backend files changed
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
@@ -155,8 +178,8 @@ jobs:
   app_pipeline:
     name: Application CI/CD
     needs: [frontend, core, graphql, backend, security, supply_chain, secret_scan, infra]
-    # ALWAYS RUN - Complete pipeline from A-Z
-    if: always()
+    # Run when full_run is requested or on main branch pushes (but only if security checks pass)
+    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read
@@ -166,7 +189,7 @@ jobs:
       target_env: 'dev'
       run_tests: true
       force_deploy: false
-      full_run: true
+      full_run: ${{ inputs.full_run || 'false' }}
     secrets: inherit
 
   deploy_tag:
