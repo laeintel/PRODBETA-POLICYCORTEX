@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-secure:
-    runs-on: ${{ vars.DEFAULT_RUNNER || 'ubuntu-latest' }}
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
