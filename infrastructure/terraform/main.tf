@@ -203,12 +203,7 @@ variable "frontend_next_public_aoai_chat_deployment" {
   default     = ""
 }
 
-variable "frontend_next_public_aoai_api_key" {
-  description = "Azure OpenAI API key (sensitive)"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
+# Note: Azure OpenAI API key is now retrieved directly from azurerm_cognitive_account.openai.primary_access_key
 
 variable "frontend_next_public_demo_mode" {
   description = "Enable demo mode for frontend"
@@ -605,7 +600,7 @@ resource "azurerm_container_app" "frontend" {
   # Secrets
   secret {
     name  = "aoai-api-key"
-    value = var.frontend_next_public_aoai_api_key
+    value = azurerm_cognitive_account.openai.primary_access_key
   }
 
   tags = local.common_tags
