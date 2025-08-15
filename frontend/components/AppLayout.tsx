@@ -70,14 +70,14 @@ function AppLayoutInner({ children }: AppLayoutProps) {
       color: 'blue',
       children: [
         { id: 'policies-overview', title: 'Overview', path: '/policies' },
-        { id: 'policies-security', title: 'Security', path: '/policies?category=Security' },
-        { id: 'policies-governance', title: 'Governance', path: '/policies?category=Governance' },
-        { id: 'policies-compliance', title: 'Compliance', path: '/policies?category=Compliance' },
-        { id: 'policies-network', title: 'Network', path: '/policies?category=Network' },
-        { id: 'policies-monitoring', title: 'Monitoring', path: '/policies?category=Monitoring' },
-        { id: 'policies-sql', title: 'SQL', path: '/policies?category=SQL' },
-        { id: 'policies-k8s', title: 'Kubernetes', path: '/policies?category=Kubernetes' },
-        { id: 'policies-noncompliant', title: 'Non-Compliant', path: '/policies?view=noncompliant' },
+        { id: 'policies-security', title: 'Security', path: '/policies/security' },
+        { id: 'policies-governance', title: 'Governance', path: '/policies/governance' },
+        { id: 'policies-compliance', title: 'Compliance', path: '/policies/compliance' },
+        { id: 'policies-network', title: 'Network', path: '/policies/network' },
+        { id: 'policies-monitoring', title: 'Monitoring', path: '/policies/monitoring' },
+        { id: 'policies-sql', title: 'SQL', path: '/policies/sql' },
+        { id: 'policies-k8s', title: 'Kubernetes', path: '/policies/kubernetes' },
+        { id: 'policies-noncompliant', title: 'Non-Compliant', path: '/policies/non-compliant' },
       ]
     },
     {
@@ -89,10 +89,10 @@ function AppLayoutInner({ children }: AppLayoutProps) {
       color: 'green',
       children: [
         { id: 'rbac-overview', title: 'Overview', path: '/rbac' },
-        { id: 'rbac-privileged', title: 'Privileged Accounts', path: '/rbac?filter=privileged' },
-        { id: 'rbac-service-principals', title: 'Service Principals', path: '/rbac?type=ServicePrincipal' },
-        { id: 'rbac-role-defs', title: 'Role Definitions', path: '/rbac?view=roles' },
-        { id: 'rbac-access-reviews', title: 'Access Reviews', path: '/rbac?view=reviews' },
+        { id: 'rbac-privileged', title: 'Privileged Accounts', path: '/rbac/privileged' },
+        { id: 'rbac-service-principals', title: 'Service Principals', path: '/rbac/service-principals' },
+        { id: 'rbac-role-defs', title: 'Role Definitions', path: '/rbac/roles' },
+        { id: 'rbac-access-reviews', title: 'Access Reviews', path: '/rbac/reviews' },
       ]
     },
     {
@@ -103,10 +103,10 @@ function AppLayoutInner({ children }: AppLayoutProps) {
       description: 'FinOps',
       color: 'yellow',
       children: [
-        { id: 'costs-overview', title: 'Overview', path: '/dashboard?module=costs' },
-        { id: 'costs-breakdown', title: 'Breakdown', path: '/dashboard?module=costs&view=breakdown' },
-        { id: 'costs-anomalies', title: 'Anomalies', path: '/dashboard?module=costs&view=anomalies' },
-        { id: 'costs-optimizations', title: 'Optimizations', path: '/dashboard?module=costs&view=optimizations' },
+        { id: 'costs-overview', title: 'Overview', path: '/costs' },
+        { id: 'costs-breakdown', title: 'Breakdown', path: '/costs/breakdown' },
+        { id: 'costs-anomalies', title: 'Anomalies', path: '/costs/anomalies' },
+        { id: 'costs-optimizations', title: 'Optimizations', path: '/costs/optimizations' },
       ]
     },
     {
@@ -117,10 +117,10 @@ function AppLayoutInner({ children }: AppLayoutProps) {
       description: 'Security',
       color: 'red',
       children: [
-        { id: 'network-overview', title: 'Overview', path: '/dashboard?module=network' },
-        { id: 'network-nsg', title: 'NSG Rules', path: '/dashboard?module=network&view=nsg' },
-        { id: 'network-endpoints', title: 'Public Endpoints', path: '/dashboard?module=network&view=endpoints' },
-        { id: 'network-zero-trust', title: 'Zero Trust', path: '/dashboard?module=network&view=zero-trust' },
+        { id: 'network-overview', title: 'Overview', path: '/network' },
+        { id: 'network-nsg', title: 'NSG Rules', path: '/network/nsg' },
+        { id: 'network-endpoints', title: 'Public Endpoints', path: '/network/endpoints' },
+        { id: 'network-zero-trust', title: 'Zero Trust', path: '/network/zero-trust' },
       ]
     },
     {
@@ -132,11 +132,11 @@ function AppLayoutInner({ children }: AppLayoutProps) {
       color: 'indigo',
       children: [
         { id: 'resources-all', title: 'All Resources', path: '/resources' },
-        { id: 'resources-vm', title: 'Virtual Machines', path: '/resources?type=virtualMachines' },
-        { id: 'resources-storage', title: 'Storage Accounts', path: '/resources?type=storageAccounts' },
-        { id: 'resources-db', title: 'Databases', path: '/resources?type=databases' },
-        { id: 'resources-k8s', title: 'Kubernetes', path: '/resources?type=managedClusters' },
-        { id: 'resources-web', title: 'Web Apps', path: '/resources?type=Web' },
+        { id: 'resources-vm', title: 'Virtual Machines', path: '/resources/vm' },
+        { id: 'resources-storage', title: 'Storage Accounts', path: '/resources/storage' },
+        { id: 'resources-db', title: 'Databases', path: '/resources/db' },
+        { id: 'resources-k8s', title: 'Kubernetes', path: '/resources/k8s' },
+        { id: 'resources-web', title: 'Web Apps', path: '/resources/web' },
       ]
     },
     {

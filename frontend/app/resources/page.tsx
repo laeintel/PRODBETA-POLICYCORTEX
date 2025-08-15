@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import AppLayout from '../../components/AppLayout'
@@ -45,6 +46,7 @@ import Pagination from '../../components/Pagination'
 
 export default function ResourcesPage() {
   const { resources: azureResources, loading, error, isUsingFallback } = useAzureResources()
+  const pathname = usePathname()
   const { isMockData } = useMockDataStatus()
   // Read initial filters from query string
   const initialParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
@@ -54,6 +56,21 @@ export default function ResourcesPage() {
   // If a hash or query is provided, preselect that resource in the modal
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState(initialType)
+  // Apply subroute filters, e.g. /resources/vm, /resources/storage
+  useEffect(() => {
+    if (!pathname) return
+    if (pathname.startsWith('/resources/')) {
+      const seg = pathname.split('/')[2]
+      const map: Record<string,string> = {
+        vm: 'virtualMachines',
+        storage: 'storageAccounts',
+        db: 'databases',
+        k8s: 'managedClusters',
+        web: 'Web',
+      }
+      if (map[seg]) setFilterType(map[seg])
+    }
+  }, [pathname])
   const [filterStatus, setFilterStatus] = useState(initialStatus)
   const [selectedResource, setSelectedResource] = useState<AzureResource | null>(null)
   const [showDetails, setShowDetails] = useState(false)
