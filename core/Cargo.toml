@@ -12,7 +12,7 @@ description = "PolicyCortex v2 - AI-Powered Azure Governance Platform"
 # Web Framework
 axum = "0.7"
 tower = "0.4"
-tower-http = { version = "0.5", features = ["cors"] }
+tower-http = { version = "0.5", features = ["cors", "limit"] }
 
 # Async Runtime
 tokio = { version = "1", features = ["full"] }
@@ -54,6 +54,10 @@ headers = "0.3"
 # Redis caching
 redis = { version = "0.32", features = ["tokio-comp", "connection-manager", "json"] }
 
+# Rate limiting
+tower_governor = "0.4"
+governor = "0.6"
+
 # SQL database support
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
 
@@ -62,6 +66,9 @@ lazy_static = "1.4"
 
 # Regular expressions for secret scanning
 regex = "1.10"
+
+# URL parsing for validation
+url = "2.5"
 
 # Random number generation for jitter
 rand = "0.8"

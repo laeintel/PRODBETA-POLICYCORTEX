@@ -1,4 +1,6 @@
 use crate::auth::{AuthUser, TenantContext, TokenValidator};
+use crate::error::{ApiError, ApiResult};
+use crate::validation::Validator;
 use crate::secrets::SecretsManager;
 use crate::slo::SLOManager;
 use axum::{
@@ -322,14 +324,7 @@ pub async fn get_metrics(
         }
         Err(e) => {
             tracing::error!("Failed to get tenant context: {:?}", e);
-            return (
-                StatusCode::FORBIDDEN,
-                Json(serde_json::json!({
-                    "error": "tenant_access_denied",
-                    "message": "Unable to determine tenant access"
-                })),
-            )
-                .into_response();
+            return ApiError::Forbidden("Unable to determine tenant access".to_string()).into_response();
         }
     };
 
@@ -857,15 +852,26 @@ pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoRespon
             let headers = resp.headers().clone();
             match resp.bytes().await {
                 Ok(bytes) => {
-                    let mut builder = Response::builder()
-                        .status(axum::http::StatusCode::from_u16(status.as_u16()).unwrap());
+                    let status_code = axum::http::StatusCode::from_u16(status.as_u16())
+                        .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+                    let mut builder = Response::builder().status(status_code);
+                    
                     if let Some(ct) = headers.get("content-type") {
                         builder = builder
                             .header("content-type", ct.to_str().unwrap_or("application/sdp"));
                     } else {
                         builder = builder.header("content-type", "application/sdp");
                     }
-                    builder.body(Body::from(bytes)).unwrap().into_response()
+                    
+                    match builder.body(Body::from(bytes)) {
+                        Ok(response) => response.into_response(),
+                        Err(e) => {
+                            tracing::error!("Failed to build response: {}", e);
+                            (StatusCode::INTERNAL_SERVER_ERROR, 
+                             Json(serde_json::json!({"error": "Failed to build response"})))
+                                .into_response()
+                        }
+                    }
                 }
                 Err(e) => (
                     StatusCode::BAD_GATEWAY,
@@ -1548,12 +1554,20 @@ pub async fn create_exception(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<CreateExceptionRequest>,
 ) -> impl IntoResponse {
+    // Validate permissions
     if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Write"]) {
-        return (
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({"error":"insufficient_scope"})),
-        )
-            .into_response();
+        return ApiError::Forbidden("Insufficient permissions for creating exceptions".to_string()).into_response();
+    }
+
+    // Validate input payload
+    if let Err(e) = Validator::validate_azure_resource_name(&payload.resource_id) {
+        return e.into_response();
+    }
+    if let Err(e) = Validator::validate_policy_name(&payload.policy_id) {
+        return e.into_response();
+    }
+    if let Err(e) = Validator::validate_exception_reason(&payload.reason) {
+        return e.into_response();
     }
     use chrono::Utc;
     let id = Uuid::new_v4();
