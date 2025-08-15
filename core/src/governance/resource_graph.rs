@@ -15,13 +15,13 @@ use crate::governance::{GovernanceError, GovernanceResult, ComponentHealth, Heal
 pub struct ResourceGraphClient {
     /// Azure client for API calls
     azure_client: Arc<AzureClient>,
-    
+
     /// Intelligent cache for resource data with TTL
     cache: Arc<DashMap<String, CachedResourceData>>,
-    
+
     /// Query statistics for optimization
     query_stats: Arc<RwLock<QueryStatistics>>,
-    
+
     /// Configuration for the client
     config: ResourceGraphConfig,
 }
@@ -31,13 +31,13 @@ pub struct ResourceGraphClient {
 pub struct ResourceGraphConfig {
     /// Cache TTL for resource data (default: 5 minutes)
     pub cache_ttl: Duration,
-    
+
     /// Maximum concurrent queries
     pub max_concurrent_queries: usize,
-    
+
     /// Query timeout
     pub query_timeout: Duration,
-    
+
     /// Enable enhanced quota usage (useResourceGraph=true)
     pub use_enhanced_quota: bool,
 }
@@ -58,10 +58,10 @@ impl Default for ResourceGraphConfig {
 pub struct CachedResourceData {
     /// The cached resource data
     pub data: ResourceQueryResult,
-    
+
     /// When the data was cached
     pub cached_at: DateTime<Utc>,
-    
+
     /// TTL for this cache entry
     pub ttl: Duration,
 }
@@ -88,16 +88,16 @@ pub struct QueryStatistics {
 pub struct ResourceQueryResult {
     /// Total count of resources matching the query
     pub total_records: u64,
-    
+
     /// The actual resource data
     pub data: Vec<AzureResource>,
-    
+
     /// Facets for aggregated data
     pub facets: Option<Vec<QueryFacet>>,
-    
+
     /// Skip token for pagination
     pub skip_token: Option<String>,
-    
+
     /// Result metadata
     pub result_truncated: bool,
 }
@@ -107,31 +107,31 @@ pub struct ResourceQueryResult {
 pub struct AzureResource {
     /// Resource ID
     pub id: String,
-    
+
     /// Resource name
     pub name: String,
-    
+
     /// Resource type
     pub resource_type: String,
-    
+
     /// Resource group
     pub resource_group: String,
-    
+
     /// Subscription ID
     pub subscription_id: String,
-    
+
     /// Location
     pub location: String,
-    
+
     /// Tags
     pub tags: HashMap<String, String>,
-    
+
     /// Resource properties (dynamic JSON)
     pub properties: serde_json::Value,
-    
+
     /// Compliance state
     pub compliance_state: Option<ComplianceState>,
-    
+
     /// Last modified timestamp
     pub last_modified: Option<DateTime<Utc>>,
 }
@@ -141,10 +141,10 @@ pub struct AzureResource {
 pub struct ComplianceState {
     /// Overall compliance status
     pub status: ComplianceStatus,
-    
+
     /// Policy evaluations
     pub policy_evaluations: Vec<PolicyEvaluation>,
-    
+
     /// Last evaluation timestamp
     pub last_evaluation: DateTime<Utc>,
 }
@@ -164,16 +164,16 @@ pub enum ComplianceStatus {
 pub struct PolicyEvaluation {
     /// Policy assignment ID
     pub policy_assignment_id: String,
-    
+
     /// Policy definition ID
     pub policy_definition_id: String,
-    
+
     /// Evaluation result
     pub result: ComplianceStatus,
-    
+
     /// Evaluation reason
     pub reason: String,
-    
+
     /// Evaluation timestamp
     pub evaluated_at: DateTime<Utc>,
 }
@@ -183,10 +183,10 @@ pub struct PolicyEvaluation {
 pub struct QueryFacet {
     /// Facet expression
     pub expression: String,
-    
+
     /// Result type
     pub result_type: String,
-    
+
     /// Facet results
     pub results: Vec<FacetResult>,
 }
@@ -196,7 +196,7 @@ pub struct QueryFacet {
 pub struct FacetResult {
     /// Facet value
     pub value: serde_json::Value,
-    
+
     /// Count for this facet value
     pub count: u64,
 }
@@ -206,22 +206,22 @@ pub struct FacetResult {
 pub struct ResourceFilter {
     /// Resource types to include
     pub resource_types: Option<Vec<String>>,
-    
+
     /// Subscription IDs to filter by
     pub subscription_ids: Option<Vec<String>>,
-    
+
     /// Resource groups to filter by
     pub resource_groups: Option<Vec<String>>,
-    
+
     /// Locations to filter by
     pub locations: Option<Vec<String>>,
-    
+
     /// Tag filters
     pub tags: Option<HashMap<String, String>>,
-    
+
     /// Compliance state filter
     pub compliance_state: Option<ComplianceStatus>,
-    
+
     /// Custom KQL where clause
     pub custom_filter: Option<String>,
 }
@@ -230,7 +230,7 @@ impl ResourceGraphClient {
     /// Create a new Resource Graph client
     pub async fn new(azure_client: Arc<AzureClient>) -> GovernanceResult<Self> {
         let config = ResourceGraphConfig::default();
-        
+
         Ok(Self {
             azure_client,
             cache: Arc::new(DashMap::new()),
@@ -238,7 +238,7 @@ impl ResourceGraphClient {
             config,
         })
     }
-    
+
     /// Create client with custom configuration
     pub async fn with_config(azure_client: Arc<AzureClient>, config: ResourceGraphConfig) -> GovernanceResult<Self> {
         Ok(Self {
@@ -248,11 +248,11 @@ impl ResourceGraphClient {
             config,
         })
     }
-    
+
     /// Execute a KQL query against Azure Resource Graph
     pub async fn query_resources(&self, query: &str) -> GovernanceResult<ResourceQueryResult> {
         let start_time = std::time::Instant::now();
-        
+
         // Check cache first
         let cache_key = format!("query:{}", query);
         if let Some(cached) = self.cache.get(&cache_key) {
@@ -261,21 +261,21 @@ impl ResourceGraphClient {
                 return Ok(cached.data.clone());
             }
         }
-        
+
         // Execute query against Azure Resource Graph
         let result = self.execute_query(query).await?;
-        
+
         // Cache the result
         self.cache.insert(cache_key, CachedResourceData {
             data: result.clone(),
             cached_at: Utc::now(),
             ttl: self.config.cache_ttl,
         });
-        
+
         self.update_stats(false, start_time.elapsed().as_millis() as f64).await;
         Ok(result)
     }
-    
+
     /// Get compliance state for a specific scope
     pub async fn get_compliance_state(&self, scope: &str) -> GovernanceResult<ComplianceState> {
         let query = format!(
@@ -287,7 +287,7 @@ impl ResourceGraphClient {
                 PolicyResources
                 | where type == "microsoft.authorization/policyevaluations"
             ) on $left.id == $right.properties.policyAssignmentId
-            | project 
+            | project
                 policyAssignmentId = id,
                 policyDefinitionId = properties.policyDefinitionId,
                 complianceState = properties.complianceState,
@@ -296,9 +296,9 @@ impl ResourceGraphClient {
             "#,
             scope
         );
-        
+
         let result = self.query_resources(&query).await?;
-        
+
         // Process policy evaluations from the result
         let mut policy_evaluations = Vec::new();
         for resource in result.data {
@@ -306,7 +306,7 @@ impl ResourceGraphClient {
                 policy_evaluations.push(evaluation);
             }
         }
-        
+
         // Determine overall compliance status
         let status = if policy_evaluations.is_empty() {
             ComplianceStatus::Unknown
@@ -317,21 +317,21 @@ impl ResourceGraphClient {
         } else {
             ComplianceStatus::Unknown
         };
-        
+
         Ok(ComplianceState {
             status,
             policy_evaluations,
             last_evaluation: Utc::now(),
         })
     }
-    
+
     /// Discover resources by type with filtering
     pub async fn discover_resources_by_type(&self, resource_type: &str) -> GovernanceResult<Vec<AzureResource>> {
         let query = format!(
             r#"
             Resources
             | where type == "{}"
-            | project 
+            | project
                 id,
                 name,
                 type,
@@ -345,16 +345,16 @@ impl ResourceGraphClient {
             "#,
             resource_type
         );
-        
+
         let result = self.query_resources(&query).await?;
         Ok(result.data)
     }
-    
+
     /// Discover resources with advanced filtering
     pub async fn discover_resources(&self, filter: &ResourceFilter) -> GovernanceResult<Vec<AzureResource>> {
         let mut query_parts = vec!["Resources".to_string()];
         let mut where_conditions = Vec::new();
-        
+
         // Build WHERE conditions based on filter
         if let Some(ref types) = filter.resource_types {
             let types_str = types.iter()
@@ -363,7 +363,7 @@ impl ResourceGraphClient {
                 .join(", ");
             where_conditions.push(format!("type in ({})", types_str));
         }
-        
+
         if let Some(ref subscriptions) = filter.subscription_ids {
             let subs_str = subscriptions.iter()
                 .map(|s| format!("\"{}\"", s))
@@ -371,7 +371,7 @@ impl ResourceGraphClient {
                 .join(", ");
             where_conditions.push(format!("subscriptionId in ({})", subs_str));
         }
-        
+
         if let Some(ref groups) = filter.resource_groups {
             let groups_str = groups.iter()
                 .map(|g| format!("\"{}\"", g))
@@ -379,7 +379,7 @@ impl ResourceGraphClient {
                 .join(", ");
             where_conditions.push(format!("resourceGroup in ({})", groups_str));
         }
-        
+
         if let Some(ref locations) = filter.locations {
             let locations_str = locations.iter()
                 .map(|l| format!("\"{}\"", l))
@@ -387,24 +387,24 @@ impl ResourceGraphClient {
                 .join(", ");
             where_conditions.push(format!("location in ({})", locations_str));
         }
-        
+
         if let Some(ref tags) = filter.tags {
             for (key, value) in tags {
                 where_conditions.push(format!("tags[\"{}\"] == \"{}\"", key, value));
             }
         }
-        
+
         if let Some(ref custom) = filter.custom_filter {
             where_conditions.push(custom.clone());
         }
-        
+
         // Build the complete query
         if !where_conditions.is_empty() {
             query_parts.push(format!("| where {}", where_conditions.join(" and ")));
         }
-        
+
         query_parts.push(r#"
-            | project 
+            | project
                 id,
                 name,
                 type,
@@ -416,17 +416,17 @@ impl ResourceGraphClient {
                 kind
             | order by name asc
         "#.to_string());
-        
+
         let query = query_parts.join("\n");
         let result = self.query_resources(&query).await?;
         Ok(result.data)
     }
-    
+
     /// Get resource inventory with compliance information
     pub async fn get_resource_inventory(&self) -> GovernanceResult<ResourceInventory> {
         let query = r#"
             Resources
-            | summarize 
+            | summarize
                 TotalResources = count(),
                 ResourcesByType = count() by type,
                 ResourcesByLocation = count() by location,
@@ -434,9 +434,9 @@ impl ResourceGraphClient {
                 ResourcesByResourceGroup = count() by resourceGroup
             | order by TotalResources desc
         "#;
-        
+
         let result = self.query_resources(query).await?;
-        
+
         // Process the aggregated data into inventory format
         let mut inventory = ResourceInventory {
             total_resources: 0,
@@ -446,7 +446,7 @@ impl ResourceGraphClient {
             resources_by_resource_group: HashMap::new(),
             last_updated: Utc::now(),
         };
-        
+
         // Extract aggregated counts from the result
         for resource in result.data {
             if let Some(total) = resource.properties.get("TotalResources") {
@@ -454,14 +454,14 @@ impl ResourceGraphClient {
                     inventory.total_resources = count;
                 }
             }
-            
+
             // Process other aggregations...
             // (Implementation would parse the JSON results and populate the HashMap fields)
         }
-        
+
         Ok(inventory)
     }
-    
+
     /// Execute raw KQL query (private helper)
     async fn execute_query(&self, query: &str) -> GovernanceResult<ResourceQueryResult> {
         // Build the request URL with enhanced quota parameter
@@ -469,7 +469,7 @@ impl ResourceGraphClient {
         if self.config.use_enhanced_quota {
             url.push_str("?useResourceGraph=true");
         }
-        
+
         // Build request body
         let request_body = serde_json::json!({
             "subscriptions": [], // Will be populated from Azure client context
@@ -479,7 +479,7 @@ impl ResourceGraphClient {
                 "resultTruncated": false
             }
         });
-        
+
         // Execute the HTTP request
         // This is a simplified version - actual implementation would use azure_core HTTP client
         let response = self.azure_client
@@ -487,11 +487,11 @@ impl ResourceGraphClient {
             .post(url, Some(request_body.to_string()))
             .await
             .map_err(|e| GovernanceError::AzureApi(e))?;
-            
+
         // Parse response
         let result: ResourceQueryResult = serde_json::from_str(&response.body)
             .map_err(GovernanceError::Serialization)?;
-            
+
         // Update quota statistics from response headers
         if let Some(remaining) = response.headers.get("x-ms-user-quota-remaining") {
             if let Ok(quota) = remaining.parse::<u32>() {
@@ -499,56 +499,56 @@ impl ResourceGraphClient {
                 stats.quota_remaining = Some(quota);
             }
         }
-        
+
         Ok(result)
     }
-    
+
     /// Update query statistics
     async fn update_stats(&self, cache_hit: bool, query_time_ms: f64) {
         let mut stats = self.query_stats.write().await;
         stats.total_queries += 1;
-        
+
         if cache_hit {
             stats.cache_hits += 1;
         } else {
             stats.cache_misses += 1;
         }
-        
+
         // Update average query time
         let total_time = stats.average_query_time_ms * (stats.total_queries - 1) as f64;
         stats.average_query_time_ms = (total_time + query_time_ms) / stats.total_queries as f64;
     }
-    
+
     /// Get query statistics
     pub async fn get_statistics(&self) -> QueryStatistics {
         self.query_stats.read().await.clone()
     }
-    
+
     /// Clear cache
     pub fn clear_cache(&self) {
         self.cache.clear();
     }
-    
+
     /// Health check for the Resource Graph client
     pub async fn health_check(&self) -> ComponentHealth {
         let start_time = std::time::Instant::now();
-        
+
         // Simple query to test connectivity
         let test_query = "Resources | take 1";
-        
+
         match self.execute_query(test_query).await {
             Ok(_) => {
                 let query_time = start_time.elapsed().as_millis() as f64;
                 let stats = self.get_statistics().await;
-                
+
                 let mut metrics = HashMap::new();
                 metrics.insert("query_time_ms".to_string(), query_time);
-                metrics.insert("cache_hit_ratio".to_string(), 
+                metrics.insert("cache_hit_ratio".to_string(),
                     if stats.total_queries > 0 {
                         stats.cache_hits as f64 / stats.total_queries as f64
                     } else { 0.0 });
                 metrics.insert("total_queries".to_string(), stats.total_queries as f64);
-                
+
                 ComponentHealth {
                     component: "ResourceGraph".to_string(),
                     status: if query_time < 5000.0 { HealthStatus::Healthy } else { HealthStatus::Degraded },

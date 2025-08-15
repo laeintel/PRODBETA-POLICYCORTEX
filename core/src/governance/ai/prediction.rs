@@ -140,7 +140,7 @@ impl PredictiveComplianceEngine {
         policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
     ) -> GovernanceResult<Self> {
         let mut prediction_models = HashMap::new();
-        
+
         // Initialize prediction models
         prediction_models.insert(
             "compliance_drift".to_string(),
@@ -253,10 +253,10 @@ impl PredictiveComplianceEngine {
                 ],
                 auto_remediable: true,
                 business_impact: PredictionImpact {
-                    severity: if trend.predicted_value < 70.0 { 
-                        PredictionSeverity::Critical 
-                    } else { 
-                        PredictionSeverity::High 
+                    severity: if trend.predicted_value < 70.0 {
+                        PredictionSeverity::Critical
+                    } else {
+                        PredictionSeverity::High
                     },
                     compliance_frameworks: vec![
                         "SOC 2".to_string(),
@@ -485,7 +485,7 @@ impl PredictiveComplianceEngine {
     // Get prediction accuracy metrics
     pub async fn get_prediction_accuracy(&self) -> GovernanceResult<HashMap<String, f64>> {
         let mut accuracy = HashMap::new();
-        
+
         for (model_name, model) in &self.prediction_models {
             accuracy.insert(model_name.clone(), model.accuracy_score);
         }
@@ -500,7 +500,7 @@ impl PredictiveComplianceEngine {
             model.last_trained = Utc::now();
             model.accuracy_score = (model.accuracy_score + 0.01).min(0.95); // Slight improvement simulation
         }
-        
+
         Ok(())
     }
 }
@@ -560,10 +560,10 @@ impl TrendAnalyzer {
         let current_value = recent_data[0].compliance_percentage;
         let oldest_value = recent_data.last().unwrap().compliance_percentage;
         let trend_slope = (current_value - oldest_value) / self.window_size_days as f64;
-        
+
         // Predict future value
         let predicted_value = current_value + (trend_slope * 30.0);
-        
+
         let trend_direction = if trend_slope > 0.5 {
             TrendDirection::Improving
         } else if trend_slope < -0.5 {

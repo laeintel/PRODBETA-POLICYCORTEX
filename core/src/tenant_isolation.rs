@@ -205,7 +205,7 @@ impl TenantDatabase {
             // Admin can update any resource
             sqlx::query(
                 r#"
-                UPDATE resources 
+                UPDATE resources
                 SET data = $1, updated_at = NOW(), updated_by = $2
                 WHERE id = $3
                 "#,
@@ -219,7 +219,7 @@ impl TenantDatabase {
             // Regular user can only update their tenant's resources
             sqlx::query(
                 r#"
-                UPDATE resources 
+                UPDATE resources
                 SET data = $1, updated_at = NOW(), updated_by = $2
                 WHERE id = $3 AND tenant_id = $4
                 "#,
@@ -298,7 +298,7 @@ impl TenantDatabase {
         let rows = if tenant.is_admin {
             sqlx::query(
                 r#"
-                SELECT 
+                SELECT
                     COUNT(*) as total_resources,
                     SUM(CASE WHEN compliance_status = 'compliant' THEN 1 ELSE 0 END) as compliant,
                     SUM(CASE WHEN compliance_status = 'non_compliant' THEN 1 ELSE 0 END) as non_compliant
@@ -310,7 +310,7 @@ impl TenantDatabase {
         } else {
             sqlx::query(
                 r#"
-                SELECT 
+                SELECT
                     COUNT(*) as total_resources,
                     SUM(CASE WHEN compliance_status = 'compliant' THEN 1 ELSE 0 END) as compliant,
                     SUM(CASE WHEN compliance_status = 'non_compliant' THEN 1 ELSE 0 END) as non_compliant

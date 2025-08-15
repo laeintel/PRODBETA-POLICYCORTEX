@@ -196,7 +196,7 @@ impl PolicyEvaluationEngine {
 
     fn evaluate_condition(&self, condition: &PolicyCondition, resource: &Value) -> bool {
         let field_value = self.get_field_value(resource, &condition.field);
-        
+
         let base_result = match &condition.operator {
             ConditionOperator::Equals => field_value == Some(&condition.value),
             ConditionOperator::NotEquals => field_value != Some(&condition.value),
@@ -268,7 +268,7 @@ impl PolicyEvaluationEngine {
     fn get_field_value<'a>(&self, resource: &'a Value, field: &str) -> Option<&'a Value> {
         let parts: Vec<&str> = field.split('.').collect();
         let mut current = resource;
-        
+
         for part in parts {
             match current {
                 Value::Object(map) => {
@@ -277,13 +277,13 @@ impl PolicyEvaluationEngine {
                 _ => return None,
             }
         }
-        
+
         Some(current)
     }
 
     fn evaluate_rule(&self, rule: &PolicyRule, resource: &Value) -> Option<Violation> {
         let compliant = self.evaluate_condition(&rule.condition, resource);
-        
+
         if !compliant {
             let field_value = self.get_field_value(resource, &rule.condition.field);
             Some(Violation {
@@ -302,7 +302,7 @@ impl PolicyEvaluationEngine {
 
     async fn generate_recommendations(&self, violations: &[Violation]) -> Vec<String> {
         let mut recommendations = Vec::new();
-        
+
         for violation in violations {
             if violation.remediation_available {
                 recommendations.push(format!(
@@ -320,7 +320,7 @@ impl PolicyEvaluationEngine {
                 ));
             }
         }
-        
+
         recommendations
     }
 }
@@ -329,18 +329,18 @@ impl PolicyEvaluationEngine {
 impl PolicyEvaluator for PolicyEvaluationEngine {
     async fn evaluate_resource(&self, resource: &Value, policy: &Policy) -> Result<EvaluationResult, EvaluationError> {
         let start = std::time::Instant::now();
-        
+
         let mut violations = Vec::new();
-        
+
         for rule in &policy.rules {
             if let Some(violation) = self.evaluate_rule(rule, resource) {
                 violations.push(violation);
             }
         }
-        
+
         let compliant = violations.is_empty();
         let recommendations = self.generate_recommendations(&violations).await;
-        
+
         Ok(EvaluationResult {
             policy_id: policy.id.clone(),
             resource_id: resource.get("id")
@@ -357,23 +357,23 @@ impl PolicyEvaluator for PolicyEvaluationEngine {
 
     async fn evaluate_batch(&self, resources: Vec<Value>, policy: &Policy) -> Result<Vec<EvaluationResult>, EvaluationError> {
         let mut results = Vec::new();
-        
+
         for resource in resources {
             results.push(self.evaluate_resource(&resource, policy).await?);
         }
-        
+
         Ok(results)
     }
 
     async fn evaluate_policy_set(&self, resource: &Value, policy_set: &PolicySet) -> Result<Vec<EvaluationResult>, EvaluationError> {
         let mut results = Vec::new();
-        
+
         for policy_id in &policy_set.policies {
             if let Some(policy) = self.policies.get(policy_id) {
                 results.push(self.evaluate_resource(resource, policy).await?);
             }
         }
-        
+
         Ok(results)
     }
 

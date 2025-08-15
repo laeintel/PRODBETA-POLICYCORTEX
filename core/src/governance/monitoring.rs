@@ -44,12 +44,12 @@ impl GovernanceMonitor {
     pub async fn new(azure_client: Arc<AzureClient>) -> GovernanceResult<Self> {
         Ok(Self { azure_client })
     }
-    
+
     pub async fn create_governance_alerts(&self, _rules: Vec<AlertRule>) -> GovernanceResult<()> {
         // Placeholder implementation
         Ok(())
     }
-    
+
     pub async fn query_compliance_metrics(&self, _kql: &str) -> GovernanceResult<MetricsResult> {
         // Placeholder implementation
         Ok(MetricsResult {
@@ -63,12 +63,12 @@ impl GovernanceMonitor {
             timestamp: Utc::now(),
         })
     }
-    
+
     pub async fn track_policy_violations(&self) -> GovernanceResult<Vec<PolicyViolation>> {
         // Placeholder implementation
         Ok(vec![])
     }
-    
+
     pub async fn health_check(&self) -> ComponentHealth {
         ComponentHealth {
             component: "Monitoring".to_string(),

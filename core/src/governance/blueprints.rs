@@ -42,7 +42,7 @@ impl GovernanceBlueprints {
     pub async fn new(azure_client: Arc<AzureClient>) -> GovernanceResult<Self> {
         Ok(Self { azure_client })
     }
-    
+
     pub async fn list_blueprint_definitions(&self) -> GovernanceResult<Vec<BlueprintDefinition>> {
         // Placeholder implementation
         Ok(vec![
@@ -55,7 +55,7 @@ impl GovernanceBlueprints {
             }
         ])
     }
-    
+
     pub async fn create_blueprint_assignment(&self, _blueprint_id: &str, _scope: &str) -> GovernanceResult<BlueprintAssignment> {
         // Placeholder implementation
         Ok(BlueprintAssignment {
@@ -66,7 +66,7 @@ impl GovernanceBlueprints {
             last_updated: Utc::now(),
         })
     }
-    
+
     pub async fn assess_blueprint_compliance(&self, _assignment_id: &str) -> GovernanceResult<ComplianceAssessment> {
         // Placeholder implementation
         Ok(ComplianceAssessment {
@@ -76,7 +76,7 @@ impl GovernanceBlueprints {
             compliance_percentage: 90.0,
         })
     }
-    
+
     pub async fn health_check(&self) -> ComponentHealth {
         ComponentHealth {
             component: "Blueprints".to_string(),

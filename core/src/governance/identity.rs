@@ -38,7 +38,7 @@ impl IdentityGovernanceClient {
     pub async fn new(azure_client: Arc<AzureClient>) -> GovernanceResult<Self> {
         Ok(Self { azure_client })
     }
-    
+
     pub async fn get_identity_governance_state(&self) -> GovernanceResult<IdentityState> {
         // Placeholder implementation
         Ok(IdentityState {
@@ -48,7 +48,7 @@ impl IdentityGovernanceClient {
             last_updated: Utc::now(),
         })
     }
-    
+
     pub async fn perform_access_review(&self, _scope: &str) -> GovernanceResult<AccessReviewResult> {
         // Placeholder implementation
         Ok(AccessReviewResult {
@@ -57,12 +57,12 @@ impl IdentityGovernanceClient {
             recommendations: vec!["Remove unused permissions".to_string()],
         })
     }
-    
+
     pub async fn manage_privileged_access(&self, _request: PIMRequest) -> GovernanceResult<()> {
         // Placeholder implementation
         Ok(())
     }
-    
+
     pub async fn health_check(&self) -> ComponentHealth {
         ComponentHealth {
             component: "Identity".to_string(),

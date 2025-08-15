@@ -40,7 +40,7 @@ pub struct AIInsight {
     pub governance_domains: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum AIInsightType {
     CrossDomainCorrelation,
     PredictiveCompliance,
@@ -114,12 +114,12 @@ impl AIGovernanceEngine {
             identity.clone(),
             monitoring.clone(),
         ).await?;
-        
+
         let correlation = CrossDomainCorrelationEngine::new(
             resource_graph.clone(),
             policy_engine.clone(),
         ).await?;
-        
+
         let prediction = PredictiveComplianceEngine::new(
             resource_graph.clone(),
             policy_engine.clone(),
@@ -139,7 +139,7 @@ impl AIGovernanceEngine {
     // Patent 1: Cross-Domain Governance Correlation Engine
     pub async fn analyze_governance_correlations(&self, scope: &str) -> GovernanceResult<Vec<AIInsight>> {
         let correlations = self.correlation.analyze_cross_domain_patterns(scope).await?;
-        
+
         let mut insights = Vec::new();
         for correlation in correlations {
             insights.push(AIInsight {
@@ -166,8 +166,8 @@ impl AIGovernanceEngine {
     }
 
     // Patent 2: Conversational Governance Intelligence System
-    pub async fn process_natural_language_query(&self, 
-        query: &str, 
+    pub async fn process_natural_language_query(&self,
+        query: &str,
         context: &ConversationContext
     ) -> GovernanceResult<String> {
         self.conversation.process_query(query, context).await
@@ -176,7 +176,7 @@ impl AIGovernanceEngine {
     // Patent 4: Predictive Policy Compliance Engine
     pub async fn generate_compliance_predictions(&self, time_horizon_days: u32) -> GovernanceResult<Vec<AIInsight>> {
         let predictions = self.prediction.predict_compliance_drift(time_horizon_days).await?;
-        
+
         let mut insights = Vec::new();
         for prediction in predictions {
             insights.push(AIInsight {
@@ -189,12 +189,12 @@ impl AIGovernanceEngine {
                 description: prediction.description,
                 recommendations: prediction.mitigation_actions.into_iter().map(|action| AIRecommendation {
                     action,
-                    priority: if prediction.risk_level > 0.8 { 
-                        RecommendationPriority::Critical 
-                    } else if prediction.risk_level > 0.6 { 
-                        RecommendationPriority::High 
-                    } else { 
-                        RecommendationPriority::Medium 
+                    priority: if prediction.risk_level > 0.8 {
+                        RecommendationPriority::Critical
+                    } else if prediction.risk_level > 0.6 {
+                        RecommendationPriority::High
+                    } else {
+                        RecommendationPriority::Medium
                     },
                     estimated_impact: "High".to_string(),
                     implementation_complexity: ComplexityLevel::Low,
@@ -304,12 +304,12 @@ impl AIGovernanceEngine {
     // Health check for AI governance components
     pub async fn health_check(&self) -> GovernanceResult<HashMap<String, String>> {
         let mut health = HashMap::new();
-        
+
         health.insert("conversation_engine".to_string(), "healthy".to_string());
         health.insert("correlation_engine".to_string(), "healthy".to_string());
         health.insert("prediction_engine".to_string(), "healthy".to_string());
         health.insert("last_insight_generation".to_string(), Utc::now().to_rfc3339());
-        
+
         Ok(health)
     }
 }

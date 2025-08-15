@@ -2110,7 +2110,7 @@ pub async fn get_action_impact(
     }
     Json(serde_json::json!({
         "resourceChanges": [
-            {"resource":"Microsoft.Compute/virtualMachines/vm-prod-001","changes":[{"op":"add","path":"/tags/Owner","value":"FinOps"}]} 
+            {"resource":"Microsoft.Compute/virtualMachines/vm-prod-001","changes":[{"op":"add","path":"/tags/Owner","value":"FinOps"}]}
         ],
         "blastRadius": {"resources": 1, "dependencies": 0},
         "riskScore": 15

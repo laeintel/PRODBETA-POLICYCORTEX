@@ -19,7 +19,7 @@ pub struct RealAzureDataClient {
 impl RealAzureDataClient {
     pub async fn new() -> Result<Self, AzureError> {
         let credential = Arc::new(DefaultAzureCredential::default());
-        
+
         // Get subscription ID from environment or Azure CLI
         let subscription_id = std::env::var("AZURE_SUBSCRIPTION_ID")
             .or_else(|_| Self::get_subscription_from_cli())
@@ -44,7 +44,7 @@ impl RealAzureDataClient {
             .args(&["account", "show", "--query", "id", "-o", "tsv"])
             .output()
             .map_err(|_| std::env::VarError::NotPresent)?;
-        
+
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
     }
 
@@ -53,16 +53,16 @@ impl RealAzureDataClient {
             .get_token(&["https://management.azure.com/.default"])
             .await
             .map_err(|e| AzureError::Authentication(e.to_string()))?;
-        
+
         Ok(token.token.secret().to_string())
     }
 
-    pub async fn make_azure_request<T>(&self, url: &str) -> Result<T, AzureError> 
+    pub async fn make_azure_request<T>(&self, url: &str) -> Result<T, AzureError>
     where
         T: for<'de> Deserialize<'de>,
     {
         let token = self.get_access_token().await?;
-        
+
         let response = self.http_client
             .get(url)
             .header(header::AUTHORIZATION, format!("Bearer {}", token))
@@ -106,7 +106,7 @@ impl RealAzureDataClient {
         );
 
         let response = self.make_azure_request::<MetricsResponse>(&url).await?;
-        
+
         // Process real metrics
         let mut metrics = VmMetrics::default();
         for metric in response.value {
@@ -125,7 +125,7 @@ impl RealAzureDataClient {
                 _ => {}
             }
         }
-        
+
         Ok(metrics)
     }
 
@@ -182,10 +182,10 @@ impl RealAzureDataClient {
             let cost = row[0].as_f64().unwrap_or(0.0);
             let service = row[1].as_str().unwrap_or("Unknown");
             let resource_id = row[2].as_str().unwrap_or("");
-            
+
             total_cost += cost;
             *cost_by_service.entry(service.to_string()).or_insert(0.0) += cost;
-            
+
             // Check if resource is idle (would check metrics)
             if let Ok(metrics) = self.get_vm_metrics(resource_id).await {
                 if metrics.cpu_avg < 5.0 && metrics.network_io_avg < 1.0 {
@@ -230,7 +230,7 @@ impl RealAzureDataClient {
         let total = summary.value[0].results.resource_count;
         let compliant = summary.value[0].results.compliant_resource_count;
         let non_compliant = summary.value[0].results.non_compliant_resource_count;
-        
+
         Ok(PolicyCompliance {
             total_policies: summary.value[0].policy_assignments.count,
             compliant_resources: compliant,
@@ -249,7 +249,7 @@ impl RealAzureDataClient {
         );
 
         let response = self.make_azure_request::<PolicyStatesResponse>(&url).await?;
-        
+
         Ok(response.value.into_iter().map(|state| PolicyViolation {
             policy_name: state.policy_definition_name,
             resource_id: state.resource_id,
@@ -268,7 +268,7 @@ impl RealAzureDataClient {
         );
 
         let response = self.make_azure_request::<AlertsResponse>(&url).await?;
-        
+
         Ok(response.value.into_iter().map(|alert| SecurityAlert {
             id: alert.id,
             name: alert.name,
@@ -289,11 +289,11 @@ impl RealAzureDataClient {
         );
 
         let response = self.make_azure_request::<RoleAssignmentsResponse>(&url).await?;
-        
+
         // Analyze for overprivileged accounts
         let mut overprivileged_count = 0;
         let mut risk_score = 0.0;
-        
+
         for assignment in &response.value {
             // Check if role is Owner or Contributor at subscription level
             if assignment.properties.scope == format!("/subscriptions/{}", self.subscription_id) {
@@ -304,7 +304,7 @@ impl RealAzureDataClient {
                 }
             }
         }
-        
+
         Ok(RbacData {
             total_assignments: response.value.len(),
             overprivileged_count,
@@ -322,14 +322,14 @@ impl RealAzureDataClient {
         );
 
         let response = self.make_azure_request::<NsgResponse>(&url).await?;
-        
+
         let mut public_endpoints = 0;
         let mut critical_exposures = Vec::new();
-        
+
         for nsg in response.value {
             for rule in nsg.properties.security_rules {
                 // Check for public exposure
-                if rule.properties.source_address_prefix == "*" || 
+                if rule.properties.source_address_prefix == "*" ||
                    rule.properties.source_address_prefix == "Internet" {
                     if rule.properties.destination_port_range == "3389" || // RDP
                        rule.properties.destination_port_range == "22" ||   // SSH
@@ -344,7 +344,7 @@ impl RealAzureDataClient {
                 }
             }
         }
-        
+
         Ok(NetworkTopology {
             total_endpoints: response.value.len(),
             public_endpoints,
@@ -356,17 +356,17 @@ impl RealAzureDataClient {
         if timeseries.is_empty() {
             return 0.0;
         }
-        
+
         let sum: f64 = timeseries.iter()
             .flat_map(|ts| &ts.data)
             .filter_map(|d| d.average)
             .sum();
-        
+
         let count = timeseries.iter()
             .flat_map(|ts| &ts.data)
             .filter(|d| d.average.is_some())
             .count();
-        
+
         if count > 0 {
             sum / count as f64
         } else {
@@ -379,11 +379,11 @@ impl RealAzureDataClient {
             .flat_map(|ts| &ts.data)
             .filter_map(|d| d.average)
             .collect();
-        
+
         if values.is_empty() {
             return 0.0;
         }
-        
+
         use std::cmp::Ordering;
         values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
         let index = (percentile as f64 / 100.0 * values.len() as f64) as usize;

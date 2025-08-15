@@ -39,7 +39,7 @@ impl NetworkGovernanceEngine {
     pub async fn new(azure_client: Arc<AzureClient>) -> GovernanceResult<Self> {
         Ok(Self { azure_client })
     }
-    
+
     pub async fn analyze_network_security(&self) -> GovernanceResult<NetworkSecuritySummary> {
         // Placeholder implementation
         Ok(NetworkSecuritySummary {
@@ -49,17 +49,17 @@ impl NetworkGovernanceEngine {
             security_violations: vec![],
         })
     }
-    
+
     pub async fn validate_network_policies(&self) -> GovernanceResult<Vec<NetworkViolation>> {
         // Placeholder implementation
         Ok(vec![])
     }
-    
+
     pub async fn optimize_network_configuration(&self) -> GovernanceResult<Vec<NetworkOptimization>> {
         // Placeholder implementation
         Ok(vec![])
     }
-    
+
     pub async fn health_check(&self) -> ComponentHealth {
         ComponentHealth {
             component: "Network".to_string(),

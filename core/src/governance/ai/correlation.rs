@@ -29,7 +29,7 @@ pub struct CorrelationPattern {
     pub business_impact: BusinessImpact,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum CorrelationType {
     SecurityCostCorrelation,     // Security controls affecting costs
     CompliancePolicyDrift,       // Policy changes affecting compliance
@@ -90,7 +90,7 @@ impl CrossDomainCorrelationEngine {
         policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
     ) -> GovernanceResult<Self> {
         let pattern_analyzer = PatternAnalyzer::new();
-        
+
         Ok(Self {
             resource_graph,
             policy_engine,
@@ -105,12 +105,12 @@ impl CrossDomainCorrelationEngine {
 
         // Collect events from all governance domains
         let events = self.collect_cross_domain_events(scope).await?;
-        
+
         // Analyze Security-Cost correlations
         let security_cost_patterns = self.analyze_security_cost_correlation(&events).await?;
         patterns.extend(security_cost_patterns);
 
-        // Analyze Compliance-Policy correlations  
+        // Analyze Compliance-Policy correlations
         let compliance_patterns = self.analyze_compliance_policy_correlation(&events).await?;
         patterns.extend(compliance_patterns);
 
@@ -145,7 +145,7 @@ impl CrossDomainCorrelationEngine {
         // Collect resource changes
         let resources = self.resource_graph
             .query_resources(&format!("Resources | where id startswith '{}'", scope)).await?;
-        
+
         for resource in resources {
             events.push(CrossDomainEvent {
                 event_id: uuid::Uuid::new_v4().to_string(),
