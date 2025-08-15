@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Cpu, Play, Square, Clock, Zap, GitBranch, CheckCircle, AlertCircle } from 'lucide-react'
+import AppLayout from '../../components/AppLayout'
 
 export default function AutomationPage() {
   const [automationData, setAutomationData] = useState<any>(null)
@@ -26,14 +27,17 @@ export default function AutomationPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <AppLayout>
+      <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
           <Cpu className="w-8 h-8 mr-3 text-orange-500" />
@@ -222,5 +226,6 @@ export default function AutomationPage() {
         </div>
       </motion.div>
     </div>
+    </AppLayout>
   )
 }
