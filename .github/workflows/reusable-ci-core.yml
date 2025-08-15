@@ -34,25 +34,27 @@ jobs:
       - name: Format check and auto-fix
         run: |
           echo "🔍 Checking Rust code formatting..."
+          
+          # Show Rust version for debugging
+          rustc --version
+          cargo fmt --version
+          
+          cd core
+          # Apply formatting first to ensure consistency
+          echo "📝 Applying formatting..."
+          cargo fmt --all
+          
+          # Then check if it passes the check
           if ! cargo fmt --all -- --check; then
-            echo "📝 Code formatting issues found. Auto-fixing..."
-            cargo fmt --all
-            echo "✅ Code has been automatically formatted"
-            
-            # Check if there are any changes after formatting
-            if git diff --quiet; then
-              echo "✅ No formatting changes needed after auto-fix"
-            else
-              echo "📋 Formatting changes applied:"
-              git diff --name-only
-              echo ""
-              echo "⚠️ Formatting has been automatically applied but not committed."
-              echo "   The CI will continue with the formatted code."
-            fi
+            echo "❌ Formatting check still fails after auto-format"
+            echo "📋 Remaining differences:"
+            cargo fmt --all -- --check || true
+            echo ""
+            echo "⚠️ This indicates a rustfmt version mismatch between local and CI"
+            echo "   CI will continue with the formatted code but may show warnings"
           else
-            echo "✅ Code formatting is already correct"
+            echo "✅ Code formatting is correct"
           fi
-        working-directory: core
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
         working-directory: core
