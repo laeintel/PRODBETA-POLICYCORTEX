@@ -1,3 +1,11 @@
+pub mod resources;
+
+// Re-export resource API functions
+pub use resources::{
+    get_all_resources, get_resources_by_category, get_resource_by_id,
+    execute_resource_action, get_resource_insights, get_resource_health_summary
+};
+
 use crate::auth::{AuthUser, TenantContext, TokenValidator};
 use crate::error::{ApiError, ApiResult};
 use crate::validation::Validator;
