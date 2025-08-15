@@ -1,6 +1,7 @@
 use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, TokenValidator};
 use crate::secrets::SecretsManager;
 use crate::slo::{Aggregation, ErrorBudget, SLIType, SLOManager, SLOWindow, SLI, SLO};
+use axum::routing::post;
 use axum::{
     body::Body,
     extract::{Path, Query, State},
@@ -11,12 +12,11 @@ use axum::{
     },
     Json,
 };
-use axum::routing::post;
-use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use chrono::{DateTime, Utc};
 use flate2::{write::GzEncoder, Compression};
 use metrics::counter;
 use metrics_exporter_prometheus::PrometheusHandle;
+use reqwest::header::{AUTHORIZATION, CONTENT_TYPE};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
@@ -920,9 +920,11 @@ pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoRespon
             let headers = resp.headers().clone();
             match resp.bytes().await {
                 Ok(bytes) => {
-                    let mut builder = Response::builder().status(axum::http::StatusCode::from_u16(status.as_u16()).unwrap());
+                    let mut builder = Response::builder()
+                        .status(axum::http::StatusCode::from_u16(status.as_u16()).unwrap());
                     if let Some(ct) = headers.get("content-type") {
-                        builder = builder.header("content-type", ct.to_str().unwrap_or("application/sdp"));
+                        builder = builder
+                            .header("content-type", ct.to_str().unwrap_or("application/sdp"));
                     } else {
                         builder = builder.header("content-type", "application/sdp");
                     }
@@ -964,7 +966,9 @@ mod tests {
     async fn roadmap_status_returns_ok() {
         // get_roadmap_status requires State but ignores it; provide minimal AppState
         let state = Arc::new(AppState::new());
-        let resp = crate::api::get_roadmap_status(axum::extract::State(state)).await.into_response();
+        let resp = crate::api::get_roadmap_status(axum::extract::State(state))
+            .await
+            .into_response();
         assert_eq!(resp.status(), axum::http::StatusCode::OK);
         let body = hyper::body::to_bytes(resp.into_body()).await.unwrap();
         let v: serde_json::Value = serde_json::from_slice(&body).unwrap();
@@ -1269,9 +1273,11 @@ pub async fn process_conversation(
     let azure_api_key = std::env::var("AZURE_OPENAI_API_KEY").ok();
     let azure_deployment = std::env::var("AZURE_OPENAI_DEPLOYMENT").ok();
 
-    if let (Some(endpoint), Some(api_key), Some(deployment)) =
-        (azure_endpoint.clone(), azure_api_key.clone(), azure_deployment.clone())
-    {
+    if let (Some(endpoint), Some(api_key), Some(deployment)) = (
+        azure_endpoint.clone(),
+        azure_api_key.clone(),
+        azure_deployment.clone(),
+    ) {
         let api_version = std::env::var("AZURE_OPENAI_API_VERSION")
             .ok()
             .unwrap_or_else(|| "2024-05-01-preview".to_string());
@@ -1317,10 +1323,7 @@ pub async fn process_conversation(
                 }
             }
             Ok(resp) => {
-                tracing::warn!(
-                    "Azure OpenAI returned non-success: {}",
-                    resp.status()
-                );
+                tracing::warn!("Azure OpenAI returned non-success: {}", resp.status());
             }
             Err(e) => {
                 tracing::warn!("Azure OpenAI call failed: {}", e);
@@ -1357,10 +1360,15 @@ pub async fn process_conversation(
 
 fn infer_intent(query: &str) -> String {
     let q = query.to_lowercase();
-    if q.contains("cost") { "cost_inquiry".to_string() }
-    else if q.contains("security") { "security_insight".to_string() }
-    else if q.contains("compliance") || q.contains("policy") { "compliance_policy".to_string() }
-    else { "general".to_string() }
+    if q.contains("cost") {
+        "cost_inquiry".to_string()
+    } else if q.contains("security") {
+        "security_insight".to_string()
+    } else if q.contains("compliance") || q.contains("policy") {
+        "compliance_policy".to_string()
+    } else {
+        "general".to_string()
+    }
 }
 
 fn extract_suggestions(text: &str) -> Vec<String> {
