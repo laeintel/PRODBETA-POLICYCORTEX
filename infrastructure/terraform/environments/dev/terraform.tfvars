@@ -33,5 +33,5 @@ frontend_next_public_msal_post_logout_redirect_uri = "http://localhost:3000"
 frontend_next_public_aoai_endpoint                 = ""
 frontend_next_public_aoai_api_version              = "2024-08-01-preview"
 frontend_next_public_aoai_chat_deployment          = "gpt-4o"
-frontend_next_public_aoai_api_key                  = ""
+# frontend_next_public_aoai_api_key is now retrieved directly from Azure OpenAI resource
 frontend_next_public_demo_mode                     = true
