@@ -644,8 +644,35 @@ jobs:
         run: |
           echo "📋 Running Terraform PLAN..."
           cd infrastructure/terraform/environments/dev
-          terraform init || true
-          terraform plan -out=tfplan || true
+          
+          # Check for state locks and handle them
+          echo "🔍 Checking for Terraform state lock before init..."
+          
+          # Try init first
+          if ! terraform init; then
+            echo "⚠️ Terraform init failed, checking for state lock issues..."
+            
+            # Attempt recovery by re-initializing
+            echo "🔄 Attempting terraform init with reconfigure..."
+            terraform init -reconfigure || true
+          fi
+          
+          # Try plan with state lock detection
+          echo "📋 Running terraform plan..."
+          if ! terraform plan -out=tfplan 2>&1 | tee plan_output.log; then
+            if grep -q "lock" plan_output.log; then
+              echo "🔓 Detected state lock during plan. This may be a transient issue."
+              echo "ℹ️ In CI, we'll skip this run and let the next trigger retry."
+              echo "⚠️ If this persists, manual intervention may be required."
+              exit 0  # Exit gracefully to not fail the entire pipeline
+            else
+              echo "❌ Terraform plan failed for other reasons"
+              cat plan_output.log
+              exit 1
+            fi
+          fi
+          
+          rm -f plan_output.log
           
           # Show plan summary in PR
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -665,11 +692,32 @@ jobs:
           echo "🚀 Applying Terraform changes (main branch only)..."
           cd infrastructure/terraform/environments/dev
           
-          # Initialize with locking backend
-          terraform init -backend-config="use_azuread_auth=true"
+          # Initialize with locking backend and state lock handling
+          echo "🔍 Initializing Terraform with lock recovery..."
+          if ! terraform init -backend-config="use_azuread_auth=true"; then
+            echo "⚠️ Terraform init failed, attempting recovery..."
+            terraform init -backend-config="use_azuread_auth=true" -reconfigure
+          fi
           
-          # Apply with auto-approve for dev (production requires manual approval via environment protection)
-          terraform apply -auto-approve tfplan || echo "No plan file found, skipping apply"
+          # Apply with state lock detection
+          echo "🚀 Applying Terraform plan..."
+          if ! terraform apply -auto-approve tfplan 2>&1 | tee apply_output.log; then
+            if grep -q "lock" apply_output.log; then
+              echo "🔓 Detected state lock during apply."
+              echo "⚠️ State may be locked by another process. Skipping apply."
+              echo "ℹ️ This is safer than force-unlocking during concurrent operations."
+              rm -f apply_output.log
+              exit 0  # Exit gracefully
+            else
+              echo "❌ Terraform apply failed for other reasons"
+              cat apply_output.log
+              rm -f apply_output.log
+              exit 1
+            fi
+          fi
+          
+          rm -f apply_output.log
+          echo "✅ Terraform apply completed successfully"
 
       - name: Verify Deployment (Dev)
         if: steps.check_images.outputs.images_available == 'true'

@@ -54,9 +54,99 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  docker-health-check:
+    name: Docker health check and auto-fix
+    runs-on: self-hosted
+    steps:
+      - name: Check Docker repository health
+        id: docker_check
+        continue-on-error: true
+        run: |
+          echo "🔍 Checking Docker repository configuration..."
+          
+          # Check for corrupted entries with pipe characters
+          if grep -r "download\.docker\.com.*|" /etc/apt/sources.list* 2>/dev/null; then
+            echo "❌ Found corrupted Docker repository entries with pipe characters"
+            echo "corrupted=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No corrupted pipe entries found"
+            echo "corrupted=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Also check for any docker.com entries that might be malformed
+          if grep -r "download\.docker\.com" /etc/apt/sources.list* 2>/dev/null | grep "|"; then
+            echo "❌ Found malformed Docker repository entries"
+            echo "corrupted=true" >> $GITHUB_OUTPUT
+          fi
+          
+          # Try to update package list
+          if ! sudo apt-get update 2>&1; then
+            echo "❌ apt-get update failed"
+            echo "update_failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ apt-get update succeeded" 
+            echo "update_failed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Auto-fix Docker repository issues
+        if: steps.docker_check.outputs.corrupted == 'true' || steps.docker_check.outputs.update_failed == 'true'
+        run: |
+          echo "🔧 Auto-fixing Docker repository issues..."
+          
+          # Show current problematic entries
+          echo "🔍 Current problematic entries:"
+          grep -r "docker.com" /etc/apt/sources.list* 2>/dev/null | grep "|" || echo "No pipe entries found in grep"
+          
+          # Remove all Docker-related repository files
+          echo "🧹 Removing ALL Docker repository configurations..."
+          sudo rm -f /etc/apt/sources.list.d/docker*.list || true
+          sudo rm -f /etc/apt/keyrings/docker*.gpg || true
+          sudo rm -f /etc/apt/trusted.gpg.d/docker*.gpg || true
+          sudo rm -f /usr/share/keyrings/docker*.gpg || true
+          
+          # Remove ANY entries containing docker.com with pipe characters
+          echo "🧹 Removing corrupted entries from all sources..."
+          sudo sed -i '/docker\.com.*|/d' /etc/apt/sources.list || true
+          sudo sed -i '/download\.docker\.com.*|/d' /etc/apt/sources.list || true
+          
+          # Clean all sources.list.d files more aggressively
+          for file in /etc/apt/sources.list.d/*.list; do
+            if [ -f "$file" ]; then
+              echo "Cleaning $file..."
+              sudo sed -i '/docker\.com.*|/d' "$file" || true
+              sudo sed -i '/download\.docker\.com.*|/d' "$file" || true
+              # Remove any lines with pipe characters that contain docker
+              sudo sed -i '/docker.*|/d' "$file" || true
+            fi
+          done
+          
+          # Clean package cache completely
+          echo "🧹 Cleaning package cache completely..."
+          sudo apt-get clean || true
+          sudo rm -rf /var/lib/apt/lists/* || true
+          sudo rm -rf /var/cache/apt/archives/* || true
+          
+          # Update package index
+          echo "📦 Updating package index..."
+          if sudo apt-get update; then
+            echo "✅ Package index updated successfully"
+          else
+            echo "❌ Package index update still failing, trying more aggressive fix..."
+            
+            # Emergency fix: recreate sources.list without any docker entries
+            sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup
+            sudo grep -v "docker" /etc/apt/sources.list.backup | sudo tee /etc/apt/sources.list
+            
+            # Try update again
+            sudo apt-get update
+          fi
+          
+          echo "✅ Docker repository auto-fix completed"
+
   detect-changes:
     name: Detect changed areas
     runs-on: self-hosted
+    needs: docker-health-check
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       rust_core: ${{ steps.filter.outputs.rust_core }}
@@ -88,7 +178,7 @@ jobs:
 
   frontend:
     name: Frontend CI
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when frontend files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.frontend == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -99,7 +189,7 @@ jobs:
 
   core:
     name: Core (Rust) CI
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when core files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_core)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.rust_core == 'true')
     uses: ./.github/workflows/reusable-ci-core.yml
@@ -107,7 +197,7 @@ jobs:
 
   graphql:
     name: GraphQL gateway CI
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when graphql files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.graphql == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -118,7 +208,7 @@ jobs:
 
   backend:
     name: Backend Services CI
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when backend files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -129,7 +219,7 @@ jobs:
 
   security:
     name: Security & Secrets
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/reusable-security.yml
@@ -140,7 +230,7 @@ jobs:
 
   supply_chain:
     name: Supply Chain Security
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/supply-chain.yml
@@ -152,7 +242,7 @@ jobs:
 
   secret_scan:
     name: Secret Scan (Gitleaks)
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/secret-scan.yml
@@ -163,7 +253,7 @@ jobs:
 
   infra:
     name: Azure Infrastructure
-    needs: detect-changes
+    needs: [docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/azure-infra.yml

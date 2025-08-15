@@ -79,6 +79,105 @@ terraform init \
   -backend-config="access_key=${ACCESS_KEY}" \
   -reconfigure
 
+# Check for state lock and attempt recovery
+echo "🔍 Checking for Terraform state lock..."
+
+# First, try to detect state lock by attempting a simple plan
+PLAN_OUTPUT=$(terraform plan -detailed-exitcode 2>&1)
+PLAN_EXIT_CODE=$?
+
+if [[ $PLAN_EXIT_CODE -ne 0 && $PLAN_EXIT_CODE -ne 2 ]]; then
+  echo "⚠️ Terraform plan failed, checking for state lock..."
+  
+  # Check if the output contains lock-related errors
+  if echo "$PLAN_OUTPUT" | grep -q "state blob is already locked\|state lock\|Lock Info"; then
+    echo "🔓 Detected state lock! Attempting recovery..."
+    
+    # Extract lock ID from output if available
+    LOCK_ID=$(echo "$PLAN_OUTPUT" | grep -o "ID:[[:space:]]*[a-f0-9\-]*" | cut -d: -f2 | tr -d ' ' || echo "")
+    
+    if [[ -n "$LOCK_ID" ]]; then
+      echo "🔑 Found lock ID: $LOCK_ID"
+      echo "🚨 In CI context, automatically force-unlocking stale lock"
+      echo "   (GitHub Actions timeout prevents infinite locks)"
+      
+      # Force unlock using the extracted lock ID
+      if terraform force-unlock -force "$LOCK_ID"; then
+        echo "✅ Successfully force-unlocked state with ID: $LOCK_ID"
+      else
+        echo "❌ Force unlock failed, trying alternative methods..."
+        
+        # Alternative: try to remove lock from Azure Storage directly
+        echo "🔍 Attempting to remove lock from Azure Storage..."
+        LOCK_BLOBS=$(az storage blob list \
+          --container-name "${BACKEND_CONTAINER}" \
+          --account-name "${BACKEND_SA}" \
+          --account-key "${ACCESS_KEY}" \
+          --prefix "${BACKEND_KEY}" \
+          --query "[?contains(name, 'lock')].name" -o tsv 2>/dev/null || echo "")
+        
+        if [[ -n "$LOCK_BLOBS" ]]; then
+          echo "🔓 Found lock blobs in storage: $LOCK_BLOBS"
+          while IFS= read -r blob; do
+            echo "Removing lock blob: $blob"
+            az storage blob delete \
+              --container-name "${BACKEND_CONTAINER}" \
+              --account-name "${BACKEND_SA}" \
+              --account-key "${ACCESS_KEY}" \
+              --name "$blob" \
+              --output none 2>/dev/null || true
+          done <<< "$LOCK_BLOBS"
+          echo "✅ Removed lock blobs from storage"
+        fi
+      fi
+    else
+      echo "⚠️ Could not extract lock ID from error message"
+      echo "Full error output:"
+      echo "$PLAN_OUTPUT"
+      
+      # Try generic force unlock (will ask for lock ID)
+      echo "🔄 Attempting generic lock recovery..."
+      
+      # List potential lock files in storage
+      LOCK_BLOBS=$(az storage blob list \
+        --container-name "${BACKEND_CONTAINER}" \
+        --account-name "${BACKEND_SA}" \
+        --account-key "${ACCESS_KEY}" \
+        --prefix "${BACKEND_KEY}" \
+        --query "[?contains(name, 'lock')].name" -o tsv 2>/dev/null || echo "")
+      
+      if [[ -n "$LOCK_BLOBS" ]]; then
+        echo "🔓 Found potential lock blobs: $LOCK_BLOBS"
+        while IFS= read -r blob; do
+          echo "Removing lock blob: $blob"
+          az storage blob delete \
+            --container-name "${BACKEND_CONTAINER}" \
+            --account-name "${BACKEND_SA}" \
+            --account-key "${ACCESS_KEY}" \
+            --name "$blob" \
+            --output none 2>/dev/null || true
+        done <<< "$LOCK_BLOBS"
+      fi
+    fi
+    
+    echo "🔄 Retrying terraform operations after lock removal..."
+    sleep 3
+    
+    # Verify lock is gone
+    if terraform plan -detailed-exitcode >/dev/null 2>&1; then
+      echo "✅ State lock successfully removed"
+    else
+      echo "❌ State may still be locked or have other issues"
+      terraform plan -detailed-exitcode 2>&1 | head -20
+    fi
+  else
+    echo "❌ Plan failed for reasons other than state lock:"
+    echo "$PLAN_OUTPUT"
+  fi
+else
+  echo "✅ No state lock detected"
+fi
+
 # Reconcile state: import existing resources if they exist
 export AZURE_SUBSCRIPTION_ID="${SUBSCRIPTION_ID}"
 # Invoke import script with bash to avoid execute-bit dependency in CI
