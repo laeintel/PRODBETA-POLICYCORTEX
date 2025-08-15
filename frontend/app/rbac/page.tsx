@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import AppLayout from '../../components/AppLayout'
 import { useRbacAssignments } from '../../lib/azure-api'
 import { Search, Users, Shield, Filter, AlertTriangle, BarChart3 } from 'lucide-react'
@@ -12,9 +13,17 @@ import { useServerPagination } from '@/hooks/useServerPagination'
 
 export default function RbacPage() {
   const { assignments, loading } = useRbacAssignments()
+  const pathname = usePathname()
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'User' | 'ServicePrincipal'>('all')
   const [onlyPrivileged, setOnlyPrivileged] = useState(false)
+
+  // Apply subroute filters, e.g. /rbac/privileged or /rbac/service-principals
+  useEffect(() => {
+    if (!pathname) return
+    if (pathname.includes('/rbac/privileged')) setOnlyPrivileged(true)
+    if (pathname.includes('/rbac/service-principals')) setTypeFilter('ServicePrincipal')
+  }, [pathname])
 
   const rows = (assignments || [])
     .filter(a => {

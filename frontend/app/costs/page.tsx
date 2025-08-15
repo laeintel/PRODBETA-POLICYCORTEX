@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import AppLayout from '../../components/AppLayout'
 import { useCostBreakdown } from '../../lib/azure-api'
 import { DollarSign } from 'lucide-react'
@@ -9,6 +10,7 @@ import FilterBar from '../../components/FilterBar'
 
 export default function CostsPage() {
   const { breakdown, loading } = useCostBreakdown()
+  const pathname = usePathname()
 
   const totalMonthly = (breakdown || []).reduce((s,b)=> s + (b.monthlyCost||0), 0)
   const topServices = useMemo(() => (
@@ -19,6 +21,11 @@ export default function CostsPage() {
       return acc
     }, {})).sort((a:any,b:any)=> b.monthly - a.monthly).slice(0,8)
   ), [breakdown])
+
+  // Future: apply subroute-specific views (e.g., /costs/anomalies)
+  useEffect(() => {
+    // placeholder for route-specific behaviors
+  }, [pathname])
 
   return (
     <AppLayout>

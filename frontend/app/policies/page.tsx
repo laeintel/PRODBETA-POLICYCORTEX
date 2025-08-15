@@ -111,10 +111,14 @@ export default function PoliciesPage() {
   // Respond to URL param changes (e.g., submenu navigation)
   useEffect(() => {
     const q = searchParams.get('q') || ''
-    const cat = searchParams.get('category') || 'all'
+    const cat = searchParams.get('category') || (typeof window !== 'undefined' && window.location.pathname.startsWith('/policies/') ? decodeURIComponent(window.location.pathname.split('/')[2] || 'all') : 'all')
+    const normalizedCat = (
+      cat.toLowerCase() === 'non-compliant' ? 'Non-Compliant' :
+      cat.charAt(0).toUpperCase() + cat.slice(1)
+    )
     const stat = searchParams.get('status') || 'all'
     setSearchQuery(q)
-    setFilterCategory(cat)
+    setFilterCategory(cat === 'all' ? 'all' : normalizedCat)
     setFilterStatus(stat)
   }, [searchParams])
 
