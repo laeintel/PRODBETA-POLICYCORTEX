@@ -79,7 +79,7 @@ pub struct Intent {
     pub parameters: HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum IntentType {
     // Query intents
     GetComplianceStatus,
@@ -118,7 +118,7 @@ pub struct EntityInfo {
     pub metadata: HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum EntityType {
     ResourceId,
     ResourceType,
@@ -775,7 +775,7 @@ impl PolicyTranslator {
 }
 
 impl ConversationContext {
-    fn new(session_id: String) -> Self {
+    pub fn new(session_id: String) -> Self {
         Self {
             session_id,
             conversation_history: Vec::new(),

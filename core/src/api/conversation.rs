@@ -51,7 +51,7 @@ pub struct ActionSuggestion {
     pub impact: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PolicyTranslationRequest {
     pub natural_language: String,
     pub policy_type: Option<String>,

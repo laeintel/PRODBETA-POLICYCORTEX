@@ -177,7 +177,7 @@ impl PredictiveComplianceEngine {
         
         for indicator in drift_indicators {
             if indicator.time_to_violation <= lookahead_hours {
-                violation_probability = violation_probability.max(1.0 - (indicator.time_to_violation as f64 / lookahead_hours as f64));
+                violation_probability = f64::max(violation_probability, 1.0 - (indicator.time_to_violation as f64 / lookahead_hours as f64));
                 earliest_violation = earliest_violation.min(indicator.time_to_violation);
             }
         }

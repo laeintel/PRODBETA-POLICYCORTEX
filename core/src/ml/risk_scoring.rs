@@ -137,7 +137,7 @@ impl RiskScoringEngine {
             risk += 0.5;
         }
         
-        risk.min(1.0)
+        f64::min(risk, 1.0)
     }
 
     fn calculate_security_risk(&self, prediction: &ViolationPrediction) -> f64 {
@@ -176,7 +176,7 @@ impl RiskScoringEngine {
             }
         }
         
-        risk.min(1.0)
+        f64::min(risk, 1.0)
     }
 
     fn calculate_cost_risk(&self, prediction: &ViolationPrediction) -> f64 {
@@ -196,7 +196,7 @@ impl RiskScoringEngine {
             risk = financial_impact / 25000.0; // Linear scale for smaller amounts
         }
         
-        risk.min(1.0)
+        f64::min(risk, 1.0)
     }
 
     fn calculate_operational_risk(&self, prediction: &ViolationPrediction) -> f64 {
@@ -225,7 +225,7 @@ impl RiskScoringEngine {
             risk += 0.2;
         }
         
-        risk.min(1.0)
+        f64::min(risk, 1.0)
     }
 
     pub fn prioritize_predictions(&self, predictions: &mut Vec<ViolationPrediction>) {
