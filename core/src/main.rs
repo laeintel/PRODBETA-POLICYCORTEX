@@ -39,6 +39,7 @@ mod events;
 mod evidence_pipeline;
 mod finops;
 mod governance;
+mod ml;
 mod observability;
 mod policy_engine;
 mod resources;
@@ -54,7 +55,7 @@ mod tenant_isolation;
 use api::{
     approve_request, create_action, create_approval, create_exception, export_policies,
     export_prometheus, generate_policy, get_action, get_action_preflight, get_compliance,
-    get_config, get_correlations, get_costs_deep, get_evidence_pack, get_framework, get_metrics,
+    get_config, get_correlations_legacy, get_costs_deep, get_evidence_pack, get_framework, get_metrics,
     get_network_deep, get_policies, get_policies_deep, get_policy_drift, get_predictions,
     get_rbac_deep, get_recommendations, get_resources, get_resources_deep, get_roadmap_status,
     get_secrets_status, list_approvals, list_frameworks, process_conversation, reload_secrets,
@@ -62,6 +63,13 @@ use api::{
     // New resource management functions
     get_all_resources, get_resources_by_category, get_resource_by_id,
     execute_resource_action, get_resource_insights, get_resource_health_summary,
+    // Predictive compliance functions
+    get_violation_predictions, get_resource_predictions, get_risk_score, remediate_prediction,
+    // Conversation functions
+    chat, translate_policy, get_suggestions, get_history,
+    // Correlation functions
+    get_correlations, analyze_correlations, what_if_analysis,
+    get_real_time_insights, get_correlation_graph,
 };
 use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
@@ -333,12 +341,24 @@ async fn main() {
         // Patent 2: Predictive Compliance endpoints
         .route("/api/v1/predictions", get(get_predictions))
         .route("/api/v1/compliance/predict", get(get_predictions))
+        .route("/api/v1/predictions/violations", get(get_violation_predictions))
+        .route("/api/v1/predictions/violations/:resource_id", get(get_resource_predictions))
+        .route("/api/v1/predictions/risk-score/:resource_id", get(get_risk_score))
+        .route("/api/v1/predictions/remediate/:prediction_id", post(remediate_prediction))
         // Patent 3: Conversational Intelligence endpoints
         .route("/api/v1/conversation", post(process_conversation))
         .route("/api/v1/nlp/query", post(process_conversation))
+        .route("/api/v1/conversation/chat", post(chat))
+        .route("/api/v1/conversation/translate-policy", post(translate_policy))
+        .route("/api/v1/conversation/suggestions", get(get_suggestions))
+        .route("/api/v1/conversation/history", get(get_history))
         // Patent 4: Cross-Domain Correlation endpoints
         .route("/api/v1/correlations", get(get_correlations))
-        .route("/api/v1/analysis/cross-domain", get(get_correlations))
+        .route("/api/v1/correlations/analyze", post(analyze_correlations))
+        .route("/api/v1/correlations/what-if", post(what_if_analysis))
+        .route("/api/v1/correlations/insights", get(get_real_time_insights))
+        .route("/api/v1/correlations/graph", get(get_correlation_graph))
+        .route("/api/v1/analysis/cross-domain", get(get_correlations_legacy))
         // Proactive Recommendations
         .route("/api/v1/recommendations", get(get_recommendations))
         .route(
