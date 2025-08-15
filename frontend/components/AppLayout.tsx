@@ -370,28 +370,53 @@ function AppLayoutInner({ children }: AppLayoutProps) {
               </div>
             </div>
 
-            {/* Navigation */}
+            {/* Navigation with nested submenus */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
               {navigation.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.path)
                 
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavigation(item.path)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
+                  <div key={item.id}>
+                    <div className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
                       active 
                         ? 'bg-purple-600/20 border border-purple-500/50 text-white' 
                         : 'hover:bg-white/5 text-gray-300 hover:text-white'
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 ${active ? 'text-purple-400' : ''}`} />
-                    <div className="text-left">
-                      <div className="text-sm font-medium">{item.title}</div>
-                      <div className="text-xs text-gray-400">{item.description}</div>
+                    }`}>
+                      <button
+                        onClick={() => handleNavigation(item.path)}
+                        className="flex-1 flex items-center gap-3 text-left"
+                      >
+                        <Icon className={`w-5 h-5 ${active ? 'text-purple-400' : ''}`} />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">{item.title}</div>
+                          <div className="text-xs text-gray-400">{item.description}</div>
+                        </div>
+                      </button>
+                      {Array.isArray((item as any).children) && (
+                        <button
+                          onClick={() => toggleExpand(item.id)}
+                          className="text-gray-400 hover:text-white"
+                          aria-label={`Toggle ${item.title} submenu`}
+                        >
+                          {(expanded[item.id] ? <ChevronLeft className="w-4 h-4 rotate-90" /> : <ChevronRight className="w-4 h-4" />)}
+                        </button>
+                      )}
                     </div>
-                  </button>
+                    {Array.isArray((item as any).children) && expanded[item.id] && (
+                      <div className="ml-8 mt-1 mb-2 space-y-1">
+                        {(item as any).children.map((sub: any) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => handleNavigation(sub.path)}
+                            className={`w-full text-left text-xs px-2 py-1 rounded hover:bg-white/5 ${isActive(sub.path) ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                          >
+                            {sub.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </nav>

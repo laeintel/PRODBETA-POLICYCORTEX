@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import VirtualizedTable from '@/components/VirtualizedTable'
 import ServerPagination from '@/components/ServerPagination'
@@ -54,10 +55,10 @@ export default function PoliciesPage() {
   const [loading, setLoading] = useState(true)
   const [isUsingFallback, setIsUsingFallback] = useState(false)
   const { isMockData } = useMockDataStatus()
-  const initialParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-  const [searchQuery, setSearchQuery] = useState(initialParams?.get('q') || '')
-  const [filterCategory, setFilterCategory] = useState(initialParams?.get('category') || 'all')
-  const [filterStatus, setFilterStatus] = useState(initialParams?.get('status') || 'all')
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
   const [selectedPolicy, setSelectedPolicy] = useState<PolicyDefinition | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [nonCompliantResources, setNonCompliantResources] = useState<NonCompliantResource[]>([])
@@ -94,14 +95,28 @@ export default function PoliciesPage() {
   }, [])
 
   // Keep URL in sync with filters/search
+  // Reflect UI changes into URL (one-way to avoid loops)
   useEffect(() => {
     if (typeof window === 'undefined') return
     const url = new URL(window.location.href)
-    if (searchQuery) url.searchParams.set('q', searchQuery); else url.searchParams.delete('q')
-    if (filterCategory && filterCategory !== 'all') url.searchParams.set('category', filterCategory); else url.searchParams.delete('category')
-    if (filterStatus && filterStatus !== 'all') url.searchParams.set('status', filterStatus); else url.searchParams.delete('status')
+    const q = url.searchParams.get('q') || ''
+    const cat = url.searchParams.get('category') || 'all'
+    const stat = url.searchParams.get('status') || 'all'
+    if (q !== searchQuery) (searchQuery ? url.searchParams.set('q', searchQuery) : url.searchParams.delete('q'))
+    if (cat !== filterCategory) (filterCategory !== 'all' ? url.searchParams.set('category', filterCategory) : url.searchParams.delete('category'))
+    if (stat !== filterStatus) (filterStatus !== 'all' ? url.searchParams.set('status', filterStatus) : url.searchParams.delete('status'))
     window.history.replaceState(null, '', url.toString())
   }, [searchQuery, filterCategory, filterStatus])
+
+  // Respond to URL param changes (e.g., submenu navigation)
+  useEffect(() => {
+    const q = searchParams.get('q') || ''
+    const cat = searchParams.get('category') || 'all'
+    const stat = searchParams.get('status') || 'all'
+    setSearchQuery(q)
+    setFilterCategory(cat)
+    setFilterStatus(stat)
+  }, [searchParams])
 
   const filteredPolicies = policies.filter(policy => {
     const q = (searchQuery || '').toLowerCase()
