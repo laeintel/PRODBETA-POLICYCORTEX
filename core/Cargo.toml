@@ -87,6 +87,9 @@ dotenv = "0.15"
 # UUID
 uuid = { version = "1.18", features = ["serde", "v4"] }
 
+# High-performance concurrent data structures for governance
+dashmap = "5.5"
+
 # Error handling
 thiserror = "1.0"
 anyhow = "1.0"

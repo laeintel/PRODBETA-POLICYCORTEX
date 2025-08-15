@@ -34,6 +34,7 @@ mod enforcement;
 mod events;
 mod evidence_pipeline;
 mod finops;
+mod governance;
 mod observability;
 mod policy_engine;
 mod secret_guard;
