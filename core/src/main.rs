@@ -11,6 +11,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
+use tower_http::limit::RequestBodyLimitLayer;
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tracing::{info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -18,6 +20,8 @@ mod action_orchestrator;
 mod ai;
 mod api;
 mod approval_workflow;
+mod error;
+mod validation;
 mod approvals;
 mod audit_chain;
 mod auth;
@@ -291,6 +295,22 @@ async fn main() {
     .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
     .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION]);
 
+    // Configure rate limiting - 60 requests per minute per IP  
+    let governor_conf = match GovernorConfigBuilder::default()
+        .per_second(1) // 1 request per second
+        .burst_size(30) // Allow bursts up to 30 requests
+        .finish()
+    {
+        Some(config) => Arc::new(config),
+        None => {
+            warn!("Failed to configure rate limiting");
+            std::process::exit(1);
+        }
+    };
+
+    // Request body size limit - 10MB for large payloads, 1MB for most endpoints
+    let request_size_limit = RequestBodyLimitLayer::new(10 * 1024 * 1024); // 10MB
+
     // Prometheus exporter already initialized above
 
     // Build the application router
@@ -362,6 +382,8 @@ async fn main() {
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         .layer(
             ServiceBuilder::new()
+                .layer(request_size_limit)
+                .layer(GovernorLayer { config: governor_conf })
                 .layer(cors)
                 .layer(observability::CorrelationLayer),
         )
