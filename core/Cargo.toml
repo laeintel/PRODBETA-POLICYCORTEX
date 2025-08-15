@@ -1,6 +1,6 @@
 [package]
 name = "policycortex-core"
-version = "2.2.2"
+version = "2.2.3"
 edition = "2021"
 authors = ["AeoliTech"]
 description = "PolicyCortex v2 - AI-Powered Azure Governance Platform"
@@ -12,23 +12,23 @@ description = "PolicyCortex v2 - AI-Powered Azure Governance Platform"
 # Web Framework
 axum = "0.7"
 tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "limit"] }
+tower-http = { version = "2.2.3", features = ["cors", "limit"] }
 
 # Async Runtime
-tokio = { version = "1.0", features = ["full"] }
-tokio-stream = { version = "0.1", features = ["sync"] }
+tokio = { version = "2.2.3", features = ["full"] }
+tokio-stream = { version = "2.2.3", features = ["sync"] }
 async-stream = "0.3"
 
 # Serialization
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "2.2.3", features = ["derive"] }
 serde_json = "1.0"
 
 # Logging
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "2.2.3", features = ["env-filter"] }
 
 # Time
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "2.2.3", features = ["serde"] }
 
 # Azure SDK
 azure_identity = "0.20"
@@ -36,7 +36,7 @@ azure_core = "0.20"
 azure_security_keyvault = "0.20"
 
 # HTTP Client (use rustls to avoid OpenSSL completely)
-reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "2.2.3", default-features = false, features = ["json", "rustls-tls"] }
 
 # Hyper for HTTP body handling in tests
 hyper = "1.0"
@@ -52,14 +52,14 @@ async-trait = "0.1"
 headers = "0.3"
 
 # Redis caching
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager", "json"] }
+redis = { version = "2.2.3", features = ["tokio-comp", "connection-manager", "json"] }
 
 # Rate limiting
 tower_governor = "0.4"
 governor = "0.6"
 
 # SQL database support
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
+sqlx = { version = "2.2.3", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
 
 # Lazy static for compile-time patterns
 lazy_static = "1.4"
@@ -81,9 +81,9 @@ metrics = "0.21"
 metrics-exporter-prometheus = "0.12"
 
 # OpenTelemetry for distributed tracing
-opentelemetry = { version = "0.21", features = ["trace"] }
+opentelemetry = { version = "2.2.3", features = ["trace"] }
 opentelemetry-otlp = "0.14"
-opentelemetry_sdk = { version = "0.21", features = ["rt-tokio"] }
+opentelemetry_sdk = { version = "2.2.3", features = ["rt-tokio"] }
 tracing-opentelemetry = "0.22"
 
 # Prometheus metrics
@@ -95,7 +95,7 @@ flate2 = "1.0"
 dotenv = "0.15"
 
 # UUID
-uuid = { version = "1.0", features = ["serde", "v4"] }
+uuid = { version = "2.2.3", features = ["serde", "v4"] }
 
 # High-performance concurrent data structures for governance
 dashmap = "5.5"
@@ -113,20 +113,20 @@ hmac = "0.12"
 ## (removed duplicate regex dependency; defined above at version 1.10)
 
 # AWS SDK (optional, for multi-cloud)
-aws-config = { version = "1.0", optional = true }
-aws-sdk-iam = { version = "1.0", optional = true }
-aws-sdk-organizations = { version = "1.0", optional = true }
-aws-sdk-ec2 = { version = "1.0", optional = true }
-aws-sdk-s3 = { version = "1.0", optional = true }
-aws-sdk-cloudtrail = { version = "1.0", optional = true }
-aws-sdk-config = { version = "1.0", optional = true }
+aws-config = { version = "2.2.3", optional = true }
+aws-sdk-iam = { version = "2.2.3", optional = true }
+aws-sdk-organizations = { version = "2.2.3", optional = true }
+aws-sdk-ec2 = { version = "2.2.3", optional = true }
+aws-sdk-s3 = { version = "2.2.3", optional = true }
+aws-sdk-cloudtrail = { version = "2.2.3", optional = true }
+aws-sdk-config = { version = "2.2.3", optional = true }
 
 # NATS for event streaming (optional)
-async-nats = { version = "0.42", optional = true }
+async-nats = { version = "2.2.3", optional = true }
 futures-lite = "2.6.1"
 
 # OpenSSL vendored fallback (optional, for CI environments)
-openssl = { version = "0.10", features = ["vendored"], optional = true }
+openssl = { version = "2.2.3", features = ["vendored"], optional = true }
 
 [features]
 default = []
