@@ -3251,7 +3251,7 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 
 [[package]]
 name = "policycortex-core"
-version = "2.0.0"
+version = "2.2.0"
 dependencies = [
  "anyhow",
  "async-nats",
@@ -3276,6 +3276,7 @@ dependencies = [
  "futures-lite 2.6.1",
  "headers",
  "hmac",
+ "hyper 1.6.0",
  "jsonwebtoken",
  "lazy_static",
  "metrics",
