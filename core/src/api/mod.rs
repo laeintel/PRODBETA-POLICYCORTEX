@@ -886,7 +886,7 @@ pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoRespon
         .ok()
         .unwrap_or_else(|| "2024-05-01-preview".to_string());
 
-    let offer_sdp = match to_bytes(req.body_mut(), usize::MAX).await {
+    let offer_sdp = match to_bytes(req.into_body(), usize::MAX).await {
         Ok(b) => b,
         Err(e) => {
             return (
@@ -909,8 +909,8 @@ pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoRespon
         .post(&url)
         .header("api-key", api_key)
         .header("OpenAI-Beta", "realtime=v1")
-        .header(axum::http::header::CONTENT_TYPE, "application/sdp")
-        .header(axum::http::header::ACCEPT, "application/sdp")
+        .header("content-type", "application/sdp")
+        .header("accept", "application/sdp")
         .body(offer_sdp)
         .send()
         .await
@@ -920,11 +920,11 @@ pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoRespon
             let headers = resp.headers().clone();
             match resp.bytes().await {
                 Ok(bytes) => {
-                    let mut builder = Response::builder().status(status);
-                    if let Some(ct) = headers.get(axum::http::header::CONTENT_TYPE) {
-                        builder = builder.header(axum::http::header::CONTENT_TYPE, ct);
+                    let mut builder = Response::builder().status(axum::http::StatusCode::from_u16(status.as_u16()).unwrap());
+                    if let Some(ct) = headers.get("content-type") {
+                        builder = builder.header("content-type", ct.to_str().unwrap_or("application/sdp"));
                     } else {
-                        builder = builder.header(axum::http::header::CONTENT_TYPE, "application/sdp");
+                        builder = builder.header("content-type", "application/sdp");
                     }
                     builder.body(Body::from(bytes)).unwrap().into_response()
                 }

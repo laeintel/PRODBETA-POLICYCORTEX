@@ -254,7 +254,7 @@ impl CacheManager {
             };
 
             let json_str = serde_json::to_string(&entry)?;
-            pipe.set_ex(key, json_str, ttl.as_secs() as usize);
+            pipe.set_ex(key, json_str, ttl.as_secs());
         }
 
         let _: () = pipe.query_async(&mut self.connection_pool.clone()).await?;
@@ -379,7 +379,7 @@ impl CacheManager {
             let mut conn = self.connection_pool.clone();
             match timeout(
                 Duration::from_millis(5000),
-                conn.set_ex::<&str, String, ()>(key, json_str.clone(), ttl.as_secs() as usize),
+                conn.set_ex::<&str, String, ()>(key, json_str.clone(), ttl.as_secs()),
             )
             .await
             {
