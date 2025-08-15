@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
@@ -163,7 +163,14 @@ function AppLayoutInner({ children }: AppLayoutProps) {
   }
 
   const toggleExpand = (id: string) => {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
+    // Open the requested section and collapse others
+    setExpanded((prev) => {
+      const next: Record<string, boolean> = {}
+      navigation.forEach((item) => {
+        next[item.id] = item.id === id ? !prev[id] : false
+      })
+      return next
+    })
   }
 
   const isActive = (path: string) => {
@@ -180,6 +187,24 @@ function AppLayoutInner({ children }: AppLayoutProps) {
     }
     return pathname === path
   }
+
+  // Auto-expand the section matching the current route (keep open until another section becomes active)
+  useEffect(() => {
+    let activeSectionId: string | null = null
+    navigation.forEach((item) => {
+      const hasActiveChild = Array.isArray((item as any).children) && (item as any).children.some((sub: any) => isActive(sub.path))
+      if (isActive(item.path) || hasActiveChild) {
+        activeSectionId = item.id
+      }
+    })
+    if (activeSectionId) {
+      const next: Record<string, boolean> = {}
+      navigation.forEach((item) => {
+        next[item.id] = item.id === activeSectionId
+      })
+      setExpanded(next)
+    }
+  }, [pathname])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
