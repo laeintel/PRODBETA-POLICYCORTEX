@@ -1,4 +1,4 @@
-use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, TokenValidator};
+use crate::auth::{AuthUser, TenantContext, TokenValidator};
 use crate::secrets::SecretsManager;
 use crate::slo::SLOManager;
 use axum::{
@@ -300,85 +300,38 @@ impl AppState {
 
 // API Handlers
 pub async fn get_metrics(
-    auth_user: OptionalAuthUser,
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     counter!("api_requests_total", 1, "endpoint" => "metrics");
-    // Log authenticated request
-    // If authenticated, log who; if not, allow simulated data in dev/local flows
-    if let Some(ref user) = auth_user.0 {
-        tracing::info!(
-            "Authenticated request for metrics from user: {:?}",
-            user.claims.preferred_username
-        );
+    // Log authenticated request - authentication is now required
+    tracing::info!(
+        "Authenticated request for metrics from user: {:?}",
+        auth_user.claims.preferred_username
+    );
 
-        // Get tenant context for multi-tenant data access
-        let _tenant_context = match TenantContext::from_user(user).await {
-            Ok(context) => {
-                tracing::debug!(
-                    "User has access to tenant: {} with {} subscriptions",
-                    context.tenant_id,
-                    context.subscription_ids.len()
-                );
-                context
-            }
-            Err(e) => {
-                tracing::error!("Failed to get tenant context: {:?}", e);
-                return (
-                    StatusCode::FORBIDDEN,
-                    Json(serde_json::json!({
-                        "error": "tenant_access_denied",
-                        "message": "Unable to determine tenant access"
-                    })),
-                )
-                    .into_response();
-            }
-        };
-    } else {
-        tracing::info!("Unauthenticated metrics request - returning simulated data (dev mode)");
-        let simulated_metrics = GovernanceMetrics {
-            policies: PolicyMetrics {
-                total: 15,
-                active: 12,
-                violations: 3,
-                automated: 10,
-                compliance_rate: 85.5,
-                prediction_accuracy: 92.3,
-            },
-            rbac: RbacMetrics {
-                users: 150,
-                roles: 25,
-                violations: 2,
-                risk_score: 3.2,
-                anomalies_detected: 1,
-            },
-            costs: CostMetrics {
-                current_spend: 125000.0,
-                predicted_spend: 118000.0,
-                savings_identified: 7000.0,
-                optimization_rate: 88.5,
-            },
-            network: NetworkMetrics {
-                endpoints: 450,
-                active_threats: 0,
-                blocked_attempts: 127,
-                latency_ms: 15.2,
-            },
-            resources: ResourceMetrics {
-                total: 2500,
-                optimized: 2100,
-                idle: 200,
-                overprovisioned: 200,
-            },
-            ai: AIMetrics {
-                accuracy: 94.5,
-                predictions_made: 12000,
-                automations_executed: 8500,
-                learning_progress: 85.0,
-            },
-        };
-        return Json(simulated_metrics).into_response();
-    }
+    // Get tenant context for multi-tenant data access
+    let _tenant_context = match TenantContext::from_user(&auth_user).await {
+        Ok(context) => {
+            tracing::debug!(
+                "User has access to tenant: {} with {} subscriptions",
+                context.tenant_id,
+                context.subscription_ids.len()
+            );
+            context
+        }
+        Err(e) => {
+            tracing::error!("Failed to get tenant context: {:?}", e);
+            return (
+                StatusCode::FORBIDDEN,
+                Json(serde_json::json!({
+                    "error": "tenant_access_denied",
+                    "message": "Unable to determine tenant access"
+                })),
+            )
+                .into_response();
+        }
+    };
 
     // Always try to get real Azure data when Azure client is available
     // This works for local development with Azure CLI authentication
@@ -458,21 +411,18 @@ pub async fn get_metrics(
 }
 
 pub async fn get_predictions(
-    auth_user: OptionalAuthUser,
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
-    // Verify authentication and tenant access
-    if let Some(ref user) = auth_user.0 {
-        tracing::info!(
-            "Authenticated request for predictions from user: {:?}",
-            user.claims.preferred_username
-        );
-        // Optional: load tenant context without failing if it errors (dev)
-        if let Err(e) = TenantContext::from_user(user).await {
-            tracing::warn!("Tenant context unavailable: {:?}", e);
-        }
-    } else {
-        tracing::info!("Unauthenticated predictions request (dev mode)");
+    // Verify authentication and tenant access - authentication required
+    tracing::info!(
+        "Authenticated request for predictions from user: {:?}",
+        auth_user.claims.preferred_username
+    );
+
+    // Load tenant context
+    if let Err(e) = TenantContext::from_user(&auth_user).await {
+        tracing::warn!("Tenant context unavailable: {:?}", e);
     }
 
     let predictions = state.predictions.read().await;
@@ -480,19 +430,15 @@ pub async fn get_predictions(
 }
 
 pub async fn get_recommendations(
-    auth_user: OptionalAuthUser,
+    auth_user: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     counter!("api_requests_total", 1, "endpoint" => "recommendations");
-    // Verify authentication
-    if let Some(ref user) = auth_user.0 {
-        tracing::info!(
-            "Authenticated request for recommendations from user: {:?}",
-            user.claims.preferred_username
-        );
-    } else {
-        tracing::info!("Unauthenticated recommendations request (dev mode)");
-    }
+    // Verify authentication - authentication required
+    tracing::info!(
+        "Authenticated request for recommendations from user: {:?}",
+        auth_user.claims.preferred_username
+    );
     // If we have an Azure client, fetch real recommendations based on actual Azure data
     if let Some(ref async_azure_client) = state.async_azure_client {
         match async_azure_client.get_governance_metrics().await {
@@ -682,20 +628,13 @@ pub async fn get_secrets_status(State(state): State<Arc<AppState>>) -> impl Into
 
 pub async fn export_prometheus(
     State(state): State<Arc<AppState>>,
-    auth: OptionalAuthUser,
+    auth: AuthUser,
 ) -> impl IntoResponse {
-    // In production, require auth for metrics to avoid exposing internals
-    let is_prod = matches!(
-        std::env::var("ENVIRONMENT").as_deref(),
-        Ok("production") | Ok("prod")
+    // Authentication required for metrics to avoid exposing internals
+    tracing::info!(
+        "Authenticated request for prometheus metrics from user: {:?}",
+        auth.claims.preferred_username
     );
-    if is_prod && auth.0.is_none() {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({"error":"unauthorized"})),
-        )
-            .into_response();
-    }
 
     if let Some(ref h) = state.prometheus {
         let body = h.render();
@@ -1384,17 +1323,13 @@ fn extract_suggestions(text: &str) -> Vec<String> {
     out
 }
 
-pub async fn get_correlations(auth_user: OptionalAuthUser) -> impl IntoResponse {
+pub async fn get_correlations(auth_user: AuthUser) -> impl IntoResponse {
     counter!("api_requests_total", 1, "endpoint" => "correlations");
-    // Verify authentication
-    if let Some(ref user) = auth_user.0 {
-        tracing::info!(
-            "Authenticated request for correlations from user: {:?}",
-            user.claims.preferred_username
-        );
-    } else {
-        tracing::info!("Unauthenticated correlations request (dev mode)");
-    }
+    // Verify authentication - authentication required
+    tracing::info!(
+        "Authenticated request for correlations from user: {:?}",
+        auth_user.claims.preferred_username
+    );
     let correlation = CrossDomainCorrelation {
         correlation_id: "corr-001".to_string(),
         domains: vec!["cost".to_string(), "resources".to_string()],
@@ -1623,6 +1558,22 @@ pub async fn create_exception(
     use chrono::Utc;
     let id = Uuid::new_v4();
     let expires_at = Utc::now() + chrono::Duration::days(30);
+    
+    // Validate tenant ID is present
+    let tenant_id = match &auth_user.claims.tid {
+        Some(tid) if !tid.is_empty() => tid.clone(),
+        _ => {
+            tracing::error!("Missing or empty tenant ID for user: {:?}", auth_user.claims.preferred_username);
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "invalid_tenant",
+                    "message": "Valid tenant ID is required"
+                }))
+            ).into_response();
+        }
+    };
+    
     if let Some(ref pool) = state.db_pool {
         let _ = sqlx::query(
             r#"INSERT INTO exceptions (
@@ -1630,7 +1581,7 @@ pub async fn create_exception(
             ) VALUES ($1,$2,$3,$4,$5,'Approved',$6,NOW(),$7,$8,$9,$10)"#
         )
         .bind(&id)
-        .bind(auth_user.claims.tid.clone().unwrap_or_else(|| "default".to_string()))
+        .bind(&tenant_id)
         .bind(&payload.resource_id)
         .bind(&payload.policy_id)
         .bind(&payload.reason)
@@ -2024,6 +1975,13 @@ pub async fn create_action(
             }
         }
         send_step("completed");
+        
+        // Clean up the broadcast channel to prevent memory leaks
+        {
+            let mut events = state_clone.action_events.write().await;
+            events.remove(&id_clone);
+        }
+        tracing::debug!("Cleaned up action event channel for action: {}", id_clone);
     });
 
     Json(serde_json::json!({"action_id": id})).into_response()
