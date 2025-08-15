@@ -104,8 +104,8 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
       console.error('Login failed:', err)
       setError(err.message || 'Login failed')
       
-      // Fallback to demo mode on error in development
-      if (process.env.NODE_ENV === 'development' || demoMode) {
+      // Only fallback to demo mode if explicitly enabled
+      if (demoMode) {
         const demoAccount: AccountInfo = {
           username: 'demo@policycortex.local',
           name: 'Demo User (Auth Failed)',
@@ -117,6 +117,9 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
         setDemoUser(demoAccount)
         console.log('Auth failed - using demo mode')
         setError(null) // Clear error for demo mode
+      } else {
+        // Keep the error for real authentication failures
+        console.error('Authentication failed. Please check your Azure AD configuration.')
       }
     } finally {
       setLoading(false)
