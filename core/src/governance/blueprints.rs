@@ -150,7 +150,7 @@ pub struct ResourceGroupDefinition {
     pub description: String,
     pub location: String,
     pub tags: HashMap<String, String>,
-    pub strongType: Option<String>,
+    pub strong_type: Option<String>,
 }
 
 /// Policy assignment definition within blueprint
