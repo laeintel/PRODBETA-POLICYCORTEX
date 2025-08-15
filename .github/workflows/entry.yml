@@ -1,5 +1,9 @@
 name: Monorepo CI Entry
 
+# COMPLETE A-Z PIPELINE - ALL STEPS RUN EVERY TIME
+# This workflow ensures every component is built, tested, secured, and deployed
+# regardless of which files changed. No conditional skipping for complete coverage.
+
 on:
   push:
     branches: [ main, develop ]
@@ -29,7 +33,7 @@ concurrency:
 jobs:
   detect-changes:
     name: Detect changed areas
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       rust_core: ${{ steps.filter.outputs.rust_core }}
@@ -62,7 +66,8 @@ jobs:
   frontend:
     name: Frontend CI
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.frontend == 'true'
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/reusable-ci-frontend.yml
     secrets: inherit
     with:
@@ -72,24 +77,38 @@ jobs:
   core:
     name: Core (Rust) CI
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.rust_core == 'true'
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/reusable-ci-core.yml
     secrets: inherit
 
   graphql:
     name: GraphQL gateway CI
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.graphql == 'true'
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
       working-directory: 'graphql'
     secrets: inherit
 
+  backend:
+    name: Backend Services CI
+    needs: detect-changes
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
+    uses: ./.github/workflows/reusable-ci-frontend.yml
+    with:
+      node-version: '20'
+      working-directory: 'backend'
+    secrets: inherit
+
   security:
     name: Security & Secrets
     needs: detect-changes
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run)
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/reusable-security.yml
     permissions:
       contents: read
@@ -99,7 +118,8 @@ jobs:
   supply_chain:
     name: Supply Chain Security
     needs: detect-changes
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run)
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/supply-chain.yml
     permissions:
       contents: read
@@ -110,7 +130,8 @@ jobs:
   secret_scan:
     name: Secret Scan (Gitleaks)
     needs: detect-changes
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.full_run)
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/secret-scan.yml
     permissions:
       contents: read
@@ -120,7 +141,8 @@ jobs:
   infra:
     name: Azure Infrastructure
     needs: detect-changes
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || needs.detect-changes.outputs.infrastructure == 'true'
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/azure-infra.yml
     permissions:
       contents: read
@@ -132,8 +154,9 @@ jobs:
 
   app_pipeline:
     name: Application CI/CD
-    needs: [frontend, core, graphql, security]
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.full_run)
+    needs: [frontend, core, graphql, backend, security, supply_chain, secret_scan, infra]
+    # ALWAYS RUN - Complete pipeline from A-Z
+    if: always()
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read
@@ -143,12 +166,13 @@ jobs:
       target_env: 'dev'
       run_tests: true
       force_deploy: false
-      full_run: ${{ inputs.full_run }}
+      full_run: true
     secrets: inherit
 
   deploy_tag:
     name: Deploy from Tag
-    needs: [frontend, core, graphql]
+    needs: [frontend, core, graphql, backend, security, supply_chain, secret_scan, infra, app_pipeline]
+    # Only deploy for tags - but ensure all previous steps ran
     if: startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/deploy.yml
     with:
