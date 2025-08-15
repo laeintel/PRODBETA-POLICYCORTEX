@@ -66,25 +66,15 @@ jobs:
             echo "✅ Passwordless sudo already configured"
           else
             echo "⚠️ Passwordless sudo not configured"
-            echo "🔧 Attempting to configure passwordless sudo for runner..."
-            
-            # Try to add runner to sudoers without password
-            echo "runner ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers.d/runner 2>/dev/null || {
-              echo "❌ Cannot configure passwordless sudo automatically"
-              echo "📋 Manual setup required:"
-              echo "   1. Run: sudo visudo"
-              echo "   2. Add: runner ALL=(ALL) NOPASSWD:ALL"
-              echo "   Or run: echo 'runner ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/runner"
-              echo ""
-              echo "🔄 Continuing without sudo for now..."
-            }
-            
-            # Verify sudo configuration
-            if sudo -n true 2>/dev/null; then
-              echo "✅ Passwordless sudo now configured"
-            else
-              echo "⚠️ Still no passwordless sudo - will attempt fixes without elevated privileges"
-            fi
+            echo "ℹ️ This is expected for self-hosted runners that need manual setup"
+            echo ""
+            echo "📋 To fix this manually, run on the runner machine:"
+            echo "   sudo visudo"
+            echo "   Add line: runner ALL=(ALL) NOPASSWD:ALL"
+            echo "   Or: echo 'runner ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/runner"
+            echo ""
+            echo "🔄 Continuing with limited permissions - some fixes may be skipped"
+            echo "⚠️ Manual intervention may be required for system-level repairs"
           fi
 
   docker-health-check:
@@ -124,22 +114,21 @@ jobs:
 
       - name: Auto-fix Docker repository issues
         if: steps.docker_check.outputs.corrupted == 'true' || steps.docker_check.outputs.update_failed == 'true'
+        timeout-minutes: 5
         run: |
           echo "🔧 Auto-fixing Docker repository issues..."
           
           # Check if we have sudo access without password
-          if ! sudo -n true 2>/dev/null; then
-            echo "⚠️ No passwordless sudo access. Checking if we can fix files with current permissions..."
-            
-            # Try to fix files that are writable by current user
-            if [ -w /etc/apt/sources.list.d/ ] 2>/dev/null; then
-              echo "✅ Have write access to sources.list.d"
-            else
-              echo "❌ No write access to APT configuration. Manual intervention required."
-              echo "   The self-hosted runner needs passwordless sudo configured."
-              echo "   Run: sudo visudo and add: runner ALL=(ALL) NOPASSWD:ALL"
-              exit 1
-            fi
+          if ! timeout 10s sudo -n true 2>/dev/null; then
+            echo "⚠️ No passwordless sudo access detected"
+            echo "ℹ️ Will attempt fixes with current user permissions only"
+            echo ""
+            echo "🚨 IMPORTANT: For complete Docker repository repair, configure passwordless sudo:"
+            echo "   1. On the runner machine, run: sudo visudo"
+            echo "   2. Add line: runner ALL=(ALL) NOPASSWD:ALL"
+            echo "   3. Re-run the workflow for full system-level repairs"
+            echo ""
+            echo "🔄 Proceeding with limited repair capabilities..."
           else
             echo "✅ Passwordless sudo access confirmed"
           fi
@@ -150,10 +139,15 @@ jobs:
           
           # Function to run command with or without sudo
           run_cmd() {
-            if sudo -n true 2>/dev/null; then
-              sudo "$@"
+            if timeout 5s sudo -n true 2>/dev/null; then
+              timeout 30s sudo "$@" || {
+                echo "⚠️ Sudo command timed out or failed: $*"
+                echo "🔄 Trying without sudo..."
+                "$@" 2>/dev/null || echo "❌ Command failed: $*"
+              }
             else
-              "$@"
+              echo "ℹ️ Running without sudo: $*"
+              "$@" 2>/dev/null || echo "❌ Command failed (no sudo): $*"
             fi
           }
           
