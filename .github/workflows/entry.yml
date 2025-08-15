@@ -54,9 +54,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  runner-setup:
+    name: Configure runner environment
+    runs-on: self-hosted
+    steps:
+      - name: Check and configure passwordless sudo
+        run: |
+          echo "🔧 Checking runner sudo configuration..."
+          
+          if sudo -n true 2>/dev/null; then
+            echo "✅ Passwordless sudo already configured"
+          else
+            echo "⚠️ Passwordless sudo not configured"
+            echo "🔧 Attempting to configure passwordless sudo for runner..."
+            
+            # Try to add runner to sudoers without password
+            echo "runner ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers.d/runner 2>/dev/null || {
+              echo "❌ Cannot configure passwordless sudo automatically"
+              echo "📋 Manual setup required:"
+              echo "   1. Run: sudo visudo"
+              echo "   2. Add: runner ALL=(ALL) NOPASSWD:ALL"
+              echo "   Or run: echo 'runner ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/runner"
+              echo ""
+              echo "🔄 Continuing without sudo for now..."
+            }
+            
+            # Verify sudo configuration
+            if sudo -n true 2>/dev/null; then
+              echo "✅ Passwordless sudo now configured"
+            else
+              echo "⚠️ Still no passwordless sudo - will attempt fixes without elevated privileges"
+            fi
+          fi
+
   docker-health-check:
     name: Docker health check and auto-fix
     runs-on: self-hosted
+    needs: runner-setup
     steps:
       - name: Check Docker repository health
         id: docker_check
@@ -93,52 +127,102 @@ jobs:
         run: |
           echo "🔧 Auto-fixing Docker repository issues..."
           
+          # Check if we have sudo access without password
+          if ! sudo -n true 2>/dev/null; then
+            echo "⚠️ No passwordless sudo access. Checking if we can fix files with current permissions..."
+            
+            # Try to fix files that are writable by current user
+            if [ -w /etc/apt/sources.list.d/ ] 2>/dev/null; then
+              echo "✅ Have write access to sources.list.d"
+            else
+              echo "❌ No write access to APT configuration. Manual intervention required."
+              echo "   The self-hosted runner needs passwordless sudo configured."
+              echo "   Run: sudo visudo and add: runner ALL=(ALL) NOPASSWD:ALL"
+              exit 1
+            fi
+          else
+            echo "✅ Passwordless sudo access confirmed"
+          fi
+          
           # Show current problematic entries
           echo "🔍 Current problematic entries:"
           grep -r "docker.com" /etc/apt/sources.list* 2>/dev/null | grep "|" || echo "No pipe entries found in grep"
           
+          # Function to run command with or without sudo
+          run_cmd() {
+            if sudo -n true 2>/dev/null; then
+              sudo "$@"
+            else
+              "$@"
+            fi
+          }
+          
           # Remove all Docker-related repository files
           echo "🧹 Removing ALL Docker repository configurations..."
-          sudo rm -f /etc/apt/sources.list.d/docker*.list || true
-          sudo rm -f /etc/apt/keyrings/docker*.gpg || true
-          sudo rm -f /etc/apt/trusted.gpg.d/docker*.gpg || true
-          sudo rm -f /usr/share/keyrings/docker*.gpg || true
+          run_cmd rm -f /etc/apt/sources.list.d/docker*.list || true
+          run_cmd rm -f /etc/apt/keyrings/docker*.gpg || true
+          run_cmd rm -f /etc/apt/trusted.gpg.d/docker*.gpg || true
+          run_cmd rm -f /usr/share/keyrings/docker*.gpg || true
           
-          # Remove ANY entries containing docker.com with pipe characters
+          # More aggressive pipe character removal
           echo "🧹 Removing corrupted entries from all sources..."
-          sudo sed -i '/docker\.com.*|/d' /etc/apt/sources.list || true
-          sudo sed -i '/download\.docker\.com.*|/d' /etc/apt/sources.list || true
+          
+          # Target the specific malformed URL pattern
+          run_cmd sed -i '/https:\/\/download\.docker\.com\/linux\/ubuntu.*|/d' /etc/apt/sources.list || true
+          run_cmd sed -i '/download\.docker\.com.*|/d' /etc/apt/sources.list || true
+          run_cmd sed -i '/docker\.com.*|/d' /etc/apt/sources.list || true
           
           # Clean all sources.list.d files more aggressively
           for file in /etc/apt/sources.list.d/*.list; do
             if [ -f "$file" ]; then
               echo "Cleaning $file..."
-              sudo sed -i '/docker\.com.*|/d' "$file" || true
-              sudo sed -i '/download\.docker\.com.*|/d' "$file" || true
-              # Remove any lines with pipe characters that contain docker
-              sudo sed -i '/docker.*|/d' "$file" || true
+              # Multiple patterns to catch all variations
+              run_cmd sed -i '/https:\/\/download\.docker\.com\/linux\/ubuntu.*|/d' "$file" || true
+              run_cmd sed -i '/download\.docker\.com.*|/d' "$file" || true
+              run_cmd sed -i '/docker\.com.*|/d' "$file" || true
+              run_cmd sed -i '/docker.*|.*noble/d' "$file" || true
+              # Remove any line containing both docker and pipe character
+              run_cmd sed -i '/docker.*|/d' "$file" || true
+              run_cmd sed -i '/|.*docker/d' "$file" || true
             fi
           done
           
           # Clean package cache completely
           echo "🧹 Cleaning package cache completely..."
-          sudo apt-get clean || true
-          sudo rm -rf /var/lib/apt/lists/* || true
-          sudo rm -rf /var/cache/apt/archives/* || true
+          run_cmd apt-get clean || true
+          run_cmd rm -rf /var/lib/apt/lists/* || true
+          run_cmd rm -rf /var/cache/apt/archives/* || true
+          
+          # Verify problematic entries are gone
+          echo "🔍 Verifying cleanup..."
+          if grep -r "docker.*|" /etc/apt/sources.list* 2>/dev/null; then
+            echo "❌ Still found problematic entries, trying nuclear option..."
+            
+            # Nuclear option: completely remove the problematic file
+            if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
+              echo "🗑️ Completely removing /etc/apt/sources.list.d/docker.list"
+              run_cmd rm -f /etc/apt/sources.list.d/docker.list
+            fi
+            
+            # Remove any file containing the pipe character pattern
+            for file in /etc/apt/sources.list.d/*.list; do
+              if [ -f "$file" ] && grep -q "docker.*|" "$file" 2>/dev/null; then
+                echo "🗑️ Removing corrupted file: $file"
+                run_cmd rm -f "$file"
+              fi
+            done
+          else
+            echo "✅ No more pipe character entries found"
+          fi
           
           # Update package index
           echo "📦 Updating package index..."
-          if sudo apt-get update; then
+          if run_cmd apt-get update; then
             echo "✅ Package index updated successfully"
           else
-            echo "❌ Package index update still failing, trying more aggressive fix..."
-            
-            # Emergency fix: recreate sources.list without any docker entries
-            sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup
-            sudo grep -v "docker" /etc/apt/sources.list.backup | sudo tee /etc/apt/sources.list
-            
-            # Try update again
-            sudo apt-get update
+            echo "❌ Package index update still failing"
+            echo "🔍 Checking remaining issues..."
+            run_cmd apt-get update 2>&1 | head -10
           fi
           
           echo "✅ Docker repository auto-fix completed"
@@ -146,7 +230,7 @@ jobs:
   detect-changes:
     name: Detect changed areas
     runs-on: self-hosted
-    needs: docker-health-check
+    needs: [runner-setup, docker-health-check]
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       rust_core: ${{ steps.filter.outputs.rust_core }}
@@ -178,7 +262,7 @@ jobs:
 
   frontend:
     name: Frontend CI
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when frontend files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.frontend == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -189,7 +273,7 @@ jobs:
 
   core:
     name: Core (Rust) CI
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when core files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_core)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.rust_core == 'true')
     uses: ./.github/workflows/reusable-ci-core.yml
@@ -197,7 +281,7 @@ jobs:
 
   graphql:
     name: GraphQL gateway CI
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when graphql files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.graphql == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -208,7 +292,7 @@ jobs:
 
   backend:
     name: Backend Services CI
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # Only run if explicitly requested via workflow_dispatch or on push/PR when backend files changed
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || (github.event_name != 'workflow_dispatch' && needs.detect-changes.outputs.backend == 'true')
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -219,7 +303,7 @@ jobs:
 
   security:
     name: Security & Secrets
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/reusable-security.yml
@@ -230,7 +314,7 @@ jobs:
 
   supply_chain:
     name: Supply Chain Security
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/supply-chain.yml
@@ -242,7 +326,7 @@ jobs:
 
   secret_scan:
     name: Secret Scan (Gitleaks)
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/secret-scan.yml
@@ -253,7 +337,7 @@ jobs:
 
   infra:
     name: Azure Infrastructure
-    needs: [docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/azure-infra.yml
