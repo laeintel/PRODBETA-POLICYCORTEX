@@ -1,0 +1,409 @@
+# Helm Values for Tenant-Specific Istio Configurations
+# This file contains Helm values for different tenant tiers in PolicyCortex
+
+# Enterprise Tenant Helm Values
+enterprise:
+  # Global settings for enterprise tier
+  global:
+    meshID: policycortex-enterprise-mesh
+    network: policycortex-enterprise-network
+    trustDomain: enterprise.policycortex.local
+    
+    # Enhanced security for enterprise
+    proxy:
+      resources:
+        requests:
+          cpu: 200m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      # Enhanced logging for enterprise compliance
+      logLevel: info
+      componentLogLevel: "misc:info,rbac:debug"
+      # Enterprise-specific configurations
+      privileged: false
+      enableCoreDump: false
+      readOnlyRootFilesystem: true
+      runAsUser: 1337
+      runAsGroup: 1337
+    
+    # Enterprise CA configuration
+    caAddress: ""
+    externalIstiod: false
+    
+    # Enterprise mesh networks
+    meshNetworks:
+      enterprise-network:
+        endpoints:
+        - fromRegistry: enterprise-registry
+        gateways:
+        - address: enterprise-gateway.policycortex.aeolitech.com
+          port: 15443
+    
+    # Enterprise telemetry configuration
+    tracer:
+      datadog:
+        address: datadog-agent.monitoring.svc.cluster.local:8126
+      stackdriver:
+        debug: false
+        maxNumberOfAttributes: 500
+        maxNumberOfAnnotations: 500
+        maxNumberOfMessageEvents: 500
+  
+  # Enterprise pilot configuration
+  pilot:
+    autoscaleEnabled: true
+    autoscaleMin: 2
+    autoscaleMax: 10
+    replicaCount: 3
+    
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 4Gi
+      limits:
+        cpu: 4000m
+        memory: 8Gi
+    
+    env:
+      PILOT_TRACE_SAMPLING: 10.0  # Higher sampling for enterprise
+      PILOT_ENABLE_ALPHA_GATEWAY_API: true
+      PILOT_JWT_PUB_KEY_REFRESH_INTERVAL: "10m"  # More frequent refresh
+      PILOT_ENABLE_STATUS: true
+      PILOT_ENABLE_DESTINATION_RULE_INHERITANCE: true
+      # Enterprise-specific configurations
+      PILOT_ENABLE_WORKLOAD_ENTRY_CROSS_CLUSTER: true
+      PILOT_ENABLE_CROSS_CLUSTER_WORKLOAD_ENTRY: true
+      PILOT_ENABLE_ENHANCED_RESOURCE_SCOPING: true
+      PILOT_ENABLE_AMBIENT: false
+  
+  # Enterprise gateway configuration
+  gateways:
+    istio-ingressgateway:
+      enabled: true
+      autoscaleEnabled: true
+      autoscaleMin: 3
+      autoscaleMax: 10
+      replicaCount: 3
+      
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+      
+      # Enterprise-specific service configuration
+      type: LoadBalancer
+      loadBalancerIP: ""  # Will be assigned by cloud provider
+      loadBalancerSourceRanges: []
+      externalTrafficPolicy: Local
+      
+      # Enhanced security context
+      securityContext:
+        runAsUser: 1337
+        runAsGroup: 1337
+        runAsNonRoot: true
+        fsGroup: 1337
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Enterprise nodeSelector and tolerations
+      nodeSelector:
+        workload-type: gateway
+        tenant-tier: enterprise
+      tolerations:
+      - key: "tenant-tier"
+        operator: "Equal"
+        value: "enterprise"
+        effect: "NoSchedule"
+      
+      # Anti-affinity for high availability
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: istio-ingressgateway
+                istio: ingressgateway
+            topologyKey: kubernetes.io/hostname
+
+# Premium Tenant Helm Values
+premium:
+  # Global settings for premium tier
+  global:
+    meshID: policycortex-premium-mesh
+    network: policycortex-premium-network
+    trustDomain: premium.policycortex.local
+    
+    proxy:
+      resources:
+        requests:
+          cpu: 150m
+          memory: 192Mi
+        limits:
+          cpu: 800m
+          memory: 768Mi
+      logLevel: warning
+      componentLogLevel: "misc:warning,rbac:info"
+      privileged: false
+      enableCoreDump: false
+      readOnlyRootFilesystem: true
+      runAsUser: 1337
+      runAsGroup: 1337
+    
+    # Premium mesh networks
+    meshNetworks:
+      premium-network:
+        endpoints:
+        - fromRegistry: premium-registry
+        gateways:
+        - address: premium-gateway.policycortex.aeolitech.com
+          port: 15443
+    
+    # Premium telemetry
+    tracer:
+      stackdriver:
+        debug: false
+        maxNumberOfAttributes: 300
+        maxNumberOfAnnotations: 300
+        maxNumberOfMessageEvents: 300
+  
+  # Premium pilot configuration
+  pilot:
+    autoscaleEnabled: true
+    autoscaleMin: 2
+    autoscaleMax: 6
+    replicaCount: 2
+    
+    resources:
+      requests:
+        cpu: 750m
+        memory: 3Gi
+      limits:
+        cpu: 3000m
+        memory: 6Gi
+    
+    env:
+      PILOT_TRACE_SAMPLING: 5.0
+      PILOT_ENABLE_ALPHA_GATEWAY_API: true
+      PILOT_JWT_PUB_KEY_REFRESH_INTERVAL: "15m"
+      PILOT_ENABLE_STATUS: true
+      PILOT_ENABLE_DESTINATION_RULE_INHERITANCE: true
+      PILOT_ENABLE_WORKLOAD_ENTRY_CROSS_CLUSTER: true
+  
+  # Premium gateway configuration
+  gateways:
+    istio-ingressgateway:
+      enabled: true
+      autoscaleEnabled: true
+      autoscaleMin: 2
+      autoscaleMax: 6
+      replicaCount: 2
+      
+      resources:
+        requests:
+          cpu: 300m
+          memory: 384Mi
+        limits:
+          cpu: 1500m
+          memory: 1536Mi
+      
+      type: LoadBalancer
+      loadBalancerIP: ""
+      externalTrafficPolicy: Local
+      
+      securityContext:
+        runAsUser: 1337
+        runAsGroup: 1337
+        runAsNonRoot: true
+        fsGroup: 1337
+        seccompProfile:
+          type: RuntimeDefault
+      
+      nodeSelector:
+        workload-type: gateway
+        tenant-tier: premium
+      tolerations:
+      - key: "tenant-tier"
+        operator: "Equal"
+        value: "premium"
+        effect: "NoSchedule"
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: istio-ingressgateway
+                  istio: ingressgateway
+              topologyKey: kubernetes.io/hostname
+
+# Standard Tenant Helm Values
+standard:
+  # Global settings for standard tier
+  global:
+    meshID: policycortex-standard-mesh
+    network: policycortex-standard-network
+    trustDomain: standard.policycortex.local
+    
+    proxy:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      logLevel: error
+      componentLogLevel: "misc:error"
+      privileged: false
+      enableCoreDump: false
+      readOnlyRootFilesystem: true
+      runAsUser: 1337
+      runAsGroup: 1337
+    
+    # Standard mesh networks
+    meshNetworks:
+      standard-network:
+        endpoints:
+        - fromRegistry: standard-registry
+        gateways:
+        - address: standard-gateway.policycortex.aeolitech.com
+          port: 15443
+    
+    # Minimal telemetry for standard
+    tracer:
+      stackdriver:
+        debug: false
+        maxNumberOfAttributes: 100
+        maxNumberOfAnnotations: 100
+        maxNumberOfMessageEvents: 100
+  
+  # Standard pilot configuration
+  pilot:
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 3
+    replicaCount: 1
+    
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+    
+    env:
+      PILOT_TRACE_SAMPLING: 1.0
+      PILOT_ENABLE_ALPHA_GATEWAY_API: false
+      PILOT_JWT_PUB_KEY_REFRESH_INTERVAL: "30m"
+      PILOT_ENABLE_STATUS: true
+      PILOT_ENABLE_DESTINATION_RULE_INHERITANCE: false
+  
+  # Standard gateway configuration
+  gateways:
+    istio-ingressgateway:
+      enabled: true
+      autoscaleEnabled: true
+      autoscaleMin: 1
+      autoscaleMax: 3
+      replicaCount: 1
+      
+      resources:
+        requests:
+          cpu: 200m
+          memory: 256Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      
+      type: LoadBalancer
+      loadBalancerIP: ""
+      externalTrafficPolicy: Cluster
+      
+      securityContext:
+        runAsUser: 1337
+        runAsGroup: 1337
+        runAsNonRoot: true
+        fsGroup: 1337
+        seccompProfile:
+          type: RuntimeDefault
+      
+      nodeSelector:
+        workload-type: gateway
+        tenant-tier: standard
+
+# Shared Configuration for All Tenants
+shared:
+  # CNI configuration (if enabled)
+  cni:
+    enabled: false
+    chained: true
+    cniBinDir: /opt/cni/bin
+    cniConfDir: /etc/cni/net.d
+    excludeNamespaces:
+    - istio-system
+    - kube-system
+    - kube-public
+    - kube-node-lease
+  
+  # Ztunnel configuration for ambient mesh
+  ztunnel:
+    enabled: false
+  
+  # Common security settings
+  security:
+    enabled: true
+    trustDomain: cluster.local
+    workloadCertTtl: 24h
+    maxWorkloadCertTtl: 90d
+    
+    # Common certificate authority settings
+    caBundle: ""
+    
+    # Default security providers
+    defaultProviders:
+      metrics:
+      - prometheus
+      tracing:
+      - jaeger
+      logging:
+      - otel
+  
+  # Common telemetry settings
+  telemetry:
+    v2:
+      enabled: true
+      prometheus:
+        configOverride:
+          metric_relabeling_configs:
+          - source_labels: [__name__]
+            regex: 'istio_.*'
+            target_label: __tmp_istio_metric
+          disable_host_header_fallback: true
+      
+      # Access logging configuration
+      accessLogFile: /dev/stdout
+      accessLogFormat: |
+        [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%"
+        %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT%
+        %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% "%REQ(X-FORWARDED-FOR)%"
+        "%REQ(USER-AGENT)%" "%REQ(X-REQUEST-ID)%" "%REQ(:AUTHORITY)%" "%UPSTREAM_HOST%"
+        %UPSTREAM_CLUSTER% %UPSTREAM_LOCAL_ADDRESS% %DOWNSTREAM_LOCAL_ADDRESS%
+        %DOWNSTREAM_REMOTE_ADDRESS% %REQUESTED_SERVER_NAME% %ROUTE_NAME%
+  
+  # Revision and validation settings
+  revision: ""
+  revisionTags: []
+  validationURL: ""
+  defaultRevision: ""
+  
+  # Compatibility and installation verification
+  compatibilityVersion: "1.20"
+  verify: true

@@ -1,0 +1,413 @@
+---
+# Default Deny All Policy - Secure by default
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: istio-system
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+spec:
+  # This policy denies all traffic by default
+  # Other policies must explicitly allow traffic
+---
+# Allow Istio System Communication
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-istio-system
+  namespace: istio-system
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+spec:
+  # Allow internal Istio system communication
+  rules:
+  - from:
+    - source:
+        namespaces: ["istio-system"]
+  - to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+---
+# PolicyCortex Core Services Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policycortex-core-access
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/component: core
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-core
+  rules:
+  # Allow frontend to access core API
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-frontend"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/v1/*", "/health"]
+  # Allow GraphQL gateway to access core API
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-graphql"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/v1/*"]
+  # Allow AI engine to access core API
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-ai-engine"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/api/v1/metrics", "/api/v1/predictions", "/api/v1/correlations"]
+---
+# Frontend Services Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policycortex-frontend-access
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/component: frontend
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-frontend
+  rules:
+  # Allow ingress gateway to access frontend
+  - from:
+    - source:
+        principals: ["cluster.local/ns/istio-ingress/sa/istio-ingressgateway-service-account"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/*"]
+  # Allow authenticated users from all tenant namespaces
+  - from:
+    - source:
+        namespaces: ["policycortex-enterprise", "policycortex-premium", "policycortex-standard"]
+    when:
+    - key: request.headers[authorization]
+      values: ["Bearer *"]
+---
+# GraphQL Gateway Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policycortex-graphql-access
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/component: graphql
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-graphql
+  rules:
+  # Allow frontend to access GraphQL
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-frontend"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/graphql", "/playground"]
+  # Allow ingress gateway for external GraphQL access
+  - from:
+    - source:
+        principals: ["cluster.local/ns/istio-ingress/sa/istio-ingressgateway-service-account"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/graphql"]
+    when:
+    - key: request.headers[authorization]
+      values: ["Bearer *"]
+---
+# AI Engine Authorization - Critical Security
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: policycortex-ai-engine-access
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/component: ai-engine
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-ai-engine
+  rules:
+  # Only allow core services to access AI engine
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-core"]
+    to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/api/v1/conversation", "/api/v1/predictions", "/api/v1/correlations"]
+  # Allow GraphQL gateway for federated queries
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-graphql"]
+    to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/api/v1/conversation"]
+---
+# Database Access Authorization - Ultra-Critical
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: database-access-control
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/component: database
+spec:
+  selector:
+    matchLabels:
+      component: database
+  rules:
+  # Only allow core services to access databases
+  - from:
+    - source:
+        principals: [
+          "cluster.local/ns/policycortex/sa/policycortex-core",
+          "cluster.local/ns/policycortex/sa/policycortex-ai-engine"
+        ]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        ports: ["5432", "6379", "2113"]
+---
+# Tenant Enterprise Namespace Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: tenant-enterprise-isolation
+  namespace: policycortex-enterprise
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/tenant: enterprise
+spec:
+  rules:
+  # Allow access from core services
+  - from:
+    - source:
+        namespaces: ["policycortex"]
+        principals: [
+          "cluster.local/ns/policycortex/sa/policycortex-core",
+          "cluster.local/ns/policycortex/sa/policycortex-frontend",
+          "cluster.local/ns/policycortex/sa/policycortex-graphql"
+        ]
+  # Allow intra-namespace communication
+  - from:
+    - source:
+        namespaces: ["policycortex-enterprise"]
+  # Deny access from other tenant namespaces
+  - from:
+    - source:
+        notNamespaces: ["policycortex", "policycortex-enterprise", "istio-system"]
+    to:
+    - operation:
+        methods: ["*"]
+    when:
+    - key: source.namespace
+      notValues: ["policycortex", "policycortex-enterprise", "istio-system"]
+---
+# Tenant Premium Namespace Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: tenant-premium-isolation
+  namespace: policycortex-premium
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/tenant: premium
+spec:
+  rules:
+  # Allow access from core services
+  - from:
+    - source:
+        namespaces: ["policycortex"]
+        principals: [
+          "cluster.local/ns/policycortex/sa/policycortex-core",
+          "cluster.local/ns/policycortex/sa/policycortex-frontend",
+          "cluster.local/ns/policycortex/sa/policycortex-graphql"
+        ]
+  # Allow intra-namespace communication
+  - from:
+    - source:
+        namespaces: ["policycortex-premium"]
+  # Deny access from other tenant namespaces
+  - from:
+    - source:
+        notNamespaces: ["policycortex", "policycortex-premium", "istio-system"]
+    to:
+    - operation:
+        methods: ["*"]
+    when:
+    - key: source.namespace
+      notValues: ["policycortex", "policycortex-premium", "istio-system"]
+---
+# Tenant Standard Namespace Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: tenant-standard-isolation
+  namespace: policycortex-standard
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: medium
+    policycortex.aeolitech.com/tenant: standard
+spec:
+  rules:
+  # Allow access from core services
+  - from:
+    - source:
+        namespaces: ["policycortex"]
+        principals: [
+          "cluster.local/ns/policycortex/sa/policycortex-core",
+          "cluster.local/ns/policycortex/sa/policycortex-frontend",
+          "cluster.local/ns/policycortex/sa/policycortex-graphql"
+        ]
+  # Allow intra-namespace communication
+  - from:
+    - source:
+        namespaces: ["policycortex-standard"]
+  # Deny access from other tenant namespaces
+  - from:
+    - source:
+        notNamespaces: ["policycortex", "policycortex-standard", "istio-system"]
+    to:
+    - operation:
+        methods: ["*"]
+    when:
+    - key: source.namespace
+      notValues: ["policycortex", "policycortex-standard", "istio-system"]
+---
+# Ingress Gateway Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: ingress-gateway-access
+  namespace: istio-ingress
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/component: gateway
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  rules:
+  # Allow external traffic to ingress gateway
+  - to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        paths: ["/*"]
+  # Rate limiting and source validation will be handled by external systems
+---
+# Egress Gateway Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: egress-gateway-access
+  namespace: istio-egress
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/component: gateway
+spec:
+  selector:
+    matchLabels:
+      app: istio-egressgateway
+  rules:
+  # Allow egress traffic from PolicyCortex services
+  - from:
+    - source:
+        namespaces: ["policycortex"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+  # Allow Azure API calls
+  - from:
+    - source:
+        principals: [
+          "cluster.local/ns/policycortex/sa/policycortex-core",
+          "cluster.local/ns/policycortex/sa/policycortex-ai-engine"
+        ]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT"]
+        hosts: ["*.azure.com", "*.microsoft.com", "management.azure.com"]
+---
+# Health Check and Monitoring Authorization
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: health-monitoring-access
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: authorization-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: low
+    policycortex.aeolitech.com/component: monitoring
+spec:
+  rules:
+  # Allow health checks from any source
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/health", "/ready", "/live", "/metrics"]
+  # Allow monitoring systems access
+  - from:
+    - source:
+        namespaces: ["istio-system", "monitoring", "kube-system"]
+    to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/metrics", "/stats/prometheus"]

@@ -1,0 +1,269 @@
+# Istio Base Configuration for PolicyCortex Enterprise Service Mesh
+# This configuration provides enterprise-grade security and multi-tenant isolation
+
+global:
+  # Enable strict security posture
+  imagePullPolicy: Always
+  meshID: policycortex-mesh
+  network: policycortex-network
+  defaultPodDisruptionBudget:
+    enabled: true
+  
+  # Proxy configuration for enhanced security
+  proxy:
+    # Enable auto-injection globally with strict mTLS
+    autoInject: enabled
+    privileged: false
+    enableCoreDump: false
+    # Resource limits for production workloads
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 2000m
+        memory: 1Gi
+    # Security context
+    runAsUser: 1337
+    runAsGroup: 1337
+    readOnlyRootFilesystem: true
+    # Logging configuration
+    logLevel: warning
+    componentLogLevel: "misc:error"
+    
+  # CA configuration for enterprise PKI
+  caAddress: ""
+  externalIstiod: false
+  remotePilotAddress: ""
+  
+  # Multi-cluster configuration
+  meshNetworks: {}
+  defaultNodeSelector: {}
+  defaultTolerations: []
+  
+  # Telemetry and observability
+  tracer:
+    lightstep: {}
+    zipkin: {}
+    datadog: {}
+    stackdriver:
+      debug: false
+      maxNumberOfAttributes: 200
+      maxNumberOfAnnotations: 200
+      maxNumberOfMessageEvents: 200
+  
+  # Security settings
+  defaultConfigVisibilitySettings: []
+  useMCP: false
+  
+  # Istio CNI configuration
+  cni:
+    enabled: false
+    chained: true
+    cniBinDir: /opt/cni/bin
+    cniConfDir: /etc/cni/net.d
+    cniConfFileName: "YY-istio-cni.conf"
+    excludeNamespaces:
+      - istio-system
+      - kube-system
+    logLevel: info
+
+# Pilot (Istiod) configuration
+pilot:
+  # High availability configuration
+  autoscaleEnabled: true
+  autoscaleMin: 2
+  autoscaleMax: 5
+  replicaCount: 2
+  
+  # Resource configuration for production
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2048Mi
+    limits:
+      cpu: 2000m
+      memory: 4096Mi
+  
+  # Security and networking
+  env:
+    EXTERNAL_ISTIOD: false
+    PILOT_ENABLE_WORKLOAD_ENTRY_CROSS_CLUSTER: true
+    PILOT_ENABLE_CROSS_CLUSTER_WORKLOAD_ENTRY: true
+    PILOT_TRACE_SAMPLING: 1.0
+    PILOT_ENABLE_ALPHA_GATEWAY_API: true
+    # Enhanced security features
+    PILOT_JWT_PUB_KEY_REFRESH_INTERVAL: "15m"
+    PILOT_ENABLE_STATUS: true
+    PILOT_ENABLE_DESTINATION_RULE_INHERITANCE: true
+    
+  # Certificate management
+  seccompProfile:
+    type: RuntimeDefault
+  
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  
+  # Node affinity for high availability
+  nodeSelector: {}
+  tolerations: []
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app: istiod
+          topologyKey: kubernetes.io/hostname
+
+# Gateway configuration
+gateways:
+  istio-ingressgateway:
+    enabled: true
+    # High availability for ingress
+    autoscaleEnabled: true
+    autoscaleMin: 2
+    autoscaleMax: 5
+    replicaCount: 2
+    
+    # Resource configuration
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 2000m
+        memory: 1024Mi
+    
+    # LoadBalancer service configuration
+    type: LoadBalancer
+    ports:
+      - port: 15021
+        targetPort: 15021
+        name: status-port
+        protocol: TCP
+      - port: 80
+        targetPort: 8080
+        name: http2
+        protocol: TCP
+      - port: 443
+        targetPort: 8443
+        name: https
+        protocol: TCP
+      - port: 15443
+        targetPort: 15443
+        name: tls
+        protocol: TCP
+    
+    # Security context
+    securityContext:
+      runAsUser: 1337
+      runAsGroup: 1337
+      runAsNonRoot: true
+      fsGroup: 1337
+    
+    # Pod disruption budget
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+    
+    # Node affinity
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: istio-ingressgateway
+            topologyKey: kubernetes.io/hostname
+
+  istio-egressgateway:
+    enabled: true
+    # Resource configuration for egress
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 3
+    replicaCount: 1
+    
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 512Mi
+    
+    # Egress ports
+    ports:
+      - port: 80
+        name: http2
+        protocol: TCP
+      - port: 443
+        name: https
+        protocol: TCP
+      - port: 15443
+        targetPort: 15443
+        name: tls
+        protocol: TCP
+
+# Security configuration
+security:
+  # Enable security features
+  enabled: true
+  
+  # Certificate authority configuration
+  caBundle: ""
+  trustDomain: cluster.local
+  
+  # Workload certificate settings
+  workloadCertTtl: 24h
+  maxWorkloadCertTtl: 90d
+  
+  # Security policies
+  defaultProviders:
+    metrics:
+      - prometheus
+    tracing:
+      - jaeger
+    logging:
+      - otel
+
+# Telemetry configuration
+telemetry:
+  v2:
+    enabled: true
+    prometheus:
+      configOverride:
+        metric_relabeling_configs:
+          - source_labels: [__name__]
+            regex: 'istio_.*'
+            target_label: __tmp_istio_metric
+        disable_host_header_fallback: true
+
+# CNI configuration
+cni:
+  enabled: false
+  # If enabling CNI, use these settings
+  chained: true
+  cniBinDir: /opt/cni/bin
+  cniConfDir: /etc/cni/net.d
+
+# Ztunnel configuration (for ambient mesh if needed)
+ztunnel:
+  enabled: false
+
+# Revision configuration for canary deployments
+revision: ""
+revisionTags: []
+
+# Validation webhook
+validationURL: ""
+
+# Default revision
+defaultRevision: ""
+
+# Compatibility configuration
+compatibilityVersion: "1.20"
+
+# Verify installation
+verify: true

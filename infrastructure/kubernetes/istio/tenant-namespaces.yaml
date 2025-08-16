@@ -1,0 +1,468 @@
+---
+# PolicyCortex Core Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policycortex
+  labels:
+    name: policycortex
+    istio-injection: enabled
+    security.istio.io/tlsMode: strict
+    app.kubernetes.io/name: policycortex
+    app.kubernetes.io/component: core-platform
+    app.kubernetes.io/part-of: policycortex
+    app.kubernetes.io/managed-by: kubectl
+    policycortex.aeolitech.com/tenant: shared
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/environment: production
+    # Resource quotas and limits
+    kubernetes.io/resource-quota: "high"
+    kubernetes.io/limit-range: "enterprise"
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: "workload-type=core"
+    security.istio.io/enforce-policy: "true"
+    policycortex.aeolitech.com/description: "Core platform services and shared infrastructure"
+    policycortex.aeolitech.com/contact: "platform-team@aeolitech.com"
+    policycortex.aeolitech.com/created-date: "2024-01-01"
+---
+# Service Account for Core Services
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-core
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: service-account
+    app.kubernetes.io/component: core
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: shared
+automountServiceAccountToken: true
+---
+# Service Account for Frontend
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-frontend
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: service-account
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: shared
+automountServiceAccountToken: true
+---
+# Service Account for GraphQL Gateway
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-graphql
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: service-account
+    app.kubernetes.io/component: graphql
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: shared
+automountServiceAccountToken: true
+---
+# Service Account for AI Engine
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-ai-engine
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: service-account
+    app.kubernetes.io/component: ai-engine
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: shared
+automountServiceAccountToken: true
+---
+# Enterprise Tenant Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policycortex-enterprise
+  labels:
+    name: policycortex-enterprise
+    istio-injection: enabled
+    security.istio.io/tlsMode: strict
+    app.kubernetes.io/name: policycortex-enterprise
+    app.kubernetes.io/component: tenant-namespace
+    app.kubernetes.io/part-of: policycortex
+    app.kubernetes.io/managed-by: kubectl
+    policycortex.aeolitech.com/tenant: enterprise
+    policycortex.aeolitech.com/tenant-tier: enterprise
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/environment: production
+    policycortex.aeolitech.com/isolation-level: strict
+    # Resource quotas and limits
+    kubernetes.io/resource-quota: "enterprise"
+    kubernetes.io/limit-range: "enterprise"
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: "workload-type=tenant,tenant-tier=enterprise"
+    security.istio.io/enforce-policy: "true"
+    network.istio.io/isolation: "strict"
+    policycortex.aeolitech.com/description: "Enterprise tier tenant namespace with premium features"
+    policycortex.aeolitech.com/sla: "99.99%"
+    policycortex.aeolitech.com/support-tier: "premium"
+    policycortex.aeolitech.com/max-users: "unlimited"
+    policycortex.aeolitech.com/features: "ai-advanced,predictive-analytics,custom-integrations,priority-support"
+---
+# Enterprise Tenant Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-enterprise-sa
+  namespace: policycortex-enterprise
+  labels:
+    app.kubernetes.io/name: service-account
+    app.kubernetes.io/component: tenant-service
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: enterprise
+automountServiceAccountToken: true
+---
+# Premium Tenant Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policycortex-premium
+  labels:
+    name: policycortex-premium
+    istio-injection: enabled
+    security.istio.io/tlsMode: strict
+    app.kubernetes.io/name: policycortex-premium
+    app.kubernetes.io/component: tenant-namespace
+    app.kubernetes.io/part-of: policycortex
+    app.kubernetes.io/managed-by: kubectl
+    policycortex.aeolitech.com/tenant: premium
+    policycortex.aeolitech.com/tenant-tier: premium
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/environment: production
+    policycortex.aeolitech.com/isolation-level: moderate
+    # Resource quotas and limits
+    kubernetes.io/resource-quota: "premium"
+    kubernetes.io/limit-range: "premium"
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: "workload-type=tenant,tenant-tier=premium"
+    security.istio.io/enforce-policy: "true"
+    network.istio.io/isolation: "moderate"
+    policycortex.aeolitech.com/description: "Premium tier tenant namespace with advanced features"
+    policycortex.aeolitech.com/sla: "99.9%"
+    policycortex.aeolitech.com/support-tier: "business"
+    policycortex.aeolitech.com/max-users: "1000"
+    policycortex.aeolitech.com/features: "ai-standard,basic-analytics,standard-integrations,business-support"
+---
+# Premium Tenant Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-premium-sa
+  namespace: policycortex-premium
+  labels:
+    app.kubernetes.io/name: service-account
+    app.kubernetes.io/component: tenant-service
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: premium
+automountServiceAccountToken: true
+---
+# Standard Tenant Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policycortex-standard
+  labels:
+    name: policycortex-standard
+    istio-injection: enabled
+    security.istio.io/tlsMode: strict
+    app.kubernetes.io/name: policycortex-standard
+    app.kubernetes.io/component: tenant-namespace
+    app.kubernetes.io/part-of: policycortex
+    app.kubernetes.io/managed-by: kubectl
+    policycortex.aeolitech.com/tenant: standard
+    policycortex.aeolitech.com/tenant-tier: standard
+    policycortex.aeolitech.com/security-level: medium
+    policycortex.aeolitech.com/environment: production
+    policycortex.aeolitech.com/isolation-level: basic
+    # Resource quotas and limits
+    kubernetes.io/resource-quota: "standard"
+    kubernetes.io/limit-range: "standard"
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: "workload-type=tenant,tenant-tier=standard"
+    security.istio.io/enforce-policy: "true"
+    network.istio.io/isolation: "basic"
+    policycortex.aeolitech.com/description: "Standard tier tenant namespace with basic features"
+    policycortex.aeolitech.com/sla: "99.5%"
+    policycortex.aeolitech.com/support-tier: "standard"
+    policycortex.aeolitech.com/max-users: "100"
+    policycortex.aeolitech.com/features: "ai-basic,standard-reports,email-support"
+---
+# Standard Tenant Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-standard-sa
+  namespace: policycortex-standard
+  labels:
+    app.kubernetes.io/name: service-account
+    app.kubernetes.io/component: tenant-service
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: standard
+automountServiceAccountToken: true
+---
+# Resource Quota for Core Namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: policycortex-core-quota
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: resource-quota
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: shared
+spec:
+  hard:
+    # CPU and Memory
+    requests.cpu: "20"
+    requests.memory: "40Gi"
+    limits.cpu: "50"
+    limits.memory: "100Gi"
+    # Storage
+    requests.storage: "200Gi"
+    persistentvolumeclaims: "20"
+    # Networking
+    services: "50"
+    services.loadbalancers: "10"
+    services.nodeports: "5"
+    # Other resources
+    pods: "100"
+    replicationcontrollers: "20"
+    secrets: "50"
+    configmaps: "50"
+    count/deployments.apps: "20"
+    count/jobs.batch: "10"
+---
+# Resource Quota for Enterprise Tenant
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: policycortex-enterprise-quota
+  namespace: policycortex-enterprise
+  labels:
+    app.kubernetes.io/name: resource-quota
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: enterprise
+spec:
+  hard:
+    # Generous resources for enterprise tier
+    requests.cpu: "10"
+    requests.memory: "20Gi"
+    limits.cpu: "30"
+    limits.memory: "60Gi"
+    requests.storage: "100Gi"
+    persistentvolumeclaims: "10"
+    services: "20"
+    services.loadbalancers: "5"
+    pods: "50"
+    secrets: "20"
+    configmaps: "20"
+    count/deployments.apps: "10"
+---
+# Resource Quota for Premium Tenant
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: policycortex-premium-quota
+  namespace: policycortex-premium
+  labels:
+    app.kubernetes.io/name: resource-quota
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: premium
+spec:
+  hard:
+    # Moderate resources for premium tier
+    requests.cpu: "5"
+    requests.memory: "10Gi"
+    limits.cpu: "15"
+    limits.memory: "30Gi"
+    requests.storage: "50Gi"
+    persistentvolumeclaims: "5"
+    services: "10"
+    services.loadbalancers: "2"
+    pods: "25"
+    secrets: "10"
+    configmaps: "10"
+    count/deployments.apps: "5"
+---
+# Resource Quota for Standard Tenant
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: policycortex-standard-quota
+  namespace: policycortex-standard
+  labels:
+    app.kubernetes.io/name: resource-quota
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: standard
+spec:
+  hard:
+    # Limited resources for standard tier
+    requests.cpu: "2"
+    requests.memory: "4Gi"
+    limits.cpu: "6"
+    limits.memory: "12Gi"
+    requests.storage: "20Gi"
+    persistentvolumeclaims: "3"
+    services: "5"
+    services.loadbalancers: "1"
+    pods: "15"
+    secrets: "5"
+    configmaps: "5"
+    count/deployments.apps: "3"
+---
+# Limit Range for Core Namespace
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: policycortex-core-limits
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: limit-range
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: shared
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "1"
+      memory: "2Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "256Mi"
+    max:
+      cpu: "8"
+      memory: "16Gi"
+    min:
+      cpu: "50m"
+      memory: "128Mi"
+  - type: Pod
+    max:
+      cpu: "16"
+      memory: "32Gi"
+  - type: PersistentVolumeClaim
+    max:
+      storage: "100Gi"
+    min:
+      storage: "1Gi"
+---
+# Limit Range for Enterprise Tenant
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: policycortex-enterprise-limits
+  namespace: policycortex-enterprise
+  labels:
+    app.kubernetes.io/name: limit-range
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: enterprise
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "500m"
+      memory: "1Gi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "256Mi"
+    max:
+      cpu: "4"
+      memory: "8Gi"
+    min:
+      cpu: "50m"
+      memory: "128Mi"
+  - type: Pod
+    max:
+      cpu: "8"
+      memory: "16Gi"
+  - type: PersistentVolumeClaim
+    max:
+      storage: "50Gi"
+    min:
+      storage: "1Gi"
+---
+# Limit Range for Premium Tenant
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: policycortex-premium-limits
+  namespace: policycortex-premium
+  labels:
+    app.kubernetes.io/name: limit-range
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: premium
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "300m"
+      memory: "512Mi"
+    defaultRequest:
+      cpu: "50m"
+      memory: "128Mi"
+    max:
+      cpu: "2"
+      memory: "4Gi"
+    min:
+      cpu: "25m"
+      memory: "64Mi"
+  - type: Pod
+    max:
+      cpu: "4"
+      memory: "8Gi"
+  - type: PersistentVolumeClaim
+    max:
+      storage: "25Gi"
+    min:
+      storage: "1Gi"
+---
+# Limit Range for Standard Tenant
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: policycortex-standard-limits
+  namespace: policycortex-standard
+  labels:
+    app.kubernetes.io/name: limit-range
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: standard
+spec:
+  limits:
+  - type: Container
+    default:
+      cpu: "200m"
+      memory: "256Mi"
+    defaultRequest:
+      cpu: "25m"
+      memory: "64Mi"
+    max:
+      cpu: "1"
+      memory: "2Gi"
+    min:
+      cpu: "10m"
+      memory: "32Mi"
+  - type: Pod
+    max:
+      cpu: "2"
+      memory: "4Gi"
+  - type: PersistentVolumeClaim
+    max:
+      storage: "10Gi"
+    min:
+      storage: "1Gi"
