@@ -162,12 +162,10 @@ impl PredictionExplainer {
             prediction.risk_level
         ));
         
-        if let Some(impact) = &prediction.business_impact {
-            narrative.push_str(&format!(
-                "Potential Business Impact: {}\n",
-                impact.compliance_impact
-            ));
-        }
+        narrative.push_str(&format!(
+            "Potential Business Impact: {}\n",
+            prediction.business_impact.compliance_impact
+        ));
         
         narrative
     }

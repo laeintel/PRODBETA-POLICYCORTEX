@@ -244,7 +244,7 @@ impl QueryUnderstandingEngine {
             .map(|(intent, _)| intent.clone())
             .collect();
         
-        let confidence = (primary_score / (1.0 + primary_score)).min(1.0);
+        let confidence: f64 = (primary_score / (1.0f64 + primary_score)).min(1.0);
         let domain = entities.domain.clone();
         
         Intent {
