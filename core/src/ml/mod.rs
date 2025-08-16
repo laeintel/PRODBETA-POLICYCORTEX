@@ -15,6 +15,11 @@ pub mod pattern_library;
 pub mod cost_prediction;
 pub mod anomaly_detection;
 
+// Day 7: Natural Language Enhancements
+pub mod conversation_memory;
+pub mod intent_router;
+pub mod policy_generator;
+
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
