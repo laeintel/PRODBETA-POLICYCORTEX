@@ -33,6 +33,7 @@ mod change_management;
 mod collectors;
 mod compliance;
 mod config;
+mod correlation;
 mod data_mode;
 mod enforcement;
 mod events;
