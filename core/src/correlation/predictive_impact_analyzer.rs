@@ -11,6 +11,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::RwLock;
 use chrono::{DateTime, Duration, Utc};
 use uuid::Uuid;
 
@@ -36,7 +37,7 @@ pub enum ActionType {
 /// Predictive impact analyzer with scenario modeling
 pub struct PredictiveImpactAnalyzer {
     impact_models: HashMap<String, AdvancedImpactModel>,
-    scenario_cache: ScenarioCache,
+    scenario_cache: RwLock<ScenarioCache>,
     predictive_engine: PredictiveEngine,
     what_if_analyzer: WhatIfAnalyzer,
     risk_quantifier: RiskQuantifier,
@@ -46,7 +47,7 @@ impl PredictiveImpactAnalyzer {
     pub fn new() -> Self {
         let mut analyzer = Self {
             impact_models: HashMap::new(),
-            scenario_cache: ScenarioCache::new(),
+            scenario_cache: RwLock::new(ScenarioCache::new()),
             predictive_engine: PredictiveEngine::new(),
             what_if_analyzer: WhatIfAnalyzer::new(),
             risk_quantifier: RiskQuantifier::new(),
@@ -98,14 +99,14 @@ impl PredictiveImpactAnalyzer {
     }
 
     /// Predict impact of potential changes or failures
-    pub async fn predict_impact(&mut self, 
+    pub async fn predict_impact(&self, 
         scenario: ImpactScenario,
         resources: &[ResourceContext],
         historical_data: &[HistoricalEvent]
     ) -> PredictiveImpactResult {
         
         // Check scenario cache first
-        if let Some(cached_result) = self.scenario_cache.get(&scenario) {
+        if let Some(cached_result) = self.scenario_cache.read().unwrap().get(&scenario) {
             return cached_result;
         }
 
@@ -148,13 +149,13 @@ impl PredictiveImpactAnalyzer {
         };
 
         // Cache the result
-        self.scenario_cache.insert(scenario, result.clone());
+        self.scenario_cache.write().unwrap().insert(scenario, result.clone());
         
         result
     }
 
     /// Perform what-if analysis for different scenarios
-    pub async fn what_if_analysis(&mut self,
+    pub async fn what_if_analysis(&self,
         base_scenario: ImpactScenario,
         variations: Vec<ScenarioVariation>,
         resources: &[ResourceContext]
