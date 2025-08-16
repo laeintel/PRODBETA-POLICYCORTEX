@@ -1,0 +1,82 @@
+neo4j:
+  name: policycortex-graph
+  edition: enterprise
+  version: ${neo4j_version}
+
+  acceptLicenseAgreement: "yes"
+
+  auth:
+    enabled: ${auth_enabled}
+
+  cluster:
+    enabled: ${cluster_enabled}
+
+  core:
+    replicas: ${core_replicas}
+    resources:
+      requests:
+        cpu: ${cpu_request}
+        memory: ${memory_heap}
+      limits:
+        cpu: ${cpu_limit}
+        memory: ${memory_heap}
+    
+    persistentVolume:
+      enabled: true
+      storageClass: ${storage_class}
+      size: ${storage_size}
+
+  replica:
+    replicas: ${replica_replicas}
+    resources:
+      requests:
+        cpu: ${cpu_request}
+        memory: ${memory_heap}
+      limits:
+        cpu: ${cpu_limit}
+        memory: ${memory_heap}
+    
+    persistentVolume:
+      enabled: true
+      storageClass: ${storage_class}
+      size: ${storage_size}
+
+  config:
+    dbms.memory.heap.initial_size: ${memory_heap}
+    dbms.memory.heap.max_size: ${memory_heap}
+    dbms.memory.pagecache.size: ${memory_pagecache}
+    
+    # Performance tuning
+    dbms.tx_state.memory_allocation: "ON_HEAP"
+    dbms.query_cache_size: "1000"
+    dbms.cypher.min_replan_interval: "10s"
+    
+    # Security
+    dbms.security.procedures.unrestricted: "apoc.*,algo.*"
+    dbms.security.allow_csv_import_from_file_urls: "true"
+    
+    # Networking
+    dbms.connector.bolt.enabled: "true"
+    dbms.connector.http.enabled: "true"
+    dbms.connector.https.enabled: ${ssl_enabled}
+
+  ssl:
+    bolt:
+      enabled: ${ssl_enabled}
+    https:
+      enabled: ${ssl_enabled}
+
+  metrics:
+    enabled: true
+    prometheus:
+      enabled: true
+      endpoint: "/metrics"
+
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    retentionDays: 30
+
+  plugins:
+    - "apoc"
+    - "graph-data-science"

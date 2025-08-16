@@ -77,6 +77,10 @@ rand = "0.8"
 # Base64 encoding for signatures
 base64 = "0.21"
 
+# Graph database drivers
+neo4rs = "0.7"
+gremlin-client = "0.8"
+
 # Performance monitoring
 metrics = "0.21"
 metrics-exporter-prometheus = "0.12"
