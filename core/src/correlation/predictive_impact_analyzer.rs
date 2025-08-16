@@ -127,7 +127,7 @@ impl PredictiveImpactAnalyzer {
                 mitigation_id: format!("MIT-{}", i + 1),
                 strategy: format!("{:?}", m.action_type),
                 expected_impact_reduction: m.expected_effectiveness,
-                implementation_time: Duration::from_secs(m.implementation_time as u64 * 60),
+                implementation_time: Duration::seconds((m.implementation_time * 60) as i64),
                 cost_estimate: m.estimated_cost,
                 success_probability: m.expected_effectiveness,
             }
@@ -154,7 +154,7 @@ impl PredictiveImpactAnalyzer {
     }
 
     /// Perform what-if analysis for different scenarios
-    pub async fn what_if_analysis(&self,
+    pub async fn what_if_analysis(&mut self,
         base_scenario: ImpactScenario,
         variations: Vec<ScenarioVariation>,
         resources: &[ResourceContext]

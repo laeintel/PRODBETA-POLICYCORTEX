@@ -175,3 +175,6 @@ frontendmiddleware.ts
 *.old
 policycortex-backup-*.zip
 infrastructure/terraform/tfplan
+
+# Patent generation artifacts
+NON-PROVISIONAL/

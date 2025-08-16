@@ -502,23 +502,51 @@ impl SmartDependencyMapper {
         let mut critical_paths = Vec::new();
         
         // Find paths with high criticality resources
-        for source in self.dependency_graph.node_indices() {
-            for target in self.dependency_graph.node_indices() {
+        // Create a weighted graph for bellman_ford
+        let mut weighted_graph = DiGraph::<(), f64>::new();
+        let mut node_mapping = HashMap::new();
+        
+        // Copy nodes
+        for node_idx in self.dependency_graph.node_indices() {
+            let new_idx = weighted_graph.add_node(());
+            node_mapping.insert(node_idx, new_idx);
+        }
+        
+        // Copy edges with weights based on strength
+        for edge in self.dependency_graph.edge_indices() {
+            if let Some((source, target)) = self.dependency_graph.edge_endpoints(edge) {
+                if let (Some(&new_source), Some(&new_target)) = (node_mapping.get(&source), node_mapping.get(&target)) {
+                    if let Some(edge_weight) = self.dependency_graph.edge_weight(edge) {
+                        // Use inverse of strength as weight (lower weight = stronger dependency)
+                        weighted_graph.add_edge(new_source, new_target, 1.0 - edge_weight.strength);
+                    }
+                }
+            }
+        }
+        
+        for source in weighted_graph.node_indices() {
+            for target in weighted_graph.node_indices() {
                 if source != target {
                     // Use Bellman-Ford to find shortest path considering criticality weights
-                    if let Ok(distances) = bellman_ford(&self.dependency_graph, source) {
-                        if let Some(&distance) = distances.distances.get(&target) {
-                            if distance < std::i32::MAX / 2 {
-                                let path_criticality = self.calculate_path_criticality(source, target);
-                                if path_criticality > 0.8 {
-                                    critical_paths.push(CriticalPath {
-                                        path_id: Uuid::new_v4().to_string(),
-                                        source_resource: self.reverse_index.get(&source).cloned().unwrap_or_default(),
-                                        target_resource: self.reverse_index.get(&target).cloned().unwrap_or_default(),
-                                        path_length: distance as usize,
-                                        criticality_score: path_criticality,
+                    if let Ok(distances) = bellman_ford(&weighted_graph, source) {
+                        if let Some(&distance) = distances.distances.get(target.index()) {
+                            if distance < 100.0 {
+                                // Map back to original indices
+                                let orig_source = node_mapping.iter().find(|(_, &v)| v == source).map(|(k, _)| *k);
+                                let orig_target = node_mapping.iter().find(|(_, &v)| v == target).map(|(k, _)| *k);
+                                
+                                if let (Some(orig_source), Some(orig_target)) = (orig_source, orig_target) {
+                                    let path_criticality = self.calculate_path_criticality(orig_source, orig_target);
+                                    if path_criticality > 0.8 {
+                                        critical_paths.push(CriticalPath {
+                                            path_id: Uuid::new_v4().to_string(),
+                                            source_resource: self.reverse_index.get(&orig_source).cloned().unwrap_or_default(),
+                                            target_resource: self.reverse_index.get(&orig_target).cloned().unwrap_or_default(),
+                                            path_length: (distance * 10.0) as usize,
+                                            criticality_score: path_criticality,
                                         bottleneck_resources: self.identify_bottlenecks_in_path(source, target),
-                                    });
+                                        });
+                                    }
                                 }
                             }
                         }
