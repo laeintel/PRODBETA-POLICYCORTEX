@@ -29,7 +29,7 @@
 
 ## Project Overview
 
-PolicyCortex v2 is an AI-powered Azure governance platform featuring four patented technologies:
+PolicyCortex is an AI-powered Azure governance platform featuring four patented technologies:
 
 1. **Cross-Domain Governance Correlation Engine** (Patent 1)
 2. **Conversational Governance Intelligence System** (Patent 2) 

@@ -1,4 +1,4 @@
-# PolicyCortex v2 - AI-Powered Azure Governance Platform
+# PolicyCortex - AI-Powered Azure Governance Platform
 
 ## 🚀 Complete Architecture Rebuild
 

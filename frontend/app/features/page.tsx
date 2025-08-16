@@ -138,7 +138,7 @@ export default function FeaturesPage() {
             Features & Capabilities
           </h1>
           <p className="text-xl text-gray-300">
-            Discover the cutting-edge technology powering PolicyCortex v2
+            Discover the cutting-edge technology powering PolicyCortex
           </p>
         </motion.div>
 

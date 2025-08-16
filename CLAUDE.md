@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-PolicyCortex v2 is an AI-powered Azure governance platform with four patented technologies:
+PolicyCortex is an AI-powered Azure governance platform with four patented technologies:
 1. Cross-Domain Governance Correlation Engine (Patent 1)
 2. Conversational Governance Intelligence System (Patent 2) 
 3. Unified AI-Driven Cloud Governance Platform (Patent 3)
