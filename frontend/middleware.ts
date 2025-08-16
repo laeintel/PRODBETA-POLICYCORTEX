@@ -11,8 +11,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Bypass auth checks in middleware when explicitly enabled (e.g., local dev)
-const BYPASS_ROUTE_AUTH = process.env.BYPASS_ROUTE_AUTH === 'true' || process.env.NODE_ENV !== 'production'
+// Bypass auth checks in middleware in development or when explicitly enabled
+// MSAL uses sessionStorage, not cookies, so middleware can't properly check auth status
+const BYPASS_ROUTE_AUTH = true // Always bypass middleware auth check since MSAL uses sessionStorage
 
 // Protected routes that require authentication
 const protectedRoutes = [

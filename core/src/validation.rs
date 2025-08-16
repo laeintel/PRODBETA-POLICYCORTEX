@@ -168,7 +168,7 @@ impl Validator {
             return Err(ApiError::InvalidInput("page must be >= 1".to_string()));
         }
         
-        if limit < 1 || limit > 1000 {
+        if !(1..=1000).contains(&limit) {
             return Err(ApiError::InvalidInput("limit must be between 1 and 1000".to_string()));
         }
         

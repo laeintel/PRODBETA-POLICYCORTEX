@@ -249,7 +249,7 @@ impl GraphDriver for Neo4jDriver {
         
         let query = "MATCH (n) WHERE id(n) = $id SET n += $props";
         
-        client
+        let _ = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
@@ -269,7 +269,7 @@ impl GraphDriver for Neo4jDriver {
         let client = self.client.as_ref().unwrap();
         let query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n";
         
-        client
+        let _ = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
@@ -355,7 +355,7 @@ impl GraphDriver for Neo4jDriver {
         
         let query = "MATCH ()-[r]-() WHERE id(r) = $id SET r += $props";
         
-        client
+        let _ = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
@@ -375,7 +375,7 @@ impl GraphDriver for Neo4jDriver {
         let client = self.client.as_ref().unwrap();
         let query = "MATCH ()-[r]-() WHERE id(r) = $id DELETE r";
         
-        client
+        let _ = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
