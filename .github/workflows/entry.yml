@@ -364,6 +364,7 @@ jobs:
       contents: read
       actions: read
       packages: write
+      pull-requests: read
     with:
       target_env: 'dev'
       run_tests: true
