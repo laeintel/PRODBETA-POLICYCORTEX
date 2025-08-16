@@ -540,6 +540,36 @@ impl PredictiveImpactAnalyzer {
             .collect()
     }
 
+    fn generate_predictive_mitigations(&self, scenario: &ImpactScenario, cascade_effects: &[PredictedCascadeEffect]) -> Vec<MitigationOption> {
+        let mut mitigations = Vec::new();
+        
+        // Generate mitigations based on impact type
+        for effect in cascade_effects {
+            if effect.impact_strength > 0.7 {
+                mitigations.push(MitigationOption {
+                    action_type: ActionType::Preventive,
+                    target_resource: effect.target_resource.clone(),
+                    implementation_time: 15,
+                    expected_effectiveness: 0.8,
+                    prerequisites: vec![],
+                    estimated_cost: 1000.0,
+                });
+            }
+        }
+        
+        // Add general mitigation recommendations
+        mitigations.push(MitigationOption {
+            action_type: ActionType::Reactive,
+            target_resource: scenario.affected_resources[0].clone(),
+            implementation_time: 30,
+            expected_effectiveness: 0.9,
+            prerequisites: vec!["approval".to_string()],
+            estimated_cost: 500.0,
+        });
+        
+        mitigations
+    }
+
     fn calculate_prediction_confidence(&self, scenario: &ImpactScenario, historical_data: &[HistoricalEvent]) -> ConfidenceMetrics {
         // Calculate confidence based on historical accuracy
         let historical_accuracy = self.calculate_historical_accuracy(historical_data);

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use chrono::{DateTime, Utc};
 use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::algo::{dijkstra, connected_components};
+use petgraph::algo::{dijkstra, connected_components, kosaraju_scc};
 
 /// Cross-domain correlation engine
 pub struct CrossDomainEngine {
@@ -160,7 +160,7 @@ impl CrossDomainEngine {
         let mut critical_paths = Vec::new();
         
         // Find strongly connected components
-        let sccs = strongly_connected_components(&self.dependency_graph);
+        let sccs = kosaraju_scc(&self.dependency_graph);
         
         for scc in sccs {
             if scc.len() > 1 {
@@ -284,7 +284,7 @@ impl CrossDomainEngine {
         let mut recommendations = Vec::new();
         
         // Check for circular dependencies
-        let sccs = strongly_connected_components(&self.dependency_graph);
+        let sccs = kosaraju_scc(&self.dependency_graph);
         for scc in sccs {
             if scc.len() > 1 {
                 recommendations.push("Circular dependencies detected. Consider refactoring to reduce coupling.".to_string());

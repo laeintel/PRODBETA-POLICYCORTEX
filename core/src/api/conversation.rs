@@ -4,7 +4,6 @@ use crate::ml::natural_language::{
 };
 use axum::{
     extract::{Query as AxumQuery, State},
-    http::StatusCode,
     response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};

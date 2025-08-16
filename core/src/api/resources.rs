@@ -1,13 +1,13 @@
 use super::AppState;
 use crate::resources::{
     AzureResource, ResourceCategory, ResourceFilter, ResourceSummary,
-    HealthStatus, ComplianceFilter, CostRange, ResourceInsight,
+    HealthStatus, ComplianceFilter, CostRange,
 };
 use crate::resources::manager::ResourceManager;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     Json,
 };
 use serde::{Deserialize, Serialize};
