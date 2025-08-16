@@ -104,15 +104,31 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
         }
         setDemoUser(demoAccount)
         console.log('Demo mode: Authentication bypassed for development')
+        setLoading(false)
         return
       }
       
-      const loginResponse = await instance.loginPopup(loginRequest)
-      instance.setActiveAccount(loginResponse.account)
-      console.log('Login successful:', loginResponse)
+      console.log('Starting Azure AD login with config:', {
+        clientId: msalConfig.auth.clientId,
+        authority: msalConfig.auth.authority,
+        redirectUri: msalConfig.auth.redirectUri
+      })
+      
+      // Try redirect first as it's more reliable than popup
+      try {
+        const loginResponse = await instance.loginRedirect(loginRequest)
+        console.log('Login redirect initiated:', loginResponse)
+      } catch (popupError: any) {
+        // If redirect fails, try popup
+        console.warn('Redirect failed, trying popup:', popupError)
+        const loginResponse = await instance.loginPopup(loginRequest)
+        instance.setActiveAccount(loginResponse.account)
+        console.log('Login successful via popup:', loginResponse)
+      }
     } catch (err: any) {
       console.error('Login failed:', err)
-      setError(err.message || 'Login failed')
+      const errorMessage = err.errorMessage || err.message || 'Login failed'
+      setError(errorMessage)
       
       // Only fallback to demo mode if explicitly enabled
       if (demoMode) {
