@@ -317,12 +317,14 @@ export function BulkSelectHeader({
 }: BulkSelectHeaderProps) {
   return (
     <div className={cn("flex items-center gap-3 p-3 border-b", className)}>
-      <Checkbox
+      <input
+        type="checkbox"
         checked={isAllSelected}
         ref={(el) => {
           if (el) el.indeterminate = isIndeterminate
         }}
-        onCheckedChange={onToggleAll}
+        onChange={() => onToggleAll()}
+        className="h-4 w-4 rounded border border-gray-300 text-blue-600 focus:ring-blue-500"
       />
       <span className="text-sm font-medium">{label}</span>
     </div>

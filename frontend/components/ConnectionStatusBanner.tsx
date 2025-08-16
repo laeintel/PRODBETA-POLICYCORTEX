@@ -38,7 +38,7 @@ export default function ConnectionStatusBanner() {
         }
       } catch (err) {
         setStatus('down')
-        setMessage('Backend service unavailable. Please start the backend with ./start-dev.bat')
+        setMessage('Backend service unavailable. Please start the backend with ./scripts/runtime/start-dev.bat')
       }
     }
     check()
