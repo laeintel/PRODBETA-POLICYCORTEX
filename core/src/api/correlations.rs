@@ -1,6 +1,5 @@
 use crate::ml::correlation_engine::{
-    CorrelationEngine, CorrelationResult, WhatIfScenario, ScenarioType,
-    ProposedChange, RealTimeInsights,
+    CorrelationEngine,
 };
 use crate::ml::graph_neural_network::{
     ResourceNode, ResourceEdge, GovernanceDomain, RelationshipType,
