@@ -163,7 +163,13 @@ jobs:
       - name: Select tfvars by environment
         id: tfvars
         run: |
-          echo "TFVARS_FILE=environments/${ENV_NAME}/terraform.tfvars" >> $GITHUB_OUTPUT
+          # Check if tfvars file exists, if not use defaults
+          if [ -f "infra/environments/${ENV_NAME}/terraform.tfvars" ]; then
+            echo "TFVARS_FILE=environments/${ENV_NAME}/terraform.tfvars" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ No tfvars file found for ${ENV_NAME}, using defaults"
+            echo "TFVARS_FILE=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Terraform Validate
         run: terraform validate -no-color
@@ -191,7 +197,12 @@ jobs:
         continue-on-error: true
       
       - name: Terraform Plan
-        run: terraform plan -input=false -no-color -out=tfplan -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }}
+        run: |
+          if [ -n "${{ steps.tfvars.outputs.TFVARS_FILE }}" ]; then
+            terraform plan -input=false -no-color -out=tfplan -var-file=${{ steps.tfvars.outputs.TFVARS_FILE }}
+          else
+            terraform plan -input=false -no-color -out=tfplan
+          fi
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
