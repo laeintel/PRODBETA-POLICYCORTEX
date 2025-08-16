@@ -11,7 +11,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
-use chrono::{DateTime, Utc, Duration};
+use std::time::Duration;
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 // Define missing types
@@ -119,7 +120,19 @@ impl PredictiveImpactAnalyzer {
         let risk_assessment = self.risk_quantifier.quantify_risks(&scenario, &cascade_effects, resources);
         
         // Generate mitigation recommendations
-        let mitigation_options = self.generate_predictive_mitigations(&scenario, &cascade_effects);
+        let raw_mitigations = self.generate_predictive_mitigations(&scenario, &cascade_effects);
+        
+        // Convert MitigationOption to PredictiveMitigation
+        let mitigation_options: Vec<PredictiveMitigation> = raw_mitigations.iter().enumerate().map(|(i, m)| {
+            PredictiveMitigation {
+                mitigation_id: format!("MIT-{}", i + 1),
+                strategy: format!("{:?}", m.action_type),
+                expected_impact_reduction: m.expected_effectiveness,
+                implementation_time: Duration::from_secs(m.implementation_time as u64 * 60),
+                cost_estimate: m.estimated_cost,
+                success_probability: m.expected_effectiveness,
+            }
+        }).collect();
         
         // Calculate confidence intervals
         let confidence_metrics = self.calculate_prediction_confidence(&scenario, historical_data);
@@ -158,10 +171,11 @@ impl PredictiveImpactAnalyzer {
             let modified_scenario = self.apply_variation(&base_scenario, variation);
             let variation_result = self.predict_impact(modified_scenario, resources, &[]).await;
             
+            let comparison = self.compare_scenarios(&base_result, &variation_result);
             scenario_results.push(WhatIfScenarioResult {
                 variation: variation.clone(),
                 impact_result: variation_result,
-                comparison_to_base: self.compare_scenarios(&base_result, &variation_result),
+                comparison_to_base: comparison,
             });
         }
 
@@ -202,13 +216,16 @@ impl PredictiveImpactAnalyzer {
         // Calculate intervention opportunities
         let intervention_windows = self.identify_intervention_windows(&remaining_timeline);
         
+        let accuracy = self.calculate_real_time_accuracy(ongoing_event);
+        let risk_score = self.calculate_dynamic_risk_score(&current_impact, &remaining_timeline);
+        
         RealTimeImpactAnalysis {
             current_impact,
             remaining_timeline,
             updated_mitigations,
             intervention_windows,
-            prediction_accuracy: self.calculate_real_time_accuracy(ongoing_event),
-            dynamic_risk_score: self.calculate_dynamic_risk_score(&current_impact, &remaining_timeline),
+            prediction_accuracy: accuracy,
+            dynamic_risk_score: risk_score,
         }
     }
 

@@ -280,7 +280,7 @@ impl EntityExtractor {
         }
     }
 
-    fn deduplicate_entities(&self, mut entities: Vec<Entity>) -> Vec<Entity> {
+    fn deduplicate_entities(&self, entities: Vec<Entity>) -> Vec<Entity> {
         let mut deduplicated = Vec::new();
         
         for entity in entities {

@@ -3502,7 +3502,7 @@ dependencies = [
 
 [[package]]
 name = "policycortex-core"
-version = "2.11.1"
+version = "2.11.4"
 dependencies = [
  "anyhow",
  "async-nats",

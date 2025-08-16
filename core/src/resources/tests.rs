@@ -335,7 +335,7 @@ mod correlation_tests {
     async fn test_performance_correlation_detection() {
         let engine = CrossDomainCorrelationEngine::new(Arc::new(ModelRegistry::new()));
         
-        let mut resources = vec![
+        let resources = vec![
             create_resource_with_performance("db1", 95.0, 100.0),
             create_resource_with_performance("app1", 60.0, 99.5),
             create_resource_with_performance("cache1", 50.0, 98.0),
