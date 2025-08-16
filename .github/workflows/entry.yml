@@ -44,6 +44,7 @@ permissions:
   security-events: write
   id-token: write
   packages: write
+  pull-requests: read
 
 concurrency:
   group: monorepo-${{ github.workflow }}-${{ github.ref }}
