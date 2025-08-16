@@ -21,7 +21,7 @@ set USE_REAL_DATA=true
 
 echo.
 echo [1/4] Building Rust backend...
-cd core
+cd ..\..\core
 cargo build --release
 if %errorlevel% neq 0 (
     echo Failed to build Rust backend
