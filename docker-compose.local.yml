@@ -138,5 +138,5 @@ volumes:
 
 networks:
   default:
-    name: policycortex-v2
+    name: policycortex
     driver: bridge

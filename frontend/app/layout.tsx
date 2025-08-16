@@ -16,7 +16,7 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PolicyCortex v2 - AI-Powered Azure Governance',
+  title: 'PolicyCortex - AI-Powered Azure Governance',
   description: 'Transform Azure governance with AI-powered insights and automation',
   manifest: '/manifest.json',
 }

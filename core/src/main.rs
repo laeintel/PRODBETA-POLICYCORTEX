@@ -171,7 +171,7 @@ async fn main() {
             .init();
     }
 
-    info!("Starting PolicyCortex v2 Core Service");
+    info!("Starting PolicyCortex Core Service");
     info!("Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation");
 
     // Load app configuration
