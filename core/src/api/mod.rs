@@ -2,6 +2,7 @@ pub mod resources;
 pub mod predictions;
 pub mod conversation;
 pub mod correlations;
+pub mod remediation;
 
 // Re-export resource API functions
 pub use resources::{
@@ -222,6 +223,11 @@ pub struct AppState {
     pub secrets: Option<SecretsManager>,
     pub prometheus: Option<PrometheusHandle>,
     pub db_pool: Option<sqlx::Pool<sqlx::Postgres>>,
+    // Remediation system components
+    pub approval_manager: Option<Arc<crate::remediation::approval_manager::ApprovalManager>>,
+    pub bulk_remediation_engine: Option<Arc<crate::remediation::bulk_remediation::BulkRemediationEngine>>,
+    pub rollback_manager: Option<Arc<crate::remediation::rollback_manager::RollbackManager>>,
+    pub bulk_remediation_channels: Option<Arc<RwLock<std::collections::HashMap<String, broadcast::Sender<String>>>>>,
 }
 
 impl AppState {
@@ -323,6 +329,11 @@ impl AppState {
             secrets: None,
             prometheus: None,
             db_pool: None,
+            // Remediation system components
+            approval_manager: None,
+            bulk_remediation_engine: None,
+            rollback_manager: None,
+            bulk_remediation_channels: Some(Arc::new(RwLock::new(std::collections::HashMap::new()))),
         }
     }
 }
