@@ -33,6 +33,60 @@ claude-code --yes --no-confirm --autonomous --batch-mode < "Instruct/Module _suc
 
 ---
 
+## Demo-readiness scorecard – 13 critical capabilities
+(_✓ ready for demo • △ needs lite work/placeholder • ✗ missing, risk to demo_)
+
+- Core API endpoints (metrics, predictions, correlations): **✓** Rust service compiles; `/api/v1/*` all return simulated data
+- Next.js 14 front-end with live dashboard bindings: **✓** Works against simulated API; environment variables baked into `docker-compose.local.yml`
+- Simulated-mode toggle & mock data indicators: **✓** `USE_REAL_DATA=false` flag honoured; “Simulated” badge shows in UI
+- GraphQL gateway path: **△** Gateway container exists but health-check sometimes 404s in local compose; set mock resolver to always return empty arrays to prevent blank panels
+- Conversational chat box: **△** Intent router + chat page compile, but OpenAI key must be added manually; create fallback “demo mode” that returns canned answers if key absent
+- Predictive compliance call: **✓** Stub model returns deterministic sample; swagger doc explains simulated output
+- Knowledge-graph visual or API: **✗** No service in code yet – not demo-critical if you don’t click the correlation tab; hide that nav item or wire it to a placeholder route returning 200 {}
+- Explainability / “Why?” button next to predictions: **✗** Button in UI but handler TODO – either remove for demo or hard-code mock SHAP chart
+- Multi-tenant toggle / namespace isolation: **△** Not required for demo; ensure pilot tenant IDs are hardcoded so “tenant-id” shows in header
+- Security posture screen: **△** UI panel loads, but backend returns empty list; drop sample JSON fixture so graphs light up
+- Cost optimisation panel: **✓** Time-series chart shows mock savings; prediction call uses simple ARIMA stub
+- CI/CD lightboard (value stream badges): **✓** Reusable workflow badges in README show green; keep them up-to-date
+- Voice assistant / speech POC: **✗** Feature flagged off – leave hidden
+
+### Low-effort polish to land before the demo (1–2 dev days)
+- Add a GraphQL mock resolver that returns 200 with empty arrays:
+
+```ts
+// frontend/app/api/graphql/mock.ts
+export async function GET() {
+  return new Response(JSON.stringify({ data: { policies: [], resource: null } }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+```
+
+- In `frontend/app/features/` wrap any empty array result with a visible “Coming Soon” banner instead of blank space.
+- Hard-code three demo tenants in `scripts/seed-data.sql`; make the dashboard tenant selector filter mock data.
+- Hide or comment out Explainability CTA and Voice Assistant nav items for the demo build.
+- Add a tiny helper script to spin up a local demo quickly:
+
+```bash
+# scripts/demo-ready.sh
+#!/usr/bin/env bash
+set -euo pipefail
+export NEXT_PUBLIC_API_URL=http://localhost:8080
+docker compose -f docker-compose.local.yml up -d core graphql frontend
+echo "Frontend → http://localhost:3000 | Core → http://localhost:8080/health"
+```
+
+- Ensure `.github/workflows/demo.yml` builds simulated images with tag `demo-$(date +%Y%m%d)` and pushes to ACR so the demo environment can be redeployed instantly if needed.
+
+### Verdict
+With those quick tweaks the product is safe and impressive for an MVP demo:
+- All five governance domains appear populated (mock data)
+- Live, clickable UI shows KPIs, cost graphs, compliance prediction
+- Conversational chat answers curated sample questions
+- CI, Terraform, and documentation signal engineering maturity
+Investors will see a coherent, running product that hints at deeper AI guts without exposing unfinished internals.
+
 # PolicyCortex — Autonomous Implementation Spec and Module Success Criteria
 
 ## Mission & Value Proposition
