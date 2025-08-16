@@ -132,15 +132,10 @@ export function AdvancedSearchV2({
     switch (fieldConfig.type) {
       case 'select':
         return (
-          <Select value={filter.value} onValueChange={(value) => updateFilter(index, { value })}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {fieldConfig.options?.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
+          <Select value={filter.value} onChange={(e) => updateFilter(index, { value: e.target.value })}>
+            {fieldConfig.options?.map(option => (
+              <SelectItem key={option} value={option}>{option}</SelectItem>
+            ))}
           </Select>
         )
       
@@ -302,20 +297,15 @@ export function AdvancedSearchV2({
                     
                     <Select
                       value={filter.operator}
-                      onValueChange={(value) => updateFilter(index, { operator: value as any })}
+                      onChange={(e) => updateFilter(index, { operator: e.target.value as any })}
                     >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="equals">equals</SelectItem>
-                        <SelectItem value="contains">contains</SelectItem>
-                        <SelectItem value="starts_with">starts with</SelectItem>
-                        <SelectItem value="ends_with">ends with</SelectItem>
-                        <SelectItem value="greater_than">greater than</SelectItem>
-                        <SelectItem value="less_than">less than</SelectItem>
-                        <SelectItem value="between">between</SelectItem>
-                      </SelectContent>
+                      <SelectItem value="equals">equals</SelectItem>
+                      <SelectItem value="contains">contains</SelectItem>
+                      <SelectItem value="starts_with">starts with</SelectItem>
+                      <SelectItem value="ends_with">ends with</SelectItem>
+                      <SelectItem value="greater_than">greater than</SelectItem>
+                      <SelectItem value="less_than">less than</SelectItem>
+                      <SelectItem value="between">between</SelectItem>
                     </Select>
 
                     {renderFilterValue(filter, index)}

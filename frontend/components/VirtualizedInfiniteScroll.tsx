@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { FixedSizeList as List } from 'react-window'
 import InfiniteLoader from 'react-window-infinite-loader'
 import { Loader2 } from 'lucide-react'
@@ -128,18 +128,17 @@ export function VirtualizedInfiniteScroll<T>({
         loadMoreItems={handleLoadMore}
         threshold={threshold}
       >
-        {({ onItemsRendered, ref }) => (
-          <List
-            ref={ref}
-            onItemsRendered={onItemsRendered}
-            height={height}
-            width={width}
-            itemCount={itemCount}
-            itemSize={itemHeight}
-          >
-            {Item}
-          </List>
-        )}
+        {({ onItemsRendered, ref }) => 
+          React.createElement(List as any, {
+            ref,
+            onItemsRendered,
+            height,
+            width: typeof width === 'string' ? parseInt(width) || 300 : (width || 300),
+            itemCount,
+            itemSize: itemHeight,
+            children: Item
+          })
+        }
       </InfiniteLoader>
 
       {/* Loading indicator at bottom */}

@@ -107,7 +107,7 @@ export function InteractiveChart({
   const [chartConfig, setChartConfig] = useState(config)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const colors = COLOR_PALETTES[chartConfig.colorPalette as keyof typeof COLOR_PALETTES] || COLOR_PALETTES.default
+  const colors = chartConfig.colorPalette || COLOR_PALETTES.default
 
   const handleDataPointClick = useCallback((data: any) => {
     onDataPointClick?.(data)
@@ -136,7 +136,7 @@ export function InteractiveChart({
             )}
             {chartConfig.showLegend && <Legend />}
             <Bar 
-              dataKey={chartConfig.yKey} 
+              dataKey={chartConfig.yKey || 'value'} 
               fill={colors[0]}
               animationDuration={chartConfig.animations ? 1000 : 0}
             />
@@ -172,8 +172,8 @@ export function InteractiveChart({
             {chartConfig.showLegend && <Legend />}
             <Pie
               data={chartConfig.data}
-              dataKey={chartConfig.valueKey}
-              nameKey={chartConfig.nameKey}
+              dataKey={chartConfig.valueKey || 'value'}
+              nameKey={chartConfig.nameKey || 'name'}
               cx="50%"
               cy="50%"
               outerRadius={80}
@@ -198,7 +198,7 @@ export function InteractiveChart({
             {chartConfig.showLegend && <Legend />}
             <Area
               type="monotone"
-              dataKey={chartConfig.yKey}
+              dataKey={chartConfig.yKey || 'value'}
               stroke={colors[0]}
               fill={colors[0]}
               fillOpacity={0.3}
@@ -236,7 +236,7 @@ export function InteractiveChart({
             )}
             {chartConfig.showLegend && <Legend />}
             <Radar
-              dataKey={chartConfig.valueKey}
+              dataKey={chartConfig.valueKey || 'value'}
               stroke={colors[0]}
               fill={colors[0]}
               fillOpacity={0.3}
@@ -261,7 +261,7 @@ export function InteractiveChart({
           </DialogHeader>
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
-              {renderChart()}
+              {renderChart() || <div>Chart type not supported</div>}
             </ResponsiveContainer>
           </div>
         </DialogContent>
@@ -336,7 +336,7 @@ export function InteractiveChart({
                     {Object.keys(COLOR_PALETTES).map(palette => (
                       <DropdownMenuItem
                         key={palette}
-                        onClick={() => setChartConfig(prev => ({ ...prev, colorPalette: palette }))}
+                        onClick={() => setChartConfig(prev => ({ ...prev, colorPalette: COLOR_PALETTES[palette as keyof typeof COLOR_PALETTES] }))}
                       >
                         <div className="flex items-center gap-2">
                           <div className="flex gap-1">
@@ -391,7 +391,7 @@ export function InteractiveChart({
               width="100%" 
               height={chartConfig.height || 300}
             >
-              {renderChart()}
+              {renderChart() || <div>Chart type not supported</div>}
             </ResponsiveContainer>
           </CardContent>
         </>
