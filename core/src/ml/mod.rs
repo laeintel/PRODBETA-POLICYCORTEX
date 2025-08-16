@@ -7,6 +7,14 @@ pub mod natural_language;
 pub mod graph_neural_network;
 pub mod correlation_engine;
 
+// Day 5: Enhanced ML Predictions
+pub mod continuous_training;
+pub mod confidence_scoring;
+pub mod explainability;
+pub mod pattern_library;
+pub mod cost_prediction;
+pub mod anomaly_detection;
+
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
