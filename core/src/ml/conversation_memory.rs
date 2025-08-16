@@ -331,14 +331,55 @@ impl EntityStore {
     }
 }
 
-/// Context analyzer
+/// Context analyzer with advanced cognitive understanding
 pub struct ContextAnalyzer {
-    // Analysis configuration
+    semantic_patterns: HashMap<String, Vec<String>>,
+    entity_relationships: HashMap<String, Vec<String>>,
+    conversation_patterns: HashMap<ConversationState, Vec<String>>,
 }
 
 impl ContextAnalyzer {
     pub fn new() -> Self {
-        Self {}
+        let mut analyzer = Self {
+            semantic_patterns: HashMap::new(),
+            entity_relationships: HashMap::new(),
+            conversation_patterns: HashMap::new(),
+        };
+        analyzer.initialize_patterns();
+        analyzer
+    }
+    
+    fn initialize_patterns(&mut self) {
+        // Semantic patterns for goal inference
+        self.semantic_patterns.insert("troubleshooting".to_string(), vec![
+            "fix".to_string(), "issue".to_string(), "problem".to_string(), "error".to_string()
+        ]);
+        
+        self.semantic_patterns.insert("compliance_check".to_string(), vec![
+            "compliance".to_string(), "violation".to_string(), "policy".to_string(), "audit".to_string()
+        ]);
+        
+        self.semantic_patterns.insert("cost_optimization".to_string(), vec![
+            "cost".to_string(), "expensive".to_string(), "optimize".to_string(), "budget".to_string()
+        ]);
+        
+        // Entity relationships
+        self.entity_relationships.insert("StorageAccount".to_string(), vec![
+            "encryption".to_string(), "backup".to_string(), "access_tier".to_string()
+        ]);
+        
+        self.entity_relationships.insert("VirtualMachine".to_string(), vec![
+            "disk_encryption".to_string(), "backup".to_string(), "monitoring".to_string()
+        ]);
+        
+        // Conversation state patterns
+        self.conversation_patterns.insert(ConversationState::GatheringInfo, vec![
+            "tell me".to_string(), "show me".to_string(), "what".to_string(), "how".to_string()
+        ]);
+        
+        self.conversation_patterns.insert(ConversationState::AwaitingConfirmation, vec![
+            "should i".to_string(), "can you".to_string(), "proceed".to_string(), "confirm".to_string()
+        ]);
     }
     
     pub async fn analyze(&self, session: &ConversationSession) -> ConversationContext {
@@ -352,43 +393,201 @@ impl ContextAnalyzer {
             clarifications_needed: Vec::new(),
         };
         
-        // Analyze recent history to extract context
-        for exchange in session.history.iter().rev().take(10) {
-            // Extract active resources
-            for entity in &exchange.entities {
-                if matches!(entity.entity_type, EntityType::ResourceGroup | 
-                          EntityType::StorageAccount | EntityType::VirtualMachine) {
-                    if !context.active_resources.contains(&entity.value) {
-                        context.active_resources.push(entity.value.clone());
-                    }
-                }
-                
-                // Extract discussed policies
-                if matches!(entity.entity_type, EntityType::Policy) {
-                    if !context.discussed_policies.contains(&entity.value) {
-                        context.discussed_policies.push(entity.value.clone());
-                    }
-                }
-            }
-            
-            // Determine conversation state
-            match exchange.intent.intent_type {
-                IntentType::ExecuteRemediation => {
-                    context.conversation_state = ConversationState::AwaitingConfirmation;
-                }
-                IntentType::QueryViolations | IntentType::PredictCompliance => {
-                    context.conversation_state = ConversationState::ProvidingSolution;
-                }
-                _ => {}
-            }
-        }
-        
-        // Extract user goal from topic stack
-        if let Some(current_topic) = session.get_current_topic() {
-            context.user_goal = Some(format!("Working on: {}", current_topic.topic_type));
-        }
+        // Enhanced context analysis
+        self.analyze_entities(session, &mut context).await;
+        self.analyze_conversation_flow(session, &mut context).await;
+        self.analyze_user_intent(session, &mut context).await;
+        self.identify_clarifications_needed(session, &mut context).await;
         
         context
+    }
+    
+    async fn analyze_entities(&self, session: &ConversationSession, context: &mut ConversationContext) {
+        let mut entity_frequency: HashMap<String, i32> = HashMap::new();
+        
+        // Analyze recent history with weighted importance (recent = more important)
+        for (i, exchange) in session.history.iter().rev().take(15).enumerate() {
+            let weight = 15 - i; // Recent exchanges have higher weight
+            
+            for entity in &exchange.entities {
+                // Track entity frequency with weight
+                *entity_frequency.entry(entity.value.clone()).or_insert(0) += weight as i32;
+                
+                match entity.entity_type {
+                    EntityType::ResourceGroup | EntityType::StorageAccount | 
+                    EntityType::VirtualMachine | EntityType::Database | EntityType::Network => {
+                        if !context.active_resources.contains(&entity.value) {
+                            context.active_resources.push(entity.value.clone());
+                        }
+                    },
+                    EntityType::Policy => {
+                        if !context.discussed_policies.contains(&entity.value) {
+                            context.discussed_policies.push(entity.value.clone());
+                        }
+                    },
+                    _ => {}
+                }
+            }
+        }
+        
+        // Sort resources by importance (frequency * recency)
+        context.active_resources.sort_by(|a, b| {
+            let freq_a = entity_frequency.get(a).unwrap_or(&0);
+            let freq_b = entity_frequency.get(b).unwrap_or(&0);
+            freq_b.cmp(freq_a)
+        });
+        
+        // Keep only top 10 most relevant resources
+        context.active_resources.truncate(10);
+    }
+    
+    async fn analyze_conversation_flow(&self, session: &ConversationSession, context: &mut ConversationContext) {
+        if let Some(last_exchange) = session.history.back() {
+            // Determine conversation state based on last interaction and patterns
+            let user_input = &last_exchange.user_input.to_lowercase();
+            
+            if self.contains_patterns(user_input, &self.conversation_patterns.get(&ConversationState::AwaitingConfirmation).unwrap_or(&vec![])) {
+                context.conversation_state = ConversationState::AwaitingConfirmation;
+            } else if last_exchange.intent.intent_type == IntentType::ExecuteRemediation {
+                context.conversation_state = ConversationState::ExecutingAction;
+            } else if last_exchange.assistant_response.contains("recommendation") || 
+                     last_exchange.assistant_response.contains("solution") {
+                context.conversation_state = ConversationState::ProvidingSolution;
+            } else {
+                context.conversation_state = ConversationState::GatheringInfo;
+            }
+        }
+        
+        // Analyze pending actions from conversation flow
+        for exchange in session.history.iter().rev().take(5) {
+            if exchange.intent.intent_type == IntentType::ExecuteRemediation && 
+               exchange.assistant_response.contains("pending") {
+                context.pending_actions.push(PendingAction {
+                    action_id: Uuid::new_v4().to_string(),
+                    action_type: "remediation".to_string(),
+                    description: format!("Remediation from: {}", &exchange.user_input[..50.min(exchange.user_input.len())]),
+                    requires_approval: true,
+                    created_at: exchange.timestamp,
+                });
+            }
+        }
+    }
+    
+    async fn analyze_user_intent(&self, session: &ConversationSession, context: &mut ConversationContext) {
+        let mut goal_scores: HashMap<String, f64> = HashMap::new();
+        
+        // Analyze semantic patterns across conversation
+        for exchange in &session.history {
+            let combined_text = format!("{} {}", exchange.user_input, exchange.assistant_response).to_lowercase();
+            
+            for (goal, patterns) in &self.semantic_patterns {
+                let mut score = 0.0;
+                for pattern in patterns {
+                    if combined_text.contains(pattern) {
+                        score += 1.0;
+                    }
+                }
+                if score > 0.0 {
+                    *goal_scores.entry(goal.clone()).or_insert(0.0) += score;
+                }
+            }
+        }
+        
+        // Extract dominant goal
+        if let Some((goal, _)) = goal_scores.iter().max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap()) {
+            context.user_goal = Some(format!("Primary goal: {}", goal.replace("_", " ")));
+        }
+        
+        // Enhance with current topic
+        if let Some(current_topic) = session.get_current_topic() {
+            if let Some(ref existing_goal) = context.user_goal {
+                context.user_goal = Some(format!("{}, Current focus: {}", existing_goal, current_topic.topic_type));
+            } else {
+                context.user_goal = Some(format!("Current focus: {}", current_topic.topic_type));
+            }
+        }
+    }
+    
+    async fn identify_clarifications_needed(&self, session: &ConversationSession, context: &mut ConversationContext) {
+        if let Some(last_exchange) = session.history.back() {
+            let user_input = &last_exchange.user_input.to_lowercase();
+            
+            // Check for ambiguous requests
+            if user_input.contains("all") && !user_input.contains("specific") {
+                context.clarifications_needed.push("Scope clarification: Which specific resources or categories?".to_string());
+            }
+            
+            if user_input.contains("fix") && !context.active_resources.is_empty() && context.active_resources.len() > 5 {
+                context.clarifications_needed.push("Target clarification: Which resources should be prioritized?".to_string());
+            }
+            
+            if user_input.contains("cost") && !user_input.contains("time") && !user_input.contains("period") {
+                context.clarifications_needed.push("Time range clarification: What time period should be analyzed?".to_string());
+            }
+            
+            // Check for incomplete entity information
+            let has_action = last_exchange.entities.iter().any(|e| e.entity_type == EntityType::Action);
+            let has_resource = last_exchange.entities.iter().any(|e| matches!(e.entity_type, 
+                EntityType::ResourceGroup | EntityType::StorageAccount | EntityType::VirtualMachine));
+            
+            if has_action && !has_resource && context.active_resources.is_empty() {
+                context.clarifications_needed.push("Resource specification: Which resources should this action apply to?".to_string());
+            }
+        }
+        
+        // Check conversation coherence
+        if session.history.len() > 3 {
+            let recent_intents: Vec<&IntentType> = session.history.iter()
+                .rev()
+                .take(3)
+                .map(|e| &e.intent.intent_type)
+                .collect();
+            
+            // If intents are very different, might need clarification
+            let intent_consistency = self.calculate_intent_consistency(&recent_intents);
+            if intent_consistency < 0.5 {
+                context.clarifications_needed.push("Goal clarification: It seems we've covered multiple topics. What's the main objective?".to_string());
+            }
+        }
+    }
+    
+    fn contains_patterns(&self, text: &str, patterns: &[String]) -> bool {
+        patterns.iter().any(|pattern| text.contains(pattern))
+    }
+    
+    fn calculate_intent_consistency(&self, intents: &[&IntentType]) -> f64 {
+        if intents.len() < 2 {
+            return 1.0;
+        }
+        
+        let mut consistency_score = 0.0;
+        let mut comparisons = 0;
+        
+        for i in 0..intents.len() {
+            for j in i+1..intents.len() {
+                comparisons += 1;
+                if self.intents_are_related(intents[i], intents[j]) {
+                    consistency_score += 1.0;
+                }
+            }
+        }
+        
+        if comparisons > 0 {
+            consistency_score / comparisons as f64
+        } else {
+            1.0
+        }
+    }
+    
+    fn intents_are_related(&self, intent1: &IntentType, intent2: &IntentType) -> bool {
+        match (intent1, intent2) {
+            (IntentType::QueryViolations, IntentType::ExecuteRemediation) => true,
+            (IntentType::PredictCompliance, IntentType::QueryViolations) => true,
+            (IntentType::AnalyzeCost, IntentType::GetRecommendations) => true,
+            (IntentType::ExplainPolicy, IntentType::CreatePolicy) => true,
+            (IntentType::CheckSecurity, IntentType::QueryViolations) => true,
+            _ => intent1 == intent2,
+        }
     }
 }
 

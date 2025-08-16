@@ -20,6 +20,10 @@ pub mod conversation_memory;
 pub mod intent_router;
 pub mod policy_generator;
 
+// Day 9: Advanced NLP Enhancements
+pub mod entity_extractor;
+pub mod query_understanding;
+
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
