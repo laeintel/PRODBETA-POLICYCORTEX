@@ -1,0 +1,107 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: ingress-gateway
+  namespace: istio-system
+spec:
+  components:
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      k8s:
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        hpaSpec:
+          minReplicas: 2
+          maxReplicas: 10
+          metrics:
+          - type: Resource
+            resource:
+              name: cpu
+              targetAverageUtilization: 80
+        service:
+          type: LoadBalancer
+          ports:
+          - port: 80
+            targetPort: 8080
+            name: http2
+          - port: 443
+            targetPort: 8443
+            name: https
+          - port: 31400
+            targetPort: 31400
+            name: tcp
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: policycortex-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: policycortex-tls-cert
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: policycortex-vs
+  namespace: policycortex
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - istio-system/policycortex-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/api/v1"
+    route:
+    - destination:
+        host: policycortex-api
+        port:
+          number: 8080
+      weight: 100
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: gateway-error,connect-failure,refused-stream
+  - match:
+    - uri:
+        prefix: "/graphql"
+    route:
+    - destination:
+        host: policycortex-graphql
+        port:
+          number: 4000
+      weight: 100
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: policycortex-frontend
+        port:
+          number: 3000
+      weight: 100

@@ -1,0 +1,53 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: istio-system
+spec:
+  {}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-intra-namespace
+  namespace: policycortex
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["policycortex"]
+  - to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingress-gateway
+  namespace: policycortex
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app: policycortex-api
+  rules:
+  - from:
+    - source:
+        namespaces: ["istio-system"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-health-checks
+  namespace: policycortex
+spec:
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/health", "/ready", "/live"]

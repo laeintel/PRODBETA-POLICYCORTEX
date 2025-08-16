@@ -1,0 +1,38 @@
+# Tenant-specific namespaces with Istio injection
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-default
+  labels:
+    istio-injection: enabled
+    tenant: default
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-alpha
+  labels:
+    istio-injection: enabled
+    tenant: alpha
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-beta
+  labels:
+    istio-injection: enabled
+    tenant: beta
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant-enterprise
+  labels:
+    istio-injection: enabled
+    tenant: enterprise
+    environment: production
+    tier: enterprise

@@ -1,0 +1,89 @@
+name: Deploy Service Mesh
+
+on:
+  push:
+    branches: [main, CLEAN-DEFENSE-BRANCH]
+    paths:
+      - 'infrastructure/kubernetes/istio/**'
+      - '.github/workflows/deploy-service-mesh.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AKS_CLUSTER_NAME: policycortex-aks
+  AKS_RESOURCE_GROUP: policycortex-rg
+
+jobs:
+  deploy-istio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ env.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ env.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ env.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ env.AZURE_TENANT_ID }}"
+            }
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AKS_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Install Istio CLI
+        run: |
+          curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.0 sh -
+          sudo mv istio-*/bin/istioctl /usr/local/bin/
+          istioctl version --remote=false
+
+      - name: Deploy Istio Service Mesh
+        working-directory: ./infrastructure/kubernetes/istio
+        run: |
+          chmod +x deploy-istio.sh
+          ./deploy-istio.sh
+
+      - name: Verify Istio Installation
+        run: |
+          istioctl verify-install
+          kubectl get pods -n istio-system
+          kubectl get svc -n istio-system
+
+      - name: Deploy Tenant Applications
+        run: |
+          # Deploy applications to tenant namespaces
+          for tenant in default alpha beta enterprise; do
+            echo "Deploying to tenant-$tenant namespace..."
+            kubectl apply -f infrastructure/kubernetes/deployments/ -n tenant-$tenant || true
+          done
+
+      - name: Configure Istio Telemetry
+        run: |
+          # Install Prometheus
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
+          
+          # Install Grafana
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
+          
+          # Install Kiali
+          kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
+
+      - name: Output Gateway Information
+        run: |
+          echo "🌐 Istio Ingress Gateway External IP:"
+          kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+          echo ""
+          echo "📊 Access URLs:"
+          echo "- Kiali: kubectl port-forward svc/kiali -n istio-system 20001:20001"
+          echo "- Grafana: kubectl port-forward svc/grafana -n istio-system 3000:3000"
+          echo "- Prometheus: kubectl port-forward svc/prometheus -n istio-system 9090:9090"
