@@ -1,0 +1,467 @@
+name: Deploy Service Mesh
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: dev
+      tenant_tier:
+        description: 'Tenant tier configuration'
+        required: true
+        type: choice
+        options:
+          - enterprise
+          - premium
+          - standard
+        default: enterprise
+      dry_run:
+        description: 'Perform dry run deployment'
+        required: false
+        type: boolean
+        default: false
+      skip_validation:
+        description: 'Skip post-deployment validation'
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/kubernetes/istio/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infrastructure/kubernetes/istio/**'
+
+env:
+  ISTIO_VERSION: "1.20.2"
+  HELM_VERSION: "3.14.0"
+  KUBECTL_VERSION: "1.29.0"
+  AZURE_RESOURCE_GROUP: "rg-policycortex-${{ github.event.inputs.environment || 'dev' }}"
+  AKS_CLUSTER_NAME: "aks-policycortex-${{ github.event.inputs.environment || 'dev' }}"
+
+jobs:
+  validate-configuration:
+    name: Validate Service Mesh Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      configuration-valid: ${{ steps.validate.outputs.valid }}
+      tenant-tier: ${{ steps.validate.outputs.tenant-tier }}
+      environment: ${{ steps.validate.outputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up environment variables
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ENVIRONMENT=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+            echo "TENANT_TIER=${{ github.event.inputs.tenant_tier }}" >> $GITHUB_ENV
+            echo "DRY_RUN=${{ github.event.inputs.dry_run }}" >> $GITHUB_ENV
+            echo "SKIP_VALIDATION=${{ github.event.inputs.skip_validation }}" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "TENANT_TIER=enterprise" >> $GITHUB_ENV
+            echo "DRY_RUN=true" >> $GITHUB_ENV
+            echo "SKIP_VALIDATION=false" >> $GITHUB_ENV
+          fi
+
+      - name: Install validation tools
+        run: |
+          # Install kubeval for Kubernetes manifest validation
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo mv kubeval /usr/local/bin/
+          
+          # Install yamllint
+          sudo pip install yamllint
+          
+          # Install helm
+          curl https://get.helm.sh/helm-v${{ env.HELM_VERSION }}-linux-amd64.tar.gz | tar xz
+          sudo mv linux-amd64/helm /usr/local/bin/
+
+      - name: Validate YAML syntax
+        run: |
+          echo "Validating YAML syntax..."
+          find infrastructure/kubernetes/istio -name "*.yaml" -o -name "*.yml" | xargs yamllint -d relaxed
+
+      - name: Validate Kubernetes manifests
+        run: |
+          echo "Validating Kubernetes manifests..."
+          find infrastructure/kubernetes/istio -name "*.yaml" | grep -E "(namespace|peer-authentication|authorization-policy|ingress-gateway|network-policies|tenant-namespaces)" | while read file; do
+            echo "Validating $file..."
+            kubeval "$file" || echo "Warning: Validation failed for $file"
+          done
+
+      - name: Validate Helm values
+        run: |
+          echo "Validating Helm values files..."
+          helm lint infrastructure/kubernetes/istio/istio-base-values.yaml || echo "Warning: Helm lint failed"
+
+      - name: Check required files
+        id: validate
+        run: |
+          echo "Checking required configuration files..."
+          required_files=(
+            "infrastructure/kubernetes/istio/istio-system-namespace.yaml"
+            "infrastructure/kubernetes/istio/istio-base-values.yaml"
+            "infrastructure/kubernetes/istio/peer-authentication.yaml"
+            "infrastructure/kubernetes/istio/authorization-policy.yaml"
+            "infrastructure/kubernetes/istio/ingress-gateway.yaml"
+            "infrastructure/kubernetes/istio/tenant-namespaces.yaml"
+            "infrastructure/kubernetes/istio/network-policies.yaml"
+            "infrastructure/kubernetes/istio/helm-values-tenants.yaml"
+            "infrastructure/kubernetes/istio/deploy-istio.sh"
+          )
+          
+          missing_files=()
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              missing_files+=("$file")
+            fi
+          done
+          
+          if [ ${#missing_files[@]} -ne 0 ]; then
+            echo "Missing required files: ${missing_files[*]}"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "All required files present"
+            echo "valid=true" >> $GITHUB_OUTPUT
+            echo "tenant-tier=${{ env.TENANT_TIER }}" >> $GITHUB_OUTPUT
+            echo "environment=${{ env.ENVIRONMENT }}" >> $GITHUB_OUTPUT
+          fi
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: validate-configuration
+    if: needs.validate-configuration.outputs.configuration-valid == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'infrastructure/kubernetes/istio'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Check for security violations
+        run: |
+          echo "Checking for security policy violations..."
+          
+          # Check for insecure configurations
+          grep -r "mode: DISABLE" infrastructure/kubernetes/istio/ && echo "Warning: mTLS disabled found" || echo "mTLS configuration secure"
+          grep -r "mode: PERMISSIVE" infrastructure/kubernetes/istio/ && echo "Warning: Permissive mTLS found" || echo "mTLS configuration secure"
+          
+          # Check for missing security labels
+          if ! grep -r "policycortex.aeolitech.com/security-level" infrastructure/kubernetes/istio/; then
+            echo "Warning: Missing security level labels"
+          fi
+
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [validate-configuration, security-scan]
+    if: |
+      needs.validate-configuration.outputs.configuration-valid == 'true' &&
+      (github.event.inputs.environment == 'dev' || github.event_name != 'workflow_dispatch')
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_DEV }}
+
+      - name: Set up Azure CLI
+        uses: azure/CLI@v1
+        with:
+          azcliversion: 2.30.0
+          inlineScript: |
+            az --version
+            az account show
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Install Istio CLI
+        run: |
+          curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${{ env.ISTIO_VERSION }} sh -
+          sudo mv istio-${{ env.ISTIO_VERSION }}/bin/istioctl /usr/local/bin/
+          istioctl version --client
+
+      - name: Install Helm
+        run: |
+          curl https://get.helm.sh/helm-v${{ env.HELM_VERSION }}-linux-amd64.tar.gz | tar xz
+          sudo mv linux-amd64/helm /usr/local/bin/
+          helm version
+
+      - name: Pre-deployment validation
+        run: |
+          echo "Validating cluster readiness..."
+          kubectl cluster-info
+          kubectl get nodes
+          kubectl get namespaces
+
+      - name: Deploy Istio Service Mesh
+        run: |
+          cd infrastructure/kubernetes/istio
+          chmod +x deploy-istio.sh
+          
+          export TENANT_TIER="${{ needs.validate-configuration.outputs.tenant-tier }}"
+          export DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          export SKIP_VALIDATION="${{ github.event.inputs.skip_validation || 'false' }}"
+          
+          ./deploy-istio.sh --tenant-tier "$TENANT_TIER"
+
+      - name: Post-deployment validation
+        if: github.event.inputs.skip_validation != 'true'
+        run: |
+          echo "Validating deployment..."
+          
+          # Wait for deployments to be ready
+          kubectl wait --for=condition=available deployment -l app=istiod -n istio-system --timeout=300s
+          
+          # Check Istio installation
+          istioctl verify-install
+          
+          # Check proxy status
+          istioctl proxy-status
+          
+          # Analyze configuration
+          istioctl analyze --all-namespaces
+
+      - name: Generate deployment report
+        if: always()
+        run: |
+          echo "## Deployment Report - Development" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: dev" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tenant Tier**: ${{ needs.validate-configuration.outputs.tenant-tier }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Istio Version**: ${{ env.ISTIO_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: ${{ github.event.inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Istio Components" >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n istio-system -o wide >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Services" >> $GITHUB_STEP_SUMMARY
+          kubectl get svc -n istio-system >> $GITHUB_STEP_SUMMARY
+          kubectl get svc -n istio-ingress >> $GITHUB_STEP_SUMMARY
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [validate-configuration, security-scan, deploy-dev]
+    if: |
+      needs.validate-configuration.outputs.configuration-valid == 'true' &&
+      github.event.inputs.environment == 'staging' &&
+      success()
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_STAGING }}
+
+      - name: Set environment variables
+        run: |
+          echo "AZURE_RESOURCE_GROUP=rg-policycortex-staging" >> $GITHUB_ENV
+          echo "AKS_CLUSTER_NAME=aks-policycortex-staging" >> $GITHUB_ENV
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Install tools
+        run: |
+          # Install Istio CLI
+          curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${{ env.ISTIO_VERSION }} sh -
+          sudo mv istio-${{ env.ISTIO_VERSION }}/bin/istioctl /usr/local/bin/
+          
+          # Install Helm
+          curl https://get.helm.sh/helm-v${{ env.HELM_VERSION }}-linux-amd64.tar.gz | tar xz
+          sudo mv linux-amd64/helm /usr/local/bin/
+
+      - name: Deploy Istio Service Mesh
+        run: |
+          cd infrastructure/kubernetes/istio
+          chmod +x deploy-istio.sh
+          
+          export TENANT_TIER="${{ needs.validate-configuration.outputs.tenant-tier }}"
+          export DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          export SKIP_VALIDATION="${{ github.event.inputs.skip_validation || 'false' }}"
+          
+          ./deploy-istio.sh --tenant-tier "$TENANT_TIER"
+
+      - name: Staging validation
+        run: |
+          echo "Running staging-specific validations..."
+          istioctl analyze --all-namespaces
+          kubectl get pods -A | grep istio
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [validate-configuration, security-scan, deploy-staging]
+    if: |
+      needs.validate-configuration.outputs.configuration-valid == 'true' &&
+      github.event.inputs.environment == 'prod' &&
+      success()
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_PROD }}
+
+      - name: Set environment variables
+        run: |
+          echo "AZURE_RESOURCE_GROUP=rg-policycortex-prod" >> $GITHUB_ENV
+          echo "AKS_CLUSTER_NAME=aks-policycortex-prod" >> $GITHUB_ENV
+
+      - name: Production safety checks
+        run: |
+          echo "Performing production safety checks..."
+          
+          # Verify we're not in dry-run mode for production
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "Error: Cannot deploy to production in dry-run mode"
+            exit 1
+          fi
+          
+          # Verify tenant tier is appropriate for production
+          if [ "${{ needs.validate-configuration.outputs.tenant-tier }}" != "enterprise" ]; then
+            echo "Warning: Deploying non-enterprise tier to production"
+          fi
+
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --overwrite-existing
+
+      - name: Install tools
+        run: |
+          # Install Istio CLI
+          curl -L https://istio.io/downloadIstio | ISTIO_VERSION=${{ env.ISTIO_VERSION }} sh -
+          sudo mv istio-${{ env.ISTIO_VERSION }}/bin/istioctl /usr/local/bin/
+          
+          # Install Helm
+          curl https://get.helm.sh/helm-v${{ env.HELM_VERSION }}-linux-amd64.tar.gz | tar xz
+          sudo mv linux-amd64/helm /usr/local/bin/
+
+      - name: Backup existing configuration
+        run: |
+          echo "Backing up existing Istio configuration..."
+          mkdir -p backup
+          kubectl get all -n istio-system -o yaml > backup/istio-system-backup.yaml
+          kubectl get peerauthentication -A -o yaml > backup/peer-auth-backup.yaml
+          kubectl get authorizationpolicy -A -o yaml > backup/authz-policy-backup.yaml
+
+      - name: Deploy Istio Service Mesh
+        run: |
+          cd infrastructure/kubernetes/istio
+          chmod +x deploy-istio.sh
+          
+          export TENANT_TIER="${{ needs.validate-configuration.outputs.tenant-tier }}"
+          export DRY_RUN="false"
+          export SKIP_VALIDATION="false"
+          export ENABLE_MONITORING="true"
+          export ENABLE_TRACING="true"
+          
+          ./deploy-istio.sh --tenant-tier "$TENANT_TIER" --enable-monitoring --enable-tracing
+
+      - name: Production validation
+        run: |
+          echo "Running production validations..."
+          
+          # Wait for all components to be ready
+          kubectl wait --for=condition=available deployment -l app=istiod -n istio-system --timeout=600s
+          
+          # Comprehensive verification
+          istioctl verify-install
+          istioctl proxy-status
+          istioctl analyze --all-namespaces
+          
+          # Check security policies
+          kubectl get peerauthentication -A
+          kubectl get authorizationpolicy -A
+          
+          # Verify mTLS is strict
+          istioctl authn tls-check
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "## 🚀 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: production" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tenant Tier**: ${{ needs.validate-configuration.outputs.tenant-tier }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Istio Version**: ${{ env.ISTIO_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security**: Strict mTLS enabled" >> $GITHUB_STEP_SUMMARY
+          echo "- **Multi-tenant isolation**: Enabled" >> $GITHUB_STEP_SUMMARY
+
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-dev, deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+      - name: Cleanup artifacts
+        run: |
+          echo "Cleaning up deployment artifacts..."
+          # Add any cleanup tasks here
+
+      - name: Report deployment status
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation**: ${{ needs.validate-configuration.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Scan**: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Development**: ${{ needs.deploy-dev.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Staging**: ${{ needs.deploy-staging.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production**: ${{ needs.deploy-production.result }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,228 @@
+---
+# Global Peer Authentication - Enforce strict mTLS across the mesh
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+spec:
+  # Enforce strict mTLS for all workloads in the mesh
+  mtls:
+    mode: STRICT
+---
+# PolicyCortex Application Namespace - Strict mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: policycortex-strict-mtls
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/tenant: shared
+spec:
+  mtls:
+    mode: STRICT
+---
+# Tenant Enterprise - Strict mTLS with enhanced security
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: tenant-enterprise-mtls
+  namespace: policycortex-enterprise
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/tenant: enterprise
+spec:
+  mtls:
+    mode: STRICT
+---
+# Tenant Premium - Strict mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: tenant-premium-mtls
+  namespace: policycortex-premium
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/tenant: premium
+spec:
+  mtls:
+    mode: STRICT
+---
+# Tenant Standard - Strict mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: tenant-standard-mtls
+  namespace: policycortex-standard
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: medium
+    policycortex.aeolitech.com/tenant: standard
+spec:
+  mtls:
+    mode: STRICT
+---
+# Core Services - Ultra-strict mTLS with workload-specific settings
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: core-services-mtls
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/component: core
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-core
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8080:
+      mode: STRICT
+    8443:
+      mode: STRICT
+---
+# Frontend Services - Strict mTLS for internal communication
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: frontend-services-mtls
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/component: frontend
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-frontend
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    3000:
+      mode: STRICT
+    3005:
+      mode: STRICT
+---
+# GraphQL Gateway - Strict mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: graphql-gateway-mtls
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: high
+    policycortex.aeolitech.com/component: graphql
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-graphql
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    4000:
+      mode: STRICT
+    4001:
+      mode: STRICT
+---
+# AI Engine Services - Critical security mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: ai-engine-mtls
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/component: ai-engine
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-ai-engine
+  mtls:
+    mode: STRICT
+---
+# Database Services - Ultra-strict mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: database-services-mtls
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+    policycortex.aeolitech.com/component: database
+spec:
+  selector:
+    matchLabels:
+      component: database
+  mtls:
+    mode: STRICT
+---
+# Monitoring and Observability - Permissive for external tools
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: monitoring-mtls
+  namespace: istio-system
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: medium
+    policycortex.aeolitech.com/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      component: monitoring
+  mtls:
+    mode: PERMISSIVE
+---
+# External Services - Disable mTLS for external communication
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: external-services-mtls
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: peer-authentication
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: low
+    policycortex.aeolitech.com/component: external
+spec:
+  selector:
+    matchLabels:
+      type: external-service
+  mtls:
+    mode: DISABLE

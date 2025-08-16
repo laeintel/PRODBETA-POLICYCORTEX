@@ -1,0 +1,745 @@
+---
+# Default Deny All Network Policy - Security by Default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/security-level: critical
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# PolicyCortex Core Services Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: policycortex-core-network-policy
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: core
+spec:
+  podSelector:
+    matchLabels:
+      app: policycortex-core
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from frontend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: policycortex-frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8443
+  # Allow traffic from GraphQL gateway
+  - from:
+    - podSelector:
+        matchLabels:
+          app: policycortex-graphql
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow traffic from Istio ingress gateway
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-ingress
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8443
+  # Allow health checks from Istio system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  # Allow outbound to databases
+  - to:
+    - podSelector:
+        matchLabels:
+          component: database
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis/DragonflyDB
+    - protocol: TCP
+      port: 2113  # EventStore
+  # Allow outbound to AI engine
+  - to:
+    - podSelector:
+        matchLabels:
+          app: policycortex-ai-engine
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow outbound DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow outbound to Azure APIs
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+---
+# Frontend Services Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: policycortex-frontend-network-policy
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: frontend
+spec:
+  podSelector:
+    matchLabels:
+      app: policycortex-frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from Istio ingress gateway
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-ingress
+    ports:
+    - protocol: TCP
+      port: 3000
+    - protocol: TCP
+      port: 3005
+  # Allow health checks from Istio system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  # Allow outbound to core API
+  - to:
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow outbound to GraphQL
+  - to:
+    - podSelector:
+        matchLabels:
+          app: policycortex-graphql
+    ports:
+    - protocol: TCP
+      port: 4000
+  # Allow outbound DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow outbound HTTPS for external resources
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+---
+# GraphQL Gateway Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: policycortex-graphql-network-policy
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: graphql
+spec:
+  podSelector:
+    matchLabels:
+      app: policycortex-graphql
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from frontend
+  - from:
+    - podSelector:
+        matchLabels:
+          app: policycortex-frontend
+    ports:
+    - protocol: TCP
+      port: 4000
+    - protocol: TCP
+      port: 4001
+  # Allow traffic from Istio ingress gateway
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-ingress
+    ports:
+    - protocol: TCP
+      port: 4000
+    - protocol: TCP
+      port: 4001
+  # Allow health checks from Istio system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    ports:
+    - protocol: TCP
+      port: 4000
+  egress:
+  # Allow outbound to core API
+  - to:
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow outbound to AI engine
+  - to:
+    - podSelector:
+        matchLabels:
+          app: policycortex-ai-engine
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow outbound DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+---
+# AI Engine Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: policycortex-ai-engine-network-policy
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: ai-engine
+spec:
+  podSelector:
+    matchLabels:
+      app: policycortex-ai-engine
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from core services only
+  - from:
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow traffic from GraphQL gateway
+  - from:
+    - podSelector:
+        matchLabels:
+          app: policycortex-graphql
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow health checks from Istio system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Allow outbound to core API for data access
+  - to:
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow outbound DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow outbound HTTPS for Azure AI services
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+---
+# Database Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-network-policy
+  namespace: policycortex
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: database
+spec:
+  podSelector:
+    matchLabels:
+      component: database
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Only allow core services to access databases
+  - from:
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis/DragonflyDB
+    - protocol: TCP
+      port: 2113  # EventStore
+  # Allow AI engine to access databases
+  - from:
+    - podSelector:
+        matchLabels:
+          app: policycortex-ai-engine
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+  # Allow monitoring from Istio system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+    - protocol: TCP
+      port: 2113
+  egress:
+  # Allow outbound DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow database replication if needed
+  - to:
+    - podSelector:
+        matchLabels:
+          component: database
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+    - protocol: TCP
+      port: 2113
+---
+# Enterprise Tenant Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-enterprise-network-policy
+  namespace: policycortex-enterprise
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: enterprise
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from core services
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-frontend
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-graphql
+  # Allow intra-namespace communication
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-enterprise
+  # Allow Istio system communication
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  egress:
+  # Allow outbound to core services
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+  # Allow intra-namespace communication
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-enterprise
+  # Allow Istio system communication
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow HTTPS for external resources
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+---
+# Premium Tenant Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-premium-network-policy
+  namespace: policycortex-premium
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: premium
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from core services
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-frontend
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-graphql
+  # Allow intra-namespace communication
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-premium
+  # Allow Istio system communication
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  egress:
+  # Allow outbound to core services
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+  # Allow intra-namespace communication
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-premium
+  # Allow Istio system communication
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow HTTPS for external resources (limited)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+---
+# Standard Tenant Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-standard-network-policy
+  namespace: policycortex-standard
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/tenant: standard
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from core services
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-core
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-frontend
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+    - podSelector:
+        matchLabels:
+          app: policycortex-graphql
+  # Allow intra-namespace communication
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-standard
+  # Allow Istio system communication
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  egress:
+  # Allow outbound to core services
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+  # Allow intra-namespace communication
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-standard
+  # Allow Istio system communication
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Restricted HTTPS access for standard tier
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+---
+# Istio System Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: istio-system-network-policy
+  namespace: istio-system
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: istio-system
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all traffic within istio-system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  # Allow traffic from all application namespaces for health checks
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-enterprise
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-premium
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-standard
+  # Allow traffic from ingress and egress namespaces
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-ingress
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-egress
+  egress:
+  # Allow all outbound traffic for Istio system components
+  - to: []
+---
+# Istio Ingress Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: istio-ingress-network-policy
+  namespace: istio-ingress
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: istio-ingress
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow all external traffic to ingress gateway
+  - {}
+  egress:
+  # Allow outbound to all application namespaces
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-enterprise
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-premium
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-standard
+  # Allow communication with Istio system
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+---
+# Istio Egress Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: istio-egress-network-policy
+  namespace: istio-egress
+  labels:
+    app.kubernetes.io/name: network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: policycortex
+    policycortex.aeolitech.com/component: istio-egress
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow traffic from application namespaces
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-enterprise
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-premium
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: policycortex-standard
+  # Allow communication with Istio system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+  egress:
+  # Allow all outbound traffic for egress gateway
+  - to: []

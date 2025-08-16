@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-system
+  labels:
+    name: istio-system
+    istio-injection: disabled
+    security.istio.io/tlsMode: strict
+    app.kubernetes.io/name: istio-system
+    app.kubernetes.io/component: istio-control-plane
+    app.kubernetes.io/part-of: policycortex
+    app.kubernetes.io/managed-by: helm
+  annotations:
+    meta.helm.sh/release-name: istio-control-plane
+    meta.helm.sh/release-namespace: istio-system
+    security.istio.io/enforce-policy: "true"
+    policycortex.aeolitech.com/environment: "production"
+    policycortex.aeolitech.com/security-level: "critical"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-ingress
+  labels:
+    name: istio-ingress
+    istio-injection: enabled
+    security.istio.io/tlsMode: strict
+    app.kubernetes.io/name: istio-ingress
+    app.kubernetes.io/component: istio-gateway
+    app.kubernetes.io/part-of: policycortex
+    app.kubernetes.io/managed-by: helm
+  annotations:
+    meta.helm.sh/release-name: istio-ingress
+    meta.helm.sh/release-namespace: istio-ingress
+    security.istio.io/enforce-policy: "true"
+    policycortex.aeolitech.com/environment: "production"
+    policycortex.aeolitech.com/security-level: "high"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-egress
+  labels:
+    name: istio-egress
+    istio-injection: enabled
+    security.istio.io/tlsMode: strict
+    app.kubernetes.io/name: istio-egress
+    app.kubernetes.io/component: istio-gateway
+    app.kubernetes.io/part-of: policycortex
+    app.kubernetes.io/managed-by: helm
+  annotations:
+    meta.helm.sh/release-name: istio-egress
+    meta.helm.sh/release-namespace: istio-egress
+    security.istio.io/enforce-policy: "true"
+    policycortex.aeolitech.com/environment: "production"
+    policycortex.aeolitech.com/security-level: "high"
