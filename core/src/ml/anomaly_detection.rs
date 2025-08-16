@@ -163,7 +163,7 @@ impl IsolationForest {
     pub fn anomaly_score(&self, features: &[f64]) -> f64 {
         // Simplified isolation forest scoring
         // In production, would use actual tree traversal
-        let mut score = 0.0;
+        let mut score: f64 = 0.0;
         
         for feature in features {
             if *feature > 80.0 || *feature < 5.0 {
@@ -200,7 +200,7 @@ impl StatisticalDetector {
     }
     
     pub fn detect(&self, features: &[f64]) -> f64 {
-        let mut max_z_score = 0.0;
+        let mut max_z_score: f64 = 0.0;
         
         for (i, &value) in features.iter().enumerate() {
             if i < self.mean.len() {
@@ -285,7 +285,7 @@ impl PatternBasedDetector {
     }
     
     pub fn detect(&self, metrics: &ResourceMetrics) -> f64 {
-        let mut max_score = 0.0;
+        let mut max_score: f64 = 0.0;
         
         for pattern in &self.known_patterns {
             let score = pattern.match_score(metrics);

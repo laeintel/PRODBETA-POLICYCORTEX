@@ -152,14 +152,14 @@ impl ContinuousTrainingPipeline {
         
         // Check if model meets minimum requirements
         if validation_metrics.accuracy >= self.config.min_accuracy {
+            // Record metrics
+            let training_time = Utc::now() - start_time;
+            let model_id = new_model.id.clone();
+            
             // Deploy new model
             if self.config.auto_deploy {
                 self.deploy_model(new_model).await?;
             }
-            
-            // Record metrics
-            let training_time = Utc::now() - start_time;
-            let model_id = new_model.id.clone();
             self.record_training_metrics(TrainingMetrics {
                 model_id,
                 started_at: start_time,
@@ -287,9 +287,9 @@ impl ContinuousTrainingPipeline {
     pub async fn rollback_model(&self, version_id: &str) -> Result<(), String> {
         let mut versions = self.model_versions.write().await;
         
-        // Find the specified version
-        let target_version = versions.iter_mut()
-            .find(|v| v.id == version_id)
+        // Find the specified version index
+        let target_idx = versions.iter()
+            .position(|v| v.id == version_id)
             .ok_or_else(|| format!("Model version {} not found", version_id))?;
         
         // Deactivate all models
@@ -298,8 +298,9 @@ impl ContinuousTrainingPipeline {
         }
         
         // Activate target version
-        target_version.is_active = true;
-        *self.active_model_id.write().await = target_version.id.clone();
+        versions[target_idx].is_active = true;
+        let target_id = versions[target_idx].id.clone();
+        *self.active_model_id.write().await = target_id;
         
         tracing::info!("Rolled back to model version: {}", version_id);
         

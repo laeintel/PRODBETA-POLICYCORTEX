@@ -300,7 +300,7 @@ impl RequirementParser {
     }
     
     fn calculate_confidence(&self, resource_types: &[String], conditions: &[Condition]) -> f64 {
-        let mut confidence = 0.5;
+        let mut confidence: f64 = 0.5;
         
         if !resource_types.is_empty() {
             confidence += 0.2;

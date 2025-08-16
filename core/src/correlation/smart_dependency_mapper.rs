@@ -14,6 +14,7 @@ use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
 use chrono::{DateTime, Utc, Duration};
 use petgraph::graph::{DiGraph, NodeIndex, EdgeIndex};
 use petgraph::algo::{kosaraju_scc, dijkstra, bellman_ford};
+use petgraph::visit::EdgeRef;
 use uuid::Uuid;
 
 /// Smart dependency mapper with ML-based inference
@@ -203,8 +204,8 @@ impl SmartDependencyMapper {
                             source: DependencySource::Explicit,
                             discovered_at: Utc::now(),
                             last_verified: Utc::now(),
-                            business_criticality: dep.business_criticality,
-                            failure_impact: dep.failure_impact,
+                            business_criticality: dep.business_criticality.clone(),
+                            failure_impact: dep.failure_impact.clone(),
                             recovery_time: dep.recovery_time,
                         };
                         
@@ -432,7 +433,7 @@ impl SmartDependencyMapper {
         }
     }
 
-    fn generate_dependency_insights(&self, resources: &[SmartResourceInfo]) -> Vec<DependencyInsight> {
+    fn generate_dependency_insights(&self, _resources: &[SmartResourceInfo]) -> Vec<DependencyInsight> {
         let mut insights = Vec::new();
         
         // Insight 1: Highly connected resources
@@ -1013,8 +1014,8 @@ impl DependencyInferenceEngine {
     }
 
     pub async fn infer_dependencies(&self, 
-        resources: &[SmartResourceInfo], 
-        runtime_data: &[RuntimeMetric]
+        _resources: &[SmartResourceInfo], 
+        _runtime_data: &[RuntimeMetric]
     ) -> Vec<InferredDependency> {
         // ML-based dependency inference
         vec![] // Simplified for now
@@ -1053,16 +1054,16 @@ impl DependencyPredictor {
     }
 
     pub async fn predict_future_dependencies(&self, 
-        resources: &[SmartResourceInfo], 
-        runtime_data: &[RuntimeMetric]
+        _resources: &[SmartResourceInfo], 
+        _runtime_data: &[RuntimeMetric]
     ) -> Vec<PredictedDependency> {
         // Predict future dependencies based on trends
         vec![] // Simplified for now
     }
 
     pub async fn update_predictions(&self, 
-        events: &[ResourceEvent], 
-        metrics: &[RuntimeMetric]
+        _events: &[ResourceEvent], 
+        _metrics: &[RuntimeMetric]
     ) -> Vec<PredictedDependency> {
         // Update predictions with real-time data
         vec![] // Simplified for now

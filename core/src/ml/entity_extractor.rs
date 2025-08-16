@@ -21,7 +21,7 @@ pub struct Entity {
     pub end_index: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
 pub enum EntityType {
     ResourceType,
     ResourceName,

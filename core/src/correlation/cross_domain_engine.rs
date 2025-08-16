@@ -236,7 +236,7 @@ impl CrossDomainEngine {
     }
     
     fn calculate_resource_risk(&self, resource: &AzureResource) -> f64 {
-        let mut risk = 0.0;
+        let mut risk: f64 = 0.0;
         
         // Check for compliance violations
         if resource.compliance_state == "NonCompliant" {

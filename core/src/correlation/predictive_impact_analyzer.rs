@@ -11,8 +11,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::time::Duration;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use uuid::Uuid;
 
 // Define missing types
@@ -99,7 +98,7 @@ impl PredictiveImpactAnalyzer {
     }
 
     /// Predict impact of potential changes or failures
-    pub async fn predict_impact(&self, 
+    pub async fn predict_impact(&mut self, 
         scenario: ImpactScenario,
         resources: &[ResourceContext],
         historical_data: &[HistoricalEvent]
@@ -140,7 +139,7 @@ impl PredictiveImpactAnalyzer {
         let result = PredictiveImpactResult {
             scenario: scenario.clone(),
             impact_timeline,
-            cascade_effects,
+            cascade_effects: cascade_effects.clone(),
             risk_assessment,
             mitigation_options,
             confidence_metrics,
@@ -592,7 +591,7 @@ impl PredictiveImpactAnalyzer {
             if effect.impact_strength > 0.7 {
                 mitigations.push(MitigationOption {
                     action_type: ActionType::Preventive,
-                    target_resource: effect.target_resource.clone(),
+                    target_resource: effect.affected_resource.clone(),
                     implementation_time: 15,
                     expected_effectiveness: 0.8,
                     prerequisites: vec![],
@@ -804,7 +803,7 @@ impl PredictiveEngine {
         }
     }
 
-    pub fn update_with_real_time_data(&mut self, event: &OngoingEvent) {
+    pub fn update_with_real_time_data(&mut self, _event: &OngoingEvent) {
         // Update predictive models with real-time observations
     }
 }
