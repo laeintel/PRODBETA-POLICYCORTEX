@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::algo::{all_simple_paths, has_path_connecting};
+use petgraph::visit::EdgeRef;
 
 /// Resource mapper for dependency tracking
 pub struct ResourceMapper {

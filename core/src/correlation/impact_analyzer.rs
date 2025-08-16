@@ -147,7 +147,7 @@ impl ImpactAnalyzer {
         
         ImpactAssessment {
             event: event.clone(),
-            affected_resources,
+            affected_resources: affected_resources.clone(),
             cascade_effects,
             total_impact_score: self.calculate_total_impact(&affected_resources),
             estimated_recovery_time: self.estimate_recovery_time(&event, &affected_resources),

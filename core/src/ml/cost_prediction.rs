@@ -10,7 +10,7 @@
 // Predicts future cloud costs and identifies optimization opportunities
 
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Utc, Duration, Datelike};
 use std::collections::HashMap;
 
 /// Cost prediction model for forecasting cloud expenses

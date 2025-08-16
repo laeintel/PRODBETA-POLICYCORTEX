@@ -28,7 +28,7 @@ pub struct Intent {
     pub domain: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
 pub enum IntentType {
     // Query Intents
     List,

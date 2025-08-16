@@ -1,1250 +1,1301 @@
-Failed to load resource: the server responded with a status of 500 (Internal Server Error)
-(index):1  The resource http://localhost:3000/_next/static/media/e4af272ccee01ff0-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
-invariant.js:35 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
-AuthContext.tsx:86  🚨 SECURITY WARNING: Demo mode is active! This bypasses authentication and should NEVER be used in production!
-login @ AuthContext.tsx:86
-AuthContext.tsx:96 Demo mode: Authentication bypassed for development
-2auth-config.ts:47 [Fri, 15 Aug 2025 12:17:52 GMT] : [] : @azure/msal-react@3.0.18 : Info - useAccount - Updating account
-hot-reloader-client.js:176 [Fast Refresh] rebuilding
-[NEW] Explain Console errors by using Copilot in Edge: click
-         
-         to explain an error. 
-        Learn more
-        Don't show again
-auth-config.ts:53  [Fri, 15 Aug 2025 12:17:56 GMT] : [] : @azure/msal-browser@4.20.0 : Warning - There is already an instance of MSAL.js in the window with the same client id.
-loggerCallback @ auth-config.ts:53
-executeCallback @ Logger.mjs:83
-logMessage @ Logger.mjs:76
-warning @ Logger.mjs:110
-collectInstanceStats @ MsalFrameStatsUtils.mjs:14
-logMultipleInstances @ StandardController.mjs:1450
-initialize @ StandardController.mjs:159
-initialize @ PublicClientApplication.mjs:61
-getAuthHeaders @ api.ts:122
-await in getAuthHeaders
-getDashboardData @ api.ts:252
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-commitHookPassiveMountEffects @ react-dom.development.js:23051
-reconnectPassiveEffects @ react-dom.development.js:23303
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-commitPassiveMountOnFiber @ react-dom.development.js:23238
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23164
-commitPassiveMountEffects @ react-dom.development.js:23122
-flushPassiveEffectsImpl @ react-dom.development.js:26322
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-auth-config.ts:53  [Fri, 15 Aug 2025 12:17:56 GMT] : [] : @azure/msal-browser@4.20.0 : Warning - There is already an instance of MSAL.js in the window with the same client id.
-loggerCallback @ auth-config.ts:53
-executeCallback @ Logger.mjs:83
-logMessage @ Logger.mjs:76
-warning @ Logger.mjs:110
-collectInstanceStats @ MsalFrameStatsUtils.mjs:14
-logMultipleInstances @ StandardController.mjs:1450
-initialize @ StandardController.mjs:159
-initialize @ PublicClientApplication.mjs:61
-getAuthHeaders @ api.ts:122
-await in getAuthHeaders
-getDashboardData @ api.ts:252
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-invokePassiveEffectMountInDEV @ react-dom.development.js:23877
-invokeEffectsInDev @ react-dom.development.js:26666
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26649
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26630
-flushPassiveEffectsImpl @ react-dom.development.js:26339
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-2auth-config.ts:47 [Fri, 15 Aug 2025 12:17:56 GMT] : [] : @azure/msal-browser@4.20.0 : Info - MSAL.js was last initialized by version: 4.20.0
-performance-api.ts:229   GET http://localhost:3000/api/v1/recommendations 500 (Internal Server Error)
-eval @ performance-api.ts:229
-execute @ performance-api.ts:111
-eval @ performance-api.ts:220
-executeWithBackpressure @ performance-api.ts:186
-eval @ performance-api.ts:219
-dedupe @ performance-api.ts:76
-get @ performance-api.ts:218
-eval @ performance-api.ts:326
-batch @ performance-api.ts:324
-getDashboardData @ api.ts:260
-await in getDashboardData
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-commitHookPassiveMountEffects @ react-dom.development.js:23051
-reconnectPassiveEffects @ react-dom.development.js:23303
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-commitPassiveMountOnFiber @ react-dom.development.js:23238
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23164
-commitPassiveMountEffects @ react-dom.development.js:23122
-flushPassiveEffectsImpl @ react-dom.development.js:26322
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-performance-api.ts:229   GET http://localhost:3000/api/v1/metrics 500 (Internal Server Error)
-eval @ performance-api.ts:229
-execute @ performance-api.ts:111
-eval @ performance-api.ts:220
-executeWithBackpressure @ performance-api.ts:186
-eval @ performance-api.ts:219
-dedupe @ performance-api.ts:76
-get @ performance-api.ts:218
-eval @ performance-api.ts:326
-batch @ performance-api.ts:324
-getDashboardData @ api.ts:260
-await in getDashboardData
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-commitHookPassiveMountEffects @ react-dom.development.js:23051
-reconnectPassiveEffects @ react-dom.development.js:23303
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-commitPassiveMountOnFiber @ react-dom.development.js:23238
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23164
-commitPassiveMountEffects @ react-dom.development.js:23122
-flushPassiveEffectsImpl @ react-dom.development.js:26322
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-performance-api.ts:229   GET http://localhost:3000/api/v1/predictions 500 (Internal Server Error)
-eval @ performance-api.ts:229
-execute @ performance-api.ts:111
-eval @ performance-api.ts:220
-executeWithBackpressure @ performance-api.ts:186
-eval @ performance-api.ts:219
-dedupe @ performance-api.ts:76
-get @ performance-api.ts:218
-eval @ performance-api.ts:326
-batch @ performance-api.ts:324
-getDashboardData @ api.ts:260
-await in getDashboardData
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-commitHookPassiveMountEffects @ react-dom.development.js:23051
-reconnectPassiveEffects @ react-dom.development.js:23303
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-commitPassiveMountOnFiber @ react-dom.development.js:23238
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23164
-commitPassiveMountEffects @ react-dom.development.js:23122
-flushPassiveEffectsImpl @ react-dom.development.js:26322
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-performance-api.ts:229   GET http://localhost:3000/api/v1/correlations 500 (Internal Server Error)
-eval @ performance-api.ts:229
-execute @ performance-api.ts:111
-eval @ performance-api.ts:220
-executeWithBackpressure @ performance-api.ts:186
-eval @ performance-api.ts:219
-dedupe @ performance-api.ts:76
-get @ performance-api.ts:218
-eval @ performance-api.ts:326
-batch @ performance-api.ts:324
-getDashboardData @ api.ts:260
-await in getDashboardData
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-commitHookPassiveMountEffects @ react-dom.development.js:23051
-reconnectPassiveEffects @ react-dom.development.js:23303
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-commitPassiveMountOnFiber @ react-dom.development.js:23238
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23164
-commitPassiveMountEffects @ react-dom.development.js:23122
-flushPassiveEffectsImpl @ react-dom.development.js:26322
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-api.ts:265  Some dashboard requests failed: (4) [Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…, Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…, Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…, Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…]
-getDashboardData @ api.ts:265
-await in getDashboardData
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-commitHookPassiveMountEffects @ react-dom.development.js:23051
-reconnectPassiveEffects @ react-dom.development.js:23303
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-commitPassiveMountOnFiber @ react-dom.development.js:23238
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23164
-commitPassiveMountEffects @ react-dom.development.js:23122
-flushPassiveEffectsImpl @ react-dom.development.js:26322
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-api.ts:265  Some dashboard requests failed: (4) [Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…, Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…, Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…, Error: HTTP 500: Internal Server Error
-    at eval (webpack-internal:///(app-pages-browser)/./lib/p…]
-getDashboardData @ api.ts:265
-await in getDashboardData
-fetchData @ api.ts:323
-eval @ api.ts:335
-commitHookEffectListMount @ react-dom.development.js:20998
-invokePassiveEffectMountInDEV @ react-dom.development.js:23877
-invokeEffectsInDev @ react-dom.development.js:26666
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26649
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26630
-flushPassiveEffectsImpl @ react-dom.development.js:26339
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-ConnectionStatusBanner.tsx:13   GET http://localhost:3000/api/v1/policies 500 (Internal Server Error)
-check @ ConnectionStatusBanner.tsx:13
-eval @ ConnectionStatusBanner.tsx:22
-commitHookEffectListMount @ react-dom.development.js:20998
-commitHookPassiveMountEffects @ react-dom.development.js:23051
-reconnectPassiveEffects @ react-dom.development.js:23303
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-reconnectPassiveEffects @ react-dom.development.js:23382
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-reconnectPassiveEffects @ react-dom.development.js:23382
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-reconnectPassiveEffects @ react-dom.development.js:23301
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-reconnectPassiveEffects @ react-dom.development.js:23301
-recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23283
-commitPassiveMountOnFiber @ react-dom.development.js:23238
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23231
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23153
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23134
-commitPassiveMountOnFiber @ react-dom.development.js:23164
-commitPassiveMountEffects @ react-dom.development.js:23122
-flushPassiveEffectsImpl @ react-dom.development.js:26322
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-RoadmapStatusWidget.tsx:15   GET http://localhost:3000/api/v1/roadmap 500 (Internal Server Error)
-load @ RoadmapStatusWidget.tsx:15
-eval @ RoadmapStatusWidget.tsx:24
-commitHookEffectListMount @ react-dom.development.js:20998
-invokePassiveEffectMountInDEV @ react-dom.development.js:23877
-invokeEffectsInDev @ react-dom.development.js:26666
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26649
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26630
-flushPassiveEffectsImpl @ react-dom.development.js:26339
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-ConnectionStatusBanner.tsx:13   GET http://localhost:3000/api/v1/policies 500 (Internal Server Error)
-check @ ConnectionStatusBanner.tsx:13
-eval @ ConnectionStatusBanner.tsx:22
-commitHookEffectListMount @ react-dom.development.js:20998
-invokePassiveEffectMountInDEV @ react-dom.development.js:23877
-invokeEffectsInDev @ react-dom.development.js:26666
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26649
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26630
-flushPassiveEffectsImpl @ react-dom.development.js:26339
-flushPassiveEffects @ react-dom.development.js:26263
-eval @ react-dom.development.js:26000
-workLoop @ scheduler.development.js:261
-flushWork @ scheduler.development.js:230
-performWorkUntilDeadline @ scheduler.development.js:534
-RoadmapStatusWidget.tsx:15   GET http://localhost:3000/api/v1/roadmap 500 (Internal Server Error)
+|             help: remove this `mut`
+
+warning: unused variable: `control`
+   --> src\compliance\mod.rs:439:9
+    |
+439 |         control: &ComplianceControl,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_control`
+
+error[E0382]: borrow of moved value: `cascade_effects`
+   --> src\correlation\predictive_impact_analyzer.rs:147:63
+    |
+117 |         let cascade_effects = self.predict_cascade_effects(&scenario, resources, &impact_timeline);
+    |             --------------- move occurs because `cascade_effects` has type `Vec<PredictedCascadeEffect>`, which does not implement the `Copy` trait
+...
+143 |             cascade_effects,
+    |             --------------- value moved here
+...
+147 |             peak_impact_time: self.calculate_peak_impact_time(&cascade_effects),
+    |                                                               ^^^^^^^^^^^^^^^^ value borrowed here after move
+    |
+    = note: borrow occurs due to deref coercion to `[PredictedCascadeEffect]`
+help: consider cloning the value if the performance cost is acceptable
+    |
+143 |             cascade_effects: cascade_effects.clone(),
+    |                            +++++++++++++++++++++++++
+
+error[E0596]: cannot borrow `self.scenario_cache` as mutable, as it is behind a `&` reference
+   --> src\correlation\predictive_impact_analyzer.rs:152:9
+    |
+152 |         self.scenario_cache.insert(scenario, result.clone());
+    |         ^^^^^^^^^^^^^^^^^^^ `self` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+    |
+help: consider changing this to be a mutable reference
+    |
+102 |     pub async fn predict_impact(&mut self,
+    |                                  +++
+
+warning: variable does not need to be mutable
+   --> src\correlation\smart_dependency_mapper.rs:152:17
+    |
+152 |             let mut test_index = self.resource_index.clone();
+    |                 ----^^^^^^^^^^
+    |                 |
+    |                 help: remove this `mut`
+
+warning: unused variable: `resources`
+    --> src\correlation\smart_dependency_mapper.rs:1016:9
+     |
+1016 |         resources: &[SmartResourceInfo],
+     |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `runtime_data`
+    --> src\correlation\smart_dependency_mapper.rs:1017:9
+     |
+1017 |         runtime_data: &[RuntimeMetric]
+     |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_runtime_data`
+
+warning: unused variable: `resources`
+    --> src\correlation\smart_dependency_mapper.rs:1056:9
+     |
+1056 |         resources: &[SmartResourceInfo],
+     |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `runtime_data`
+    --> src\correlation\smart_dependency_mapper.rs:1057:9
+     |
+1057 |         runtime_data: &[RuntimeMetric]
+     |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_runtime_data`
+
+warning: unused variable: `events`
+    --> src\correlation\smart_dependency_mapper.rs:1064:9
+     |
+1064 |         events: &[ResourceEvent],
+     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_events`
+
+warning: unused variable: `metrics`
+    --> src\correlation\smart_dependency_mapper.rs:1065:9
+     |
+1065 |         metrics: &[RuntimeMetric]
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
+warning: unused variable: `key_id`
+   --> src\evidence_pipeline.rs:450:9
+    |
+450 |         key_id: &str,
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_key_id`
+
+warning: unused variable: `task_data`
+   --> src\governance\policy_engine.rs:553:13
+    |
+553 |         let task_data: serde_json::Value = serde_json::from_str(&response_text)
+    |             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_task_data`
+
+warning: unused variable: `budget_request`
+   --> src\governance\cost_management.rs:539:13
+    |
+539 |         let budget_request = self.build_budget_request(&budget)?;
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_budget_request`
+
+warning: unused variable: `budget_id`
+   --> src\governance\cost_management.rs:787:45
+    |
+787 | ...(&self, budget_id: &str, budget: &BudgetDefinition) -> GovernanceResult<()> {
+    |            ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_budget_id`
+
+warning: unused variable: `budget`
+   --> src\governance\cost_management.rs:787:62
+    |
+787 | ..._id: &str, budget: &BudgetDefinition) -> GovernanceResult<()> {
+    |               ^^^^^^ help: if this is intentional, prefix it with an underscore: `_budget`
+
+warning: unused variable: `cost_data`
+   --> src\governance\cost_management.rs:798:13
+    |
+798 |         let cost_data = self.fetch_cost_data(scope, 30).await?;
+    |             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cost_data`
+
+warning: unused variable: `permission_set`
+   --> src\governance\access_control.rs:509:14
+    |
+509 |         for (permission_set, usage_count) in frequent_permissions {
+    |              ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_permission_set`
+
+warning: unused variable: `review_definition`
+   --> src\governance\access_control.rs:609:46
+    |
+609 | ...c fn create_access_review(&self, review_definition: AccessReviewDefinition) -> GovernanceResult<Str...
+    |                                     ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_review_definition`
+
+warning: unused variable: `blueprint_id`
+   --> src\governance\blueprints.rs:927:43
+    |
+927 | ...elf, blueprint_id: &str, version: &str) -> GovernanceResult<BlueprintVersion> {
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_blueprint_id`
+
+warning: unused variable: `query`
+   --> src\governance\ai\conversation.rs:117:43
+    |
+117 | ...uery(&self, query: &str, intent: &Intent, context: &ConversationContext) -> GovernanceResult<QueryR...
+    |                ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: unused variable: `context`
+   --> src\governance\ai\conversation.rs:117:73
+    |
+117 | ... &Intent, context: &ConversationContext) -> GovernanceResult<QueryResponse> {
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_context`
+
+warning: unused variable: `events`
+   --> src\governance\ai\correlation.rs:267:59
+    |
+267 | ...ion(&self, events: &[CrossDomainEvent]) -> GovernanceResult<Vec<CorrelationPattern>> {
+    |               ^^^^^^ help: if this is intentional, prefix it with an underscore: `_events`
+
+warning: unused variable: `correlation_id`
+   --> src\governance\ai\correlation.rs:427:46
+    |
+427 | ...f, correlation_id: &str) -> GovernanceResult<CorrelationPattern> {
+    |       ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_correlation_id`
+
+warning: unused variable: `query`
+  --> src\ml\predictive_compliance.rs:90:13
+   |
+90 |         let query = format!(
+   |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: unused variable: `resource`
+   --> src\ml\predictive_compliance.rs:113:45
+    |
+113 | ...s(&self, resource: &serde_json::Value) -> Result<Vec<PolicyDefinition>, String> {
+    |             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resource`
+
+warning: unused variable: `entities`
+   --> src\ml\natural_language.rs:292:46
+    |
+292 |     async fn handle_policy_violations(&self, entities: &[EntityInfo]) -> ConversationResponse {
+    |                                              ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `entities`
+   --> src\ml\natural_language.rs:366:40
+    |
+366 |     async fn handle_remediation(&self, entities: &[EntityInfo]) -> ConversationResponse {
+    |                                        ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+error[E0382]: borrow of moved value: `new_model`
+   --> src\ml\continuous_training.rs:162:28
+    |
+148 |         let new_model = self.train_model(train_set).await?;
+    |             --------- move occurs because `new_model` has type `ModelVersion`, which does not implement the `Copy` trait
+...
+157 |                 self.deploy_model(new_model).await?;
+    |                                   --------- value moved here
+...
+162 |             let model_id = new_model.id.clone();
+    |                            ^^^^^^^^^^^^ value borrowed here after move
+    |
+note: consider changing this parameter type in method `deploy_model` to borrow instead if owning the value isn't necessary
+   --> src\ml\continuous_training.rs:222:41
+    |
+222 |     async fn deploy_model(&self, model: ModelVersion) -> Result<(), String> {
+    |              ------------               ^^^^^^^^^^^^ this parameter takes ownership of the value
+    |              |
+    |              in this method
+help: consider cloning the value if the performance cost is acceptable
+    |
+157 |                 self.deploy_model(new_model.clone()).await?;
+    |                                            ++++++++
+
+warning: unused variable: `validation_data`
+   --> src\ml\continuous_training.rs:208:58
+    |
+208 | ...del(&self, model: &ModelVersion, validation_data: &[TrainingSample]) -> Result<ValidationMetrics, S...
+    |                                     ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_validation_data`
+
+error[E0499]: cannot borrow `versions` as mutable more than once at a time
+   --> src\ml\continuous_training.rs:296:24
+    |
+291 |         let target_version = versions.iter_mut()
+    |                              -------- first mutable borrow occurs here
+...
+296 |         for version in versions.iter_mut() {
+    |                        ^^^^^^^^ second mutable borrow occurs here
+...
+301 |         target_version.is_active = true;
+    |         ------------------------------- first borrow later used here
+
+error[E0382]: use of moved value: `entity`
+   --> src\ml\conversation_memory.rs:79:72
+    |
+77  |             for entity in entities {
+    |                 ------ move occurs because `entity` has type `ExtractedEntity`, which does not implement the `Copy` trait
+78  |                 session.update_entity(entity);
+    |                                       ------ value moved here
+79  |                 self.entity_store.write().await.add_entity(session_id, entity).await;
+    |                                                                        ^^^^^^ value used here after move
+    |
+note: consider changing this parameter type in method `update_entity` to borrow instead if owning the value isn't necessary
+   --> src\ml\conversation_memory.rs:176:45
+    |
+176 |     pub fn update_entity(&mut self, entity: ExtractedEntity) {
+    |            ------------- in this method     ^^^^^^^^^^^^^^^ this parameter takes ownership of the value
+help: consider cloning the value if the performance cost is acceptable
+    |
+78  |                 session.update_entity(entity.clone());
+    |                                             ++++++++
+
+error[E0599]: the method `get` exists for struct `HashMap<ConversationState, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\conversation_memory.rs:457:79
+    |
+233 | pub enum ConversationState {
+    | -------------------------- doesn't satisfy `_: Eq` or `conversation_memory::ConversationState: Hash`
+...
+457 |             if self.contains_patterns(user_input, &self.conversation_patterns.get(&ConversationState::...
+    |                                                                               ^^^ method cannot be called on `HashMap<ConversationState, Vec<String>>` due to unsatisfied trait bounds
+    |
+    = note: the following trait bounds were not satisfied:
+            `conversation_memory::ConversationState: std::cmp::Eq`
+            `conversation_memory::ConversationState: Hash`
+help: consider annotating `conversation_memory::ConversationState` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+233 + #[derive(Eq, Hash, PartialEq)]
+234 | pub enum ConversationState {
+    |
+
+warning: unused variable: `request`
+   --> src\remediation\approval_manager.rs:355:45
+    |
+355 |     async fn determine_approval_gate(&self, request: &ApprovalRequest) -> Result<ApprovalGate, String> {
+    |                                             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `policy`
+   --> src\remediation\approval_manager.rs:357:13
+    |
+357 |         let policy = policies.get("standard").ok_or("No approval policy found")?;
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_policy`
+
+warning: unused variable: `request`
+   --> src\remediation\approval_manager.rs:435:53
+    |
+435 |     async fn auto_approve(&self, approval_id: &str, request: &ApprovalRequest) -> Result<(), String> {
+    |                                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `config`
+   --> src\remediation\rollback_manager.rs:385:50
+    |
+385 |             RollbackAction::RestoreConfiguration(config) => {
+    |                                                  ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `deployment_result`
+   --> src\remediation\arm_executor.rs:187:13
+    |
+187 |         let deployment_result = DeploymentResult {
+    |             ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_deployment_result`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:593:42
+    |
+593 | ...ns(&self, request: &RemediationRequest, template: &RemediationTemplate) -> Result<ValidationCheck, ...
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `template`
+   --> src\remediation\validation_engine.rs:593:72
+    |
+593 | ...Request, template: &RemediationTemplate) -> Result<ValidationCheck, String> {
+    |             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_template`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:764:50
+    |
+764 | ...ss(&self, request: &RemediationRequest, result: &RemediationResult) -> Result<ValidationCheck, Stri...
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:805:50
+    |
+805 | ...te(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:843:46
+    |
+843 | ...ce(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:881:49
+    |
+881 | ...ct(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:927:47
+    |
+927 | ...re(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `rule`
+   --> src\remediation\validation_engine.rs:965:42
+    |
+965 | ..._rule(&self, rule: &SafetyRule, request: &RemediationRequest, template: &RemediationTemplate) -> Re...
+    |                 ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:965:61
+    |
+965 | ...fetyRule, request: &RemediationRequest, template: &RemediationTemplate) -> Result<bool, String> {
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `template`
+   --> src\remediation\validation_engine.rs:965:91
+    |
+965 | ...Request, template: &RemediationTemplate) -> Result<bool, String> {
+    |             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_template`
+
+warning: unused variable: `template`
+    --> src\remediation\validation_engine.rs:1089:9
+     |
+1089 |         template: &RemediationTemplate,
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_template`
+
+warning: unused variable: `resource_id`
+    --> src\remediation\validation_engine.rs:1134:42
+     |
+1134 |     pub async fn get_dependencies(&self, resource_id: &str) -> Result<Vec<ResourceInfo>, String> {
+     |                                          ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resource_id`
+
+warning: variable does not need to be mutable
+   --> src\remediation\notification_system.rs:266:43
+    |
+266 |     pub async fn send_notification(&self, mut request: NotificationRequest) -> Result<NotificationResu...
+    |                                           ----^^^^^^^
+    |                                           |
+    |                                           help: remove this `mut`
+
+warning: unused variable: `request`
+   --> src\remediation\notification_system.rs:411:63
+    |
+411 | ...nChannel, request: &NotificationRequest) -> Result<ChannelResult, String> {
+    |              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+   --> src\correlation\cross_domain_engine.rs:256:14
+    |
+256 |         risk.min(1.0)
+    |              ^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+239 |         let mut risk: f32 = 0.0;
+    |                     +++++
+
+error[E0599]: no method named `target` found for struct `petgraph::graph::EdgeReference` in the current scope
+   --> src\correlation\resource_mapper.rs:107:39
+    |
+107 |                 let target_idx = edge.target();
+    |                                       ^^^^^^ method not found in `petgraph::graph::EdgeReference<'_, Dependency>`
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\petgraph-0.6.5\src\visit\mod.rs:228:8
+    |
+228 |     fn target(&self) -> Self::NodeId;
+    |        ------ the method is available for `petgraph::graph::EdgeReference<'_, Dependency>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `EdgeRef` which provides `target` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use petgraph::visit::EdgeRef;
+    |
+
+error[E0599]: no method named `source` found for struct `petgraph::graph::EdgeReference` in the current scope
+   --> src\correlation\resource_mapper.rs:123:39
+    |
+123 |                 let source_idx = edge.source();
+    |                                       ^^^^^^ method not found in `petgraph::graph::EdgeReference<'_, Dependency>`
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\petgraph-0.6.5\src\visit\mod.rs:226:8
+    |
+226 |     fn source(&self) -> Self::NodeId;
+    |        ------ the method is available for `petgraph::graph::EdgeReference<'_, Dependency>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `EdgeRef` which provides `source` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use petgraph::visit::EdgeRef;
+    |
+
+error[E0599]: no method named `hour` found for struct `chrono::DateTime` in the current scope
+   --> src\correlation\advanced_correlation_engine.rs:294:42
+    |
+294 |             let hour = pattern.peak_time.hour();
+    |                                          ^^^^
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\chrono-0.4.41\src\traits.rs:285:8
+    |
+285 |     fn hour(&self) -> u32;
+    |        ---- the method is available for `chrono::DateTime<chrono::Utc>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `Timelike` which provides `hour` is implemented but not in scope; perhaps you want to import it
+    |
+10  + use chrono::Timelike;
+    |
+help: there is a method `hour12` with a similar name
+    |
+294 |             let hour = pattern.peak_time.hour12();
+    |                                              ++
+
+error[E0599]: no method named `hour` found for struct `chrono::DateTime` in the current scope
+   --> src\correlation\advanced_correlation_engine.rs:942:34
+    |
+942 |             .map(|e| e.timestamp.hour())
+    |                                  ^^^^
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\chrono-0.4.41\src\traits.rs:285:8
+    |
+285 |     fn hour(&self) -> u32;
+    |        ---- the method is available for `chrono::DateTime<chrono::Utc>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `Timelike` which provides `hour` is implemented but not in scope; perhaps you want to import it
+    |
+10  + use chrono::Timelike;
+    |
+help: there is a method `hour12` with a similar name
+    |
+942 |             .map(|e| e.timestamp.hour12())
+    |                                      ++
+
+error[E0599]: no function or associated item named `minutes` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:261:77
+    |
+261 | ...rt_time + Duration::minutes((time_offset + propagation_delay) as i64),
+    |                        ^^^^^^^ function or associated item not found in `Duration`
+    |
+note: if you're trying to build a new `Duration` consider using one of the following associated functions:
+      Duration::new
+      Duration::from_secs
+      Duration::from_millis
+      Duration::from_micros
+      and 9 others
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\core\src\time.rs:194:5
+
+error[E0599]: no method named `num_minutes` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:572:65
+    |
+572 |             best_case_recovery_time: scenario.expected_duration.num_minutes() as u32 / 2,
+    |                                                                 ^^^^^^^^^^^ method not found in `Duration`
+
+error[E0599]: no method named `num_minutes` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:573:64
+    |
+573 |             expected_recovery_time: scenario.expected_duration.num_minutes() as u32,
+    |                                                                ^^^^^^^^^^^ method not found in `Duration`
+
+error[E0599]: no method named `num_minutes` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:574:66
+    |
+574 |             worst_case_recovery_time: scenario.expected_duration.num_minutes() as u32 * 2,
+    |                                                                  ^^^^^^^^^^^ method not found in `Duration`
+
+error[E0609]: no field `target_resource` on type `&PredictedCascadeEffect`
+   --> src\correlation\predictive_impact_analyzer.rs:595:45
+    |
+595 |                     target_resource: effect.target_resource.clone(),
+    |                                             ^^^^^^^^^^^^^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+595 -                     target_resource: effect.target_resource.clone(),
+595 +                     target_resource: effect.source_resource.clone(),
+    |
+
+error[E0308]: mismatched types
+   --> src\correlation\predictive_impact_analyzer.rs:662:27
+    |
+662 |             elapsed_time: Utc::now() - event.start_time,
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Duration`, found `TimeDelta`
+
+error[E0599]: no function or associated item named `hours` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:680:39
+    |
+680 |             total_duration: Duration::hours(2), // Estimated remaining time
+    |                                       ^^^^^ function or associated item not found in `Duration`
+    |
+note: if you're trying to build a new `Duration` consider using one of the following associated functions:
+      Duration::new
+      Duration::from_secs
+      Duration::from_millis
+      Duration::from_micros
+      and 9 others
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\core\src\time.rs:194:5
+
+error[E0599]: no method named `num_hours` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:706:65
+    |
+706 |         let projected_score = remaining_timeline.total_duration.num_hours() as f64 * 0.05;
+    |                                                                 ^^^^^^^^^ method not found in `Duration`
+
+error[E0599]: no function or associated item named `minutes` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:785:44
+    |
+785 |                     time_offset: Duration::minutes(0),
+    |                                            ^^^^^^^ function or associated item not found in `Duration`
+    |
+note: if you're trying to build a new `Duration` consider using one of the following associated functions:
+      Duration::new
+      Duration::from_secs
+      Duration::from_millis
+      Duration::from_micros
+      and 9 others
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\core\src\time.rs:194:5
+
+error[E0599]: no function or associated item named `minutes` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:791:44
+    |
+791 |                     time_offset: Duration::minutes(15),
+    |                                            ^^^^^^^ function or associated item not found in `Duration`
+    |
+note: if you're trying to build a new `Duration` consider using one of the following associated functions:
+      Duration::new
+      Duration::from_secs
+      Duration::from_millis
+      Duration::from_micros
+      and 9 others
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\core\src\time.rs:194:5
+
+error[E0599]: no function or associated item named `hours` found for struct `Duration` in the current scope
+   --> src\correlation\predictive_impact_analyzer.rs:797:44
+    |
+797 |                     time_offset: Duration::hours(1),
+    |                                            ^^^^^ function or associated item not found in `Duration`
+    |
+note: if you're trying to build a new `Duration` consider using one of the following associated functions:
+      Duration::new
+      Duration::from_secs
+      Duration::from_millis
+      Duration::from_micros
+      and 9 others
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\core\src\time.rs:194:5
+
+error[E0599]: no method named `num_hours` found for reference `&Duration` in the current scope
+    --> src\correlation\predictive_impact_analyzer.rs:1109:109
+     |
+1109 | ...tion to {} hours", duration.num_hours()),
+     |                                ^^^^^^^^^ method not found in `&Duration`
+
+error[E0277]: the trait bound `SmartDependency: FloatMeasure` is not satisfied
+   --> src\correlation\smart_dependency_mapper.rs:508:57
+    |
+508 |                     if let Ok(distances) = bellman_ford(&self.dependency_graph, source) {
+    |                                            ------------ ^^^^^^^^^^^^^^^^^^^^^^ the trait `FloatMeasure` is not implemented for `SmartDependency`
+    |                                            |
+    |                                            required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `FloatMeasure`:
+              f32
+              f64
+note: required by a bound in `bellman_ford`
+   --> C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\petgraph-0.6.5\src\algo\bellman_ford.rs:87:20
+    |
+81  | pub fn bellman_ford<G>(
+    |        ------------ required by a bound in this function
+...
+87  |     G::EdgeWeight: FloatMeasure,
+    |                    ^^^^^^^^^^^^ required by this bound in `bellman_ford`
+
+error[E0277]: the type `[SmartDependency]` cannot be indexed by `&NodeIndex`
+   --> src\correlation\smart_dependency_mapper.rs:509:74
+    |
+509 |                         if let Some(&distance) = distances.distances.get(&target) {
+    |                                                                      --- ^^^^^^^ slice indices are of type `usize` or ranges of `usize`
+    |                                                                      |
+    |                                                                      required by a bound introduced by this call
+    |
+    = help: the trait `SliceIndex<[SmartDependency]>` is not implemented for `&NodeIndex`
+note: required by a bound in `core::slice::<impl [T]>::get`
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\core\src\slice\mod.rs:571:5
+
+error[E0599]: no method named `target` found for struct `petgraph::graph::EdgeReference` in the current scope
+   --> src\correlation\smart_dependency_mapper.rs:636:59
+    |
+636 |                 resource_id: self.reverse_index.get(&edge.target()).cloned().unwrap_or_default(),
+    |                                                           ^^^^^^ method not found in `petgraph::graph::EdgeReference<'_, SmartDependency>`
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\petgraph-0.6.5\src\visit\mod.rs:228:8
+    |
+228 |     fn target(&self) -> Self::NodeId;
+    |        ------ the method is available for `petgraph::graph::EdgeReference<'_, SmartDependency>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `EdgeRef` which provides `target` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use petgraph::visit::EdgeRef;
+    |
+
+error[E0599]: no method named `source` found for struct `petgraph::graph::EdgeReference` in the current scope
+   --> src\correlation\smart_dependency_mapper.rs:678:59
+    |
+678 |                 resource_id: self.reverse_index.get(&edge.source()).cloned().unwrap_or_default(),
+    |                                                           ^^^^^^ method not found in `petgraph::graph::EdgeReference<'_, SmartDependency>`
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\petgraph-0.6.5\src\visit\mod.rs:226:8
+    |
+226 |     fn source(&self) -> Self::NodeId;
+    |        ------ the method is available for `petgraph::graph::EdgeReference<'_, SmartDependency>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `EdgeRef` which provides `source` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use petgraph::visit::EdgeRef;
+    |
+
+error[E0599]: no method named `target` found for struct `petgraph::graph::EdgeReference` in the current scope
+   --> src\correlation\smart_dependency_mapper.rs:713:69
+    |
+713 |             if let Some(resource_id) = self.reverse_index.get(&edge.target()) {
+    |                                                                     ^^^^^^ method not found in `petgraph::graph::EdgeReference<'_, SmartDependency>`
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\petgraph-0.6.5\src\visit\mod.rs:228:8
+    |
+228 |     fn target(&self) -> Self::NodeId;
+    |        ------ the method is available for `petgraph::graph::EdgeReference<'_, SmartDependency>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `EdgeRef` which provides `target` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use petgraph::visit::EdgeRef;
+    |
+
+error[E0599]: no method named `target` found for struct `petgraph::graph::EdgeReference` in the current scope
+   --> src\correlation\smart_dependency_mapper.rs:773:73
+    |
+773 |                 if let Some(resource_id) = self.reverse_index.get(&edge.target()) {
+    |                                                                         ^^^^^^ method not found in `petgraph::graph::EdgeReference<'_, SmartDependency>`
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\petgraph-0.6.5\src\visit\mod.rs:228:8
+    |
+228 |     fn target(&self) -> Self::NodeId;
+    |        ------ the method is available for `petgraph::graph::EdgeReference<'_, SmartDependency>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `EdgeRef` which provides `target` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use petgraph::visit::EdgeRef;
+    |
+
+error[E0308]: mismatched types
+   --> src\ml\explainability.rs:165:16
+    |
+165 |         if let Some(impact) = &prediction.business_impact {
+    |                ^^^^^^^^^^^^   --------------------------- this expression has type `&ml::BusinessImpact`
+    |                |
+    |                expected `BusinessImpact`, found `Option<_>`
+    |
+    = note: expected struct `ml::BusinessImpact`
+                 found enum `std::option::Option<_>`
+
+error[E0599]: no method named `month` found for struct `chrono::DateTime` in the current scope
+   --> src\ml\cost_prediction.rs:211:36
+    |
+211 |             let month = point.date.month();
+    |                                    ^^^^^
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\chrono-0.4.41\src\traits.rs:54:8
+    |
+54  |     fn month(&self) -> u32;
+    |        ----- the method is available for `chrono::DateTime<chrono::Utc>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `Datelike` which provides `month` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use chrono::Datelike;
+    |
+help: there is a method `month0` with a similar name
+    |
+211 |             let month = point.date.month0();
+    |                                         +
+
+error[E0599]: no method named `month` found for struct `chrono::DateTime` in the current scope
+   --> src\ml\cost_prediction.rs:229:26
+    |
+229 |         let month = date.month() as usize;
+    |                          ^^^^^
+    |
+   ::: C:\Users\leona\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\chrono-0.4.41\src\traits.rs:54:8
+    |
+54  |     fn month(&self) -> u32;
+    |        ----- the method is available for `chrono::DateTime<chrono::Utc>` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `Datelike` which provides `month` is implemented but not in scope; perhaps you want to import it
+    |
+12  + use chrono::Datelike;
+    |
+help: there is a method `month0` with a similar name
+    |
+229 |         let month = date.month0() as usize;
+    |                               +
+
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+   --> src\ml\anomaly_detection.rs:174:15
+    |
+174 |         score.min(1.0)
+    |               ^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+166 |         let mut score: f32 = 0.0;
+    |                      +++++
+
+error[E0689]: can't call method `max` on ambiguous numeric type `{float}`
+   --> src\ml\anomaly_detection.rs:208:43
+    |
+208 |                 max_z_score = max_z_score.max(z_score);
+    |                                           ^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+203 |         let mut max_z_score: f32 = 0.0;
+    |                            +++++
+
+error[E0689]: can't call method `max` on ambiguous numeric type `{float}`
+   --> src\ml\anomaly_detection.rs:292:35
+    |
+292 |             max_score = max_score.max(score);
+    |                                   ^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+288 |         let mut max_score: f32 = 0.0;
+    |                          +++++
+
+error[E0599]: the method `insert` exists for struct `HashMap<ConversationState, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\conversation_memory.rs:384:36
+    |
+233 | pub enum ConversationState {
+    | -------------------------- doesn't satisfy `_: Eq` or `conversation_memory::ConversationState: Hash`
+...
+384 |         self.conversation_patterns.insert(ConversationState::GatheringInfo, vec![
+    |         ---------------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `conversation_memory::ConversationState: std::cmp::Eq`
+            `conversation_memory::ConversationState: Hash`
+help: consider annotating `conversation_memory::ConversationState` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+233 + #[derive(Eq, Hash, PartialEq)]
+234 | pub enum ConversationState {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<ConversationState, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\conversation_memory.rs:388:36
+    |
+233 | pub enum ConversationState {
+    | -------------------------- doesn't satisfy `_: Eq` or `conversation_memory::ConversationState: Hash`
+...
+388 |         self.conversation_patterns.insert(ConversationState::AwaitingConfirmation, vec![
+    |         ---------------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `conversation_memory::ConversationState: std::cmp::Eq`
+            `conversation_memory::ConversationState: Hash`
+help: consider annotating `conversation_memory::ConversationState` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+233 + #[derive(Eq, Hash, PartialEq)]
+234 | pub enum ConversationState {
+    |
+
+error[E0599]: the method `entry` exists for struct `HashMap<IntentType, Vec<Intent>>`, but its trait bounds were not satisfied
+   --> src\ml\intent_router.rs:88:24
+    |
+88  |             intent_map.entry(intent.intent_type.clone())
+    |                        ^^^^^ method cannot be called on `HashMap<IntentType, Vec<Intent>>` due to unsatisfied trait bounds
+    |
+   ::: src\ml\conversation_memory.rs:641:1
+    |
+641 | pub enum IntentType {
+    | ------------------- doesn't satisfy `conversation_memory::IntentType: Hash` or `conversation_memory::IntentType: std::cmp::Eq`
+    |
+    = note: the following trait bounds were not satisfied:
+            `conversation_memory::IntentType: std::cmp::Eq`
+            `conversation_memory::IntentType: Hash`
+help: consider annotating `conversation_memory::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+   --> src\ml\conversation_memory.rs:641:1
+    |
+641 + #[derive(Eq, Hash, PartialEq)]
+642 | pub enum IntentType {
+    |
+
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+   --> src\ml\policy_generator.rs:317:20
+    |
+317 |         confidence.min(1.0)
+    |                    ^^^
+    |
+help: you must specify a type for this binding, like `f32`
+    |
+303 |         let mut confidence: f32 = 0.5;
+    |                           +++++
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+  --> src\ml\entity_extractor.rs:70:23
+   |
+25 | pub enum EntityType {
+   | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+70 |         self.patterns.insert(
+   |         --------------^^^^^^
+   |
+   = note: the following trait bounds were not satisfied:
+           `entity_extractor::EntityType: std::cmp::Eq`
+           `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+   |
+25 + #[derive(Eq, Hash, PartialEq)]
+26 | pub enum EntityType {
+   |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+  --> src\ml\entity_extractor.rs:85:23
+   |
+25 | pub enum EntityType {
+   | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+85 |         self.patterns.insert(
+   |         --------------^^^^^^
+   |
+   = note: the following trait bounds were not satisfied:
+           `entity_extractor::EntityType: std::cmp::Eq`
+           `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+   |
+25 + #[derive(Eq, Hash, PartialEq)]
+26 | pub enum EntityType {
+   |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+  --> src\ml\entity_extractor.rs:97:23
+   |
+25 | pub enum EntityType {
+   | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+97 |         self.patterns.insert(
+   |         --------------^^^^^^
+   |
+   = note: the following trait bounds were not satisfied:
+           `entity_extractor::EntityType: std::cmp::Eq`
+           `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+   |
+25 + #[derive(Eq, Hash, PartialEq)]
+26 | pub enum EntityType {
+   |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+   --> src\ml\entity_extractor.rs:110:23
+    |
+25  | pub enum EntityType {
+    | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+110 |         self.patterns.insert(
+    |         --------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `entity_extractor::EntityType: std::cmp::Eq`
+            `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+25  + #[derive(Eq, Hash, PartialEq)]
+26  | pub enum EntityType {
+    |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+   --> src\ml\entity_extractor.rs:121:23
+    |
+25  | pub enum EntityType {
+    | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+121 |         self.patterns.insert(
+    |         --------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `entity_extractor::EntityType: std::cmp::Eq`
+            `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+25  + #[derive(Eq, Hash, PartialEq)]
+26  | pub enum EntityType {
+    |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+   --> src\ml\entity_extractor.rs:131:23
+    |
+25  | pub enum EntityType {
+    | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+131 |         self.patterns.insert(
+    |         --------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `entity_extractor::EntityType: std::cmp::Eq`
+            `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+25  + #[derive(Eq, Hash, PartialEq)]
+26  | pub enum EntityType {
+    |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+   --> src\ml\entity_extractor.rs:140:23
+    |
+25  | pub enum EntityType {
+    | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+140 |         self.patterns.insert(
+    |         --------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `entity_extractor::EntityType: std::cmp::Eq`
+            `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+25  + #[derive(Eq, Hash, PartialEq)]
+26  | pub enum EntityType {
+    |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+   --> src\ml\entity_extractor.rs:150:23
+    |
+25  | pub enum EntityType {
+    | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+150 |         self.patterns.insert(
+    |         --------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `entity_extractor::EntityType: std::cmp::Eq`
+            `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+25  + #[derive(Eq, Hash, PartialEq)]
+26  | pub enum EntityType {
+    |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+   --> src\ml\entity_extractor.rs:161:23
+    |
+25  | pub enum EntityType {
+    | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+161 |         self.patterns.insert(
+    |         --------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `entity_extractor::EntityType: std::cmp::Eq`
+            `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+25  + #[derive(Eq, Hash, PartialEq)]
+26  | pub enum EntityType {
+    |
+
+error[E0599]: the method `insert` exists for struct `std::collections::HashMap<entity_extractor::EntityType, Vec<regex::Regex>>`, but its trait bounds were not satisfied
+   --> src\ml\entity_extractor.rs:169:23
+    |
+25  | pub enum EntityType {
+    | ------------------- doesn't satisfy `entity_extractor::EntityType: Hash` or `entity_extractor::EntityType: std::cmp::Eq`
+...
+169 |         self.patterns.insert(
+    |         --------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `entity_extractor::EntityType: std::cmp::Eq`
+            `entity_extractor::EntityType: Hash`
+help: consider annotating `entity_extractor::EntityType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+25  + #[derive(Eq, Hash, PartialEq)]
+26  | pub enum EntityType {
+    |
+
+error[E0277]: the trait bound `query_understanding::IntentType: std::cmp::Eq` is not satisfied
+   --> src\ml\query_understanding.rs:210:31
+    |
+210 |                 intent_scores.insert(intent_type.clone(), score);
+    |                               ^^^^^^ the trait `std::cmp::Eq` is not implemented for `query_understanding::IntentType`
+    |
+note: required by a bound in `std::collections::HashMap::<K, V, S>::insert`
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\std\src\collections\hash\map.rs:1203:5
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq)]`
+    |
+32  + #[derive(Eq)]
+33  | pub enum IntentType {
+    |
+
+error[E0277]: the trait bound `query_understanding::IntentType: Hash` is not satisfied
+   --> src\ml\query_understanding.rs:210:31
+    |
+210 |                 intent_scores.insert(intent_type.clone(), score);
+    |                               ^^^^^^ the trait `Hash` is not implemented for `query_understanding::IntentType`
+    |
+note: required by a bound in `std::collections::HashMap::<K, V, S>::insert`
+   --> /rustc/29483883eed69d5fb4db01964cdf2af4d86e9cb2\library\std\src\collections\hash\map.rs:1203:5
+help: consider annotating `query_understanding::IntentType` with `#[derive(Hash)]`
+    |
+32  + #[derive(Hash)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `entry` exists for struct `std::collections::HashMap<query_understanding::IntentType, {float}>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:219:40
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+219 |                         *intent_scores.entry(IntentType::List).or_insert(0.0) += 0.5;
+    |                                        ^^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `entry` exists for struct `std::collections::HashMap<query_understanding::IntentType, {float}>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:222:40
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+222 |                         *intent_scores.entry(IntentType::Remediate).or_insert(0.0) += 0.5;
+    |                                        ^^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `entry` exists for struct `std::collections::HashMap<query_understanding::IntentType, {float}>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:225:40
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+225 |                         *intent_scores.entry(IntentType::Create).or_insert(0.0) += 0.5;
+    |                                        ^^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `entry` exists for struct `std::collections::HashMap<query_understanding::IntentType, {float}>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:229:36
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+229 |                     *intent_scores.entry(IntentType::CostAnalysis).or_insert(0.0) += 0.3;
+    |                                    ^^^^^ method cannot be called due to unsatisfied trait bounds
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0369]: binary operation `!=` cannot be applied to type `&&query_understanding::IntentType`
+   --> src\ml\query_understanding.rs:243:46
+    |
+243 |             .filter(|(intent, score)| intent != &&primary_intent && **score > 0.3)
+    |                                       ------ ^^ ---------------- &&query_understanding::IntentType
+    |                                       |
+    |                                       &&query_understanding::IntentType
+    |
+note: an implementation of `PartialEq` might be missing for `query_understanding::IntentType`
+   --> src\ml\query_understanding.rs:32:1
+    |
+32  | pub enum IntentType {
+    | ^^^^^^^^^^^^^^^^^^^ must implement `PartialEq`
+help: consider annotating `query_understanding::IntentType` with `#[derive(PartialEq)]`
+    |
+32  + #[derive(PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0689]: can't call method `min` on ambiguous numeric type `{float}`
+   --> src\ml\query_understanding.rs:247:66
+    |
+247 |         let confidence = (primary_score / (1.0 + primary_score)).min(1.0);
+    |                                                                  ^^^
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:497:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+497 |         self.intent_patterns.insert(IntentType::List, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:501:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+501 |         self.intent_patterns.insert(IntentType::Find, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:505:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+505 |         self.intent_patterns.insert(IntentType::Fix, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:509:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+509 |         self.intent_patterns.insert(IntentType::Remediate, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:513:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+513 |         self.intent_patterns.insert(IntentType::Create, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:517:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+517 |         self.intent_patterns.insert(IntentType::Analyze, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:521:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+521 |         self.intent_patterns.insert(IntentType::Predict, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:525:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+525 |         self.intent_patterns.insert(IntentType::CostAnalysis, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |
+32  + #[derive(Eq, Hash, PartialEq)]
+33  | pub enum IntentType {
+    |
+
+error[E0599]: the method `insert` exists for struct `HashMap<IntentType, Vec<String>>`, but its trait bounds were not satisfied
+   --> src\ml\query_understanding.rs:529:30
+    |
+32  | pub enum IntentType {
+    | ------------------- doesn't satisfy `query_understanding::IntentType: Hash` or `query_understanding::IntentType: std::cmp::Eq`
+...
+529 |         self.intent_patterns.insert(IntentType::CheckCompliance, vec![
+    |         ---------------------^^^^^^
+    |
+    = note: the following trait bounds were not satisfied:
+            `query_understanding::IntentType: std::cmp::Eq`
+            `query_understanding::IntentType: Hash`
+help: consider annotating `query_understanding::IntentType` with `#[derive(Eq, Hash, PartialEq)]`
+    |

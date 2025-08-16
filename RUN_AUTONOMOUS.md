@@ -12,27 +12,45 @@
 - `--autonomous`: Full autonomous mode
 - `--batch-mode`: Process all tasks in sequence
 
-## TASK: Complete Days 9-14 of Sprint Plan
+## TASK: Close Azure GA Critical Backlog (Immediate High-Impact Defenses)
 
-### Instructions:
-1. Read TWO_WEEK_SPRINT_PLAN.md
-2. For each day (9-14):
-   - Implement ALL tasks listed
-   - Fix any compilation errors
-   - Run tests and fix failures
-   - Commit changes with descriptive message
-   - Push to repository
-   - Update PROJECT_TRACKING.MD
-3. Continue to next day without stopping
-4. Handle all errors independently
-5. Make implementation decisions based on best practices
+### Objective
+Ship the five defense clusters required for Azure GA and competitive resilience. Execute in order; fix builds/tests as you go; update tracking.
 
-### Decision Rules:
-- If multiple implementation options exist, choose the most efficient
-- If errors occur, attempt fixes automatically
-- If tests fail, debug and fix without asking
-- If file conflicts occur, merge intelligently
-- If unclear requirements, implement based on context
+### Clusters & Work Items
+
+1) Service Mesh + Multi-Tenant Isolation (AKS)
+- Add Istio (or Linkerd) manifests under `infrastructure/kubernetes/istio/`
+- Enable mTLS, PeerAuthentication, AuthorizationPolicy, and IngressGateway
+- Create Helm values for per-tenant namespaces + NetworkPolicies
+- Wire CI deployment step to apply mesh and tenant namespaces
+
+2) Knowledge-Graph Datastore + ETL
+- Provision Neo4j (Helm) or CosmosDB (Gremlin) via Terraform modules
+- Add Rust/Python driver in `core/src/correlation/` and `backend/services/graph_etl/`
+- Implement 15-min ETL scheduler (Azure Function/ContainerApps Job)
+- Expose `/api/v1/graph/*` and a What-If Simulation CLI in `scripts/`
+
+3) Explainability + Model Governance
+- Implement SHAP/Captum wrapper service (sidecar Python) for predictions
+- Add model-card generation; persist attributions alongside predictions
+- Implement online drift detection (river-ML) + auto-retrain trigger
+- Create Grafana dashboards: explainability coverage, drift metrics
+
+4) Usage Metering & Tiering
+- Implement per-API usage metering (rate/volume) in gateway/core
+- Add plans: Free, Pro, Enterprise; enforce quotas in middleware
+- Emit billing events (Kafka/Event Grid) → usage DB; export CSV for invoicing
+
+5) Azure Policy/SDK Auto-Refresh
+- Nightly job to detect Azure REST API / Policy updates
+- Auto-generate client stubs and open PR with unit tests
+- Notify #ops if breaking change; add fallback compatibility layer
+
+### Execution Steps
+1. Implement cluster-1 fully; run build/test; deploy to dev; commit/push; update `docs/PROJECT_TRACKING.MD`
+2. Repeat for clusters 2→5 in order
+3. After all, run GA validation checklist (at end of file)
 
 ## ADDITIONAL AUTONOMOUS TASKS
 
@@ -174,66 +192,58 @@ claude-code --yes --retry-on-error --max-retries=3 < RUN_AUTONOMOUS.md
 ```bash
 claude-code --yes <<'EOF'
   CRITICAL GA REQUIREMENTS - Implement ALL missing components:
-  
-  Platform/DevSecOps (❌ to ✓):
-    - Create Istio service-mesh manifests in infrastructure/kubernetes/
-    - Add multi-tenant namespace isolation Helm values
-    - Wire Canary pipeline SLO gates in .github/workflows/
-  
-  Data & Knowledge Graph (❌ to ✓):
-    - Add Neo4j/Cosmos-Gremlin driver code in core/src/
-    - Create Terraform modules for graph database
-    - Implement ETL job with 15-min scheduler
-    - Build What-If Simulation CLI tool
-  
-  AI/ML (❌ to ✓):
-    - Implement explainability layer (SHAP/Captum wrappers)
-    - Complete online drift detector & auto-retrain loop
-    - Finish RLHF fine-tuning pipeline integration
-  
-  Security & Compliance (❌ to ✓):
-    - Implement Defender-for-Cloud posture ingest client
-    - Wire SOC-2 evidence collector to CI pipeline
-    - Add Azure Security Benchmark test suite
-  
-  Observability (❌ to ✓):
-    - Create model-governance dashboards (explainability, drift)
-    - Add Grafana dashboards for ML metrics
-  
-  Conversational UX (❌ to ✓):
-    - Implement Voice-bot POC with Azure Speech Services
-    - Add speech-to-text and text-to-speech capabilities
-  
-  Cost/FinOps (⚠️ to ✓):
-    - Complete rightsizing recommender engine
-    - Wire cost optimizer to production APIs
-  
-  Documentation (⚠️ to ✓):
-    - Create docs/model_governance/ with review checklist
-    - Add weekly ritual schedules and runbooks
+
+  Cluster 1: Platform/Isolation (❌ to ✓)
+    - Istio/Linkerd manifests in infrastructure/kubernetes/istio/
+    - mTLS + AuthZ policies; IngressGateway
+    - Helm values for per-tenant namespaces + NetworkPolicies
+
+  Cluster 2: Knowledge Graph (❌ to ✓)
+    - Terraform modules for Neo4j/Cosmos Gremlin
+    - Graph driver in core/src/correlation/ + ETL job (15-min scheduler)
+    - What-If Simulation CLI in scripts/
+
+  Cluster 3: AI Ops (❌ to ✓)
+    - Explainability layer (SHAP/Captum) sidecar + model cards
+    - Online drift detector (river) + auto-retrain pipeline (Azure ML)
+    - Grafana dashboards for explainability/drift
+
+  Cluster 4: Usage Metering & Tiering (❌ to ✓)
+    - API metering middleware + per-plan quotas
+    - Usage DB + Event export; billing CSV generator
+
+  Cluster 5: Azure Policy/SDK Auto-Refresh (❌ to ✓)
+    - Nightly detection of API/Policy changes
+    - Auto-codegen client stubs + PR with tests
+    - Compatibility shim for version bumps
+
+  Security/Compliance Integrations (⚠️ to ✓)
+    - Defender for Cloud posture ingest client
+    - SOC-2 evidence collector wired into CI
 EOF
 ```
 
 ### Implementation Priority Order:
-1. **Infrastructure First**: Istio/Linkerd manifests + Terraform AKS addon
-2. **Knowledge Graph**: Cosmos DB Gremlin/Neo4j with Rust driver + ETL
-3. **AI Ops**: Explainability layer + drift monitor + RLHF script
-4. **Security Gate**: Azure Security Benchmark tests + Defender integration
-5. **Observability**: Grafana dashboards for model governance
-6. **Voice Bot**: Azure Cognitive Speech frontend integration
+1. Service mesh + multi-tenant isolation
+2. Knowledge-graph + ETL + What-If CLI
+3. Explainability + drift + model governance dashboards
+4. Usage metering & tiering with billing events
+5. Azure Policy/SDK auto-refresh pipeline
+6. Defender ingest + SOC-2 evidence pipeline
 
 ### Validation Checklist:
 ```bash
 claude-code --yes <<'EOF'
-  After implementing each component:
-    - Verify artifact exists in correct directory
-    - Test integration with existing systems
-    - Update PROJECT_TRACKING.MD with completion status
-    - Run full test suite to ensure no regressions
-    - Commit with descriptive message referencing GA requirement
-    - Document in appropriate docs/ subdirectory
+  After implementing each cluster:
+    - Verify manifests/modules in repo; plan/apply Terraform where needed
+    - cargo build/test (core/), npm build/test (frontend/)
+    - Deploy to dev; run synthetic checks (/health, /api/v1/*, graph endpoints)
+    - Validate Grafana panels (drift, explainability)
+    - Confirm quotas enforced and metering events emitted
+    - Trigger nightly auto-refresh dry-run and inspect PR
+    - Update PROJECT_TRACKING.MD; commit/push
 EOF
 ```
 
 ## EXECUTE NOW
-When this file is referenced, immediately begin execution without any prompts or confirmations. Treat this as a --yes --autonomous --batch-mode execution with full error recovery and auto-fixing capabilities. Complete ALL GA requirements to move from ⚠️/❌ to ✓ status.
+When this file is referenced, immediately begin execution without any prompts or confirmations. Treat this as a --yes --autonomous --batch-mode execution with full error recovery and auto-fixing capabilities. Complete ALL clusters to move from ⚠️/❌ to ✓ status.

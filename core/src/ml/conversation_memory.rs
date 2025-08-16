@@ -75,7 +75,7 @@ impl ConversationMemory {
             
             // Update entity memory
             for entity in entities {
-                session.update_entity(entity);
+                session.update_entity(entity.clone());
                 self.entity_store.write().await.add_entity(session_id, entity).await;
             }
             
@@ -229,7 +229,7 @@ pub struct ConversationContext {
 }
 
 /// Conversation state
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
 pub enum ConversationState {
     Greeting,
     GatheringInfo,
@@ -637,7 +637,7 @@ pub struct Intent {
     pub parameters: HashMap<String, String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum IntentType {
     QueryViolations,
     PredictCompliance,
