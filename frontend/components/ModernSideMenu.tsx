@@ -288,6 +288,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
         description: 'Cross-domain insights',
         aiPowered: true
       }
+      // Removed: Voice Assistant and Explainability for demo
     ],
     
     'Operations': [
