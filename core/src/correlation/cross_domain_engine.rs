@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use chrono::{DateTime, Utc};
 use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::algo::{dijkstra, strongly_connected_components};
+use petgraph::algo::{dijkstra, connected_components};
 
 /// Cross-domain correlation engine
 pub struct CrossDomainEngine {
