@@ -1,0 +1,287 @@
+# Tagging Compliance Remediation Template
+# Applies required tags to Azure resources for governance compliance
+
+templates:
+  - id: apply-required-tags
+    name: Apply Required Tags
+    description: Applies mandatory governance tags to Azure resources
+    version: "1.0.0"
+    category: governance
+    resource_type: "*"
+    violation_types:
+      - MissingTags
+      - InvalidTags
+      - IncompleteTagging
+      - TaggingViolation
+    
+    # ARM Template for applying tags
+    arm_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "resourceName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the resource to tag"
+            }
+          },
+          "resourceType": {
+            "type": "string",
+            "metadata": {
+              "description": "Type of the resource (e.g., Microsoft.Storage/storageAccounts)"
+            }
+          },
+          "requiredTags": {
+            "type": "object",
+            "defaultValue": {
+              "Environment": "Production",
+              "Owner": "IT-Team",
+              "CostCenter": "IT-Operations",
+              "Project": "PolicyCortex",
+              "Compliance": "Required"
+            },
+            "metadata": {
+              "description": "Object containing required tags"
+            }
+          },
+          "existingTags": {
+            "type": "object",
+            "defaultValue": {},
+            "metadata": {
+              "description": "Existing tags to preserve"
+            }
+          }
+        },
+        "variables": {
+          "mergedTags": "[union(parameters('existingTags'), parameters('requiredTags'))]"
+        },
+        "resources": [
+          {
+            "type": "[parameters('resourceType')]",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('resourceName')]",
+            "tags": "[variables('mergedTags')]",
+            "properties": {}
+          }
+        ],
+        "outputs": {
+          "appliedTags": {
+            "type": "object",
+            "value": "[variables('mergedTags')]"
+          },
+          "tagCount": {
+            "type": "int",
+            "value": "[length(variables('mergedTags'))]"
+          }
+        }
+      }
+    
+    # PowerShell script for bulk tag application
+    powershell_script: |
+      param(
+          [string]$ResourceId,
+          [hashtable]$RequiredTags = @{
+              "Environment" = "Production"
+              "Owner" = "IT-Team"
+              "CostCenter" = "IT-Operations"
+              "Project" = "PolicyCortex"
+              "Compliance" = "Required"
+              "LastUpdated" = (Get-Date -Format "yyyy-MM-dd")
+          },
+          [string]$ResourceGroupName
+      )
+      
+      try {
+          # Get current resource
+          $resource = Get-AzResource -ResourceId $ResourceId
+          
+          if (-not $resource) {
+              throw "Resource not found: $ResourceId"
+          }
+          
+          # Get existing tags
+          $existingTags = $resource.Tags
+          if (-not $existingTags) {
+              $existingTags = @{}
+          }
+          
+          # Merge required tags with existing tags (required tags take precedence)
+          $mergedTags = $existingTags.Clone()
+          foreach ($tag in $RequiredTags.GetEnumerator()) {
+              $mergedTags[$tag.Key] = $tag.Value
+          }
+          
+          # Apply tags to resource
+          Set-AzResource -ResourceId $ResourceId -Tag $mergedTags -Force
+          
+          Write-Output "Successfully applied tags to resource: $($resource.Name)"
+          Write-Output "Applied tags: $($mergedTags | ConvertTo-Json -Compress)"
+          
+          return $mergedTags
+      }
+      catch {
+          Write-Error "Failed to apply tags to resource $ResourceId : $($_.Exception.Message)"
+          throw
+      }
+    
+    # Azure CLI commands for tag management
+    azure_cli_commands:
+      - command: "az tag create --resource-id {resourceId} --tags Environment=Production Owner=IT-Team CostCenter=IT-Operations Project=PolicyCortex Compliance=Required"
+        description: "Apply required governance tags"
+      - command: "az tag update --resource-id {resourceId} --operation Merge --tags LastUpdated=$(date +%Y-%m-%d)"
+        description: "Add last updated timestamp"
+      - command: "az resource tag --tags Environment=Production Owner=IT-Team --resource-group {resourceGroupName} --name {resourceName} --resource-type {resourceType}"
+        description: "Alternative tagging method using resource command"
+      - command: "az group update --resource-group {resourceGroupName} --tags Environment=Production Owner=IT-Team CostCenter=IT-Operations"
+        description: "Apply tags to resource group (inherited by resources)"
+    
+    # Validation rules
+    validation_rules:
+      - rule_id: check-environment-tag
+        rule_type: post_condition
+        condition: "exists(resource.tags.Environment)"
+        error_message: "Environment tag is missing"
+      - rule_id: check-owner-tag
+        rule_type: post_condition
+        condition: "exists(resource.tags.Owner)"
+        error_message: "Owner tag is missing"
+      - rule_id: check-costcenter-tag
+        rule_type: post_condition
+        condition: "exists(resource.tags.CostCenter)"
+        error_message: "CostCenter tag is missing"
+      - rule_id: check-project-tag
+        rule_type: post_condition
+        condition: "exists(resource.tags.Project)"
+        error_message: "Project tag is missing"
+      - rule_id: check-compliance-tag
+        rule_type: post_condition
+        condition: "exists(resource.tags.Compliance)"
+        error_message: "Compliance tag is missing"
+      - rule_id: check-minimum-tags
+        rule_type: post_condition
+        condition: "length(resource.tags) >= 5"
+        error_message: "Resource has fewer than 5 required tags"
+    
+    # Rollback template (removes added tags)
+    rollback_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "resourceName": {
+            "type": "string"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "originalTags": {
+            "type": "object",
+            "defaultValue": {}
+          }
+        },
+        "resources": [
+          {
+            "type": "[parameters('resourceType')]",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('resourceName')]",
+            "tags": "[parameters('originalTags')]",
+            "properties": {}
+          }
+        ]
+      }
+    
+    success_criteria:
+      compliance_check: true
+      health_check: false
+      performance_check: false
+      custom_validations:
+        - "All required tags present"
+        - "Tag values non-empty"
+        - "Minimum 5 tags applied"
+      min_success_percentage: 100.0
+    
+    created_by: "PolicyCortex AI"
+    created_date: "2025-08-16"
+    last_modified: "2025-08-16"
+    tags:
+      - governance
+      - tagging
+      - compliance
+      - metadata
+    
+    estimated_duration_minutes: 1
+    risk_level: low
+    
+    required_permissions:
+      - "Microsoft.Resources/tags/write"
+      - "Microsoft.Resources/subscriptions/resourceGroups/read"
+      - "*/read"
+      - "*/write"
+
+  - id: standardize-tag-format
+    name: Standardize Tag Format
+    description: Standardizes tag naming conventions and formats across resources
+    version: "1.0.0"
+    category: governance
+    resource_type: "*"
+    violation_types:
+      - InconsistentTagFormat
+      - InvalidTagNaming
+    
+    powershell_script: |
+      param(
+          [string]$ResourceId,
+          [hashtable]$TagMappings = @{
+              "env" = "Environment"
+              "environment" = "Environment"
+              "costcenter" = "CostCenter"
+              "cost-center" = "CostCenter"
+              "cost_center" = "CostCenter"
+              "owner" = "Owner"
+              "project" = "Project"
+              "proj" = "Project"
+          }
+      )
+      
+      $resource = Get-AzResource -ResourceId $ResourceId
+      $currentTags = $resource.Tags
+      $standardizedTags = @{}
+      
+      foreach ($tag in $currentTags.GetEnumerator()) {
+          $standardKey = $tag.Key
+          $lowercaseKey = $tag.Key.ToLower()
+          
+          # Check if we have a mapping for this tag
+          if ($TagMappings.ContainsKey($lowercaseKey)) {
+              $standardKey = $TagMappings[$lowercaseKey]
+          }
+          
+          # Standardize value format (Title Case for certain tags)
+          $standardValue = $tag.Value
+          if ($standardKey -in @("Environment", "Owner", "Project")) {
+              $standardValue = (Get-Culture).TextInfo.ToTitleCase($tag.Value.ToLower())
+          }
+          
+          $standardizedTags[$standardKey] = $standardValue
+      }
+      
+      # Apply standardized tags
+      Set-AzResource -ResourceId $ResourceId -Tag $standardizedTags -Force
+      
+      Write-Output "Standardized tags for resource: $($resource.Name)"
+    
+    azure_cli_commands:
+      - command: "az resource show --ids {resourceId} --query tags"
+        description: "Show current tags before standardization"
+      - command: "az tag update --resource-id {resourceId} --operation Replace --tags Environment=Production Owner=IT-Team"
+        description: "Replace with standardized tags"
+    
+    validation_rules:
+      - rule_id: check-standard-tag-names
+        rule_type: post_condition
+        condition: "all(keys(resource.tags), &contains(@, ['Environment', 'Owner', 'CostCenter', 'Project']))"
+        error_message: "Tags do not follow standard naming conventions"
+    
+    estimated_duration_minutes: 1
+    risk_level: low

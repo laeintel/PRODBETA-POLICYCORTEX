@@ -22,6 +22,7 @@ async-stream = "0.3"
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+serde_yaml = "0.9"
 
 # Logging
 tracing = "0.1"
@@ -128,6 +129,13 @@ futures-lite = "2.6.1"
 # OpenSSL vendored fallback (optional, for CI environments)
 openssl = { version = "0.10", features = ["vendored"], optional = true }
 futures = "0.3.31"
+
+# Test dependencies
+[dev-dependencies]
+tokio-test = "0.4"
+wiremock = "0.6"
+tempfile = "3.8"
+criterion = { version = "0.5", features = ["html_reports"] }
 
 [features]
 default = []

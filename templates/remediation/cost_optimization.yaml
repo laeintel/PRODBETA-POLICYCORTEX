@@ -1,0 +1,477 @@
+# Cost Optimization Remediation Template
+# Implements cost optimization measures for over-provisioned or underutilized resources
+
+templates:
+  - id: rightsize-virtual-machine
+    name: Right-size Virtual Machine
+    description: Adjusts VM size based on utilization metrics to optimize costs
+    version: "1.0.0"
+    category: cost-optimization
+    resource_type: Microsoft.Compute/virtualMachines
+    violation_types:
+      - OverProvisioned
+      - UnderUtilized
+      - CostOptimizationOpportunity
+      - RightsizingNeeded
+    
+    # ARM Template for VM resizing
+    arm_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "vmName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the virtual machine to resize"
+            }
+          },
+          "newVmSize": {
+            "type": "string",
+            "metadata": {
+              "description": "New VM size (e.g., Standard_B2s, Standard_D2s_v3)"
+            }
+          },
+          "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-03-01",
+            "name": "[parameters('vmName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+              "hardwareProfile": {
+                "vmSize": "[parameters('newVmSize')]"
+              }
+            }
+          }
+        ],
+        "outputs": {
+          "vmResourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+          },
+          "newVmSize": {
+            "type": "string",
+            "value": "[parameters('newVmSize')]"
+          }
+        }
+      }
+    
+    # PowerShell script for VM resizing with validation
+    powershell_script: |
+      param(
+          [string]$VMName,
+          [string]$ResourceGroupName,
+          [string]$NewVMSize,
+          [int]$UtilizationThreshold = 20,
+          [bool]$AutoResize = $false
+      )
+      
+      try {
+          # Get VM information
+          $vm = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName
+          if (-not $vm) {
+              throw "VM $VMName not found in resource group $ResourceGroupName"
+          }
+          
+          $currentSize = $vm.HardwareProfile.VmSize
+          Write-Output "Current VM size: $currentSize"
+          Write-Output "Proposed new size: $NewVMSize"
+          
+          # Get available VM sizes for the location
+          $availableSizes = Get-AzVMSize -Location $vm.Location | Where-Object { $_.Name -eq $NewVMSize }
+          if (-not $availableSizes) {
+              throw "VM size $NewVMSize is not available in location $($vm.Location)"
+          }
+          
+          # Check if VM is running
+          $vmStatus = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName -Status
+          $isRunning = $vmStatus.Statuses | Where-Object { $_.Code -eq "PowerState/running" }
+          
+          if ($isRunning -and -not $AutoResize) {
+              Write-Warning "VM is currently running. Stop the VM before resizing or use -AutoResize flag."
+              return
+          }
+          
+          # Stop VM if running and AutoResize is enabled
+          if ($isRunning -and $AutoResize) {
+              Write-Output "Stopping VM for resizing..."
+              Stop-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName -Force
+              
+              # Wait for VM to stop
+              do {
+                  Start-Sleep -Seconds 10
+                  $vmStatus = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName -Status
+                  $stopped = $vmStatus.Statuses | Where-Object { $_.Code -eq "PowerState/deallocated" }
+              } while (-not $stopped)
+          }
+          
+          # Resize the VM
+          Write-Output "Resizing VM from $currentSize to $NewVMSize..."
+          $vm.HardwareProfile.VmSize = $NewVMSize
+          Update-AzVM -VM $vm -ResourceGroupName $ResourceGroupName
+          
+          # Start VM if it was running before
+          if ($isRunning -and $AutoResize) {
+              Write-Output "Starting VM after resizing..."
+              Start-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName
+          }
+          
+          Write-Output "VM $VMName successfully resized to $NewVMSize"
+          
+          # Calculate potential savings
+          $savings = Calculate-VMCostSavings -CurrentSize $currentSize -NewSize $NewVMSize -Location $vm.Location
+          Write-Output "Estimated monthly savings: $savings"
+          
+      }
+      catch {
+          Write-Error "Failed to resize VM $VMName : $($_.Exception.Message)"
+          throw
+      }
+      
+      function Calculate-VMCostSavings {
+          param($CurrentSize, $NewSize, $Location)
+          # Simplified cost calculation - in real implementation, use Azure Pricing API
+          $costMap = @{
+              "Standard_D2s_v3" = 96.36
+              "Standard_B2s" = 30.66
+              "Standard_D1_v2" = 55.48
+              "Standard_B1s" = 7.59
+          }
+          
+          $currentCost = $costMap[$CurrentSize] ?? 100
+          $newCost = $costMap[$NewSize] ?? 50
+          $savings = $currentCost - $newCost
+          
+          return "$([math]::Round($savings, 2)) USD/month"
+      }
+    
+    # Azure CLI commands for VM operations
+    azure_cli_commands:
+      - command: "az vm show --resource-group {resourceGroupName} --name {vmName} --query 'hardwareProfile.vmSize'"
+        description: "Show current VM size"
+      - command: "az vm list-sizes --location {location} --query '[?name==`{newVmSize}`]'"
+        description: "Verify new VM size is available"
+      - command: "az vm deallocate --resource-group {resourceGroupName} --name {vmName}"
+        description: "Deallocate VM before resizing"
+      - command: "az vm resize --resource-group {resourceGroupName} --name {vmName} --size {newVmSize}"
+        description: "Resize the VM"
+      - command: "az vm start --resource-group {resourceGroupName} --name {vmName}"
+        description: "Start VM after resizing"
+    
+    # Validation rules
+    validation_rules:
+      - rule_id: check-vm-size-changed
+        rule_type: post_condition
+        condition: "resource.properties.hardwareProfile.vmSize == newVmSize"
+        error_message: "VM size was not successfully changed"
+      - rule_id: check-vm-available
+        rule_type: post_condition
+        condition: "resource.properties.provisioningState == 'Succeeded'"
+        error_message: "VM is not in succeeded state after resizing"
+      - rule_id: verify-cost-reduction
+        rule_type: custom
+        condition: "newVmSize results in lower monthly cost"
+        error_message: "Resize did not result in cost reduction"
+    
+    # Rollback template
+    rollback_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "vmName": {
+            "type": "string"
+          },
+          "originalVmSize": {
+            "type": "string"
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-03-01",
+            "name": "[parameters('vmName')]",
+            "properties": {
+              "hardwareProfile": {
+                "vmSize": "[parameters('originalVmSize')]"
+              }
+            }
+          }
+        ]
+      }
+    
+    success_criteria:
+      compliance_check: false
+      health_check: true
+      performance_check: true
+      custom_validations:
+        - "VM size successfully changed"
+        - "VM operational after resize"
+        - "Cost reduction achieved"
+      min_success_percentage: 100.0
+    
+    created_by: "PolicyCortex AI"
+    created_date: "2025-08-16"
+    last_modified: "2025-08-16"
+    tags:
+      - cost-optimization
+      - rightsizing
+      - vm-management
+      - efficiency
+    
+    estimated_duration_minutes: 10
+    risk_level: medium
+    
+    required_permissions:
+      - "Microsoft.Compute/virtualMachines/write"
+      - "Microsoft.Compute/virtualMachines/read"
+      - "Microsoft.Compute/virtualMachines/start/action"
+      - "Microsoft.Compute/virtualMachines/deallocate/action"
+
+  - id: delete-unused-resources
+    name: Delete Unused Resources
+    description: Safely removes unused resources to eliminate unnecessary costs
+    version: "1.0.0"
+    category: cost-optimization
+    resource_type: "*"
+    violation_types:
+      - UnusedResource
+      - OrphanedResource
+      - ZeroUtilization
+    
+    powershell_script: |
+      param(
+          [string]$ResourceId,
+          [string]$ResourceType,
+          [int]$UnusedDays = 30,
+          [bool]$DryRun = $true
+      )
+      
+      try {
+          $resource = Get-AzResource -ResourceId $ResourceId
+          
+          # Safety checks before deletion
+          $safeToDelete = $true
+          $reasons = @()
+          
+          # Check resource age
+          $createdDate = $resource.CreatedTime
+          if ($createdDate -and (Get-Date).AddDays(-7) -lt $createdDate) {
+              $safeToDelete = $false
+              $reasons += "Resource is less than 7 days old"
+          }
+          
+          # Check for dependencies (simplified)
+          if ($ResourceType -eq "Microsoft.Storage/storageAccounts") {
+              # Check if storage account has data
+              $storageAccount = Get-AzStorageAccount -ResourceGroupName $resource.ResourceGroupName -Name $resource.Name
+              $containers = Get-AzStorageContainer -Context $storageAccount.Context
+              if ($containers.Count -gt 0) {
+                  $safeToDelete = $false
+                  $reasons += "Storage account contains data"
+              }
+          }
+          
+          # Check tags for deletion protection
+          if ($resource.Tags -and $resource.Tags.ContainsKey("DoNotDelete")) {
+              $safeToDelete = $false
+              $reasons += "Resource has DoNotDelete tag"
+          }
+          
+          if (-not $safeToDelete) {
+              Write-Warning "Resource $($resource.Name) cannot be safely deleted:"
+              $reasons | ForEach-Object { Write-Warning "  - $_" }
+              return
+          }
+          
+          if ($DryRun) {
+              Write-Output "DRY RUN: Would delete resource $($resource.Name) of type $ResourceType"
+              Write-Output "Estimated monthly savings: $(Get-ResourceCostEstimate -ResourceType $ResourceType)"
+          } else {
+              Write-Output "Deleting unused resource: $($resource.Name)"
+              Remove-AzResource -ResourceId $ResourceId -Force
+              Write-Output "Resource deleted successfully"
+          }
+      }
+      catch {
+          Write-Error "Failed to process resource deletion: $($_.Exception.Message)"
+          throw
+      }
+      
+      function Get-ResourceCostEstimate {
+          param($ResourceType)
+          # Simplified cost estimation
+          $costEstimates = @{
+              "Microsoft.Compute/virtualMachines" = "50-500 USD/month"
+              "Microsoft.Storage/storageAccounts" = "10-100 USD/month"
+              "Microsoft.Network/loadBalancers" = "20-200 USD/month"
+              "Microsoft.Network/publicIPAddresses" = "5-15 USD/month"
+          }
+          return $costEstimates[$ResourceType] ?? "Variable"
+      }
+    
+    azure_cli_commands:
+      - command: "az resource show --ids {resourceId}"
+        description: "Show resource details before deletion"
+      - command: "az resource delete --ids {resourceId} --verbose"
+        description: "Delete the unused resource"
+      - command: "az group delete --name {resourceGroupName} --yes --no-wait"
+        description: "Delete entire resource group if all resources are unused"
+    
+    validation_rules:
+      - rule_id: verify-resource-deleted
+        rule_type: post_condition
+        condition: "!exists(resource)"
+        error_message: "Resource still exists after deletion attempt"
+      - rule_id: check-no-dependencies-broken
+        rule_type: post_condition
+        condition: "no dependent resources affected"
+        error_message: "Resource deletion broke dependencies"
+    
+    success_criteria:
+      compliance_check: false
+      health_check: true
+      performance_check: false
+      custom_validations:
+        - "Resource successfully removed"
+        - "No broken dependencies"
+        - "Cost savings realized"
+      min_success_percentage: 100.0
+    
+    estimated_duration_minutes: 5
+    risk_level: high
+    
+    required_permissions:
+      - "*/delete"
+      - "Microsoft.Resources/subscriptions/resourceGroups/delete"
+
+  - id: schedule-vm-auto-shutdown
+    name: Schedule VM Auto-Shutdown
+    description: Configures automatic shutdown schedules for VMs to reduce costs
+    version: "1.0.0"
+    category: cost-optimization
+    resource_type: Microsoft.Compute/virtualMachines
+    violation_types:
+      - NoAutoShutdown
+      - AlwaysOnVM
+    
+    arm_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "vmName": {
+            "type": "string"
+          },
+          "shutdownTime": {
+            "type": "string",
+            "defaultValue": "19:00",
+            "metadata": {
+              "description": "Time to shutdown VM (24-hour format)"
+            }
+          },
+          "timeZone": {
+            "type": "string",
+            "defaultValue": "UTC",
+            "metadata": {
+              "description": "Time zone for the shutdown schedule"
+            }
+          },
+          "enableNotifications": {
+            "type": "bool",
+            "defaultValue": true
+          }
+        },
+        "variables": {
+          "scheduleResourceName": "[concat('shutdown-computevm-', parameters('vmName'))]"
+        },
+        "resources": [
+          {
+            "type": "Microsoft.DevTestLab/schedules",
+            "apiVersion": "2018-09-15",
+            "name": "[variables('scheduleResourceName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+              "status": "Enabled",
+              "taskType": "ComputeVmShutdownTask",
+              "dailyRecurrence": {
+                "time": "[parameters('shutdownTime')]"
+              },
+              "timeZoneId": "[parameters('timeZone')]",
+              "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]",
+              "notificationSettings": {
+                "status": "[if(parameters('enableNotifications'), 'Enabled', 'Disabled')]",
+                "timeInMinutes": 15,
+                "webhookUrl": "",
+                "emailRecipient": "",
+                "notificationLocale": "en"
+              }
+            }
+          }
+        ],
+        "outputs": {
+          "scheduleResourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.DevTestLab/schedules', variables('scheduleResourceName'))]"
+          }
+        }
+      }
+    
+    powershell_script: |
+      param(
+          [string]$VMName,
+          [string]$ResourceGroupName,
+          [string]$ShutdownTime = "19:00",
+          [string]$TimeZone = "UTC",
+          [string]$NotificationEmail = ""
+      )
+      
+      $scheduleResourceName = "shutdown-computevm-$VMName"
+      $vmResourceId = (Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VMName).Id
+      
+      # Create auto-shutdown schedule
+      $scheduleProperties = @{
+          'status' = 'Enabled'
+          'taskType' = 'ComputeVmShutdownTask'
+          'dailyRecurrence' = @{ 'time' = $ShutdownTime }
+          'timeZoneId' = $TimeZone
+          'targetResourceId' = $vmResourceId
+          'notificationSettings' = @{
+              'status' = if ($NotificationEmail) { 'Enabled' } else { 'Disabled' }
+              'timeInMinutes' = 15
+              'emailRecipient' = $NotificationEmail
+          }
+      }
+      
+      New-AzResource -ResourceGroupName $ResourceGroupName `
+          -ResourceType "Microsoft.DevTestLab/schedules" `
+          -ResourceName $scheduleResourceName `
+          -Location (Get-AzResourceGroup -Name $ResourceGroupName).Location `
+          -Properties $scheduleProperties
+      
+      Write-Output "Auto-shutdown scheduled for VM $VMName at $ShutdownTime $TimeZone"
+    
+    azure_cli_commands:
+      - command: "az vm auto-shutdown --resource-group {resourceGroupName} --name {vmName} --time {shutdownTime} --timezone {timeZone}"
+        description: "Configure auto-shutdown using VM extension"
+      - command: "az resource create --resource-group {resourceGroupName} --resource-type Microsoft.DevTestLab/schedules --name shutdown-computevm-{vmName} --properties @schedule.json"
+        description: "Create shutdown schedule using resource template"
+    
+    validation_rules:
+      - rule_id: check-schedule-created
+        rule_type: post_condition
+        condition: "exists(scheduleResource)"
+        error_message: "Auto-shutdown schedule was not created"
+      - rule_id: verify-schedule-enabled
+        rule_type: post_condition
+        condition: "scheduleResource.properties.status == 'Enabled'"
+        error_message: "Auto-shutdown schedule is not enabled"
+    
+    estimated_duration_minutes: 2
+    risk_level: low

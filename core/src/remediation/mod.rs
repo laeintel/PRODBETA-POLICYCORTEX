@@ -6,6 +6,11 @@ pub mod approval_manager;
 pub mod rollback_manager;
 pub mod bulk_remediation;
 pub mod arm_executor;
+pub mod template_library;
+pub mod status_tracker;
+pub mod validation_engine;
+pub mod notification_system;
+pub mod quick_fixes;
 
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
@@ -56,7 +61,7 @@ pub struct RemediationResult {
     pub warnings: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RemediationStatus {
     Pending,
     AwaitingApproval,
@@ -102,7 +107,7 @@ pub struct RemediationTemplate {
     pub powershell_script: Option<String>,
     pub azure_cli_commands: Vec<String>,
     pub validation_rules: Vec<ValidationRule>,
-    pub rollback_template: Option<Box<RemediationTemplate>>,
+    pub rollback_template: Option<serde_json::Value>,
     pub success_criteria: SuccessCriteria,
 }
 
@@ -121,6 +126,7 @@ pub enum ValidationType {
     ResourceState,
     PolicyCompliance,
     DependencyCheck,
+    Custom,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,6 +136,18 @@ pub struct SuccessCriteria {
     pub performance_check: bool,
     pub custom_validations: Vec<String>,
     pub min_success_percentage: f64,
+}
+
+impl Default for SuccessCriteria {
+    fn default() -> Self {
+        Self {
+            compliance_check: true,
+            health_check: true,
+            performance_check: false,
+            custom_validations: Vec::new(),
+            min_success_percentage: 100.0,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

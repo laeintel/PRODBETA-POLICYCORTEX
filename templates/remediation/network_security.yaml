@@ -1,0 +1,304 @@
+# Network Security Remediation Template
+# Configures Network Security Groups with proper security rules
+
+templates:
+  - id: secure-network-access
+    name: Secure Network Access
+    description: Applies security rules to Network Security Groups to prevent unauthorized access
+    version: "1.0.0"
+    category: security
+    resource_type: Microsoft.Network/networkSecurityGroups
+    violation_types:
+      - InsecureNetwork
+      - PublicAccessEnabled
+      - MissingSecurityRules
+      - OverlyPermissiveRules
+    
+    # ARM Template for NSG security configuration
+    arm_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "nsgName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the Network Security Group"
+            }
+          },
+          "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+          },
+          "allowedSourceIps": {
+            "type": "array",
+            "defaultValue": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+            "metadata": {
+              "description": "Array of allowed source IP ranges"
+            }
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('nsgName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+              "securityRules": [
+                {
+                  "name": "DenyInternetInbound",
+                  "properties": {
+                    "description": "Deny all inbound traffic from Internet",
+                    "protocol": "*",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "*",
+                    "sourceAddressPrefix": "Internet",
+                    "destinationAddressPrefix": "*",
+                    "access": "Deny",
+                    "priority": 100,
+                    "direction": "Inbound"
+                  }
+                },
+                {
+                  "name": "AllowSSHFromTrustedNetworks",
+                  "properties": {
+                    "description": "Allow SSH from trusted networks only",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "22",
+                    "sourceAddressPrefixes": "[parameters('allowedSourceIps')]",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 200,
+                    "direction": "Inbound"
+                  }
+                },
+                {
+                  "name": "AllowHTTPSFromTrustedNetworks",
+                  "properties": {
+                    "description": "Allow HTTPS from trusted networks only",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "443",
+                    "sourceAddressPrefixes": "[parameters('allowedSourceIps')]",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 300,
+                    "direction": "Inbound"
+                  }
+                },
+                {
+                  "name": "DenyAllOtherInbound",
+                  "properties": {
+                    "description": "Deny all other inbound traffic",
+                    "protocol": "*",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "*",
+                    "sourceAddressPrefix": "*",
+                    "destinationAddressPrefix": "*",
+                    "access": "Deny",
+                    "priority": 4000,
+                    "direction": "Inbound"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "outputs": {
+          "nsgResourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+          },
+          "securityRulesCount": {
+            "type": "int",
+            "value": "[length(reference(parameters('nsgName')).securityRules)]"
+          }
+        }
+      }
+    
+    # PowerShell script for quick NSG fixes
+    powershell_script: |
+      param(
+          [string]$NetworkSecurityGroupName,
+          [string]$ResourceGroupName,
+          [string[]]$AllowedSourceIps = @("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+      )
+      
+      # Get the NSG
+      $nsg = Get-AzNetworkSecurityGroup -Name $NetworkSecurityGroupName -ResourceGroupName $ResourceGroupName
+      
+      # Remove any rules that allow Internet access
+      $nsg.SecurityRules | Where-Object { $_.SourceAddressPrefix -eq "Internet" -and $_.Access -eq "Allow" } | ForEach-Object {
+          Remove-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $nsg -Name $_.Name
+      }
+      
+      # Add deny Internet inbound rule
+      Add-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $nsg `
+          -Name "DenyInternetInbound" `
+          -Description "Deny all inbound traffic from Internet" `
+          -Access Deny `
+          -Protocol * `
+          -Direction Inbound `
+          -Priority 100 `
+          -SourceAddressPrefix Internet `
+          -SourcePortRange * `
+          -DestinationAddressPrefix * `
+          -DestinationPortRange *
+      
+      # Apply changes
+      Set-AzNetworkSecurityGroup -NetworkSecurityGroup $nsg
+      
+      Write-Output "Network Security Group $NetworkSecurityGroupName secured successfully"
+    
+    # Azure CLI commands
+    azure_cli_commands:
+      - command: "az network nsg rule create --resource-group {resourceGroupName} --nsg-name {nsgName} --name DenyInternetInbound --priority 100 --source-address-prefixes Internet --destination-port-ranges '*' --access Deny --protocol '*'"
+        description: "Add rule to deny Internet inbound traffic"
+      - command: "az network nsg rule list --resource-group {resourceGroupName} --nsg-name {nsgName} --query \"[?sourceAddressPrefix=='Internet' && access=='Allow']\" --output table"
+        description: "List potentially insecure rules allowing Internet access"
+      - command: "az network nsg rule delete --resource-group {resourceGroupName} --nsg-name {nsgName} --name {ruleName}"
+        description: "Delete insecure rules (replace {ruleName} with actual rule name)"
+    
+    # Validation rules
+    validation_rules:
+      - rule_id: check-no-internet-allow
+        rule_type: post_condition
+        condition: "!exists(resource.properties.securityRules[?sourceAddressPrefix=='Internet' && access=='Allow'])"
+        error_message: "NSG still has rules allowing Internet access"
+      - rule_id: check-deny-rule-exists
+        rule_type: post_condition
+        condition: "exists(resource.properties.securityRules[?name=='DenyInternetInbound'])"
+        error_message: "Deny Internet inbound rule was not created"
+      - rule_id: check-high-priority-deny
+        rule_type: post_condition
+        condition: "exists(resource.properties.securityRules[?priority<=`200` && access=='Deny'])"
+        error_message: "No high-priority deny rules found"
+    
+    # Rollback template
+    rollback_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "nsgName": {
+            "type": "string"
+          },
+          "originalSecurityRules": {
+            "type": "array",
+            "defaultValue": []
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('nsgName')]",
+            "properties": {
+              "securityRules": "[parameters('originalSecurityRules')]"
+            }
+          }
+        ]
+      }
+    
+    success_criteria:
+      compliance_check: true
+      health_check: true
+      performance_check: false
+      custom_validations:
+        - "No Internet allow rules"
+        - "Deny rules with high priority"
+        - "Trusted network access only"
+      min_success_percentage: 100.0
+    
+    created_by: "PolicyCortex AI"
+    created_date: "2025-08-16"
+    last_modified: "2025-08-16"
+    tags:
+      - security
+      - networking
+      - nsg
+      - firewall
+    
+    estimated_duration_minutes: 3
+    risk_level: medium
+    
+    required_permissions:
+      - "Microsoft.Network/networkSecurityGroups/write"
+      - "Microsoft.Network/networkSecurityGroups/read"
+      - "Microsoft.Network/networkSecurityGroups/securityRules/write"
+
+  - id: disable-public-access
+    name: Disable Public Access
+    description: Disables public network access for resources that support it
+    version: "1.0.0"
+    category: security
+    resource_type: Microsoft.Storage/storageAccounts
+    violation_types:
+      - PublicAccessEnabled
+      - PublicNetworkAccess
+    
+    arm_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "storageAccountName": {
+            "type": "string"
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('storageAccountName')]",
+            "properties": {
+              "publicNetworkAccess": "Disabled",
+              "networkAcls": {
+                "defaultAction": "Deny",
+                "bypass": "AzureServices"
+              }
+            }
+          }
+        ]
+      }
+    
+    powershell_script: |
+      param(
+          [string]$StorageAccountName,
+          [string]$ResourceGroupName
+      )
+      
+      # Disable public network access
+      Set-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -PublicNetworkAccess Disabled
+      
+      Write-Output "Public access disabled for storage account $StorageAccountName"
+    
+    azure_cli_commands:
+      - command: "az storage account update --name {storageAccountName} --resource-group {resourceGroupName} --public-network-access Disabled"
+        description: "Disable public network access"
+      - command: "az storage account update --name {storageAccountName} --resource-group {resourceGroupName} --default-action Deny"
+        description: "Set network default action to Deny"
+    
+    validation_rules:
+      - rule_id: check-public-access-disabled
+        rule_type: post_condition
+        condition: "resource.properties.publicNetworkAccess == 'Disabled'"
+        error_message: "Public network access was not disabled"
+      - rule_id: check-default-deny
+        rule_type: post_condition
+        condition: "resource.properties.networkAcls.defaultAction == 'Deny'"
+        error_message: "Network default action is not set to Deny"
+    
+    success_criteria:
+      compliance_check: true
+      health_check: true
+      performance_check: false
+      min_success_percentage: 100.0
+    
+    estimated_duration_minutes: 1
+    risk_level: low
+    
+    required_permissions:
+      - "Microsoft.Storage/storageAccounts/write"
