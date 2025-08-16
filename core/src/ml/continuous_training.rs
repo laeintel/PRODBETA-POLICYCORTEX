@@ -159,8 +159,9 @@ impl ContinuousTrainingPipeline {
             
             // Record metrics
             let training_time = Utc::now() - start_time;
+            let model_id = new_model.id.clone();
             self.record_training_metrics(TrainingMetrics {
-                model_id: new_model.id.clone(),
+                model_id,
                 started_at: start_time,
                 completed_at: Utc::now(),
                 training_duration: training_time.num_seconds() as u64,
@@ -234,8 +235,9 @@ impl ContinuousTrainingPipeline {
         versions.push(new_model.clone());
         
         // Keep only the configured number of backup models
-        if versions.len() > self.config.backup_models {
-            versions.drain(0..versions.len() - self.config.backup_models);
+        let len = versions.len();
+        if len > self.config.backup_models {
+            versions.drain(0..len - self.config.backup_models);
         }
         
         tracing::info!("Deployed new model: {}", new_model.id);
@@ -249,8 +251,9 @@ impl ContinuousTrainingPipeline {
         history.push(metrics);
         
         // Keep only last 100 training runs
-        if history.len() > 100 {
-            history.drain(0..history.len() - 100);
+        let len = history.len();
+        if len > 100 {
+            history.drain(0..len - 100);
         }
     }
     

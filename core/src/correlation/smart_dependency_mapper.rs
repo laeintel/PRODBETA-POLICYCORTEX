@@ -128,12 +128,15 @@ impl SmartDependencyMapper {
         // Update predictions based on real-time data
         let updated_predictions = self.dependency_predictor.update_predictions(&events, &metrics).await;
         
+        let stability_score = self.calculate_graph_stability();
+        let recommendations = self.generate_real_time_recommendations(&dependency_changes);
+        
         RealTimeDependencyUpdate {
             dependency_changes,
             detected_anomalies: anomalies,
             updated_predictions,
-            graph_stability_score: self.calculate_graph_stability(),
-            recommendation_updates: self.generate_real_time_recommendations(&dependency_changes),
+            graph_stability_score: stability_score,
+            recommendation_updates: recommendations,
         }
     }
 
