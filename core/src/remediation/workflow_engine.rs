@@ -12,6 +12,7 @@ pub struct WorkflowEngine {
     rollback_manager: Arc<RollbackManager>,
 }
 
+#[derive(Clone)]
 struct WorkflowExecution {
     workflow_id: Uuid,
     execution_id: Uuid,

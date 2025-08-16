@@ -1,0 +1,192 @@
+# Storage Encryption Remediation Template
+# Enables encryption at rest for Azure Storage Accounts
+
+templates:
+  - id: enable-storage-encryption
+    name: Enable Storage Account Encryption
+    description: Enables encryption at rest for Azure Storage Accounts that are missing encryption
+    version: "1.0.0"
+    category: security
+    resource_type: Microsoft.Storage/storageAccounts
+    violation_types:
+      - EncryptionNotEnabled
+      - EncryptionDisabled
+      - MissingEncryption
+    
+    # ARM Template for remediation
+    arm_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "storageAccountName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the storage account to encrypt"
+            }
+          },
+          "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+              "description": "Location for the storage account"
+            }
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+              "encryption": {
+                "services": {
+                  "blob": {
+                    "enabled": true,
+                    "keyType": "Account"
+                  },
+                  "file": {
+                    "enabled": true,
+                    "keyType": "Account"
+                  },
+                  "queue": {
+                    "enabled": true,
+                    "keyType": "Account"
+                  },
+                  "table": {
+                    "enabled": true,
+                    "keyType": "Account"
+                  }
+                },
+                "keySource": "Microsoft.Storage",
+                "requireInfrastructureEncryption": false
+              },
+              "supportsHttpsTrafficOnly": true,
+              "minimumTlsVersion": "TLS1_2"
+            }
+          }
+        ],
+        "outputs": {
+          "storageAccountId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+          },
+          "encryptionEnabled": {
+            "type": "bool",
+            "value": true
+          }
+        }
+      }
+    
+    # Alternative PowerShell script for quick fixes
+    powershell_script: |
+      param(
+          [string]$StorageAccountName,
+          [string]$ResourceGroupName
+      )
+      
+      # Enable encryption for all services
+      Set-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -EnableEncryptionService Blob
+      Set-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -EnableEncryptionService File
+      Set-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -EnableEncryptionService Queue
+      Set-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -EnableEncryptionService Table
+      
+      # Ensure HTTPS only
+      Set-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -EnableHttpsTrafficOnly $true
+      
+      Write-Output "Storage account $StorageAccountName encryption enabled successfully"
+    
+    # Azure CLI commands for automation
+    azure_cli_commands:
+      - command: "az storage account update --name {storageAccountName} --resource-group {resourceGroupName} --encryption-services blob file queue table"
+        description: "Enable encryption for all storage services"
+      - command: "az storage account update --name {storageAccountName} --resource-group {resourceGroupName} --https-only true"
+        description: "Enforce HTTPS-only traffic"
+      - command: "az storage account update --name {storageAccountName} --resource-group {resourceGroupName} --min-tls-version TLS1_2"
+        description: "Set minimum TLS version to 1.2"
+    
+    # Validation rules to verify successful remediation
+    validation_rules:
+      - rule_id: check-blob-encryption
+        rule_type: post_condition
+        condition: "resource.properties.encryption.services.blob.enabled == true"
+        error_message: "Blob encryption was not successfully enabled"
+      - rule_id: check-file-encryption
+        rule_type: post_condition
+        condition: "resource.properties.encryption.services.file.enabled == true"
+        error_message: "File encryption was not successfully enabled"
+      - rule_id: check-https-only
+        rule_type: post_condition
+        condition: "resource.properties.supportsHttpsTrafficOnly == true"
+        error_message: "HTTPS-only traffic was not enabled"
+      - rule_id: check-tls-version
+        rule_type: post_condition
+        condition: "resource.properties.minimumTlsVersion == 'TLS1_2'"
+        error_message: "Minimum TLS version not set to 1.2"
+    
+    # Rollback template (if needed)
+    rollback_template: |
+      {
+        "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+          "storageAccountName": {
+            "type": "string"
+          },
+          "originalEncryptionState": {
+            "type": "object",
+            "defaultValue": {
+              "blob": { "enabled": false },
+              "file": { "enabled": false },
+              "queue": { "enabled": false },
+              "table": { "enabled": false }
+            }
+          }
+        },
+        "resources": [
+          {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "name": "[parameters('storageAccountName')]",
+            "properties": {
+              "encryption": {
+                "services": "[parameters('originalEncryptionState')]",
+                "keySource": "Microsoft.Storage"
+              }
+            }
+          }
+        ]
+      }
+    
+    # Success criteria for validation
+    success_criteria:
+      compliance_check: true
+      health_check: true
+      performance_check: false
+      custom_validations:
+        - "All storage services encrypted"
+        - "HTTPS-only enabled"
+        - "TLS 1.2 minimum enforced"
+      min_success_percentage: 100.0
+    
+    # Metadata
+    created_by: "PolicyCortex AI"
+    created_date: "2025-08-16"
+    last_modified: "2025-08-16"
+    tags:
+      - security
+      - encryption
+      - storage
+      - compliance
+    
+    # Estimated execution time
+    estimated_duration_minutes: 2
+    
+    # Risk level
+    risk_level: low
+    
+    # Required permissions
+    required_permissions:
+      - "Microsoft.Storage/storageAccounts/write"
+      - "Microsoft.Storage/storageAccounts/read"

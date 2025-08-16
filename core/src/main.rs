@@ -42,6 +42,7 @@ mod governance;
 mod ml;
 mod observability;
 mod policy_engine;
+mod remediation;
 mod resources;
 mod secret_guard;
 mod secrets;

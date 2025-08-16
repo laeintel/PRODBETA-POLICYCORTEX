@@ -3,6 +3,238 @@
 **Base URL**: https://ca-cortex-core-dev.agreeableocean-dbcff600.eastus.azurecontainerapps.io
 **GraphQL URL**: https://ca-cortex-graphql-dev.agreeableocean-dbcff600.eastus.azurecontainerapps.io/graphql
 
+---
+
+# One-Click Automated Remediation API
+
+## Overview
+
+The One-Click Automated Remediation System provides comprehensive REST APIs for managing automated governance workflows, approvals, notifications, and rollback operations. This implements **Patent 3: Unified AI-Driven Cloud Governance Platform**.
+
+**API Version:** v1  
+**Authentication:** Bearer Token (Azure AD JWT)
+
+## Authentication
+
+All remediation API endpoints require authentication via Azure AD Bearer tokens.
+
+```http
+Authorization: Bearer <your-jwt-token>
+```
+
+**Required Permissions:**
+- `PolicyCortex.View` - Read access to resources
+- `PolicyCortex.Remediate` - Execute remediation operations  
+- `PolicyCortex.Approve` - Approve remediation requests
+- `PolicyCortex.Admin` - Full administrative access
+- `PolicyCortex.Notify` - Send notifications
+
+## Remediation APIs
+
+### 1. Create Approval Request
+
+**Endpoint:** `POST /api/v1/remediation/approvals`  
+**Permission:** `PolicyCortex.Remediate`
+
+Create a new approval request for high-risk remediation operations.
+
+**Request Body:**
+```json
+{
+  "remediation_request": {
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "violation_id": "policy-violation-123",
+    "resource_id": "/subscriptions/abc/resourceGroups/prod/providers/Microsoft.Storage/storageAccounts/prodstg",
+    "resource_type": "Microsoft.Storage/storageAccounts",
+    "policy_id": "storage-encryption-required",
+    "remediation_type": "Encryption",
+    "requested_by": "security.admin@company.com",
+    "approval_required": true,
+    "auto_rollback": true
+  },
+  "approvers": ["security.lead@company.com"],
+  "require_all": false,
+  "timeout_hours": 24
+}
+```
+
+**Response:**
+```json
+{
+  "approval_id": "approval-456",
+  "status": "pending",
+  "expires_at": "2025-08-17T14:30:00Z",
+  "approval_url": "/api/v1/remediation/approvals/approval-456"
+}
+```
+
+### 2. Process Approval Decision
+
+**Endpoint:** `POST /api/v1/remediation/approvals/{approval_id}/approve`  
+**Permission:** `PolicyCortex.Approve`
+
+**Request Body:**
+```json
+{
+  "decision": "approve",
+  "reason": "Security review completed - approved for execution"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": "approved",
+  "remediation_started": true,
+  "remediation_id": "rem-789"
+}
+```
+
+### 3. Execute Bulk Remediation
+
+**Endpoint:** `POST /api/v1/remediation/bulk`  
+**Permission:** `PolicyCortex.Remediate`
+
+Execute remediation for multiple violations simultaneously.
+
+**Request Body:**
+```json
+{
+  "violations": [
+    {
+      "violation_id": "viol-1",
+      "resource_id": "/subscriptions/abc/resourceGroups/rg1/providers/Microsoft.Storage/storageAccounts/stg1",
+      "resource_type": "Microsoft.Storage/storageAccounts",
+      "policy_id": "encryption-policy",
+      "violation_type": "encryption_disabled",
+      "severity": "high"
+    }
+  ],
+  "dry_run": false,
+  "parallel": true,
+  "max_parallel": 5,
+  "stop_on_error": false
+}
+```
+
+**Response:**
+```json
+{
+  "bulk_id": "bulk-123",
+  "total_violations": 1,
+  "processing": 1,
+  "stream_url": "/api/v1/remediation/bulk/bulk-123/stream"
+}
+```
+
+### 4. Execute Rollback
+
+**Endpoint:** `POST /api/v1/remediation/rollback/{rollback_token}`  
+**Permission:** `PolicyCortex.Remediate`
+
+**Request Body:**
+```json
+{
+  "reason": "Post-remediation validation failed",
+  "force": false
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "resources_restored": 3,
+  "duration_ms": 45000,
+  "details": ["Storage account encryption reverted"]
+}
+```
+
+## Notification APIs
+
+### 1. Send Notification
+
+**Endpoint:** `POST /api/v1/notifications/send`  
+**Permission:** `PolicyCortex.Notify`
+
+**Request Body:**
+```json
+{
+  "event_type": "ApprovalRequested",
+  "priority": "High",
+  "recipients": [
+    {
+      "recipient_type": "Email",
+      "identifier": "approver@company.com",
+      "name": "Security Approver"
+    }
+  ],
+  "subject": "High Priority Approval Required",
+  "message": "A high-risk remediation requires your approval",
+  "channels": ["email", "teams"]
+}
+```
+
+**Response:**
+```json
+{
+  "notification_id": "notif-789",
+  "status": "sent",
+  "total_recipients": 1,
+  "successful_deliveries": 1,
+  "failed_deliveries": 0
+}
+```
+
+### 2. Create Notification Channel
+
+**Endpoint:** `POST /api/v1/notifications/channels`  
+**Permission:** `PolicyCortex.Admin`
+
+**Request Body:**
+```json
+{
+  "channel_type": "Teams",
+  "config": {
+    "teams_webhook_url": "https://company.webhook.office.com/webhookb2/...",
+    "teams_channel_id": "security-alerts"
+  },
+  "enabled": true,
+  "priority": 5
+}
+```
+
+## Error Handling
+
+### Error Response Format
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "request_id": "req-123",
+    "timestamp": "2025-08-16T14:30:00Z"
+  }
+}
+```
+
+### Common Error Codes
+- `400 VALIDATION_ERROR` - Request validation failed
+- `401 UNAUTHORIZED` - Authentication required
+- `403 FORBIDDEN` - Insufficient permissions
+- `404 NOT_FOUND` - Resource not found
+- `429 RATE_LIMITED` - Too many requests
+- `500 INTERNAL_ERROR` - Internal server error
+
+## Rate Limiting
+
+- **Default:** 100 requests/minute per user
+- **Bulk Operations:** 10 requests/minute per user
+- **Notifications:** 50 requests/minute per user
+
+---
+
 ## 🔑 Authentication
 Currently running in demo mode with `REQUIRE_AUTH=false`. In production, all endpoints require Azure AD Bearer token:
 ```bash

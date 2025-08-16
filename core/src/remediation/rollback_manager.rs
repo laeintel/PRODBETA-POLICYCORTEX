@@ -1,7 +1,9 @@
 use super::*;
+use super::validation_engine::RiskLevel;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
+use chrono::Duration;
 
 pub struct RollbackManager {
     rollback_points: Arc<RwLock<HashMap<String, RollbackPoint>>>,
@@ -224,8 +226,9 @@ impl RollbackManager {
             },
         };
         
+        let resource_snapshots_clone = rollback_point.resource_snapshots.clone();
         self.rollback_points.write().await.insert(token.clone(), rollback_point);
-        self.snapshot_store.store_snapshots(token.clone(), resource_snapshots).await?;
+        self.snapshot_store.store_snapshots(token.clone(), resource_snapshots_clone).await?;
         
         Ok(token)
     }

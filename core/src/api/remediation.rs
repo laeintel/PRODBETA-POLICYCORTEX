@@ -4,9 +4,10 @@
 use crate::api::{AppState, ApiError};
 use crate::auth::{AuthUser, TokenValidator};
 use crate::remediation::*;
-use crate::remediation::approval_manager::{ApprovalManager, ApprovalRequest, ApprovalDecision};
+use crate::remediation::approval_manager::{ApprovalManager, ApprovalRequest, ApprovalDecision, ApprovalWorkflowManager};
 use crate::remediation::bulk_remediation::{BulkRemediationEngine, Violation};
 use crate::remediation::rollback_manager::RollbackManager;
+use crate::remediation::quick_fixes::*;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -123,7 +124,7 @@ pub async fn create_approval_request(
         id: approval_id.clone(),
         remediation_request: request.remediation_request,
         approvers: request.approvers,
-        require_all: request.require_all,
+        require_all: Some(request.require_all),
         created_by: auth_user.claims.preferred_username.clone().unwrap_or_default(),
         created_at: Utc::now(),
         expires_at,
@@ -138,10 +139,11 @@ pub async fn create_approval_request(
     // Create approval
     match approval_manager.create_approval(approval).await {
         Ok(id) => {
+            let approval_id_clone = id.clone();
             // Send notifications to approvers (async)
             tokio::spawn(async move {
                 // In production, send email/Teams/Slack notifications
-                tracing::info!("Sending approval notifications for {}", id);
+                tracing::info!("Sending approval notifications for {}", approval_id_clone);
             });
             
             Json(CreateApprovalResponse {
@@ -152,7 +154,7 @@ pub async fn create_approval_request(
             }).into_response()
         }
         Err(e) => {
-            ApiError::InternalServer(format!("Failed to create approval: {}", e))
+            ApiError::internal_server(format!("Failed to create approval: {}", e))
                 .into_response()
         }
     }
@@ -179,11 +181,10 @@ pub async fn approve_remediation(
         }
     };
     
-    let approval_decision = ApprovalDecision {
-        approver: auth_user.claims.preferred_username.clone().unwrap_or_default(),
-        decision: decision.decision == "approve",
-        reason: decision.reason,
-        timestamp: Utc::now(),
+    let approval_decision = if decision.decision == "approve" {
+        ApprovalDecision::Approved
+    } else {
+        ApprovalDecision::Rejected
     };
     
     match approval_manager.process_approval(&approval_id, approval_decision).await {
@@ -202,7 +203,7 @@ pub async fn approve_remediation(
             
             Json(ApprovalDecisionResponse {
                 success: true,
-                status: if result.approved { "approved" } else { "rejected" },
+                status: if result.approved { "approved".to_string() } else { "rejected".to_string() },
                 remediation_started,
                 remediation_id,
             }).into_response()
@@ -284,6 +285,10 @@ pub async fn execute_bulk_remediation(
         }
     }).collect();
     
+    let bulk_id_clone = bulk_id.clone();
+    let bulk_id_spawn = bulk_id.clone();
+    let violations_clone = violations.clone();
+    
     // Create SSE channel for progress updates
     let (tx, _rx) = broadcast::channel::<String>(100);
     let tx_clone = tx.clone();
@@ -298,7 +303,7 @@ pub async fn execute_bulk_remediation(
     
     // Execute remediation in background
     tokio::spawn(async move {
-        let _ = tx_clone.send(format!("Starting bulk remediation {}", bulk_id));
+        let _ = tx_clone.send(format!("Starting bulk remediation {}", bulk_id_spawn));
         
         let options = crate::remediation::bulk_remediation::BulkOptions {
             dry_run: request.dry_run,
@@ -308,7 +313,7 @@ pub async fn execute_bulk_remediation(
             stop_on_error: request.stop_on_error,
         };
         
-        let result = bulk_engine.execute_with_options(violations, options).await;
+        let result = bulk_engine.execute_with_options(violations_clone, options).await;
         
         let _ = tx_clone.send(format!(
             "Bulk remediation completed: {} successful, {} failed, {} skipped",
@@ -318,7 +323,7 @@ pub async fn execute_bulk_remediation(
     
     // Store SSE channel for streaming
     if let Some(channels) = &state.bulk_remediation_channels {
-        channels.write().await.insert(bulk_id.clone(), tx);
+        channels.write().await.insert(bulk_id_clone.clone(), tx);
     }
     
     Json(BulkRemediationResponse {
@@ -373,17 +378,17 @@ pub async fn rollback_remediation(
     
     let start_time = std::time::Instant::now();
     
-    match rollback_manager.execute_rollback(&rollback_token, request.force).await {
+    match rollback_manager.execute_rollback(rollback_token, request.reason).await {
         Ok(result) => {
             Json(RollbackResponse {
                 success: true,
                 resources_restored: result.resources_restored,
                 duration_ms: start_time.elapsed().as_millis() as u64,
-                details: result.changes,
+                details: vec![format!("{} resources restored", result.resources_restored)],
             }).into_response()
         }
         Err(e) => {
-            ApiError::InternalServer(format!("Rollback failed: {}", e))
+            ApiError::internal_server(format!("Rollback failed: {}", e))
                 .into_response()
         }
     }

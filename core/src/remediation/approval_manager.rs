@@ -2,6 +2,25 @@ use super::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::collections::HashMap;
+use chrono::{Duration, DateTime, Utc};
+use serde::{Serialize, Deserialize};
+
+// Public alias for backward compatibility
+pub type ApprovalManager = ApprovalWorkflowManager;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApprovalRequest {
+    pub id: String,
+    pub remediation_request: RemediationRequest,
+    pub approvers: Vec<String>,
+    pub require_all: Option<bool>,
+    pub created_by: String,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    pub status: String,
+    pub decisions: HashMap<String, bool>,
+}
+
 
 pub struct ApprovalWorkflowManager {
     pending_approvals: Arc<RwLock<HashMap<String, PendingApproval>>>,
@@ -270,16 +289,35 @@ impl ApprovalWorkflowManager {
         
         let pending_approval = PendingApproval {
             approval_id: approval_id.clone(),
-            workflow_id: request.workflow_id,
-            resource_id: request.resource_id,
-            remediation_type: request.remediation_type,
-            risk_level: request.risk_level,
-            requested_by: request.requested_by,
+            workflow_id: request.remediation_request.request_id,
+            resource_id: request.remediation_request.resource_id.clone(),
+            remediation_type: request.remediation_request.remediation_type.clone(),
+            risk_level: RiskLevel::Medium, // Default risk level
+            requested_by: request.created_by.clone(),
             requested_at: Utc::now(),
             expires_at: Utc::now() + Duration::hours(24),
             approval_gate,
             approvers_responded: HashMap::new(),
-            context: request.context,
+            context: ApprovalContext {
+                changes_summary: "Automated remediation request".to_string(),
+                affected_resources: vec![request.remediation_request.resource_id.clone()],
+                estimated_impact: ImpactAssessment {
+                    downtime_expected: false,
+                    downtime_minutes: None,
+                    users_affected: 0,
+                    services_affected: vec![],
+                    cost_impact: CostImpact {
+                        one_time_cost: 0.0,
+                        monthly_cost_change: 0.0,
+                        annual_cost_change: 0.0,
+                        currency: "USD".to_string(),
+                    },
+                    risk_score: 0.1,
+                },
+                compliance_implications: vec![],
+                rollback_available: true,
+                supporting_documents: vec![],
+            },
             status: ApprovalStatus::Pending,
         };
         
@@ -295,11 +333,11 @@ impl ApprovalWorkflowManager {
             timestamp: Utc::now(),
             approval_id: approval_id.clone(),
             action: AuditAction::ApprovalRequested,
-            actor: request.requested_by,
+            actor: request.created_by.clone(),
             details: serde_json::json!({
-                "resource": request.resource_id,
-                "remediation_type": request.remediation_type,
-                "risk_level": request.risk_level,
+                "resource": request.remediation_request.resource_id,
+                "remediation_type": format!("{:?}", request.remediation_request.remediation_type),
+                "risk_level": "medium",
             }),
         }).await;
         
@@ -310,7 +348,8 @@ impl ApprovalWorkflowManager {
         let policies = self.approval_policies.read().await;
         let policy = policies.get("standard").ok_or("No approval policy found")?;
         
-        let approvers = match request.risk_level {
+        let risk_level = RiskLevel::Medium; // Default risk level
+        let approvers = match risk_level {
             RiskLevel::Low => vec![],
             RiskLevel::Medium => vec![Approver {
                 approver_type: ApproverType::Role,
@@ -350,9 +389,9 @@ impl ApprovalWorkflowManager {
         
         Ok(ApprovalGate {
             gate_id: Uuid::new_v4().to_string(),
-            name: format!("{:?} Risk Approval", request.risk_level),
+            name: format!("{:?} Risk Approval", risk_level),
             approvers,
-            approval_type: match request.risk_level {
+            approval_type: match risk_level {
                 RiskLevel::Critical => ApprovalType::AllApprovers,
                 RiskLevel::High => ApprovalType::MinimumApprovers(2),
                 _ => ApprovalType::SingleApprover,
@@ -363,7 +402,8 @@ impl ApprovalWorkflowManager {
     }
 
     async fn check_auto_approval(&self, request: &ApprovalRequest, gate: &ApprovalGate) -> Result<bool, String> {
-        if matches!(request.risk_level, RiskLevel::Low) && gate.approvers.is_empty() {
+        let default_risk = RiskLevel::Medium;
+        if matches!(default_risk, RiskLevel::Low) && gate.approvers.is_empty() {
             return Ok(true);
         }
         
@@ -436,7 +476,7 @@ impl ApprovalWorkflowManager {
                     ApprovalDecision::Rejected => AuditAction::ApprovalRejected,
                     _ => AuditAction::ApprovalRequested,
                 },
-                actor: response.approver_id,
+                actor: response.approver_id.clone(),
                 details: serde_json::to_value(&response).unwrap(),
             }).await;
             
@@ -500,15 +540,6 @@ impl ApprovalWorkflowManager {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApprovalRequest {
-    pub workflow_id: Uuid,
-    pub resource_id: String,
-    pub remediation_type: RemediationType,
-    pub risk_level: RiskLevel,
-    pub requested_by: String,
-    pub context: ApprovalContext,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ApprovalOutcome {

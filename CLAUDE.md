@@ -176,6 +176,14 @@ GitHub Actions workflow (`application.yml`) includes:
 - `backend/services/ai_engine/domain_expert.py` - Core AI engine
 - `graphql/gateway.js` - GraphQL federation gateway
 
+## Project Tracking Requirements
+**CRITICAL**: After completing each day's implementation work, ALWAYS update the `docs/PROJECT_TRACKING.MD` file with:
+- Main heading for the day completed
+- Bullet list of all features/components implemented
+- Status updates showing progress and completion
+- Technical details and system capabilities achieved
+This ensures continuous documentation of implementation progress and maintains project visibility.
+
 ## Testing Patent Features
 The system includes four patented technologies that can be tested via their respective APIs:
 1. Unified Platform - Test via `/api/v1/metrics` for cross-domain metrics
