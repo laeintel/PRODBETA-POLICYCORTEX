@@ -369,6 +369,16 @@ async fn main() {
         .route("/api/v1/correlations/insights", get(get_real_time_insights))
         .route("/api/v1/correlations/graph", get(get_correlation_graph))
         .route("/api/v1/analysis/cross-domain", get(get_correlations_legacy))
+        // ML and AI endpoints (Day 6 enhancements)
+        .route("/api/v1/ml/predict/:resource_id", get(api::ml::get_prediction))
+        .route("/api/v1/ml/metrics", get(api::ml::get_model_metrics))
+        .route("/api/v1/ml/ab-test", post(api::ml::start_ab_test))
+        .route("/api/v1/ml/ab-test/:test_id", get(api::ml::get_ab_test_status))
+        .route("/api/v1/ml/feature-importance", get(api::ml::get_feature_importance))
+        .route("/api/v1/ml/anomalies", get(api::ml::detect_anomalies))
+        .route("/api/v1/ml/feedback", post(api::ml::submit_feedback))
+        .route("/api/v1/ml/cost-prediction", get(api::ml::get_cost_prediction))
+        .route("/api/v1/ml/retrain", post(api::ml::trigger_retraining))
         // Proactive Recommendations
         .route("/api/v1/recommendations", get(get_recommendations))
         .route(

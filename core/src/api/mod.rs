@@ -11,6 +11,7 @@ pub mod predictions;
 pub mod conversation;
 pub mod correlations;
 pub mod remediation;
+pub mod ml;
 
 // Re-export resource API functions
 pub use resources::{
