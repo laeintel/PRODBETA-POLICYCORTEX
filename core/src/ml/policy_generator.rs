@@ -275,7 +275,7 @@ impl RequirementParser {
         
         // Look for parameter-like patterns
         if description.contains("tag") {
-            if let Some(captures) = Regex::new(r"tag[s]?\s+['\"]?(\w+)['\"]?").unwrap().captures(description) {
+            if let Some(captures) = Regex::new(r#"tag[s]?\s+['"]?(\w+)['"]?"#).unwrap().captures(description) {
                 if let Some(tag_name) = captures.get(1) {
                     parameters.push(PolicyParameter {
                         name: format!("required_{}", tag_name.as_str()),
