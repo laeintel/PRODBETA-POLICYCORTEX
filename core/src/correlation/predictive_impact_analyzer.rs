@@ -6,6 +6,25 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use chrono::{DateTime, Utc, Duration};
 use uuid::Uuid;
 
+// Define missing types
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MitigationOption {
+    pub action_type: ActionType,
+    pub target_resource: String,
+    pub implementation_time: u32,
+    pub expected_effectiveness: f64,
+    pub prerequisites: Vec<String>,
+    pub estimated_cost: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ActionType {
+    Preventive,
+    Reactive,
+    Corrective,
+    Detective,
+}
+
 /// Predictive impact analyzer with scenario modeling
 pub struct PredictiveImpactAnalyzer {
     impact_models: HashMap<String, AdvancedImpactModel>,
