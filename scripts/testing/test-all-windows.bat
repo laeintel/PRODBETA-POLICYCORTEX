@@ -96,7 +96,7 @@ if "%DOCKER_AVAILABLE%"=="true" (
     REM Test database connections
     echo Testing PostgreSQL connection...
     docker exec policycortex-postgres psql -U postgres -d policycortex -c "SELECT 1;" >nul 2>&1
-    if %errorlevel% eq 0 (
+    if %errorlevel% equ 0 (
         echo %GREEN%✅ PostgreSQL: Connected%NC%
     ) else (
         echo %RED%❌ PostgreSQL: Failed to connect%NC%
@@ -105,7 +105,7 @@ if "%DOCKER_AVAILABLE%"=="true" (
     
     echo Testing Redis connection...
     docker exec policycortex-redis redis-cli ping >nul 2>&1
-    if %errorlevel% eq 0 (
+    if %errorlevel% equ 0 (
         echo %GREEN%✅ Redis: Connected%NC%
     ) else (
         echo %RED%❌ Redis: Failed to connect%NC%

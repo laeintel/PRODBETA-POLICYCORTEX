@@ -112,7 +112,7 @@ export class ChatFallbackService {
   static shouldUseFallback(): boolean {
     return !process.env.OPENAI_API_KEY && 
            !process.env.AZURE_OPENAI_API_KEY &&
-           (process.env.USE_DEMO_CHAT === 'true' || process.env.NODE_ENV === 'demo');
+           (process.env.USE_DEMO_CHAT === 'true' || process.env.NODE_ENV === 'development');
   }
 }
 

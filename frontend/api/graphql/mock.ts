@@ -91,6 +91,6 @@ export const graphQLMockMiddleware = async (req: any, res: any) => {
 // Utility to check if we should use mock mode
 export const shouldUseMockGraphQL = (): boolean => {
   return process.env.USE_MOCK_GRAPHQL === 'true' || 
-         process.env.NODE_ENV === 'demo' ||
+         process.env.NODE_ENV === 'development' ||
          !process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
 };
