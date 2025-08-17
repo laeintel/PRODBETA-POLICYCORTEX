@@ -2,12 +2,15 @@
 # These import blocks allow Terraform to adopt existing resources
 # that were created outside of Terraform
 
+# NOTE: Import blocks are commented out by default to prevent import conflicts
+# Uncomment and update the subscription ID when you need to import existing resources
+# The subscription ID should match the ARM_SUBSCRIPTION_ID environment variable
+
 # Import existing resource group if it exists
-# This will be skipped if the resource doesn't exist
-import {
-  to = azurerm_resource_group.main
-  id = "/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78/resourceGroups/rg-cortex-dev"
-}
+# import {
+#   to = azurerm_resource_group.main
+#   id = "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/rg-cortex-dev"
+# }
 
 # Note: Additional import blocks can be added here for other existing resources
 # The import blocks will only be processed if the resources exist in Azure
