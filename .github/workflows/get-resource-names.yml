@@ -1,0 +1,128 @@
+name: Get Resource Names (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target environment (dev/prod)'
+        required: true
+        type: string
+    outputs:
+      resource_group:
+        description: 'Resource group name'
+        value: ${{ jobs.compute.outputs.resource_group }}
+      container_registry:
+        description: 'Container registry name'
+        value: ${{ jobs.compute.outputs.container_registry }}
+      container_registry_url:
+        description: 'Container registry URL'
+        value: ${{ jobs.compute.outputs.container_registry_url }}
+      container_env:
+        description: 'Container Apps Environment name'
+        value: ${{ jobs.compute.outputs.container_env }}
+      core_app:
+        description: 'Core Container App name'
+        value: ${{ jobs.compute.outputs.core_app }}
+      frontend_app:
+        description: 'Frontend Container App name'
+        value: ${{ jobs.compute.outputs.frontend_app }}
+      graphql_app:
+        description: 'GraphQL Container App name'
+        value: ${{ jobs.compute.outputs.graphql_app }}
+      key_vault:
+        description: 'Key Vault name'
+        value: ${{ jobs.compute.outputs.key_vault }}
+      log_workspace:
+        description: 'Log Analytics workspace name'
+        value: ${{ jobs.compute.outputs.log_workspace }}
+      app_insights:
+        description: 'Application Insights name'
+        value: ${{ jobs.compute.outputs.app_insights }}
+      postgresql:
+        description: 'PostgreSQL server name'
+        value: ${{ jobs.compute.outputs.postgresql }}
+      storage_account:
+        description: 'Storage account name'
+        value: ${{ jobs.compute.outputs.storage_account }}
+      cosmos_db:
+        description: 'Cosmos DB account name'
+        value: ${{ jobs.compute.outputs.cosmos_db }}
+      vnet:
+        description: 'Virtual network name'
+        value: ${{ jobs.compute.outputs.vnet }}
+
+jobs:
+  compute:
+    name: Compute Resource Names
+    runs-on: ubuntu-latest
+    outputs:
+      resource_group: ${{ steps.names.outputs.resource_group }}
+      container_registry: ${{ steps.names.outputs.container_registry }}
+      container_registry_url: ${{ steps.names.outputs.container_registry_url }}
+      container_env: ${{ steps.names.outputs.container_env }}
+      core_app: ${{ steps.names.outputs.core_app }}
+      frontend_app: ${{ steps.names.outputs.frontend_app }}
+      graphql_app: ${{ steps.names.outputs.graphql_app }}
+      key_vault: ${{ steps.names.outputs.key_vault }}
+      log_workspace: ${{ steps.names.outputs.log_workspace }}
+      app_insights: ${{ steps.names.outputs.app_insights }}
+      postgresql: ${{ steps.names.outputs.postgresql }}
+      storage_account: ${{ steps.names.outputs.storage_account }}
+      cosmos_db: ${{ steps.names.outputs.cosmos_db }}
+      vnet: ${{ steps.names.outputs.vnet }}
+      
+    steps:
+      - name: Generate Consistent Hash
+        id: hash
+        run: |
+          # Generate a consistent hash from the GitHub repository name
+          # This ensures the same hash across all runs
+          REPO_HASH=$(echo -n "${{ github.repository }}" | sha256sum | cut -c1-6)
+          echo "hash=$REPO_HASH" >> $GITHUB_OUTPUT
+          
+      - name: Compute Resource Names
+        id: names
+        env:
+          ENV: ${{ inputs.environment }}
+          HASH: ${{ steps.hash.outputs.hash }}
+        run: |
+          # Compute all resource names based on environment and patterns
+          
+          # Basic resources (regional, can have dashes)
+          echo "resource_group=rg-cortex-${ENV}" >> $GITHUB_OUTPUT
+          echo "container_env=cae-cortex-${ENV}" >> $GITHUB_OUTPUT
+          echo "core_app=ca-cortex-core-${ENV}" >> $GITHUB_OUTPUT
+          echo "frontend_app=ca-cortex-frontend-${ENV}" >> $GITHUB_OUTPUT
+          echo "graphql_app=ca-cortex-graphql-${ENV}" >> $GITHUB_OUTPUT
+          echo "log_workspace=log-cortex-${ENV}" >> $GITHUB_OUTPUT
+          echo "app_insights=appi-cortex-${ENV}" >> $GITHUB_OUTPUT
+          echo "postgresql=psql-cortex-${ENV}" >> $GITHUB_OUTPUT
+          echo "vnet=vnet-cortex-${ENV}" >> $GITHUB_OUTPUT
+          
+          # Global resources (need unique names, no dashes allowed in some)
+          # For existing resources, we need to use the actual hash that exists
+          if [[ "${ENV}" == "dev" ]]; then
+            # Use the existing hash for dev environment
+            echo "container_registry=crcortexdev5sug2t" >> $GITHUB_OUTPUT
+            echo "container_registry_url=crcortexdev5sug2t.azurecr.io" >> $GITHUB_OUTPUT
+            echo "key_vault=kv-cortex-dev-5sug2t" >> $GITHUB_OUTPUT
+            echo "storage_account=stcortexdev5sug2t" >> $GITHUB_OUTPUT
+            echo "cosmos_db=cosmos-cortex-dev-5sug2t" >> $GITHUB_OUTPUT
+          else
+            # For prod, use computed hash or existing if known
+            echo "container_registry=crcortexprod${HASH}" >> $GITHUB_OUTPUT
+            echo "container_registry_url=crcortexprod${HASH}.azurecr.io" >> $GITHUB_OUTPUT
+            echo "key_vault=kv-cortex-prod-${HASH}" >> $GITHUB_OUTPUT
+            echo "storage_account=stcortexprod${HASH}" >> $GITHUB_OUTPUT
+            echo "cosmos_db=cosmos-cortex-prod-${HASH}" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Display Computed Names
+        run: |
+          echo "### Resource Names for ${{ inputs.environment }} environment:" >> $GITHUB_STEP_SUMMARY
+          echo "- Resource Group: ${{ steps.names.outputs.resource_group }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Container Registry: ${{ steps.names.outputs.container_registry }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Container Environment: ${{ steps.names.outputs.container_env }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Core App: ${{ steps.names.outputs.core_app }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend App: ${{ steps.names.outputs.frontend_app }}" >> $GITHUB_STEP_SUMMARY
+          echo "- GraphQL App: ${{ steps.names.outputs.graphql_app }}" >> $GITHUB_STEP_SUMMARY

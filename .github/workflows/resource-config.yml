@@ -1,0 +1,32 @@
+# Central Resource Configuration
+# This file defines all resource naming patterns and should be the single source of truth
+
+name: Resource Configuration
+
+env:
+  # Resource naming patterns - NEVER hardcode these in workflows!
+  # All resources follow pattern: {prefix}-{resource}-{environment}
+  
+  # Prefixes
+  RG_PREFIX: "rg-cortex"
+  CA_PREFIX: "ca-cortex"
+  CAE_PREFIX: "cae-cortex"
+  KV_PREFIX: "kv-cortex"
+  LOG_PREFIX: "log-cortex"
+  APPI_PREFIX: "appi-cortex"
+  PSQL_PREFIX: "psql-cortex"
+  ST_PREFIX: "stcortex"
+  CR_PREFIX: "crcortex"
+  VNET_PREFIX: "vnet-cortex"
+  COSMOS_PREFIX: "cosmos-cortex"
+  COG_PREFIX: "cogao-cortex"
+  
+  # Suffixes for uniqueness (append hash for global resources)
+  HASH_SUFFIX: "5sug2t"  # This should be generated consistently
+  
+  # Function to get resource names (these would be computed in each job)
+  # Examples:
+  # Resource Group: rg-cortex-{env}
+  # Container App: ca-cortex-{service}-{env}
+  # Container Registry: crcortex{env}{hash}
+  # Storage Account: stcortex{env}{hash}
