@@ -1,0 +1,127 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'patents/**'
+  workflow_dispatch:
+    inputs:
+      skip_security:
+        description: 'Skip security scans (emergency only)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  # Build and test
+  build-test:
+    name: Build and Test
+    uses: ./.github/workflows/application.yml
+    with:
+      target_env: prod
+      run_tests: true
+    secrets: inherit
+
+  # Security and compliance checks
+  security-compliance:
+    name: Security & Compliance
+    needs: build-test
+    if: github.event.inputs.skip_security != 'true'
+    uses: ./.github/workflows/security-compliance.yml
+    with:
+      target_env: prod
+      image_tag: ${{ github.sha }}
+    secrets: inherit
+
+  # Deploy to production
+  deploy:
+    name: Production Deployment
+    needs: [build-test, security-compliance]
+    if: needs.security-compliance.outputs.approved == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://ca-cortex-frontend-prod.azurecontainerapps.io
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Production
+        run: |
+          echo "🚀 Deploying to production..."
+          
+          # Update Container Apps with new images
+          az containerapp update \
+            -n ca-cortex-core-prod \
+            -g rg-cortex-prod \
+            --image crcortexprodvb9v2h.azurecr.io/policycortex-core:${{ github.sha }}
+          
+          az containerapp update \
+            -n ca-cortex-frontend-prod \
+            -g rg-cortex-prod \
+            --image crcortexprodvb9v2h.azurecr.io/policycortex-frontend:${{ github.sha }}
+          
+          az containerapp update \
+            -n ca-cortex-graphql-prod \
+            -g rg-cortex-prod \
+            --image crcortexprodvb9v2h.azurecr.io/policycortex-graphql:${{ github.sha }}
+
+      - name: Verify Deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+          sleep 30
+          
+          # Check health endpoints
+          curl -f https://ca-cortex-core-prod.azurecontainerapps.io/health || exit 1
+          curl -f https://ca-cortex-frontend-prod.azurecontainerapps.io/ || exit 1
+          curl -f https://ca-cortex-graphql-prod.azurecontainerapps.io/.well-known/apollo/server-health || exit 1
+          
+          echo "✅ Deployment verified successfully"
+
+  # Post-deployment monitoring
+  post-deployment:
+    name: Post-Deployment Monitoring
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Monitor Application
+        run: |
+          echo "📊 Starting post-deployment monitoring..."
+          
+          # Monitor for 5 minutes
+          for i in {1..10}; do
+            echo "Check $i/10..."
+            
+            # Check health
+            curl -s https://ca-cortex-core-prod.azurecontainerapps.io/health | jq .
+            
+            # Check metrics
+            curl -s https://ca-cortex-core-prod.azurecontainerapps.io/metrics | head -20
+            
+            sleep 30
+          done
+          
+          echo "✅ Post-deployment monitoring complete"
+
+      - name: Send Notification
+        if: always()
+        run: |
+          # Send deployment notification (webhook, email, etc.)
+          echo "📧 Sending deployment notification..."
+          
+          STATUS="${{ job.status }}"
+          MESSAGE="Production deployment $STATUS for version ${{ github.sha }}"
+          
+          # Add webhook call here if configured
+          echo "$MESSAGE"
