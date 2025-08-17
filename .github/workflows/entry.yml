@@ -61,18 +61,18 @@ jobs:
     steps:
       - name: Check and configure passwordless sudo
         run: |
-          echo "🔧 Checking runner sudo configuration..."
+          echo "CHECKING: runner sudo configuration..."
           
           # Check if sudo is available and configured
           if command -v sudo >/dev/null 2>&1; then
             # Only check sudo if it exists (Linux/macOS)
             if timeout 10s sudo -n true 2>/dev/null; then
-              echo "✅ Passwordless sudo already configured"
+              echo "SUCCESS: Passwordless sudo already configured"
             else
               echo "WARNING: Passwordless sudo not configured or timed out"
               echo "INFO: This is expected for self-hosted runners that need manual setup"
               echo ""
-              echo "📋 To fix this manually, run on the runner machine:"
+              echo "TO FIX: manually run on the runner machine:"
               echo "   sudo visudo"
               echo "   Add line: runner ALL=(ALL) NOPASSWD:ALL"
               echo "   Or: echo 'runner ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/runner"
@@ -82,7 +82,7 @@ jobs:
             fi
           else
             echo "INFO: sudo not available - likely containerized or restricted environment"
-            echo "✅ Continuing without sudo checks"
+            echo "SUCCESS: Continuing without sudo checks"
           fi
 
   docker-health-check:
@@ -94,32 +94,32 @@ jobs:
         id: docker_check
         continue-on-error: true
         run: |
-          echo "🔍 Checking Docker repository configuration..."
+          echo "CHECKING: Docker repository configuration..."
           
           # Check if this is an apt-based system
           if [[ -d "/etc/apt" ]]; then
             # Linux apt-based system
             # Check for corrupted entries with pipe characters
             if grep -r "download\.docker\.com.*|" /etc/apt/sources.list* 2>/dev/null; then
-              echo "❌ Found corrupted Docker repository entries with pipe characters"
+              echo "ERROR: Found corrupted Docker repository entries with pipe characters"
               echo "corrupted=true" >> $GITHUB_OUTPUT
             else
-              echo "✅ No corrupted pipe entries found"
+              echo "SUCCESS: No corrupted pipe entries found"
               echo "corrupted=false" >> $GITHUB_OUTPUT
             fi
             
             # Also check for any docker.com entries that might be malformed
             if grep -r "download\.docker\.com" /etc/apt/sources.list* 2>/dev/null | grep "|"; then
-              echo "❌ Found malformed Docker repository entries"
+              echo "ERROR: Found malformed Docker repository entries"
               echo "corrupted=true" >> $GITHUB_OUTPUT
             fi
             
             # Try to update package list (with timeout and sudo check)
             if command -v sudo >/dev/null 2>&1 && timeout 30s sudo apt-get update 2>&1; then
-              echo "✅ Package list updated successfully"
+              echo "SUCCESS: Package list updated successfully"
               echo "update_failed=false" >> $GITHUB_OUTPUT
             else
-              echo "❌ apt-get update failed or timed out"
+              echo "ERROR: apt-get update failed or timed out"
               echo "update_failed=true" >> $GITHUB_OUTPUT
             fi
           else
@@ -132,25 +132,25 @@ jobs:
         if: steps.docker_check.outputs.corrupted == 'true' || steps.docker_check.outputs.update_failed == 'true'
         timeout-minutes: 5
         run: |
-          echo "🔧 Auto-fixing Docker repository issues..."
+          echo "FIXING: Docker repository issues..."
           
           # Check if we have sudo access without password
           if ! timeout 10s sudo -n true 2>/dev/null; then
             echo "WARNING: No passwordless sudo access detected"
             echo "INFO: Will attempt fixes with current user permissions only"
             echo ""
-            echo "🚨 IMPORTANT: For complete Docker repository repair, configure passwordless sudo:"
+            echo "IMPORTANT: For complete Docker repository repair, configure passwordless sudo:"
             echo "   1. On the runner machine, run: sudo visudo"
             echo "   2. Add line: runner ALL=(ALL) NOPASSWD:ALL"
             echo "   3. Re-run the workflow for full system-level repairs"
             echo ""
             echo "PROCEEDING: with limited repair capabilities..."
           else
-            echo "✅ Passwordless sudo access confirmed"
+            echo "SUCCESS: Passwordless sudo access confirmed"
           fi
           
           # Show current problematic entries
-          echo "🔍 Current problematic entries:"
+          echo "CHECKING: Current problematic entries:"
           grep -r "docker.com" /etc/apt/sources.list* 2>/dev/null | grep "|" || echo "No pipe entries found in grep"
           
           # Function to run command with or without sudo
@@ -159,23 +159,23 @@ jobs:
               timeout 30s sudo "$@" || {
                 echo "WARNING: Sudo command timed out or failed: $*"
                 echo "RETRYING: without sudo..."
-                "$@" 2>/dev/null || echo "❌ Command failed: $*"
+                "$@" 2>/dev/null || echo "ERROR: Command failed: $*"
               }
             else
               echo "INFO: Running without sudo: $*"
-              "$@" 2>/dev/null || echo "❌ Command failed (no sudo): $*"
+              "$@" 2>/dev/null || echo "ERROR: Command failed (no sudo): $*"
             fi
           }
           
           # Remove all Docker-related repository files
-          echo "🧹 Removing ALL Docker repository configurations..."
+          echo "REMOVING: ALL Docker repository configurations..."
           run_cmd rm -f /etc/apt/sources.list.d/docker*.list || true
           run_cmd rm -f /etc/apt/keyrings/docker*.gpg || true
           run_cmd rm -f /etc/apt/trusted.gpg.d/docker*.gpg || true
           run_cmd rm -f /usr/share/keyrings/docker*.gpg || true
           
           # More aggressive pipe character removal
-          echo "🧹 Removing corrupted entries from all sources..."
+          echo "REMOVING: corrupted entries from all sources..."
           
           # Target the specific malformed URL pattern
           run_cmd sed -i '/https:\/\/download\.docker\.com\/linux\/ubuntu.*|/d' /etc/apt/sources.list || true
@@ -198,15 +198,15 @@ jobs:
           done
           
           # Clean package cache completely
-          echo "🧹 Cleaning package cache completely..."
+          echo "CLEANING: package cache completely..."
           run_cmd apt-get clean || true
           run_cmd rm -rf /var/lib/apt/lists/* || true
           run_cmd rm -rf /var/cache/apt/archives/* || true
           
           # Verify problematic entries are gone
-          echo "🔍 Verifying cleanup..."
+          echo "VERIFYING: cleanup..."
           if grep -r "docker.*|" /etc/apt/sources.list* 2>/dev/null; then
-            echo "❌ Still found problematic entries, trying nuclear option..."
+            echo "ERROR: Still found problematic entries, trying nuclear option..."
             
             # Nuclear option: completely remove the problematic file
             if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
@@ -222,20 +222,20 @@ jobs:
               fi
             done
           else
-            echo "✅ No more pipe character entries found"
+            echo "SUCCESS: No more pipe character entries found"
           fi
           
           # Update package index
-          echo "📦 Updating package index..."
+          echo "UPDATING: package index..."
           if run_cmd apt-get update; then
-            echo "✅ Package index updated successfully"
+            echo "SUCCESS: Package index updated successfully"
           else
-            echo "❌ Package index update still failing"
-            echo "🔍 Checking remaining issues..."
+            echo "ERROR: Package index update still failing"
+            echo "CHECKING: remaining issues..."
             run_cmd apt-get update 2>&1 | head -10
           fi
           
-          echo "✅ Docker repository auto-fix completed"
+          echo "SUCCESS: Docker repository auto-fix completed"
 
   detect-changes:
     name: Detect changed areas
