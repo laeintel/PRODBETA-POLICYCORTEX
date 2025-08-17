@@ -1,0 +1,91 @@
+tenant:
+  id: ""
+  name: ""
+  tier: "free"  # free, pro, enterprise
+  azureSubscriptionId: ""
+  azureResourceGroup: ""
+  azureClientId: ""
+
+resources:
+  free:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+    quota:
+      cpu: "2"
+      memory: "4Gi"
+      storage: "5Gi"
+      pvcs: "2"
+  pro:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+    quota:
+      cpu: "4"
+      memory: "8Gi"
+      storage: "20Gi"
+      pvcs: "5"
+  enterprise:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+    quota:
+      cpu: "8"
+      memory: "16Gi"
+      storage: "100Gi"
+      pvcs: "10"
+
+features:
+  free:
+    - core
+    - basic-compliance
+  pro:
+    - core
+    - compliance
+    - cost-optimization
+    - ai-recommendations
+  enterprise:
+    - core
+    - compliance
+    - cost-optimization
+    - ai-recommendations
+    - custom-policies
+    - advanced-analytics
+    - priority-support
+
+rateLimits:
+  free:
+    requestsPerMinute: 60
+    requestsPerDay: 10000
+  pro:
+    requestsPerMinute: 300
+    requestsPerDay: 100000
+  enterprise:
+    requestsPerMinute: 1000
+    requestsPerDay: 1000000
+
+networking:
+  enableIstio: true
+  enableNetworkPolicy: true
+  allowedNamespaces:
+    - shared-services
+    - monitoring
+
+monitoring:
+  enablePrometheus: true
+  enableGrafana: true
+  enableAlerts: true
+
+security:
+  enablePodSecurityPolicy: true
+  enableOPA: true
+  scanImages: true
