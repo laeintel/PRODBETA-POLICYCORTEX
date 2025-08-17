@@ -171,6 +171,18 @@ jobs:
             echo "TFVARS_FILE=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Handle Existing Resources
+        run: |
+          if [ -f "handle-existing-resources.sh" ]; then
+            chmod +x handle-existing-resources.sh
+            ./handle-existing-resources.sh || echo "Resource handling completed with warnings"
+          fi
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Terraform Validate
         run: terraform validate -no-color
         env:

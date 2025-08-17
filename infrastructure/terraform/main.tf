@@ -114,6 +114,11 @@ resource "azurerm_resource_group" "tfstate" {
   name     = local.resource_names.tfstate_rg
   location = var.location
   tags     = local.common_tags
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [tags]
+  }
 }
 
 resource "azurerm_storage_account" "tfstate" {
@@ -128,6 +133,11 @@ resource "azurerm_storage_account" "tfstate" {
   }
 
   tags = local.common_tags
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [tags]
+  }
 }
 
 resource "azurerm_storage_container" "tfstate" {
@@ -158,20 +168,21 @@ resource "azurerm_virtual_network" "main" {
   tags                = local.common_tags
 }
 
-# Subnet for Container Apps
+# Subnet for Container Apps - NO DELEGATION (Container Apps Environment requires non-delegated subnet)
 resource "azurerm_subnet" "container_apps" {
   name                 = "snet-container-apps"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.0.0/23"]
 
-  delegation {
-    name = "container-apps"
-    service_delegation {
-      name    = "Microsoft.App/environments"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
-    }
-  }
+  # Service endpoints for resources that need them
+  service_endpoints = [
+    "Microsoft.Storage",
+    "Microsoft.KeyVault",
+    "Microsoft.ContainerRegistry",
+    "Microsoft.AzureCosmosDB",
+    "Microsoft.Web"
+  ]
 }
 
 # Subnet for Private Endpoints
@@ -329,14 +340,8 @@ resource "azurerm_container_registry" "main" {
   sku                 = "Premium" # Premium required for private endpoints
   admin_enabled       = true
 
-  network_rule_set {
-    default_action = "Deny"
-
-    virtual_network {
-      action    = "Allow"
-      subnet_id = azurerm_subnet.container_apps.id
-    }
-  }
+  # Remove network rules - we'll use private endpoints instead
+  public_network_access_enabled = true # Temporarily enable for initial setup
 
   tags = local.common_tags
 }
@@ -373,10 +378,8 @@ resource "azurerm_storage_account" "main" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
-  network_rules {
-    default_action             = "Deny"
-    virtual_network_subnet_ids = [azurerm_subnet.container_apps.id]
-  }
+  # Temporarily allow public access for initial setup
+  public_network_access_enabled = true
 
   tags = local.common_tags
 }
@@ -415,10 +418,11 @@ resource "azurerm_key_vault" "main" {
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
 
+  # Temporarily allow public access for initial setup
+  public_network_access_enabled = true
   network_acls {
-    default_action             = "Deny"
-    bypass                     = "AzureServices"
-    virtual_network_subnet_ids = [azurerm_subnet.container_apps.id]
+    default_action = "Allow"
+    bypass         = "AzureServices"
   }
 
   access_policy {
@@ -530,11 +534,9 @@ resource "azurerm_cosmosdb_account" "main" {
     name = "EnableServerless"
   }
 
-  is_virtual_network_filter_enabled = true
-
-  virtual_network_rule {
-    id = azurerm_subnet.container_apps.id
-  }
+  # Temporarily disable network restrictions for initial setup
+  is_virtual_network_filter_enabled = false
+  public_network_access_enabled     = true
 
   tags = local.common_tags
 }
@@ -573,11 +575,13 @@ resource "azurerm_cognitive_account" "openai" {
 
   custom_subdomain_name = local.resource_names.openai
 
+  # Handle soft-deleted resource
+  restore = true
+
+  # Temporarily allow public access for initial setup
+  public_network_access_enabled = true
   network_acls {
-    default_action = "Deny"
-    virtual_network_rules {
-      subnet_id = azurerm_subnet.container_apps.id
-    }
+    default_action = "Allow"
   }
 
   tags = local.common_tags
