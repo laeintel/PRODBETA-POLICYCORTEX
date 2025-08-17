@@ -249,7 +249,7 @@ impl GraphDriver for Neo4jDriver {
         
         let query = "MATCH (n) WHERE id(n) = $id SET n += $props";
         
-        let _ = client
+        let mut result = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
@@ -257,6 +257,9 @@ impl GraphDriver for Neo4jDriver {
             )
             .await
             .map_err(|e| format!("Failed to update node: {}", e))?;
+        
+        // Consume the stream even though we don't need the results
+        while result.next().await.map_err(|e| e.to_string())?.is_some() {}
         
         Ok(())
     }
@@ -269,13 +272,16 @@ impl GraphDriver for Neo4jDriver {
         let client = self.client.as_ref().unwrap();
         let query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n";
         
-        let _ = client
+        let mut result = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
             )
             .await
             .map_err(|e| format!("Failed to delete node: {}", e))?;
+        
+        // Consume the stream even though we don't need the results
+        while result.next().await.map_err(|e| e.to_string())?.is_some() {}
         
         Ok(())
     }
@@ -355,7 +361,7 @@ impl GraphDriver for Neo4jDriver {
         
         let query = "MATCH ()-[r]-() WHERE id(r) = $id SET r += $props";
         
-        let _ = client
+        let mut result = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
@@ -363,6 +369,9 @@ impl GraphDriver for Neo4jDriver {
             )
             .await
             .map_err(|e| format!("Failed to update edge: {}", e))?;
+        
+        // Consume the stream even though we don't need the results
+        while result.next().await.map_err(|e| e.to_string())?.is_some() {}
         
         Ok(())
     }
@@ -375,13 +384,16 @@ impl GraphDriver for Neo4jDriver {
         let client = self.client.as_ref().unwrap();
         let query = "MATCH ()-[r]-() WHERE id(r) = $id DELETE r";
         
-        let _ = client
+        let mut result = client
             .execute(
                 neo4rs::query(query)
                     .param("id", id.parse::<i64>().map_err(|e| e.to_string())?)
             )
             .await
             .map_err(|e| format!("Failed to delete edge: {}", e))?;
+        
+        // Consume the stream even though we don't need the results
+        while result.next().await.map_err(|e| e.to_string())?.is_some() {}
         
         Ok(())
     }

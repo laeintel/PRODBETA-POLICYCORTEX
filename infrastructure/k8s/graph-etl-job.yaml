@@ -1,0 +1,237 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: knowledge-graph-etl
+  namespace: policycortex
+  labels:
+    app: graph-etl
+    version: v1
+    component: data-pipeline
+spec:
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  concurrencyPolicy: Forbid  # Don't allow overlapping jobs
+  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    metadata:
+      labels:
+        app: graph-etl
+        sidecar.istio.io/inject: "true"
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600  # 10 minute timeout
+      template:
+        metadata:
+          labels:
+            app: graph-etl
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9090"
+        spec:
+          serviceAccountName: graph-etl-sa
+          restartPolicy: OnFailure
+          initContainers:
+          - name: wait-for-neo4j
+            image: busybox:1.35
+            command: ['sh', '-c', 'until nc -z neo4j-service 7687; do echo waiting for neo4j; sleep 2; done']
+          containers:
+          - name: etl-processor
+            image: crpcxdev.azurecr.io/graph-etl:latest
+            imagePullPolicy: Always
+            env:
+            - name: AZURE_SUBSCRIPTION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: azure-credentials
+                  key: subscription-id
+            - name: AZURE_TENANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: azure-credentials
+                  key: tenant-id
+            - name: AZURE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: azure-credentials
+                  key: client-id
+            - name: NEO4J_URI
+              value: "bolt://neo4j-service:7687"
+            - name: NEO4J_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-credentials
+                  key: username
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neo4j-credentials
+                  key: password
+            - name: REDIS_URL
+              value: "redis://redis-service:6379"
+            - name: ETL_MODE
+              value: "incremental"
+            - name: CHECKPOINT_ENABLED
+              value: "true"
+            - name: BATCH_SIZE
+              value: "1000"
+            - name: MAX_WORKERS
+              value: "4"
+            - name: LOG_LEVEL
+              value: "INFO"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:4317"
+            - name: OTEL_SERVICE_NAME
+              value: "graph-etl"
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "250m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+            volumeMounts:
+            - name: etl-config
+              mountPath: /app/config
+              readOnly: true
+            - name: temp-storage
+              mountPath: /tmp/etl
+          - name: metrics-exporter
+            image: prom/node-exporter:v1.5.0
+            ports:
+            - containerPort: 9090
+              name: metrics
+            resources:
+              requests:
+                memory: "32Mi"
+                cpu: "10m"
+              limits:
+                memory: "64Mi"
+                cpu: "50m"
+          volumes:
+          - name: etl-config
+            configMap:
+              name: graph-etl-config
+          - name: temp-storage
+            emptyDir:
+              sizeLimit: 5Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: graph-etl-sa
+  namespace: policycortex
+  annotations:
+    azure.workload.identity/client-id: "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: graph-etl-config
+  namespace: policycortex
+data:
+  etl-config.yaml: |
+    sources:
+      - name: azure_resources
+        type: resource_graph
+        query: |
+          Resources
+          | where subscriptionId == '${AZURE_SUBSCRIPTION_ID}'
+          | project id, name, type, location, tags, properties
+        batch_size: 1000
+        
+      - name: azure_policies
+        type: policy_compliance
+        endpoint: /providers/Microsoft.PolicyInsights/policyStates/latest
+        filters:
+          - complianceState != 'Compliant'
+        
+      - name: cost_data
+        type: cost_management
+        endpoint: /providers/Microsoft.CostManagement/query
+        time_window: 7d
+        granularity: daily
+        
+      - name: security_scores
+        type: security_center
+        endpoint: /providers/Microsoft.Security/secureScores
+        
+    transformations:
+      - name: resource_enrichment
+        steps:
+          - add_compliance_status
+          - calculate_cost_allocation
+          - add_security_score
+          - detect_drift
+          
+      - name: relationship_mapping
+        rules:
+          - source_type: Microsoft.Compute/virtualMachines
+            target_type: Microsoft.Network/networkInterfaces
+            relationship: ATTACHED_TO
+          - source_type: Microsoft.Network/networkSecurityGroups
+            target_type: Microsoft.Network/virtualNetworks
+            relationship: PROTECTS
+            
+    graph_schema:
+      nodes:
+        - label: Resource
+          properties: [id, name, type, location, subscription]
+        - label: Policy
+          properties: [id, name, definition, enforcement_mode]
+        - label: CostCenter
+          properties: [id, name, budget, spent]
+        - label: SecurityAlert
+          properties: [id, severity, status, timestamp]
+          
+      relationships:
+        - type: VIOLATES
+          from: Resource
+          to: Policy
+        - type: INCURS_COST
+          from: Resource
+          to: CostCenter
+        - type: HAS_ALERT
+          from: Resource
+          to: SecurityAlert
+          
+    output:
+      neo4j:
+        batch_size: 500
+        merge_strategy: upsert
+        index_properties: [id, name, type]
+      
+      metrics:
+        export_interval: 60s
+        labels:
+          - source
+          - transformation
+          - status
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: graph-etl-monitor
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: graph-etl
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graph-etl-metrics
+  namespace: policycortex
+  labels:
+    app: graph-etl
+spec:
+  selector:
+    app: graph-etl
+  ports:
+  - name: metrics
+    port: 9090
+    targetPort: 9090

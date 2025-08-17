@@ -14,6 +14,7 @@ use serde::Deserialize;
 use std::sync::Arc;
 use tracing::{error, info, warn};
 
+use crate::utils::{retry_with_exponential_backoff, RetryConfig, should_retry_http_status};
 use crate::api::{
     AIMetrics, CostMetrics, GovernanceMetrics, NetworkMetrics, PolicyMetrics, RbacMetrics,
     ResourceMetrics,
@@ -143,12 +144,27 @@ impl AzureClient {
             .get_token(&["https://management.azure.com/.default"])
             .await?;
 
-        let response = self
-            .http_client
-            .get(&policy_assignments_url)
-            .bearer_auth(&token.token.secret())
-            .send()
-            .await?;
+        let response = retry_with_exponential_backoff(
+            RetryConfig::for_azure_api(),
+            "fetch_policy_assignments",
+            || async {
+                let resp = self
+                    .http_client
+                    .get(&policy_assignments_url)
+                    .bearer_auth(&token.token.secret())
+                    .send()
+                    .await
+                    .map_err(|e| format!("HTTP request failed: {}", e))?;
+                
+                if should_retry_http_status(resp.status().as_u16()) {
+                    Err(format!("HTTP status {}: retryable error", resp.status()))
+                } else {
+                    Ok(resp)
+                }
+            },
+        )
+        .await
+        .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)) as Box<dyn std::error::Error + Send + Sync>)?;
 
         if response.status().is_success() {
             let policy_data: serde_json::Value = response.json().await?;
@@ -172,13 +188,28 @@ impl AzureClient {
                 self.subscription_id
             );
 
-            let compliance_response = self
-                .http_client
-                .post(&compliance_url)
-                .bearer_auth(&token.token.secret())
-                .json(&serde_json::json!({}))
-                .send()
-                .await?;
+            let compliance_response = retry_with_exponential_backoff(
+                RetryConfig::for_azure_api(),
+                "fetch_compliance_data",
+                || async {
+                    let resp = self
+                        .http_client
+                        .post(&compliance_url)
+                        .bearer_auth(&token.token.secret())
+                        .json(&serde_json::json!({}))
+                        .send()
+                        .await
+                        .map_err(|e| format!("HTTP request failed: {}", e))?;
+                    
+                    if should_retry_http_status(resp.status().as_u16()) {
+                        Err(format!("HTTP status {}: retryable error", resp.status()))
+                    } else {
+                        Ok(resp)
+                    }
+                },
+            )
+            .await
+            .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)) as Box<dyn std::error::Error + Send + Sync>)?;
 
             let (violations, compliance_rate) = if compliance_response.status().is_success() {
                 let compliance_data: serde_json::Value = compliance_response.json().await?;
@@ -245,12 +276,27 @@ impl AzureClient {
             .get_token(&["https://management.azure.com/.default"])
             .await?;
 
-        let response = self
-            .http_client
-            .get(&role_assignments_url)
-            .bearer_auth(&token.token.secret())
-            .send()
-            .await?;
+        let response = retry_with_exponential_backoff(
+            RetryConfig::for_azure_api(),
+            "fetch_role_assignments",
+            || async {
+                let resp = self
+                    .http_client
+                    .get(&role_assignments_url)
+                    .bearer_auth(&token.token.secret())
+                    .send()
+                    .await
+                    .map_err(|e| format!("HTTP request failed: {}", e))?;
+                
+                if should_retry_http_status(resp.status().as_u16()) {
+                    Err(format!("HTTP status {}: retryable error", resp.status()))
+                } else {
+                    Ok(resp)
+                }
+            },
+        )
+        .await
+        .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)) as Box<dyn std::error::Error + Send + Sync>)?;
 
         if response.status().is_success() {
             let rbac_data: serde_json::Value = response.json().await?;

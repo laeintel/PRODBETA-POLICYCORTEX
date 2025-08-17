@@ -38,10 +38,12 @@ mod azure_client;
 mod azure_client_async;
 mod cache;
 mod change_management;
+mod checkpoint;
 mod collectors;
 mod compliance;
 mod config;
 mod correlation;
+mod defender_streaming;
 mod data_mode;
 mod enforcement;
 mod events;
@@ -51,6 +53,7 @@ mod governance;
 mod ml;
 mod observability;
 mod policy_engine;
+mod quota_middleware;
 mod remediation;
 mod resources;
 mod secret_guard;
@@ -60,6 +63,7 @@ mod simulated_data;
 mod slo;
 mod tenant;
 mod tenant_isolation;
+mod utils;
 // (removed duplicate observability mod)
 
 use api::{
