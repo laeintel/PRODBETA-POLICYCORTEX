@@ -305,9 +305,9 @@ jobs:
     needs: [runner-setup, docker-health-check, detect-changes]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || github.event_name == 'push' || github.event_name == 'pull_request'
-    uses: ./.github/workflows/reusable-ci-frontend.yml
+    uses: ./.github/workflows/reusable-ci-python.yml
     with:
-      node-version: '20'
+      python-version: '3.11'
       working-directory: 'backend'
     secrets: inherit
 
