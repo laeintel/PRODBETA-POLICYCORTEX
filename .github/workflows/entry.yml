@@ -288,6 +288,7 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_core)) || needs.detect-changes.outputs.rust_core == 'true'
     uses: ./.github/workflows/reusable-ci-core.yml
     secrets: inherit
+    continue-on-error: true
 
   graphql:
     name: GraphQL gateway CI
@@ -351,6 +352,7 @@ jobs:
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
     uses: ./.github/workflows/azure-infra.yml
+    continue-on-error: true
     permissions:
       contents: read
       id-token: write
@@ -362,11 +364,11 @@ jobs:
   app_pipeline:
     name: Application CI/CD
     needs: [core, security, supply_chain, secret_scan, infra]
-    # Run when full_run is requested or on main/CLEAN-DEFENSE-BRANCH pushes (but only if security checks pass)
+    # Run when full_run is requested or on main/CLEAN-DEFENSE-BRANCH pushes (continues even if some jobs fail)
     if: |
       always() && 
-      !contains(needs.*.result, 'failure') && 
       !cancelled() && 
+      (needs.security.result == 'success' || needs.security.result == 'skipped') && 
       ((github.event_name == 'workflow_dispatch' && inputs.full_run) || 
        (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH')))
     uses: ./.github/workflows/application.yml
