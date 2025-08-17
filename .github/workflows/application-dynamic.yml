@@ -224,13 +224,21 @@ jobs:
           APP_NAME: ${{ needs.resource-names.outputs.core_app }}
           CAE: ${{ needs.resource-names.outputs.container_env }}
           REGISTRY: ${{ needs.resource-names.outputs.container_registry_url }}
+          ACR_NAME: ${{ needs.resource-names.outputs.container_registry }}
         run: |
+          # Get ACR admin credentials
+          ACR_USERNAME=$(az acr credential show --name "$ACR_NAME" --query username -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name "$ACR_NAME" --query passwords[0].value -o tsv)
+          
           if [[ "${{ steps.check_apps.outputs.core_exists }}" == "true" ]]; then
             echo "Updating existing Core app..."
             az containerapp update \
               --name "$APP_NAME" \
               --resource-group "$RG" \
-              --image "$REGISTRY/policycortex-core:${{ env.IMAGE_TAG }}"
+              --image "$REGISTRY/policycortex-core:${{ env.IMAGE_TAG }}" \
+              --registry-server "$REGISTRY" \
+              --registry-username "$ACR_USERNAME" \
+              --registry-password "$ACR_PASSWORD"
           else
             echo "Creating new Core app..."
             CAE_ID=$(az containerapp env show -n "$CAE" -g "$RG" --query id -o tsv)
@@ -242,7 +250,10 @@ jobs:
               --target-port 8080 \
               --ingress external \
               --cpu 0.5 --memory 1.0Gi \
-              --min-replicas 0 --max-replicas 1
+              --min-replicas 0 --max-replicas 1 \
+              --registry-server "$REGISTRY" \
+              --registry-username "$ACR_USERNAME" \
+              --registry-password "$ACR_PASSWORD"
           fi
 
       - name: Create or Update Frontend App
@@ -251,8 +262,13 @@ jobs:
           APP_NAME: ${{ needs.resource-names.outputs.frontend_app }}
           CAE: ${{ needs.resource-names.outputs.container_env }}
           REGISTRY: ${{ needs.resource-names.outputs.container_registry_url }}
+          ACR_NAME: ${{ needs.resource-names.outputs.container_registry }}
           CORE_APP: ${{ needs.resource-names.outputs.core_app }}
         run: |
+          # Get ACR admin credentials
+          ACR_USERNAME=$(az acr credential show --name "$ACR_NAME" --query username -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name "$ACR_NAME" --query passwords[0].value -o tsv)
+          
           # Get Core app URL dynamically
           CORE_URL=$(az containerapp show --name "$CORE_APP" --resource-group "$RG" \
             --query "properties.configuration.ingress.fqdn" -o tsv)
@@ -263,7 +279,10 @@ jobs:
               --name "$APP_NAME" \
               --resource-group "$RG" \
               --image "$REGISTRY/policycortex-frontend:${{ env.IMAGE_TAG }}" \
-              --set-env-vars "NEXT_PUBLIC_API_URL=https://${CORE_URL}"
+              --set-env-vars "NEXT_PUBLIC_API_URL=https://${CORE_URL}" \
+              --registry-server "$REGISTRY" \
+              --registry-username "$ACR_USERNAME" \
+              --registry-password "$ACR_PASSWORD"
           else
             echo "Creating new Frontend app..."
             CAE_ID=$(az containerapp env show -n "$CAE" -g "$RG" --query id -o tsv)
@@ -276,7 +295,10 @@ jobs:
               --ingress external \
               --cpu 0.5 --memory 1.0Gi \
               --min-replicas 0 --max-replicas 1 \
-              --env-vars "NEXT_PUBLIC_API_URL=https://${CORE_URL}"
+              --env-vars "NEXT_PUBLIC_API_URL=https://${CORE_URL}" \
+              --registry-server "$REGISTRY" \
+              --registry-username "$ACR_USERNAME" \
+              --registry-password "$ACR_PASSWORD"
           fi
 
       - name: Create or Update GraphQL App
@@ -285,13 +307,21 @@ jobs:
           APP_NAME: ${{ needs.resource-names.outputs.graphql_app }}
           CAE: ${{ needs.resource-names.outputs.container_env }}
           REGISTRY: ${{ needs.resource-names.outputs.container_registry_url }}
+          ACR_NAME: ${{ needs.resource-names.outputs.container_registry }}
         run: |
+          # Get ACR admin credentials
+          ACR_USERNAME=$(az acr credential show --name "$ACR_NAME" --query username -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name "$ACR_NAME" --query passwords[0].value -o tsv)
+          
           if [[ "${{ steps.check_apps.outputs.graphql_exists }}" == "true" ]]; then
             echo "Updating existing GraphQL app..."
             az containerapp update \
               --name "$APP_NAME" \
               --resource-group "$RG" \
-              --image "$REGISTRY/policycortex-graphql:${{ env.IMAGE_TAG }}"
+              --image "$REGISTRY/policycortex-graphql:${{ env.IMAGE_TAG }}" \
+              --registry-server "$REGISTRY" \
+              --registry-username "$ACR_USERNAME" \
+              --registry-password "$ACR_PASSWORD"
           else
             echo "Creating new GraphQL app..."
             CAE_ID=$(az containerapp env show -n "$CAE" -g "$RG" --query id -o tsv)
@@ -303,7 +333,10 @@ jobs:
               --target-port 4000 \
               --ingress external \
               --cpu 0.5 --memory 1.0Gi \
-              --min-replicas 0 --max-replicas 1
+              --min-replicas 0 --max-replicas 1 \
+              --registry-server "$REGISTRY" \
+              --registry-username "$ACR_USERNAME" \
+              --registry-password "$ACR_PASSWORD"
           fi
 
       - name: Display Deployment URLs
