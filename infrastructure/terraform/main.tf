@@ -110,22 +110,10 @@ locals {
 # TERRAFORM STATE INFRASTRUCTURE
 # ===========================
 
-# Import existing tfstate resource group if it exists
-import {
-  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_names.tfstate_rg}"
-  to = azurerm_resource_group.tfstate
-}
-
 resource "azurerm_resource_group" "tfstate" {
   name     = local.resource_names.tfstate_rg
   location = var.location
   tags     = local.common_tags
-}
-
-# Import existing tfstate storage account if it exists
-import {
-  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.resource_names.tfstate_rg}/providers/Microsoft.Storage/storageAccounts/${local.resource_names.tfstate_storage}"
-  to = azurerm_storage_account.tfstate
 }
 
 resource "azurerm_storage_account" "tfstate" {
@@ -140,12 +128,6 @@ resource "azurerm_storage_account" "tfstate" {
   }
 
   tags = local.common_tags
-}
-
-# Import existing tfstate container if it exists
-import {
-  id = "https://${local.resource_names.tfstate_storage}.blob.core.windows.net/tfstate"
-  to = azurerm_storage_container.tfstate
 }
 
 resource "azurerm_storage_container" "tfstate" {
@@ -199,7 +181,7 @@ resource "azurerm_subnet" "private_endpoints" {
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.4.0/24"]
 
-  private_endpoint_network_policies_enabled = false
+  private_endpoint_network_policies = "Disabled"
 }
 
 # Subnet for Database
@@ -499,7 +481,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
   storage_mb = 32768
   sku_name   = "B_Standard_B1ms"
   zone       = "1"
-  
+
   # Disable public network access when using private endpoints
   public_network_access_enabled = false
 
