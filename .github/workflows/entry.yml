@@ -351,8 +351,8 @@ jobs:
     needs: [runner-setup, docker-health-check, detect-changes]
     # ALWAYS RUN - Complete pipeline from A-Z
     if: always()
-    uses: ./.github/workflows/azure-infra.yml
     continue-on-error: true
+    uses: ./.github/workflows/azure-infra.yml
     permissions:
       contents: read
       id-token: write
