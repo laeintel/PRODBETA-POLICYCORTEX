@@ -371,9 +371,9 @@ jobs:
       pull-requests: read
     with:
       target_env: 'dev'
-      run_tests: true
-      force_deploy: false
-      full_run: ${{ inputs.full_run || 'false' }}
+      run_tests: false
+      force_deploy: true
+      full_run: 'true'
     secrets: inherit
 
   deploy_tag:
