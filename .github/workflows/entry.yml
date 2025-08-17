@@ -8,6 +8,10 @@ name: Monorepo CI Entry
 # 4. Full pipeline available via "full_run" option
 
 on:
+  push:
+    branches: 
+      - main
+      - CLEAN-DEFENSE-BRANCH
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -53,7 +57,7 @@ concurrency:
 jobs:
   runner-setup:
     name: Configure runner environment
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Check and configure passwordless sudo
         run: |
@@ -83,7 +87,7 @@ jobs:
 
   docker-health-check:
     name: Docker health check and auto-fix
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: runner-setup
     steps:
       - name: Check Docker repository health
@@ -235,7 +239,7 @@ jobs:
 
   detect-changes:
     name: Detect changed areas
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [runner-setup, docker-health-check]
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}

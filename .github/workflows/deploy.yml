@@ -13,7 +13,7 @@ on:
 jobs:
   deploy:
     # Use this YAML in your workflow file for each job
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -44,3 +44,4 @@ jobs:
           curl -fsS http://localhost:4001/health || true
           # Public domain over HTTPS (self-signed allowed in early stages)
           curl -kfsS https://policycortex.com/health
+
