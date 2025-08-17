@@ -717,7 +717,7 @@ resource "azurerm_container_app" "core" {
 
   ingress {
     external_enabled = true
-    target_port      = 8080
+    target_port      = 80 # Placeholder image listens on port 80
     transport        = "http"
     traffic_weight {
       percentage      = 100
@@ -769,7 +769,7 @@ resource "azurerm_container_app" "frontend" {
 
   ingress {
     external_enabled = true
-    target_port      = 3000
+    target_port      = 80 # Placeholder image listens on port 80
     transport        = "http"
     traffic_weight {
       percentage      = 100
@@ -820,7 +820,7 @@ resource "azurerm_container_app" "graphql" {
 
   ingress {
     external_enabled = true
-    target_port      = 4000
+    target_port      = 80 # Placeholder image listens on port 80
     transport        = "http"
     traffic_weight {
       percentage      = 100
