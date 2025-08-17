@@ -13,7 +13,7 @@ terraform {
       version = "~> 3.6.0"
     }
   }
-  
+
   # Backend configuration - will be initialized with backend config file
   backend "azurerm" {}
 }
