@@ -333,8 +333,8 @@ mod tests {
         assert_eq!(config.consumer_group, "$Default");
     }
 
-    #[test]
-    fn test_alert_parsing() {
+    #[tokio::test]
+    async fn test_alert_parsing() {
         let json = serde_json::json!({
             "id": "alert123",
             "title": "Suspicious activity detected",

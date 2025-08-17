@@ -444,7 +444,7 @@ impl ApprovalWorkflowEngine {
             let request_id = request.id;
             let trigger_after = Duration::hours(rule.trigger_after_hours as i64);
             let escalate_to = rule.escalate_to.clone();
-            let message = rule.notification_message.clone();
+            let _message = rule.notification_message.clone();
 
             tokio::spawn(async move {
                 tokio::time::sleep(trigger_after.to_std().unwrap()).await;
