@@ -72,13 +72,13 @@ jobs:
       vnet: ${{ steps.names.outputs.vnet }}
       
     steps:
-      - name: Generate Consistent Hash
+      - name: Set Fixed Suffix
         id: hash
         run: |
-          # Generate a consistent hash from the GitHub repository name
-          # This ensures the same hash across all runs
-          REPO_HASH=$(echo -n "${{ github.repository }}" | sha256sum | cut -c1-6)
-          echo "hash=$REPO_HASH" >> $GITHUB_OUTPUT
+          # Use fixed suffix for all resources - NO RANDOM NUMBERS
+          # This ensures resources can be recreated with exact same names
+          FIXED_SUFFIX="3p0bata"
+          echo "hash=$FIXED_SUFFIX" >> $GITHUB_OUTPUT
           
       - name: Compute Resource Names
         id: names
@@ -103,11 +103,11 @@ jobs:
           # For existing resources, we need to use the actual hash that exists
           if [[ "${ENV}" == "dev" ]]; then
             # Use the existing hash for dev environment
-            echo "container_registry=crcortexdev5sug2t" >> $GITHUB_OUTPUT
-            echo "container_registry_url=crcortexdev5sug2t.azurecr.io" >> $GITHUB_OUTPUT
-            echo "key_vault=kv-cortex-dev-5sug2t" >> $GITHUB_OUTPUT
-            echo "storage_account=stcortexdev5sug2t" >> $GITHUB_OUTPUT
-            echo "cosmos_db=cosmos-cortex-dev-5sug2t" >> $GITHUB_OUTPUT
+            echo "container_registry=crcortexdev3p0bata" >> $GITHUB_OUTPUT
+            echo "container_registry_url=crcortexdev3p0bata.azurecr.io" >> $GITHUB_OUTPUT
+            echo "key_vault=kv-cortex-dev-3p0bata" >> $GITHUB_OUTPUT
+            echo "storage_account=stcortexdev3p0bata" >> $GITHUB_OUTPUT
+            echo "cosmos_db=cosmos-cortex-dev-3p0bata" >> $GITHUB_OUTPUT
           else
             # For prod, use computed hash or existing if known
             echo "container_registry=crcortexprod${HASH}" >> $GITHUB_OUTPUT

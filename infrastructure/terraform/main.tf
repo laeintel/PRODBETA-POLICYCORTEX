@@ -34,11 +34,10 @@ provider "azurerm" {
 # Data sources
 data "azurerm_client_config" "current" {}
 
-# Random suffix for unique resource names
-resource "random_string" "suffix" {
-  length  = 6
-  special = false
-  upper   = false
+# Fixed suffix for unique resource names - NO RANDOM
+# Using a consistent suffix ensures resources can be recreated with same names
+locals {
+  suffix = "3p0bata"  # Fixed suffix for all environments
 }
 
 # Variables
@@ -73,7 +72,7 @@ locals {
 
   # Naming convention: <resource>-cortex-<env>
   env_suffix    = var.environment
-  unique_suffix = random_string.suffix.result
+  unique_suffix = local.suffix
 }
 
 # Resource Group - New group for Terraform-managed resources

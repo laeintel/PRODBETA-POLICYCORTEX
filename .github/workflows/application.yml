@@ -48,7 +48,7 @@ on:
 
 env:
   # Use environment-specific registries
-  REGISTRY_DEV: crcortexdev5sug2t.azurecr.io
+  REGISTRY_DEV: crcortexdev3p0bata.azurecr.io
   REGISTRY_PROD: crcortexprodvb9v2h.azurecr.io
   IMAGE_TAG: ${{ github.sha }}
   TARGET_ENV: ${{ inputs.target_env || github.event.inputs.target_env || 'dev' }}
@@ -396,7 +396,7 @@ jobs:
           echo "Setting subscription to PolicyCortex Dev"
           az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
-          az acr login --name crcortexdev5sug2t
+          az acr login --name crcortexdev3p0bata
 
       - name: Build and Push Core Image
         if: steps.docker_check.outputs.docker_available == 'true'
@@ -483,7 +483,7 @@ jobs:
           echo "Setting subscription to PolicyCortex Dev"
           az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
-          az acr login --name crcortexdev5sug2t
+          az acr login --name crcortexdev3p0bata
 
       - name: Build and Push Frontend Image
         if: steps.docker_check.outputs.docker_available == 'true'
@@ -570,7 +570,7 @@ jobs:
           echo "Setting subscription to PolicyCortex Dev"
           az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
-          az acr login --name crcortexdev5sug2t
+          az acr login --name crcortexdev3p0bata
 
       - name: Build and Push GraphQL Image
         if: steps.docker_check.outputs.docker_available == 'true'

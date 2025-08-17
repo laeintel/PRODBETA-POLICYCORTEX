@@ -22,7 +22,7 @@ env:
   COG_PREFIX: "cogao-cortex"
   
   # Suffixes for uniqueness (append hash for global resources)
-  HASH_SUFFIX: "5sug2t"  # This should be generated consistently
+  HASH_SUFFIX: "3p0bata"  # This should be generated consistently
   
   # Function to get resource names (these would be computed in each job)
   # Examples:
