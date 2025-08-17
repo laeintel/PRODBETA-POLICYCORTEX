@@ -575,9 +575,6 @@ resource "azurerm_cognitive_account" "openai" {
 
   custom_subdomain_name = local.resource_names.openai
 
-  # Handle soft-deleted resource
-  restore = true
-
   # Temporarily allow public access for initial setup
   public_network_access_enabled = true
   network_acls {

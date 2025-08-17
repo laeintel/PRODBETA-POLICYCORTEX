@@ -27,11 +27,23 @@ fi
 
 # Purge soft-deleted Cognitive Services if needed
 COGNITIVE_NAME="cogao-cortex-dev"
+RG_NAME="rg-cortex-dev"
 echo "Checking for soft-deleted Cognitive Services..."
-DELETED_ACCOUNTS=$(az cognitiveservices account list-deleted --query "[?name=='${COGNITIVE_NAME}']" -o json)
-if [ "$DELETED_ACCOUNTS" != "[]" ]; then
-    echo "Purging soft-deleted Cognitive Services account: $COGNITIVE_NAME"
-    az cognitiveservices account purge --name "$COGNITIVE_NAME" --resource-group "rg-cortex-dev" --location "eastus" || true
+
+# First check if the resource exists in the resource group
+if az cognitiveservices account show --name "$COGNITIVE_NAME" --resource-group "$RG_NAME" 2>/dev/null; then
+    echo "Cognitive Services account exists, skipping purge check"
+else
+    # Check for soft-deleted accounts
+    DELETED_ACCOUNTS=$(az cognitiveservices account list-deleted --query "[?name=='${COGNITIVE_NAME}']" -o json 2>/dev/null || echo "[]")
+    if [ "$DELETED_ACCOUNTS" != "[]" ] && [ -n "$DELETED_ACCOUNTS" ]; then
+        echo "Found soft-deleted Cognitive Services account: $COGNITIVE_NAME"
+        echo "Purging soft-deleted account..."
+        # Try to purge without specifying resource group (for soft-deleted resources)
+        az cognitiveservices account purge --name "$COGNITIVE_NAME" --location "eastus" 2>/dev/null || \
+        az cognitiveservices account purge --name "$COGNITIVE_NAME" --resource-group "$RG_NAME" --location "eastus" 2>/dev/null || \
+        echo "Warning: Could not purge soft-deleted account, may need manual intervention"
+    fi
 fi
 
 echo "Resource handling complete."
