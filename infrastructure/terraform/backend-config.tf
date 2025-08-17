@@ -23,10 +23,10 @@ locals {
 output "backend_config" {
   description = "Terraform backend configuration for this environment"
   value = {
-    resource_group = local.backend_config[var.environment].resource_group_name
+    resource_group  = local.backend_config[var.environment].resource_group_name
     storage_account = local.backend_config[var.environment].storage_account_name
-    container = local.backend_config[var.environment].container_name
-    key = local.backend_config[var.environment].key
+    container       = local.backend_config[var.environment].container_name
+    key             = local.backend_config[var.environment].key
   }
   sensitive = false
 }

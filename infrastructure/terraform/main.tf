@@ -37,7 +37,7 @@ data "azurerm_client_config" "current" {}
 # Fixed suffix for unique resource names - NO RANDOM
 # Using a consistent suffix ensures resources can be recreated with same names
 locals {
-  suffix = "3p0bata"  # Fixed suffix for all environments
+  suffix = "3p0bata" # Fixed suffix for all environments
 }
 
 # Variables

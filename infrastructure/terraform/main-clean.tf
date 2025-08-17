@@ -71,7 +71,7 @@ resource "azurerm_key_vault" "main" {
   sku_name                   = "standard"
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
-  
+
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
@@ -80,7 +80,7 @@ resource "azurerm_key_vault" "main" {
       "Get", "List", "Set", "Delete", "Purge"
     ]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -183,20 +183,20 @@ resource "azurerm_cosmosdb_account" "main" {
   resource_group_name = azurerm_resource_group.main.name
   offer_type          = "Standard"
   kind                = "GlobalDocumentDB"
-  
+
   consistency_policy {
     consistency_level = "Session"
   }
-  
+
   geo_location {
     location          = azurerm_resource_group.main.location
     failover_priority = 0
   }
-  
+
   capabilities {
     name = "EnableServerless"
   }
-  
+
   tags = local.common_tags
 }
 
@@ -261,7 +261,7 @@ resource "azurerm_container_app" "frontend" {
       image  = "${local.resource_names.container_registry}.azurecr.io/policycortex-frontend:latest"
       cpu    = 0.5
       memory = "1Gi"
-      
+
       env {
         name  = "NEXT_PUBLIC_API_URL"
         value = "https://${azurerm_container_app.core.latest_revision_fqdn}"

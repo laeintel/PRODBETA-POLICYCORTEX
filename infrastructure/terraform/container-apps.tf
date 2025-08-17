@@ -5,36 +5,36 @@ locals {
   # Container App names based on environment
   container_apps = {
     core = {
-      name = "ca-cortex-core-${var.environment}"
-      image = "${var.registry_name}.azurecr.io/policycortex-core:latest"
-      cpu = 0.5
-      memory = "1Gi"
-      min_replicas = 0
-      max_replicas = 1
-      port = 8080
-      ingress_enabled = true
+      name             = "ca-cortex-core-${var.environment}"
+      image            = "${var.registry_name}.azurecr.io/policycortex-core:latest"
+      cpu              = 0.5
+      memory           = "1Gi"
+      min_replicas     = 0
+      max_replicas     = 1
+      port             = 8080
+      ingress_enabled  = true
       external_enabled = true
     }
     frontend = {
-      name = "ca-cortex-frontend-${var.environment}"
-      image = "${var.registry_name}.azurecr.io/policycortex-frontend:latest"
-      cpu = 0.5
-      memory = "1Gi"
-      min_replicas = 0
-      max_replicas = 1
-      port = 3000
-      ingress_enabled = true
+      name             = "ca-cortex-frontend-${var.environment}"
+      image            = "${var.registry_name}.azurecr.io/policycortex-frontend:latest"
+      cpu              = 0.5
+      memory           = "1Gi"
+      min_replicas     = 0
+      max_replicas     = 1
+      port             = 3000
+      ingress_enabled  = true
       external_enabled = true
     }
     graphql = {
-      name = "ca-cortex-graphql-${var.environment}"
-      image = "${var.registry_name}.azurecr.io/policycortex-graphql:latest"
-      cpu = 0.5
-      memory = "1Gi"
-      min_replicas = 0
-      max_replicas = 1
-      port = 4000
-      ingress_enabled = true
+      name             = "ca-cortex-graphql-${var.environment}"
+      image            = "${var.registry_name}.azurecr.io/policycortex-graphql:latest"
+      cpu              = 0.5
+      memory           = "1Gi"
+      min_replicas     = 0
+      max_replicas     = 1
+      port             = 4000
+      ingress_enabled  = true
       external_enabled = true
     }
   }
@@ -103,8 +103,8 @@ resource "azurerm_container_app" "apps" {
   }
 
   registry {
-    server               = "${var.registry_name}.azurecr.io"
-    identity             = azurerm_user_assigned_identity.aca_identity.id
+    server   = "${var.registry_name}.azurecr.io"
+    identity = azurerm_user_assigned_identity.aca_identity.id
   }
 
   identity {
