@@ -209,7 +209,7 @@ impl SeasonalityModel {
         
         for point in data {
             let month = point.date.month();
-            monthly_totals.entry(month).or_insert_with(Vec::new).push(point.amount);
+            monthly_totals.entry(month).or_default().push(point.amount);
         }
         
         // Calculate seasonal factors

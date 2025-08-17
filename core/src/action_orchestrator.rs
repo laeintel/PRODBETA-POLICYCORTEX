@@ -488,7 +488,7 @@ impl ActionOrchestrator {
                         .and_then(|v| serde_json::from_value(v.clone()).ok());
                     return Ok(Some(IdempotencyRecord {
                         key: key.to_string(),
-                        action_id: action_id.unwrap_or_else(|| uuid::Uuid::nil()),
+                        action_id: action_id.unwrap_or_else(uuid::Uuid::nil),
                         result,
                         created_at: created_at.unwrap_or(chrono::Utc::now()),
                         expires_at: expires_at.unwrap_or(chrono::Utc::now()),
@@ -521,7 +521,7 @@ impl ActionOrchestrator {
                    ON CONFLICT (key) DO NOTHING"#,
             )
             .bind(&action.idempotency_key)
-            .bind(&action.id)
+            .bind(action.id)
             .bind(Option::<serde_json::Value>::None)
             .execute(pool)
             .await
@@ -717,7 +717,7 @@ impl ActionOrchestrator {
         let pending = self.pending_actions.read().await;
         for (_, state) in pending.iter() {
             if state.action.id == action_id {
-                return Some(state.status.clone());
+                return Some(state.status);
             }
         }
 

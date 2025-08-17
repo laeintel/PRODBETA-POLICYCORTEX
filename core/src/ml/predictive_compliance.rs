@@ -8,10 +8,9 @@
 
 use super::*;
 use crate::azure_client::AzureClient;
-use async_trait::async_trait;
 use std::collections::HashMap;
 use chrono::{Duration, Utc};
-use tracing::{info, warn, debug};
+use tracing::info;
 
 pub struct PredictiveComplianceEngine {
     azure_client: AzureClient,

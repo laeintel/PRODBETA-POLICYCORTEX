@@ -289,7 +289,7 @@ impl ApprovalEngine {
         approver_id: &str,
     ) -> bool {
         // Check separation of duty rules
-        for rule in &policy.sod_rules {
+        if let Some(rule) = policy.sod_rules.first() {
             // This would check against actual role assignments
             // For now, return true (compliant)
             return true;
@@ -324,7 +324,7 @@ impl ApprovalEngine {
             id: Uuid::new_v4(),
             approver_id,
             approver_email,
-            decision: decision.clone(),
+            decision,
             comments,
             conditions: Vec::new(),
             approved_at: Utc::now(),
@@ -374,7 +374,7 @@ impl ApprovalEngine {
             _ => {}
         }
 
-        Ok(request.status.clone())
+        Ok(request.status)
     }
 
     pub fn create_break_glass_access(

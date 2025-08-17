@@ -95,7 +95,7 @@ impl AsyncAzureClient {
     }
 
     pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
-        let mut config = AzureClientConfig::default();
+        let config = AzureClientConfig::default();
 
         // Validate required configuration - only tenant ID is required
         if config.tenant_id.is_empty() {

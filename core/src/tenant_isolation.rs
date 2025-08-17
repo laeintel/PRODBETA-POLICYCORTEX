@@ -16,7 +16,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 use uuid::Uuid;
 
 /// Tenant context for request processing
@@ -190,7 +190,7 @@ impl TenantDatabase {
             "#,
         )
         .bind(id)
-        .bind(&tenant.tenant_id)
+        .bind(tenant.tenant_id)
         .bind(resource_type)
         .bind(name)
         .bind(&data)
@@ -364,7 +364,7 @@ pub async fn audit_log(
         "#
     )
     .bind(Uuid::new_v4())
-    .bind(&tenant.tenant_id)
+    .bind(tenant.tenant_id)
     .bind(tenant.user_id)
     .bind(action)
     .bind(resource_type)

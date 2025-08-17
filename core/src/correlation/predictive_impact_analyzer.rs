@@ -13,7 +13,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::RwLock;
 use chrono::{DateTime, Duration, Utc};
-use uuid::Uuid;
 
 // Define missing types
 #[derive(Debug, Clone, Serialize, Deserialize)]

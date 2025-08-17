@@ -36,7 +36,7 @@ pub use correlations::{
 };
 
 use crate::auth::{AuthUser, TenantContext, TokenValidator};
-use crate::error::{ApiError, ApiResult};
+use crate::error::ApiError;
 use crate::validation::Validator;
 use crate::secrets::SecretsManager;
 use crate::slo::SLOManager;
@@ -782,7 +782,7 @@ pub async fn get_evidence_pack() -> impl IntoResponse {
             .into_response();
     }
 
-    if let Err(_) = tar.finish() {
+    if tar.finish().is_err() {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({"error":"failed_to_finalize_tar"})),
@@ -829,7 +829,7 @@ pub async fn export_policies(State(_state): State<Arc<AppState>>) -> impl IntoRe
 
 // ===================== Azure OpenAI Realtime (WebRTC SDP exchange) =====================
 /// Browser posts an SDP offer; we forward to Azure OpenAI Realtime and return the SDP answer.
-pub async fn realtime_sdp(mut req: axum::http::Request<Body>) -> impl IntoResponse {
+pub async fn realtime_sdp(req: axum::http::Request<Body>) -> impl IntoResponse {
     use axum::body::to_bytes;
     let endpoint = match std::env::var("AZURE_OPENAI_ENDPOINT") {
         Ok(v) => v,
@@ -1641,14 +1641,14 @@ pub async fn create_exception(
                 id, tenant_id, resource_id, policy_id, reason, status, created_by, created_at, expires_at, recertify_at, evidence, metadata
             ) VALUES ($1,$2,$3,$4,$5,'Approved',$6,NOW(),$7,$8,$9,$10)"#
         )
-        .bind(&id)
+        .bind(id)
         .bind(&tenant_id)
         .bind(&payload.resource_id)
         .bind(&payload.policy_id)
         .bind(&payload.reason)
         .bind(auth_user.claims.preferred_username.clone().unwrap_or_default())
-        .bind(&expires_at)
-        .bind(&expires_at)
+        .bind(expires_at)
+        .bind(expires_at)
         .bind(serde_json::json!({"requested_by": auth_user.claims.preferred_username}))
         .bind(serde_json::json!({}))
         .execute(pool)

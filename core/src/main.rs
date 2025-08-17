@@ -85,11 +85,9 @@ use api::{
     get_correlations, analyze_correlations, what_if_analysis,
     get_real_time_insights, get_correlation_graph,
 };
-use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
 use azure_client_async::AsyncAzureClient;
 use sqlx::postgres::PgPoolOptions;
-use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
 
 #[derive(Serialize)]
 struct HealthResponse {

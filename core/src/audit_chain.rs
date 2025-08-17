@@ -400,9 +400,9 @@ impl PersistentAuditChain {
         "#;
 
         sqlx::query(query)
-            .bind(&entry.id)
+            .bind(entry.id)
             .bind(entry.sequence as i64)
-            .bind(&entry.timestamp)
+            .bind(entry.timestamp)
             .bind(&entry.tenant_id)
             .bind(
                 serde_json::to_value(&entry.event_type)

@@ -13,7 +13,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
-use crate::governance::{GovernanceError, GovernanceResult, GovernanceCoordinator};
+use crate::governance::{GovernanceError, GovernanceResult};
 
 pub struct CrossDomainCorrelationEngine {
     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,

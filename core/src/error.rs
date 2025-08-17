@@ -152,19 +152,19 @@ impl From<std::env::VarError> for ApiError {
 #[macro_export]
 macro_rules! api_error {
     (unauthorized, $msg:expr) => {
-        crate::error::ApiError::Unauthorized($msg.to_string())
+        $crate::error::ApiError::Unauthorized($msg.to_string())
     };
     (forbidden, $msg:expr) => {
-        crate::error::ApiError::Forbidden($msg.to_string())
+        $crate::error::ApiError::Forbidden($msg.to_string())
     };
     (bad_request, $msg:expr) => {
-        crate::error::ApiError::BadRequest($msg.to_string())
+        $crate::error::ApiError::BadRequest($msg.to_string())
     };
     (not_found, $msg:expr) => {
-        crate::error::ApiError::NotFound($msg.to_string())
+        $crate::error::ApiError::NotFound($msg.to_string())
     };
     (internal, $msg:expr) => {
-        crate::error::ApiError::InternalError($msg.to_string())
+        $crate::error::ApiError::InternalError($msg.to_string())
     };
 }
 

@@ -13,7 +13,7 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 use uuid::Uuid;
 
 /// Evidence Pipeline for collecting, signing, and storing compliance artifacts
@@ -527,7 +527,7 @@ impl EvidencePipeline {
                 $9, $10, $11, $12, $13, $14, $15
             ) ON CONFLICT (id) DO NOTHING"#
         )
-        .bind(&evidence.id)
+        .bind(evidence.id)
         .bind(format!("{:?}", evidence.evidence_type))
         .bind(serde_json::to_value(&evidence.source).map_err(|e| e.to_string())?)
         .bind(&evidence.subject)
@@ -539,8 +539,8 @@ impl EvidencePipeline {
         .bind(serde_json::to_value(&evidence.chain_of_custody).map_err(|e| e.to_string())?)
         .bind(serde_json::to_value(&evidence.metadata).map_err(|e| e.to_string())?)
         .bind(&evidence.tenant_id)
-        .bind(&evidence.created_at)
-        .bind(&evidence.expires_at)
+        .bind(evidence.created_at)
+        .bind(evidence.expires_at)
         .bind(format!("{:?}", evidence.verification_status))
         .execute(pool)
         .await

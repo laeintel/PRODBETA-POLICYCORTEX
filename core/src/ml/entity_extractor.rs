@@ -10,7 +10,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use regex::Regex;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entity {
@@ -186,7 +185,7 @@ impl EntityExtractor {
                     entities.push(Entity {
                         entity_type: entity_type.clone(),
                         value: mat.as_str().to_string(),
-                        confidence: self.calculate_confidence(&entity_type, mat.as_str()),
+                        confidence: self.calculate_confidence(entity_type, mat.as_str()),
                         start_index: mat.start(),
                         end_index: mat.end(),
                     });
@@ -285,7 +284,7 @@ impl EntityExtractor {
         
         for entity in entities {
             let is_overlap = deduplicated.iter().any(|existing: &Entity| {
-                (entity.start_index < existing.end_index && entity.end_index > existing.start_index)
+                entity.start_index < existing.end_index && entity.end_index > existing.start_index
             });
             
             if !is_overlap {

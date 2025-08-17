@@ -162,7 +162,7 @@ impl DriftDetector {
         // Store drift events
         self.drift_history
             .entry(resource_id.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .extend(drift_events.clone());
         
         // Calculate drift metrics
@@ -332,7 +332,7 @@ impl DriftDetector {
                 format!("Public network access changed from {} to {}. Security exposure risk.", old_value, new_value)
             },
             p if p.contains("authentication") => {
-                format!("Authentication settings modified. Access control may be compromised.", )
+                "Authentication settings modified. Access control may be compromised.".to_string()
             },
             _ => format!("Configuration drift detected in {}", property),
         }

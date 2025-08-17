@@ -13,7 +13,7 @@ use std::sync::Arc;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
-use crate::governance::{GovernanceError, GovernanceResult, GovernanceCoordinator};
+use crate::governance::{GovernanceError, GovernanceResult};
 
 pub struct PredictiveComplianceEngine {
     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
@@ -504,7 +504,7 @@ impl PredictiveComplianceEngine {
     // Retrain prediction models with new data
     pub async fn retrain_models(&mut self) -> GovernanceResult<()> {
         // In production, this would retrain ML models with fresh historical data
-        for (_, model) in &mut self.prediction_models {
+        for model in self.prediction_models.values_mut() {
             model.last_trained = Utc::now();
             model.accuracy_score = (model.accuracy_score + 0.01).min(0.95); // Slight improvement simulation
         }
@@ -517,8 +517,8 @@ impl HistoricalDataStore {
     fn new() -> Self {
         // Generate sample historical data
         let mut compliance_history = Vec::new();
-        let mut violation_history = Vec::new();
-        let mut resource_history = Vec::new();
+        let violation_history = Vec::new();
+        let resource_history = Vec::new();
 
         // Generate 30 days of sample compliance data
         for i in 0..30 {
