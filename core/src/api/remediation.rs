@@ -420,7 +420,7 @@ pub async fn get_rollback_status(
 
 /// Get remediation status
 pub async fn get_remediation_status(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(request_id): Path<String>,
     Query(params): Query<RemediationStatusQuery>,
 ) -> impl IntoResponse {
@@ -465,7 +465,7 @@ fn parse_severity(severity: &str) -> crate::remediation::bulk_remediation::Viola
     }
 }
 
-async fn start_remediation(state: &Arc<AppState>, approval_id: &str) -> Result<String, String> {
+async fn start_remediation(_state: &Arc<AppState>, approval_id: &str) -> Result<String, String> {
     // In production, start actual remediation process
     let remediation_id = Uuid::new_v4().to_string();
     tracing::info!("Starting remediation {} for approval {}", remediation_id, approval_id);

@@ -80,7 +80,7 @@ pub struct PredictionMetadata {
 
 // GET /api/v1/predictions/violations
 pub async fn get_violation_predictions(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Query(query): Query<PredictionQuery>,
 ) -> impl IntoResponse {
     let lookahead_hours = query.lookahead_hours.unwrap_or(24);
@@ -122,7 +122,7 @@ pub async fn get_violation_predictions(
 
 // GET /api/v1/predictions/violations/{resource_id}
 pub async fn get_resource_predictions(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Path(resource_id): Path<String>,
     Query(query): Query<PredictionQuery>,
 ) -> impl IntoResponse {
@@ -147,7 +147,7 @@ pub async fn get_resource_predictions(
 
 // GET /api/v1/predictions/risk-score/{resource_id}
 pub async fn get_risk_score(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Path(resource_id): Path<String>,
 ) -> impl IntoResponse {
     let predictions = generate_demo_predictions(24)
@@ -174,9 +174,9 @@ pub async fn get_risk_score(
 
 // POST /api/v1/predictions/remediate/{prediction_id}
 pub async fn remediate_prediction(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Path(prediction_id): Path<String>,
-    Json(payload): Json<RemediationRequest>,
+    Json(_payload): Json<RemediationRequest>,
 ) -> impl IntoResponse {
     // In production, this would trigger actual remediation
     let response = RemediationResponse {

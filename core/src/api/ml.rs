@@ -160,7 +160,7 @@ pub struct AnomalyPattern {
 
 /// Get prediction for a specific resource
 pub async fn get_prediction(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(resource_id): Path<String>,
     Query(params): Query<PredictionRequest>,
 ) -> impl IntoResponse {
@@ -236,7 +236,7 @@ pub async fn get_prediction(
 
 /// Get current ML model metrics
 pub async fn get_model_metrics(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let metrics = ModelMetrics {
         accuracy: 0.94,
@@ -270,7 +270,7 @@ pub async fn get_model_metrics(
 
 /// Start A/B test for model comparison
 pub async fn start_ab_test(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Json(request): Json<ABTestRequest>,
 ) -> impl IntoResponse {
     let test_id = Uuid::new_v4().to_string();
@@ -287,7 +287,7 @@ pub async fn start_ab_test(
 
 /// Get A/B test status
 pub async fn get_ab_test_status(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(test_id): Path<String>,
 ) -> impl IntoResponse {
     let status = ABTestStatus {
@@ -314,7 +314,7 @@ pub async fn get_ab_test_status(
 
 /// Get feature importance for model interpretability
 pub async fn get_feature_importance(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let features = vec![
         FeatureImportance {
@@ -349,7 +349,7 @@ pub async fn get_feature_importance(
 
 /// Detect anomalies in resource metrics
 pub async fn detect_anomalies(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let result = AnomalyDetectionResult {
         anomalies: vec![
@@ -395,7 +395,7 @@ pub async fn detect_anomalies(
 
 /// Submit feedback for model improvement
 pub async fn submit_feedback(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Json(feedback): Json<serde_json::Value>,
 ) -> impl IntoResponse {
     // Process feedback for continuous learning
@@ -410,7 +410,7 @@ pub async fn submit_feedback(
 
 /// Get cost prediction for resources
 pub async fn get_cost_prediction(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let prediction = serde_json::json!({
         "predicted_monthly_cost": 4532.67,
@@ -436,7 +436,7 @@ pub async fn get_cost_prediction(
 
 /// Retrain model with new data
 pub async fn trigger_retraining(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     let response = serde_json::json!({
         "status": "initiated",

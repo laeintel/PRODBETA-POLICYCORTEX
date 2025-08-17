@@ -54,7 +54,7 @@ mod ml;
 mod observability;
 mod policy_engine;
 mod quota_middleware;
-mod remediation;
+pub mod remediation;
 mod resources;
 mod secret_guard;
 mod secrets;

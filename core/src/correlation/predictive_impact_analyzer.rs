@@ -673,7 +673,7 @@ impl PredictiveImpactAnalyzer {
         0.1 // impacts per minute
     }
 
-    fn predict_remaining_cascade(&self, event: &OngoingEvent, state: &SystemState, resources: &[ResourceContext]) -> ImpactTimeline {
+    fn predict_remaining_cascade(&self, event: &OngoingEvent, _state: &SystemState, resources: &[ResourceContext]) -> ImpactTimeline {
         ImpactTimeline {
             timeline_points: vec![], // Would calculate remaining cascade points
             total_duration: Duration::hours(2), // Estimated remaining time
