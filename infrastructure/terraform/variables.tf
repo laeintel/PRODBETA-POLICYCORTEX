@@ -25,47 +25,47 @@ variable "project_name" {
 # Computed locals for consistent naming
 locals {
   # Generate consistent hash from subscription ID for uniqueness
-  hash_input = "${data.azurerm_client_config.current.subscription_id}-${var.project_name}"
+  hash_input  = "${data.azurerm_client_config.current.subscription_id}-${var.project_name}"
   hash_suffix = substr(md5(local.hash_input), 0, 6)
-  
+
   # Environment suffix
   env_suffix = var.environment
-  
+
   # Resource names - single source of truth
   resource_names = {
     # Resource Group
     resource_group = "rg-${var.project_name}-${local.env_suffix}"
-    
+
     # Container Apps
     container_env = "cae-${var.project_name}-${local.env_suffix}"
-    core_app = "ca-${var.project_name}-core-${local.env_suffix}"
-    frontend_app = "ca-${var.project_name}-frontend-${local.env_suffix}"
-    graphql_app = "ca-${var.project_name}-graphql-${local.env_suffix}"
-    
+    core_app      = "ca-${var.project_name}-core-${local.env_suffix}"
+    frontend_app  = "ca-${var.project_name}-frontend-${local.env_suffix}"
+    graphql_app   = "ca-${var.project_name}-graphql-${local.env_suffix}"
+
     # Container Registry (global, needs unique name)
     container_registry = "cr${var.project_name}${local.env_suffix}${local.hash_suffix}"
-    
+
     # Storage Account (global, needs unique name, no hyphens)
     storage_account = "st${var.project_name}${local.env_suffix}${local.hash_suffix}"
-    
+
     # Key Vault
     key_vault = "kv-${var.project_name}-${local.env_suffix}-${local.hash_suffix}"
-    
+
     # Database
     postgresql = "psql-${var.project_name}-${local.env_suffix}"
-    cosmos_db = "cosmos-${var.project_name}-${local.env_suffix}-${local.hash_suffix}"
-    
+    cosmos_db  = "cosmos-${var.project_name}-${local.env_suffix}-${local.hash_suffix}"
+
     # Monitoring
     log_workspace = "log-${var.project_name}-${local.env_suffix}"
-    app_insights = "appi-${var.project_name}-${local.env_suffix}"
-    
+    app_insights  = "appi-${var.project_name}-${local.env_suffix}"
+
     # Networking
     vnet = "vnet-${var.project_name}-${local.env_suffix}"
-    
+
     # AI Services
     openai = "cogao-${var.project_name}-${local.env_suffix}"
   }
-  
+
   # Common tags
   common_tags = {
     Environment = var.environment

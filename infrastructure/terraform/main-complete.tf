@@ -58,43 +58,43 @@ locals {
   project = "cortex"
   # Fixed suffix for globally unique resources - NO RANDOM NUMBERS
   # This ensures resources can be recreated with exact same names
-  hash_suffix = "3p0bata"  # Fixed suffix, never changes
-  
+  hash_suffix = "3p0bata" # Fixed suffix, never changes
+
   # Resource names
   resource_names = {
     # Core Infrastructure
     resource_group = "rg-${local.project}-${var.environment}"
-    tfstate_rg = "rg-tfstate-${local.project}-${var.environment}"
-    
+    tfstate_rg     = "rg-tfstate-${local.project}-${var.environment}"
+
     # Networking
     vnet = "vnet-${local.project}-${var.environment}"
-    
+
     # Container Apps
     container_env = "cae-${local.project}-${var.environment}"
-    core_app = "ca-${local.project}-core-${var.environment}"
-    frontend_app = "ca-${local.project}-frontend-${var.environment}"
-    graphql_app = "ca-${local.project}-graphql-${var.environment}"
-    
+    core_app      = "ca-${local.project}-core-${var.environment}"
+    frontend_app  = "ca-${local.project}-frontend-${var.environment}"
+    graphql_app   = "ca-${local.project}-graphql-${var.environment}"
+
     # Storage & Registry
     container_registry = "cr${local.project}${var.environment}${local.hash_suffix}"
-    storage_account = "st${local.project}${var.environment}${local.hash_suffix}"
-    tfstate_storage = "sttf${local.project}${var.environment}${local.hash_suffix}"
-    
+    storage_account    = "st${local.project}${var.environment}${local.hash_suffix}"
+    tfstate_storage    = "sttf${local.project}${var.environment}${local.hash_suffix}"
+
     # Data
-    key_vault = "kv-${local.project}-${var.environment}-${local.hash_suffix}"
+    key_vault  = "kv-${local.project}-${var.environment}-${local.hash_suffix}"
     postgresql = "psql-${local.project}-${var.environment}"
-    cosmos_db = "cosmos-${local.project}-${var.environment}-${local.hash_suffix}"
-    
+    cosmos_db  = "cosmos-${local.project}-${var.environment}-${local.hash_suffix}"
+
     # Monitoring
     log_workspace = "log-${local.project}-${var.environment}"
-    app_insights = "appi-${local.project}-${var.environment}"
-    
+    app_insights  = "appi-${local.project}-${var.environment}"
+
     # AI Services
-    openai = "cogao-${local.project}-${var.environment}"
-    ai_hub = "policycortex-gpt4o-resource"
+    openai     = "cogao-${local.project}-${var.environment}"
+    ai_hub     = "policycortex-gpt4o-resource"
     ai_project = "policycortex_gpt4o"
   }
-  
+
   common_tags = {
     Environment = var.environment
     Project     = "PolicyCortex"
@@ -119,11 +119,11 @@ resource "azurerm_storage_account" "tfstate" {
   location                 = azurerm_resource_group.tfstate.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  
+
   blob_properties {
     versioning_enabled = true
   }
-  
+
   tags = local.common_tags
 }
 
@@ -161,11 +161,11 @@ resource "azurerm_subnet" "container_apps" {
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.1.0/23"]
-  
+
   delegation {
     name = "container-apps"
     service_delegation {
-      name = "Microsoft.App/environments"
+      name    = "Microsoft.App/environments"
       actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
@@ -177,7 +177,7 @@ resource "azurerm_subnet" "private_endpoints" {
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.4.0/24"]
-  
+
   private_endpoint_network_policies_enabled = false
 }
 
@@ -187,11 +187,11 @@ resource "azurerm_subnet" "database" {
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.5.0/24"]
-  
+
   delegation {
     name = "postgresql"
     service_delegation {
-      name = "Microsoft.DBforPostgreSQL/flexibleServers"
+      name    = "Microsoft.DBforPostgreSQL/flexibleServers"
       actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
     }
   }
@@ -307,11 +307,11 @@ resource "azurerm_monitor_smart_detector_alert_rule" "failure_anomalies" {
   scope_resource_ids  = [azurerm_application_insights.main.id]
   frequency           = "PT1M"
   detector_type       = "FailureAnomaliesDetector"
-  
+
   action_group {
     ids = []
   }
-  
+
   tags = local.common_tags
 }
 
@@ -323,18 +323,18 @@ resource "azurerm_container_registry" "main" {
   name                = local.resource_names.container_registry
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
-  sku                 = "Premium"  # Premium required for private endpoints
+  sku                 = "Premium" # Premium required for private endpoints
   admin_enabled       = true
-  
+
   network_rule_set {
     default_action = "Deny"
-    
+
     virtual_network {
       action    = "Allow"
       subnet_id = azurerm_subnet.container_apps.id
     }
   }
-  
+
   tags = local.common_tags
 }
 
@@ -343,19 +343,19 @@ resource "azurerm_private_endpoint" "acr" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   subnet_id           = azurerm_subnet.private_endpoints.id
-  
+
   private_service_connection {
     name                           = "psc-acr"
     private_connection_resource_id = azurerm_container_registry.main.id
     subresource_names              = ["registry"]
     is_manual_connection           = false
   }
-  
+
   private_dns_zone_group {
     name                 = "pdz-acr"
     private_dns_zone_ids = [azurerm_private_dns_zone.acr.id]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -369,12 +369,12 @@ resource "azurerm_storage_account" "main" {
   location                 = azurerm_resource_group.main.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  
+
   network_rules {
     default_action             = "Deny"
     virtual_network_subnet_ids = [azurerm_subnet.container_apps.id]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -383,19 +383,19 @@ resource "azurerm_private_endpoint" "storage" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   subnet_id           = azurerm_subnet.private_endpoints.id
-  
+
   private_service_connection {
     name                           = "psc-storage"
     private_connection_resource_id = azurerm_storage_account.main.id
     subresource_names              = ["blob"]
     is_manual_connection           = false
   }
-  
+
   private_dns_zone_group {
     name                 = "pdz-storage"
     private_dns_zone_ids = [azurerm_private_dns_zone.storage.id]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -411,26 +411,26 @@ resource "azurerm_key_vault" "main" {
   sku_name                   = "standard"
   soft_delete_retention_days = 7
   purge_protection_enabled   = false
-  
+
   network_acls {
     default_action             = "Deny"
     bypass                     = "AzureServices"
     virtual_network_subnet_ids = [azurerm_subnet.container_apps.id]
   }
-  
+
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
-    
+
     secret_permissions = [
       "Get", "List", "Set", "Delete", "Purge", "Recover"
     ]
-    
+
     key_permissions = [
       "Get", "List", "Create", "Delete", "Purge", "Recover"
     ]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -439,19 +439,19 @@ resource "azurerm_private_endpoint" "keyvault" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   subnet_id           = azurerm_subnet.private_endpoints.id
-  
+
   private_service_connection {
     name                           = "psc-keyvault"
     private_connection_resource_id = azurerm_key_vault.main.id
     subresource_names              = ["vault"]
     is_manual_connection           = false
   }
-  
+
   private_dns_zone_group {
     name                 = "pdz-keyvault"
     private_dns_zone_ids = [azurerm_private_dns_zone.keyvault.id]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -465,22 +465,22 @@ resource "random_password" "db_password" {
 }
 
 resource "azurerm_postgresql_flexible_server" "main" {
-  name                   = local.resource_names.postgresql
-  resource_group_name    = azurerm_resource_group.main.name
-  location               = azurerm_resource_group.main.location
-  version                = "15"
-  delegated_subnet_id    = azurerm_subnet.database.id
-  private_dns_zone_id    = azurerm_private_dns_zone.postgresql.id
-  
+  name                = local.resource_names.postgresql
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  version             = "15"
+  delegated_subnet_id = azurerm_subnet.database.id
+  private_dns_zone_id = azurerm_private_dns_zone.postgresql.id
+
   administrator_login    = "psqladmin"
   administrator_password = random_password.db_password.result
-  
-  storage_mb             = 32768
-  sku_name               = "B_Standard_B1ms"
-  zone                   = "1"
-  
+
+  storage_mb = 32768
+  sku_name   = "B_Standard_B1ms"
+  zone       = "1"
+
   tags = local.common_tags
-  
+
   depends_on = [
     azurerm_private_dns_zone_virtual_network_link.postgresql
   ]
@@ -510,26 +510,26 @@ resource "azurerm_cosmosdb_account" "main" {
   resource_group_name = azurerm_resource_group.main.name
   offer_type          = "Standard"
   kind                = "GlobalDocumentDB"
-  
+
   consistency_policy {
     consistency_level = "Session"
   }
-  
+
   geo_location {
     location          = azurerm_resource_group.main.location
     failover_priority = 0
   }
-  
+
   capabilities {
     name = "EnableServerless"
   }
-  
+
   is_virtual_network_filter_enabled = true
-  
+
   virtual_network_rule {
     id = azurerm_subnet.container_apps.id
   }
-  
+
   tags = local.common_tags
 }
 
@@ -538,19 +538,19 @@ resource "azurerm_private_endpoint" "cosmosdb" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   subnet_id           = azurerm_subnet.private_endpoints.id
-  
+
   private_service_connection {
     name                           = "psc-cosmosdb"
     private_connection_resource_id = azurerm_cosmosdb_account.main.id
     subresource_names              = ["Sql"]
     is_manual_connection           = false
   }
-  
+
   private_dns_zone_group {
     name                 = "pdz-cosmosdb"
     private_dns_zone_ids = [azurerm_private_dns_zone.cosmosdb.id]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -564,29 +564,29 @@ resource "azurerm_cognitive_account" "openai" {
   resource_group_name = azurerm_resource_group.main.name
   kind                = "OpenAI"
   sku_name            = "S0"
-  
+
   custom_subdomain_name = local.resource_names.openai
-  
+
   network_acls {
     default_action = "Deny"
     virtual_network_rules {
       subnet_id = azurerm_subnet.container_apps.id
     }
   }
-  
+
   tags = local.common_tags
 }
 
 resource "azurerm_cognitive_deployment" "gpt4" {
   name                 = "gpt-4"
   cognitive_account_id = azurerm_cognitive_account.openai.id
-  
+
   model {
     format  = "OpenAI"
     name    = "gpt-4"
     version = "0613"
   }
-  
+
   scale {
     type = "Standard"
   }
@@ -597,19 +597,19 @@ resource "azurerm_private_endpoint" "openai" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   subnet_id           = azurerm_subnet.private_endpoints.id
-  
+
   private_service_connection {
     name                           = "psc-openai"
     private_connection_resource_id = azurerm_cognitive_account.openai.id
     subresource_names              = ["account"]
     is_manual_connection           = false
   }
-  
+
   private_dns_zone_group {
     name                 = "pdz-openai"
     private_dns_zone_ids = [azurerm_private_dns_zone.openai.id]
   }
-  
+
   tags = local.common_tags
 }
 
@@ -630,11 +630,11 @@ resource "azurerm_machine_learning_workspace" "ai_hub" {
   application_insights_id = azurerm_application_insights.main.id
   key_vault_id            = azurerm_key_vault.main.id
   storage_account_id      = azurerm_storage_account.main.id
-  
+
   identity {
     type = "SystemAssigned"
   }
-  
+
   tags = local.common_tags
 }
 
@@ -648,7 +648,7 @@ resource "azurerm_container_app_environment" "main" {
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
   infrastructure_subnet_id   = azurerm_subnet.container_apps.id
-  
+
   tags = local.common_tags
 }
 
@@ -692,12 +692,12 @@ resource "azurerm_container_app" "core" {
       image  = "${azurerm_container_registry.main.login_server}/policycortex-core:latest"
       cpu    = 0.5
       memory = "1Gi"
-      
+
       env {
         name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
         value = azurerm_application_insights.main.connection_string
       }
-      
+
       env {
         name  = "DATABASE_URL"
         value = "postgresql://psqladmin:${random_password.db_password.result}@${azurerm_postgresql_flexible_server.main.fqdn}/policycortex"
@@ -746,12 +746,12 @@ resource "azurerm_container_app" "frontend" {
       image  = "${azurerm_container_registry.main.login_server}/policycortex-frontend:latest"
       cpu    = 0.5
       memory = "1Gi"
-      
+
       env {
         name  = "NEXT_PUBLIC_API_URL"
         value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
       }
-      
+
       env {
         name  = "NEXT_PUBLIC_GRAPHQL_URL"
         value = "https://${azurerm_container_app.graphql.latest_revision_fqdn}"
@@ -800,7 +800,7 @@ resource "azurerm_container_app" "graphql" {
       image  = "${azurerm_container_registry.main.login_server}/policycortex-graphql:latest"
       cpu    = 0.5
       memory = "1Gi"
-      
+
       env {
         name  = "CORE_API_URL"
         value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
@@ -900,9 +900,9 @@ output "app_insights_connection_string" {
 
 output "backend_config" {
   value = {
-    resource_group   = azurerm_resource_group.tfstate.name
-    storage_account  = azurerm_storage_account.tfstate.name
-    container        = azurerm_storage_container.tfstate.name
-    key              = "${var.environment}.tfstate"
+    resource_group  = azurerm_resource_group.tfstate.name
+    storage_account = azurerm_storage_account.tfstate.name
+    container       = azurerm_storage_container.tfstate.name
+    key             = "${var.environment}.tfstate"
   }
 }
