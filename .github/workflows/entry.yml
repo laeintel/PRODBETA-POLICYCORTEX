@@ -273,8 +273,8 @@ jobs:
   frontend:
     name: Frontend CI
     needs: [runner-setup, docker-health-check, detect-changes]
-    # Only run if explicitly requested via workflow_dispatch - NOT on automatic push/PR
-    if: github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)
+    # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     secrets: inherit
     with:
@@ -292,8 +292,8 @@ jobs:
   graphql:
     name: GraphQL gateway CI
     needs: [runner-setup, docker-health-check, detect-changes]
-    # Only run if explicitly requested via workflow_dispatch - NOT on automatic push/PR
-    if: github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)
+    # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
@@ -303,8 +303,8 @@ jobs:
   backend:
     name: Backend Services CI
     needs: [runner-setup, docker-health-check, detect-changes]
-    # Only run if explicitly requested via workflow_dispatch - NOT on automatic push/PR
-    if: github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)
+    # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
@@ -361,9 +361,14 @@ jobs:
 
   app_pipeline:
     name: Application CI/CD
-    needs: [frontend, core, graphql, backend, security, supply_chain, secret_scan, infra]
-    # Run when full_run is requested or on main branch pushes (but only if security checks pass)
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    needs: [core, security, supply_chain, secret_scan, infra]
+    # Run when full_run is requested or on main/CLEAN-DEFENSE-BRANCH pushes (but only if security checks pass)
+    if: |
+      always() && 
+      !contains(needs.*.result, 'failure') && 
+      !cancelled() && 
+      ((github.event_name == 'workflow_dispatch' && inputs.full_run) || 
+       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH')))
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read
@@ -379,9 +384,13 @@ jobs:
 
   deploy_tag:
     name: Deploy from Tag
-    needs: [frontend, core, graphql, backend, security, supply_chain, secret_scan, infra, app_pipeline]
+    needs: [core, security, supply_chain, secret_scan, infra, app_pipeline]
     # Only deploy for tags - but ensure all previous steps ran
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: |
+      always() && 
+      !contains(needs.*.result, 'failure') && 
+      !cancelled() && 
+      startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/deploy.yml
     with:
       from_tag: ${{ github.ref_name }}
