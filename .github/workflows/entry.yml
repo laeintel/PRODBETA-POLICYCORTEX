@@ -272,7 +272,7 @@ jobs:
 
   frontend:
     name: Frontend CI
-    needs: [runner-setup, docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -283,7 +283,7 @@ jobs:
 
   core:
     name: Core (Rust) CI
-    needs: [runner-setup, docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) when Rust core files change
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_core)) || needs.detect-changes.outputs.rust_core == 'true'
     uses: ./.github/workflows/reusable-ci-core.yml
@@ -291,7 +291,7 @@ jobs:
 
   graphql:
     name: GraphQL gateway CI
-    needs: [runner-setup, docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
@@ -302,7 +302,7 @@ jobs:
 
   backend:
     name: Backend Services CI
-    needs: [runner-setup, docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-python.yml
@@ -361,9 +361,9 @@ jobs:
 
   app_pipeline:
     name: Application CI/CD
-    needs: [detect-changes]
-    # Run after detect-changes on push to main or CLEAN-DEFENSE-BRANCH  
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH')
+    needs: [detect-changes, infra]
+    # Run after infrastructure is created on push to main or CLEAN-DEFENSE-BRANCH  
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH') && needs.infra.result == 'success'
     uses: ./.github/workflows/application-dynamic.yml
     permissions:
       contents: read
