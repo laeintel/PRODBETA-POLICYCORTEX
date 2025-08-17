@@ -225,7 +225,7 @@ impl TemplateLibraryManager {
             powershell_script: yaml.powershell_script,
             azure_cli_commands,
             validation_rules,
-            rollback_template: yaml.rollback_template.map(|s| serde_json::from_str(&s).ok()).flatten(),
+            rollback_template: yaml.rollback_template.and_then(|s| serde_json::from_str(&s).ok()),
             success_criteria,
         })
     }
@@ -422,13 +422,13 @@ impl TemplateLibrary {
         
         // Update category index
         let category = self.extract_category(&template);
-        self.categories.entry(category.clone()).or_insert_with(Vec::new).push(template_id.clone());
+        self.categories.entry(category.clone()).or_default().push(template_id.clone());
 
         // Update resource type index
         for resource_type in &template.resource_types {
             self.resource_type_index
                 .entry(resource_type.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(template_id.clone());
         }
 
@@ -436,7 +436,7 @@ impl TemplateLibrary {
         for violation_type in &template.violation_types {
             self.violation_type_index
                 .entry(violation_type.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(template_id.clone());
         }
 

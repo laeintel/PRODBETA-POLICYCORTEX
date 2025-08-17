@@ -12,14 +12,13 @@
 use crate::api::{AppState, ApiError};
 use crate::auth::{AuthUser, TokenValidator};
 use crate::remediation::*;
-use crate::remediation::approval_manager::{ApprovalManager, ApprovalRequest, ApprovalDecision, ApprovalWorkflowManager};
+use crate::remediation::approval_manager::{ApprovalManager, ApprovalRequest, ApprovalDecision};
 use crate::remediation::bulk_remediation::{BulkRemediationEngine, Violation};
 use crate::remediation::rollback_manager::RollbackManager;
-use crate::remediation::quick_fixes::*;
+// use crate::remediation::quick_fixes::*;
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
-    response::{IntoResponse, Json, Response, sse::{Event, Sse}},
+    response::{IntoResponse, Json, sse::{Event, Sse}},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

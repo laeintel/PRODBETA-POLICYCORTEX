@@ -116,7 +116,7 @@ impl ImpactAnalyzer {
                     // Calculate cascading impact
                     let cascade_impact = self.calculate_cascade_impact(
                         &resource_id,
-                        &dependent,
+                        dependent,
                         impact_score,
                     );
                     
@@ -126,7 +126,7 @@ impl ImpactAnalyzer {
                     cascade_effects.push(CascadeEffect {
                         source_resource: resource_id.clone(),
                         affected_resource: dependent.id.clone(),
-                        impact_type: self.determine_impact_type(&event, &dependent),
+                        impact_type: self.determine_impact_type(&event, dependent),
                         severity: self.calculate_severity(cascade_impact),
                         propagation_delay_minutes: self.estimate_propagation_delay(&resource_id, &dependent.id),
                     });

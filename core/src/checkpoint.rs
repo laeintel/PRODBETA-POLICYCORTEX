@@ -3,7 +3,7 @@ use redis::aio::ConnectionManager;
 use redis::{AsyncCommands, RedisError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IngestionCheckpoint {
@@ -74,7 +74,7 @@ impl CheckpointManager {
             .map_err(|e| RedisError::from((redis::ErrorKind::TypeError, "Serialization failed", e.to_string())))?;
         
         // Set with 7-day expiration (604800 seconds)
-        self.redis_conn.set_ex(&key, serialized, 604800).await?;
+        self.redis_conn.set_ex::<_, _, ()>(&key, serialized, 604800).await?;
         
         debug!(
             "Saved checkpoint for source '{}': {} records processed, last_id: {:?}",
@@ -109,7 +109,7 @@ impl CheckpointManager {
 
     pub async fn delete_checkpoint(&mut self, source: &str) -> Result<(), RedisError> {
         let key = self.get_key(source);
-        self.redis_conn.del(&key).await?;
+        self.redis_conn.del::<_, ()>(&key).await?;
         info!("Deleted checkpoint for source '{}'", source);
         Ok(())
     }

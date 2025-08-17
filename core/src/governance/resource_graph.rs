@@ -15,7 +15,6 @@ use tokio::sync::RwLock;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc, Duration};
-use azure_core::{Result as AzureResult, Error as AzureError};
 use crate::azure_client::AzureClient;
 use crate::governance::{GovernanceError, GovernanceResult, ComponentHealth, HealthStatus};
 

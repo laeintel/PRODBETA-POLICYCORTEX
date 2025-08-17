@@ -151,7 +151,7 @@ impl AzureClient {
                 let resp = self
                     .http_client
                     .get(&policy_assignments_url)
-                    .bearer_auth(&token.token.secret())
+                    .bearer_auth(token.token.secret())
                     .send()
                     .await
                     .map_err(|e| format!("HTTP request failed: {}", e))?;
@@ -164,7 +164,7 @@ impl AzureClient {
             },
         )
         .await
-        .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)) as Box<dyn std::error::Error + Send + Sync>)?;
+        .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error + Send + Sync>)?;
 
         if response.status().is_success() {
             let policy_data: serde_json::Value = response.json().await?;
@@ -195,7 +195,7 @@ impl AzureClient {
                     let resp = self
                         .http_client
                         .post(&compliance_url)
-                        .bearer_auth(&token.token.secret())
+                        .bearer_auth(token.token.secret())
                         .json(&serde_json::json!({}))
                         .send()
                         .await
@@ -209,7 +209,7 @@ impl AzureClient {
                 },
             )
             .await
-            .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)) as Box<dyn std::error::Error + Send + Sync>)?;
+            .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error + Send + Sync>)?;
 
             let (violations, compliance_rate) = if compliance_response.status().is_success() {
                 let compliance_data: serde_json::Value = compliance_response.json().await?;
@@ -283,7 +283,7 @@ impl AzureClient {
                 let resp = self
                     .http_client
                     .get(&role_assignments_url)
-                    .bearer_auth(&token.token.secret())
+                    .bearer_auth(token.token.secret())
                     .send()
                     .await
                     .map_err(|e| format!("HTTP request failed: {}", e))?;
@@ -296,7 +296,7 @@ impl AzureClient {
             },
         )
         .await
-        .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)) as Box<dyn std::error::Error + Send + Sync>)?;
+        .map_err(|e| Box::new(std::io::Error::other(e)) as Box<dyn std::error::Error + Send + Sync>)?;
 
         if response.status().is_success() {
             let rbac_data: serde_json::Value = response.json().await?;
@@ -320,7 +320,7 @@ impl AzureClient {
             let roles_response = self
                 .http_client
                 .get(&roles_url)
-                .bearer_auth(&token.token.secret())
+                .bearer_auth(token.token.secret())
                 .send()
                 .await?;
 
@@ -391,7 +391,7 @@ impl AzureClient {
         let response = self
             .http_client
             .post(&cost_url)
-            .bearer_auth(&token.token.secret())
+            .bearer_auth(token.token.secret())
             .json(&query_body)
             .send()
             .await?;
@@ -404,7 +404,7 @@ impl AzureClient {
                 for row in rows {
                     if let Some(cost) = row
                         .as_array()
-                        .and_then(|r| r.get(0))
+                        .and_then(|r| r.first())
                         .and_then(|c| c.as_f64())
                     {
                         total_cost += cost;
@@ -452,7 +452,7 @@ impl AzureClient {
         let response = self
             .http_client
             .get(&resources_url)
-            .bearer_auth(&token.token.secret())
+            .bearer_auth(token.token.secret())
             .send()
             .await?;
 
@@ -498,7 +498,7 @@ impl AzureClient {
         let response = self
             .http_client
             .get(&resources_url)
-            .bearer_auth(&token.token.secret())
+            .bearer_auth(token.token.secret())
             .send()
             .await?;
 

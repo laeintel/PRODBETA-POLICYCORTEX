@@ -160,7 +160,7 @@ impl DefenderStreamingService {
                 let resp = self
                     .http_client
                     .get(url)
-                    .bearer_auth(&token.token.secret())
+                    .bearer_auth(token.token.secret())
                     .send()
                     .await
                     .map_err(|e| format!("HTTP request failed: {}", e))?;

@@ -14,11 +14,8 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use crate::governance::{
-    GovernanceError, GovernanceResult, GovernanceCoordinator,
-    resource_graph::{ResourceGraphClient, AzureResource},
-    policy_engine::{PolicyEngine, PolicyDefinition, ComplianceState},
-    identity::{IdentityGovernanceClient, IdentityState},
-    monitoring::{GovernanceMonitor, MetricsResult},
+    GovernanceError, GovernanceResult,
+    identity::IdentityState,
 };
 
 pub struct UnifiedGovernanceAPI {

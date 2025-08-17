@@ -217,7 +217,7 @@ impl ApprovalWorkflowEngine {
                 .preferred_username
                 .clone()
                 .unwrap_or_default(),
-            decision: decision.clone(),
+            decision,
             comments,
             conditions: Vec::new(),
             approved_at: Utc::now(),

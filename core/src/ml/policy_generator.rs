@@ -9,7 +9,7 @@
 // Policy Generation from Natural Language
 // Translates natural language requirements into Azure Policy JSON definitions
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use regex::Regex;
@@ -310,7 +310,7 @@ impl RequirementParser {
             confidence += 0.2;
         }
         
-        if resource_types.len() == 1 && conditions.len() >= 1 {
+        if resource_types.len() == 1 && !conditions.is_empty() {
             confidence += 0.1;
         }
         

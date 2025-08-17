@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
 use crate::azure_client::AzureClient;
-use crate::governance::{GovernanceError, GovernanceResult, ComponentHealth, HealthStatus};
+use crate::governance::{GovernanceResult, ComponentHealth, HealthStatus};
 
 /// Azure RBAC access governance engine
 pub struct AccessGovernanceEngine {
@@ -416,7 +416,7 @@ impl AccessGovernanceEngine {
 
         // Analyze role assignments for privilege escalation patterns
         for assignment in &access_data.role_assignments {
-            if self.is_privilege_escalation(&assignment) {
+            if self.is_privilege_escalation(assignment) {
                 anomalies.push(AccessAnomaly {
                     anomaly_id: uuid::Uuid::new_v4().to_string(),
                     anomaly_type: AnomalyType::PrivilegeEscalation,
@@ -482,7 +482,7 @@ impl AccessGovernanceEngine {
 
         // Analyze role assignments for excessive permissions
         for assignment in &access_data.role_assignments {
-            if self.has_excessive_permissions(&assignment) {
+            if self.has_excessive_permissions(assignment) {
                 recommendations.push(ComplianceRecommendation {
                     recommendation_id: uuid::Uuid::new_v4().to_string(),
                     title: format!("Reduce excessive permissions for {}", assignment.principal_name),
@@ -916,7 +916,7 @@ impl IdentityTracker {
     }
 
     pub fn track_identity_activity(&mut self, principal_id: &str, activity: ActivityPattern) {
-        self.activity_patterns.entry(principal_id.to_string()).or_insert_with(Vec::new).push(activity);
+        self.activity_patterns.entry(principal_id.to_string()).or_default().push(activity);
     }
 
     pub fn get_identity_risk_score(&self, principal_id: &str) -> f64 {

@@ -11,10 +11,9 @@
 
 use std::sync::Arc;
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use crate::governance::{GovernanceError, GovernanceResult, GovernanceCoordinator};
-use super::{ConversationContext, ConversationTurn};
+use crate::governance::GovernanceResult;
+use super::ConversationContext;
 
 pub struct ConversationalGovernance {
     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
@@ -232,7 +231,7 @@ impl ConversationalGovernance {
         // Simplified policy response
         let policies: Vec<serde_json::Value> = vec![];
 
-        let response_text = format!("Policy information is available through the governance dashboard. Use 'show me compliance status' for current policy compliance.");
+        let response_text = "Policy information is available through the governance dashboard. Use 'show me compliance status' for current policy compliance.".to_string();
 
         Ok(QueryResponse {
             response_text,

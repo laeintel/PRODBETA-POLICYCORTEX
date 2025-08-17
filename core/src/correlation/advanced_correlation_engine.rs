@@ -8,10 +8,9 @@
 
 // Advanced Cross-Domain Correlation Engine with ML-based Pattern Detection
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use chrono::{DateTime, Utc, Duration, Timelike};
 use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::algo::{dijkstra, astar, kosaraju_scc};
 use uuid::Uuid;
 
 /// Advanced correlation engine with machine learning capabilities
@@ -292,7 +291,7 @@ impl AdvancedCorrelationEngine {
         let mut hourly_activity: HashMap<u32, Vec<&TemporalPattern>> = HashMap::new();
         for pattern in patterns {
             let hour = pattern.peak_time.hour();
-            hourly_activity.entry(hour).or_insert_with(Vec::new).push(pattern);
+            hourly_activity.entry(hour).or_default().push(pattern);
         }
         
         // Identify significant clusters
@@ -321,7 +320,7 @@ impl AdvancedCorrelationEngine {
         for correlation in correlations {
             if correlation.strength > 0.8 {
                 graph.entry(correlation.source_id.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(correlation.target_id.clone());
             }
         }

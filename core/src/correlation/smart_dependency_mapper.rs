@@ -10,9 +10,9 @@
 // Advanced dependency discovery and mapping with machine learning inference
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque, BTreeMap};
+use std::collections::{HashMap, HashSet, VecDeque};
 use chrono::{DateTime, Utc, Duration};
-use petgraph::graph::{DiGraph, NodeIndex, EdgeIndex};
+use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::algo::{kosaraju_scc, dijkstra, bellman_ford};
 use petgraph::visit::EdgeRef;
 use uuid::Uuid;
@@ -150,7 +150,7 @@ impl SmartDependencyMapper {
         
         for scenario in scenarios {
             let mut test_graph = self.dependency_graph.clone();
-            let mut test_index = self.resource_index.clone();
+            let test_index = self.resource_index.clone();
             
             // Apply scenario changes to test graph
             self.apply_scenario_to_graph(&scenario, &mut test_graph, &test_index);
@@ -288,7 +288,7 @@ impl SmartDependencyMapper {
         // Group metrics by resource
         let mut resource_metrics: HashMap<String, Vec<&RuntimeMetric>> = HashMap::new();
         for metric in runtime_data {
-            resource_metrics.entry(metric.resource_id.clone()).or_insert_with(Vec::new).push(metric);
+            resource_metrics.entry(metric.resource_id.clone()).or_default().push(metric);
         }
         
         // Find correlations between resource metrics
@@ -918,9 +918,9 @@ impl SmartDependencyMapper {
         if node_count == 0.0 { return 1.0; }
         
         let density = edge_count / (node_count * (node_count - 1.0));
-        let stability = (1.0 - density).max(0.0).min(1.0);
         
-        stability
+        
+        (1.0 - density).max(0.0).min(1.0)
     }
 
     fn generate_real_time_recommendations(&self, changes: &[DependencyChange]) -> Vec<String> {

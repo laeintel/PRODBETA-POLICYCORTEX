@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 
 /// Comprehensive secrets management with Azure Key Vault integration
 /// Provides centralized, secure storage and retrieval of all application secrets

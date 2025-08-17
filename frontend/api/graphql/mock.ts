@@ -1,7 +1,12 @@
 // GraphQL Mock Resolver - Returns 200 with empty arrays for demo
 // This provides fallback responses when GraphQL gateway is unavailable
+// Only active when DEMO_MODE is enabled
 
 export const mockGraphQLResolver = async (query: string, variables?: any) => {
+  // Only return mock data if demo mode is enabled
+  if (process.env.DEMO_MODE !== 'true' && process.env.USE_MOCK_GRAPHQL !== 'true') {
+    throw new Error('Mock GraphQL is disabled in production mode');
+  }
   // Parse the query to determine the requested operation
   const operationMatch = query.match(/query\s+(\w+)|mutation\s+(\w+)/);
   const operation = operationMatch ? (operationMatch[1] || operationMatch[2]) : 'unknown';
@@ -72,6 +77,17 @@ export const mockGraphQLResolver = async (query: string, variables?: any) => {
 
 // Express middleware for GraphQL mock endpoint
 export const graphQLMockMiddleware = async (req: any, res: any) => {
+  // Check if mock mode is enabled
+  if (!shouldUseMockGraphQL()) {
+    res.status(503).json({
+      errors: [{
+        message: "Mock GraphQL is disabled in production mode",
+        extensions: { code: "MOCK_DISABLED" }
+      }]
+    });
+    return;
+  }
+  
   try {
     const { query, variables } = req.body;
     const response = await mockGraphQLResolver(query, variables);
@@ -90,7 +106,8 @@ export const graphQLMockMiddleware = async (req: any, res: any) => {
 
 // Utility to check if we should use mock mode
 export const shouldUseMockGraphQL = (): boolean => {
-  return process.env.USE_MOCK_GRAPHQL === 'true' || 
-         process.env.NODE_ENV === 'development' ||
-         !process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
+  // Only use mock in demo mode or when explicitly enabled
+  // In production, this should always be false unless DEMO_MODE is set
+  return process.env.DEMO_MODE === 'true' || 
+         process.env.USE_MOCK_GRAPHQL === 'true';
 };

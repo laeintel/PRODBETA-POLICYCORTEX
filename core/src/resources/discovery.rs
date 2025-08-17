@@ -52,7 +52,7 @@ impl IntelligentDiscovery {
             let types = discoverer.supported_types();
             debug!("Discovering resource types: {:?}", types);
             
-            match discoverer.discover(&*self.azure_client).await {
+            match discoverer.discover(&self.azure_client).await {
                 Ok(resources) => {
                     info!("Discovered {} resources", resources.len());
                     all_resources.extend(resources);

@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
 use crate::azure_client::AzureClient;
-use crate::governance::{GovernanceError, GovernanceResult, ComponentHealth, HealthStatus};
+use crate::governance::{GovernanceResult, ComponentHealth, HealthStatus};
 
 /// Azure Blueprints governance engine for standardized deployments
 pub struct GovernanceBlueprints {
@@ -979,7 +979,7 @@ impl GovernanceBlueprints {
         let mut assessments = Vec::new();
 
         for assignment in &blueprint_data.blueprint_assignments {
-            let assessment = self.evaluate_assignment_compliance(&assignment).await?;
+            let assessment = self.evaluate_assignment_compliance(assignment).await?;
             assessments.push(assessment);
         }
 

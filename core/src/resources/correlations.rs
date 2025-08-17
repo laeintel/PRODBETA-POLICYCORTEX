@@ -8,9 +8,8 @@
 
 use super::*;
 use crate::ai::model_registry::ModelRegistry;
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use tracing::{info, debug};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -333,7 +332,7 @@ impl CrossDomainCorrelationEngine {
             for violation in &resource.compliance_status.violations {
                 compliance_groups
                     .entry(violation.policy_id.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(resource);
             }
         }

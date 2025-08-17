@@ -10,7 +10,7 @@ use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
 use tracing::{debug, warn, info};
 
@@ -106,8 +106,8 @@ impl QuotaManager {
             (Some(t), Some(ts)) => (t, ts),
             _ => {
                 // Initialize bucket
-                conn.set_ex(&bucket_key, plan.burst_size as i64, 60).await?;
-                conn.set_ex(&timestamp_key, now, 60).await?;
+                conn.set_ex::<_, _, ()>(&bucket_key, plan.burst_size as i64, 60).await?;
+                conn.set_ex::<_, _, ()>(&timestamp_key, now, 60).await?;
                 (plan.burst_size as i64, now)
             }
         };
@@ -120,14 +120,14 @@ impl QuotaManager {
         // Check if request can proceed
         if new_tokens > 0 {
             // Consume a token
-            conn.set_ex(&bucket_key, new_tokens - 1, 60).await?;
-            conn.set_ex(&timestamp_key, now, 60).await?;
+            conn.set_ex::<_, _, ()>(&bucket_key, new_tokens - 1, 60).await?;
+            conn.set_ex::<_, _, ()>(&timestamp_key, now, 60).await?;
             
             // Increment daily counter
             let daily_count: u64 = conn.incr(&daily_key, 1).await?;
             if daily_count == 1 {
                 // Set expiry for daily counter
-                conn.expire(&daily_key, 86400).await?;
+                conn.expire::<_, ()>(&daily_key, 86400).await?;
             }
             
             // Check daily limit
@@ -357,7 +357,7 @@ impl UsageTracker {
         let queue_key = "usage:events:queue";
         
         let event_json = serde_json::to_string(&event)?;
-        conn.rpush(queue_key, event_json).await?;
+        conn.rpush::<_, _, ()>(queue_key, event_json).await?;
         
         // Batch publish to Event Grid every 100 events or 60 seconds
         let queue_length: usize = conn.llen(queue_key).await?;
@@ -394,7 +394,7 @@ impl UsageTracker {
         
         if response.status().is_success() {
             // Clear queue on success
-            conn.del(queue_key).await?;
+            conn.del::<_, ()>(queue_key).await?;
             info!("Flushed {} usage events to Event Grid", usage_events.len());
         } else {
             warn!("Failed to send usage events: {}", response.status());

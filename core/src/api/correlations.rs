@@ -9,16 +9,17 @@
 use crate::ml::correlation_engine::{
     CorrelationEngine,
 };
-use crate::ml::graph_neural_network::{
-    ResourceNode, ResourceEdge, GovernanceDomain, RelationshipType,
-};
+// Graph neural network types - currently unused but will be needed for ML operations
+// use crate::ml::graph_neural_network::{
+//     ResourceNode, ResourceEdge, GovernanceDomain, RelationshipType,
+// };
 use axum::{
-    extract::{Query as AxumQuery, Path, State},
+    extract::{Query as AxumQuery, State},
     response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use chrono::Utc;
 use uuid::Uuid;
 
@@ -149,7 +150,7 @@ pub async fn get_correlations(
     // Parse resource IDs
     let resource_ids = query.resource_ids
         .map(|ids| ids.split(',').map(|s| s.trim().to_string()).collect())
-        .unwrap_or_else(|| get_demo_resource_ids());
+        .unwrap_or_else(get_demo_resource_ids);
     
     // For demo, return mock correlation data
     let response = get_demo_correlations(resource_ids);

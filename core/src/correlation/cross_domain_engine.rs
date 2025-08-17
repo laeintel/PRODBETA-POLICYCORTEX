@@ -10,10 +10,9 @@
 // Identifies relationships and impacts across different Azure service domains
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use chrono::{DateTime, Utc};
-use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::algo::{dijkstra, connected_components, kosaraju_scc};
+use std::collections::HashMap;
+use petgraph::graph::DiGraph;
+use petgraph::algo::kosaraju_scc;
 
 /// Cross-domain correlation engine
 pub struct CrossDomainEngine {

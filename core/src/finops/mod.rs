@@ -10,7 +10,7 @@
 // Based on Roadmap_07_FinOps_Autopilot.md
 
 use async_trait::async_trait;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -436,7 +436,7 @@ impl AzureFinOpsEngine {
                         } else {
                             "medium".to_string()
                         },
-                        probable_cause: self.infer_cause(point, &window).await,
+                        probable_cause: self.infer_cause(point, window).await,
                         auto_remediation_available: z_score > 0.0, // Can remediate cost increases
                     });
                 }
@@ -832,7 +832,7 @@ impl FinOpsEngine for AzureFinOpsEngine {
                         .unwrap_or("unknown")
                         .to_string(),
                 )
-                .or_insert(Vec::new())
+                .or_default()
                 .push(serde_json::from_value(cost_point).unwrap_or_default());
         }
 

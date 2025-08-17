@@ -25,10 +25,3 @@ pub mod smart_dependency_mapper;
 // Knowledge graph driver
 pub mod graph_driver;
 
-pub use cross_domain_engine::{CrossDomainEngine, CorrelationAnalysis, AzureResource};
-pub use resource_mapper::{ResourceMapper, ResourceMap, DependencyMap};
-pub use impact_analyzer::{ImpactAnalyzer, ImpactAssessment, CascadeEffect};
-pub use advanced_correlation_engine::{AdvancedCorrelationEngine, AdvancedCorrelationResult};
-pub use predictive_impact_analyzer::{PredictiveImpactAnalyzer, PredictiveImpactResult, WhatIfAnalysisResult};
-pub use smart_dependency_mapper::{SmartDependencyMapper, SmartDependencyMap, SmartDependencyInfo};
-pub use graph_driver::{GraphDriver, GraphNode, GraphEdge, WhatIfScenario, SimulationResult};
