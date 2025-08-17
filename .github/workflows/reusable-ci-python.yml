@@ -77,11 +77,12 @@ jobs:
           mypy . --ignore-missing-imports --no-strict-optional || true
       
       - name: Test with pytest
+        timeout-minutes: 5
         run: |
           # Install pytest if not already installed
           pip install pytest pytest-cov pytest-asyncio
           # Run tests with coverage
-          pytest --verbose --cov=. --cov-report=term-missing || echo "No tests found or tests failed"
+          pytest --verbose --cov=. --cov-report=term-missing --tb=short -x || echo "No tests found or tests failed"
       
       - name: Security check with bandit
         continue-on-error: true
