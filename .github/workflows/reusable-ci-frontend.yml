@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   install-build-test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -57,5 +57,6 @@ jobs:
           if [ -f "package.json" ]; then
             npm test --silent --if-present
           fi
+
 
 

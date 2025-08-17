@@ -26,7 +26,7 @@ on:
 jobs:
   check-runner:
     name: Check Runner Status
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       docker_installed: ${{ steps.check.outputs.docker }}
       azure_installed: ${{ steps.check.outputs.azure }}
@@ -121,7 +121,7 @@ jobs:
 
   install-docker:
     name: Install Docker
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: check-runner
     if: github.event.inputs.install_docker == 'true' && needs.check-runner.outputs.docker_installed == 'false'
     steps:
@@ -173,7 +173,7 @@ jobs:
 
   install-azure-cli:
     name: Install Azure CLI
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: check-runner
     if: github.event.inputs.install_azure_cli == 'true' && needs.check-runner.outputs.azure_installed == 'false'
     steps:
@@ -202,7 +202,7 @@ jobs:
 
   install-terraform:
     name: Install Terraform
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: check-runner
     if: github.event.inputs.install_terraform == 'true' && needs.check-runner.outputs.terraform_installed == 'false'
     steps:
@@ -230,7 +230,7 @@ jobs:
 
   configure-runner:
     name: Configure Runner
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [check-runner, install-docker, install-azure-cli, install-terraform]
     if: always()
     steps:
@@ -279,7 +279,7 @@ jobs:
 
   restart-runner-service:
     name: Restart Runner Service
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [configure-runner]
     if: needs.install-docker.result == 'success'
     steps:

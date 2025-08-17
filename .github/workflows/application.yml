@@ -67,7 +67,7 @@ permissions:
 jobs:
   changes:
     name: Detect Changes
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       core: ${{ steps.changes.outputs.core }}
       frontend: ${{ steps.changes.outputs.frontend }}
@@ -91,7 +91,7 @@ jobs:
 
   test-core:
     name: Test Rust Core
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: changes
     if: ((needs.changes.outputs.core == 'true') || inputs.full_run) && ((inputs.run_tests) || (github.event.inputs.run_tests == 'true') || inputs.full_run) && (!(inputs.force_deploy) && !(github.event.inputs.force_deploy == 'true'))
     steps:
@@ -194,7 +194,7 @@ jobs:
 
   test-frontend:
     name: Test Frontend
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: changes
     if: (needs.changes.outputs.frontend == 'true' || inputs.full_run || inputs.force_deploy || github.event.inputs.force_deploy == 'true')
     steps:
@@ -241,7 +241,7 @@ jobs:
 
   test-graphql:
     name: Test GraphQL Gateway
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: changes
     if: (needs.changes.outputs.graphql == 'true' || inputs.full_run || inputs.force_deploy || github.event.inputs.force_deploy == 'true')
     steps:
@@ -271,7 +271,7 @@ jobs:
   # Parallel security scans
   security-trivy:
     name: Security - Trivy
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: inputs.full_run || github.event.inputs.force_deploy != 'true'
     continue-on-error: true
     # No additional permissions required here to satisfy caller restrictions
@@ -291,7 +291,7 @@ jobs:
 
   security-secrets:
     name: Security - Secrets
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event.inputs.force_deploy != 'true'
     continue-on-error: true
     steps:
@@ -305,7 +305,7 @@ jobs:
 
   security-licenses:
     name: Security - Licenses
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event.inputs.force_deploy != 'true'
     continue-on-error: true
     steps:
@@ -320,7 +320,7 @@ jobs:
   # Aggregate security results
   security-scan:
     name: Security Summary
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [security-trivy, security-secrets, security-licenses]
     if: always()
     continue-on-error: true
@@ -334,7 +334,7 @@ jobs:
 
   build-core:
     name: Build Core Service
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [changes, test-core, security-scan]
     # Only build if core changed OR force deploy
     if: ((needs.changes.outputs.core == 'true') || inputs.full_run || github.event.inputs.force_deploy == 'true') && ((needs.test-core.result == 'success' || needs.test-core.result == 'skipped') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped'))
@@ -418,7 +418,7 @@ jobs:
 
   build-frontend:
     name: Build Frontend
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [changes, test-frontend, security-scan]
     # Only build if frontend changed OR force deploy
     if: ((needs.changes.outputs.frontend == 'true') || inputs.full_run || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
@@ -502,7 +502,7 @@ jobs:
 
   build-graphql:
     name: Build GraphQL Gateway
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [changes, test-graphql, security-scan]
     # Only build if graphql changed OR force deploy
     if: ((needs.changes.outputs.graphql == 'true') || inputs.full_run || github.event.inputs.force_deploy == 'true') && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
@@ -586,7 +586,7 @@ jobs:
 
   integration-tests:
     name: Integration Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [build-core, build-frontend, build-graphql]
     # Always run on push; on manual dispatch respect inputs
     if: github.event_name == 'push' || inputs.full_run || (!(inputs.force_deploy) && ((inputs.run_tests) || (github.event.inputs.run_tests == 'true')))
@@ -652,7 +652,7 @@ jobs:
 
   deploy-dev:
     name: Deploy to Development
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: always() && ((github.event_name == 'push') || (inputs.target_env == 'dev') || (github.event.inputs.target_env == 'dev') || inputs.full_run) &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
@@ -886,7 +886,7 @@ jobs:
 
   deploy-prod:
     name: Deploy to Production
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [build-core, build-frontend, build-graphql, integration-tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.target_env == 'prod') &&
       (needs.build-core.result == 'success' || needs.build-core.result == 'skipped') &&
@@ -1110,7 +1110,7 @@ jobs:
 
   notify:
     name: Notify Deployment Status
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [deploy-dev, deploy-prod]
     if: always()
     steps:

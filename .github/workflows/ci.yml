@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-secure:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,3 +64,4 @@ jobs:
             echo "   and add it as WORKFLOW_TRIGGER_PAT secret in repository settings"
             echo "   Or manually trigger the deployment workflow from Actions tab"
           fi
+

@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build-test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       CARGO_TERM_COLOR: always
     steps:
@@ -64,5 +64,6 @@ jobs:
       - name: Test
         run: cargo test --workspace --all-features --locked -- --nocapture
         working-directory: core
+
 
 
