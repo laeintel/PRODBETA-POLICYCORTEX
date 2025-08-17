@@ -1,0 +1,497 @@
+# Production Helm Values for PolicyCortex
+# Multi-tenant namespace isolation and security hardening
+
+global:
+  environment: production
+  domain: policycortex.azurecontainerapps.io
+  
+  # Azure configuration
+  azure:
+    subscriptionId: "205b477d-17e7-4b3b-92c1-32cf02626b78"
+    tenantId: "9ef5b184-d371-462a-bc75-5024ce8baff7"
+    clientId: "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c"
+    region: eastus
+  
+  # Container registry
+  imageRegistry: crcortexprodvb9v2h.azurecr.io
+  imagePullSecrets:
+    - name: acr-secret
+  
+  # Security settings
+  security:
+    mtls:
+      enabled: true
+      mode: STRICT
+    networkPolicies:
+      enabled: true
+    podSecurityPolicy:
+      enabled: true
+    rbac:
+      create: true
+
+# Namespace isolation configuration
+namespaceIsolation:
+  enabled: true
+  
+  # Create per-tenant namespaces
+  tenants:
+    - name: tenant-default
+      id: "00000000-0000-0000-0000-000000000000"
+      tier: free
+      quotas:
+        cpu: "2"
+        memory: "4Gi"
+        storage: "10Gi"
+        pods: "10"
+    
+    - name: tenant-premium-001
+      id: "205b477d-17e7-4b3b-92c1-32cf02626b78"
+      tier: premium
+      quotas:
+        cpu: "8"
+        memory: "16Gi"
+        storage: "100Gi"
+        pods: "50"
+    
+    - name: tenant-enterprise-001
+      id: "9ef5b184-d371-462a-bc75-5024ce8baff7"
+      tier: enterprise
+      quotas:
+        cpu: "32"
+        memory: "64Gi"
+        storage: "1Ti"
+        pods: "200"
+  
+  # Network policies for tenant isolation
+  networkPolicies:
+    denyAll: true  # Default deny all traffic
+    allowedNamespaces:
+      - istio-system
+      - policycortex-shared
+    
+    # Egress rules
+    egress:
+      - name: azure-services
+        ports:
+          - 443
+          - 5432
+        cidrs:
+          - "0.0.0.0/0"  # Restrict to Azure IP ranges in production
+      
+      - name: dns
+        ports:
+          - 53
+        protocol: UDP
+  
+  # Resource quotas per namespace
+  resourceQuotas:
+    enabled: true
+    defaults:
+      requests.cpu: "1"
+      requests.memory: "2Gi"
+      limits.cpu: "4"
+      limits.memory: "8Gi"
+      persistentvolumeclaims: "5"
+      services.loadbalancers: "0"
+      services.nodeports: "0"
+  
+  # Limit ranges
+  limitRanges:
+    enabled: true
+    defaults:
+      - type: Container
+        default:
+          cpu: "500m"
+          memory: "512Mi"
+        defaultRequest:
+          cpu: "100m"
+          memory: "128Mi"
+        max:
+          cpu: "2"
+          memory: "4Gi"
+        min:
+          cpu: "50m"
+          memory: "64Mi"
+      
+      - type: PersistentVolumeClaim
+        min:
+          storage: "1Gi"
+        max:
+          storage: "100Gi"
+
+# Core service configuration
+core:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: policycortex-core
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  env:
+    USE_REAL_DATA: "true"
+    RUST_LOG: "info"
+    ENVIRONMENT: "production"
+    DEMO_MODE: "false"
+  
+  # Pod security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+  
+  # Liveness and readiness probes
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Frontend service configuration
+frontend:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: policycortex-frontend
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 60
+  
+  env:
+    NODE_ENV: "production"
+    NEXT_PUBLIC_USE_REAL_DATA: "true"
+    DEMO_MODE: "false"
+  
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    readOnlyRootFilesystem: true
+
+# GraphQL gateway configuration
+graphql:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: policycortex-graphql
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 4000
+    targetPort: 4000
+  
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  
+  env:
+    NODE_ENV: "production"
+    APOLLO_KEY: "prod"
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    database: policycortex
+    username: pcxadmin
+    existingSecret: postgres-secret
+  
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: managed-premium
+    
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "2Gi"
+      limits:
+        cpu: "4000m"
+        memory: "8Gi"
+  
+  readReplicas:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 100Gi
+    
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2000m"
+        memory: "4Gi"
+  
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    retention: 30
+
+# Redis/DragonflyDB configuration
+redis:
+  enabled: true
+  architecture: replication
+  
+  auth:
+    enabled: true
+    existingSecret: redis-secret
+  
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: managed-premium
+    
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2000m"
+        memory: "4Gi"
+  
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 20Gi
+    
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+  
+  sentinel:
+    enabled: true
+    quorum: 2
+
+# Neo4j graph database
+neo4j:
+  enabled: true
+  
+  core:
+    numberOfServers: 3
+    persistentVolume:
+      enabled: true
+      size: 50Gi
+      storageClass: managed-premium
+  
+  readReplica:
+    numberOfServers: 2
+    persistentVolume:
+      enabled: true
+      size: 50Gi
+  
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "4000m"
+      memory: "8Gi"
+
+# EventStore configuration
+eventstore:
+  enabled: true
+  clusterSize: 3
+  
+  persistence:
+    enabled: true
+    size: 100Gi
+    storageClass: managed-premium
+  
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+# Monitoring and observability
+monitoring:
+  enabled: true
+  
+  prometheus:
+    enabled: true
+    retention: 30d
+    storage: 100Gi
+  
+  grafana:
+    enabled: true
+    adminPassword: changeme  # Use secret in production
+  
+  jaeger:
+    enabled: true
+    storage:
+      type: elasticsearch
+  
+  elasticsearch:
+    enabled: true
+    replicas: 3
+    minimumMasterNodes: 2
+    volumeClaimTemplate:
+      resources:
+        requests:
+          storage: 100Gi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+  
+  hosts:
+    - host: policycortex.azurecontainerapps.io
+      paths:
+        - path: /
+          pathType: Prefix
+          service: policycortex-frontend
+        - path: /api
+          pathType: Prefix
+          service: policycortex-core
+        - path: /graphql
+          pathType: Prefix
+          service: policycortex-graphql
+  
+  tls:
+    - secretName: policycortex-tls
+      hosts:
+        - policycortex.azurecontainerapps.io
+
+# Backup and disaster recovery
+backup:
+  enabled: true
+  
+  velero:
+    enabled: true
+    schedule: "0 */6 * * *"  # Every 6 hours
+    ttl: 720h  # 30 days
+    
+    backupStorageLocation:
+      provider: azure
+      bucket: policycortex-backups
+      config:
+        resourceGroup: rg-cortex-backups
+        storageAccount: stcortexbackups
+  
+  databaseBackups:
+    enabled: true
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    retention: 30  # days
+
+# Security policies
+securityPolicies:
+  podSecurityStandards:
+    enforce: restricted
+    audit: restricted
+    warn: restricted
+  
+  networkPolicies:
+    enabled: true
+    policyTypes:
+      - Ingress
+      - Egress
+  
+  admissionControl:
+    enabled: true
+    webhooks:
+      - name: tenant-validator
+        failurePolicy: Fail
+      - name: resource-validator
+        failurePolicy: Fail
+      - name: security-scanner
+        failurePolicy: Ignore
