@@ -144,7 +144,7 @@ pub struct RecommendationInfo {
 
 // GET /api/v1/correlations
 pub async fn get_correlations(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     AxumQuery(query): AxumQuery<CorrelationQuery>,
 ) -> impl IntoResponse {
     // Parse resource IDs
@@ -160,7 +160,7 @@ pub async fn get_correlations(
 
 // POST /api/v1/correlations/analyze
 pub async fn analyze_correlations(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Json(resource_ids): Json<Vec<String>>,
 ) -> impl IntoResponse {
     // Analyze correlations for specific resources
@@ -170,7 +170,7 @@ pub async fn analyze_correlations(
 
 // POST /api/v1/correlations/what-if
 pub async fn what_if_analysis(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Json(request): Json<WhatIfRequest>,
 ) -> impl IntoResponse {
     let response = WhatIfResponse {
@@ -236,7 +236,7 @@ pub async fn what_if_analysis(
 
 // GET /api/v1/correlations/insights
 pub async fn get_real_time_insights(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
 ) -> impl IntoResponse {
     let insights = serde_json::json!({
         "timestamp": Utc::now(),
@@ -277,7 +277,7 @@ pub async fn get_real_time_insights(
 
 // GET /api/v1/correlations/graph
 pub async fn get_correlation_graph(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
 ) -> impl IntoResponse {
     let graph = serde_json::json!({
         "nodes": [

@@ -427,7 +427,7 @@ impl IntentHandler for ViolationHandler {
     async fn handle(
         &self,
         _query: &str,
-        intent: &Intent,
+        _intent: &Intent,
         context: &ConversationContext,
     ) -> HandlerResponse {
         HandlerResponse {
@@ -579,7 +579,7 @@ impl IntentHandler for SecurityHandler {
         &self,
         _query: &str,
         _intent: &Intent,
-        context: &ConversationContext,
+        _context: &ConversationContext,
     ) -> HandlerResponse {
         HandlerResponse {
             success: true,

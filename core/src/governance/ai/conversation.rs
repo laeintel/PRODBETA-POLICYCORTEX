@@ -113,7 +113,7 @@ impl ConversationalGovernance {
         Ok(response.response_text)
     }
 
-    async fn handle_resource_query(&self, query: &str, intent: &Intent, context: &ConversationContext) -> GovernanceResult<QueryResponse> {
+    async fn handle_resource_query(&self, query: &str, intent: &Intent, _context: &ConversationContext) -> GovernanceResult<QueryResponse> {
         // Extract resource type and filters from entities
         let resource_type = intent.entities.iter()
             .find(|e| e.entity_type == "resource_type")

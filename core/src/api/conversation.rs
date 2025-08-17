@@ -75,7 +75,7 @@ pub struct PolicyTranslationResponse {
 
 // POST /api/v1/conversation/chat
 pub async fn chat(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Json(request): Json<ChatRequest>,
 ) -> impl IntoResponse {
     let start_time = std::time::Instant::now();
@@ -118,7 +118,7 @@ pub async fn chat(
 
 // POST /api/v1/conversation/translate-policy
 pub async fn translate_policy(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Json(request): Json<PolicyTranslationRequest>,
 ) -> impl IntoResponse {
     // Translate natural language to Azure Policy JSON
@@ -140,8 +140,8 @@ pub async fn translate_policy(
 
 // GET /api/v1/conversation/suggestions
 pub async fn get_suggestions(
-    State(state): State<Arc<crate::api::AppState>>,
-    AxumQuery(query): AxumQuery<ChatQuery>,
+    State(_state): State<Arc<crate::api::AppState>>,
+    AxumQuery(_query): AxumQuery<ChatQuery>,
 ) -> impl IntoResponse {
     let suggestions = vec![
         "What are my current policy violations?",
@@ -167,7 +167,7 @@ pub async fn get_suggestions(
 
 // GET /api/v1/conversation/history
 pub async fn get_history(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     AxumQuery(query): AxumQuery<ChatQuery>,
 ) -> impl IntoResponse {
     let session_id = query.session_id.unwrap_or_else(|| "default".to_string());
