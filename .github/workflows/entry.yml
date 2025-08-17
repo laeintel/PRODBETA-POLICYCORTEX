@@ -364,7 +364,7 @@ jobs:
     needs: [detect-changes]
     # Run after detect-changes on push to main or CLEAN-DEFENSE-BRANCH  
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH')
-    uses: ./.github/workflows/application.yml
+    uses: ./.github/workflows/application-dynamic.yml
     permissions:
       contents: read
       actions: read

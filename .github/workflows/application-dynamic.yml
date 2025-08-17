@@ -1,0 +1,329 @@
+name: Application CI/CD (Dynamic Resources)
+
+on:
+  workflow_call:
+    inputs:
+      target_env:
+        description: 'Environment to deploy'
+        required: false
+        default: 'dev'
+        type: string
+      force_deploy:
+        description: 'Force deployment (skip tests)'
+        required: false
+        default: false
+        type: boolean
+      run_tests:
+        description: 'Run tests before deployment'
+        required: false
+        default: true
+        type: boolean
+      full_run:
+        description: 'Ignore path filters and run all stages'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+  TARGET_ENV: ${{ inputs.target_env || 'dev' }}
+
+jobs:
+  # Get dynamic resource names first
+  resource-names:
+    name: Get Resource Names
+    uses: ./.github/workflows/get-resource-names.yml
+    with:
+      environment: ${{ inputs.target_env || 'dev' }}
+
+  # Build jobs
+  build-core:
+    name: Build Core
+    runs-on: ubuntu-latest
+    needs: [resource-names]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Set Azure Subscription
+        run: |
+          echo "Setting Azure subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription"
+
+      - name: Login to Container Registry
+        run: |
+          echo "Logging into Azure Container Registry: ${{ needs.resource-names.outputs.container_registry }}"
+          az acr login --name ${{ needs.resource-names.outputs.container_registry }}
+
+      - name: Build and Push Core Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./core
+          file: ./core/Dockerfile
+          push: true
+          tags: |
+            ${{ needs.resource-names.outputs.container_registry_url }}/policycortex-core:${{ env.IMAGE_TAG }}
+            ${{ needs.resource-names.outputs.container_registry_url }}/policycortex-core:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: [resource-names]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Set Azure Subscription
+        run: |
+          echo "Setting Azure subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription"
+
+      - name: Login to Container Registry
+        run: |
+          echo "Logging into Azure Container Registry: ${{ needs.resource-names.outputs.container_registry }}"
+          az acr login --name ${{ needs.resource-names.outputs.container_registry }}
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ needs.resource-names.outputs.container_registry_url }}/policycortex-frontend:${{ env.IMAGE_TAG }}
+            ${{ needs.resource-names.outputs.container_registry_url }}/policycortex-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-graphql:
+    name: Build GraphQL
+    runs-on: ubuntu-latest
+    needs: [resource-names]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Set Azure Subscription
+        run: |
+          echo "Setting Azure subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription"
+
+      - name: Login to Container Registry
+        run: |
+          echo "Logging into Azure Container Registry: ${{ needs.resource-names.outputs.container_registry }}"
+          az acr login --name ${{ needs.resource-names.outputs.container_registry }}
+
+      - name: Build and Push GraphQL Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./graphql
+          file: ./graphql/Dockerfile
+          push: true
+          tags: |
+            ${{ needs.resource-names.outputs.container_registry_url }}/policycortex-graphql:${{ env.IMAGE_TAG }}
+            ${{ needs.resource-names.outputs.container_registry_url }}/policycortex-graphql:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to ${{ inputs.target_env || 'dev' }}
+    runs-on: ubuntu-latest
+    needs: [resource-names, build-core, build-frontend, build-graphql]
+    environment: ${{ inputs.target_env || 'dev' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set Azure Subscription
+        run: |
+          echo "Setting Azure subscription"
+          if [[ "${{ env.TARGET_ENV }}" == "dev" ]]; then
+            az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78"
+          else
+            # For prod, use prod subscription ID if different
+            az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78"
+          fi
+
+      - name: Check Container Apps Existence
+        id: check_apps
+        env:
+          RG: ${{ needs.resource-names.outputs.resource_group }}
+          CORE_APP: ${{ needs.resource-names.outputs.core_app }}
+          FRONTEND_APP: ${{ needs.resource-names.outputs.frontend_app }}
+          GRAPHQL_APP: ${{ needs.resource-names.outputs.graphql_app }}
+        run: |
+          echo "Checking if Container Apps exist..."
+          
+          # Check each app
+          if az containerapp show --name "$CORE_APP" --resource-group "$RG" &>/dev/null; then
+            echo "core_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "core_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if az containerapp show --name "$FRONTEND_APP" --resource-group "$RG" &>/dev/null; then
+            echo "frontend_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if az containerapp show --name "$GRAPHQL_APP" --resource-group "$RG" &>/dev/null; then
+            echo "graphql_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "graphql_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create or Update Core App
+        env:
+          RG: ${{ needs.resource-names.outputs.resource_group }}
+          APP_NAME: ${{ needs.resource-names.outputs.core_app }}
+          CAE: ${{ needs.resource-names.outputs.container_env }}
+          REGISTRY: ${{ needs.resource-names.outputs.container_registry_url }}
+        run: |
+          if [[ "${{ steps.check_apps.outputs.core_exists }}" == "true" ]]; then
+            echo "Updating existing Core app..."
+            az containerapp update \
+              --name "$APP_NAME" \
+              --resource-group "$RG" \
+              --image "$REGISTRY/policycortex-core:${{ env.IMAGE_TAG }}"
+          else
+            echo "Creating new Core app..."
+            CAE_ID=$(az containerapp env show -n "$CAE" -g "$RG" --query id -o tsv)
+            az containerapp create \
+              --name "$APP_NAME" \
+              --resource-group "$RG" \
+              --environment "$CAE_ID" \
+              --image "$REGISTRY/policycortex-core:${{ env.IMAGE_TAG }}" \
+              --target-port 8080 \
+              --ingress external \
+              --cpu 0.5 --memory 1.0Gi \
+              --min-replicas 0 --max-replicas 1
+          fi
+
+      - name: Create or Update Frontend App
+        env:
+          RG: ${{ needs.resource-names.outputs.resource_group }}
+          APP_NAME: ${{ needs.resource-names.outputs.frontend_app }}
+          CAE: ${{ needs.resource-names.outputs.container_env }}
+          REGISTRY: ${{ needs.resource-names.outputs.container_registry_url }}
+          CORE_APP: ${{ needs.resource-names.outputs.core_app }}
+        run: |
+          # Get Core app URL dynamically
+          CORE_URL=$(az containerapp show --name "$CORE_APP" --resource-group "$RG" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          if [[ "${{ steps.check_apps.outputs.frontend_exists }}" == "true" ]]; then
+            echo "Updating existing Frontend app..."
+            az containerapp update \
+              --name "$APP_NAME" \
+              --resource-group "$RG" \
+              --image "$REGISTRY/policycortex-frontend:${{ env.IMAGE_TAG }}" \
+              --set-env-vars "NEXT_PUBLIC_API_URL=https://${CORE_URL}"
+          else
+            echo "Creating new Frontend app..."
+            CAE_ID=$(az containerapp env show -n "$CAE" -g "$RG" --query id -o tsv)
+            az containerapp create \
+              --name "$APP_NAME" \
+              --resource-group "$RG" \
+              --environment "$CAE_ID" \
+              --image "$REGISTRY/policycortex-frontend:${{ env.IMAGE_TAG }}" \
+              --target-port 3000 \
+              --ingress external \
+              --cpu 0.5 --memory 1.0Gi \
+              --min-replicas 0 --max-replicas 1 \
+              --env-vars "NEXT_PUBLIC_API_URL=https://${CORE_URL}"
+          fi
+
+      - name: Create or Update GraphQL App
+        env:
+          RG: ${{ needs.resource-names.outputs.resource_group }}
+          APP_NAME: ${{ needs.resource-names.outputs.graphql_app }}
+          CAE: ${{ needs.resource-names.outputs.container_env }}
+          REGISTRY: ${{ needs.resource-names.outputs.container_registry_url }}
+        run: |
+          if [[ "${{ steps.check_apps.outputs.graphql_exists }}" == "true" ]]; then
+            echo "Updating existing GraphQL app..."
+            az containerapp update \
+              --name "$APP_NAME" \
+              --resource-group "$RG" \
+              --image "$REGISTRY/policycortex-graphql:${{ env.IMAGE_TAG }}"
+          else
+            echo "Creating new GraphQL app..."
+            CAE_ID=$(az containerapp env show -n "$CAE" -g "$RG" --query id -o tsv)
+            az containerapp create \
+              --name "$APP_NAME" \
+              --resource-group "$RG" \
+              --environment "$CAE_ID" \
+              --image "$REGISTRY/policycortex-graphql:${{ env.IMAGE_TAG }}" \
+              --target-port 4000 \
+              --ingress external \
+              --cpu 0.5 --memory 1.0Gi \
+              --min-replicas 0 --max-replicas 1
+          fi
+
+      - name: Display Deployment URLs
+        env:
+          RG: ${{ needs.resource-names.outputs.resource_group }}
+          CORE_APP: ${{ needs.resource-names.outputs.core_app }}
+          FRONTEND_APP: ${{ needs.resource-names.outputs.frontend_app }}
+          GRAPHQL_APP: ${{ needs.resource-names.outputs.graphql_app }}
+        run: |
+          echo "### Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          CORE_URL=$(az containerapp show --name "$CORE_APP" --resource-group "$RG" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show --name "$FRONTEND_APP" --resource-group "$RG" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          GRAPHQL_URL=$(az containerapp show --name "$GRAPHQL_APP" --resource-group "$RG" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "**Application URLs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://${FRONTEND_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- Core API: https://${CORE_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- GraphQL: https://${GRAPHQL_URL}" >> $GITHUB_STEP_SUMMARY
