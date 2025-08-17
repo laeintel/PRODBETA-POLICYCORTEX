@@ -123,7 +123,7 @@ jobs:
           echo "🛡️ Running Microsoft Defender for Containers scan..."
           
           # Get ACR name
-          ACR_NAME="${{ inputs.target_env == 'prod' && 'crcortexprodvb9v2h' || 'crpcxdev' }}"
+          ACR_NAME="${{ inputs.target_env == 'prod' && 'crcortexprodvb9v2h' || 'crcortexdev5sug2t' }}"
           
           # Trigger Defender scan
           az acr task run --registry "$ACR_NAME" \
