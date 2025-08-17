@@ -361,13 +361,11 @@ jobs:
 
   app_pipeline:
     name: Application CI/CD
-    needs: [detect-changes]
-    # Run when full_run is requested or on main/CLEAN-DEFENSE-BRANCH pushes (continues even if some jobs fail)
+    needs: [frontend, backend, graphql, security, supply_chain, secret_scan, infra]
+    # Run after CI jobs complete, even if some fail
     if: |
       always() && 
-      !cancelled() && 
-      ((github.event_name == 'workflow_dispatch' && inputs.full_run) || 
-       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH')))
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH'))
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read
