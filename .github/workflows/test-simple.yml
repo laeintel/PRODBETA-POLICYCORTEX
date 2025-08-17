@@ -1,0 +1,12 @@
+name: Test Simple Workflow
+
+on:
+  push:
+    branches: [CLEAN-DEFENSE-BRANCH]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test step
+        run: echo "Testing if workflow starts"
