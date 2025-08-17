@@ -716,6 +716,24 @@ jobs:
         with:
           terraform_version: "1.6.0"
 
+      - name: Import Existing Resources
+        if: steps.check_images.outputs.images_available == 'true'
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
+          ARM_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
+          ARM_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
+          ARM_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+          ARM_USE_OIDC: false
+        run: |
+          echo "Importing existing Azure resources to prevent deletion..."
+          cd infrastructure/terraform
+          
+          # Make import script executable
+          chmod +x ./import-existing.sh || true
+          
+          # Run import to capture existing resources in state
+          ./import-existing.sh dev "$AZURE_SUBSCRIPTION_ID" || echo "Import completed with some warnings"
+          
       - name: Terraform Plan (Dev)
         if: steps.check_images.outputs.images_available == 'true'
         env:
