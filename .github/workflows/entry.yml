@@ -374,7 +374,7 @@ jobs:
       target_env: 'dev'
       run_tests: false
       force_deploy: true
-      full_run: 'true'
+      full_run: true
     secrets: inherit
 
   deploy_tag:
