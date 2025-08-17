@@ -25,6 +25,14 @@ if az storage container show --name "tfstate" --account-name "$SA_TFSTATE" 2>/de
     terraform import azurerm_storage_container.tfstate "https://${SA_TFSTATE}.blob.core.windows.net/tfstate" || true
 fi
 
+# Import existing CosmosDB if it exists
+COSMOS_NAME="cosmos-cortex-dev-3p0bata"
+RG_MAIN="rg-cortex-dev"
+if az cosmosdb show --name "$COSMOS_NAME" --resource-group "$RG_MAIN" 2>/dev/null; then
+    echo "Importing existing CosmosDB account..."
+    terraform import azurerm_cosmosdb_account.main "/subscriptions/${AZURE_SUBSCRIPTION_ID}/resourceGroups/${RG_MAIN}/providers/Microsoft.DocumentDB/databaseAccounts/${COSMOS_NAME}" || true
+fi
+
 # Purge soft-deleted Cognitive Services if needed
 COGNITIVE_NAME="cogao-cortex-dev"
 RG_NAME="rg-cortex-dev"

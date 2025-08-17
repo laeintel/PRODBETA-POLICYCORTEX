@@ -585,13 +585,13 @@ resource "azurerm_cognitive_account" "openai" {
 }
 
 resource "azurerm_cognitive_deployment" "gpt4" {
-  name                 = "gpt-4"
+  name                 = "gpt-4o-mini"
   cognitive_account_id = azurerm_cognitive_account.openai.id
 
   model {
     format  = "OpenAI"
-    name    = "gpt-4"
-    version = "0613"
+    name    = "gpt-4o-mini"
+    version = "2024-07-18"
   }
 
   scale {
@@ -670,18 +670,19 @@ resource "azurerm_user_assigned_identity" "container_apps" {
   tags                = local.common_tags
 }
 
-# Role assignments
-resource "azurerm_role_assignment" "acr_pull" {
-  scope                = azurerm_container_registry.main.id
-  role_definition_name = "AcrPull"
-  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
-}
+# Role assignments - Commented out as service principal lacks authorization
+# These need to be created manually or by a user with proper permissions
+# resource "azurerm_role_assignment" "acr_pull" {
+#   scope                = azurerm_container_registry.main.id
+#   role_definition_name = "AcrPull"
+#   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+# }
 
-resource "azurerm_role_assignment" "keyvault_secrets" {
-  scope                = azurerm_key_vault.main.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
-}
+# resource "azurerm_role_assignment" "keyvault_secrets" {
+#   scope                = azurerm_key_vault.main.id
+#   role_definition_name = "Key Vault Secrets User"
+#   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
+# }
 
 # ===========================
 # CONTAINER APPS
@@ -696,7 +697,7 @@ resource "azurerm_container_app" "core" {
   template {
     container {
       name   = "core"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-core:latest"
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" # Placeholder until images are built
       cpu    = 0.5
       memory = "1Gi"
 
@@ -729,10 +730,8 @@ resource "azurerm_container_app" "core" {
     identity_ids = [azurerm_user_assigned_identity.container_apps.id]
   }
 
-  registry {
-    server   = azurerm_container_registry.main.login_server
-    identity = azurerm_user_assigned_identity.container_apps.id
-  }
+  # Registry configuration removed - using public placeholder image
+  # Will be re-enabled once images are built and pushed
 
   tags = local.common_tags
 
@@ -750,7 +749,7 @@ resource "azurerm_container_app" "frontend" {
   template {
     container {
       name   = "frontend"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-frontend:latest"
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" # Placeholder until images are built
       cpu    = 0.5
       memory = "1Gi"
 
@@ -783,10 +782,8 @@ resource "azurerm_container_app" "frontend" {
     identity_ids = [azurerm_user_assigned_identity.container_apps.id]
   }
 
-  registry {
-    server   = azurerm_container_registry.main.login_server
-    identity = azurerm_user_assigned_identity.container_apps.id
-  }
+  # Registry configuration removed - using public placeholder image
+  # Will be re-enabled once images are built and pushed
 
   tags = local.common_tags
 
@@ -804,7 +801,7 @@ resource "azurerm_container_app" "graphql" {
   template {
     container {
       name   = "graphql"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-graphql:latest"
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" # Placeholder until images are built
       cpu    = 0.5
       memory = "1Gi"
 
@@ -832,10 +829,8 @@ resource "azurerm_container_app" "graphql" {
     identity_ids = [azurerm_user_assigned_identity.container_apps.id]
   }
 
-  registry {
-    server   = azurerm_container_registry.main.login_server
-    identity = azurerm_user_assigned_identity.container_apps.id
-  }
+  # Registry configuration removed - using public placeholder image
+  # Will be re-enabled once images are built and pushed
 
   tags = local.common_tags
 
