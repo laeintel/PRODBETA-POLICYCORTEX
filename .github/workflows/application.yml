@@ -392,6 +392,9 @@ jobs:
         if: steps.docker_check.outputs.docker_available == 'true'
         run: |
           echo "Logging into Azure Container Registry"
+          # Ensure we're using the correct subscription for dev ACR
+          echo "Setting subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crpcxdev
 
@@ -476,6 +479,9 @@ jobs:
         if: steps.docker_check.outputs.docker_available == 'true'
         run: |
           echo "Logging into Azure Container Registry"
+          # Ensure we're using the correct subscription for dev ACR
+          echo "Setting subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crpcxdev
 
@@ -560,6 +566,9 @@ jobs:
         if: steps.docker_check.outputs.docker_available == 'true'
         run: |
           echo "Logging into Azure Container Registry"
+          # Ensure we're using the correct subscription for dev ACR
+          echo "Setting subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crpcxdev
 
@@ -693,6 +702,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
         continue-on-error: true
+
+      - name: Set Azure Subscription
+        run: |
+          echo "Setting Azure subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing"
+          echo "Current subscription:"
+          az account show --query "[name, id]" -o tsv
 
       - name: Setup Terraform
         if: steps.check_images.outputs.images_available == 'true'
@@ -931,6 +947,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
         continue-on-error: true
+
+      - name: Set Azure Subscription
+        run: |
+          echo "Setting Azure subscription to PolicyCortex Dev"
+          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing"
+          echo "Current subscription:"
+          az account show --query "[name, id]" -o tsv
 
       - name: Setup Terraform
         if: steps.check_images.outputs.images_available == 'true'
