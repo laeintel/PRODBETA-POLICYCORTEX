@@ -361,7 +361,7 @@ jobs:
 
   app_pipeline:
     name: Application CI/CD
-    needs: [security, supply_chain, secret_scan, infra, frontend, backend, graphql]
+    needs: [detect-changes]
     # Run when full_run is requested or on main/CLEAN-DEFENSE-BRANCH pushes (continues even if some jobs fail)
     if: |
       always() && 
@@ -383,12 +383,12 @@ jobs:
 
   deploy_tag:
     name: Deploy from Tag
-    needs: [security, supply_chain, secret_scan, infra, app_pipeline]
+    needs: [app_pipeline]
     # Only deploy for tags - but ensure all previous steps ran
     if: |
       always() && 
       !cancelled() && 
-      (needs.app_pipeline.result == 'success' || needs.app_pipeline.result == 'skipped') && 
+      needs.app_pipeline.result == 'success' && 
       startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/deploy.yml
     with:
