@@ -361,11 +361,9 @@ jobs:
 
   app_pipeline:
     name: Application CI/CD
-    needs: [frontend, backend, graphql, security, supply_chain, secret_scan, infra]
-    # Run after CI jobs complete, even if some fail
-    if: |
-      always() && 
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH'))
+    needs: [detect-changes]
+    # Run immediately after detect-changes on push to main or CLEAN-DEFENSE-BRANCH
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH')
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read

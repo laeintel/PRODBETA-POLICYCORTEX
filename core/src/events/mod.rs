@@ -19,6 +19,8 @@ use uuid::Uuid;
 
 #[cfg(feature = "events")]
 use async_nats;
+#[cfg(feature = "events")]
+use futures::StreamExt;
 
 // Core event types
 #[derive(Debug, Clone, Serialize, Deserialize)]
