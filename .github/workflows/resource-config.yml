@@ -3,6 +3,9 @@
 
 name: Resource Configuration
 
+on:
+  workflow_call:
+
 env:
   # Resource naming patterns - NEVER hardcode these in workflows!
   # All resources follow pattern: {prefix}-{resource}-{environment}
@@ -30,3 +33,14 @@ env:
   # Container App: ca-cortex-{service}-{env}
   # Container Registry: crcortex{env}{hash}
   # Storage Account: stcortex{env}{hash}
+
+jobs:
+  # This is a configuration-only workflow that can be called by other workflows
+  # It doesn't perform any actual tasks but defines the resource naming patterns
+  config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resource Configuration
+        run: |
+          echo "This workflow defines resource naming patterns"
+          echo "It is meant to be referenced for consistent naming across all workflows"
