@@ -144,7 +144,7 @@ jobs:
       
       - name: Build with Buildpacks
         env:
-          PACK_REGISTRY: ${{ vars.BUILDPACK_REGISTRY || 'crpcxdev.azurecr.io' }}
+          PACK_REGISTRY: ${{ vars.BUILDPACK_REGISTRY || 'crcortexdev5sug2t.azurecr.io' }}
         run: |
           # Buildpacks auto-detect and build without Dockerfile
           # Do not publish to Docker Hub; use ACR or skip publishing
