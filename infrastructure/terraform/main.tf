@@ -755,12 +755,12 @@ resource "azurerm_container_app" "frontend" {
 
       env {
         name  = "NEXT_PUBLIC_API_URL"
-        value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
+        value = "https://ca-cortex-core-${var.environment}.azurecontainerapps.io"
       }
 
       env {
         name  = "NEXT_PUBLIC_GRAPHQL_URL"
-        value = "https://${azurerm_container_app.graphql.latest_revision_fqdn}"
+        value = "https://ca-cortex-graphql-${var.environment}.azurecontainerapps.io"
       }
     }
     min_replicas = 0
@@ -790,6 +790,10 @@ resource "azurerm_container_app" "frontend" {
   lifecycle {
     ignore_changes = [template[0].container[0].image]
   }
+
+  depends_on = [
+    azurerm_container_app.core
+  ]
 }
 
 resource "azurerm_container_app" "graphql" {
@@ -807,7 +811,7 @@ resource "azurerm_container_app" "graphql" {
 
       env {
         name  = "CORE_API_URL"
-        value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
+        value = "https://ca-cortex-core-${var.environment}.azurecontainerapps.io"
       }
     }
     min_replicas = 0
