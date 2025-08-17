@@ -124,7 +124,7 @@ resource "azurerm_container_app" "apps" {
 
 # User-assigned identity for Container Apps
 resource "azurerm_user_assigned_identity" "aca_identity" {
-  name                = "id-aca-${var.environment}-${random_string.suffix.result}"
+  name                = "id-aca-${var.environment}-3p0bata"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   tags                = local.common_tags
@@ -141,7 +141,7 @@ resource "azurerm_role_assignment" "aca_acr_pull" {
 variable "registry_name" {
   description = "Container Registry name"
   type        = string
-  default     = "crcortexdev5sug2t"
+  default     = "crcortexdev3p0bata"
 }
 
 variable "container_app_env_vars" {

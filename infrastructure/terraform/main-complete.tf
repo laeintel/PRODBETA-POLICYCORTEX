@@ -56,7 +56,9 @@ variable "ai_location" {
 # Locals for consistent naming
 locals {
   project = "cortex"
-  hash_suffix = "5sug2t"  # Using your existing hash
+  # Fixed suffix for globally unique resources - NO RANDOM NUMBERS
+  # This ensures resources can be recreated with exact same names
+  hash_suffix = "3p0bata"  # Fixed suffix, never changes
   
   # Resource names
   resource_names = {

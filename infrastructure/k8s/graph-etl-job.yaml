@@ -36,7 +36,7 @@ spec:
             command: ['sh', '-c', 'until nc -z neo4j-service 7687; do echo waiting for neo4j; sleep 2; done']
           containers:
           - name: etl-processor
-            image: crcortexdev5sug2t.azurecr.io/graph-etl:latest
+            image: crcortexdev3p0bata.azurecr.io/graph-etl:latest
             imagePullPolicy: Always
             env:
             - name: AZURE_SUBSCRIPTION_ID

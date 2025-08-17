@@ -30,7 +30,7 @@ az account set --subscription "$SUBSCRIPTION_ID"
 
 # Get resource names using consistent pattern
 PROJECT="cortex"
-HASH=$(echo -n "$SUBSCRIPTION_ID-$PROJECT" | md5sum | cut -c1-6)
+HASH="3p0bata"  # Fixed suffix - NO RANDOM
 
 # Resource names
 RG="rg-${PROJECT}-${ENVIRONMENT}"
