@@ -128,6 +128,23 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
       const loginResponse = await instance.loginPopup(loginRequest)
       instance.setActiveAccount(loginResponse.account)
       console.log('Login successful via popup:', loginResponse)
+      
+      // Set authentication cookie for middleware
+      await fetch('/api/auth/set-cookie', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: loginResponse.idToken,
+          user: {
+            username: loginResponse.account.username,
+            name: loginResponse.account.name,
+            tenantId: loginResponse.tenantId
+          }
+        })
+      })
+      
       // Don't redirect here - let the component handle navigation
     } catch (err: any) {
       console.error('Login failed:', err)
@@ -160,6 +177,11 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     setLoading(true)
     
     try {
+      // Clear authentication cookies
+      await fetch('/api/auth/set-cookie', {
+        method: 'DELETE'
+      })
+      
       if (demoMode) {
         setDemoUser(null)
       } else {
