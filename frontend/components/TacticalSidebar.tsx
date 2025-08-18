@@ -65,8 +65,19 @@ export default function TacticalSidebar() {
   }, [pathname]);
 
   const detectSectionFromPath = (path: string): string | null => {
-    if (path.includes('/monitor') || path.includes('/metrics') || path.includes('/logs') || 
-        path.includes('/performance') || path.includes('/alerts') || path.includes('/events')) {
+    // Check for Operations items first - these should stay in Operations section
+    if (path === '/tactical' || path === '/tactical/monitor' || path === '/tactical/resources' || 
+        path === '/tactical/health' || path === '/tactical/incidents' || 
+        path === '/tactical/changes' || path === '/tactical/deploy' || 
+        path === '/tactical/backup' || path === '/tactical/automation' || 
+        path === '/tactical/workflow') {
+      return 'operations';
+    }
+    // Monitoring section paths
+    if (path.includes('/monitoring-overview') || path.includes('/metrics') || path.includes('/logs') || 
+        path.includes('/performance') || path.includes('/alerts') || path.includes('/events') ||
+        path.includes('/availability') || path.includes('/capacity') || path.includes('/predictive') ||
+        path.includes('/reports') || path.includes('/traces')) {
       return 'monitoring';
     }
     if (path.includes('/security') || path.includes('/threats') || path.includes('/compliance') || 
@@ -132,7 +143,7 @@ export default function TacticalSidebar() {
       title: 'MONITORING & ANALYTICS',
       icon: BarChart,
       items: [
-        { label: 'Monitoring Overview', path: '/tactical/monitor', icon: Activity },
+        { label: 'Monitoring Overview', path: '/tactical/monitoring-overview', icon: Activity },
         { label: 'Metrics Dashboard', path: '/tactical/metrics', icon: BarChart },
         { label: 'Log Analytics', path: '/tactical/logs', icon: Terminal },
         { label: 'Performance', path: '/tactical/performance', icon: Gauge },
