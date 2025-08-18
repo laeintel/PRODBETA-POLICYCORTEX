@@ -256,7 +256,7 @@ export default function TacticalDashboard() {
               </div>
               <div className="p-2 bg-gray-800 rounded">
                 <p className="text-xs text-gray-400">Policies</p>
-                <p className="text-lg font-bold">{metrics.policies || 0}</p>
+                <p className="text-lg font-bold">{typeof metrics.policies === 'object' ? (metrics.policies?.total || 0) : (metrics.policies || 0)}</p>
               </div>
             </div>
           </div>
