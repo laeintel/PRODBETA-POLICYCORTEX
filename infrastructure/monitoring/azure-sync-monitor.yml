@@ -1,0 +1,457 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: azure-sync-monitoring
+  namespace: policycortex
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    rule_files:
+      - "azure_sync_rules.yml"
+
+    scrape_configs:
+      - job_name: 'azure-sync-service'
+        static_configs:
+          - targets: ['azure-sync-service:8085']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+        scrape_timeout: 10s
+
+      - job_name: 'policy-sync-monitor'
+        static_configs:
+          - targets: ['policy-sync-monitor:9090']
+        scrape_interval: 60s
+
+  azure_sync_rules.yml: |
+    groups:
+      - name: azure_sync_alerts
+        rules:
+          - alert: PolicySyncFailure
+            expr: azure_policy_sync_failures_total > 0
+            for: 5m
+            labels:
+              severity: warning
+              service: azure-sync
+            annotations:
+              summary: "Azure policy sync failures detected"
+              description: "{{ $value }} policy sync failures in the last 5 minutes"
+
+          - alert: SDKUpdateRequired
+            expr: azure_sdk_security_updates_available > 0
+            for: 0m
+            labels:
+              severity: critical
+              service: azure-sync
+            annotations:
+              summary: "Critical SDK security updates available"
+              description: "{{ $value }} SDK packages have security updates available"
+
+          - alert: PolicySyncStale
+            expr: (time() - azure_policy_last_sync_timestamp) > 7200
+            for: 10m
+            labels:
+              severity: warning
+              service: azure-sync
+            annotations:
+              summary: "Azure policy sync is stale"
+              description: "Last policy sync was {{ $value }} seconds ago"
+
+          - alert: SDKVersionCheckStale
+            expr: (time() - azure_sdk_last_check_timestamp) > 172800
+            for: 30m
+            labels:
+              severity: warning
+              service: azure-sync
+            annotations:
+              summary: "SDK version check is stale"
+              description: "Last SDK version check was {{ $value }} seconds ago"
+
+          - alert: PolicySyncHighLatency
+            expr: azure_policy_sync_duration_seconds > 300
+            for: 5m
+            labels:
+              severity: warning
+              service: azure-sync
+            annotations:
+              summary: "High policy sync latency"
+              description: "Policy sync taking {{ $value }} seconds"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-sync-monitoring
+  namespace: policycortex
+  labels:
+    app: azure-sync-monitoring
+spec:
+  selector:
+    app: azure-sync-monitoring
+  ports:
+    - name: prometheus
+      port: 9090
+      targetPort: 9090
+    - name: grafana
+      port: 3000
+      targetPort: 3000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-sync-monitoring
+  namespace: policycortex
+  labels:
+    app: azure-sync-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-sync-monitoring
+  template:
+    metadata:
+      labels:
+        app: azure-sync-monitoring
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--web.console.libraries=/etc/prometheus/console_libraries'
+            - '--web.console.templates=/etc/prometheus/consoles'
+            - '--web.enable-lifecycle'
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+
+        - name: grafana
+          image: grafana/grafana:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+            - name: GF_INSTALL_PLUGINS
+              value: "grafana-clock-panel,grafana-simple-json-datasource"
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: azure-sync-monitoring
+        - name: grafana-storage
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: azure-sync-dashboard
+  namespace: policycortex
+data:
+  azure-sync-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Azure Sync Monitoring",
+        "tags": ["azure", "sync", "policies", "sdk"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Policy Sync Success Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "rate(azure_policy_sync_success_total[5m]) / rate(azure_policy_sync_total[5m]) * 100",
+                "legendFormat": "Success Rate %"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percent",
+                "min": 0,
+                "max": 100,
+                "thresholds": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "yellow", "value": 90},
+                    {"color": "green", "value": 95}
+                  ]
+                }
+              }
+            },
+            "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "SDK Update Status",
+            "type": "piechart",
+            "targets": [
+              {
+                "expr": "azure_sdk_up_to_date_total",
+                "legendFormat": "Up to Date"
+              },
+              {
+                "expr": "azure_sdk_updates_available_total",
+                "legendFormat": "Updates Available"
+              },
+              {
+                "expr": "azure_sdk_security_updates_available",
+                "legendFormat": "Security Updates"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Policy Sync Duration",
+            "type": "timeseries",
+            "targets": [
+              {
+                "expr": "azure_policy_sync_duration_seconds",
+                "legendFormat": "Sync Duration"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "seconds",
+                "custom": {
+                  "drawStyle": "line",
+                  "lineInterpolation": "linear",
+                  "pointSize": 5,
+                  "fillOpacity": 10
+                }
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "id": 4,
+            "title": "Policies by Type",
+            "type": "bargauge",
+            "targets": [
+              {
+                "expr": "azure_policies_builtin_total",
+                "legendFormat": "Built-in Policies"
+              },
+              {
+                "expr": "azure_policies_custom_total",
+                "legendFormat": "Custom Policies"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "unit": "short",
+                "custom": {
+                  "orientation": "horizontal",
+                  "displayMode": "gradient"
+                }
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+          },
+          {
+            "id": 5,
+            "title": "SDK Update History",
+            "type": "table",
+            "targets": [
+              {
+                "expr": "azure_sdk_update_history",
+                "format": "table"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "custom": {
+                  "align": "auto",
+                  "displayMode": "auto"
+                }
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: azure-policy-sync-job
+  namespace: policycortex
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: policy-sync
+              image: policycortex/azure-sync:latest
+              command:
+                - python
+                - /app/scripts/azure-sync-cli.py
+                - policy
+                - sync
+                - --scope=subscription
+                - --include-builtin
+                - --include-custom
+              env:
+                - name: AZURE_SUBSCRIPTION_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: azure-credentials
+                      key: subscription-id
+                - name: AZURE_TENANT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: azure-credentials
+                      key: tenant-id
+                - name: AZURE_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: azure-credentials
+                      key: client-id
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "200m"
+          restartPolicy: OnFailure
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: azure-sdk-check-job
+  namespace: policycortex
+spec:
+  schedule: "0 8 * * *"  # Daily at 8 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: sdk-check
+              image: policycortex/azure-sync:latest
+              command:
+                - python
+                - /app/scripts/azure-sync-cli.py
+                - sdk
+                - check
+              env:
+                - name: GITHUB_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: github-credentials
+                      key: api-token
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "200m"
+          restartPolicy: OnFailure
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-credentials
+  namespace: policycortex
+type: Opaque
+data:
+  subscription-id: # Base64 encoded Azure subscription ID
+  tenant-id: # Base64 encoded Azure tenant ID
+  client-id: # Base64 encoded Azure client ID
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-credentials
+  namespace: policycortex
+type: Opaque
+data:
+  api-token: # Base64 encoded GitHub API token
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: azure-sync-metrics
+  namespace: policycortex
+  labels:
+    app: azure-sync-service
+spec:
+  selector:
+    matchLabels:
+      app: azure-sync-service
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: azure-sync-monitoring
+  namespace: policycortex
+spec:
+  hosts:
+    - azure-sync-monitoring.policycortex.local
+  gateways:
+    - policycortex-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /grafana
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: azure-sync-monitoring
+            port:
+              number: 3000
+    - match:
+        - uri:
+            prefix: /prometheus
+      route:
+        - destination:
+            host: azure-sync-monitoring
+            port:
+              number: 9090

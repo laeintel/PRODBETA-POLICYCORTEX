@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# PolicyCortex v2 - Seed Data Script
+# PolicyCortex - Seed Data Script
 
-echo "🌱 Seeding PolicyCortex v2 Development Data"
+echo "🌱 Seeding PolicyCortex Development Data"
 echo "=========================================="
 
 # Wait for services to be ready

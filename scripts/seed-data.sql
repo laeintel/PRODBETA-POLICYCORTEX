@@ -1,4 +1,4 @@
--- PolicyCortex v2 Seed Data SQL
+-- PolicyCortex Seed Data SQL
 
 -- Create tables if not exists
 CREATE TABLE IF NOT EXISTS organizations (

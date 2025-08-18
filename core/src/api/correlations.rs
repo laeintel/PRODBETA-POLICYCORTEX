@@ -9,16 +9,17 @@
 use crate::ml::correlation_engine::{
     CorrelationEngine,
 };
-use crate::ml::graph_neural_network::{
-    ResourceNode, ResourceEdge, GovernanceDomain, RelationshipType,
-};
+// Graph neural network types - currently unused but will be needed for ML operations
+// use crate::ml::graph_neural_network::{
+//     ResourceNode, ResourceEdge, GovernanceDomain, RelationshipType,
+// };
 use axum::{
-    extract::{Query as AxumQuery, Path, State},
+    extract::{Query as AxumQuery, State},
     response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use chrono::Utc;
 use uuid::Uuid;
 
@@ -143,13 +144,13 @@ pub struct RecommendationInfo {
 
 // GET /api/v1/correlations
 pub async fn get_correlations(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     AxumQuery(query): AxumQuery<CorrelationQuery>,
 ) -> impl IntoResponse {
     // Parse resource IDs
     let resource_ids = query.resource_ids
         .map(|ids| ids.split(',').map(|s| s.trim().to_string()).collect())
-        .unwrap_or_else(|| get_demo_resource_ids());
+        .unwrap_or_else(get_demo_resource_ids);
     
     // For demo, return mock correlation data
     let response = get_demo_correlations(resource_ids);
@@ -159,7 +160,7 @@ pub async fn get_correlations(
 
 // POST /api/v1/correlations/analyze
 pub async fn analyze_correlations(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Json(resource_ids): Json<Vec<String>>,
 ) -> impl IntoResponse {
     // Analyze correlations for specific resources
@@ -169,7 +170,7 @@ pub async fn analyze_correlations(
 
 // POST /api/v1/correlations/what-if
 pub async fn what_if_analysis(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
     Json(request): Json<WhatIfRequest>,
 ) -> impl IntoResponse {
     let response = WhatIfResponse {
@@ -235,7 +236,7 @@ pub async fn what_if_analysis(
 
 // GET /api/v1/correlations/insights
 pub async fn get_real_time_insights(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
 ) -> impl IntoResponse {
     let insights = serde_json::json!({
         "timestamp": Utc::now(),
@@ -276,7 +277,7 @@ pub async fn get_real_time_insights(
 
 // GET /api/v1/correlations/graph
 pub async fn get_correlation_graph(
-    State(state): State<Arc<crate::api::AppState>>,
+    State(_state): State<Arc<crate::api::AppState>>,
 ) -> impl IntoResponse {
     let graph = serde_json::json!({
         "nodes": [

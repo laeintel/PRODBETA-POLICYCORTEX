@@ -12,7 +12,7 @@ use crate::azure_client::AzureClient;
 use chrono::Utc;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 pub struct ResourceManager {
     azure_client: Arc<AzureClient>,

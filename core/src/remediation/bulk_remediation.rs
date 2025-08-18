@@ -144,7 +144,7 @@ impl BulkRemediationEngine {
         
         for violation in violations {
             let pattern = self.pattern_analyzer.identify_pattern(&violation).await;
-            grouped.entry(pattern).or_insert_with(Vec::new).push(violation);
+            grouped.entry(pattern).or_default().push(violation);
         }
         
         grouped

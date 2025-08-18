@@ -144,7 +144,7 @@ impl ConfidenceScorer {
     }
     
     /// Generate human-readable explanation for confidence score
-    fn generate_explanation(&self, score: f64, weights: &ConfidenceWeights) -> String {
+    fn generate_explanation(&self, score: f64, _weights: &ConfidenceWeights) -> String {
         let mut factors = Vec::new();
         
         if score >= self.confidence_thresholds.high_confidence {

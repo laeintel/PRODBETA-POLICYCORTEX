@@ -9,7 +9,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use uuid::Uuid;
 
 /// Simulated data provider for development and testing
 pub struct SimulatedDataProvider;

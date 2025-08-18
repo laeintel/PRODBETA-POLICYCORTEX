@@ -6,7 +6,7 @@
 // Unauthorized use, reproduction, or distribution may constitute patent infringement.
 // © 2024 PolicyCortex. All rights reserved.
 
-use super::{ResourceCategory, AzureResource, ResourceStatus, ResourceHealth, HealthStatus, QuickAction, ActionType};
+use super::{ResourceCategory, ActionType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

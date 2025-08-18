@@ -9,7 +9,7 @@ on:
 jobs:
   health-check:
     name: Check Runner Health
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - name: System Information

@@ -1,0 +1,372 @@
+# Istio Service Mesh Configuration for PolicyCortex
+# Provides mTLS, traffic management, and observability
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policycortex
+  labels:
+    istio-injection: enabled  # Enable automatic sidecar injection
+
+---
+# Strict mTLS for all services
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: policycortex
+spec:
+  mtls:
+    mode: STRICT
+
+---
+# Authorization policies
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: frontend-authz
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-frontend
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["istio-system", "policycortex"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/*"]
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: core-authz
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-core
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-frontend"]
+        namespaces: ["policycortex"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/*"]
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/policycortex-graphql"]
+        namespaces: ["policycortex"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/api/*"]
+
+---
+# Virtual Services for traffic management
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: policycortex-core
+  namespace: policycortex
+spec:
+  hosts:
+  - policycortex-core
+  http:
+  - match:
+    - headers:
+        x-user-role:
+          exact: admin
+    route:
+    - destination:
+        host: policycortex-core
+        port:
+          number: 8080
+      weight: 100
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+  - route:
+    - destination:
+        host: policycortex-core
+        port:
+          number: 8080
+    timeout: 10s
+    retries:
+      attempts: 2
+      perTryTimeout: 5s
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: policycortex-frontend
+  namespace: policycortex
+spec:
+  hosts:
+  - policycortex-frontend
+  http:
+  - route:
+    - destination:
+        host: policycortex-frontend
+        port:
+          number: 3000
+    timeout: 30s
+
+---
+# Destination Rules for load balancing and circuit breaking
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: policycortex-core
+  namespace: policycortex
+spec:
+  host: policycortex-core
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 1
+    loadBalancer:
+      simple: LEAST_REQUEST
+    outlierDetection:
+      consecutiveErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 30
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+    trafficPolicy:
+      connectionPool:
+        tcp:
+          maxConnections: 50
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: policycortex-frontend
+  namespace: policycortex
+spec:
+  host: policycortex-frontend
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 200
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 200
+    loadBalancer:
+      simple: ROUND_ROBIN
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: policycortex-graphql
+  namespace: policycortex
+spec:
+  host: policycortex-graphql
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http2MaxRequests: 100
+    loadBalancer:
+      simple: LEAST_REQUEST
+
+---
+# Service Entries for external services
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: azure-services
+  namespace: policycortex
+spec:
+  hosts:
+  - "*.database.windows.net"
+  - "*.blob.core.windows.net"
+  - "*.servicebus.windows.net"
+  - "*.vault.azure.net"
+  - "*.openai.azure.com"
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  - number: 5432
+    name: postgres
+    protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: microsoft-defender
+  namespace: policycortex
+spec:
+  hosts:
+  - "api.securitycenter.microsoft.com"
+  - "*.protection.outlook.com"
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+# Gateway for ingress traffic
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: policycortex-gateway
+  namespace: policycortex
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+    tls:
+      httpsRedirect: true  # Redirect HTTP to HTTPS
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: policycortex-tls
+    hosts:
+    - "policycortex.azurecontainerapps.io"
+    - "*.policycortex.azurecontainerapps.io"
+
+---
+# VirtualService for gateway routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: policycortex-gateway-routes
+  namespace: policycortex
+spec:
+  hosts:
+  - "policycortex.azurecontainerapps.io"
+  - "*.policycortex.azurecontainerapps.io"
+  gateways:
+  - policycortex-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/api"
+    route:
+    - destination:
+        host: policycortex-core
+        port:
+          number: 8080
+  - match:
+    - uri:
+        prefix: "/graphql"
+    route:
+    - destination:
+        host: policycortex-graphql
+        port:
+          number: 4000
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: policycortex-frontend
+        port:
+          number: 3000
+
+---
+# RequestAuthentication for JWT validation
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: jwt-auth
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: policycortex-core
+  jwtRules:
+  - issuer: "https://login.microsoftonline.com/9ef5b184-d371-462a-bc75-5024ce8baff7/v2.0"
+    jwksUri: "https://login.microsoftonline.com/9ef5b184-d371-462a-bc75-5024ce8baff7/discovery/v2.0/keys"
+    audiences:
+    - "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c"
+    forwardOriginalToken: true
+
+---
+# Telemetry configuration
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: policycortex-metrics
+  namespace: policycortex
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+      tagOverrides:
+        tenant_id:
+          value: request.headers["x-tenant-id"] | "unknown"
+    - match:
+        metric: REQUEST_DURATION
+      tagOverrides:
+        tenant_id:
+          value: request.headers["x-tenant-id"] | "unknown"
+
+---
+# Service accounts for SPIFFE identity
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-core
+  namespace: policycortex
+  labels:
+    app: policycortex-core
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-frontend
+  namespace: policycortex
+  labels:
+    app: policycortex-frontend
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policycortex-graphql
+  namespace: policycortex
+  labels:
+    app: policycortex-graphql

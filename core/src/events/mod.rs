@@ -12,7 +12,6 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use futures_lite::stream::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::sync::broadcast;
@@ -20,6 +19,8 @@ use uuid::Uuid;
 
 #[cfg(feature = "events")]
 use async_nats;
+#[cfg(feature = "events")]
+use futures::StreamExt;
 
 // Core event types
 #[derive(Debug, Clone, Serialize, Deserialize)]

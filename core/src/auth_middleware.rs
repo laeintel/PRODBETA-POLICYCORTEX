@@ -6,7 +6,7 @@
 // Unauthorized use, reproduction, or distribution may constitute patent infringement.
 // © 2024 PolicyCortex. All rights reserved.
 
-use crate::auth::{AuthUser, Claims, TokenValidator};
+use crate::auth::TokenValidator;
 use axum::response::IntoResponse;
 use axum::{http::Request, response::Response};
 use std::future::Future;

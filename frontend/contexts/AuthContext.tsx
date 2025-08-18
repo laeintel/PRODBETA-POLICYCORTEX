@@ -29,11 +29,21 @@ if (typeof window !== 'undefined') {
   
   // Initialize MSAL
   msalInstance.initialize().then(() => {
-    // Check if there's an account already signed in
-    const accounts = msalInstance!.getAllAccounts()
-    if (accounts.length > 0) {
-      msalInstance!.setActiveAccount(accounts[0])
-    }
+    // Handle redirect response from Azure AD
+    msalInstance!.handleRedirectPromise().then((response) => {
+      if (response && response.account) {
+        msalInstance!.setActiveAccount(response.account)
+        // Don't auto-redirect - let components handle navigation
+      } else {
+        // Check if there's an account already signed in
+        const accounts = msalInstance!.getAllAccounts()
+        if (accounts.length > 0) {
+          msalInstance!.setActiveAccount(accounts[0])
+        }
+      }
+    }).catch((error) => {
+      console.error('Error handling redirect:', error)
+    })
   }).catch((error) => {
     console.error('MSAL initialization failed:', error);
   });
@@ -104,15 +114,25 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
         }
         setDemoUser(demoAccount)
         console.log('Demo mode: Authentication bypassed for development')
+        setLoading(false)
         return
       }
       
+      console.log('Starting Azure AD login with config:', {
+        clientId: msalConfig.auth.clientId,
+        authority: msalConfig.auth.authority,
+        redirectUri: msalConfig.auth.redirectUri
+      })
+      
+      // Use popup to avoid redirect loop issues
       const loginResponse = await instance.loginPopup(loginRequest)
       instance.setActiveAccount(loginResponse.account)
-      console.log('Login successful:', loginResponse)
+      console.log('Login successful via popup:', loginResponse)
+      // Don't redirect here - let the component handle navigation
     } catch (err: any) {
       console.error('Login failed:', err)
-      setError(err.message || 'Login failed')
+      const errorMessage = err.errorMessage || err.message || 'Login failed'
+      setError(errorMessage)
       
       // Only fallback to demo mode if explicitly enabled
       if (demoMode) {

@@ -230,7 +230,9 @@ pub struct ConversationContext {
 
 /// Conversation state
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
+#[derive(Default)]
 pub enum ConversationState {
+    #[default]
     Greeting,
     GatheringInfo,
     ProvidingSolution,
@@ -239,11 +241,6 @@ pub enum ConversationState {
     Complete,
 }
 
-impl Default for ConversationState {
-    fn default() -> Self {
-        ConversationState::Greeting
-    }
-}
 
 /// Pending action
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -314,12 +311,12 @@ impl EntityStore {
     }
     
     pub async fn add_entity(&mut self, session_id: &str, entity: ExtractedEntity) {
-        let session_entities = self.entities.entry(session_id.to_string()).or_insert_with(HashMap::new);
+        let session_entities = self.entities.entry(session_id.to_string()).or_default();
         session_entities.insert(entity.id.clone(), entity.clone());
         
         // Update index
         let entity_type = format!("{:?}", entity.entity_type);
-        self.entity_index.entry(entity_type).or_insert_with(Vec::new).push(entity.id);
+        self.entity_index.entry(entity_type).or_default().push(entity.id);
     }
     
     pub async fn get_relevant_entities(&self, session_id: &str, query: &str) -> Vec<ExtractedEntity> {
@@ -454,7 +451,7 @@ impl ContextAnalyzer {
             // Determine conversation state based on last interaction and patterns
             let user_input = &last_exchange.user_input.to_lowercase();
             
-            if self.contains_patterns(user_input, &self.conversation_patterns.get(&ConversationState::AwaitingConfirmation).unwrap_or(&vec![])) {
+            if self.contains_patterns(user_input, self.conversation_patterns.get(&ConversationState::AwaitingConfirmation).unwrap_or(&vec![])) {
                 context.conversation_state = ConversationState::AwaitingConfirmation;
             } else if last_exchange.intent.intent_type == IntentType::ExecuteRemediation {
                 context.conversation_state = ConversationState::ExecutingAction;

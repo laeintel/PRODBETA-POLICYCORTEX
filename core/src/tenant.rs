@@ -14,7 +14,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tracing::{info, warn};
+use tracing::info;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantContext {
@@ -88,7 +88,7 @@ pub async fn tenant_middleware(
     // Set database session variable for RLS
     if let Some(ref pool) = state.db_pool {
         if let Ok(mut conn) = pool.acquire().await {
-            let query = format!("SELECT set_tenant_context($1)");
+            let query = "SELECT set_tenant_context($1)".to_string();
             let _ = sqlx::query(&query)
                 .bind(&tenant.tenant_id)
                 .execute(&mut *conn)

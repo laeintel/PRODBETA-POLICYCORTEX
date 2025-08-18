@@ -9,8 +9,8 @@
 use super::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use std::collections::{HashMap, VecDeque};
-use chrono::{Duration, Utc};
+use std::collections::HashMap;
+use chrono::Utc;
 
 pub struct WorkflowEngine {
     workflows: Arc<RwLock<HashMap<Uuid, RemediationWorkflow>>>,
@@ -382,7 +382,7 @@ impl WorkflowEngine {
                                         });
                                         
                                         // Move to next step
-                                        if let Some(next_step) = self.get_next_step(&workflow, &exec.current_step) {
+                                        if let Some(next_step) = self.get_next_step(workflow, &exec.current_step) {
                                             exec.current_step = next_step;
                                         } else {
                                             exec.status.state = WorkflowState::Completed;

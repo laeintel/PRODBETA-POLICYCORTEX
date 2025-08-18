@@ -9,7 +9,6 @@
 // Pattern Library for Common Violations
 // Pre-built patterns for detecting and predicting common compliance violations
 
-use super::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
@@ -283,7 +282,7 @@ impl ViolationPatternLibrary {
             if was_correct {
                 pattern.confidence = pattern.confidence * (1.0 - alpha) + alpha;
             } else {
-                pattern.confidence = pattern.confidence * (1.0 - alpha);
+                pattern.confidence *= 1.0 - alpha;
             }
             
             // Update false positive rate

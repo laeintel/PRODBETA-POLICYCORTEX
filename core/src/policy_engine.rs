@@ -219,7 +219,7 @@ impl DefaultPolicyEngine {
                 if let (Some(field_val), Some(compare_val)) =
                     (self.get_field_value(resource, field), value.as_f64())
                 {
-                    field_val.as_f64().map_or(false, |v| v > compare_val)
+                    field_val.as_f64().is_some_and(|v| v > compare_val)
                 } else {
                     false
                 }
@@ -228,14 +228,14 @@ impl DefaultPolicyEngine {
                 if let (Some(field_val), Some(compare_val)) =
                     (self.get_field_value(resource, field), value.as_f64())
                 {
-                    field_val.as_f64().map_or(false, |v| v < compare_val)
+                    field_val.as_f64().is_some_and(|v| v < compare_val)
                 } else {
                     false
                 }
             }
             Condition::Contains { field, value } => {
                 if let Some(field_val) = self.get_field_value(resource, field) {
-                    field_val.as_str().map_or(false, |s| s.contains(value))
+                    field_val.as_str().is_some_and(|s| s.contains(value))
                 } else {
                     false
                 }
@@ -245,7 +245,7 @@ impl DefaultPolicyEngine {
                     if let Some(s) = field_val.as_str() {
                         regex::Regex::new(pattern)
                             .ok()
-                            .map_or(false, |re| re.is_match(s))
+                            .is_some_and(|re| re.is_match(s))
                     } else {
                         false
                     }

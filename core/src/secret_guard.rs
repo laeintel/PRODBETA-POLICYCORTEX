@@ -169,7 +169,7 @@ impl SecretGuard {
 
                     violations.push(SecretViolation {
                         pattern_name: pattern.name.clone(),
-                        severity: pattern.severity.clone(),
+                        severity: pattern.severity,
                         location: context.to_string(),
                         line_number: None,
                         column: Some(mat.start()),

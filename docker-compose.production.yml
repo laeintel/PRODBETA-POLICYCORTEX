@@ -1,0 +1,251 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: policycortex-postgres-prod
+    environment:
+      POSTGRES_DB: policycortex
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis/DragonflyDB Cache
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: policycortex-redis-prod
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Neo4j Graph Database
+  neo4j:
+    image: neo4j:5-community
+    container_name: policycortex-neo4j-prod
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_PLUGINS: '["apoc","graph-data-science"]'
+      NEO4J_dbms_memory_pagecache_size: 512M
+      NEO4J_dbms_memory_heap_max__size: 512M
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "neo4j status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # EventStore
+  eventstore:
+    image: eventstore/eventstore:latest
+    container_name: policycortex-eventstore-prod
+    environment:
+      EVENTSTORE_CLUSTER_SIZE: 1
+      EVENTSTORE_RUN_PROJECTIONS: All
+      EVENTSTORE_START_STANDARD_PROJECTIONS: true
+      EVENTSTORE_HTTP_PORT: 2113
+      EVENTSTORE_INSECURE: true
+      EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: true
+    ports:
+      - "2113:2113"
+      - "1113:1113"
+    volumes:
+      - eventstore_data:/var/lib/eventstore
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:2113/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Rust Core Service (Production Build)
+  core:
+    image: policycortex-core:prod
+    container_name: policycortex-core-prod
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info
+      - ENVIRONMENT=production
+      - USE_REAL_DATA=true  # CRITICAL: Must be true for production
+      - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/policycortex
+      - REDIS_URL=redis://dragonfly:6379
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=password
+      - EVENT_STORE_URL=http://eventstore:2113
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      # Azure OpenAI
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_REALTIME_DEPLOYMENT=${AZURE_OPENAI_REALTIME_DEPLOYMENT:-gpt-4}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-05-01-preview}
+      # Microsoft Defender (for streaming)
+      - DEFENDER_EVENTHUB_NAMESPACE=${DEFENDER_EVENTHUB_NAMESPACE:-defender-streaming}
+      - DEFENDER_EVENTHUB_NAME=${DEFENDER_EVENTHUB_NAME:-security-alerts}
+      - DEFENDER_WEBHOOK_SECRET=${DEFENDER_WEBHOOK_SECRET:-default_secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      eventstore:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # GraphQL Gateway
+  graphql:
+    image: policycortex-graphql:latest
+    container_name: policycortex-graphql-prod
+    build:
+      context: ./graphql
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - DEMO_MODE=false  # Disable all demo/mock data
+      - CORE_SERVICE_URL=http://core:8080
+      - APOLLO_KEY=${APOLLO_KEY:-prod}
+      - APOLLO_GRAPH_REF=${APOLLO_GRAPH_REF:-production}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - core
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/.well-known/apollo/server-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (Next.js)
+  frontend:
+    image: policycortex-frontend:latest
+    container_name: policycortex-frontend-prod
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+      - DEMO_MODE=false  # Disable all demo/mock data
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DEMO_MODE=false  # Disable all demo/mock data
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4000/graphql
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8080/ws
+    depends_on:
+      - core
+      - graphql
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Explainability Service (SHAP/Captum)
+  explainability:
+    build:
+      context: ./backend/services/explainability
+      dockerfile: Dockerfile
+    container_name: policycortex-explainability-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://dragonfly:6379
+      - MODEL_DIR=/models
+      - CACHE_TTL=3600
+    volumes:
+      - model_data:/models
+    depends_on:
+      - dragonfly
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway (Python)
+  api-gateway:
+    image: policycortex-api-gateway:latest
+    container_name: policycortex-api-gateway-prod
+    build:
+      context: ./backend/services/api_gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      - CORE_SERVICE_URL=http://core:8080
+      - GRAPHQL_SERVICE_URL=http://graphql:4000
+      - REDIS_URL=redis://dragonfly:6379
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/policycortex
+    depends_on:
+      - core
+      - postgres
+      - dragonfly
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # OpenTelemetry Collector (for production metrics)
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: policycortex-otel-prod
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Prometheus metrics
+    volumes:
+      - ./infrastructure/observability/otel-config.yaml:/etc/otel-collector-config.yaml
+    command: ["--config=/etc/otel-collector-config.yaml"]
+
+  # Adminer for database management
+  adminer:
+    image: adminer
+    container_name: policycortex-adminer-prod
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  eventstore_data:
+  model_data:
+
+networks:
+  default:
+    name: policycortex-prod
+    driver: bridge

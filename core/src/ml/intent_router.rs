@@ -9,9 +9,9 @@
 // Intent Router for Complex Queries
 // Routes natural language queries to appropriate handlers based on intent classification
 
-use super::conversation_memory::{Intent, IntentType, ExtractedEntity, EntityType, ConversationContext};
+use super::conversation_memory::{Intent, IntentType, ConversationContext};
 use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use async_trait::async_trait;
 
 /// Intent router for directing queries to appropriate handlers
@@ -86,7 +86,7 @@ impl IntentRouter {
         // Group by intent type
         for intent in intents {
             intent_map.entry(intent.intent_type.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(intent);
         }
         
@@ -372,7 +372,7 @@ impl IntentClassifier for PatternClassifier {
         // Check for multi-intent queries
         if query.contains(" and ") || query.contains(" then ") {
             // Split and classify each part
-            let parts: Vec<&str> = query.split(|c| c == ',' || c == ';').collect();
+            let parts: Vec<&str> = query.split([',', ';']).collect();
             
             for part in parts {
                 // Simplified classification for each part
@@ -427,7 +427,7 @@ impl IntentHandler for ViolationHandler {
     async fn handle(
         &self,
         _query: &str,
-        intent: &Intent,
+        _intent: &Intent,
         context: &ConversationContext,
     ) -> HandlerResponse {
         HandlerResponse {
@@ -579,7 +579,7 @@ impl IntentHandler for SecurityHandler {
         &self,
         _query: &str,
         _intent: &Intent,
-        context: &ConversationContext,
+        _context: &ConversationContext,
     ) -> HandlerResponse {
         HandlerResponse {
             success: true,

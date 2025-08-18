@@ -38,10 +38,12 @@ mod azure_client;
 mod azure_client_async;
 mod cache;
 mod change_management;
+mod checkpoint;
 mod collectors;
 mod compliance;
 mod config;
 mod correlation;
+mod defender_streaming;
 mod data_mode;
 mod enforcement;
 mod events;
@@ -51,7 +53,8 @@ mod governance;
 mod ml;
 mod observability;
 mod policy_engine;
-mod remediation;
+mod quota_middleware;
+pub mod remediation;
 mod resources;
 mod secret_guard;
 mod secrets;
@@ -60,6 +63,7 @@ mod simulated_data;
 mod slo;
 mod tenant;
 mod tenant_isolation;
+mod utils;
 // (removed duplicate observability mod)
 
 use api::{
@@ -81,11 +85,9 @@ use api::{
     get_correlations, analyze_correlations, what_if_analysis,
     get_real_time_insights, get_correlation_graph,
 };
-use auth::{AuthUser, OptionalAuthUser};
 use azure_client::AzureClient;
 use azure_client_async::AsyncAzureClient;
 use sqlx::postgres::PgPoolOptions;
-use tenant_isolation::{tenant_isolation_middleware, TenantContext, TenantDatabase};
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -171,7 +173,7 @@ async fn main() {
             .init();
     }
 
-    info!("Starting PolicyCortex v2 Core Service");
+    info!("Starting PolicyCortex Core Service");
     info!("Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation");
 
     // Load app configuration

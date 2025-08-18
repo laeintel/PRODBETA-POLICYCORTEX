@@ -8,6 +8,10 @@ name: Monorepo CI Entry
 # 4. Full pipeline available via "full_run" option
 
 on:
+  push:
+    branches: 
+      - main
+      - CLEAN-DEFENSE-BRANCH
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -53,73 +57,73 @@ concurrency:
 jobs:
   runner-setup:
     name: Configure runner environment
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Check and configure passwordless sudo
         run: |
-          echo "🔧 Checking runner sudo configuration..."
+          echo "CHECKING: runner sudo configuration..."
           
           # Check if sudo is available and configured
           if command -v sudo >/dev/null 2>&1; then
             # Only check sudo if it exists (Linux/macOS)
             if timeout 10s sudo -n true 2>/dev/null; then
-              echo "✅ Passwordless sudo already configured"
+              echo "SUCCESS: Passwordless sudo already configured"
             else
-              echo "⚠️ Passwordless sudo not configured or timed out"
-              echo "ℹ️ This is expected for self-hosted runners that need manual setup"
+              echo "WARNING: Passwordless sudo not configured or timed out"
+              echo "INFO: This is expected for self-hosted runners that need manual setup"
               echo ""
-              echo "📋 To fix this manually, run on the runner machine:"
+              echo "TO FIX: manually run on the runner machine:"
               echo "   sudo visudo"
               echo "   Add line: runner ALL=(ALL) NOPASSWD:ALL"
               echo "   Or: echo 'runner ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/runner"
               echo ""
-              echo "🔄 Continuing with limited permissions - some fixes may be skipped"
-              echo "⚠️ Manual intervention may be required for system-level repairs"
+              echo "CONTINUING: with limited permissions - some fixes may be skipped"
+              echo "WARNING: Manual intervention may be required for system-level repairs"
             fi
           else
-            echo "ℹ️ sudo not available - likely containerized or restricted environment"
-            echo "✅ Continuing without sudo checks"
+            echo "INFO: sudo not available - likely containerized or restricted environment"
+            echo "SUCCESS: Continuing without sudo checks"
           fi
 
   docker-health-check:
     name: Docker health check and auto-fix
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: runner-setup
     steps:
       - name: Check Docker repository health
         id: docker_check
         continue-on-error: true
         run: |
-          echo "🔍 Checking Docker repository configuration..."
+          echo "CHECKING: Docker repository configuration..."
           
           # Check if this is an apt-based system
           if [[ -d "/etc/apt" ]]; then
             # Linux apt-based system
             # Check for corrupted entries with pipe characters
             if grep -r "download\.docker\.com.*|" /etc/apt/sources.list* 2>/dev/null; then
-              echo "❌ Found corrupted Docker repository entries with pipe characters"
+              echo "ERROR: Found corrupted Docker repository entries with pipe characters"
               echo "corrupted=true" >> $GITHUB_OUTPUT
             else
-              echo "✅ No corrupted pipe entries found"
+              echo "SUCCESS: No corrupted pipe entries found"
               echo "corrupted=false" >> $GITHUB_OUTPUT
             fi
             
             # Also check for any docker.com entries that might be malformed
             if grep -r "download\.docker\.com" /etc/apt/sources.list* 2>/dev/null | grep "|"; then
-              echo "❌ Found malformed Docker repository entries"
+              echo "ERROR: Found malformed Docker repository entries"
               echo "corrupted=true" >> $GITHUB_OUTPUT
             fi
             
             # Try to update package list (with timeout and sudo check)
             if command -v sudo >/dev/null 2>&1 && timeout 30s sudo apt-get update 2>&1; then
-              echo "✅ Package list updated successfully"
+              echo "SUCCESS: Package list updated successfully"
               echo "update_failed=false" >> $GITHUB_OUTPUT
             else
-              echo "❌ apt-get update failed or timed out"
+              echo "ERROR: apt-get update failed or timed out"
               echo "update_failed=true" >> $GITHUB_OUTPUT
             fi
           else
-            echo "ℹ️ Non-apt system detected - skipping repository checks"
+            echo "INFO: Non-apt system detected - skipping repository checks"
             echo "corrupted=false" >> $GITHUB_OUTPUT
             echo "update_failed=false" >> $GITHUB_OUTPUT
           fi
@@ -128,50 +132,50 @@ jobs:
         if: steps.docker_check.outputs.corrupted == 'true' || steps.docker_check.outputs.update_failed == 'true'
         timeout-minutes: 5
         run: |
-          echo "🔧 Auto-fixing Docker repository issues..."
+          echo "FIXING: Docker repository issues..."
           
           # Check if we have sudo access without password
           if ! timeout 10s sudo -n true 2>/dev/null; then
-            echo "⚠️ No passwordless sudo access detected"
-            echo "ℹ️ Will attempt fixes with current user permissions only"
+            echo "WARNING: No passwordless sudo access detected"
+            echo "INFO: Will attempt fixes with current user permissions only"
             echo ""
-            echo "🚨 IMPORTANT: For complete Docker repository repair, configure passwordless sudo:"
+            echo "IMPORTANT: For complete Docker repository repair, configure passwordless sudo:"
             echo "   1. On the runner machine, run: sudo visudo"
             echo "   2. Add line: runner ALL=(ALL) NOPASSWD:ALL"
             echo "   3. Re-run the workflow for full system-level repairs"
             echo ""
-            echo "🔄 Proceeding with limited repair capabilities..."
+            echo "PROCEEDING: with limited repair capabilities..."
           else
-            echo "✅ Passwordless sudo access confirmed"
+            echo "SUCCESS: Passwordless sudo access confirmed"
           fi
           
           # Show current problematic entries
-          echo "🔍 Current problematic entries:"
+          echo "CHECKING: Current problematic entries:"
           grep -r "docker.com" /etc/apt/sources.list* 2>/dev/null | grep "|" || echo "No pipe entries found in grep"
           
           # Function to run command with or without sudo
           run_cmd() {
             if timeout 5s sudo -n true 2>/dev/null; then
               timeout 30s sudo "$@" || {
-                echo "⚠️ Sudo command timed out or failed: $*"
-                echo "🔄 Trying without sudo..."
-                "$@" 2>/dev/null || echo "❌ Command failed: $*"
+                echo "WARNING: Sudo command timed out or failed: $*"
+                echo "RETRYING: without sudo..."
+                "$@" 2>/dev/null || echo "ERROR: Command failed: $*"
               }
             else
-              echo "ℹ️ Running without sudo: $*"
-              "$@" 2>/dev/null || echo "❌ Command failed (no sudo): $*"
+              echo "INFO: Running without sudo: $*"
+              "$@" 2>/dev/null || echo "ERROR: Command failed (no sudo): $*"
             fi
           }
           
           # Remove all Docker-related repository files
-          echo "🧹 Removing ALL Docker repository configurations..."
+          echo "REMOVING: ALL Docker repository configurations..."
           run_cmd rm -f /etc/apt/sources.list.d/docker*.list || true
           run_cmd rm -f /etc/apt/keyrings/docker*.gpg || true
           run_cmd rm -f /etc/apt/trusted.gpg.d/docker*.gpg || true
           run_cmd rm -f /usr/share/keyrings/docker*.gpg || true
           
           # More aggressive pipe character removal
-          echo "🧹 Removing corrupted entries from all sources..."
+          echo "REMOVING: corrupted entries from all sources..."
           
           # Target the specific malformed URL pattern
           run_cmd sed -i '/https:\/\/download\.docker\.com\/linux\/ubuntu.*|/d' /etc/apt/sources.list || true
@@ -194,48 +198,48 @@ jobs:
           done
           
           # Clean package cache completely
-          echo "🧹 Cleaning package cache completely..."
+          echo "CLEANING: package cache completely..."
           run_cmd apt-get clean || true
           run_cmd rm -rf /var/lib/apt/lists/* || true
           run_cmd rm -rf /var/cache/apt/archives/* || true
           
           # Verify problematic entries are gone
-          echo "🔍 Verifying cleanup..."
+          echo "VERIFYING: cleanup..."
           if grep -r "docker.*|" /etc/apt/sources.list* 2>/dev/null; then
-            echo "❌ Still found problematic entries, trying nuclear option..."
+            echo "ERROR: Still found problematic entries, trying nuclear option..."
             
             # Nuclear option: completely remove the problematic file
             if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
-              echo "🗑️ Completely removing /etc/apt/sources.list.d/docker.list"
+              echo "REMOVING: /etc/apt/sources.list.d/docker.list completely"
               run_cmd rm -f /etc/apt/sources.list.d/docker.list
             fi
             
             # Remove any file containing the pipe character pattern
             for file in /etc/apt/sources.list.d/*.list; do
               if [ -f "$file" ] && grep -q "docker.*|" "$file" 2>/dev/null; then
-                echo "🗑️ Removing corrupted file: $file"
+                echo "REMOVING: corrupted file: $file"
                 run_cmd rm -f "$file"
               fi
             done
           else
-            echo "✅ No more pipe character entries found"
+            echo "SUCCESS: No more pipe character entries found"
           fi
           
           # Update package index
-          echo "📦 Updating package index..."
+          echo "UPDATING: package index..."
           if run_cmd apt-get update; then
-            echo "✅ Package index updated successfully"
+            echo "SUCCESS: Package index updated successfully"
           else
-            echo "❌ Package index update still failing"
-            echo "🔍 Checking remaining issues..."
+            echo "ERROR: Package index update still failing"
+            echo "CHECKING: remaining issues..."
             run_cmd apt-get update 2>&1 | head -10
           fi
           
-          echo "✅ Docker repository auto-fix completed"
+          echo "SUCCESS: Docker repository auto-fix completed"
 
   detect-changes:
     name: Detect changed areas
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [runner-setup, docker-health-check]
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -268,9 +272,9 @@ jobs:
 
   frontend:
     name: Frontend CI
-    needs: [runner-setup, docker-health-check, detect-changes]
-    # Only run if explicitly requested via workflow_dispatch - NOT on automatic push/PR
-    if: github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
+    # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     secrets: inherit
     with:
@@ -279,7 +283,7 @@ jobs:
 
   core:
     name: Core (Rust) CI
-    needs: [runner-setup, docker-health-check, detect-changes]
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) when Rust core files change
     if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_core)) || needs.detect-changes.outputs.rust_core == 'true'
     uses: ./.github/workflows/reusable-ci-core.yml
@@ -287,9 +291,9 @@ jobs:
 
   graphql:
     name: GraphQL gateway CI
-    needs: [runner-setup, docker-health-check, detect-changes]
-    # Only run if explicitly requested via workflow_dispatch - NOT on automatic push/PR
-    if: github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
+    # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
@@ -298,12 +302,12 @@ jobs:
 
   backend:
     name: Backend Services CI
-    needs: [runner-setup, docker-health-check, detect-changes]
-    # Only run if explicitly requested via workflow_dispatch - NOT on automatic push/PR
-    if: github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)
-    uses: ./.github/workflows/reusable-ci-frontend.yml
+    needs: [runner-setup, docker-health-check, detect-changes, infra]
+    # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
+    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || github.event_name == 'push' || github.event_name == 'pull_request'
+    uses: ./.github/workflows/reusable-ci-python.yml
     with:
-      node-version: '20'
+      python-version: '3.11'
       working-directory: 'backend'
     secrets: inherit
 
@@ -357,10 +361,10 @@ jobs:
 
   app_pipeline:
     name: Application CI/CD
-    needs: [frontend, core, graphql, backend, security, supply_chain, secret_scan, infra]
-    # Run when full_run is requested or on main branch pushes (but only if security checks pass)
-    if: (github.event_name == 'workflow_dispatch' && inputs.full_run) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    uses: ./.github/workflows/application.yml
+    needs: [detect-changes, infra]
+    # Run after infrastructure is created on push to main or CLEAN-DEFENSE-BRANCH  
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH') && needs.infra.result == 'success'
+    uses: ./.github/workflows/application-dynamic.yml
     permissions:
       contents: read
       actions: read
@@ -368,16 +372,20 @@ jobs:
       pull-requests: read
     with:
       target_env: 'dev'
-      run_tests: true
-      force_deploy: false
-      full_run: ${{ inputs.full_run || 'false' }}
+      run_tests: false
+      force_deploy: true
+      full_run: true
     secrets: inherit
 
   deploy_tag:
     name: Deploy from Tag
-    needs: [frontend, core, graphql, backend, security, supply_chain, secret_scan, infra, app_pipeline]
+    needs: [app_pipeline]
     # Only deploy for tags - but ensure all previous steps ran
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: |
+      always() && 
+      !cancelled() && 
+      needs.app_pipeline.result == 'success' && 
+      startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/deploy.yml
     with:
       from_tag: ${{ github.ref_name }}

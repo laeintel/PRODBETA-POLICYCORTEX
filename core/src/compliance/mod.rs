@@ -606,8 +606,7 @@ impl AzureComplianceEngine {
                     (config.as_str(), criteria.expected_value.as_str())
                 {
                     regex::Regex::new(pattern)
-                        .ok()
-                        .and_then(|re| Some(re.is_match(config_str)))
+                        .ok().map(|re| re.is_match(config_str))
                         .unwrap_or(false)
                 } else {
                     false
@@ -750,7 +749,7 @@ impl AzureComplianceEngine {
         let mut drifts = Vec::new();
         for resource in resources {
             if let Some(tags) = resource.get("tags") {
-                if !tags.get("compliance-baseline").is_some() {
+                if tags.get("compliance-baseline").is_none() {
                     if let Some(id) = resource.get("id").and_then(|v| v.as_str()) {
                         drifts.push(format!("Resource {} missing baseline tag", id));
                     }

@@ -29,7 +29,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard')
+      // Get returnUrl from query params
+      const searchParams = new URLSearchParams(window.location.search)
+      const returnUrl = searchParams.get('returnUrl') || '/dashboard'
+      router.push(returnUrl)
     }
   }, [isAuthenticated, router])
 

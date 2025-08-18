@@ -99,7 +99,7 @@ impl RiskScoringEngine {
         // Apply time decay (urgency factor)
         let hours_to_violation = (prediction.violation_time - prediction.prediction_time).num_hours() as f64;
         let urgency_factor = 1.0 / (1.0 + (hours_to_violation / 24.0).exp());
-        score *= (1.0 + urgency_factor);
+        score *= 1.0 + urgency_factor;
         
         // Normalize score to 0-1 range
         score = score.min(1.0).max(0.0);

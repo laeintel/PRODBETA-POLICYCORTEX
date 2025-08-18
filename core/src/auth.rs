@@ -176,8 +176,8 @@ impl TokenValidator {
             std::env::var("ENVIRONMENT").as_deref(),
             Ok("production") | Ok("prod")
         );
-        if !is_production {
-            if std::env::var("JWT_HS256_SECRET")
+        if !is_production
+            && std::env::var("JWT_HS256_SECRET")
                 .ok()
                 .filter(|v| !v.is_empty())
                 .is_some()
@@ -186,7 +186,6 @@ impl TokenValidator {
                     return Ok(claims);
                 }
             }
-        }
         // Optionally enforce strict audience based on app config and environment
         let env_requires_strict = matches!(
             std::env::var("ENVIRONMENT").as_deref(),

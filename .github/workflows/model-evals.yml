@@ -21,7 +21,7 @@ jobs:
   evals:
     # Run only when explicitly requested via dispatch or workflow_call input
     if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.run_evals == 'true') || (github.event_name == 'workflow_call' && inputs.run_evals == true) }}
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Rust
@@ -34,3 +34,4 @@ jobs:
         run: |
           echo "Simulating threshold check..."
           # In a real setup, parse eval outputs and enforce min thresholds
+

@@ -9,11 +9,10 @@
 // Continuous Training Pipeline for Real-Time Model Updates
 // Implements incremental learning and automated retraining
 
-use super::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use std::collections::VecDeque;
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Configuration for continuous training
@@ -121,11 +120,10 @@ impl ContinuousTrainingPipeline {
         self.data_buffer.add_sample(sample).await;
         
         // Check if we should trigger retraining
-        if self.data_buffer.size().await >= self.config.retrain_threshold {
-            if !*self.is_training.read().await {
+        if self.data_buffer.size().await >= self.config.retrain_threshold
+            && !*self.is_training.read().await {
                 self.trigger_retraining().await?;
             }
-        }
         
         Ok(())
     }
@@ -269,7 +267,7 @@ impl ContinuousTrainingPipeline {
         let metrics = self.training_metrics.read().await;
         let recent_metrics = metrics.iter()
             .filter(|m| m.model_id == *active_id)
-            .last();
+            .next_back();
         
         Ok(ModelPerformance {
             model_id: active_model.id.clone(),
