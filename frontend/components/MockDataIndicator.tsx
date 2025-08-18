@@ -34,8 +34,8 @@ export default function MockDataIndicator({
     // Check if we're using real data
     const checkDataSource = async () => {
       try {
-        const response = await fetch('/api/v1/health')
-        const data = await response.json()
+        const resp = await fetch('/api/v1/health')
+        const data = await resp.json()
         
         // Check for real Azure connection (default to true if unknown)
         const hasAzureConnection = typeof data.azure_connected === 'boolean' ? data.azure_connected : true
@@ -133,8 +133,8 @@ export function useMockDataStatus() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const response = await fetch('/api/v1/health')
-        const data = await response.json()
+        const resp = await fetch('/api/v1/health')
+        const data = await resp.json()
         
         const hasAzureConnection = data.azure_connected || false
         const isUsingMockData = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || 

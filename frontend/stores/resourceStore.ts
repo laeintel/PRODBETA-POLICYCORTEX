@@ -201,38 +201,21 @@ export const useResourceStore = create<ResourceState>()(
           })
 
           try {
-            const params = new URLSearchParams()
-            
-            if (filter?.categories?.length) {
-              params.append('categories', filter.categories.join(','))
-            }
-            if (filter?.resource_types?.length) {
-              params.append('resource_types', filter.resource_types.join(','))
-            }
-            if (filter?.locations?.length) {
-              params.append('locations', filter.locations.join(','))
-            }
-            if (filter?.health_status?.length) {
-              params.append('health_status', filter.health_status.join(','))
-            }
-            if (filter?.compliance_only_violations !== undefined) {
-              params.append('compliance_only_violations', String(filter.compliance_only_violations))
-            }
-            if (filter?.compliance_min_score !== undefined) {
-              params.append('compliance_min_score', String(filter.compliance_min_score))
-            }
-            if (filter?.cost_min_daily !== undefined) {
-              params.append('cost_min_daily', String(filter.cost_min_daily))
-            }
-            if (filter?.cost_max_daily !== undefined) {
-              params.append('cost_max_daily', String(filter.cost_max_daily))
-            }
+            const payload: any = {}
+            if (filter?.categories?.length) payload.categories = filter.categories.join(',')
+            if (filter?.resource_types?.length) payload.resource_types = filter.resource_types.join(',')
+            if (filter?.locations?.length) payload.locations = filter.locations.join(',')
+            if (filter?.health_status?.length) payload.health_status = filter.health_status.join(',')
+            if (filter?.compliance_only_violations !== undefined) payload.compliance_only_violations = filter.compliance_only_violations
+            if (filter?.compliance_min_score !== undefined) payload.compliance_min_score = filter.compliance_min_score
+            if (filter?.cost_min_daily !== undefined) payload.cost_min_daily = filter.cost_min_daily
+            if (filter?.cost_max_daily !== undefined) payload.cost_max_daily = filter.cost_max_daily
 
-            const response = await axios.get(`${API_V2_BASE}/resources?${params.toString()}`)
-            
+            const response = await api.getResources(payload)
+            const data = response.data as any
             set((state) => {
-              state.resources = response.data.resources
-              state.summary = response.data.summary
+              state.resources = data?.resources || data || []
+              state.summary = data?.summary || null
               state.lastRefresh = new Date()
               state.loading = false
             })
@@ -247,7 +230,7 @@ export const useResourceStore = create<ResourceState>()(
         // Fetch single resource by ID
         fetchResourceById: async (id: string) => {
           try {
-            const response = await axios.get(`${API_V2_BASE}/resources/${id}`)
+            const response = await api.getResourceDetails(id)
             return response.data
           } catch (error) {
             console.error('Failed to fetch resource:', error)
@@ -263,11 +246,11 @@ export const useResourceStore = create<ResourceState>()(
           })
 
           try {
-            const response = await axios.get(`${API_V2_BASE}/resources/category/${category}`)
-            
+            const response = await api.getResources({ categories: category })
+            const data = response.data as any
             set((state) => {
-              state.resources = response.data.resources
-              state.summary = response.data.summary
+              state.resources = data?.resources || data || []
+              state.summary = data?.summary || null
               state.lastRefresh = new Date()
               state.loading = false
             })

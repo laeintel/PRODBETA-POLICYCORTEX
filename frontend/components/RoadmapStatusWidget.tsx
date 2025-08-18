@@ -11,6 +11,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { api } from '../lib/api-client'
 
 type RoadmapItem = { id: string; name: string; progress: number; description: string }
 
@@ -22,11 +23,11 @@ export default function RoadmapStatusWidget() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/v1/roadmap', { cache: 'no-store' })
-        if (!res.ok) throw new Error('Failed to load roadmap')
-        const data = await res.json()
-        setItems(data.items || [])
-        setUpdated(data.last_updated)
+        const res = await api.getRoadmap()
+        if (res.error) throw new Error(res.error)
+        const data = res.data as any
+        setItems(data?.items || [])
+        setUpdated((data as any)?.last_updated)
       } catch (e: any) {
         setError(e?.message || 'Failed to load')
       }

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../../components/AuthGuard';
+import { api } from '../../../lib/api-client';
+import toast from 'react-hot-toast';
 import { Network, GitBranch, Activity, Layers, Link2, Shuffle, AlertCircle, TrendingUp } from 'lucide-react';
 
 interface Correlation {
@@ -59,12 +61,11 @@ function CorrelationAnalysisCenterContent() {
 
   const fetchCorrelationData = async () => {
     try {
-      const response = await fetch('/api/v1/correlations');
-      if (response.ok) {
-        const data = await response.json();
-        processCorrelationData(data);
-      } else {
+      const resp = await api.getCorrelations()
+      if (resp.error) {
         loadMockData();
+      } else {
+        processCorrelationData(resp.data);
       }
     } catch (error) {
       loadMockData();
@@ -72,6 +73,24 @@ function CorrelationAnalysisCenterContent() {
       setLoading(false);
     }
   };
+
+  const triggerAction = async (actionType: string) => {
+    try {
+      const resp = await api.createAction('global', actionType)
+      if (resp.error || resp.status >= 400) {
+        toast.error(`Action failed: ${actionType}`)
+        return
+      }
+      toast.success(`${actionType.replace('_',' ')} started`)
+      const id = resp.data?.action_id || resp.data?.id
+      if (id) {
+        const stop = api.streamActionEvents(String(id), (m) => console.log('[correlation-action]', id, m))
+        setTimeout(stop, 60000)
+      }
+    } catch (e) {
+      toast.error(`Action error: ${actionType}`)
+    }
+  }
 
   const processCorrelationData = (data: any) => {
     const mockData = getMockCorrelationData();
@@ -149,11 +168,11 @@ function CorrelationAnalysisCenterContent() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <button className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-2">
+              <button onClick={() => triggerAction('deep_correlation_analysis')} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-2">
                 <Network className="w-4 h-4" />
                 DEEP ANALYSIS
               </button>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => triggerAction('export_correlation_graph')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
                 EXPORT GRAPH
               </button>
             </div>
@@ -343,7 +362,7 @@ function CorrelationAnalysisCenterContent() {
             <Network className="w-16 h-16 text-cyan-500 mx-auto mb-4" />
             <h3 className="text-lg font-bold mb-2">CORRELATION VISUALIZATION</h3>
             <p className="text-gray-500 text-sm mb-4">Interactive graph showing relationships between domains</p>
-            <button className="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded transition-colors">
+            <button onClick={() => triggerAction('launch_correlation_graph')} className="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded transition-colors">
               LAUNCH INTERACTIVE GRAPH
             </button>
           </div>

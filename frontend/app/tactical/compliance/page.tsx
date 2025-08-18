@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../../components/AuthGuard';
+import { api } from '../../../lib/api-client';
+import toast from 'react-hot-toast';
 
 interface ComplianceData {
   overallScore: number;
@@ -47,17 +49,13 @@ function ComplianceControlContent() {
 
   const fetchComplianceData = async () => {
     try {
-      // In production, this would call the real API
-      const response = await fetch('/api/v1/compliance');
-      if (response.ok) {
-        const data = await response.json();
-        setData(data);
-      } else {
-        // Mock data for demo
+      const resp = await api.getComplianceStatus()
+      if (resp.error) {
         setData(getMockComplianceData());
+      } else {
+        setData(resp.data as any);
       }
     } catch (error) {
-      // Use mock data if API is not available
       setData(getMockComplianceData());
     } finally {
       setLoading(false);
@@ -91,9 +89,9 @@ function ComplianceControlContent() {
 
   const runComplianceScan = async () => {
     setLoading(true);
-    // Call backend API to trigger scan
     try {
-      await fetch('/api/v1/compliance/scan', { method: 'POST' });
+      const resp = await api.runComplianceScan()
+      if (resp.error) toast.error('Scan failed')
     } catch (error) {
       console.error('Scan failed:', error);
     }

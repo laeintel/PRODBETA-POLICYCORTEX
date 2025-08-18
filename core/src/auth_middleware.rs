@@ -71,24 +71,34 @@ where
                     match validator.validate_token(token).await {
                         Ok(claims) => {
                             // Minimal scope enforcement: require write scope
-                            let has_scope = claims
-                                .scp
-                                .as_deref()
-                                .unwrap_or("")
+                            let scp = claims.scp.as_deref().unwrap_or("");
+                            let has_scope = scp
                                 .split_whitespace()
-                                .any(|s| s == "policycortex.write" || s == ".default");
+                                .any(|s| s == "policycortex.write" || s == ".default" || s == "access_as_user");
                             let has_admin_role = claims
                                 .roles
                                 .unwrap_or_default()
                                 .iter()
                                 .any(|r| r.to_lowercase().contains("admin"));
+                            // Allow Azure Management user_impersonation scope for write in non-prod or when explicitly allowed
+                            let env_is_prod = matches!(
+                                std::env::var("ENVIRONMENT").as_deref(),
+                                Ok("production") | Ok("prod")
+                            );
+                            let allow_mgmt_scope = std::env::var("ALLOW_AZURE_MGMT_SCOPE")
+                                .map(|v| v == "true" || v == "1")
+                                .unwrap_or(!env_is_prod);
+                            let has_mgmt_scope = scp.split_whitespace().any(|s| s == "user_impersonation");
+                            let allow_via_mgmt = allow_mgmt_scope && has_mgmt_scope;
                             if !has_scope && !has_admin_role {
-                                let body = axum::Json(serde_json::json!({
-                                    "error": "insufficient_scope",
-                                    "message": "Write operation requires policycortex.write scope or admin role"
-                                }));
-                                let res = (axum::http::StatusCode::FORBIDDEN, body).into_response();
-                                return Ok(res);
+                                if !allow_via_mgmt {
+                                    let body = axum::Json(serde_json::json!({
+                                        "error": "insufficient_scope",
+                                        "message": "Write operation requires policycortex.write scope or admin role"
+                                    }));
+                                    let res = (axum::http::StatusCode::FORBIDDEN, body).into_response();
+                                    return Ok(res);
+                                }
                             }
                         }
                         Err(e) => {

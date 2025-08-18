@@ -13,13 +13,28 @@ const nextConfig = {
   },
   async headers() {
     // Security headers suitable for demo/prod; adjust CSP as needed for integrations
+    const allowedConnect = [
+      "'self'",
+      'https:',
+      'wss:',
+      'ws:',
+    ]
+
+    // Allow configured public API/WS endpoints explicitly (helps in dev over http)
+    if (process.env.NEXT_PUBLIC_API_URL) allowedConnect.push(process.env.NEXT_PUBLIC_API_URL)
+    if (process.env.NEXT_PUBLIC_WS_URL) allowedConnect.push(process.env.NEXT_PUBLIC_WS_URL)
+
+    // Common local dev backends
+    allowedConnect.push('http://localhost:8080')
+    allowedConnect.push('http://localhost:4000')
+
     const ContentSecurityPolicy = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https: wss: ws:",
+      `connect-src ${allowedConnect.join(' ')}`,
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -32,7 +47,8 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+          // Enable microphone for local voice features; adjust for your environment
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), payment=()' },
           { key: 'Content-Security-Policy', value: ContentSecurityPolicy },
         ],
       },

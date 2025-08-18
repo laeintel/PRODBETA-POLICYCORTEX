@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../../components/AuthGuard';
+import { api } from '../../../lib/api-client';
+import toast from 'react-hot-toast';
 import { Brain, Sparkles, TrendingUp, Activity, Zap, Target, MessageSquare, AlertTriangle } from 'lucide-react';
 
 interface AIMetrics {
@@ -57,12 +59,11 @@ function AIAnalyticsCenterContent() {
 
   const fetchAIMetrics = async () => {
     try {
-      const response = await fetch('/api/v1/predictions');
-      if (response.ok) {
-        const data = await response.json();
-        setMetrics(processAIData(data));
-      } else {
+      const resp = await api.getAIPredictions()
+      if (resp.error) {
         setMetrics(getMockAIMetrics());
+      } else {
+        setMetrics(processAIData(resp.data));
       }
     } catch (error) {
       setMetrics(getMockAIMetrics());
@@ -70,6 +71,24 @@ function AIAnalyticsCenterContent() {
       setLoading(false);
     }
   };
+
+  const triggerAction = async (actionType: string, params?: any) => {
+    try {
+      const resp = await api.createAction('global', actionType, params)
+      if (resp.error || resp.status >= 400) {
+        toast.error(`Action failed: ${actionType}`)
+        return
+      }
+      toast.success(`${actionType.replace('_',' ')} started`)
+      const id = resp.data?.action_id || resp.data?.id
+      if (id) {
+        const stop = api.streamActionEvents(String(id), (m) => console.log('[ai-action]', id, m))
+        setTimeout(stop, 60000)
+      }
+    } catch (e) {
+      toast.error(`Action error: ${actionType}`)
+    }
+  }
 
   const processAIData = (data: any): AIMetrics => {
     return {
@@ -158,11 +177,11 @@ function AIAnalyticsCenterContent() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-2">
+              <button onClick={() => triggerAction('train_models')} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-2">
                 <Brain className="w-4 h-4" />
                 TRAIN MODELS
               </button>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => triggerAction('export_ai_insights')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
                 EXPORT INSIGHTS
               </button>
             </div>
@@ -366,7 +385,7 @@ function AIAnalyticsCenterContent() {
                 </div>
               </div>
             </div>
-            <button className="px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 border border-purple-800 text-purple-500 rounded text-sm transition-colors">
+            <button onClick={() => triggerAction('force_retrain')} className="px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 border border-purple-800 text-purple-500 rounded text-sm transition-colors">
               FORCE RETRAIN
             </button>
           </div>
