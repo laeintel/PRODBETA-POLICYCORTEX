@@ -14,6 +14,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { GitBranch, Link, Network, Sparkles, AlertTriangle, TrendingUp, Layers, Cpu } from 'lucide-react'
 import AppLayout from '../../components/AppLayout'
+import { api } from '../../lib/api-client'
 
 export default function CorrelationsPage() {
   const [correlationData, setCorrelationData] = useState<any>(null)
@@ -25,9 +26,12 @@ export default function CorrelationsPage() {
 
   const fetchCorrelationData = async () => {
     try {
-      const response = await fetch('/api/v1/correlations')
-      const data = await response.json()
-      setCorrelationData(data)
+      const resp = await api.getCorrelations()
+      if (resp.error) {
+        console.error('Correlations error:', resp.error)
+      } else {
+        setCorrelationData(resp.data)
+      }
     } catch (error) {
       console.error('Failed to fetch correlation data:', error)
     } finally {
@@ -96,7 +100,15 @@ export default function CorrelationsPage() {
           </p>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500">Confidence: 94%</span>
-            <button className="text-blue-500 hover:text-blue-600">View Details</button>
+            <button
+              onClick={() => {
+                // Navigate to detailed correlations graph
+                if (typeof window !== 'undefined') window.location.href = '/correlations/details?type=security-cost'
+              }}
+              className="text-blue-500 hover:text-blue-600"
+            >
+              View Details
+            </button>
           </div>
         </motion.div>
 
@@ -122,7 +134,14 @@ export default function CorrelationsPage() {
           </p>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500">Confidence: 87%</span>
-            <button className="text-blue-500 hover:text-blue-600">View Details</button>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') window.location.href = '/correlations/details?type=performance-cost'
+              }}
+              className="text-blue-500 hover:text-blue-600"
+            >
+              View Details
+            </button>
           </div>
         </motion.div>
 
@@ -148,7 +167,14 @@ export default function CorrelationsPage() {
           </p>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-500">Confidence: 76%</span>
-            <button className="text-blue-500 hover:text-blue-600">View Details</button>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') window.location.href = '/correlations/details?type=network-compliance'
+              }}
+              className="text-blue-500 hover:text-blue-600"
+            >
+              View Details
+            </button>
           </div>
         </motion.div>
       </div>

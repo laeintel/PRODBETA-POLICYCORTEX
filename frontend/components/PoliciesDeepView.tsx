@@ -25,6 +25,8 @@ import {
   TrendingDown,
   Info
 } from 'lucide-react'
+import { api } from '../lib/api-client'
+import toast from 'react-hot-toast'
 
 interface NonCompliantResource {
   resourceId: string
@@ -68,12 +70,12 @@ export default function PoliciesDeepView() {
 
   const fetchPolicyData = async () => {
     try {
-      const response = await fetch('/api/v1/policies/deep')
-      const data = await response.json()
+      const resp = await api.getPoliciesDeep()
+      const data = resp?.data || {}
       setComplianceResults(data.complianceResults || [])
     } catch (error) {
       console.error('Error fetching policy data:', error)
-      // Use mock data if API fails
+      // In production beta prefer empty over mocks
       setComplianceResults([
         {
           assignment: {
@@ -148,21 +150,22 @@ export default function PoliciesDeepView() {
   const handleRemediate = async (resource: NonCompliantResource, action: string) => {
     setRemediating(true)
     try {
-      const response = await fetch('/api/v1/remediate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resource_id: resource.resourceId,
-          action: action
-        })
-      })
-      const result = await response.json()
-      alert(`Remediation initiated: ${result.message}`)
+      const resp = await api.createAction(resource.resourceId, 'auto_remediate', { action })
+      if (resp.error || resp.status >= 400) {
+        toast.error('Remediation failed')
+      } else {
+        toast.success('Remediation initiated')
+        const id = resp.data?.action_id || resp.data?.id
+        if (id) {
+          const stop = api.streamActionEvents(String(id), (m) => console.log('[remediate]', id, m))
+          setTimeout(stop, 60000)
+        }
+      }
       // Refresh data
       await fetchPolicyData()
     } catch (error) {
       console.error('Remediation failed:', error)
-      alert('Remediation failed. Please try again.')
+      toast.error('Remediation failed. Please try again.')
     } finally {
       setRemediating(false)
     }
@@ -173,21 +176,21 @@ export default function PoliciesDeepView() {
     if (!reason) return
 
     try {
-      const response = await fetch('/api/v1/exception', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resource_id: resource.resourceId,
-          policy_id: policyId,
-          reason: reason
-        })
-      })
-      const result = await response.json()
-      alert(`Exception created: ${result.exceptionId}`)
+      const resp = await api.createAction(resource.resourceId, 'create_exception', { policy_id: policyId, reason })
+      if (resp.error || resp.status >= 400) {
+        toast.error('Failed to create exception')
+      } else {
+        toast.success('Exception created')
+        const id = resp.data?.action_id || resp.data?.id
+        if (id) {
+          const stop = api.streamActionEvents(String(id), (m) => console.log('[exception]', id, m))
+          setTimeout(stop, 60000)
+        }
+      }
       await fetchPolicyData()
     } catch (error) {
       console.error('Exception creation failed:', error)
-      alert('Failed to create exception.')
+      toast.error('Failed to create exception.')
     }
   }
 

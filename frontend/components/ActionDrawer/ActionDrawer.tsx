@@ -14,6 +14,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertTriangle, CheckCircle, Clock, Download, Play, RefreshCw } from 'lucide-react';
 import { useSSE } from '@/hooks/useSSE';
+import { api } from '@/lib/api-client';
 
 interface ActionDrawerProps {
   isOpen: boolean;
@@ -56,9 +57,8 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
 
   const fetchActionDetails = async (id: string) => {
     try {
-      const response = await fetch(`/api/v1/actions/${id}`);
-      const data = await response.json();
-      setAction(data);
+      const resp = await api.request<any>(`/api/v1/actions/${id}`)
+      if (!resp.error) setAction(resp.data)
     } catch (error) {
       console.error('Failed to fetch action details:', error);
     }
@@ -67,16 +67,10 @@ export function ActionDrawer({ isOpen, onClose, actionId }: ActionDrawerProps) {
   const executeAction = async (dryRun: boolean = true) => {
     setIsExecuting(true);
     try {
-      const response = await fetch('/api/v1/actions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...action,
-          dry_run: dryRun,
-        }),
-      });
-      const result = await response.json();
-      setAction(result);
+      const resp = await api.createAction(action?.resource_id || 'global', action?.action_type || 'custom', { ...action, dry_run: dryRun })
+      if (!resp.error) {
+        setAction({ ...(action||{}), id: resp.data?.action_id || resp.data?.id })
+      }
     } catch (error) {
       console.error('Failed to execute action:', error);
     } finally {

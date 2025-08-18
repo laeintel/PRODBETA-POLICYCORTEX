@@ -13,11 +13,15 @@ import type { NextRequest } from 'next/server'
 
 // Bypass auth checks in middleware in development or when explicitly enabled
 // MSAL uses sessionStorage, not cookies, so middleware can't properly check auth status
-const BYPASS_ROUTE_AUTH = true // Always bypass middleware auth check since MSAL uses sessionStorage
+// TEMPORARY: Set to true to allow development without auth
+const BYPASS_ROUTE_AUTH = true // TEMPORARY: Bypass for development
 
 // Protected routes that require authentication
+// Actually, we'll protect everything except login
 const protectedRoutes = [
+  '/', // Landing page is also protected
   '/dashboard',
+  '/tactical',
   '/ai-expert',
   '/chat',
   '/policies',
@@ -29,16 +33,15 @@ const protectedRoutes = [
   '/security',
   '/training',
   '/anomalies',
-  '/roadmap'
+  '/roadmap',
+  '/api/v1' // Protect all API routes
 ]
 
 // Public routes that don't require authentication
+// ONLY login and auth endpoints should be public
 const publicRoutes = [
-  '/',
   '/login',
-  '/features',
-  '/about',
-  '/api/health'
+  '/api/auth'
 ]
 
 export function middleware(request: NextRequest) {
@@ -47,31 +50,36 @@ export function middleware(request: NextRequest) {
   }
   const { pathname } = request.nextUrl
 
-  // Allow public routes
-  if (publicRoutes.some(route => pathname === route || pathname.startsWith('/api/health'))) {
+  // Check for authentication in cookies/session
+  const authToken = request.cookies.get('auth-token')
+  const authStatus = request.cookies.get('auth-status')
+  const sessionToken = request.cookies.get('session-token')
+  const msalSession = request.cookies.get('msal.session')
+  const tokenCache = request.cookies.get('msal.token.cache')
+  
+  const isAuthenticated = !!(authToken || authStatus || sessionToken || msalSession || tokenCache)
+
+  // Only allow root (now login page) and auth endpoints without authentication
+  if (pathname === '/' || pathname === '/login' || pathname.startsWith('/api/auth')) {
+    // If already authenticated and trying to access login pages, redirect to dashboard
+    if (isAuthenticated && (pathname === '/' || pathname === '/login')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
     return NextResponse.next()
   }
 
-  // Check if the route is protected
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-
-  if (isProtectedRoute) {
-    // Check for authentication in cookies/session
-    const sessionCookie = request.cookies.get('msal.session')
-    const tokenCache = request.cookies.get('msal.token.cache')
-    
-    // Also check sessionStorage keys for MSAL authentication
-    // Note: We can't directly access sessionStorage from middleware
-    // but we can check for the presence of MSAL cookies or headers
-    
-    // If no authentication evidence found, redirect to login
-    if (!sessionCookie && !tokenCache) {
-      // Store the original URL to redirect back after login
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('returnUrl', pathname)
-      
-      return NextResponse.redirect(loginUrl)
+  // For all other routes, require authentication
+  if (!isAuthenticated) {
+    // For API routes, return 401 instead of redirecting
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
     }
+    
+    // For other routes, redirect to root (login page)
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return NextResponse.next()

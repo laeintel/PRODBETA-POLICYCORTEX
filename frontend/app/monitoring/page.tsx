@@ -14,6 +14,8 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Monitor, Activity, Bell, AlertTriangle, CheckCircle, Clock, BarChart3, TrendingUp } from 'lucide-react'
 import AppLayout from '../../components/AppLayout'
+import toast from 'react-hot-toast'
+import { api } from '../../lib/api-client'
 
 export default function MonitoringPage() {
   const [monitoringData, setMonitoringData] = useState<any>(null)
@@ -25,13 +27,31 @@ export default function MonitoringPage() {
 
   const fetchMonitoringData = async () => {
     try {
-      const response = await fetch('/api/v1/monitoring')
-      const data = await response.json()
-      setMonitoringData(data)
+      const resp = await api.getMonitoring()
+      if (!resp.error) setMonitoringData(resp.data)
     } catch (error) {
       console.error('Failed to fetch monitoring data:', error)
+      toast.error('Failed to load monitoring data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const triggerAction = async (actionType: string, params?: any) => {
+    try {
+      const resp = await api.createAction('global', actionType, params)
+      if (resp.error || resp.status >= 400) {
+        toast.error(`Action failed: ${actionType}`)
+        return
+      }
+      toast.success(`${actionType.replace('_',' ')} started`)
+      const id = resp.data?.action_id || resp.data?.id
+      if (id) {
+        const stop = api.streamActionEvents(String(id), (m) => console.log('[monitoring-action]', id, m))
+        setTimeout(stop, 60000)
+      }
+    } catch (e) {
+      toast.error(`Action error: ${actionType}`)
     }
   }
 

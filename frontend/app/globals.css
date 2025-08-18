@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Quantum Theme */
+@import '/styles/quantum-theme.css';
+
 @layer base {
   :root {
     /* Fluent Enterprise tokens */

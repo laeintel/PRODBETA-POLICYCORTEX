@@ -15,7 +15,7 @@ import { ApolloProvider } from '@apollo/client'
 import { useState, useEffect } from 'react'
 import { client } from '@/lib/apollo-client'
 import dynamic from 'next/dynamic'
-import { AuthProvider } from '../contexts/AuthContext'
+import { AuthProvider, AuthTokenRefresher } from '../contexts/AuthContext'
 import { DemoDataProvider } from '../contexts/DemoDataProvider'
 import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration'
 import { OfflineIndicator, OfflineQueue, ConflictResolver } from '../components/OfflineIndicator'
@@ -51,6 +51,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <ApolloProvider client={client}>
             <ServiceWorkerRegistration />
             <DemoDataProvider>
+              <AuthTokenRefresher />
               {children}
             </DemoDataProvider>
             <OfflineIndicator />

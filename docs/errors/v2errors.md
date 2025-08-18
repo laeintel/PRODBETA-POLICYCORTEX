@@ -1,184 +1,1238 @@
-azurerm_cosmosdb_account.main: Still creating... [9m10s elapsed]
-╷
-│ Warning: Argument is deprecated
-│ 
-│   with azurerm_container_registry.main,
-│   on main.tf line 335, in resource "azurerm_container_registry" "main":
-│  335:     virtual_network {
-│ 
-│ The property `virtual_network` is deprecated since this is used exclusively
-│ for service endpoints which are being deprecated. Users are expected to use
-│ Private Endpoints instead. This property will be removed in v4.0 of the
-│ AzureRM Provider.
-╵
-╷
-│ Error: A resource with the ID "/subscriptions/***/resourceGroups/rg-tfstate-cortex-dev" already exists - to be managed via Terraform this resource needs to be imported into the State. Please see the resource documentation for "azurerm_resource_group" for more information.
-│ 
-│   with azurerm_resource_group.tfstate,
-│   on main.tf line 113, in resource "azurerm_resource_group" "tfstate":
-│  113: resource "azurerm_resource_group" "tfstate" {
-│ 
-╵
-╷
-│ Error: creating Registry (Subscription: "***"
-│ Resource Group Name: "rg-cortex-dev"
-│ Registry Name: "crcortexdev3p0bata"): performing Create: unexpected status 400 (400 Bad Request) with error: NetworkRuleValidationError: Could not validate network rule - Subnets snet-container-apps of virtual network /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev do not have ServiceEndpoints for Microsoft.ContainerRegistry resources configured. Add Microsoft.ContainerRegistry to subnet's ServiceEndpoints collection before trying to ACL Microsoft.ContainerRegistry resources to these subnets.
-│ 
-│   with azurerm_container_registry.main,
-│   on main.tf line 325, in resource "azurerm_container_registry" "main":
-│  325: resource "azurerm_container_registry" "main" {
-│ 
-╵
-╷
-│ Error: creating Storage Account (Subscription: "***"
-│ Resource Group Name: "rg-cortex-dev"
-│ Storage Account Name: "stcortexdev3p0bata"): polling after Create: polling failed: the Azure API returned the following error:
-│ 
-│ Status: "NetworkAclsValidationFailure"
-│ Code: ""
-│ Message: "Validation of network acls failure: SubnetsHaveNoServiceEndpointsConfigured:Subnets snet-container-apps of virtual network /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev do not have ServiceEndpoints for Microsoft.Storage resources configured. Add Microsoft.Storage to subnet's ServiceEndpoints collection before trying to ACL Microsoft.Storage resources to these subnets.."
-│ Activity Id: ""
-│ 
-│ ---
-│ 
-│ API Response:
-│ 
-│ ----[start]----
-│ {"status":"Failed","error":{"code":"NetworkAclsValidationFailure","message":"Validation of network acls failure: SubnetsHaveNoServiceEndpointsConfigured:Subnets snet-container-apps of virtual network /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev do not have ServiceEndpoints for Microsoft.Storage resources configured. Add Microsoft.Storage to subnet's ServiceEndpoints collection before trying to ACL Microsoft.Storage resources to these subnets.."}}
-│ -----[end]-----
-│ 
-│ 
-│   with azurerm_storage_account.main,
-│   on main.tf line 369, in resource "azurerm_storage_account" "main":
-│  369: resource "azurerm_storage_account" "main" {
-│ 
-╵
-╷
-│ Error: creating Key Vault (Subscription: "***"
-│ Resource Group Name: "rg-cortex-dev"
-│ Key Vault Name: "kv-cortex-dev-3p0bata"): performing CreateOrUpdate: vaults.VaultsClient#CreateOrUpdate: Failure sending request: StatusCode=0 -- Original Error: Code="VirtualNetworkNotValid" Message="Operation on Virtual Network could not be performed. StatusCode: 400 (BadRequest). Error Code: SubnetsHaveNoServiceEndpointsConfigured. Error Message: Subnets snet-container-apps of virtual network /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev do not have ServiceEndpoints for Microsoft.KeyVault resources configured. Add Microsoft.KeyVault to subnet's ServiceEndpoints collection before trying to ACL Microsoft.KeyVault resources to these subnets.."
-│ 
-│   with azurerm_key_vault.main,
-│   on main.tf line 409, in resource "azurerm_key_vault" "main":
-│  409: resource "azurerm_key_vault" "main" {
-│ 
-╵
-╷
-│ Error: creating Database Account (Subscription: "***"
-│ Resource Group Name: "rg-cortex-dev"
-│ Database Account Name: "cosmos-cortex-dev-3p0bata"): creating/updating CosmosDB Account "cosmos-cortex-dev-3p0bata" (Resource Group "rg-cortex-dev"): polling after DatabaseAccountsCreateOrUpdate: polling failed: the Azure API returned the following error:
-│ 
-│ Status: "Conflict"
-│ Code: ""
-│ Message: "Database account creation failed. Operation Id: dad3f68b-38e5-41ff-8420-e44827392ead, Error : Error encountered calling networking RP. StatusCode: BadRequest, ErrorCode: SubnetsHaveNoServiceEndpointsConfigured, ErrorMessage: NRP ARM exception, ErrorCode: SubnetsHaveNoServiceEndpointsConfigured, ErrorMessage: Subnets snet-container-apps of virtual network /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev do not have ServiceEndpoints for Microsoft.AzureCosmosDB resources configured. Add Microsoft.AzureCosmosDB to subnet's ServiceEndpoints collection before trying to ACL Microsoft.AzureCosmosDB resources to these subnets.\r\nActivityId: d43bdb5b-2dc3-476e-8cc6-32288c64d49e, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure
-│ Activity Id: ""
-│ 
-│ ---
-│ 
-│ API Response:
-│ 
-│ ----[start]----
-│ {"status":"Failed","error":{"code":"Conflict","message":"Database account creation failed. Operation Id: dad3f68b-38e5-41ff-8420-e44827392ead, Error : Error encountered calling networking RP. StatusCode: BadRequest, ErrorCode: SubnetsHaveNoServiceEndpointsConfigured, ErrorMessage: NRP ARM exception, ErrorCode: SubnetsHaveNoServiceEndpointsConfigured, ErrorMessage: Subnets snet-container-apps of virtual network /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev do not have ServiceEndpoints for Microsoft.AzureCosmosDB resources configured. Add Microsoft.AzureCosmosDB to subnet's ServiceEndpoints collection before trying to ACL Microsoft.AzureCosmosDB resources to these subnets.\r\nActivityId: d43bdb5b-2dc3-476e-8cc6-32288c64d49e, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft.Azure.Documents.Common/2.14.0, Microsoft
-│ -----[end]-----
-│ 
-│ 
-│   with azurerm_cosmosdb_account.main,
-│   on main.tf line 513, in resource "azurerm_cosmosdb_account" "main":
-│  513: resource "azurerm_cosmosdb_account" "main" {
-│ 
-╵
-╷
-│ Error: creating Account (Subscription: "***"
-│ Resource Group Name: "rg-cortex-dev"
-│ Account Name: "cogao-cortex-dev"): unexpected status 409 (409 Conflict) with error: FlagMustBeSetForRestore: An existing resource with ID '/subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.CognitiveServices/accounts/cogao-cortex-dev' has been soft-deleted. To restore the resource, you must specify 'restore' to be 'true' in the property. If you don't want to restore existing resource, please purge it first.
-│ 
-│   with azurerm_cognitive_account.openai,
-│   on main.tf line 567, in resource "azurerm_cognitive_account" "openai":
-│  567: resource "azurerm_cognitive_account" "openai" {
-│ 
-╵
-╷
-│ Error: creating Managed Environment (Subscription: "***"
-│ Resource Group Name: "rg-cortex-dev"
-│ Managed Environment Name: "cae-cortex-dev"): polling after CreateOrUpdate: polling failed: the Azure API returned the following error:
-│ 
-│ Status: "Failed"
-│ Code: "ManagedEnvironmentSubnetIsDelegated"
-│ Message: "AgentPoolProfile subnet with id /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps cannot be used as it's a delegated subnet. Please check https://aka.ms/adv-network-prerequest for more details.\r\nStatus: 400 (Bad Request)\r\nErrorCode: SubnetIsDelegated\r\n\r\nContent:\r\n{\n  \"code\": \"SubnetIsDelegated\",\n  \"details\": null,\n  \"message\": \"AgentPoolProfile subnet with id /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps cannot be used as it's a delegated subnet. Please check https://aka.ms/adv-network-prerequest for more details.\",\n  \"subcode\": \"\"\n }\r\n\r\nHeaders:\r\nCache-Control: no-cache\r\nPragma: no-cache\r\nx-ms-operation-identifier: REDACTED\r\nx-ms-correlation-request-id: REDACTED\r\nx-ms-request-id: 88a302d1-c6b1-4f9c-b7bd-9a42244af605\r\nStrict-Transport-Security: REDACTED\r\nx-ms-thrott
-│ Activity Id: ""
-│ 
-│ ---
-│ 
-│ API Response:
-│ 
-│ ----[start]----
-│ {"id":"/subscriptions/***/providers/Microsoft.App/locations/eastus/managedEnvironmentOperationStatuses/9362d7cf-cca0-4d62-8b86-167ba6e20a7f","name":"9362d7cf-cca0-4d62-8b86-167ba6e20a7f","status":"Failed","error":{"code":"ManagedEnvironmentSubnetIsDelegated","message":"AgentPoolProfile subnet with id /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps cannot be used as it's a delegated subnet. Please check https://aka.ms/adv-network-prerequest for more details.\r\nStatus: 400 (Bad Request)\r\nErrorCode: SubnetIsDelegated\r\n\r\nContent:\r\n{\n  \"code\": \"SubnetIsDelegated\",\n  \"details\": null,\n  \"message\": \"AgentPoolProfile subnet with id /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps cannot be used as it's a delegated subnet. Please check https://aka.ms/adv-network-prerequest for more details.\",\n  \"subcode\": \"
-│ -----[end]-----
-│ 
-│ 
-│   with azurerm_container_app_environment.main,
-│   on main.tf line 651, in resource "azurerm_container_app_environment" "main":
-│  651: resource "azurerm_container_app_environment" "main" {
-│ 
-│ creating Managed Environment (Subscription:
-│ "***"
-│ Resource Group Name: "rg-cortex-dev"
-│ Managed Environment Name: "cae-cortex-dev"): polling after CreateOrUpdate:
-│ polling failed: the Azure API returned the following error:
-│ 
-│ Status: "Failed"
-│ Code: "ManagedEnvironmentSubnetIsDelegated"
-│ Message: "AgentPoolProfile subnet with id
-│ /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps
-│ cannot be used as it's a delegated subnet. Please check
-│ https://aka.ms/adv-network-prerequest for more details.\r\nStatus: 400 (Bad
-│ Request)\r\nErrorCode: SubnetIsDelegated\r\n\r\nContent:\r\n{\n  \"code\":
-│ \"SubnetIsDelegated\",\n  \"details\": null,\n  \"message\":
-│ \"AgentPoolProfile subnet with id
-│ /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps
-│ cannot be used as it's a delegated subnet. Please check
-│ https://aka.ms/adv-network-prerequest for more details.\",\n  \"subcode\":
-│ \"\"\n }\r\n\r\nHeaders:\r\nCache-Control: no-cache\r\nPragma:
-│ no-cache\r\nx-ms-operation-identifier:
-│ REDACTED\r\nx-ms-correlation-request-id: REDACTED\r\nx-ms-request-id:
-│ 88a302d1-c6b1-4f9c-b7bd-9a42244af605\r\nStrict-Transport-Security:
-│ REDACTED\r\nx-ms-throttling-version:
-│ REDACTED\r\nx-ms-ratelimit-remaining-subscription-writes:
-│ REDACTED\r\nx-ms-routing-request-id: REDACTED\r\nX-Content-Type-Options:
-│ REDACTED\r\nX-Cache: REDACTED\r\nX-MSEdge-Ref: REDACTED\r\nDate: Sun, 17
-│ Aug 2025 16:33:35 GMT\r\nContent-Length: 399\r\nContent-Type:
-│ application/json\r\nExpires: -1\r\n"
-│ Activity Id: ""
-│ 
-│ ---
-│ 
-│ API Response:
-│ 
-│ ----[start]----
-│ {"id":"/subscriptions/***/providers/Microsoft.App/locations/eastus/managedEnvironmentOperationStatuses/9362d7cf-cca0-4d62-8b86-167ba6e20a7f","name":"9362d7cf-cca0-4d62-8b86-167ba6e20a7f","status":"Failed","error":{"code":"ManagedEnvironmentSubnetIsDelegated","message":"AgentPoolProfile
-│ subnet with id
-│ /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps
-│ cannot be used as it's a delegated subnet. Please check
-│ https://aka.ms/adv-network-prerequest for more details.\r\nStatus: 400 (Bad
-│ Request)\r\nErrorCode: SubnetIsDelegated\r\n\r\nContent:\r\n{\n  \"code\":
-│ \"SubnetIsDelegated\",\n  \"details\": null,\n  \"message\":
-│ \"AgentPoolProfile subnet with id
-│ /subscriptions/***/resourceGroups/rg-cortex-dev/providers/Microsoft.Network/virtualNetworks/vnet-cortex-dev/subnets/snet-container-apps
-│ cannot be used as it's a delegated subnet. Please check
-│ https://aka.ms/adv-network-prerequest for more details.\",\n  \"subcode\":
-│ \"\"\n }\r\n\r\nHeaders:\r\nCache-Control: no-cache\r\nPragma:
-│ no-cache\r\nx-ms-operation-identifier:
-│ REDACTED\r\nx-ms-correlation-request-id: REDACTED\r\nx-ms-request-id:
-│ 88a302d1-c6b1-4f9c-b7bd-9a42244af605\r\nStrict-Transport-Security:
-│ REDACTED\r\nx-ms-throttling-version:
-│ REDACTED\r\nx-ms-ratelimit-remaining-subscription-writes:
-│ REDACTED\r\nx-ms-routing-request-id: REDACTED\r\nX-Content-Type-Options:
-│ REDACTED\r\nX-Cache: REDACTED\r\nX-MSEdge-Ref: REDACTED\r\nDate: Sun, 17
-│ Aug 2025 16:33:35 GMT\r\nContent-Length: 399\r\nContent-Type:
-│ application/json\r\nExpires:
-│ -1\r\n"},"startTime":"2025-08-17T16:32:10.0578692"}
-│ -----[end]-----
-│ 
-╵
-Error: Terraform exited with code 1.
-Terraform apply completed with some warnings
+main-app.js?v=1755518888510:1575 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:09 GMT] : [] : @azure/msal-browser@4.20.0 : Info - handleRedirectPromise called but there is no interaction in progress, returning null.
+SidePanel.5d6a2229.js:53   POST https://o921931.ingest.us.sentry.io/api/4506977217675264/envelope/?sentry_key=23e088e4154e60f450f29452fbf5249e&sentry_version=7&sentry_client=sentry.javascript.react%2F7.93.0 net::ERR_BLOCKED_BY_CLIENT
+(anonymous) @ SidePanel.5d6a2229.js:53
+(anonymous) @ SidePanel.5d6a2229.js:46
+add @ SidePanel.5d6a2229.js:36
+i @ SidePanel.5d6a2229.js:46
+_sendEnvelope @ SidePanel.5d6a2229.js:45
+sendSession @ SidePanel.5d6a2229.js:44
+captureSession @ SidePanel.5d6a2229.js:44
+N @ SidePanel.5d6a2229.js:44
+O @ SidePanel.5d6a2229.js:44
+(anonymous) @ SidePanel.5d6a2229.js:53
+b @ SidePanel.5d6a2229.js:53
+o @ SidePanel.5d6a2229.js:375
+d6vFB.react/jsx-runtime @ SidePanel.5d6a2229.js:17
+u @ SidePanel.5d6a2229.js:1
+p @ SidePanel.5d6a2229.js:1
+dFgLa.react/jsx-runtime @ SidePanel.5d6a2229.js:1
+u @ SidePanel.5d6a2229.js:1
+dFgLa.react/jsx-runtime @ SidePanel.5d6a2229.js:1
+(anonymous) @ SidePanel.5d6a2229.js:1
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:09 GMT] : [] : @azure/msal-browser@4.20.0 : Info - initialize has already been called, exiting early.
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:10 GMT] : [] : @azure/msal-browser@4.20.0 : Info - initialize has already been called, exiting early.
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:10 GMT] : [] : @azure/msal-react@3.0.17 : Info - MsalProvider - handleRedirectPromise resolved, setting inProgress to 'none'
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:10 GMT] : [] : @azure/msal-react@3.0.17 : Info - MsalProvider - handleRedirectPromise resolved, setting inProgress to 'none'
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:10 GMT] : [] : @azure/msal-react@3.0.17 : Info - useAccount - Updating account
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:10 GMT] : [] : @azure/msal-react@3.0.17 : Info - useAccount - Updating account
+performance-api.ts:239   GET http://localhost:3000/health 500 (Internal Server Error)
+eval @ performance-api.ts:239
+execute @ performance-api.ts:121
+eval @ performance-api.ts:230
+executeWithBackpressure @ performance-api.ts:196
+eval @ performance-api.ts:229
+dedupe @ performance-api.ts:86
+get @ performance-api.ts:228
+warmCache @ performance-api.ts:178
+PerformanceApiClient @ performance-api.ts:170
+eval @ performance-api.ts:416
+(app-pages-browser)/./lib/performance-api.ts @ _app-pages-browser_components_VoiceProvider_tsx.js:139
+options.factory @ webpack.js?v=1755518888510:716
+__webpack_require__ @ webpack.js?v=1755518888510:37
+fn @ webpack.js?v=1755518888510:371
+eval @ api.ts:7
+(app-pages-browser)/./lib/api.ts @ _app-pages-browser_components_VoiceProvider_tsx.js:128
+options.factory @ webpack.js?v=1755518888510:716
+__webpack_require__ @ webpack.js?v=1755518888510:37
+fn @ webpack.js?v=1755518888510:371
+eval @ VoiceInterface.tsx:18
+(app-pages-browser)/./components/VoiceInterface.tsx @ _app-pages-browser_components_VoiceProvider_tsx.js:106
+options.factory @ webpack.js?v=1755518888510:716
+__webpack_require__ @ webpack.js?v=1755518888510:37
+fn @ webpack.js?v=1755518888510:371
+eval @ VoiceProvider.tsx:10
+(app-pages-browser)/./components/VoiceProvider.tsx @ _app-pages-browser_components_VoiceProvider_tsx.js:117
+options.factory @ webpack.js?v=1755518888510:716
+__webpack_require__ @ webpack.js?v=1755518888510:37
+fn @ webpack.js?v=1755518888510:371
+Promise.then
+next_dynamic__WEBPACK_IMPORTED_MODULE_3___default.loadableGenerated.modules @ providers.tsx:27
+loader @ app-dynamic.js:45
+lazyInitializer @ react.development.js:1376
+mountLazyComponent @ react-dom.development.js:16631
+beginWork$1 @ react-dom.development.js:18351
+beginWork @ react-dom.development.js:26741
+performUnitOfWork @ react-dom.development.js:25587
+workLoopSync @ react-dom.development.js:25303
+renderRootSync @ react-dom.development.js:25258
+performConcurrentWorkOnRoot @ react-dom.development.js:24382
+workLoop @ scheduler.development.js:261
+flushWork @ scheduler.development.js:230
+performWorkUntilDeadline @ scheduler.development.js:534
+AuthContext.tsx:121 Starting Azure AD login with config: {clientId: '1ecc95d1-e5bb-43e2-9324-30a17cb6b01c', authority: 'https://login.microsoftonline.com/9ef5b184-d371-462a-bc75-5024ce8baff7', redirectUri: 'http://localhost:3000'}
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:13 GMT] : [] : @azure/msal-react@3.0.17 : Info - MsalProvider - msal:loginStart results in setting inProgress from none to login
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:13 GMT] : [] : @azure/msal-react@3.0.17 : Info - MsalProvider - msal:loginStart results in setting inProgress from none to login
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:13 GMT] : [] : @azure/msal-react@3.0.17 : Info - useAccount - Updating account
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:13 GMT] : [] : @azure/msal-react@3.0.17 : Info - useAccount - Updating account
+hot-reloader-client.js:176 [Fast Refresh] rebuilding
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-browser@4.20.0 : Info - BrowserCacheManager: addTokenKey - idToken added to map
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-browser@4.20.0 : Info - BrowserCacheManager: addTokenKey - refreshToken added to map
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token
+AuthContext.tsx:130 Login successful via popup: {authority: 'https://login.microsoftonline.com/9ef5b184-d371-462a-bc75-5024ce8baff7/', uniqueId: '0117907b-62b8-40cb-80d6-bdc6061a5a0f', tenantId: '9ef5b184-d371-462a-bc75-5024ce8baff7', scopes: Array(4), account: {…}, …}
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-react@3.0.17 : Info - MsalProvider - msal:loginSuccess results in setting inProgress from login to none
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-react@3.0.17 : Info - MsalProvider - msal:loginSuccess results in setting inProgress from login to none
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-react@3.0.17 : Info - useAccount - Updating account
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-common@15.11.0 : Info - CacheManager:getIdToken - Returning ID token
+auth-config.ts:57 [Mon, 18 Aug 2025 12:08:19 GMT] : [] : @azure/msal-react@3.0.17 : Info - useAccount - Updating account
+invariant.js:35 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:661
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/policies/update Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:661
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:657
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/reports/generate Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:657
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:653
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/remediation/auto Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:653
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:649
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/compliance/scan Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:649
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:645
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/policies/enforce Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:645
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:687
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/incidents/respond Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:687
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:683
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/access/review Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:683
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:679
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/patch/management Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:679
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:675
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/security/vulnerability-assessment Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:675
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:671
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/security/scan Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:671
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:714
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/sync Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:714
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:711
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/optimize Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:711
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:708
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/security/lockdown Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:708
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:705
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/ai/train Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:705
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:702
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/policies/enforce Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:702
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:699
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/compliance/scan Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:699
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+tactical:1  Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/delete Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/migrate Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/scale-up Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/unlock Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/snapshot Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/restart Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/lock Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/clone Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/stop Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/start Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/scale-down Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+api-client.ts:34   POST http://localhost:3000/api/v1/actions 401 (Unauthorized)
+request @ api-client.ts:34
+createAction @ api-client.ts:240
+executeAction @ page.tsx:332
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
+page.tsx:334  Action failed /api/v1/resources/tag Error: Unauthorized
+window.console.error @ app-index.js:32
+console.error @ hydration-error-info.js:45
+executeAction @ page.tsx:334
+await in executeAction
+onClick @ page.tsx:629
+callCallback @ react-dom.development.js:20461
+invokeGuardedCallbackImpl @ react-dom.development.js:20510
+invokeGuardedCallback @ react-dom.development.js:20585
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20599
+executeDispatch @ react-dom.development.js:31936
+processDispatchQueueItemsInOrder @ react-dom.development.js:31968
+processDispatchQueue @ react-dom.development.js:31981
+dispatchEventsForPlugins @ react-dom.development.js:31992
+eval @ react-dom.development.js:32182
+batchedUpdates$1 @ react-dom.development.js:24793
+batchedUpdates @ react-dom.development.js:28653
+dispatchEventForPluginEventSystem @ react-dom.development.js:32181
+dispatchEvent @ react-dom.development.js:29949
+dispatchDiscreteEvent @ react-dom.development.js:29920
