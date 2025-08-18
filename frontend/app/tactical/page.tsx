@@ -164,7 +164,7 @@ export default function TacticalDashboard() {
           />
           <MetricCard
             title="Monthly Cost"
-            value={`$${(metrics.cost || 0).toLocaleString()}`}
+            value={`$${(typeof metrics.cost === 'object' ? (metrics.cost?.total || 0) : (metrics.cost || 0)).toLocaleString()}`}
             trend={-8}
             icon={DollarSign}
             color="yellow"
