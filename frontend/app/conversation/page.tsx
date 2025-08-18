@@ -11,6 +11,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { api } from '../../lib/api-client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Send, Sparkles, User, Bot, Copy, ThumbsUp, ThumbsDown,
@@ -111,17 +112,8 @@ export default function ConversationPage() {
     setMessages(prev => [...prev, thinkingMessage])
 
     try {
-      const response = await fetch('/api/v1/conversation/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: input,
-          session_id: sessionId,
-          include_suggestions: true
-        })
-      })
-
-      const data = await response.json()
+      const resp = await api.chat(input, sessionId, true)
+      const data = resp.data as any
       
       // Remove thinking message and add real response
       setMessages(prev => {

@@ -83,13 +83,8 @@ function SecurityOperationsCenterContent() {
 
   const fetchSecurityData = async () => {
     try {
-      const response = await fetch('/api/v1/security/threats');
-      if (response.ok) {
-        const data = await response.json();
-        setData(data);
-      } else {
-        setData(getMockSecurityData());
-      }
+      const resp = await api.getSecurityThreats()
+      if (resp.error) setData(getMockSecurityData()); else setData(resp.data as any)
     } catch (error) {
       setData(getMockSecurityData());
     } finally {
@@ -164,7 +159,8 @@ function SecurityOperationsCenterContent() {
 
   const mitigateThreat = async (threatId: string) => {
     try {
-      await fetch(`/api/v1/security/threats/${threatId}/mitigate`, { method: 'POST' });
+      const resp = await api.mitigateThreat(threatId)
+      if (resp.error) console.error('Mitigation failed', resp.error)
       fetchSecurityData();
     } catch (error) {
       console.error('Failed to mitigate threat:', error);
@@ -293,7 +289,7 @@ function SecurityOperationsCenterContent() {
                           threat.status === 'mitigating' ? 'bg-yellow-900/30 text-yellow-500' :
                           'bg-green-900/30 text-green-500'
                         }`}>
-                          {threat.status.toUpperCase()}
+                          {(threat.status || 'unknown').toUpperCase()}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">{threat.description}</p>

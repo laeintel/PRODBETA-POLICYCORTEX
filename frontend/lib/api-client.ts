@@ -33,6 +33,7 @@ class PolicyCortexAPI {
 
       const response = await fetch(url, {
         ...options,
+        credentials: 'include',
         headers: {
           ...this.headers,
           ...options.headers,
@@ -121,6 +122,14 @@ class PolicyCortexAPI {
     return this.request<any>('/api/v1/correlations')
   }
 
+  async getRbacDeep() {
+    return this.request<any>('/api/v1/rbac/deep')
+  }
+
+  async getCostsDeep() {
+    return this.request<any>('/api/v1/costs/deep')
+  }
+
   async askAI(query: string) {
     return this.request<any>('/api/v1/conversation', {
       method: 'POST',
@@ -137,6 +146,11 @@ class PolicyCortexAPI {
     return this.request<any>('/health');
   }
 
+  // Server health (versioned)
+  async getServerHealth() {
+    return this.request<any>('/api/v1/health')
+  }
+
   // Policy APIs
   async getPolicies() {
     return this.request<any>('/api/v1/policies');
@@ -144,6 +158,45 @@ class PolicyCortexAPI {
 
   async getPolicyDetails(policyId: string) {
     return this.request<any>(`/api/v1/policies/${policyId}`);
+  }
+
+  async getPoliciesDeep() {
+    return this.request<any>('/api/v1/policies/deep')
+  }
+
+  // Performance & Monitoring
+  async getPerformance() {
+    return this.request<any>('/api/v1/performance')
+  }
+
+  async getMonitoring() {
+    return this.request<any>('/api/v1/monitoring')
+  }
+
+  // Roadmap
+  async getRoadmap() {
+    return this.request<any>('/api/v1/roadmap', { cache: 'no-store' as any })
+  }
+
+  // Exceptions
+  async listExceptions() {
+    return this.request<any>('/api/v1/exceptions')
+  }
+
+  async createException(payload: { resource_id: string; policy_id: string; reason: string }) {
+    return this.request<any>('/api/v1/exception', { method: 'POST', body: JSON.stringify(payload) })
+  }
+
+  async expireExceptions() {
+    return this.request<any>('/api/v1/exceptions/expire', { method: 'POST' })
+  }
+
+  // Conversation
+  async chat(message: string, sessionId: string, includeSuggestions = true) {
+    return this.request<any>('/api/v1/conversation/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, session_id: sessionId, include_suggestions: includeSuggestions })
+    })
   }
 
   async enforcePolicies() {
@@ -189,6 +242,10 @@ class PolicyCortexAPI {
       method: 'POST',
       body: JSON.stringify({ action_type: actionType, resource_id: resourceId, params }),
     })
+  }
+
+  async getActionById(actionId: string) {
+    return this.request<any>(`/api/v1/actions/${actionId}`)
   }
 
   streamActionEvents(actionId: string, onEvent: (msg: string) => void) {

@@ -129,6 +129,23 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
       instance.setActiveAccount(loginResponse.account)
       console.log('Login successful via popup:', loginResponse)
       
+      // Proactively acquire an access token for backend/API calls and persist it for the shared api client
+      try {
+        const tokenResp = await instance.acquireTokenSilent(apiRequest)
+        if (tokenResp?.accessToken) {
+          localStorage.setItem('pcx_token', tokenResp.accessToken)
+        }
+      } catch (e) {
+        try {
+          const tokenResp = await instance.acquireTokenPopup(apiRequest)
+          if (tokenResp?.accessToken) {
+            localStorage.setItem('pcx_token', tokenResp.accessToken)
+          }
+        } catch {
+          // No token available yet; api-client will retry via getAccessToken bridge if configured
+        }
+      }
+      
       // Set authentication cookie for middleware
       await fetch('/api/auth/set-cookie', {
         method: 'POST',
@@ -177,6 +194,10 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     setLoading(true)
     
     try {
+      // Clear client token cache used by the shared api client
+      if (typeof window !== 'undefined') {
+        try { localStorage.removeItem('pcx_token') } catch {}
+      }
       // Clear authentication cookies
       await fetch('/api/auth/set-cookie', {
         method: 'DELETE'
@@ -297,4 +318,33 @@ export const useAuthenticatedFetch = () => {
   }
 
   return authenticatedFetch
+}
+
+// Bridge: keep localStorage token refreshed when auth state changes so the shared api client attaches Authorization automatically
+// This hook must live in a client component; AuthProviderInner already runs on client.
+// We co-locate here to avoid circular deps from api-client importing hooks.
+export const AuthTokenRefresher: React.FC = () => {
+  const { getAccessToken, user } = useAuth()
+  useEffect(() => {
+    let cancelled = false
+    const sync = async () => {
+      try {
+        const token = await getAccessToken()
+        if (!cancelled && token) {
+          localStorage.setItem('pcx_token', token)
+        }
+      } catch {
+        // Best-effort; ignored
+      }
+    }
+    if (typeof window !== 'undefined') {
+      if (user) {
+        sync()
+      } else {
+        try { localStorage.removeItem('pcx_token') } catch {}
+      }
+    }
+    return () => { cancelled = true }
+  }, [getAccessToken, user])
+  return null
 }

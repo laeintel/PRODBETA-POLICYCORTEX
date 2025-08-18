@@ -12,6 +12,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
+import { api } from '../../lib/api-client'
 import { FileCheck, Shield, AlertCircle, CheckCircle, XCircle, TrendingUp, BarChart3, Clock } from 'lucide-react'
 import AppLayout from '../../components/AppLayout'
 
@@ -25,11 +27,11 @@ export default function CompliancePage() {
 
   const fetchComplianceData = async () => {
     try {
-      const response = await fetch('/api/v1/compliance')
-      const data = await response.json()
-      setComplianceData(data)
+      const resp = await api.getComplianceStatus()
+      if (!resp.error) setComplianceData(resp.data)
     } catch (error) {
       console.error('Failed to fetch compliance data:', error)
+      toast.error('Failed to load compliance data')
     } finally {
       setLoading(false)
     }

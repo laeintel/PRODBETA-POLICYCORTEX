@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../../components/AuthGuard';
+import { api } from '../../../lib/api-client';
+import toast from 'react-hot-toast';
 import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, PieChart, BarChart3, Calendar, Download } from 'lucide-react';
 
 interface CostData {
@@ -60,12 +62,11 @@ function CostAnalyticsCenterContent() {
 
   const fetchCostData = async () => {
     try {
-      const response = await fetch('/api/v1/cost/analysis');
-      if (response.ok) {
-        const data = await response.json();
-        setData(data);
-      } else {
+      const resp = await api.getCostAnalysis()
+      if (resp.error) {
         setData(getMockCostData());
+      } else {
+        setData(resp.data as any);
       }
     } catch (error) {
       setData(getMockCostData());
@@ -73,6 +74,24 @@ function CostAnalyticsCenterContent() {
       setLoading(false);
     }
   };
+
+  const triggerAction = async (actionType: string) => {
+    try {
+      const resp = await api.createAction('global', actionType)
+      if (resp.error || resp.status >= 400) {
+        toast.error(`Action failed: ${actionType}`)
+        return
+      }
+      toast.success(`${actionType.replace('_',' ')} started`)
+      const id = resp.data?.action_id || resp.data?.id
+      if (id) {
+        const stop = api.streamActionEvents(String(id), (m) => console.log('[cost-action]', id, m))
+        setTimeout(stop, 60000)
+      }
+    } catch (e) {
+      toast.error(`Action error: ${actionType}`)
+    }
+  }
 
   const getMockCostData = (): CostData => ({
     currentMonth: 127439,
@@ -157,10 +176,10 @@ function CostAnalyticsCenterContent() {
                 <option value="90d">Last 90 Days</option>
                 <option value="1y">Last Year</option>
               </select>
-              <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => triggerAction('optimize_costs')} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors">
                 OPTIMIZE COSTS
               </button>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-2">
+              <button onClick={() => triggerAction('export_cost_report')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors flex items-center gap-2">
                 <Download className="w-4 h-4" />
                 EXPORT REPORT
               </button>

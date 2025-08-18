@@ -20,6 +20,7 @@ import { ChartCard, ComplianceTrend } from '../../components/ChartCards'
 import FilterBar from '../../components/FilterBar'
 import AppLayout from '../../components/AppLayout'
 import { azurePolicies, getPolicyStatistics, getNonCompliantResources, type PolicyDefinition } from '../../lib/policies-data'
+import { api } from '../../lib/api-client'
 import MockDataIndicator, { DataWithIndicator, useMockDataStatus } from '@/components/MockDataIndicator'
 import { 
   Shield,
@@ -82,13 +83,11 @@ export default function PoliciesPage() {
     // Try to fetch real policies first
     const fetchPolicies = async () => {
       try {
-        const response = await fetch('/api/v1/policies/deep')
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        const data = await response.json()
-        setPolicies(data.policies || [])
-        setNonCompliantResources(data.nonCompliantResources || [])
+        const resp = await api.getPoliciesDeep()
+        if (resp.error) throw new Error(resp.error)
+        const data = resp.data as any
+        setPolicies(data?.policies || [])
+        setNonCompliantResources(data?.nonCompliantResources || [])
         setIsUsingFallback(false)
       } catch (error) {
         console.warn('Failed to fetch policies, using fallback data:', error)

@@ -12,6 +12,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import toast from 'react-hot-toast'
+import { api } from '../../lib/api-client'
 import { Shield, Lock, Key, AlertTriangle, CheckCircle, XCircle, Eye, TrendingUp, Users, Activity } from 'lucide-react'
 import AppLayout from '../../components/AppLayout'
 
@@ -25,11 +27,11 @@ export default function SecurityPage() {
 
   const fetchSecurityData = async () => {
     try {
-      const response = await fetch('/api/v1/security')
-      const data = await response.json()
-      setSecurityData(data)
+      const resp = await api.request<any>('/api/v1/security')
+      if (!resp.error) setSecurityData(resp.data)
     } catch (error) {
       console.error('Failed to fetch security data:', error)
+      toast.error('Failed to load security data')
     } finally {
       setLoading(false)
     }

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../../components/AuthGuard';
+import { api } from '../../../lib/api-client';
+import toast from 'react-hot-toast';
 import { Server, Database, Cloud, Network, HardDrive, Cpu, Activity, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
 interface Resource {
@@ -56,15 +58,15 @@ function ResourceManagementCenterContent() {
 
   const fetchResourceData = async () => {
     try {
-      const response = await fetch('/api/v1/resources');
-      if (response.ok) {
-        const data = await response.json();
-        setResources(data.resources || []);
-        setMetrics(calculateMetrics(data.resources || []));
-      } else {
+      const resp = await api.getResources()
+      if (resp.error) {
         const mockData = getMockResourceData();
         setResources(mockData);
         setMetrics(calculateMetrics(mockData));
+      } else {
+        const items = (resp.data as any)?.resources || (resp.data as any) || []
+        setResources(items);
+        setMetrics(calculateMetrics(items));
       }
     } catch (error) {
       const mockData = getMockResourceData();
@@ -74,6 +76,24 @@ function ResourceManagementCenterContent() {
       setLoading(false);
     }
   };
+
+  const triggerAction = async (actionType: string) => {
+    try {
+      const resp = await api.createAction('global', actionType)
+      if (resp.error || resp.status >= 400) {
+        toast.error(`Action failed: ${actionType}`)
+        return
+      }
+      toast.success(`${actionType.replace('_',' ')} started`)
+      const id = resp.data?.action_id || resp.data?.id
+      if (id) {
+        const stop = api.streamActionEvents(String(id), (m) => console.log('[resources-action]', id, m))
+        setTimeout(stop, 60000)
+      }
+    } catch (e) {
+      toast.error(`Action error: ${actionType}`)
+    }
+  }
 
   const getMockResourceData = (): Resource[] => [
     { id: 'vm-01', name: 'VM-PROD-WEB-01', type: 'VirtualMachine', status: 'running', region: 'East US', resourceGroup: 'Production', created: '2024-01-15', cost: 450, health: 98, tags: ['production', 'web'] },
@@ -171,7 +191,7 @@ function ResourceManagementCenterContent() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="px-4 py-2 bg-gray-800 border border-gray-700 rounded text-sm w-64"
               />
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => triggerAction('deploy_resource')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
                 DEPLOY RESOURCE
               </button>
             </div>
