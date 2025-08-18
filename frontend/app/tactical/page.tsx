@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '../../lib/api-client';
 import NextLink from 'next/link';
 import AuthGuard from '../../components/AuthGuard';
 import { 
@@ -296,11 +297,46 @@ function TacticalOperationsCenterContent() {
 
   const executeAction = async (endpoint: string) => {
     try {
-      const response = await fetch(endpoint, { method: 'POST' });
-      const data = await response.json();
-      console.log('Action executed:', data);
+      const map: Record<string, { type: string; params?: any }> = {
+        '/api/v1/security/scan': { type: 'security_scan' },
+        '/api/v1/backup/start': { type: 'backup_now' },
+        '/api/v1/deploy': { type: 'deploy' },
+        '/api/v1/optimize': { type: 'optimize' },
+        '/api/v1/analyze': { type: 'analyze' },
+        '/api/v1/sync': { type: 'sync_all' },
+        '/api/v1/export': { type: 'export' },
+        '/api/v1/import': { type: 'import' },
+        '/api/v1/validate': { type: 'validate' },
+        '/api/v1/repair': { type: 'auto_repair' },
+        '/api/v1/scale': { type: 'auto_scale' },
+        '/api/v1/monitor': { type: 'monitor' },
+        '/api/v1/alerts/config': { type: 'configure_alerts' },
+        '/api/v1/reports/generate': { type: 'generate_report' },
+        '/api/v1/ai/train': { type: 'train_models' },
+        '/api/v1/ai/predict': { type: 'run_predictions' },
+        '/api/v1/policies/enforce': { type: 'enforce_policies' },
+        '/api/v1/compliance/scan': { type: 'compliance_scan' },
+        '/api/v1/remediation/auto': { type: 'auto_remediate' },
+        '/api/v1/policies/update': { type: 'update_policies' },
+        '/api/v1/security/vulnerability-assessment': { type: 'vuln_assessment' },
+        '/api/v1/patch/management': { type: 'patch_management' },
+        '/api/v1/access/review': { type: 'access_review' },
+        '/api/v1/incidents/respond': { type: 'incident_response' },
+        '/api/v1/security/lockdown': { type: 'emergency_lockdown' },
+      }
+      const meta = map[endpoint] || { type: 'custom', params: { endpoint } }
+      const resp = await api.createAction('global', meta.type, meta.params)
+      if (resp.error || resp.status >= 400) {
+        console.error('Action failed', endpoint, resp.error)
+        return
+      }
+      const actionId = resp.data?.action_id || resp.data?.id
+      if (actionId) {
+        const stop = api.streamActionEvents(String(actionId), (m) => console.log('[tactical]', actionId, m))
+        setTimeout(stop, 60000)
+      }
     } catch (error) {
-      console.log('Action triggered:', endpoint);
+      console.error('Action trigger error:', endpoint, error)
     }
   };
 
@@ -602,23 +638,23 @@ function TacticalOperationsCenterContent() {
             <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">POLICY ENFORCEMENT</h3>
               <div className="space-y-3">
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/policies/enforce')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Enforce All Policies</span>
                   <PlayCircle className="w-4 h-4 text-green-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/compliance/scan')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Scan for Violations</span>
                   <ScanLine className="w-4 h-4 text-yellow-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/remediation/auto')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Auto-Remediate</span>
                   <Wrench className="w-4 h-4 text-blue-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/reports/generate')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Generate Compliance Report</span>
                   <FileText className="w-4 h-4 text-gray-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/policies/update')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Update Policy Definitions</span>
                   <RefreshCw className="w-4 h-4 text-cyan-500" />
                 </button>
@@ -628,23 +664,23 @@ function TacticalOperationsCenterContent() {
             <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">SECURITY OPERATIONS</h3>
               <div className="space-y-3">
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/security/scan')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Threat Detection Scan</span>
                   <XOctagon className="w-4 h-4 text-red-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/security/vulnerability-assessment')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Vulnerability Assessment</span>
                   <Shield className="w-4 h-4 text-orange-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/patch/management')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Patch Management</span>
                   <Package className="w-4 h-4 text-purple-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/access/review')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Access Review</span>
                   <UserCheck className="w-4 h-4 text-green-500" />
                 </button>
-                <button className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
+                <button onClick={() => executeAction('/api/v1/incidents/respond')} className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left transition-colors flex items-center justify-between">
                   <span>Incident Response</span>
                   <AlertTriangle className="w-4 h-4 text-yellow-500" />
                 </button>
@@ -656,22 +692,22 @@ function TacticalOperationsCenterContent() {
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
             <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">COMMAND CENTER</h3>
             <div className="grid grid-cols-6 gap-3">
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => executeAction('/api/v1/compliance/scan')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
                 RUN COMPLIANCE SCAN
               </button>
-              <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => executeAction('/api/v1/policies/enforce')} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors">
                 APPLY POLICIES
               </button>
-              <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => executeAction('/api/v1/ai/train')} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors">
                 TRAIN AI MODELS
               </button>
-              <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => executeAction('/api/v1/security/lockdown')} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors">
                 EMERGENCY LOCKDOWN
               </button>
-              <button className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => executeAction('/api/v1/optimize')} className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded transition-colors">
                 OPTIMIZE COSTS
               </button>
-              <button className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => executeAction('/api/v1/sync')} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded transition-colors">
                 SYNC RESOURCES
               </button>
             </div>
