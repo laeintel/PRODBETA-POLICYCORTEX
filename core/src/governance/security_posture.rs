@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
 use crate::azure_client::AzureClient;
-use crate::governance::{GovernanceError, GovernanceResult, ComponentHealth, HealthStatus};
+use crate::governance::{GovernanceResult, ComponentHealth, HealthStatus};
 
 /// Microsoft Defender for Cloud security posture engine
 pub struct SecurityPostureEngine {

@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
 use crate::azure_client::AzureClient;
-use crate::governance::{GovernanceError, GovernanceResult, ComponentHealth, HealthStatus};
+use crate::governance::{GovernanceResult, ComponentHealth, HealthStatus};
 
 /// Azure Network governance engine
 pub struct NetworkGovernanceEngine {

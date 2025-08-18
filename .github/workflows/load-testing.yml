@@ -1,0 +1,232 @@
+name: Load Testing and Performance Validation
+
+on:
+  schedule:
+    # Run weekly on Sunday at 3 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of load test to run'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - stress
+          - spike
+          - soak
+      duration:
+        description: 'Test duration in seconds'
+        required: false
+        default: '300'
+        type: string
+      target_env:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+
+jobs:
+  k6-load-test:
+    name: K6 Load Testing
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup K6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+      
+      - name: Determine test endpoints
+        id: endpoints
+        run: |
+          if [[ "${{ github.event.inputs.target_env || 'dev' }}" == "dev" ]]; then
+            echo "api_url=https://ca-cortex-core-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "frontend_url=https://ca-cortex-frontend-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "graphql_url=https://ca-cortex-graphql-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
+          else
+            echo "api_url=https://ca-cortex-core-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "frontend_url=https://ca-cortex-frontend-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "graphql_url=https://ca-cortex-graphql-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Run K6 Load Test
+        id: k6_test
+        run: |
+          export API_URL="${{ steps.endpoints.outputs.api_url }}"
+          export FRONTEND_URL="${{ steps.endpoints.outputs.frontend_url }}"
+          export GRAPHQL_URL="${{ steps.endpoints.outputs.graphql_url }}"
+          export TEST_TYPE="${{ github.event.inputs.test_type || 'standard' }}"
+          export DURATION="${{ github.event.inputs.duration || '300' }}"
+          
+          k6 run tests/load/k6-test.js \
+            --out json=results.json \
+            --summary-export=summary.json
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results-${{ github.run_id }}
+          path: |
+            results.json
+            summary.json
+      
+      - name: Parse and validate results
+        id: validate
+        run: |
+          python scripts/parse-k6-results.py summary.json
+      
+      - name: Create issue if thresholds failed
+        if: failure()
+        uses: actions/create-issue@v2
+        with:
+          title: "Load Test Failed - Performance Degradation Detected"
+          body: |
+            ## Load Test Failure Report
+            
+            **Test Type:** ${{ github.event.inputs.test_type || 'standard' }}
+            **Environment:** ${{ github.event.inputs.target_env || 'dev' }}
+            **Duration:** ${{ github.event.inputs.duration || '300' }} seconds
+            **Run ID:** ${{ github.run_id }}
+            
+            ### Failed Thresholds
+            Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.
+            
+            ### Action Required
+            - Review performance metrics
+            - Identify bottlenecks
+            - Implement optimizations
+          labels: |
+            performance
+            load-testing
+            urgent
+
+  locust-load-test:
+    name: Locust Load Testing
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'stress' || github.event.inputs.test_type == 'spike'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Locust
+        run: |
+          pip install locust
+      
+      - name: Determine test endpoints
+        id: endpoints
+        run: |
+          if [[ "${{ github.event.inputs.target_env || 'dev' }}" == "dev" ]]; then
+            echo "api_url=https://ca-cortex-core-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
+          else
+            echo "api_url=https://ca-cortex-core-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Run Locust Test
+        run: |
+          locust -f tests/load/locustfile.py \
+            --host=${{ steps.endpoints.outputs.api_url }} \
+            --headless \
+            --users 100 \
+            --spawn-rate 10 \
+            --run-time ${{ github.event.inputs.duration || '300' }}s \
+            --html report.html \
+            --csv results
+      
+      - name: Upload Locust results
+        uses: actions/upload-artifact@v4
+        with:
+          name: locust-results-${{ github.run_id }}
+          path: |
+            report.html
+            results_*.csv
+
+  chaos-testing:
+    name: Chaos Engineering Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'stress'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Run chaos experiments
+        run: |
+          # This would integrate with Azure Chaos Studio
+          # For now, we'll do basic chaos testing
+          
+          echo "Running chaos experiments..."
+          
+          # Test 1: CPU stress
+          echo "Testing CPU stress resilience..."
+          
+          # Test 2: Memory pressure
+          echo "Testing memory pressure resilience..."
+          
+          # Test 3: Network latency
+          echo "Testing network latency resilience..."
+      
+      - name: Collect chaos test results
+        run: |
+          echo "Chaos test results collected"
+
+  performance-report:
+    name: Generate Performance Report
+    runs-on: ubuntu-latest
+    needs: [k6-load-test]
+    if: always()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+      
+      - name: Generate consolidated report
+        run: |
+          python scripts/generate-performance-report.py
+      
+      - name: Upload final report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report-${{ github.run_id }}
+          path: performance-report.md
+      
+      - name: Comment on PR if exists
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('performance-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });

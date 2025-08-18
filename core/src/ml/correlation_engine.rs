@@ -7,12 +7,12 @@
 // © 2024 PolicyCortex. All rights reserved.
 
 use super::graph_neural_network::{
-    GraphNeuralNetwork, ResourceNode, ResourceEdge, GovernanceDomain,
+    GraphNeuralNetwork, GovernanceDomain,
     RelationshipType, CrossDomainImpact, CorrelationPattern, PatternType,
     WhatIfAnalysis,
 };
 
-pub use super::graph_neural_network::{WhatIfScenario, ScenarioType, ProposedChange};
+pub use super::graph_neural_network::WhatIfScenario;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;

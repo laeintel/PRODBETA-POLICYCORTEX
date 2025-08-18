@@ -7,11 +7,9 @@
 // © 2024 PolicyCortex. All rights reserved.
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 
 use super::{
-    AuditLog, CloudCollector, CloudPolicy, CloudProvider, CloudResource, ComplianceStatus,
-    ResourceType,
+    AuditLog, CloudCollector, CloudPolicy, CloudResource,
 };
 
 /// GCP resource collector for multi-cloud parity (stub implementation)

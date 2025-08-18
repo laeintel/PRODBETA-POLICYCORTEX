@@ -15,8 +15,6 @@ use super::bulk_remediation::{BulkRemediationEngine, Violation};
 use super::rollback_manager::RollbackManager;
 use crate::error::ApiError;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 // Add missing methods to ApprovalWorkflowManager

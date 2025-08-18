@@ -10,11 +10,10 @@
 // Based on Roadmap_08_Security_and_Exposure_Graph.md
 // Addresses GitHub Issue #56-59: Security Graph Implementation
 
-use async_trait::async_trait;
-use petgraph::algo::{all_simple_paths, dijkstra};
+use petgraph::algo::all_simple_paths;
 use petgraph::graph::{DiGraph, NodeIndex};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 // Graph node types representing security entities
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -325,8 +324,7 @@ impl SecurityGraphEngine {
 
         let resource_items = resources
             .get("items")
-            .and_then(|v| v.as_array())
-            .map(|v| v.clone())
+            .and_then(|v| v.as_array()).cloned()
             .unwrap_or_default();
         for resource_data in resource_items {
             // Determine classification based on tags and type
@@ -413,8 +411,7 @@ impl SecurityGraphEngine {
         // Add public endpoints
         let public_endpoints = network_data
             .get("public_endpoints")
-            .and_then(|v| v.as_array())
-            .map(|v| v.clone())
+            .and_then(|v| v.as_array()).cloned()
             .unwrap_or_default();
         for public_endpoint in public_endpoints {
             let exposure = if public_endpoint
@@ -470,8 +467,7 @@ impl SecurityGraphEngine {
         // Add private endpoints
         let private_endpoints = network_data
             .get("private_endpoints")
-            .and_then(|v| v.as_array())
-            .map(|v| v.clone())
+            .and_then(|v| v.as_array()).cloned()
             .unwrap_or_default();
         for private_endpoint in private_endpoints {
             let endpoint = SecurityNode::NetworkEndpoint {

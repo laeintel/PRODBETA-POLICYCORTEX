@@ -25,7 +25,6 @@ pub mod unified_api;
 pub mod ai;
 
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use crate::azure_client::AzureClient;
 
 /// Central governance coordinator that orchestrates all governance tools
@@ -261,9 +260,9 @@ pub struct GovernanceHealthReport {
 
 /// Calculate overall health from component statuses
 fn calculate_overall_health(statuses: &[HealthStatus]) -> HealthStatus {
-    if statuses.iter().any(|s| *s == HealthStatus::Unhealthy) {
+    if statuses.contains(&HealthStatus::Unhealthy) {
         HealthStatus::Unhealthy
-    } else if statuses.iter().any(|s| *s == HealthStatus::Degraded) {
+    } else if statuses.contains(&HealthStatus::Degraded) {
         HealthStatus::Degraded
     } else {
         HealthStatus::Healthy

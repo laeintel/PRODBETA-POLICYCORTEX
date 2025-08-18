@@ -9,7 +9,6 @@
 // Notification System for Approval Workflows
 // Multi-channel notification system supporting Email, Teams, Slack, and Webhooks
 
-use super::*;
 use super::approval_manager::{ApprovalRequest, ApprovalDecision};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -263,7 +262,7 @@ impl NotificationSystem {
         Ok(())
     }
 
-    pub async fn send_notification(&self, mut request: NotificationRequest) -> Result<NotificationResult, String> {
+    pub async fn send_notification(&self, request: NotificationRequest) -> Result<NotificationResult, String> {
         let start_time = Utc::now();
         let notification_id = request.notification_id;
         

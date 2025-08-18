@@ -396,7 +396,7 @@ impl ResourceMapper {
     fn is_chain_critical(&self, path: &[NodeIndex]) -> bool {
         // Check if any edge in the path is critical
         for window in path.windows(2) {
-            if let (Some(&from), Some(&to)) = (window.get(0), window.get(1)) {
+            if let (Some(&from), Some(&to)) = (window.first(), window.get(1)) {
                 if let Some(edge) = self.dependency_graph.find_edge(from, to) {
                     if self.dependency_graph[edge].critical {
                         return true;

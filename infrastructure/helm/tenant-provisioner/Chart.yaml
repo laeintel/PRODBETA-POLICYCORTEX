@@ -1,0 +1,13 @@
+apiVersion: v2
+name: tenant-provisioner
+description: Automated tenant namespace provisioning for PolicyCortex
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - policycortex
+  - multi-tenant
+  - isolation
+maintainers:
+  - name: PolicyCortex Team
+    email: ops@policycortex.com

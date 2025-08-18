@@ -422,7 +422,7 @@ impl ChangeManagementSystem for ServiceNowIntegration {
 
             Ok(result["result"]
                 .as_array()
-                .map_or(false, |arr| !arr.is_empty()))
+                .is_some_and(|arr| !arr.is_empty()))
         } else {
             Err(format!("ServiceNow returned error: {}", response.status()))
         }
@@ -714,11 +714,10 @@ impl ChangeManagementOrchestrator {
 
     pub async fn submit_change(&self, mut request: ChangeRequest) -> Result<String, String> {
         // Check freeze windows
-        if self.is_in_freeze_window(&request).await? {
-            if request.category != ChangeCategory::Emergency {
+        if self.is_in_freeze_window(&request).await?
+            && request.category != ChangeCategory::Emergency {
                 return Err("Change rejected: in freeze window".to_string());
             }
-        }
 
         // Validate change
         self.validate_change(&request)?;
@@ -738,11 +737,10 @@ impl ChangeManagementOrchestrator {
     async fn is_in_freeze_window(&self, request: &ChangeRequest) -> Result<bool, String> {
         // Check local freeze windows
         for window in &self.freeze_windows {
-            if request.scheduled_start >= window.start && request.scheduled_start <= window.end {
-                if !window.allow_emergency || request.category != ChangeCategory::Emergency {
+            if request.scheduled_start >= window.start && request.scheduled_start <= window.end
+                && (!window.allow_emergency || request.category != ChangeCategory::Emergency) {
                     return Ok(true);
                 }
-            }
         }
 
         // Check external system

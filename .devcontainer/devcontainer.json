@@ -4,7 +4,7 @@
   "features": {
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
-  "postCreateCommand": "./scripts/preflight.ps1 || true && ./start-local.sh",
+  "postCreateCommand": "./scripts/runtime/start-local.sh",
   "customizations": {
     "vscode": {
       "settings": {

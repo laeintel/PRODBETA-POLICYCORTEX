@@ -1,4 +1,4 @@
-# PolicyCortex v2 - AI-Powered Azure Governance Platform
+# PolicyCortex - AI-Powered Azure Governance Platform
 
 ## 🚀 Complete Architecture Rebuild
 
@@ -34,15 +34,15 @@ PolicyCortex has been completely rebuilt from the ground up with 80 architectura
 ```powershell
 git clone https://github.com/aeolitech/policycortex.git
 cd policycortex
-.\start-local.bat
+.\scripts\runtime\start-local.bat
 ```
 
 #### Linux/Mac
 ```bash
 git clone https://github.com/aeolitech/policycortex.git
 cd policycortex
-chmod +x start-local.sh
-./start-local.sh
+chmod +x scripts/runtime/start-local.sh
+./scripts/runtime/start-local.sh
 ```
 
 Access the application at **http://localhost:3000**

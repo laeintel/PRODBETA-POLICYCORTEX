@@ -15,7 +15,7 @@ permissions:
 jobs:
   fix-docker-repo:
     name: Fix Docker Repository Configuration
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Check current Docker repository status
         run: |

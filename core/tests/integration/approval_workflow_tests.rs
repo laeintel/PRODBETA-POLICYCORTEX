@@ -319,4 +319,4 @@ pub enum ApprovalPriority {
     Low,
 }
 
-use policycortex_core::remediation::{RemediationRequest, RemediationRequestBuilder};
+use policycortex_core::remediation::RemediationRequest;

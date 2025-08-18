@@ -312,7 +312,7 @@ impl EnforcementEngine for DefaultEnforcementEngine {
         if action
             .result
             .as_ref()
-            .map_or(true, |r| !r.rollback_available)
+            .is_none_or(|r| !r.rollback_available)
         {
             return Err("Rollback not available for this action".to_string());
         }

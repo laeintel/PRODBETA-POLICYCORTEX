@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-PolicyCortex v2 is an AI-powered Azure governance platform with four patented technologies:
+PolicyCortex is an AI-powered Azure governance platform with four patented technologies:
 1. Cross-Domain Governance Correlation Engine (Patent 1)
 2. Conversational Governance Intelligence System (Patent 2) 
 3. Unified AI-Driven Cloud Governance Platform (Patent 3)
@@ -22,22 +22,22 @@ PolicyCortex v2 is an AI-powered Azure governance platform with four patented te
 ### Complete Testing (Recommended)
 ```bash
 # Test everything on Windows
-.\test-all-windows.bat
+.\scripts\testing\test-all-windows.bat
 
 # Test everything on Linux/Mac  
-./test-all-linux.sh
+./scripts/testing/test-all-linux.sh
 ```
 
 ### Development
 ```bash
 # Start full stack (Windows)
-.\start-dev.bat
+.\scripts\runtime\start-dev.bat
 
 # Start with Docker Compose (Windows)
-.\start-local.bat
+.\scripts\runtime\start-local.bat
 
 # Start with Docker Compose (Linux/Mac)
-./start-local.sh
+./scripts/runtime/start-local.sh
 
 # Frontend only (runs on port 3000)
 cd frontend && npm run dev
@@ -57,10 +57,10 @@ cd backend/services/api_gateway && uvicorn main:app --reload
 **🚀 Recommended: Use the comprehensive test scripts**
 ```bash
 # Complete test suite (Windows)
-.\test-all-windows.bat
+.\scripts\testing\test-all-windows.bat
 
 # Complete test suite (Linux/Mac)
-./test-all-linux.sh
+./scripts/testing/test-all-linux.sh
 ```
 
 **Manual component testing:**
@@ -70,6 +70,7 @@ cd frontend
 npm run build
 npm run lint
 npm run type-check
+npm test
 
 # Rust backend
 cd core
@@ -83,6 +84,19 @@ cd core && cargo test test_name
 
 # Format Rust code
 cd core && cargo fmt --all
+
+# Python services
+cd backend/services/api_gateway
+python -m pytest tests/ --verbose
+
+# GraphQL gateway
+cd graphql
+npm test
+
+# Edge functions
+cd edge
+npm run build
+npm test
 ```
 
 ### Database Operations
@@ -163,7 +177,7 @@ GitHub Actions workflow (`application.yml`) includes:
 
 ## Development Workflow
 1. Check Azure authentication: `az account show`
-2. Start services with appropriate script (start-dev.bat or start-local.bat)
+2. Start services with appropriate script (scripts/runtime/start-dev.bat or scripts/runtime/start-local.bat)
 3. Frontend hot-reloads automatically
 4. Backend requires restart for Rust changes (use cargo watch for auto-reload)
 5. Test patent features with `scripts/test-workflow.sh`
@@ -186,7 +200,25 @@ This ensures continuous documentation of implementation progress and maintains p
 
 ## Testing Patent Features
 The system includes four patented technologies that can be tested via their respective APIs:
-1. Unified Platform - Test via `/api/v1/metrics` for cross-domain metrics
-2. Predictive Compliance - Test via `/api/v1/predictions` for drift predictions
-3. Conversational Intelligence - Test via `/api/v1/conversation` with natural language queries
-4. Cross-Domain Correlation - Test via `/api/v1/correlations` for pattern detection
+1. Cross-Domain Correlation - Test via `/api/v1/correlations` for pattern detection
+2. Conversational Intelligence - Test via `/api/v1/conversation` with natural language queries
+3. Unified Platform - Test via `/api/v1/metrics` for cross-domain metrics
+4. Predictive Compliance - Test via `/api/v1/predictions` for drift predictions
+
+## Docker Operations
+```bash
+# Build all services
+docker-compose build
+
+# Start services (development)
+docker-compose -f docker-compose.local.yml up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f [service-name]
+
+# Clean up everything
+docker-compose down -v --remove-orphans
+```

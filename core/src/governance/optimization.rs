@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
 use crate::azure_client::AzureClient;
-use crate::governance::{GovernanceError, GovernanceResult, ComponentHealth, HealthStatus};
+use crate::governance::{GovernanceResult, ComponentHealth, HealthStatus};
 
 /// Azure Advisor optimization engine
 pub struct OptimizationEngine {
@@ -521,7 +521,7 @@ impl OptimizationEngine {
 
         // Enhance recommendations with additional analysis
         for recommendation in &mut enhanced_recommendations {
-            recommendation.risk_level = self.cost_analyzer.assess_risk_level(&recommendation);
+            recommendation.risk_level = self.cost_analyzer.assess_risk_level(recommendation);
             
             // Add custom insights based on usage patterns
             if let Some(usage_pattern) = self.cost_analyzer.usage_patterns.get(&recommendation.resource_id) {
@@ -573,7 +573,7 @@ impl OptimizationEngine {
         // Enhance with security policy compliance
         for recommendation in &mut enhanced_recommendations {
             // Check against security policies
-            for (_, policy) in &self.security_optimizer.security_policies {
+            for policy in self.security_optimizer.security_policies.values() {
                 if policy.compliance_frameworks.contains(&"CIS".to_string()) {
                     recommendation.compliance_frameworks.push("CIS Controls".to_string());
                 }

@@ -14,11 +14,20 @@ export async function GET(request: NextRequest) {
   try {
     // Proxy to backend health endpoint
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+    
     const response = await fetch(`${backendUrl}/health`, {
       headers: {
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
+    }).catch((err) => {
+      clearTimeout(timeoutId)
+      throw err
     })
+    
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       throw new Error(`Backend returned ${response.status}`)
@@ -27,14 +36,17 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
     return NextResponse.json(data)
   } catch (error) {
-    // If backend is not available, return a degraded status
+    // If backend is not available, return a degraded status with 200 OK
+    // This prevents the 500 error in the frontend
     return NextResponse.json({
-      status: 'healthy',
-      version: '2.0.0',
+      status: 'degraded',
+      version: '2.11.8',
       service: 'policycortex-frontend',
       azure_connected: false,
       data_mode: 'offline',
+      backend_available: false,
+      message: 'Running in frontend-only mode',
       error: error instanceof Error ? error.message : 'Backend unavailable'
-    })
+    }, { status: 200 }) // Return 200 even when degraded to avoid console errors
   }
 }

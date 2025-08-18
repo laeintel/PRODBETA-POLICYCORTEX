@@ -1,8 +1,8 @@
 @echo off
-REM PolicyCortex v2 - Seed Data Script for Windows
+REM PolicyCortex - Seed Data Script for Windows
 
 echo =====================================
-echo PolicyCortex v2 Development Data Seeder
+echo PolicyCortex Development Data Seeder
 echo =====================================
 echo.
 

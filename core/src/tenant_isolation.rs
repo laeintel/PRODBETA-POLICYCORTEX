@@ -16,7 +16,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
-use tracing::{error, info, warn};
+use tracing::{info, warn};
 use uuid::Uuid;
 
 /// Tenant context for request processing
@@ -190,11 +190,11 @@ impl TenantDatabase {
             "#,
         )
         .bind(id)
-        .bind(&tenant.tenant_id)
+        .bind(tenant.tenant_id)
         .bind(resource_type)
         .bind(name)
         .bind(&data)
-        .bind(&tenant.user_id)
+        .bind(tenant.user_id)
         .execute(&*self.pool)
         .await?;
 
@@ -219,7 +219,7 @@ impl TenantDatabase {
                 "#,
             )
             .bind(&data)
-            .bind(&tenant.user_id)
+            .bind(tenant.user_id)
             .bind(resource_id)
             .execute(&*self.pool)
             .await?
@@ -233,9 +233,9 @@ impl TenantDatabase {
                 "#,
             )
             .bind(&data)
-            .bind(&tenant.user_id)
+            .bind(tenant.user_id)
             .bind(resource_id)
-            .bind(&tenant.tenant_id)
+            .bind(tenant.tenant_id)
             .execute(&*self.pool)
             .await?
         };
@@ -259,7 +259,7 @@ impl TenantDatabase {
             // Regular user can only delete their tenant's resources
             sqlx::query("DELETE FROM resources WHERE id = $1 AND tenant_id = $2")
                 .bind(resource_id)
-                .bind(&tenant.tenant_id)
+                .bind(tenant.tenant_id)
                 .execute(&*self.pool)
                 .await?
         };
@@ -278,7 +278,7 @@ impl TenantDatabase {
                 .await?
         } else {
             sqlx::query("SELECT * FROM policies WHERE tenant_id = $1 ORDER BY created_at DESC")
-                .bind(&tenant.tenant_id)
+                .bind(tenant.tenant_id)
                 .fetch_all(&*self.pool)
                 .await?
         };
@@ -326,7 +326,7 @@ impl TenantDatabase {
                 WHERE tenant_id = $1
                 "#
             )
-            .bind(&tenant.tenant_id)
+            .bind(tenant.tenant_id)
             .fetch_one(&*self.pool)
             .await?
         };
@@ -364,8 +364,8 @@ pub async fn audit_log(
         "#
     )
     .bind(Uuid::new_v4())
-    .bind(&tenant.tenant_id)
-    .bind(&tenant.user_id)
+    .bind(tenant.tenant_id)
+    .bind(tenant.user_id)
     .bind(action)
     .bind(resource_type)
     .bind(resource_id)

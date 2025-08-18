@@ -11,7 +11,7 @@ services:
     environment:
       - RUST_LOG=debug
       - ENVIRONMENT=dev
-      - USE_REAL_DATA=true
+      - USE_REAL_DATA=true  # Set to true for live Azure data
       # Azure credentials (pull from your host env)
       - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
       - AZURE_TENANT_ID=${AZURE_TENANT_ID}
@@ -138,5 +138,5 @@ volumes:
 
 networks:
   default:
-    name: policycortex-v2
+    name: policycortex
     driver: bridge
