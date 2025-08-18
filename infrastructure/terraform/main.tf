@@ -697,7 +697,7 @@ resource "azurerm_container_app" "core" {
   template {
     container {
       name   = "core"
-      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" # Placeholder until images are built
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-core:latest"
       cpu    = 0.5
       memory = "1Gi"
 
@@ -717,7 +717,7 @@ resource "azurerm_container_app" "core" {
 
   ingress {
     external_enabled = true
-    target_port      = 80 # Placeholder image listens on port 80
+    target_port      = 8080 # Core API listens on port 8080
     transport        = "http"
     traffic_weight {
       percentage      = 100
@@ -749,7 +749,7 @@ resource "azurerm_container_app" "frontend" {
   template {
     container {
       name   = "frontend"
-      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" # Placeholder until images are built
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-frontend:latest"
       cpu    = 0.5
       memory = "1Gi"
 
@@ -769,7 +769,7 @@ resource "azurerm_container_app" "frontend" {
 
   ingress {
     external_enabled = true
-    target_port      = 80 # Placeholder image listens on port 80
+    target_port      = 3000 # Frontend listens on port 3000
     transport        = "http"
     traffic_weight {
       percentage      = 100
@@ -805,7 +805,7 @@ resource "azurerm_container_app" "graphql" {
   template {
     container {
       name   = "graphql"
-      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest" # Placeholder until images are built
+      image  = "${azurerm_container_registry.main.login_server}/policycortex-graphql:latest"
       cpu    = 0.5
       memory = "1Gi"
 
@@ -820,7 +820,7 @@ resource "azurerm_container_app" "graphql" {
 
   ingress {
     external_enabled = true
-    target_port      = 80 # Placeholder image listens on port 80
+    target_port      = 4000 # GraphQL listens on port 4000
     transport        = "http"
     traffic_weight {
       percentage      = 100
