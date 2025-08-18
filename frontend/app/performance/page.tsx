@@ -15,6 +15,8 @@ import { motion } from 'framer-motion'
 import { Gauge, TrendingUp, Activity, Zap, Clock, BarChart3, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Line, Bar } from 'react-chartjs-2'
 import AppLayout from '../../components/AppLayout'
+import toast from 'react-hot-toast'
+import { api } from '../../lib/api-client'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -50,13 +52,31 @@ export default function PerformancePage() {
 
   const fetchPerformanceData = async () => {
     try {
-      const response = await fetch('/api/v1/performance')
-      const data = await response.json()
-      setPerformanceData(data)
+      const resp = await api.getPerformance()
+      if (!resp.error) setPerformanceData(resp.data)
     } catch (error) {
       console.error('Failed to fetch performance data:', error)
+      toast.error('Failed to load performance data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const triggerAction = async (actionType: string, params?: any) => {
+    try {
+      const resp = await api.createAction('global', actionType, params)
+      if (resp.error || resp.status >= 400) {
+        toast.error(`Action failed: ${actionType}`)
+        return
+      }
+      toast.success(`${actionType.replace('_',' ')} started`)
+      const id = resp.data?.action_id || resp.data?.id
+      if (id) {
+        const stop = api.streamActionEvents(String(id), (m) => console.log('[performance-action]', id, m))
+        setTimeout(stop, 60000)
+      }
+    } catch (e) {
+      toast.error(`Action error: ${actionType}`)
     }
   }
 
@@ -259,7 +279,7 @@ export default function PerformancePage() {
                   )}
                 </div>
               </div>
-              <button className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+              <button onClick={() => triggerAction('apply_performance_recommendation', { title: rec.title })} className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                 Apply
               </button>
             </div>

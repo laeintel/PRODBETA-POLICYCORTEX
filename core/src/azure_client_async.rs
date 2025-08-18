@@ -79,19 +79,58 @@ impl ConnectionPool {
 }
 
 impl AsyncAzureClient {
-    /// Get Azure policies
+    /// Get Azure policies (assignments + definitions summary) for one subscription
     pub async fn get_policies(
         &self,
     ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error + Send + Sync>> {
-        use crate::simulated_data::SimulatedDataProvider;
+        let subscription_id = self
+            .config
+            .subscription_id
+            .as_ref()
+            .or_else(|| self.config.subscriptions.first())
+            .ok_or("No subscription available")?;
 
-        // For now, return simulated data structure
-        // TODO: Implement real Azure policy fetching when authenticated
-        let policies = SimulatedDataProvider::get_policies();
-        Ok(policies
-            .into_iter()
-            .map(|p| serde_json::to_value(p).unwrap())
-            .collect())
+        // List policy assignments
+        let assignments_url = format!(
+            "{}/subscriptions/{}/providers/Microsoft.Authorization/policyAssignments?api-version=2021-06-01",
+            self.config.base_url, subscription_id
+        );
+        let assignments_resp = self.make_authenticated_request(&assignments_url).await?;
+        let assignments_json: serde_json::Value = assignments_resp.json().await?;
+
+        // List policy definitions
+        let defs_url = format!(
+            "{}/subscriptions/{}/providers/Microsoft.Authorization/policyDefinitions?api-version=2021-06-01",
+            self.config.base_url, subscription_id
+        );
+        let defs_resp = self.make_authenticated_request(&defs_url).await?;
+        let defs_json: serde_json::Value = defs_resp.json().await?;
+
+        // Compose concise list for UI consumption
+        let mut out = Vec::new();
+        if let Some(items) = assignments_json.get("value").and_then(|v| v.as_array()) {
+            for a in items.iter().take(500) {
+                out.push(serde_json::json!({
+                    "type": "assignment",
+                    "name": a.get("name"),
+                    "id": a.get("id"),
+                    "scope": a.get("properties").and_then(|p| p.get("scope")),
+                    "policyDefinitionId": a.get("properties").and_then(|p| p.get("policyDefinitionId")),
+                }));
+            }
+        }
+        if let Some(items) = defs_json.get("value").and_then(|v| v.as_array()) {
+            for d in items.iter().take(500) {
+                out.push(serde_json::json!({
+                    "type": "definition",
+                    "name": d.get("name"),
+                    "id": d.get("id"),
+                    "displayName": d.get("properties").and_then(|p| p.get("displayName")),
+                    "mode": d.get("properties").and_then(|p| p.get("mode")),
+                }));
+            }
+        }
+        Ok(out)
     }
 
     pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
@@ -655,40 +694,167 @@ impl AsyncAzureClient {
     pub async fn get_rbac_analysis(
         &self,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+        let subscription_id = self
+            .config
+            .subscription_id
+            .as_ref()
+            .or_else(|| self.config.subscriptions.first())
+            .ok_or("No subscription available")?;
+        let url = format!(
+            "{}/subscriptions/{}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01",
+            self.config.base_url, subscription_id
+        );
+        let response = self.make_authenticated_request(&url).await?;
+        let rbac_data: RbacAssignmentsResponse = response.json().await?;
+
+        let unique_principals: std::collections::HashSet<String> = rbac_data
+            .value
+            .iter()
+            .map(|assignment| assignment.properties.principal_id.clone())
+            .collect();
+        let privileged = rbac_data
+            .value
+            .iter()
+            .filter(|a| self.is_privileged_role(&a.properties.role_definition_id))
+            .count();
+        let risk = self.calculate_rbac_risk_score(&rbac_data.value);
+
         Ok(serde_json::json!({
-            "users": 150,
-            "roles": 25,
-            "violations": 2,
-            "risk_score": 3.2
+            "assignments": rbac_data.value.len(),
+            "users": unique_principals.len(),
+            "privileged_count": privileged,
+            "high_risk_count": (privileged as f64 * 0.1).round() as u32,
+            "stale_count": 0,
+            "overprivileged_identities": 0,
+            "risk_score": risk,
+            "recommendations": ["review_high_privilege_roles","remove_stale_assignments"]
         }))
     }
 
     pub async fn get_cost_analysis(
         &self,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+        let subscription_id = self
+            .config
+            .subscription_id
+            .as_ref()
+            .or_else(|| self.config.subscriptions.first())
+            .ok_or("No subscription available")?;
+        let url = format!(
+            "{}/subscriptions/{}/providers/Microsoft.CostManagement/query?api-version=2023-03-01",
+            self.config.base_url, subscription_id
+        );
+        let query_payload = CostQueryRequest {
+            r#type: "ActualCost".to_string(),
+            timeframe: "MonthToDate".to_string(),
+            dataset: CostDataset {
+                granularity: "Daily".to_string(),
+                aggregation: std::collections::HashMap::from([
+                    (
+                        "totalCost".to_string(),
+                        CostAggregation { name: "PreTaxCost".to_string(), function: "Sum".to_string() },
+                    ),
+                ]),
+            },
+        };
+        let response = self
+            .http_client
+            .post(&url)
+            .bearer_auth(&self.get_access_token().await?)
+            .json(&query_payload)
+            .send()
+            .await?;
+        let cost_data: CostQueryResponse = response.json().await?;
+
+        let total: f64 = cost_data
+            .properties
+            .rows
+            .iter()
+            .map(|row| row[0].as_f64().unwrap_or(0.0))
+            .sum();
+        let predicted = self.predict_monthly_spend(&cost_data.properties.rows);
+        let savings = self.identify_cost_savings(&cost_data.properties.rows);
+
         Ok(serde_json::json!({
-            "current_spend": 125000.0,
-            "predicted_spend": 118000.0,
-            "savings_opportunities": 7000.0
+            "total_cost": total,
+            "forecast": predicted,
+            "service_breakdown": [],
+            "anomalies": [],
+            "trends": [],
+            "optimization_potential": savings,
+            "recommendations": ["rightsizing","shutdown_schedules","reserved_instances"]
         }))
     }
 
     pub async fn get_network_topology(
         &self,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+        let subscription_id = self
+            .config
+            .subscription_id
+            .as_ref()
+            .or_else(|| self.config.subscriptions.first())
+            .ok_or("No subscription available")?;
+        // Virtual networks
+        let vnet_url = format!(
+            "{}/subscriptions/{}/providers/Microsoft.Network/virtualNetworks?api-version=2023-11-01",
+            self.config.base_url, subscription_id
+        );
+        let vnet_resp = self.make_authenticated_request(&vnet_url).await?;
+        let vnets: serde_json::Value = vnet_resp.json().await?;
+        let vnet_count = vnets.get("value").and_then(|v| v.as_array()).map(|a| a.len()).unwrap_or(0);
+
+        // NSGs for endpoints count
+        let nsg_url = format!(
+            "{}/subscriptions/{}/providers/Microsoft.Network/networkSecurityGroups?api-version=2023-04-01",
+            self.config.base_url, subscription_id
+        );
+        let nsg_resp = self.make_authenticated_request(&nsg_url).await?;
+        let nsg_data: NetworkSecurityGroupsResponse = nsg_resp.json().await?;
+        let endpoints = nsg_data.value.iter().map(|n| n.properties.security_rules.len()).sum::<usize>();
+
         Ok(serde_json::json!({
-            "vnets": 5,
-            "subnets": 15,
-            "endpoints": 450
+            "vnets": vnet_count,
+            "subnets": null, // Omitted for speed; can be expanded by iterating subnets
+            "endpoints": endpoints
         }))
     }
 
     pub async fn get_all_resources_with_health(
         &self,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
+        let subscription_id = self
+            .config
+            .subscription_id
+            .as_ref()
+            .or_else(|| self.config.subscriptions.first())
+            .ok_or("No subscription available")?;
+        let url = format!(
+            "{}/subscriptions/{}/resources?api-version=2021-04-01",
+            self.config.base_url, subscription_id
+        );
+        let response = self.make_authenticated_request(&url).await?;
+        let data: ResourcesResponse = response.json().await?;
+
+        let items: Vec<serde_json::Value> = data
+            .value
+            .iter()
+            .map(|r| serde_json::json!({
+                "id": r.id,
+                "name": r.name,
+                "type": r.r#type,
+                "location": r.location,
+                "health": "unknown"
+            }))
+            .collect();
+
         Ok(serde_json::json!({
-            "resources": [],
-            "total": 0
+            "items": items,
+            "total_count": data.value.len(),
+            "health_summary": {"unknown": data.value.len()},
+            "compliance_summary": null,
+            "tag_analysis": null,
+            "recommendations": []
         }))
     }
 

@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuthenticatedFetch } from '@/contexts/AuthContext'
+import { api } from '@/lib/api-client'
 
 interface ExceptionRecord {
   id: string
@@ -39,9 +40,9 @@ export default function ExceptionsPage() {
     const controller = new AbortController()
     const load = async () => {
       try {
-        const res = await fetch('/api/v1/exceptions', { signal: controller.signal, headers: { 'Accept-Encoding': 'gzip, br' }})
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = await res.json()
+        const resp = await api.listExceptions()
+        if (resp.error) throw new Error(resp.error)
+        const json = resp.data as any
         setItems(json.items || [])
       } catch (e: any) {
         if (e.name !== 'AbortError') setError(e.message || 'Failed to load exceptions')
@@ -68,15 +69,15 @@ export default function ExceptionsPage() {
                 const res = await authedFetch('/api/v1/exception',{method:'POST',body:JSON.stringify({resource_id:resourceId,policy_id:policyId,reason})})
                 if(!res.ok) throw new Error(`HTTP ${res.status}`)
                 setResourceId(''); setPolicyId(''); setReason('');
-                const list = await fetch('/api/v1/exceptions').then(r=>r.json())
-                setItems(list.items||[])
+                const list = await api.listExceptions();
+                if (!list.error) setItems((list.data as any)?.items||[])
               }catch(e:any){ setError(e.message||'Failed to create exception') }
             }}
             className="px-4 py-2 rounded bg-blue-600 text-white"
           >Create Exception</button>
           <button
             onClick={async ()=>{
-              try{ await authedFetch('/api/v1/exceptions/expire',{method:'POST'}); const list = await fetch('/api/v1/exceptions').then(r=>r.json()); setItems(list.items||[]) }catch(e:any){ setError(e.message||'Expire failed') }
+              try{ const ex = await api.expireExceptions(); if (ex.error) throw new Error(ex.error); const list = await api.listExceptions(); if (!list.error) setItems((list.data as any)?.items||[]) }catch(e:any){ setError(e.message||'Expire failed') }
             }}
             className="px-4 py-2 rounded bg-yellow-600 text-white"
           >Expire Past</button>

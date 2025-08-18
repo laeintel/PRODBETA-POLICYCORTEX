@@ -27,6 +27,7 @@ import {
 } from '../lib/azure-api'
 import PoliciesDeepView from './PoliciesDeepView'
 import AppLayout from './AppLayout'
+import { api } from '../lib/api-client'
 import { ChartCard, ComplianceTrend, CostTrend, RiskSurface } from './ChartCards'
 import RoadmapStatusWidget from './RoadmapStatusWidget'
 import { 
@@ -336,7 +337,28 @@ export default function DashboardContent() {
                           </div>
                         </div>
                       </div>
-                      <button className="mt-3 px-4 py-2 bg-purple-600/30 text-purple-300 rounded-lg text-sm hover:bg-purple-600/50 transition-colors">
+                      <button
+                        onClick={async () => {
+                          try {
+                            // Create a backend action record (resource-agnostic for dashboard)
+                            const resp = await api.createAction('global', action.type, { source: 'dashboard', title: action.title })
+                            if (resp.error || resp.status >= 400) {
+                              console.error('Create action failed', resp.error)
+                              return
+                            }
+                            const actionId = resp.data?.action_id || resp.data?.id
+                            if (!actionId) return
+
+                            // Start streaming events (no UI toast yet; log to console)
+                            const stop = api.streamActionEvents(String(actionId), (msg) => console.log('[action]', actionId, msg))
+                            // Auto-stop after 60s
+                            setTimeout(stop, 60000)
+                          } catch (e) {
+                            console.error('Action trigger error', e)
+                          }
+                        }}
+                        className="mt-3 px-4 py-2 bg-purple-600/30 text-purple-300 rounded-lg text-sm hover:bg-purple-600/50 transition-colors"
+                      >
                         {action.action}
                       </button>
                     </motion.div>

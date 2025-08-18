@@ -9,11 +9,19 @@
  */
 
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Orbitron, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 
 const inter = Inter({ subsets: ['latin'] })
+const orbitron = Orbitron({ 
+  subsets: ['latin'],
+  variable: '--font-display',
+})
+const jetbrainsMono = JetBrains_Mono({ 
+  subsets: ['latin'],
+  variable: '--font-mono',
+})
 
 export const metadata: Metadata = {
   title: 'PolicyCortex - AI-Powered Azure Governance',
@@ -35,7 +43,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${orbitron.variable} ${jetbrainsMono.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>
