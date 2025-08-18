@@ -143,7 +143,7 @@ export default function TacticalDashboard() {
         <div className="grid grid-cols-5 gap-4 mb-6">
           <MetricCard
             title="Resources"
-            value={metrics.resources || 0}
+            value={typeof metrics.resources === 'object' ? (metrics.resources?.total || 0) : (metrics.resources || 0)}
             trend={12}
             icon={Server}
             color="blue"
