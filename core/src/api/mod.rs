@@ -375,8 +375,12 @@ pub async fn get_metrics(
         }
     };
 
+    // Determine data mode (Real vs Simulated) and enforce real-only behavior when requested
+    use crate::data_mode::DataMode;
+    let data_mode = DataMode::from_env();
+
     // Always try to get real Azure data when Azure client is available
-    // This works for local development with Azure CLI authentication
+    // Enforced for local development with Azure CLI authentication when DataMode is Real
 
     // Try high-performance async client first
     if let Some(ref async_azure_client) = state.async_azure_client {
@@ -405,7 +409,20 @@ pub async fn get_metrics(
         }
     }
 
-    // No Azure connection available - return simulated data
+    // If DataMode is Real, do NOT serve simulated data; surface an explicit error instead
+    if data_mode.is_real() {
+        tracing::error!("Real data required by DataMode, but Azure clients are unavailable or failed");
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "real_data_unavailable",
+                "message": "Azure data required but not available; verify credentials and network",
+            })),
+        )
+            .into_response();
+    }
+
+    // Otherwise, return simulated data (demo/simulated mode only)
     let simulated_metrics = GovernanceMetrics {
         policies: PolicyMetrics {
             total: 15,
@@ -1423,7 +1440,6 @@ pub struct CreateExceptionRequest {
 pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     counter!("api_requests_total", 1, "endpoint" => "policies");
     use crate::data_mode::{DataMode, DataResponse};
-    use crate::simulated_data::SimulatedDataProvider;
 
     let mode = DataMode::from_env();
 
@@ -1442,12 +1458,28 @@ pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoRespon
                 }
                 Err(e) => {
                     tracing::warn!("Failed to get real policies: {}", e);
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "real_data_unavailable",
+                            "message": "Azure Policy API unavailable; cannot serve simulated data in Real mode"
+                        })),
+                    ).into_response();
                 }
             }
         }
+        // No client available in Real mode → error
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "real_data_unavailable",
+                "message": "Azure client not initialized"
+            })),
+        ).into_response();
     }
 
     // Use simulated data as fallback or when in simulated mode
+    use crate::simulated_data::SimulatedDataProvider;
     let simulated_policies = SimulatedDataProvider::get_policies();
     Json(DataResponse::new(
         serde_json::json!({
@@ -1847,6 +1879,15 @@ pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResp
             }
             Err(e) => {
                 tracing::warn!("Failed to get compliance data: {}", e);
+                if mode.is_real() {
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "real_data_unavailable",
+                            "message": "Azure compliance data required in Real mode"
+                        })),
+                    ).into_response();
+                }
             }
         }
     }
@@ -1898,6 +1939,15 @@ pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoRespo
             }
             Err(e) => {
                 tracing::warn!("Failed to get resource data: {}", e);
+                if mode.is_real() {
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "real_data_unavailable",
+                            "message": "Azure resource data required in Real mode"
+                        })),
+                    ).into_response();
+                }
             }
         }
     }

@@ -347,17 +347,17 @@ export const cacheUtils = {
     await Promise.all([
       queryClient.prefetchQuery({
         queryKey: queryKeys.policies,
-        queryFn: () => fetch('/api/policies').then(res => res.json()),
+        queryFn: () => fetch('/api/v1/policies').then(res => res.json()),
         staleTime: 10 * 60 * 1000 // 10 minutes
       }),
       queryClient.prefetchQuery({
         queryKey: queryKeys.resources,
-        queryFn: () => fetch('/api/resources').then(res => res.json()),
+        queryFn: () => fetch('/api/v1/resources').then(res => res.json()),
         staleTime: 10 * 60 * 1000
       }),
       queryClient.prefetchQuery({
         queryKey: queryKeys.complianceScore,
-        queryFn: () => fetch('/api/compliance/score').then(res => res.json()),
+        queryFn: () => fetch('/api/v1/compliance/score').then(res => res.json()),
         staleTime: 5 * 60 * 1000 // 5 minutes
       })
     ])

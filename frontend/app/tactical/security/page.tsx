@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGuard from '../../../components/AuthGuard';
+import { api } from '../../../lib/api-client';
 
 interface SecurityData {
   threatLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -46,6 +47,23 @@ function SecurityOperationsCenterContent() {
   const [loading, setLoading] = useState(true);
   const [selectedThreat, setSelectedThreat] = useState<string | null>(null);
   const [streamingLogs, setStreamingLogs] = useState<string[]>([]);
+  
+  const triggerAction = async (actionType: string) => {
+    try {
+      const resp = await api.createAction('global', actionType)
+      if (resp.error || resp.status >= 400) {
+        console.error('Action failed', actionType, resp.error)
+        return
+      }
+      const id = resp.data?.action_id || resp.data?.id
+      if (id) {
+        const stop = api.streamActionEvents(String(id), (m) => console.log('[security-action]', id, m))
+        setTimeout(stop, 60000)
+      }
+    } catch (e) {
+      console.error('Trigger action error', actionType, e)
+    }
+  }
 
   useEffect(() => {
     fetchSecurityData();
@@ -187,10 +205,10 @@ function SecurityOperationsCenterContent() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => triggerAction('emergency_lockdown')} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded transition-colors">
                 EMERGENCY LOCKDOWN
               </button>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
+              <button onClick={() => triggerAction('security_scan')} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors">
                 RUN SECURITY SCAN
               </button>
             </div>

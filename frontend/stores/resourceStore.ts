@@ -12,6 +12,7 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import axios from 'axios'
+import { api } from '@/lib/api-client'
 
 interface Resource {
   id: string
@@ -278,13 +279,15 @@ export const useResourceStore = create<ResourceState>()(
           }
         },
 
-        // Fetch cross-domain correlations
+        // Fetch cross-domain correlations (unified API v1)
         fetchCorrelations: async () => {
           try {
-            const response = await axios.get(`${API_V2_BASE}/resources/correlations`)
-            set((state) => {
-              state.correlations = response.data
-            })
+            const resp = await api.getCorrelations()
+            if (!resp.error) {
+              set((state) => {
+                state.correlations = (resp.data as any) || []
+              })
+            }
           } catch (error) {
             console.error('Failed to fetch correlations:', error)
           }
@@ -302,7 +305,7 @@ export const useResourceStore = create<ResourceState>()(
           }
         },
 
-        // Execute action on a resource
+        // Execute action on a resource (wired to /api/v1/actions with streaming)
         executeAction: async (resourceId: string, actionId: string, confirmation: boolean) => {
           try {
             // Optimistic update
@@ -320,25 +323,30 @@ export const useResourceStore = create<ResourceState>()(
               }
             })
 
-            const response = await axios.post(
-              `${API_V2_BASE}/resources/${resourceId}/actions`,
-              { action_id: actionId, confirmation }
-            )
-
-            if (response.data.success) {
-              // Refresh the specific resource
-              const updatedResource = await get().fetchResourceById(resourceId)
-              if (updatedResource) {
-                set((state) => {
-                  const index = state.resources.findIndex(r => r.id === resourceId)
-                  if (index !== -1) {
-                    state.resources[index] = updatedResource
-                  }
-                })
-              }
-            } else {
-              // Revert optimistic update
+            const created = await api.createAction(resourceId, actionId, { confirmation })
+            if (created.error || created.status >= 400) {
               await get().fetchResources()
+              return
+            }
+            const actionIdCreated = created.data?.action_id || created.data?.id
+            if (actionIdCreated) {
+              const stop = api.streamActionEvents(String(actionIdCreated), async (msg) => {
+                // Optionally parse and react to progress events here
+                // console.log('[action-event]', actionIdCreated, msg)
+              })
+              // Stop the stream after 60s; refresh resource once to reflect final state
+              setTimeout(async () => {
+                stop()
+                const updatedResource = await get().fetchResourceById(resourceId)
+                if (updatedResource) {
+                  set((state) => {
+                    const index = state.resources.findIndex(r => r.id === resourceId)
+                    if (index !== -1) {
+                      state.resources[index] = updatedResource
+                    }
+                  })
+                }
+              }, 60000)
             }
           } catch (error) {
             console.error('Failed to execute action:', error)

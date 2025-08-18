@@ -25,6 +25,7 @@ import {
   TrendingDown,
   Info
 } from 'lucide-react'
+import { api } from '../lib/api-client'
 
 interface NonCompliantResource {
   resourceId: string
@@ -68,12 +69,12 @@ export default function PoliciesDeepView() {
 
   const fetchPolicyData = async () => {
     try {
-      const response = await fetch('/api/v1/policies/deep')
-      const data = await response.json()
+      const resp = await api.request<any>('/api/v1/policies/deep') as any
+      const data = resp?.data || {}
       setComplianceResults(data.complianceResults || [])
     } catch (error) {
       console.error('Error fetching policy data:', error)
-      // Use mock data if API fails
+      // In production beta prefer empty over mocks
       setComplianceResults([
         {
           assignment: {

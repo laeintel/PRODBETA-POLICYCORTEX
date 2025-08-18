@@ -1,7 +1,10 @@
 // API Client for PolicyCortex Backend Services
+import { getApiUrl } from './api-config'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql';
+const GRAPHQL_URL =
+  process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ||
+  process.env.NEXT_PUBLIC_GRAPHQL_URL ||
+  'http://localhost:4000/graphql'
 
 interface ApiResponse<T> {
   data?: T;
@@ -10,14 +13,10 @@ interface ApiResponse<T> {
 }
 
 class PolicyCortexAPI {
-  private baseUrl: string;
-  private headers: HeadersInit;
+  private headers: HeadersInit
 
   constructor() {
-    this.baseUrl = API_BASE_URL;
-    this.headers = {
-      'Content-Type': 'application/json',
-    };
+    this.headers = { 'Content-Type': 'application/json' }
   }
 
   private async request<T>(
@@ -25,26 +24,34 @@ class PolicyCortexAPI {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      // Compose absolute API URL respecting rewrites and NEXT_PUBLIC_API_URL
+      const url = getApiUrl(endpoint)
+
+      // Attach bearer token if present (AAD/OIDC flow stores token client-side)
+      const token =
+        (typeof window !== 'undefined' && localStorage.getItem('pcx_token')) || undefined
+
+      const response = await fetch(url, {
         ...options,
         headers: {
           ...this.headers,
           ...options.headers,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-      });
+      })
 
-      const data = response.ok ? await response.json() : null;
+      const data = response.ok ? await response.json() : null
 
       return {
         data,
         error: response.ok ? undefined : `Error: ${response.statusText}`,
         status: response.status,
-      };
+      }
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : 'Network error',
         status: 0,
-      };
+      }
     }
   }
 
@@ -111,7 +118,7 @@ class PolicyCortexAPI {
   }
 
   async getCorrelations() {
-    return this.request<any>('/api/v1/correlations');
+    return this.request<any>('/api/v1/correlations')
   }
 
   async askAI(query: string) {
@@ -147,7 +154,8 @@ class PolicyCortexAPI {
 
   // WebSocket Connection for Real-time Updates
   connectWebSocket(onMessage: (data: any) => void) {
-    const ws = new WebSocket(`ws://localhost:8080/ws`);
+    const base = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'
+    const ws = new WebSocket(`${base}/ws`)
     
     ws.onopen = () => {
       console.log('WebSocket connected');
@@ -172,7 +180,25 @@ class PolicyCortexAPI {
       setTimeout(() => this.connectWebSocket(onMessage), 5000);
     };
     
-    return ws;
+    return ws
+  }
+
+  // Action orchestration
+  async createAction(resourceId: string, actionType: string, params: any = {}) {
+    return this.request<any>('/api/v1/actions', {
+      method: 'POST',
+      body: JSON.stringify({ action_type: actionType, resource_id: resourceId, params }),
+    })
+  }
+
+  streamActionEvents(actionId: string, onEvent: (msg: string) => void) {
+    const url = getApiUrl(`/api/v1/actions/${actionId}/events`)
+    const es = new EventSource(url)
+    es.onmessage = (ev) => onEvent(ev.data)
+    es.onerror = () => {
+      try { es.close() } catch {}
+    }
+    return () => es.close()
   }
 }
 
