@@ -13,7 +13,7 @@
 **Solutions:**
 ```bash
 # Pre-warm containers before demo
-docker-compose -f docker-compose.local.yml up -d
+docker-compose -f docker-compose.local.yml up -d postgres redis core graphql frontend
 # Wait 30-60 seconds for all services to initialize
 
 # Check service health

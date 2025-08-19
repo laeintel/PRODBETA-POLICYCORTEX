@@ -695,7 +695,7 @@ export default function UsersPage() {
                         </td>
                         <td className="p-4">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                               {user.firstName.charAt(0)}{user.lastName.charAt(0)}
                             </div>
                             <div>
@@ -814,7 +814,7 @@ export default function UsersPage() {
                       <div>
                         <h4 className="font-semibold text-white">{role.name}</h4>
                         {role.system && (
-                          <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 text-xs">
+                          <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 text-xs">
                             System Role
                           </Badge>
                         )}
@@ -863,7 +863,7 @@ export default function UsersPage() {
         <TabsContent value="groups" className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-white">User Groups</h3>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Create Group
             </Button>
@@ -875,7 +875,7 @@ export default function UsersPage() {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-2">
-                      <Users className="w-5 h-5 text-purple-500" />
+                      <Users className="w-5 h-5 text-blue-500" />
                       <h4 className="font-semibold text-white">{group.name}</h4>
                     </div>
                   </div>
@@ -897,7 +897,7 @@ export default function UsersPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-purple-400 hover:text-purple-300"
+                      className="text-blue-400 hover:text-blue-300"
                     >
                       <Users className="w-3 h-3 mr-1" />
                       Manage Members

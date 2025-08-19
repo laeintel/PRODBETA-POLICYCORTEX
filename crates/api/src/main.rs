@@ -8,7 +8,7 @@
 
 use axum::{routing::get, Router};
 use std::net::SocketAddr;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -24,10 +24,23 @@ async fn main() -> anyhow::Result<()> {
     // Load environment variables
     dotenv::dotenv().ok();
 
-    // Build application
+    // Build application with restricted CORS
+    let allowed_origin = std::env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "http://localhost:3000".into());
+    let cors = if allowed_origin == "*" {
+        CorsLayer::new().allow_origin(Any)
+    } else {
+        let origins: Vec<_> = allowed_origin
+            .split(',')
+            .filter_map(|o| o.trim().parse().ok())
+            .collect();
+        CorsLayer::new().allow_origin(origins)
+    }
+    .allow_methods([http::Method::GET, http::Method::POST, http::Method::PUT, http::Method::DELETE])
+    .allow_headers([http::header::CONTENT_TYPE, http::header::AUTHORIZATION]);
+
     let app = Router::new()
         .route("/health", get(|| async { "OK" }))
-        .layer(CorsLayer::permissive());
+        .layer(cors);
 
     // Start server
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));

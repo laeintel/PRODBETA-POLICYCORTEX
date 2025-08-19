@@ -577,9 +577,9 @@ export default function IntegrationsPage() {
                 <p className="text-sm font-medium text-gray-400">Avg Response</p>
                 <p className="text-2xl font-bold text-white">{avgResponseTime}ms</p>
               </div>
-              <Clock className="w-8 h-8 text-purple-500" />
+              <Clock className="w-8 h-8 text-blue-500" />
             </div>
-            <div className="mt-4 flex items-center text-xs text-purple-500">
+            <div className="mt-4 flex items-center text-xs text-blue-500">
               <Activity className="w-3 h-3 mr-1" />
               <span>Response time</span>
             </div>
@@ -925,7 +925,7 @@ export default function IntegrationsPage() {
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Category:</span>
-                        <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 capitalize">
+                        <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 capitalize">
                           {template.category}
                         </Badge>
                       </div>
@@ -1054,7 +1054,7 @@ export default function IntegrationsPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Category:</span>
-                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/20 capitalize" variant="outline">
+                        <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/20 capitalize" variant="outline">
                           {selectedIntegration.category}
                         </Badge>
                       </div>

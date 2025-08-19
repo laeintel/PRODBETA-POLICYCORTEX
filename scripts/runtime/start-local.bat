@@ -26,7 +26,8 @@ if %errorlevel% neq 0 (
 )
 
 echo [3/5] Starting services...
-docker-compose -f docker-compose.local.yml up -d
+docker-compose -f docker-compose.local.yml up -d postgres redis
+docker-compose -f docker-compose.local.yml up -d core graphql frontend
 if %errorlevel% neq 0 (
     echo [ERROR] Failed to start services.
     pause

@@ -21,6 +21,8 @@ export REQUIRE_AUTH=false
 export NEXT_PUBLIC_API_URL=http://localhost:8080
 export NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:4000/graphql
 export RUST_LOG=info
+export NEXT_PUBLIC_DEMO_MODE=true
+export NEXT_PUBLIC_USE_WS=false
 
 echo "[1/5] Setting up demo environment variables..."
 echo "      NODE_ENV=$NODE_ENV"
@@ -40,7 +42,7 @@ echo ""
 
 # Start database services
 echo "[3/5] Starting database services..."
-docker-compose -f docker-compose.local.yml up -d postgres redis eventstore &> /dev/null || {
+docker-compose -f docker-compose.local.yml up -d postgres dragonfly eventstore &> /dev/null || {
     echo "      WARNING: Database services may already be running"
 }
 echo "      PostgreSQL, Redis, and EventStore started"
