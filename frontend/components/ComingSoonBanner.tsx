@@ -20,7 +20,7 @@ export const ComingSoonBanner: React.FC<ComingSoonBannerProps> = ({
     return (
       <div className="min-h-[400px] flex items-center justify-center p-8">
         <div className="text-center max-w-md">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">

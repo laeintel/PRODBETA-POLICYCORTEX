@@ -151,7 +151,7 @@ export default function KubernetesPage() {
   const totalCost = clusters.reduce((sum, cluster) => sum + cluster.cost.monthly, 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -159,7 +159,7 @@ export default function KubernetesPage() {
         className="mb-8"
       >
         <div className="flex items-center gap-4 mb-2">
-          <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+          <div className="p-3 bg-gray-800 rounded-xl">
             <GitBranch className="w-8 h-8 text-white" />
           </div>
           <div>

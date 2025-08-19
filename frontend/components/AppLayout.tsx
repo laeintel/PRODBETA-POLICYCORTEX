@@ -44,7 +44,7 @@ function AppLayoutInner({ children }: AppLayoutProps) {
   const { logout, user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Global banners */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <ConnectionStatusBanner />
@@ -85,7 +85,7 @@ const AppLayout = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-400 border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
           <p className="text-white">Loading...</p>

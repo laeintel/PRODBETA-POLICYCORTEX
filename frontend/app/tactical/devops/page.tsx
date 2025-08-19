@@ -5,7 +5,7 @@ import {
   GitBranch, GitCommit, GitMerge, GitPullRequest, Package, Archive,
   Play, Pause, StopCircle, RotateCw, CheckCircle, XCircle, Clock,
   Activity, Zap, Server, Container, Layers, Cloud, Database,
-  Terminal, Code, FileCode, Settings, Tool, Wrench, Hammer,
+  Terminal, Code, FileCode, Settings, Wrench, Hammer,
   TrendingUp, TrendingDown, BarChart3, LineChart, PieChart,
   AlertTriangle, Info, Bell, Shield, Lock, Key, UserCheck,
   Calendar, Timer, RefreshCw, Download, Upload, Search, Filter,

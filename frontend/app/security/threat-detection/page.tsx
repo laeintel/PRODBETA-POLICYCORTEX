@@ -277,7 +277,7 @@ export default function ThreatDetectionPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+    <div className="min-h-screen bg-black p-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

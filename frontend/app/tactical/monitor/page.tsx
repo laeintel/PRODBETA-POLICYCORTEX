@@ -334,7 +334,7 @@ export default function RealTimeMonitor() {
 
 // Metric Card Component with Sparkline
 function MetricCard({ title, value, icon: Icon, trend, history, color }: any) {
-  const colorClasses = {
+  const colorClasses: Record<string, string> = {
     blue: 'text-blue-500 bg-blue-900/20',
     green: 'text-green-500 bg-green-900/20',
     yellow: 'text-yellow-500 bg-yellow-900/20',
@@ -347,7 +347,7 @@ function MetricCard({ title, value, icon: Icon, trend, history, color }: any) {
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs text-gray-400">{title}</p>
-        <div className={`p-1.5 rounded ${colorClasses[color]}`}>
+        <div className={`p-1.5 rounded ${colorClasses[color] || ''}`}>
           <Icon className="w-4 h-4" />
         </div>
       </div>
@@ -366,7 +366,7 @@ function MetricCard({ title, value, icon: Icon, trend, history, color }: any) {
           {history.map((val: number, i: number) => (
             <div
               key={i}
-              className={`w-1 ${colorClasses[color].split(' ')[0]} opacity-${i === history.length - 1 ? '100' : '60'}`}
+              className={`w-1 ${(colorClasses[color] || '').split(' ')[0]} opacity-${i === history.length - 1 ? '100' : '60'}`}
               style={{ height: `${(val / Math.max(...history)) * 100}%` }}
             />
           ))}

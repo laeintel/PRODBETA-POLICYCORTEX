@@ -52,6 +52,8 @@ import {
   Search,
   Bell,
   HelpCircle,
+  Mail,
+  Phone,
   LogOut,
   ChevronRight,
   ChevronLeft,
@@ -104,7 +106,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
   const [recentItems, setRecentItems] = useState<string[]>([])
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
-  // Redesigned menu structure with better organization
+  // Menu structure aligned to requested taxonomy
   const menuStructure: Record<string, MenuItem[]> = {
     'Quick Access': [
       {
@@ -124,8 +126,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
         path: '/chat',
         description: 'Conversational AI',
         shortcut: '⌘K',
-        aiPowered: true,
-        isNew: true
+        aiPowered: true
       },
       {
         id: 'command-center',
@@ -133,198 +134,87 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
         icon: Command,
         path: '/command',
         description: 'Quick actions',
-        shortcut: '⌘/',
-        isPremium: true
+        shortcut: '⌘/'
       }
     ],
     
-    'Resources': [
-      {
-        id: 'all-resources',
-        title: 'All Resources',
-        icon: Box,
-        path: '/resources',
-        description: 'Unified view',
-        badge: '1,247',
-        badgeType: 'default'
-      },
-      {
-        id: 'resources-v2',
-        title: 'Resources Dashboard',
-        icon: Box,
-        path: '/resources/v2',
-        description: 'Enhanced management',
-        badge: 'NEW',
-        badgeType: 'success',
-        isNew: true,
-        aiPowered: true
-      },
-      {
-        id: 'virtual-machines',
-        title: 'Virtual Machines',
-        icon: Server,
-        path: '/resources/vm',
-        description: 'Compute instances',
-        badge: '342',
-        badgeType: 'default'
-      },
-      {
-        id: 'databases',
-        title: 'Databases',
-        icon: Database,
-        path: '/resources/db',
-        description: 'Data services',
-        badge: '89',
-        badgeType: 'default'
-      },
-      {
-        id: 'storage',
-        title: 'Storage',
-        icon: HardDrive,
-        path: '/resources/storage',
-        description: 'Storage accounts',
-        badge: '156',
-        badgeType: 'default'
-      },
-      {
-        id: 'kubernetes',
-        title: 'Kubernetes',
-        icon: GitBranch,
-        path: '/resources/k8s',
-        description: 'Container orchestration',
-        badge: '23',
-        badgeType: 'default'
-      }
+    'Security & Compliance': [
+      { id: 'sec-overview', title: 'Security Overview', icon: Shield, path: '/security/overview' },
+      { id: 'sec-threat-detection', title: 'Threat Detection', icon: AlertTriangle, path: '/security/threat-detection' },
+      { id: 'sec-vuln-scan', title: 'Vulnerability Scan', icon: AlertTriangle, path: '/security/vulnerability-scan' },
+      { id: 'sec-access-control', title: 'Access Control', icon: UserCheck, path: '/security/access-control' },
+      { id: 'sec-identity', title: 'Identity Management', icon: Lock, path: '/security/identity-management' },
+      { id: 'sec-compliance-hub', title: 'Compliance Hub', icon: FileCheck, path: '/security/compliance-hub' },
+      { id: 'sec-policy-engine', title: 'Policy Engine', icon: FileCheck, path: '/security/policy-engine' },
+      { id: 'sec-audit-trail', title: 'Audit Trail', icon: FileCheck, path: '/security/audit-trail' },
+      { id: 'sec-keys', title: 'Encryption Keys', icon: Key, path: '/security/encryption-keys' },
+      { id: 'sec-certificates', title: 'Certificates', icon: Lock, path: '/security/certificates' },
+      { id: 'sec-groups', title: 'Security Groups', icon: Shield, path: '/security/security-groups' },
+      { id: 'sec-firewall', title: 'Firewall Rules', icon: Shield, path: '/security/firewall-rules' }
     ],
-    
-    'Governance': [
-      {
-        id: 'policies',
-        title: 'Policies',
-        icon: Shield,
-        path: '/policies',
-        description: 'Compliance rules',
-        badge: '12',
-        badgeType: 'warning',
-        children: [
-          {
-            id: 'policy-violations',
-            title: 'Violations',
-            icon: AlertTriangle,
-            path: '/policies/violations',
-            badge: '12',
-            badgeType: 'error'
-          },
-          {
-            id: 'policy-insights',
-            title: 'AI Insights',
-            icon: Brain,
-            path: '/policies/insights',
-            aiPowered: true
-          }
-        ]
-      },
-      {
-        id: 'security',
-        title: 'Security Center',
-        icon: Lock,
-        path: '/security',
-        description: 'Security posture',
-        badge: '98%',
-        badgeType: 'success'
-      },
-      {
-        id: 'compliance',
-        title: 'Compliance',
-        icon: FileCheck,
-        path: '/compliance',
-        description: 'Regulatory standards',
-        badge: '3',
-        badgeType: 'warning'
-      },
-      {
-        id: 'access-control',
-        title: 'Access Control',
-        icon: UserCheck,
-        path: '/rbac',
-        description: 'RBAC & permissions'
-      }
+
+    'Governance & Policy': [
+      { id: 'gov-policies', title: 'Policies', icon: Shield, path: '/policies', children: [
+        { id: 'gov-violations', title: 'Violations', icon: AlertTriangle, path: '/policies/violations' },
+        { id: 'gov-insights', title: 'AI Insights', icon: Brain, path: '/policies/insights', aiPowered: true }
+      ]},
+      { id: 'gov-compliance', title: 'Compliance', icon: FileCheck, path: '/compliance' },
+      { id: 'gov-exceptions', title: 'Exceptions', icon: AlertCircle, path: '/exceptions' }
     ],
-    
-    'Intelligence': [
-      {
-        id: 'cost-optimization',
-        title: 'Cost Intelligence',
-        icon: DollarSign,
-        path: '/costs',
-        description: 'FinOps insights',
-        badge: '$45K',
-        badgeType: 'success',
-        aiPowered: true
-      },
-      {
-        id: 'performance',
-        title: 'Performance',
-        icon: Gauge,
-        path: '/performance',
-        description: 'System metrics',
-        badge: '↑12%',
-        badgeType: 'info'
-      },
-      {
-        id: 'predictions',
-        title: 'Predictions',
-        icon: TrendingUp,
-        path: '/predictions',
-        description: 'Predictive analytics',
-        aiPowered: true,
-        isPremium: true
-      },
-      {
-        id: 'correlations',
-        title: 'Correlations',
-        icon: GitBranch,
-        path: '/correlations',
-        description: 'Cross-domain insights',
-        aiPowered: true
-      }
-      // Removed: Voice Assistant and Explainability for demo
+
+    'Infrastructure': [
+      { id: 'infra-all', title: 'All Resources', icon: Box, path: '/resources' },
+      { id: 'infra-resources-v2', title: 'Resources Dashboard', icon: Box, path: '/resources/v2', aiPowered: true },
+      { id: 'infra-vm', title: 'Virtual Machines', icon: Server, path: '/resources/vm' },
+      { id: 'infra-db', title: 'Databases', icon: Database, path: '/resources/db' },
+      { id: 'infra-storage', title: 'Storage', icon: HardDrive, path: '/resources/storage' },
+      { id: 'infra-k8s', title: 'Kubernetes', icon: GitBranch, path: '/resources/k8s' },
+      { id: 'infra-network', title: 'Network', icon: Network, path: '/network' }
     ],
-    
-    'Operations': [
-      {
-        id: 'network',
-        title: 'Network',
-        icon: Network,
-        path: '/network',
-        description: 'Network topology',
-        badge: '5',
-        badgeType: 'warning'
-      },
-      {
-        id: 'monitoring',
-        title: 'Monitoring',
-        icon: BarChart3,
-        path: '/monitoring',
-        description: 'Real-time metrics'
-      },
-      {
-        id: 'automation',
-        title: 'Automation',
-        icon: Zap,
-        path: '/automation',
-        description: 'Workflows & scripts',
-        isNew: true
-      },
-      {
-        id: 'exceptions',
-        title: 'Exceptions',
-        icon: AlertCircle,
-        path: '/exceptions',
-        description: 'Policy exceptions',
-        badge: '8',
-        badgeType: 'error'
-      }
+
+    'AI & Intelligence': [
+      { id: 'ai-predictions', title: 'Predictions', icon: TrendingUp, path: '/predictions', aiPowered: true },
+      { id: 'ai-correlations', title: 'Correlations', icon: GitBranch, path: '/correlations', aiPowered: true },
+      { id: 'ai-expert', title: 'AI Expert', icon: Brain, path: '/ai-expert', aiPowered: true },
+      { id: 'ai-alerts', title: 'Predictive Alerts', icon: AlertTriangle, path: '/predictive-alerts', aiPowered: true },
+      { id: 'ai-ml-monitoring', title: 'ML Monitoring', icon: BarChart3, path: '/ml-monitoring' }
+    ],
+
+    'Financial Management': [
+      { id: 'fin-costs', title: 'Cost Overview', icon: DollarSign, path: '/costs' },
+      { id: 'fin-governance', title: 'Cost Governance', icon: Gauge, path: '/tactical/cost-governance' },
+      { id: 'fin-budgets', title: 'Budgets', icon: DollarSign, path: '/tactical/budgets' },
+      { id: 'fin-chargebacks', title: 'Chargebacks', icon: DollarSign, path: '/tactical/chargebacks' },
+      { id: 'fin-forecast', title: 'Forecast', icon: TrendingUp, path: '/tactical/forecast' },
+      { id: 'fin-anomalies', title: 'Cost Anomalies', icon: AlertTriangle, path: '/tactical/cost-anomalies' },
+      { id: 'fin-savings', title: 'Savings', icon: TrendingUp, path: '/tactical/savings' }
+    ],
+
+    'DevOps & CI/CD': [
+      { id: 'devops-center', title: 'DevOps', icon: Settings, path: '/tactical/devops' },
+      { id: 'devops-pipelines', title: 'Pipelines', icon: GitBranch, path: '/tactical/pipelines' },
+      { id: 'devops-releases', title: 'Releases', icon: Settings, path: '/tactical/releases' },
+      { id: 'devops-builds', title: 'Builds', icon: Settings, path: '/tactical/builds' },
+      { id: 'devops-repos', title: 'Repositories', icon: GitBranch, path: '/tactical/repos' },
+      { id: 'devops-deploy', title: 'Deploy', icon: Zap, path: '/tactical/deploy' },
+      { id: 'devops-deployments', title: 'Deployments', icon: Zap, path: '/tactical/deployments' }
+    ],
+
+    'Communication': [
+      { id: 'comm-notifications', title: 'Notifications', icon: Bell, path: '/tactical/notifications' },
+      { id: 'comm-emails', title: 'Emails', icon: Mail, path: '/tactical/emails' },
+      { id: 'comm-sms', title: 'SMS', icon: Phone, path: '/tactical/sms' },
+      { id: 'comm-slack', title: 'Slack', icon: MessageSquare, path: '/tactical/slack' }
+    ],
+
+    'Administration': [
+      { id: 'admin-settings', title: 'Settings', icon: Settings, path: '/settings' },
+      { id: 'admin-users', title: 'Users', icon: UserCheck, path: '/tactical/users' },
+      { id: 'admin-roles', title: 'Roles', icon: UserCheck, path: '/tactical/roles' },
+      { id: 'admin-teams', title: 'Teams', icon: UserCheck, path: '/tactical/teams' },
+      { id: 'admin-licenses', title: 'Licenses', icon: FileCheck, path: '/tactical/licenses' },
+      { id: 'admin-integrations', title: 'Integrations', icon: Settings, path: '/tactical/integrations' },
+      { id: 'admin-mg', title: 'Management Groups', icon: Globe, path: '/tactical/management-groups' }
     ]
   }
 
@@ -452,7 +342,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
           <div className="p-4 border-b border-white/10">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center">
                   <Shield className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -616,7 +506,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
             {/* User Profile */}
             {user && (
               <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors mb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center">
                   <span className="text-white font-semibold">
                     {user.name?.charAt(0) || 'U'}
                   </span>
@@ -693,7 +583,7 @@ function MenuItemComponent({
         <div className={`
           p-2 rounded-lg transition-all
           ${isActive 
-            ? 'bg-gradient-to-br from-purple-500 to-pink-500' 
+            ? 'bg-gray-800' 
             : 'bg-white/10 group-hover:bg-white/20'
           }
         `}>

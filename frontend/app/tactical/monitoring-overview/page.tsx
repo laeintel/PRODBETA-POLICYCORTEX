@@ -584,7 +584,7 @@ export default function MonitoringOverview() {
                             <div
                               key={idx}
                               className="w-1 bg-blue-500 rounded-t"
-                              style={{ height: `${(value / Math.max(...metric.sparkline)) * 100}%` }}
+                              style={{ height: `${(value / Math.max(...(metric.sparkline || [1]))) * 100}%` }}
                             />
                           ))}
                         </div>

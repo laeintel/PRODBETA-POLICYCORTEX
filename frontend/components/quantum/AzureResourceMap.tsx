@@ -70,7 +70,7 @@ const ResourceSphere: React.FC<{ node: ResourceNode }> = ({ node }) => {
 };
 
 const ConnectionLine: React.FC<{ start: [number, number, number], end: [number, number, number] }> = ({ start, end }) => {
-  const lineRef = useRef<THREE.Line>(null);
+  const lineRef = useRef<any>(null);
 
   useFrame((state) => {
     if (lineRef.current && lineRef.current.material) {

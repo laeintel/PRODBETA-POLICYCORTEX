@@ -245,7 +245,7 @@ export default function AIExpertDashboard() {
           </div>
           <div className="w-full bg-purple-900/30 rounded-full h-2">
             <motion.div
-              className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
+              className="h-2 rounded-full bg-gray-600"
               animate={{ width: `${learningProgress}%` }}
             />
           </div>

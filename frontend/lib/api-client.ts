@@ -1,5 +1,6 @@
 // API Client for PolicyCortex Backend Services
 import { getApiUrl } from './api-config'
+import { useState, useEffect } from 'react'
 
 const GRAPHQL_URL =
   process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ||
@@ -19,7 +20,7 @@ class PolicyCortexAPI {
     this.headers = { 'Content-Type': 'application/json' }
   }
 
-  private async request<T>(
+  public async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {

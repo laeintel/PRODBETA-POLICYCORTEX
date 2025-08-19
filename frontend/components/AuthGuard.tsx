@@ -71,7 +71,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   // Show loading state while checking authentication
   if (checking || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-purple-400 mx-auto mb-4 animate-spin" />
           <p className="text-white text-lg">Verifying authentication...</p>
@@ -83,7 +83,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   // If authentication is required but user is not authenticated
   if (requireAuth && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
