@@ -807,10 +807,10 @@ export default function IdentityManagement() {
                   
                   <div className="flex items-center space-x-3">
                     {activity.mfaUsed && (
-                      <Shield className="w-4 h-4 text-green-500" title="MFA Used" />
+                      <Shield className="w-4 h-4 text-green-500" />
                     )}
                     {activity.conditionalAccessApplied && (
-                      <Lock className="w-4 h-4 text-blue-500" title="Conditional Access Applied" />
+                      <Lock className="w-4 h-4 text-blue-500" />
                     )}
                     <button className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs">
                       Details

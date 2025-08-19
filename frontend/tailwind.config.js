@@ -57,14 +57,7 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Quantum Theme Colors
-        quantum: {
-          blue: '#00D4FF',
-          purple: '#8B5CF6',
-          green: '#10F4B1',
-          cyan: '#00F5FF',
-          yellow: '#FFE500',
-        },
+        // Removed legacy Quantum theme colors
         dark: {
           matter: '#0A0E27',
           void: '#000511',
@@ -87,11 +80,7 @@ module.exports = {
         'display': ['Orbitron', 'Space Grotesk', 'sans-serif'],
         'body': ['Inter', 'system-ui', 'sans-serif'],
       },
-      backgroundImage: {
-        'quantum-gradient': 'linear-gradient(135deg, #00D4FF 0%, #8B5CF6 50%, #10F4B1 100%)',
-        'neural-gradient': 'linear-gradient(45deg, #8B5CF6 0%, #00D4FF 100%)',
-        'hologram-gradient': 'linear-gradient(90deg, #00F5FF 0%, #00D4FF 50%, #8B5CF6 100%)',
-      },
+      backgroundImage: {},
       backdropBlur: {
         xs: '2px',
         sm: '8px',

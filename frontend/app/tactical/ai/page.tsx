@@ -226,7 +226,7 @@ function AIAnalyticsCenterContent() {
               <p className="text-xs text-gray-500 uppercase">Training Data</p>
               <Activity className="w-4 h-4 text-blue-500" />
             </div>
-            <p className="text-3xl font-bold font-mono">{(metrics?.training.dataPoints / 1000000).toFixed(1)}M</p>
+            <p className="text-3xl font-bold font-mono">{((metrics?.training?.dataPoints || 0) / 1000000).toFixed(1)}M</p>
             <p className="text-xs text-gray-500 mt-1">data points</p>
           </div>
         </div>

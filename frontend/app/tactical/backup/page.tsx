@@ -403,10 +403,10 @@ export default function BackupRecovery() {
                         {backup.status.toUpperCase()}
                       </span>
                       {backup.encrypted && (
-                        <Lock className="w-3 h-3 text-green-500" title="Encrypted" />
+                        <Lock className="w-3 h-3 text-green-500" />
                       )}
                       {backup.compressed && (
-                        <Archive className="w-3 h-3 text-blue-500" title="Compressed" />
+                        <Archive className="w-3 h-3 text-blue-500" />
                       )}
                     </div>
                     <h3 className="text-sm font-bold mb-1">{backup.name}</h3>
@@ -473,7 +473,7 @@ export default function BackupRecovery() {
                     <History className="w-4 h-4 text-blue-500" />
                     <span className="text-sm font-bold">{point.name}</span>
                   </div>
-                  {point.verified && <Shield className="w-4 h-4 text-green-500" title="Verified" />}
+                  {point.verified && <Shield className="w-4 h-4 text-green-500" />}
                 </div>
                 
                 <div className="space-y-2 text-xs">

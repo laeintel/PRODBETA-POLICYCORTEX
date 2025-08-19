@@ -7,7 +7,7 @@ import {
   Filter, Search, Settings, Shield, Activity, Eye, Lock, RefreshCw,
   ChevronRight, ChevronDown, MoreVertical, ExternalLink, Info,
   Briefcase, CreditCard, Wallet, Receipt, Calculator, FileText,
-  AlertCircle, CheckCircle, XCircle, ArrowUpRight, ArrowDownRight
+  AlertCircle, CheckCircle, XCircle, ArrowUpRight, ArrowDownRight, Building
 } from 'lucide-react';
 
 interface Budget {
