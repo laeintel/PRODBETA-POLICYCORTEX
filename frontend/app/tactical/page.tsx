@@ -43,8 +43,7 @@ export default function TacticalLanding() {
         { label: 'Policies', href: '/policies' },
         { label: 'Violations', href: '/policies/violations' },
         { label: 'AI Insights', href: '/policies/insights' },
-        { label: 'Compliance', href: '/compliance' },
-        { label: 'Exceptions', href: '/exceptions' }
+        { label: 'Compliance', href: '/compliance' }
       ]
     },
     {
@@ -53,13 +52,8 @@ export default function TacticalLanding() {
       icon: Box,
       description: 'Resources, topology, and platforms',
       links: [
-        { label: 'All Resources', href: '/resources' },
-        { label: 'Resources Dashboard', href: '/resources/v2' },
-        { label: 'Virtual Machines', href: '/resources/vm' },
-        { label: 'Databases', href: '/resources/db' },
-        { label: 'Storage', href: '/resources/storage' },
-        { label: 'Kubernetes', href: '/resources/k8s' },
-        { label: 'Network', href: '/network' }
+        { label: 'Compute Resources', href: '/tactical/compute' },
+        { label: 'Storage Systems', href: '/tactical/storage' }
       ]
     },
     {
@@ -68,9 +62,7 @@ export default function TacticalLanding() {
       icon: BarChart3,
       description: 'Observability, SLOs, and telemetry',
       links: [
-        { label: 'Monitoring', href: '/monitoring' },
-        { label: 'ML Monitoring', href: '/ml-monitoring' },
-        { label: 'Performance', href: '/performance' }
+        { label: 'Monitoring Overview', href: '/tactical/monitoring-overview' }
       ]
     },
     {
@@ -90,7 +82,7 @@ export default function TacticalLanding() {
       icon: DollarSign,
       description: 'Costs, budgets, and optimizations',
       links: [
-        { label: 'Cost Overview', href: '/costs' },
+        { label: 'Cost Overview', href: '/tactical/cost-governance' },
         { label: 'Cost Governance', href: '/tactical/cost-governance' },
         { label: 'Budgets', href: '/tactical/budgets' }
       ]
@@ -124,7 +116,6 @@ export default function TacticalLanding() {
       icon: Users,
       description: 'Access, teams, and integrations',
       links: [
-        { label: 'Settings', href: '/settings' },
         { label: 'Users', href: '/tactical/users' },
         { label: 'Roles', href: '/tactical/roles' },
         { label: 'Teams', href: '/tactical/teams' },

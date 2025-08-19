@@ -88,7 +88,7 @@ export default function MockDataIndicator({
           </span>
           <button 
             className="ml-auto px-3 py-1 bg-white/20 hover:bg-white/30 rounded-md text-sm transition-colors"
-            onClick={() => window.location.href = '/settings'}
+            onClick={() => window.location.href = '/tactical/integrations'}
           >
             Configure Azure
           </button>

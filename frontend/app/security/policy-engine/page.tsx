@@ -268,7 +268,10 @@ export default function PolicyEnginePage() {
           duration: '2m 34s',
           resourcesScanned: 156,
           violationsFound: 2,
-          remediations: 2
+          remediations: 2,
+          logs: [],
+          triggerType: 'manual',
+          executedBy: 'system'
         },
         {
           id: 'exec-002',
@@ -279,7 +282,11 @@ export default function PolicyEnginePage() {
           duration: '5m 12s',
           resourcesScanned: 312,
           violationsFound: 28,
-          remediations: 0
+          remediations: 0,
+          logs: [],
+          triggerType: 'manual',
+          executedBy: 'system',
+          progress: 62
         },
         {
           id: 'exec-003',
@@ -290,7 +297,10 @@ export default function PolicyEnginePage() {
           duration: '45s',
           resourcesScanned: 45,
           violationsFound: 5,
-          remediations: 3
+          remediations: 3,
+          logs: ['Backup agent not reachable'],
+          triggerType: 'manual',
+          executedBy: 'ops-user'
         }
       ])
 

@@ -159,29 +159,23 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
         { id: 'gov-insights', title: 'AI Insights', icon: Brain, path: '/policies/insights', aiPowered: true }
       ]},
       { id: 'gov-compliance', title: 'Compliance', icon: FileCheck, path: '/compliance' },
-      { id: 'gov-exceptions', title: 'Exceptions', icon: AlertCircle, path: '/exceptions' }
+      // Exceptions removed per tactical baseline cleanup
     ],
 
     'Infrastructure': [
-      { id: 'infra-all', title: 'All Resources', icon: Box, path: '/resources' },
-      { id: 'infra-resources-v2', title: 'Resources Dashboard', icon: Box, path: '/resources/v2', aiPowered: true },
-      { id: 'infra-vm', title: 'Virtual Machines', icon: Server, path: '/resources/vm' },
-      { id: 'infra-db', title: 'Databases', icon: Database, path: '/resources/db' },
-      { id: 'infra-storage', title: 'Storage', icon: HardDrive, path: '/resources/storage' },
-      { id: 'infra-k8s', title: 'Kubernetes', icon: GitBranch, path: '/resources/k8s' },
-      { id: 'infra-network', title: 'Network', icon: Network, path: '/network' }
+      { id: 'infra-compute', title: 'Compute Resources', icon: Server, path: '/tactical/compute' },
+      { id: 'infra-storage2', title: 'Storage Systems', icon: HardDrive, path: '/tactical/storage' }
     ],
 
     'AI & Intelligence': [
       { id: 'ai-predictions', title: 'Predictions', icon: TrendingUp, path: '/predictions', aiPowered: true },
       { id: 'ai-correlations', title: 'Correlations', icon: GitBranch, path: '/correlations', aiPowered: true },
       { id: 'ai-expert', title: 'AI Expert', icon: Brain, path: '/ai-expert', aiPowered: true },
-      { id: 'ai-alerts', title: 'Predictive Alerts', icon: AlertTriangle, path: '/predictive-alerts', aiPowered: true },
-      { id: 'ai-ml-monitoring', title: 'ML Monitoring', icon: BarChart3, path: '/ml-monitoring' }
+      { id: 'ai-alerts', title: 'Predictive Alerts', icon: AlertTriangle, path: '/predictive-alerts', aiPowered: true }
     ],
 
     'Financial Management': [
-      { id: 'fin-costs', title: 'Cost Overview', icon: DollarSign, path: '/costs' },
+      { id: 'fin-costs', title: 'Cost Overview', icon: DollarSign, path: '/tactical/cost-governance' },
       { id: 'fin-governance', title: 'Cost Governance', icon: Gauge, path: '/tactical/cost-governance' },
       { id: 'fin-budgets', title: 'Budgets', icon: DollarSign, path: '/tactical/budgets' },
       { id: 'fin-chargebacks', title: 'Chargebacks', icon: DollarSign, path: '/tactical/chargebacks' },
@@ -208,7 +202,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
     ],
 
     'Administration': [
-      { id: 'admin-settings', title: 'Settings', icon: Settings, path: '/settings' },
+      // Settings (old design) removed
       { id: 'admin-users', title: 'Users', icon: UserCheck, path: '/tactical/users' },
       { id: 'admin-roles', title: 'Roles', icon: UserCheck, path: '/tactical/roles' },
       { id: 'admin-teams', title: 'Teams', icon: UserCheck, path: '/tactical/teams' },

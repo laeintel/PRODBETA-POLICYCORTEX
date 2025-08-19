@@ -266,7 +266,7 @@ export function DashboardGrid() {
           changeLabel="vs last month"
           trend={(metrics?.costs?.trend ?? 0) < 0 ? 'down' : 'up'}
           status={(metrics?.costs?.optimization_rate ?? 0) >= 80 ? 'success' : 'warning'}
-          deepLink="/costs"
+          deepLink="/tactical/cost-governance"
           icon={<DollarSign className="w-5 h-5 text-green-600" />}
           loading={loading}
           sparklineData={[145000, 142000, 138000, 135000, 132000]}
@@ -297,7 +297,7 @@ export function DashboardGrid() {
           changeLabel="efficiency gain"
           trend="up"
           status={(metrics?.resources?.utilization_rate ?? 0) >= 70 ? 'success' : 'warning'}
-          deepLink="/resources"
+          deepLink="/tactical/compute"
           icon={<Cpu className="w-5 h-5 text-purple-600" />}
           loading={loading}
           sparklineData={[65, 68, 70, 72, 75]}

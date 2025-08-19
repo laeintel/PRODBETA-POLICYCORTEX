@@ -2,9 +2,15 @@ import React from 'react';
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   children: React.ReactNode;
+  onValueChange?: (value: string) => void;
 }
 
-export const Select: React.FC<SelectProps> = ({ children, className = '', ...props }) => {
+export const Select: React.FC<SelectProps> = ({ children, className = '', onChange, onValueChange, ...props }) => {
+  const handleChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
+    onChange?.(e);
+    onValueChange?.(e.target.value);
+  };
+
   return (
     <div className="relative">
       <select
@@ -14,6 +20,7 @@ export const Select: React.FC<SelectProps> = ({ children, className = '', ...pro
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
           ${className}
         `}
+        onChange={handleChange}
         {...props}
       >
         {children}
