@@ -298,7 +298,7 @@ export function DashboardGrid() {
           trend="up"
           status={(metrics?.resources?.utilization_rate ?? 0) >= 70 ? 'success' : 'warning'}
           deepLink="/tactical/compute"
-          icon={<Cpu className="w-5 h-5 text-blue-600" />}
+          icon={<Cpu className="w-5 h-5 text-purple-600" />}
           loading={loading}
           sparklineData={[65, 68, 70, 72, 75]}
         />
@@ -482,7 +482,7 @@ function ProgressBar({ label, value, color }: { label: string; value: number; co
     blue: 'bg-blue-500',
     green: 'bg-green-500',
     red: 'bg-red-500',
-    purple: 'bg-blue-500',
+    purple: 'bg-purple-500',
   };
 
   return (

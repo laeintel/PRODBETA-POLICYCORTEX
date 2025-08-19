@@ -170,6 +170,11 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
       { id: 'sg-network', title: 'Network Security', icon: Network, path: '/tactical/network' }
     ],
 
+    'Infrastructure': [
+      { id: 'infra-compute', title: 'Compute Resources', icon: Server, path: '/tactical/compute' },
+      { id: 'infra-storage2', title: 'Storage Systems', icon: HardDrive, path: '/tactical/storage' }
+    ],
+
     'Build & Release': [
       { id: 'br-pipelines', title: 'Pipelines', icon: GitBranch, path: '/tactical/pipelines' },
       { id: 'br-builds', title: 'Builds', icon: Settings, path: '/tactical/builds' },
@@ -178,6 +183,13 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
       { id: 'br-repos', title: 'Repositories', icon: GitBranch, path: '/tactical/repos' },
       { id: 'br-prs', title: 'Pull Requests', icon: GitBranch, path: '/tactical/prs' },
       { id: 'br-artifacts', title: 'Artifacts', icon: Box, path: '/tactical/artifacts' }
+    ],
+
+    'AI & Intelligence': [
+      { id: 'ai-predictions', title: 'Predictions', icon: TrendingUp, path: '/predictions', aiPowered: true },
+      { id: 'ai-correlations', title: 'Correlations', icon: GitBranch, path: '/correlations', aiPowered: true },
+      { id: 'ai-expert', title: 'AI Expert', icon: Brain, path: '/ai-expert', aiPowered: true },
+      { id: 'ai-alerts', title: 'Predictive Alerts', icon: AlertTriangle, path: '/predictive-alerts', aiPowered: true }
     ],
 
     'Optimize': [
@@ -190,7 +202,17 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
       { id: 'opz-savings', title: 'Savings', icon: TrendingUp, path: '/tactical/savings' }
     ],
 
-    'Communicate': [
+    'DevOps & CI/CD': [
+      { id: 'devops-center', title: 'DevOps', icon: Settings, path: '/tactical/devops' },
+      { id: 'devops-pipelines', title: 'Pipelines', icon: GitBranch, path: '/tactical/pipelines' },
+      { id: 'devops-releases', title: 'Releases', icon: Settings, path: '/tactical/releases' },
+      { id: 'devops-builds', title: 'Builds', icon: Settings, path: '/tactical/builds' },
+      { id: 'devops-repos', title: 'Repositories', icon: GitBranch, path: '/tactical/repos' },
+      { id: 'devops-deploy', title: 'Deploy', icon: Zap, path: '/tactical/deploy' },
+      { id: 'devops-deployments', title: 'Deployments', icon: Zap, path: '/tactical/deployments' }
+    ],
+
+    'Communication': [
       { id: 'comm-notifications', title: 'Notifications', icon: Bell, path: '/tactical/notifications' },
       { id: 'comm-emails', title: 'Email Templates', icon: Mail, path: '/tactical/emails' },
       { id: 'comm-sms', title: 'SMS Alerts', icon: Phone, path: '/tactical/sms' },
@@ -199,9 +221,10 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
       { id: 'comm-status', title: 'Status Page', icon: AlertCircle, path: '/tactical/status' }
     ],
 
-    'Admin': [
+    'Administration': [
       { id: 'admin-users', title: 'User Management', icon: UserCheck, path: '/tactical/users' },
       { id: 'admin-roles', title: 'Role Assignments', icon: UserCheck, path: '/tactical/roles' },
+      { id: 'admin-teams', title: 'Teams', icon: UserCheck, path: '/tactical/teams' },
       { id: 'admin-api-keys', title: 'API Keys', icon: Key, path: '/tactical/api-keys' },
       { id: 'admin-integrations', title: 'Integrations', icon: Settings, path: '/tactical/integrations' },
       { id: 'admin-licenses', title: 'License Manager', icon: FileCheck, path: '/tactical/licenses' },
