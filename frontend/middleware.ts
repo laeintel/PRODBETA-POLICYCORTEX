@@ -11,10 +11,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Bypass auth checks in middleware in development or when explicitly enabled
-// MSAL uses sessionStorage, not cookies, so middleware can't properly check auth status
-// TEMPORARY: Set to true to allow development without auth
-const BYPASS_ROUTE_AUTH = true // TEMPORARY: Bypass for development
+// Bypass auth only when explicitly enabled (for demos). Never auto-bypass based on NODE_ENV.
+const BYPASS_ROUTE_AUTH = (process.env.NEXT_PUBLIC_DEMO_MODE === 'true')
 
 // Protected routes that require authentication
 // Actually, we'll protect everything except login
@@ -50,20 +48,15 @@ export function middleware(request: NextRequest) {
   }
   const { pathname } = request.nextUrl
 
-  // Check for authentication in cookies/session
+  // Only trust server-issued auth token presence (httpOnly). Do NOT trust client-set flags.
   const authToken = request.cookies.get('auth-token')
-  const authStatus = request.cookies.get('auth-status')
-  const sessionToken = request.cookies.get('session-token')
-  const msalSession = request.cookies.get('msal.session')
-  const tokenCache = request.cookies.get('msal.token.cache')
-  
-  const isAuthenticated = !!(authToken || authStatus || sessionToken || msalSession || tokenCache)
+  const isAuthenticated = !!authToken
 
-  // Only allow root (now login page) and auth endpoints without authentication
+  // Only allow root (login) and auth endpoints without authentication
   if (pathname === '/' || pathname === '/login' || pathname.startsWith('/api/auth')) {
-    // If already authenticated and trying to access login pages, redirect to dashboard
+    // If already authenticated and trying to access login pages, redirect to tactical
     if (isAuthenticated && (pathname === '/' || pathname === '/login')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/tactical', request.url))
     }
     return NextResponse.next()
   }

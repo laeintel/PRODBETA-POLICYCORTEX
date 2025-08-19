@@ -32,19 +32,25 @@ interface SidebarSection {
 export default function TacticalSidebar() {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   // Load sidebar state from localStorage
   useEffect(() => {
     const savedState = localStorage.getItem('sidebar-state');
     if (savedState) {
-      const { open, expanded } = JSON.parse(savedState);
-      setSidebarOpen(open);
-      setExpandedSection(expanded);
+      const parsed = JSON.parse(savedState);
+      setSidebarOpen(!!parsed.open);
+      // Backward compatible: could be a single string or an array
+      if (parsed.expanded) {
+        if (Array.isArray(parsed.expanded)) {
+          setExpandedSections(new Set(parsed.expanded as string[]));
+        } else if (typeof parsed.expanded === 'string' && parsed.expanded) {
+          setExpandedSections(new Set([parsed.expanded as string]));
+        }
+      }
     } else {
-      // Auto-expand section based on current path
       const section = detectSectionFromPath(pathname);
-      setExpandedSection(section);
+      if (section) setExpandedSections(new Set([section]));
     }
   }, []);
 
@@ -52,15 +58,15 @@ export default function TacticalSidebar() {
   useEffect(() => {
     localStorage.setItem('sidebar-state', JSON.stringify({
       open: sidebarOpen,
-      expanded: expandedSection
+      expanded: Array.from(expandedSections)
     }));
-  }, [sidebarOpen, expandedSection]);
+  }, [sidebarOpen, expandedSections]);
 
   // Auto-expand section when navigating
   useEffect(() => {
     const section = detectSectionFromPath(pathname);
-    if (section && section !== expandedSection) {
-      setExpandedSection(section);
+    if (section && !expandedSections.has(section)) {
+      setExpandedSections(prev => new Set(prev).add(section));
     }
   }, [pathname]);
 
@@ -116,8 +122,19 @@ export default function TacticalSidebar() {
   };
 
   const toggleSection = (sectionId: string) => {
-    // Only one section can be expanded at a time
-    setExpandedSection(expandedSection === sectionId ? null : sectionId);
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) next.delete(sectionId); else next.add(sectionId);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedSections(new Set(sidebarSections.map(s => s.id)));
+  };
+
+  const collapseAll = () => {
+    setExpandedSections(new Set());
   };
 
   const sidebarSections: SidebarSection[] = [
@@ -313,19 +330,27 @@ export default function TacticalSidebar() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 hover:bg-gray-800 rounded transition-colors"
-          >
-            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-2">
+            {sidebarOpen && (
+              <>
+                <button onClick={expandAll} className="px-2 py-1 text-[10px] bg-gray-800 hover:bg-gray-700 rounded border border-gray-700">Expand all</button>
+                <button onClick={collapseAll} className="px-2 py-1 text-[10px] bg-gray-800 hover:bg-gray-700 rounded border border-gray-700">Collapse all</button>
+              </>
+            )}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1 hover:bg-gray-800 rounded transition-colors"
+            >
+              {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Sidebar Navigation */}
       <div className="flex-1 overflow-y-auto">
         {sidebarSections.map((section) => {
-          const isExpanded = expandedSection === section.id;
+          const isExpanded = expandedSections.has(section.id);
           const SectionIcon = section.icon;
           
           return (

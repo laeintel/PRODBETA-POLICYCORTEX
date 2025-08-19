@@ -18,6 +18,8 @@ set USE_DEMO_CHAT=true
 set REQUIRE_AUTH=false
 set NEXT_PUBLIC_API_URL=http://localhost:8080
 set NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:4000/graphql
+set NEXT_PUBLIC_DEMO_MODE=true
+set NEXT_PUBLIC_USE_WS=false
 set RUST_LOG=info
 
 echo [1/5] Setting up demo environment variables...
@@ -39,7 +41,7 @@ echo.
 
 REM Start database services
 echo [3/5] Starting database services...
-docker-compose -f docker-compose.local.yml up -d postgres redis eventstore >nul 2>&1
+docker-compose -f docker-compose.local.yml up -d postgres dragonfly eventstore >nul 2>&1
 if %errorlevel% neq 0 (
     echo       WARNING: Database services may already be running
 ) else (

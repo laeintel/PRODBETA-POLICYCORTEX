@@ -153,20 +153,34 @@ const resolvers = {
   },
 };
 
+// Basic health endpoint for container orchestration (Apollo also exposes a well-known health path)
+const http = require('http');
+let serverInstance;
+
 async function startGateway() {
   // Create Apollo Server
+  const isProd = process.env.NODE_ENV === 'production'
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    // Dev: disable CSRF prevention to ease local testing
-    csrfPrevention: false,
+    csrfPrevention: isProd, // enable CSRF in production
+    introspection: !isProd, // disable schema introspection in production
   });
 
   // Start the server
-  const { url } = await startStandaloneServer(server, {
+  const allowed = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+  const { url, server: httpServer } = await startStandaloneServer(server, {
     listen: { port: 4000 },
+    cors: {
+      origin: allowed,
+      credentials: false,
+    },
   });
 
+  serverInstance = httpServer;
   console.log(`🚀 PolicyCortex GraphQL Gateway ready at ${url}`);
 }
 
@@ -175,3 +189,16 @@ startGateway().catch((err) => {
   console.error('Failed to start gateway:', err);
   process.exit(1);
 });
+
+// Fallback minimal health check if needed
+http
+  .createServer((req, res) => {
+    if (req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok' }));
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  })
+  .listen(4001, () => console.log('Health sidecar listening on :4001'));

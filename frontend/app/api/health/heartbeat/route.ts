@@ -60,7 +60,8 @@ export async function GET(request: NextRequest) {
     // Check dependent services
     const services = await Promise.all([
       checkService('http://localhost:8080/health', 'Core API'),
-      checkService('http://localhost:4000/health', 'GraphQL Gateway'),
+      // Apollo Server exposes a standard health endpoint here
+      checkService('http://localhost:4000/.well-known/apollo/server-health', 'GraphQL Gateway'),
       checkService('http://localhost:5432', 'PostgreSQL'),
       checkService('http://localhost:6379', 'Redis Cache')
     ]);

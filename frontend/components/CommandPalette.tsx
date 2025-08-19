@@ -361,6 +361,7 @@ export function useCommandPalette(commands: CommandItem[], categories: CommandCa
   useKeyboardShortcuts({
     'cmd+k': () => setIsOpen(true),
     'ctrl+k': () => setIsOpen(true),
+    '/': () => setIsOpen(true),
   })
 
   return {

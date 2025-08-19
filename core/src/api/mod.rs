@@ -35,7 +35,7 @@ pub use correlations::{
     get_real_time_insights, get_correlation_graph
 };
 
-use crate::auth::{AuthUser, TenantContext, TokenValidator};
+use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, TokenValidator};
 use crate::error::ApiError;
 use crate::validation::Validator;
 use crate::secrets::SecretsManager;
@@ -349,18 +349,36 @@ impl AppState {
 
 // API Handlers
 pub async fn get_metrics(
-    auth_user: AuthUser,
+    auth_user_opt: OptionalAuthUser,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
+    // In production, require authentication
+    let env = state.config.environment.to_lowercase();
+    let is_prod = env == "prod" || env == "production";
+    if is_prod && auth_user_opt.0.is_none() {
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({
+                "error": "unauthorized",
+                "message": "Authentication required in production"
+            })),
+        )
+            .into_response();
+    }
     counter!("api_requests_total", 1, "endpoint" => "metrics");
     // Log authenticated request - authentication is now required
-    tracing::info!(
-        "Authenticated request for metrics from user: {:?}",
-        auth_user.claims.preferred_username
-    );
+    if let Some(ref auth_user) = auth_user_opt.0 {
+        tracing::info!(
+            "Authenticated request for metrics from user: {:?}",
+            auth_user.claims.preferred_username
+        );
+    } else {
+        tracing::debug!("Anonymous metrics request (allowed in demo/simulated mode)");
+    }
 
     // Get tenant context for multi-tenant data access
-    let _tenant_context = match TenantContext::from_user(&auth_user).await {
+    let _tenant_context = if let Some(ref auth_user) = auth_user_opt.0 {
+        match TenantContext::from_user(auth_user).await {
         Ok(context) => {
             tracing::debug!(
                 "User has access to tenant: {} with {} subscriptions",
@@ -373,7 +391,7 @@ pub async fn get_metrics(
             tracing::error!("Failed to get tenant context: {:?}", e);
             return ApiError::Forbidden("Unable to determine tenant access".to_string()).into_response();
         }
-    };
+    } else { TenantContext{ tenant_id: "demo".to_string(), subscription_ids: vec![] } };
 
     // Determine data mode (Real vs Simulated) and enforce real-only behavior when requested
     use crate::data_mode::DataMode;
