@@ -54,7 +54,7 @@ cd backend/services/api_gateway && uvicorn main:app --reload
 
 ### Building & Testing
 
-**🚀 Recommended: Use the comprehensive test scripts**
+**Recommended: Use the comprehensive test scripts**
 ```bash
 # Complete test suite (Windows)
 .\scripts\testing\test-all-windows.bat
@@ -120,7 +120,7 @@ redis-cli -h localhost -p 6379
 - **Adminer DB UI**: http://localhost:8081
 
 ## Key API Routes
-- `/api/v1/metrics` - Unified governance metrics (Patent 1)
+- `/api/v1/metrics` - Unified governance metrics (Patent 3)
 - `/api/v1/predictions` - Predictive compliance (Patent 4)
 - `/api/v1/conversation` - Conversational AI (Patent 2)
 - `/api/v1/correlations` - Cross-domain correlations (Patent 1)
@@ -164,7 +164,7 @@ Training configuration is in `training/` with Azure AI Foundry integration.
 - RBAC with fine-grained permissions
 
 ## Current Known Issues
-- **Rust Compilation**: The core service has unresolved compilation errors related to missing Copy trait implementations and borrowing issues. A mock server is used in Docker builds as a temporary workaround.
+- **Rust Compilation**: The core service has unresolved compilation errors related to unclosed delimiter in src/api/mod.rs:2328. A mock server is used in Docker builds as a temporary workaround.
 - **SQLx Offline Mode**: When running locally, you may need to unset `SQLX_OFFLINE` environment variable.
 - **MSAL Authentication**: SSR issues have been resolved by providing default AuthContext values during server-side rendering.
 
@@ -222,3 +222,60 @@ docker-compose logs -f [service-name]
 # Clean up everything
 docker-compose down -v --remove-orphans
 ```
+
+## Patent Implementation Details
+
+### Patent #2: Conversational Governance Intelligence System
+
+**Core Requirements:**
+- 175B parameter domain expert AI model
+- 13 governance-specific intent classifications
+- 10 entity extraction types
+- Natural language to cloud policy translation
+- RLHF system with PPO optimization
+- Multi-tenant isolation with cryptographic separation
+
+**Performance Targets:**
+- Azure Operations: 98.7% accuracy
+- AWS Operations: 98.2% accuracy
+- GCP Operations: 97.5% accuracy
+- Intent Classification: 95% accuracy
+- Entity Extraction: 90% precision/recall
+
+**Key APIs:**
+- `POST /api/v1/conversation` - Process messages with NLP
+- `POST /api/v1/policy/translate` - Natural language to policy
+- `POST /api/v1/approval/request` - Create approval requests
+
+### Patent #4: Predictive Policy Compliance Engine
+
+**Core Requirements:**
+- Ensemble ML with LSTM + Attention + Gradient Boosting
+- VAE drift detection with 128-dimensional latent space
+- SHAP explainability engine
+- Continuous learning pipeline with human feedback
+- Real-time prediction serving (<100ms latency)
+
+**Performance Targets:**
+- Prediction Accuracy: 99.2%
+- False Positive Rate: <2%
+- Inference Latency: <100ms
+- Training Throughput: 10,000 samples/second
+
+**Model Specifications:**
+- LSTM: 512 hidden dims, 3 layers, 0.2 dropout, 8 attention heads
+- Ensemble Weights: Isolation Forest (40%), LSTM (30%), Autoencoder (30%)
+
+**Key APIs:**
+- `GET /api/v1/predictions` - All predictions
+- `GET /api/v1/predictions/risk-score/{resource_id}` - Risk assessment
+- `GET /api/v1/ml/feature-importance` - SHAP analysis
+- `POST /api/v1/ml/feedback` - Submit feedback
+
+## Detailed Patent Implementation Guides
+
+For comprehensive implementation details including checklists, code examples, and validation criteria:
+- Patent #2 Implementation: See inline documentation in `backend/services/ai_engine/`
+- Patent #4 Implementation: See inline documentation in `core/src/ml/`
+
+These patents require exact implementation of specified architectures, performance metrics, and API endpoints to maintain compliance with patent claims.
