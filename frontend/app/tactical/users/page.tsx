@@ -746,7 +746,9 @@ export default function UsersPage() {
                               <Shield className="w-4 h-4 text-gray-500" />
                             )}
                             {user.ssoProvider && (
-                              <Globe className="w-4 h-4 text-blue-500" title={`SSO: ${user.ssoProvider}`} />
+                              <span title={`SSO: ${user.ssoProvider}`}>
+                                <Globe className="w-4 h-4 text-blue-500" />
+                              </span>
                             )}
                           </div>
                         </td>
