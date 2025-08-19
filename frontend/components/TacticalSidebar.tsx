@@ -74,8 +74,8 @@ export default function TacticalSidebar() {
       return 'operations';
     }
     // Monitoring section paths
-    if (path.includes('/monitoring-overview') || path.includes('/metrics') || path.includes('/logs') || 
-        path.includes('/performance') || path.includes('/alerts') || path.includes('/events') ||
+    if (path.includes('/monitoring-overview') || path.includes('/metrics') || path.includes('/logs') ||
+        path.includes('/alerts') || path.includes('/events') ||
         path.includes('/availability') || path.includes('/capacity') || path.includes('/predictive') ||
         path.includes('/reports') || path.includes('/traces')) {
       return 'monitoring';
@@ -146,7 +146,6 @@ export default function TacticalSidebar() {
         { label: 'Monitoring Overview', path: '/tactical/monitoring-overview', icon: Activity },
         { label: 'Metrics Dashboard', path: '/tactical/metrics', icon: BarChart },
         { label: 'Log Analytics', path: '/tactical/logs', icon: Terminal },
-        { label: 'Performance', path: '/tactical/performance', icon: Gauge },
         { label: 'Availability', path: '/tactical/availability', icon: CheckCircle },
         { label: 'Capacity Planning', path: '/tactical/capacity', icon: TrendingUp },
         { label: 'Predictive Analytics', path: '/tactical/predictive', icon: LineChart },
