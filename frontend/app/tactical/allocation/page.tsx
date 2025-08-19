@@ -8,7 +8,7 @@ import {
   Calculator, Grid3x3, Layers, AlertCircle, CheckCircle,
   Clock, Calendar, ArrowUpRight, ArrowDownRight, RefreshCw,
   Target, Zap, Shield, Database, Activity, FileText,
-  ChevronRight, Play, Pause, Edit, Trash2, Copy
+  ChevronRight, Play, Pause, Edit, Trash2, Copy, Plus
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
