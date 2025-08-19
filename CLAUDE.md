@@ -54,7 +54,7 @@ cd backend/services/api_gateway && uvicorn main:app --reload
 
 ### Building & Testing
 
-**🚀 Recommended: Use the comprehensive test scripts**
+**Recommended: Use the comprehensive test scripts**
 ```bash
 # Complete test suite (Windows)
 .\scripts\testing\test-all-windows.bat
@@ -164,7 +164,7 @@ Training configuration is in `training/` with Azure AI Foundry integration.
 - RBAC with fine-grained permissions
 
 ## Current Known Issues
-- **Rust Compilation**: The core service has unresolved compilation errors related to missing Copy trait implementations and borrowing issues. A mock server is used in Docker builds as a temporary workaround.
+- **Rust Compilation**: The core service has unresolved compilation errors related to unclosed delimiter in src/api/mod.rs:2328. A mock server is used in Docker builds as a temporary workaround.
 - **SQLx Offline Mode**: When running locally, you may need to unset `SQLX_OFFLINE` environment variable.
 - **MSAL Authentication**: SSR issues have been resolved by providing default AuthContext values during server-side rendering.
 

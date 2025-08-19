@@ -71,9 +71,10 @@ import {
   CheckSquare,
   Square,
   Circle,
-  CircleDot
+  CircleDot,
+  X
 } from 'lucide-react'
-import { Line, Bar, Doughnut, Area } from 'react-chartjs-2'
+import { Line, Bar, Doughnut } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -311,7 +312,7 @@ export default function ArtifactsPage() {
       const matchesType = selectedType === 'all' || artifact.type === selectedType
       const matchesRegistry = selectedRegistry === 'all' || artifact.registry.includes(selectedRegistry)
       const matchesVulnerable = !showVulnerable || 
-                                (artifact.vulnerabilities.critical > 0 || artifact.vulnerabilities.high > 0)
+                                ((artifact.vulnerabilities?.critical ?? 0) > 0 || (artifact.vulnerabilities?.high ?? 0) > 0)
       const matchesSigned = !showSigned || artifact.signed
       
       return matchesSearch && matchesType && matchesRegistry && matchesVulnerable && matchesSigned
@@ -329,7 +330,7 @@ export default function ArtifactsPage() {
 
     const totalDownloads = artifacts.reduce((sum, a) => sum + a.downloads, 0)
     const vulnerableCount = artifacts.filter(a => 
-      a.vulnerabilities.critical > 0 || a.vulnerabilities.high > 0
+      (a.vulnerabilities?.critical ?? 0) > 0 || (a.vulnerabilities?.high ?? 0) > 0
     ).length
     const signedCount = artifacts.filter(a => a.signed).length
 
@@ -406,10 +407,10 @@ export default function ArtifactsPage() {
     datasets: [{
       label: 'Vulnerabilities',
       data: [
-        artifacts.reduce((sum, a) => sum + a.vulnerabilities.critical, 0),
-        artifacts.reduce((sum, a) => sum + a.vulnerabilities.high, 0),
-        artifacts.reduce((sum, a) => sum + a.vulnerabilities.medium, 0),
-        artifacts.reduce((sum, a) => sum + a.vulnerabilities.low, 0)
+        artifacts.reduce((sum, a) => sum + (a.vulnerabilities?.critical ?? 0), 0),
+        artifacts.reduce((sum, a) => sum + (a.vulnerabilities?.high ?? 0), 0),
+        artifacts.reduce((sum, a) => sum + (a.vulnerabilities?.medium ?? 0), 0),
+        artifacts.reduce((sum, a) => sum + (a.vulnerabilities?.low ?? 0), 0)
       ],
       backgroundColor: [
         'rgba(220, 38, 38, 0.8)',
@@ -433,13 +434,13 @@ export default function ArtifactsPage() {
   }
 
   const getVulnerabilityBadge = (vulnerabilities: any) => {
-    if (vulnerabilities.critical > 0) {
+    if (vulnerabilities?.critical > 0) {
       return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Critical</Badge>
     }
-    if (vulnerabilities.high > 0) {
+    if (vulnerabilities?.high > 0) {
       return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">High</Badge>
     }
-    if (vulnerabilities.medium > 0) {
+    if (vulnerabilities?.medium > 0) {
       return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Medium</Badge>
     }
     return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Clean</Badge>
@@ -1036,19 +1037,19 @@ export default function ArtifactsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-red-400">Critical</span>
-                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities.critical}</span>
+                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities?.critical ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-orange-400">High</span>
-                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities.high}</span>
+                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities?.high ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-yellow-400">Medium</span>
-                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities.medium}</span>
+                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities?.medium ?? 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-blue-400">Low</span>
-                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities.low}</span>
+                      <span className="text-xs text-white">{selectedArtifact.vulnerabilities?.low ?? 0}</span>
                     </div>
                   </div>
                 </div>

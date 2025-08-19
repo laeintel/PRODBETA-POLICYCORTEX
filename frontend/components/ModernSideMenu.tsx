@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   Brain,
   MessageSquare,
+  Activity,
   
   // Resource Management
   Box,
