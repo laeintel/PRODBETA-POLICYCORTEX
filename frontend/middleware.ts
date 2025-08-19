@@ -14,7 +14,7 @@ import type { NextRequest } from 'next/server'
 // Bypass auth checks in middleware in development or when explicitly enabled
 // MSAL uses sessionStorage, not cookies, so middleware can't properly check auth status
 // TEMPORARY: Set to true to allow development without auth
-const BYPASS_ROUTE_AUTH = true // TEMPORARY: Bypass for development
+const BYPASS_ROUTE_AUTH = false // Enforce auth: show login at root before tactical
 
 // Protected routes that require authentication
 // Actually, we'll protect everything except login
@@ -61,9 +61,9 @@ export function middleware(request: NextRequest) {
 
   // Only allow root (now login page) and auth endpoints without authentication
   if (pathname === '/' || pathname === '/login' || pathname.startsWith('/api/auth')) {
-    // If already authenticated and trying to access login pages, redirect to dashboard
+    // If already authenticated and trying to access login pages, redirect to tactical
     if (isAuthenticated && (pathname === '/' || pathname === '/login')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/tactical', request.url))
     }
     return NextResponse.next()
   }

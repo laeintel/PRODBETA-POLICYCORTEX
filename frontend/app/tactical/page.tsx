@@ -125,39 +125,68 @@ export default function TacticalLanding() {
   ];
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-6 py-10">
-      {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tactical Operations</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">
-            A neutral, technical landing for navigating operations across security, governance, infrastructure, and more.
-          </p>
-        </div>
+    <main className="min-h-screen bg-gray-900">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <header className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Tactical Command</h1>
+            <p className="text-sm text-gray-400">Operational dashboard across security, governance, infra, and finops</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-gray-800/60 border border-gray-800 rounded-lg px-3 py-2">
+              <p className="text-[10px] text-gray-400">Health</p>
+              <p className="text-sm text-green-400 font-semibold">98%</p>
+            </div>
+            <div className="bg-gray-800/60 border border-gray-800 rounded-lg px-3 py-2">
+              <p className="text-[10px] text-gray-400">Issues</p>
+              <p className="text-sm text-yellow-400 font-semibold">23</p>
+            </div>
+            <div className="bg-gray-800/60 border border-gray-800 rounded-lg px-3 py-2">
+              <p className="text-[10px] text-gray-400">Spend/Day</p>
+              <p className="text-sm text-white font-semibold">$4.2K</p>
+            </div>
+          </div>
+        </header>
 
-        {/* Sections Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {sections.map(({ id, title, icon: Icon, description, links }) => (
-            <section key={id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-                  <Icon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'Policy Compliance', value: '84.4%', badge: '↑2.3%', href: '/policies' },
+            { label: 'Monthly Spend', value: '$127k', badge: '↓3.2%', href: '/tactical/cost-governance' },
+            { label: 'Risk Score', value: '72.0', badge: '↓5.1%', href: '/security/overview' },
+            { label: 'Resource Utilization', value: '63.5%', badge: '↑5.2%', href: '/tactical/compute' },
+          ].map(k => (
+            <Link key={k.label} href={k.href} className="block bg-black border border-gray-800 rounded-xl p-4 hover:border-gray-700">
+              <p className="text-xs text-gray-400">{k.label}</p>
+              <div className="flex items-baseline justify-between mt-1">
+                <p className="text-2xl font-bold text-white">{k.value}</p>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${k.badge.includes('↑') ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>{k.badge}</span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{description}</p>
+            </Link>
+          ))}
+        </section>
+
+        <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {sections.map(({ id, title, icon: Icon, description, links }) => (
+            <div key={id} className="bg-black border border-gray-800 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-gray-800">
+                  <Icon className="w-5 h-5 text-gray-200" />
+                </div>
+                <h2 className="text-sm font-semibold text-white">{title}</h2>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">{description}</p>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {links.map((l) => (
                   <li key={l.href}>
-                    <Link href={l.href} className="block px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm text-gray-800 dark:text-gray-200">
+                    <Link href={l.href} className="block px-3 py-2 rounded-lg border border-gray-800 hover:bg-gray-800 text-xs text-gray-200">
                       {l.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </section>
+            </div>
           ))}
-        </div>
+        </section>
       </div>
     </main>
   );
