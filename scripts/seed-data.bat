@@ -12,24 +12,41 @@ timeout /t 5 /nobreak >nul
 
 REM Check PostgreSQL
 echo Checking PostgreSQL...
-:check_postgres
-docker exec policycortex-v2-postgres-1 pg_isready -U postgres >nul 2>&1
-if %errorlevel% neq 0 (
-    echo Waiting for PostgreSQL...
-    timeout /t 2 /nobreak >nul
-    goto check_postgres
+set POSTGRES_CONT=
+for /f "tokens=*" %%i in ('docker ps --format "{{.Names}}" ^| findstr /i "postgres"') do (
+  set POSTGRES_CONT=%%i
+  goto :found_pg
 )
-
-echo [OK] PostgreSQL ready
+:found_pg
+if "%POSTGRES_CONT%"=="" (
+  echo [WARN] PostgreSQL container not found; skipping DB seed
+) else (
+  :check_postgres
+  docker exec %POSTGRES_CONT% pg_isready -U postgres >nul 2>&1
+  if %errorlevel% neq 0 (
+      echo Waiting for PostgreSQL...
+      timeout /t 2 /nobreak >nul
+      goto check_postgres
+  )
+  echo [OK] PostgreSQL ready (%POSTGRES_CONT%)
+)
 echo.
 
 REM Seed PostgreSQL
-echo Seeding PostgreSQL database...
-docker exec -i policycortex-v2-postgres-1 psql -U postgres -d policycortex < scripts\seed-data.sql
-if %errorlevel% equ 0 (
-    echo [OK] PostgreSQL seeded
+if exist scripts\seed-data.sql (
+  if not "%POSTGRES_CONT%"=="" (
+    echo Seeding PostgreSQL database...
+    type scripts\seed-data.sql | docker exec -i %POSTGRES_CONT% psql -U postgres -d policycortex >nul 2>&1
+    if %errorlevel% equ 0 (
+        echo [OK] PostgreSQL seeded
+    ) else (
+        echo [WARN] Failed to seed PostgreSQL; continuing demo
+    )
+  ) else (
+    echo [INFO] Skipping DB seed (PostgreSQL not running)
+  )
 ) else (
-    echo [ERROR] Failed to seed PostgreSQL
+  echo [INFO] scripts\\seed-data.sql not found; skipping DB seed
 )
 
 REM Seed EventStore
@@ -48,8 +65,18 @@ if %errorlevel% equ 0 (
 REM Seed Cache
 echo.
 echo Seeding cache...
-docker exec policycortex-v2-dragonfly-1 redis-cli SET session:demo "{\"user\":\"demo\"}" EX 3600 >nul 2>&1
-docker exec policycortex-v2-dragonfly-1 redis-cli HSET feature_flags "all_features" "enabled" >nul 2>&1
+set DF_CONT=
+for /f "tokens=*" %%i in ('docker ps --format "{{.Names}}" ^| findstr /i "dragonfly"') do (
+  set DF_CONT=%%i
+  goto :found_df
+)
+:found_df
+if not "%DF_CONT%"=="" (
+  docker exec %DF_CONT% redis-cli SET session:demo "{\"user\":\"demo\"}" EX 3600 >nul 2>&1
+  docker exec %DF_CONT% redis-cli HSET feature_flags "all_features" "enabled" >nul 2>&1
+) else (
+  echo [INFO] DragonflyDB not running; skipping cache seed
+)
 
 if %errorlevel% equ 0 (
     echo [OK] Cache seeded

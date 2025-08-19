@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const colors = require('tailwindcss/colors')
+
 module.exports = {
   darkMode: ["class"],
   content: [
@@ -57,6 +59,11 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Tactical palette overrides: map legacy purple/pink to blue/cyan to enforce consistency
+        purple: colors.blue,
+        pink: colors.cyan,
+        fuchsia: colors.cyan,
+        violet: colors.indigo,
         // Removed legacy Quantum theme colors
         dark: {
           matter: '#0A0E27',

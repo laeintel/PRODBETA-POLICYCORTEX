@@ -24,13 +24,7 @@ export async function POST(request: NextRequest) {
       path: '/'
     });
 
-    // Also set a non-httpOnly cookie for client-side checks
-    response.cookies.set('auth-status', 'authenticated', {
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 hours
-      path: '/'
-    });
+    // Do not set client-visible auth status flags (avoid spoofing)
 
     if (user) {
       response.cookies.set('user-info', JSON.stringify(user), {
@@ -55,6 +49,7 @@ export async function DELETE(request: NextRequest) {
   
   // Clear all auth cookies
   response.cookies.delete('auth-token');
+  // Remove any legacy flags if present
   response.cookies.delete('auth-status');
   response.cookies.delete('user-info');
   

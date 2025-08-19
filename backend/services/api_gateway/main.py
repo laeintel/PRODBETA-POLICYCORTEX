@@ -113,15 +113,17 @@ app = FastAPI(
 )
 
 # Security middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*"]  # Configure for production
-)
+# Restrict allowed hosts; configure via ALLOWED_HOSTS (comma-separated). Defaults to localhost only.
+allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+allowed_hosts = [h.strip() for h in allowed_hosts_env if h.strip()]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # CORS configuration
+# Lock down CORS to explicit allowlist from environment
+cors_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],

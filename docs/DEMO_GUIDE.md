@@ -203,21 +203,18 @@ This guide consolidates all demo scenarios and scripts for PolicyCortex v2, show
 ### Quick Demo Setup
 ```bash
 # Start demo environment
-.\start-demo.bat
+scripts/demo-ready.bat
 
-# Seed demo data
-.\scripts\seed-demo-data.bat
+# (Optional) Seed demo data — not required for the default simulated demo
+# scripts/seed-demo-data.bat
 
-# Verify all services
-curl http://localhost:3000/health
+# Verify UI
+curl http://localhost:3000/health || echo "Open http://localhost:3000 in your browser"
 ```
 
 ### Demo Data Requirements
-- Sample Azure resources across subscriptions
-- Policy violations in various stages
-- Cost data with trends
-- Security findings and recommendations
-- Multi-tenant sample data
+Not required for the base demo; the app provides simulated/mocked endpoints.
+For live data, set `USE_REAL_DATA=true` and configure Azure credentials.
 
 ## Demo Readiness Checklist
 

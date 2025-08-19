@@ -106,7 +106,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
   const [recentItems, setRecentItems] = useState<string[]>([])
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
-  // Menu structure aligned to requested taxonomy
+  // Menu structure aligned to consolidated IA
   const menuStructure: Record<string, MenuItem[]> = {
     'Quick Access': [
       {
@@ -137,34 +137,52 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
         shortcut: '⌘/'
       }
     ],
-    
-    'Security & Compliance': [
-      { id: 'sec-overview', title: 'Security Overview', icon: Shield, path: '/security/overview' },
-      { id: 'sec-threat-detection', title: 'Threat Detection', icon: AlertTriangle, path: '/security/threat-detection' },
-      { id: 'sec-vuln-scan', title: 'Vulnerability Scan', icon: AlertTriangle, path: '/security/vulnerability-scan' },
-      { id: 'sec-access-control', title: 'Access Control', icon: UserCheck, path: '/security/access-control' },
-      { id: 'sec-identity', title: 'Identity Management', icon: Lock, path: '/security/identity-management' },
-      { id: 'sec-compliance-hub', title: 'Compliance Hub', icon: FileCheck, path: '/security/compliance-hub' },
-      { id: 'sec-policy-engine', title: 'Policy Engine', icon: FileCheck, path: '/security/policy-engine' },
-      { id: 'sec-audit-trail', title: 'Audit Trail', icon: FileCheck, path: '/security/audit-trail' },
-      { id: 'sec-keys', title: 'Encryption Keys', icon: Key, path: '/security/encryption-keys' },
-      { id: 'sec-certificates', title: 'Certificates', icon: Lock, path: '/security/certificates' },
-      { id: 'sec-groups', title: 'Security Groups', icon: Shield, path: '/security/security-groups' },
-      { id: 'sec-firewall', title: 'Firewall Rules', icon: Shield, path: '/security/firewall-rules' }
+
+    'Operate': [
+      { id: 'op-center', title: 'Operations Center', icon: LayoutDashboard, path: '/tactical' },
+      { id: 'op-realtime', title: 'Real-time Status', icon: CircleDot, path: '/tactical/status' },
+      { id: 'op-service-health', title: 'Service Health', icon: Activity, path: '/monitoring' },
+      { id: 'op-resources', title: 'Resource Manager', icon: Box, path: '/resources' },
+      { id: 'op-backup', title: 'Backup & Recovery', icon: Database, path: '/tactical/backup-config' },
+      { id: 'op-automation', title: 'Automation', icon: Zap, path: '/automation' }
     ],
 
-    'Governance & Policy': [
-      { id: 'gov-policies', title: 'Policies', icon: Shield, path: '/policies', children: [
-        { id: 'gov-violations', title: 'Violations', icon: AlertTriangle, path: '/policies/violations' },
-        { id: 'gov-insights', title: 'AI Insights', icon: Brain, path: '/policies/insights', aiPowered: true }
+    'Observe': [
+      { id: 'ob-overview', title: 'Monitoring Overview', icon: Gauge, path: '/tactical/monitoring-overview' },
+      { id: 'ob-metrics', title: 'Metrics', icon: BarChart3, path: '/monitoring' },
+      { id: 'ob-logs', title: 'Logs & Traces', icon: FileCheck, path: '/tactical/system-logs' },
+      { id: 'ob-events', title: 'Events', icon: AlertCircle, path: '/tactical/events' },
+      { id: 'ob-availability', title: 'Availability', icon: CheckCircle, path: '/performance' },
+      { id: 'ob-alerting', title: 'Alerting', icon: Bell, path: '/tactical/notifications' }
+    ],
+
+    'Secure & Govern': [
+      { id: 'sg-posture', title: 'Posture & Risk', icon: Shield, path: '/security' },
+      { id: 'sg-iam', title: 'Identity & Access', icon: UserCheck, path: '/security/access-control' },
+      { id: 'sg-policies', title: 'Policies & Standards', icon: FileCheck, path: '/policies', children: [
+        { id: 'sg-standards', title: 'Standards', icon: FileCheck, path: '/tactical/standards' },
+        { id: 'sg-blueprints', title: 'Blueprints', icon: FileCheck, path: '/tactical/blueprints' }
       ]},
-      { id: 'gov-compliance', title: 'Compliance', icon: FileCheck, path: '/compliance' },
-      // Exceptions removed per tactical baseline cleanup
+      { id: 'sg-compliance', title: 'Compliance & Evidence', icon: FileCheck, path: '/compliance', children: [
+        { id: 'sg-scores', title: 'Compliance Scores', icon: Gauge, path: '/tactical/compliance-scores' },
+        { id: 'sg-risk', title: 'Risk Assessment', icon: AlertTriangle, path: '/tactical/risk' }
+      ]},
+      { id: 'sg-network', title: 'Network Security', icon: Network, path: '/tactical/network' }
     ],
 
     'Infrastructure': [
       { id: 'infra-compute', title: 'Compute Resources', icon: Server, path: '/tactical/compute' },
       { id: 'infra-storage2', title: 'Storage Systems', icon: HardDrive, path: '/tactical/storage' }
+    ],
+
+    'Build & Release': [
+      { id: 'br-pipelines', title: 'Pipelines', icon: GitBranch, path: '/tactical/pipelines' },
+      { id: 'br-builds', title: 'Builds', icon: Settings, path: '/tactical/builds' },
+      { id: 'br-deployments', title: 'Deployments', icon: Zap, path: '/tactical/deployments' },
+      { id: 'br-releases', title: 'Releases', icon: Settings, path: '/tactical/releases' },
+      { id: 'br-repos', title: 'Repositories', icon: GitBranch, path: '/tactical/repos' },
+      { id: 'br-prs', title: 'Pull Requests', icon: GitBranch, path: '/tactical/prs' },
+      { id: 'br-artifacts', title: 'Artifacts', icon: Box, path: '/tactical/artifacts' }
     ],
 
     'AI & Intelligence': [
@@ -174,14 +192,14 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
       { id: 'ai-alerts', title: 'Predictive Alerts', icon: AlertTriangle, path: '/predictive-alerts', aiPowered: true }
     ],
 
-    'Financial Management': [
-      { id: 'fin-costs', title: 'Cost Overview', icon: DollarSign, path: '/tactical/cost-governance' },
-      { id: 'fin-governance', title: 'Cost Governance', icon: Gauge, path: '/tactical/cost-governance' },
-      { id: 'fin-budgets', title: 'Budgets', icon: DollarSign, path: '/tactical/budgets' },
-      { id: 'fin-chargebacks', title: 'Chargebacks', icon: DollarSign, path: '/tactical/chargebacks' },
-      { id: 'fin-forecast', title: 'Forecast', icon: TrendingUp, path: '/tactical/forecast' },
-      { id: 'fin-anomalies', title: 'Cost Anomalies', icon: AlertTriangle, path: '/tactical/cost-anomalies' },
-      { id: 'fin-savings', title: 'Savings', icon: TrendingUp, path: '/tactical/savings' }
+    'Optimize': [
+      { id: 'opz-costs', title: 'Cost Analytics', icon: DollarSign, path: '/tactical/cost-governance' },
+      { id: 'opz-budgets', title: 'Budgets', icon: DollarSign, path: '/tactical/budgets' },
+      { id: 'opz-forecast', title: 'Forecasting', icon: TrendingUp, path: '/tactical/forecast' },
+      { id: 'opz-optimization', title: 'Optimization', icon: Gauge, path: '/tactical/optimization' },
+      { id: 'opz-chargebacks', title: 'Chargebacks', icon: DollarSign, path: '/tactical/chargebacks' },
+      { id: 'opz-anomalies', title: 'Anomaly Alerts', icon: AlertTriangle, path: '/tactical/cost-anomalies' },
+      { id: 'opz-savings', title: 'Savings', icon: TrendingUp, path: '/tactical/savings' }
     ],
 
     'DevOps & CI/CD': [
@@ -196,19 +214,22 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
 
     'Communication': [
       { id: 'comm-notifications', title: 'Notifications', icon: Bell, path: '/tactical/notifications' },
-      { id: 'comm-emails', title: 'Emails', icon: Mail, path: '/tactical/emails' },
-      { id: 'comm-sms', title: 'SMS', icon: Phone, path: '/tactical/sms' },
-      { id: 'comm-slack', title: 'Slack', icon: MessageSquare, path: '/tactical/slack' }
+      { id: 'comm-emails', title: 'Email Templates', icon: Mail, path: '/tactical/emails' },
+      { id: 'comm-sms', title: 'SMS Alerts', icon: Phone, path: '/tactical/sms' },
+      { id: 'comm-webhooks', title: 'Webhooks', icon: Network, path: '/tactical/webhooks' },
+      { id: 'comm-slack', title: 'Slack', icon: MessageSquare, path: '/tactical/slack' },
+      { id: 'comm-status', title: 'Status Page', icon: AlertCircle, path: '/tactical/status' }
     ],
 
     'Administration': [
-      // Settings (old design) removed
-      { id: 'admin-users', title: 'Users', icon: UserCheck, path: '/tactical/users' },
-      { id: 'admin-roles', title: 'Roles', icon: UserCheck, path: '/tactical/roles' },
+      { id: 'admin-users', title: 'User Management', icon: UserCheck, path: '/tactical/users' },
+      { id: 'admin-roles', title: 'Role Assignments', icon: UserCheck, path: '/tactical/roles' },
       { id: 'admin-teams', title: 'Teams', icon: UserCheck, path: '/tactical/teams' },
-      { id: 'admin-licenses', title: 'Licenses', icon: FileCheck, path: '/tactical/licenses' },
+      { id: 'admin-api-keys', title: 'API Keys', icon: Key, path: '/tactical/api-keys' },
       { id: 'admin-integrations', title: 'Integrations', icon: Settings, path: '/tactical/integrations' },
-      { id: 'admin-mg', title: 'Management Groups', icon: Globe, path: '/tactical/management-groups' }
+      { id: 'admin-licenses', title: 'License Manager', icon: FileCheck, path: '/tactical/licenses' },
+      { id: 'admin-update-center', title: 'Update Center', icon: Settings, path: '/tactical/updates' },
+      { id: 'admin-logs', title: 'System Logs', icon: FileCheck, path: '/tactical/system-logs' }
     ]
   }
 
@@ -360,7 +381,7 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
                 placeholder="Search menu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:bg-white/10 transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:bg-white/10 transition-all"
               />
               {searchQuery && (
                 <button
@@ -560,7 +581,7 @@ function MenuItemComponent({
         className={`
           group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all
           ${isActive 
-            ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30' 
+            ? 'bg-gradient-to-r from-blue-600/10 to-cyan-600/10 border border-blue-500/20' 
             : 'hover:bg-white/5 border border-transparent'
           }
           ${depth > 0 ? 'ml-6' : ''}
@@ -591,12 +612,12 @@ function MenuItemComponent({
               {item.title}
             </p>
             {item.isNew && (
-              <span className="px-1.5 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">
+              <span className="px-1.5 py-0.5 text-xs bg-blue-500/20 text-blue-300 rounded">
                 NEW
               </span>
             )}
             {item.aiPowered && (
-              <Sparkles className="w-3 h-3 text-purple-400" />
+              <Sparkles className="w-3 h-3 text-blue-300" />
             )}
             {item.isPremium && (
               <Star className="w-3 h-3 text-yellow-400" />

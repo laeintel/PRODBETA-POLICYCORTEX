@@ -171,21 +171,21 @@ impl TokenValidator {
 
     // Validate JWT token
     pub async fn validate_token(&mut self, token: &str) -> Result<Claims, AuthError> {
-        // Dev shortcut: allow HS256 tokens only outside production
-        let is_production = matches!(
+        // Optional HS256 dev-only path, disabled by default. Enable with ALLOW_DEV_JWT=true and never in prod.
+        let allow_dev_jwt = matches!(
+            std::env::var("ALLOW_DEV_JWT").as_deref(),
+            Ok("true") | Ok("1")
+        ) && !matches!(
             std::env::var("ENVIRONMENT").as_deref(),
             Ok("production") | Ok("prod")
         );
-        if !is_production
-            && std::env::var("JWT_HS256_SECRET")
-                .ok()
-                .filter(|v| !v.is_empty())
-                .is_some()
-            {
+        if allow_dev_jwt {
+            if std::env::var("JWT_HS256_SECRET").ok().filter(|v| !v.is_empty()).is_some() {
                 if let Ok(claims) = Self::validate_hs256(token).await {
                     return Ok(claims);
                 }
             }
+        }
         // Optionally enforce strict audience based on app config and environment
         let env_requires_strict = matches!(
             std::env::var("ENVIRONMENT").as_deref(),
