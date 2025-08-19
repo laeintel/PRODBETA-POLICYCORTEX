@@ -71,8 +71,7 @@ import {
   Crosshair,
   Navigation,
   Radio,
-  Signal,
-  Router
+  Signal
 } from 'lucide-react'
 import { Line, Bar, Doughnut, Scatter } from 'react-chartjs-2'
 import {
