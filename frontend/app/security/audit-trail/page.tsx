@@ -17,6 +17,7 @@ import {
   Shield,
   AlertTriangle,
   CheckCircle,
+  X,
   XCircle,
   Info,
   Search,

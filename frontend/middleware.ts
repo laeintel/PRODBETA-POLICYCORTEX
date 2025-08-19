@@ -26,10 +26,10 @@ const protectedRoutes = [
   '/chat',
   '/policies',
   '/rbac',
-  '/costs',
+  // '/costs', // old design removed
   '/network',
   '/resources',
-  '/settings',
+  // '/settings', // old design removed
   '/security',
   '/training',
   '/anomalies',
