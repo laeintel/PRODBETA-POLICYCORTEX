@@ -94,7 +94,8 @@ class PolicyCortexAPI {
   }
 
   async getResourceDetails(resourceId: string) {
-    return this.request<any>(`/api/v1/resources/${resourceId}`);
+    // Prefer v2 resource details if available; Next.js proxy/mocks handle fallback
+    return this.request<any>(`/api/v2/resources/${resourceId}`);
   }
 
   async getResourceMetrics(resourceId: string) {
@@ -172,6 +173,20 @@ class PolicyCortexAPI {
 
   async getMonitoring() {
     return this.request<any>('/api/v1/monitoring')
+  }
+
+  // Security Operations Center (mock/proxy)
+  async getSOCData() {
+    // Use a Next.js API proxy if available, otherwise return a shaped mock
+    const resp = await this.request<any>('/api/v1/soc')
+    if (resp.status && resp.status !== 0) {
+      return resp
+    }
+    // Fallback mock (shape compatible with SOC page)
+    return {
+      status: 200,
+      data: {},
+    }
   }
 
   // Roadmap

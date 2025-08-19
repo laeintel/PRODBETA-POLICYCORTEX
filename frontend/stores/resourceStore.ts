@@ -371,8 +371,16 @@ export const useResourceStore = create<ResourceState>()(
           }
         }),
 
-        // WebSocket for real-time updates
+        // WebSocket for real-time updates (disabled in demo by default)
         connectWebSocket: () => {
+          if (typeof window !== 'undefined') {
+            const useWs = (process.env.NEXT_PUBLIC_USE_WS || '').toLowerCase() === 'true'
+            if (!useWs) {
+              // Skip WS in demo; rely on periodic refresh and SSE action streams
+              return
+            }
+          }
+
           const ws = new WebSocket(`ws://localhost:8080/ws/resources`)
           
           ws.onopen = () => {

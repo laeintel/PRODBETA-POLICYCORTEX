@@ -21,7 +21,8 @@ docker-compose -f docker-compose.local.yml build
 
 # Start services
 echo "🎯 Starting services..."
-docker-compose -f docker-compose.local.yml up -d
+docker-compose -f docker-compose.local.yml up -d postgres redis
+docker-compose -f docker-compose.local.yml up -d core graphql frontend
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to be ready..."

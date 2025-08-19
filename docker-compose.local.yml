@@ -1,142 +1,116 @@
-version: '3.8'
-
 services:
-  # Rust Core Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: pcx_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: policycortex
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d policycortex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pcx_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: pcx_redis
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "notice"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pcx_net
+
   core:
     build:
       context: ./core
       dockerfile: Dockerfile
+    container_name: pcx_core
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: dev
+      SERVICE_VERSION: "local"
+      ALLOWED_ORIGINS: http://localhost:3000,http://frontend:3000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/policycortex
+      REDIS_URL: redis://redis:6379
+      RUST_LOG: policycortex_core=debug,tower_http=info
     ports:
       - "8080:8080"
-    environment:
-      - RUST_LOG=debug
-      - ENVIRONMENT=dev
-      - USE_REAL_DATA=true  # Set to true for live Azure data
-      # Azure credentials (pull from your host env)
-      - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
-      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
-      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
-      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/policycortex
-      - REDIS_URL=redis://dragonfly:6379
-      - EVENT_STORE_URL=http://eventstore:2113
-      - DEEP_API_BASE=http://api-gateway:8090
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-      # Azure OpenAI (Foundry) for Realtime and Chat
-      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
-      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
-      - AZURE_OPENAI_REALTIME_DEPLOYMENT=${AZURE_OPENAI_REALTIME_DEPLOYMENT:-realtime-dev}
-      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-05-01-preview}
-    depends_on:
-      - postgres
-      - dragonfly
-      - eventstore
-      - otel-collector
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pcx_net
 
-  # GraphQL Gateway
   graphql:
     build:
       context: ./graphql
       dockerfile: Dockerfile
-    ports:
-      - "4000:4000"
+    container_name: pcx_graphql
     environment:
-      - NODE_ENV=development
-      - CORE_SERVICE_URL=http://core:8080
-      - APOLLO_KEY=${APOLLO_KEY:-dev}
-      - APOLLO_GRAPH_REF=${APOLLO_GRAPH_REF:-local}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      NODE_ENV: production
+      ALLOWED_ORIGINS: http://localhost:3000,http://frontend:3000
     depends_on:
       - core
-      - otel-collector
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/.well-known/apollo/server-health', r => { process.exit(r.statusCode===200?0:1) })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pcx_net
 
-  # Next.js Frontend
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
-    ports:
-      - "3000:3000"
+      dockerfile: Dockerfile.prod
+    container_name: pcx_frontend
     environment:
-      - NODE_ENV=development
-      - IN_DOCKER=true
-      - NEXT_PUBLIC_USE_REAL_DATA=true
-      - NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://graphql:4000/graphql
-      - NEXT_PUBLIC_WEBSOCKET_ENDPOINT=ws://graphql:4000/subscriptions
-      - NEXT_PUBLIC_API_URL=http://core:8080
-      - NEXT_PUBLIC_AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
-      - NEXT_PUBLIC_AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
-      - NEXT_PUBLIC_MSAL_REDIRECT_URI=http://localhost:3000
-      - NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI=http://localhost:3000
-
-  # Python API Gateway (Deep Insights)
-  api-gateway:
-    build:
-      context: ./backend/services/api_gateway
-      dockerfile: Dockerfile
-    ports:
-      - "8090:8090"
-    environment:
-      - REQUIRE_AUTH=false
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      NODE_ENV: production
+      DOCKER: "true"
+      IN_DOCKER: "true"
+      BACKEND_SERVICE_NAME: core
+      BACKEND_SERVICE_PORT: 8080
+      NEXT_PUBLIC_API_URL: http://core:8080
+      NEXT_PUBLIC_GRAPHQL_URL: http://graphql:4000/graphql
+      NEXT_PUBLIC_GRAPHQL_ENDPOINT: http://graphql:4000/graphql
+      NEXT_PUBLIC_USE_WS: "false"
+      NEXT_PUBLIC_DEMO_MODE: "false"
     depends_on:
       - core
-      - otel-collector
-
-  # PostgreSQL for event store
-  postgres:
-    image: postgres:15-alpine
+      - graphql
     ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=policycortex
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  # DragonflyDB (Redis replacement)
-  dragonfly:
-    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
-    ports:
-      - "6379:6379"
-    ulimits:
-      memlock: -1
-    volumes:
-      - dragonfly_data:/data
-
-  # EventStore for event sourcing
-  eventstore:
-    image: eventstore/eventstore:latest
-    ports:
-      - "2113:2113"
-      - "1113:1113"
-    environment:
-      - EVENTSTORE_INSECURE=true
-      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
-      - EVENTSTORE_MEM_DB=true
-      - EVENTSTORE_RUN_PROJECTIONS=All
-      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
-    volumes:
-      - eventstore_data:/var/lib/eventstore
-
-  # OpenTelemetry Collector for local tracing/metrics export
-  otel-collector:
-    image: otel/opentelemetry-collector:0.93.0
-    command: ["--config", "/etc/otelcol/config.yaml"]
-    ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-    volumes:
-      - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
-
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', r => { process.exit(r.statusCode===200?0:1) })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pcx_net
 
 volumes:
-  postgres_data:
-  dragonfly_data:
-  eventstore_data:
+  pg_data:
 
 networks:
-  default:
-    name: policycortex
-    driver: bridge
+  pcx_net:
+    name: pcx_net
