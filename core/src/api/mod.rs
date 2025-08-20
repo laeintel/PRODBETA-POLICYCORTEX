@@ -379,19 +379,22 @@ pub async fn get_metrics(
     // Get tenant context for multi-tenant data access
     let _tenant_context = if let Some(ref auth_user) = auth_user_opt.0 {
         match TenantContext::from_user(auth_user).await {
-        Ok(context) => {
-            tracing::debug!(
-                "User has access to tenant: {} with {} subscriptions",
-                context.tenant_id,
-                context.subscription_ids.len()
-            );
-            context
+            Ok(context) => {
+                tracing::debug!(
+                    "User has access to tenant: {} with {} subscriptions",
+                    context.tenant_id,
+                    context.subscription_ids.len()
+                );
+                context
+            }
+            Err(e) => {
+                tracing::error!("Failed to get tenant context: {:?}", e);
+                return ApiError::Forbidden("Unable to determine tenant access".to_string()).into_response();
+            }
         }
-        Err(e) => {
-            tracing::error!("Failed to get tenant context: {:?}", e);
-            return ApiError::Forbidden("Unable to determine tenant access".to_string()).into_response();
-        }
-    } else { TenantContext{ tenant_id: "demo".to_string(), subscription_ids: vec![] } };
+    } else { 
+        TenantContext{ tenant_id: "demo".to_string(), subscription_ids: vec![] } 
+    };
 
     // Determine data mode (Real vs Simulated) and enforce real-only behavior when requested
     use crate::data_mode::DataMode;
@@ -1472,7 +1475,7 @@ pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoRespon
                             "total": policies.len(),
                         }),
                         DataMode::Real,
-                    ));
+                    )).into_response();
                 }
                 Err(e) => {
                     tracing::warn!("Failed to get real policies: {}", e);
@@ -1505,7 +1508,7 @@ pub async fn get_policies(State(state): State<Arc<AppState>>) -> impl IntoRespon
             "total": simulated_policies.len(),
         }),
         DataMode::Simulated,
-    ))
+    )).into_response()
 }
 
 // Policies Deep Compliance
@@ -1893,7 +1896,7 @@ pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResp
                         "timestamp": chrono::Utc::now()
                     }),
                     DataMode::Real,
-                ));
+                )).into_response();
             }
             Err(e) => {
                 tracing::warn!("Failed to get compliance data: {}", e);
@@ -1927,7 +1930,7 @@ pub async fn get_compliance(State(state): State<Arc<AppState>>) -> impl IntoResp
             "timestamp": chrono::Utc::now()
         }),
         DataMode::Simulated,
-    ))
+    )).into_response()
 }
 
 pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -1953,7 +1956,7 @@ pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoRespo
                         "timestamp": chrono::Utc::now()
                     }),
                     DataMode::Real,
-                ));
+                )).into_response();
             }
             Err(e) => {
                 tracing::warn!("Failed to get resource data: {}", e);
@@ -1986,7 +1989,7 @@ pub async fn get_resources(State(state): State<Arc<AppState>>) -> impl IntoRespo
             "timestamp": chrono::Utc::now()
         }),
         DataMode::Simulated,
-    ))
+    )).into_response()
 }
 
 // ===================== Action Orchestrator (Phase 2) =====================
