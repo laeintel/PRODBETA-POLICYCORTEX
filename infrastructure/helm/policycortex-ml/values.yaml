@@ -1,0 +1,360 @@
+# Helm Chart Values for PolicyCortex ML Components
+# Patent #4 Implementation with GPU Support
+
+global:
+  namespace: policycortex-ml
+  image:
+    registry: crpcxdev.azurecr.io
+    pullPolicy: IfNotPresent
+  
+predictionServer:
+  enabled: true
+  name: ml-prediction-server
+  image:
+    repository: policycortex-ml
+    tag: latest
+  
+  replicaCount: 3
+  
+  # GPU Configuration
+  gpu:
+    enabled: true
+    type: "nvidia-tesla-t4"
+    count: 1
+    driver: "470.82.01"
+  
+  # Resources with GPU
+  resources:
+    requests:
+      memory: "4Gi"
+      cpu: "2"
+      nvidia.com/gpu: "1"
+    limits:
+      memory: "8Gi"
+      cpu: "4"
+      nvidia.com/gpu: "1"
+  
+  # Model Configuration
+  modelConfig:
+    cacheSize: 10
+    batchSize: 32
+    maxWaitMs: 10
+    tensorrtOptimization: true
+    onnxOptimization: true
+    quantization: "fp16"  # fp32, fp16, or int8
+  
+  # Performance Targets (Patent Requirements)
+  performanceTargets:
+    accuracy: 0.992
+    falsePositiveRate: 0.02
+    inferenceLatencyMs: 100
+    throughputSamplesPerSec: 10000
+  
+  # Autoscaling
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    targetInferenceLatencyMs: 85
+  
+  service:
+    type: ClusterIP
+    ports:
+      http: 8080
+      metrics: 9090
+  
+  # Health Checks
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+websocketServer:
+  enabled: true
+  name: ml-websocket-server
+  image:
+    repository: policycortex-ml-websocket
+    tag: latest
+  
+  replicaCount: 2
+  
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "2"
+  
+  service:
+    type: LoadBalancer
+    port: 8765
+  
+  config:
+    redisUrl: "redis://redis-service:6379"
+    pingInterval: 30
+    pingTimeout: 10
+    maxConnections: 1000
+
+trainingJob:
+  enabled: false  # Enable when training needed
+  name: ml-training-job
+  image:
+    repository: policycortex-ml-trainer
+    tag: latest
+  
+  # GPU Configuration for Training
+  gpu:
+    enabled: true
+    type: "nvidia-tesla-v100"
+    count: 2
+  
+  resources:
+    requests:
+      memory: "16Gi"
+      cpu: "8"
+      nvidia.com/gpu: "2"
+    limits:
+      memory: "32Gi"
+      cpu: "16"
+      nvidia.com/gpu: "2"
+  
+  # Training Configuration
+  training:
+    epochs: 100
+    batchSize: 64
+    learningRate: 0.001
+    validationSplit: 0.2
+    earlyStopping: true
+    checkpointInterval: 10
+  
+  # Data Configuration
+  data:
+    inputPath: "/data/training"
+    outputPath: "/models/output"
+    datasetSize: "large"  # small, medium, large
+    augmentation: true
+
+storage:
+  # Model Cache Storage
+  modelCache:
+    enabled: true
+    size: 100Gi
+    storageClass: azure-files
+    accessMode: ReadWriteMany
+  
+  # Training Data Storage
+  trainingData:
+    enabled: true
+    size: 500Gi
+    storageClass: managed-premium
+    accessMode: ReadWriteOnce
+  
+  # Model Output Storage
+  modelOutput:
+    enabled: true
+    size: 200Gi
+    storageClass: azure-files
+    accessMode: ReadWriteMany
+
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      path: /metrics
+  
+  grafana:
+    enabled: true
+    dashboards:
+      - ml-inference-latency
+      - ml-model-accuracy
+      - ml-drift-detection
+      - ml-resource-utilization
+  
+  alerts:
+    enabled: true
+    rules:
+      - name: HighInferenceLatency
+        expr: ml_inference_latency_p95 > 90
+        severity: warning
+      - name: CriticalInferenceLatency
+        expr: ml_inference_latency_p95 > 100
+        severity: critical
+      - name: LowModelAccuracy
+        expr: ml_model_accuracy < 0.99
+        severity: warning
+      - name: HighFalsePositiveRate
+        expr: ml_false_positive_rate > 0.02
+        severity: critical
+
+security:
+  # Pod Security Policy
+  podSecurityPolicy:
+    enabled: true
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+    allowedCapabilities: []
+    volumes:
+      - configMap
+      - secret
+      - persistentVolumeClaim
+      - emptyDir
+  
+  # Network Policies
+  networkPolicy:
+    enabled: true
+    ingress:
+      - from:
+        - namespaceSelector:
+            matchLabels:
+              name: policycortex
+        ports:
+        - protocol: TCP
+          port: 8080
+    egress:
+      - to:
+        - namespaceSelector:
+            matchLabels:
+              name: policycortex
+      - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+
+tenantIsolation:
+  enabled: true
+  # Differential Privacy Settings
+  differentialPrivacy:
+    epsilon: 1.0
+    delta: 0.00001
+  
+  # Encryption
+  encryption:
+    algorithm: "AES-256-GCM"
+    keyRotationDays: 90
+  
+  # Federated Learning
+  federatedLearning:
+    enabled: true
+    minParticipants: 3
+    aggregationMethod: "secure"
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: "redis-password"
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+postgresql:
+  enabled: false  # Using external PostgreSQL
+  externalDatabase:
+    host: postgres-service
+    port: 5432
+    database: policycortex
+    username: postgres
+    existingSecret: postgres-secret
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/websocket-services: "ml-websocket-service"
+  hosts:
+    - host: ml.policycortex.ai
+      paths:
+        - path: /api/v1/predictions
+          pathType: Prefix
+          service:
+            name: ml-prediction-service
+            port: 8080
+        - path: /ws
+          pathType: Prefix
+          service:
+            name: ml-websocket-service
+            port: 8765
+  tls:
+    - secretName: ml-policycortex-tls
+      hosts:
+        - ml.policycortex.ai
+
+# Node Affinity for GPU Nodes
+nodeAffinity:
+  requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+    - matchExpressions:
+      - key: accelerator
+        operator: In
+        values:
+        - nvidia-tesla-t4
+        - nvidia-tesla-v100
+
+# Tolerations for GPU Nodes
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+  - key: gpu-workload
+    operator: Equal
+    value: "ml"
+    effect: NoSchedule
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Priority Class
+priorityClassName: high-priority
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "ml-service-account"
+
+# RBAC
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "services", "configmaps", "secrets"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["apps"]
+      resources: ["deployments", "replicasets"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["batch"]
+      resources: ["jobs"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
