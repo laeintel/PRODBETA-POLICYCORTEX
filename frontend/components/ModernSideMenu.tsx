@@ -187,8 +187,9 @@ export function ModernSideMenu({ isOpen, onToggle, onLogout, user }: ModernSideM
     ],
 
     'AI & Intelligence': [
-      { id: 'ai-predictions', title: 'Predictions', icon: TrendingUp, path: '/predictions', aiPowered: true },
-      { id: 'ai-correlations', title: 'Correlations', icon: GitBranch, path: '/correlations', aiPowered: true },
+      { id: 'ai-predictions', title: 'Predictions', icon: TrendingUp, path: '/predictions', aiPowered: true, badge: 'Patent #4', badgeType: 'info' },
+      { id: 'ai-correlations', title: 'Cross-Domain Correlations', icon: GitBranch, path: '/correlations', aiPowered: true, badge: 'Patent #1', badgeType: 'success', isNew: true },
+      { id: 'ai-conversation', title: 'Conversational AI', icon: MessageSquare, path: '/chat', aiPowered: true, badge: 'Patent #2', badgeType: 'success', isNew: true },
       { id: 'ai-expert', title: 'AI Expert', icon: Brain, path: '/ai-expert', aiPowered: true },
       { id: 'ai-alerts', title: 'Predictive Alerts', icon: AlertTriangle, path: '/predictive-alerts', aiPowered: true }
     ],

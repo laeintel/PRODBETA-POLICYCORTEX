@@ -37,6 +37,15 @@ interface Message {
   confidence?: number
   suggestedActions?: string[]
   generatedPolicy?: string
+  entities?: Array<{
+    type: string
+    value: string
+    confidence: number
+  }>
+  secondaryIntents?: Array<{
+    intent: string
+    confidence: number
+  }>
 }
 
 export default function ChatPage() {

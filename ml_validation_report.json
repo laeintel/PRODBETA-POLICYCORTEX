@@ -1,0 +1,65 @@
+{
+  "test_date": "2025-08-19T19:28:46.458837",
+  "patent_4_requirements": {
+    "accuracy_target": "99.2%",
+    "fpr_target": "<2%",
+    "latency_target": "<100ms",
+    "lstm_hidden_dims": 512,
+    "lstm_layers": 3,
+    "lstm_dropout": 0.2,
+    "attention_heads": 8,
+    "vae_latent_dim": 128,
+    "ensemble_weights": {
+      "isolation_forest": 0.4,
+      "lstm": 0.3,
+      "autoencoder": 0.3
+    }
+  },
+  "test_results": {
+    "module_imports": {
+      "status": "FAIL",
+      "details": [
+        [
+          "ensemble_engine",
+          "PASS"
+        ],
+        [
+          "confidence_scoring",
+          "PASS"
+        ],
+        [
+          "drift_detection",
+          "PASS"
+        ],
+        [
+          "tenant_isolation",
+          "PASS"
+        ],
+        [
+          "explainability",
+          "FAIL: No module named 'shap'"
+        ],
+        [
+          "model_versioning",
+          "PASS"
+        ],
+        [
+          "continuous_learning",
+          "PASS"
+        ]
+      ]
+    },
+    "ensemble_functionality": {
+      "status": "FAIL",
+      "error": "This StandardScaler instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator."
+    },
+    "architecture_validation": {
+      "status": "FAIL",
+      "error": "cannot import name 'VAEDriftDetector' from 'ensemble_engine' (C:\\Users\\leona\\Documents\\AeoliTech\\policycortex\\scripts\\..\\backend\\services\\ml_models\\ensemble_engine.py)"
+    },
+    "database_connectivity": {
+      "status": "SKIPPED",
+      "error": "connection to server at \"localhost\" (::1), port 5432 failed: Connection refused (0x0000274D/10061)\n\tIs the server running on that host and accepting TCP/IP connections?\nconnection to server at \"localhost\" (127.0.0.1), port 5432 failed: Connection refused (0x0000274D/10061)\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+    }
+  }
+}
