@@ -28,7 +28,7 @@ const nextConfig = {
     // For development, allow unsafe-inline and unsafe-eval
     // For production, add specific hashes for Next.js inline scripts
     const scriptSrc = isProd 
-      ? "script-src 'self' 'sha256-Q+8tPsjVtiDsjF/Cv8FMOpg2Yg91oKFKDAJat1PPb2g=' 'sha256-8QPkKpI3axAzG44IPNm8P/9hRSk+6CWgbsFMA3720pY=' 'sha256-fMzlHDdKG80oqUB0yR4/MZuY+QkRsNE/HOfPRzeyrLM=' 'sha256-fHuovPFlMa9SME8u/qe5xwuB2V3SFZ5tWYnfWI6R4lo=' 'sha256-L+euTOE6Z3a0aTaGgazoi3wl5SNkNMJj+7HmokXylis=' 'sha256-drs6v8sKWnmmrrD9KTCfeZyk9sh/EMNvzKJUm8rdVwo=' 'sha256-YoiTZbP35ftJSuqcXHIQKR0GkOgvwuSrIESq73qEh+4='" 
+      ? "script-src 'self' 'unsafe-inline' 'sha256-Q+8tPsjVtiDsjF/Cv8FMOpg2Yg91oKFKDAJat1PPb2g=' 'sha256-8QPkKpI3axAzG44IPNm8P/9hRSk+6CWgbsFMA3720pY=' 'sha256-fMzlHDdKG80oqUB0yR4/MZuY+QkRsNE/HOfPRzeyrLM=' 'sha256-fHuovPFlMa9SME8u/qe5xwuB2V3SFZ5tWYnfWI6R4lo=' 'sha256-L+euTOE6Z3a0aTaGgazoi3wl5SNkNMJj+7HmokXylis=' 'sha256-drs6v8sKWnmmrrD9KTCfeZyk9sh/EMNvzKJUm8rdVwo=' 'sha256-YoiTZbP35ftJSuqcXHIQKR0GkOgvwuSrIESq73qEh+4=' 'sha256-8eohedfRaQoWnH7igD20HvjedM7lPcYbqukJ7DEpMOk=' 'sha256-p+aICOAtWTL5NMRwNRh4JVBYXN5JvCWXDTikLQpHYfQ=' 'sha256-WvE1hLGKxbHAjqUX0KS7twwQq1yichfl1LDxY4V+eHI=' 'sha256-ss9QFHaI0p9Mcr2o4dPK5uw7Hc3lkg3lmdYn8wKk0OM=' 'sha256-bBVMHwZr0IyDKBDxSRi8tqopoDJuILSQYhVx9e1RbMs='" 
       : "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
     
     const styleSrc = isProd 
