@@ -122,5 +122,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json(predictions)
+        return NextResponse.json(predictions);
+      } catch (error) {
+        console.error('Predictions API error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      }
+    });
+  });
 }
