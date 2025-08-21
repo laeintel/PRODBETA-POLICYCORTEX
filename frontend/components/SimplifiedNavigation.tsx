@@ -187,16 +187,16 @@ export default function SimplifiedNavigation() {
       {/* Quick Actions Bar */}
       <QuickActionsBar />
 
-      {/* Responsive Sidebar - Scales with screen size */}
+      {/* Responsive Sidebar */}
       <div className={`
         fixed left-0 top-16 bottom-0 z-40
-        w-64 lg:w-64 xl:w-72 2xl:w-80 3xl:w-96 4xl:w-[28rem] 5xl:w-[32rem]
+        w-64 lg:w-64 xl:w-72 2xl:w-80
         bg-background dark:bg-gray-900 
         border-r border-border dark:border-gray-800 
         flex flex-col transition-all duration-300
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <nav className="flex-1 overflow-y-auto p-3 sm:p-4 xl:p-6 2xl:p-8 3xl:p-10 space-y-1 sm:space-y-2 xl:space-y-3 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1 sm:space-y-2 custom-scrollbar">
           {navigation.map((item) => {
             const Icon = item.icon
             const isActive = pathname.startsWith(item.href)
@@ -206,13 +206,13 @@ export default function SimplifiedNavigation() {
               <div key={item.name}>
                 <div
                   className={`
-                    flex items-center gap-2 sm:gap-3 xl:gap-4 px-2 sm:px-3 xl:px-4 2xl:px-5 py-1.5 sm:py-2 xl:py-3 2xl:py-3.5 rounded-lg xl:rounded-xl transition-all cursor-pointer border-l-2 xl:border-l-4
+                    flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all cursor-pointer border-l-2
                     ${isActive 
                       ? 'bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white border-primary dark:border-blue-400' 
                       : 'text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-gray-800 border-transparent'
                     }
                     ${item.highlight ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-background dark:ring-offset-gray-900' : ''}
-                    ${item.critical ? 'border-l-2 xl:border-l-4 border-orange-500' : ''}
+                    ${item.critical ? 'border-l-2 border-orange-500' : ''}
                   `}
                   role="button"
                   tabIndex={0}
@@ -233,10 +233,10 @@ export default function SimplifiedNavigation() {
                     }
                   }}
                 >
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 2xl:w-7 2xl:h-7 3xl:w-8 3xl:h-8 flex-shrink-0" />
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm sm:text-base xl:text-lg 2xl:text-xl 3xl:text-2xl truncate">{item.name}</div>
-                    <div className="hidden xl:block text-xs 2xl:text-sm 3xl:text-base opacity-70 truncate">{item.description}</div>
+                    <div className="font-medium text-sm sm:text-base truncate">{item.name}</div>
+                    <div className="hidden xl:block text-xs opacity-70 truncate">{item.description}</div>
                   </div>
                   {item.subsections && (
                     <button

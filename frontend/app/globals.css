@@ -93,39 +93,39 @@
     display: none;
   }
   
-  /* Responsive text utilities - scales with viewport */
+  /* Responsive text utilities - reasonable scaling */
   .text-responsive {
-    @apply text-sm sm:text-base lg:text-lg xl:text-xl 2xl:text-2xl 3xl:text-3xl 4xl:text-4xl 5xl:text-5xl;
+    @apply text-sm sm:text-base lg:text-lg;
   }
   
   .heading-responsive {
-    @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl 3xl:text-6xl 4xl:text-7xl 5xl:text-8xl;
+    @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl;
   }
   
   .subheading-responsive {
-    @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl 3xl:text-5xl 4xl:text-6xl 5xl:text-7xl;
+    @apply text-lg sm:text-xl lg:text-2xl;
   }
   
   .text-small-responsive {
-    @apply text-xs sm:text-sm lg:text-base xl:text-lg 2xl:text-xl 3xl:text-2xl 4xl:text-3xl 5xl:text-4xl;
+    @apply text-xs sm:text-sm lg:text-base;
   }
   
   /* Responsive padding utilities */
   .p-responsive {
-    @apply p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 3xl:p-16 4xl:p-20 5xl:p-24;
+    @apply p-4 sm:p-6 lg:p-8 xl:p-10;
   }
   
   .px-responsive {
-    @apply px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 3xl:px-20 4xl:px-24 5xl:px-32;
+    @apply px-4 sm:px-6 lg:px-8 xl:px-12;
   }
   
   .py-responsive {
-    @apply py-4 sm:py-6 lg:py-8 xl:py-10 2xl:py-12 3xl:py-16 4xl:py-20 5xl:py-24;
+    @apply py-4 sm:py-6 lg:py-8;
   }
   
   /* Responsive gap utilities */
   .gap-responsive {
-    @apply gap-2 sm:gap-3 lg:gap-4 xl:gap-6 2xl:gap-8 3xl:gap-10 4xl:gap-12 5xl:gap-16;
+    @apply gap-2 sm:gap-3 lg:gap-4 xl:gap-6;
   }
   
   /* Responsive border radius */
@@ -135,15 +135,15 @@
   
   /* Responsive icon sizes */
   .icon-responsive-sm {
-    @apply w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 2xl:w-8 2xl:h-8 3xl:w-10 3xl:h-10;
+    @apply w-4 h-4 sm:w-5 sm:h-5;
   }
   
   .icon-responsive-md {
-    @apply w-5 h-5 sm:w-6 sm:h-6 xl:w-8 xl:h-8 2xl:w-10 2xl:h-10 3xl:w-12 3xl:h-12;
+    @apply w-5 h-5 sm:w-6 sm:h-6;
   }
   
   .icon-responsive-lg {
-    @apply w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 2xl:w-12 2xl:h-12 3xl:w-16 3xl:h-16;
+    @apply w-6 h-6 sm:w-8 sm:h-8;
   }
   
   /* Container queries for charts */
