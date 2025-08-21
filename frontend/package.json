@@ -16,7 +16,8 @@
     "audit:clicks": "node ../scripts/audit-clickables.js",
     "verify:clicks": "npm run audit:clicks && node ../scripts/verify-clickables.js",
     "codemod:add-type": "node ../scripts/codemods/add-type-to-buttons.js",
-    "gen:value-prop": "node scripts/generate-value-prop.js"
+    "gen:value-prop": "node scripts/generate-value-prop.js",
+    "gen:pricing": "node scripts/generate-pricing.js"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",
