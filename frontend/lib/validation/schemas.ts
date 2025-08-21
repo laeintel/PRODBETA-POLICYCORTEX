@@ -32,8 +32,8 @@ export const createResourceSchema = z.object({
   type: z.enum(['vm', 'storage', 'database', 'network', 'compute']),
   resourceGroup: z.string().min(1).max(255),
   location: z.string().min(1).max(100),
-  tags: z.record(z.string()).optional(),
-  configuration: z.record(z.any()).optional(),
+  tags: z.record(z.string(), z.string()).optional(),
+  configuration: z.record(z.string(), z.any()).optional(),
 });
 
 // User/Auth schemas
@@ -134,7 +134,7 @@ export const exportRequestSchema = z.object({
   format: z.enum(['csv', 'json', 'pdf', 'excel']),
   data: z.any(),
   filename: z.string().max(255).optional(),
-  filters: z.record(z.any()).optional(),
+  filters: z.record(z.string(), z.any()).optional(),
 });
 
 // Settings schemas
@@ -161,7 +161,7 @@ export const settingsUpdateSchema = z.object({
 export function validateRequest<T>(
   schema: z.ZodSchema<T>,
   data: unknown
-): { success: true; data: T } | { success: false; errors: z.ZodError } {
+): { success: true; data: T } | { success: false; errors: any } {
   const result = schema.safeParse(data);
   
   if (result.success) {

@@ -178,7 +178,7 @@ class AuditLogger {
   /**
    * Log an audit event
    */
-  public log(event: Omit<AuditEvent, 'id' | 'timestamp' | 'metadata'>): void {
+  public log(event: Omit<AuditEvent, 'id' | 'timestamp'> & { metadata?: Partial<AuditEvent['metadata']> }): void {
     const auditEvent: AuditEvent = {
       ...event,
       id: uuidv4(),
@@ -209,6 +209,11 @@ class AuditLogger {
    * Send audit event to backend
    */
   private async sendToBackend(event: AuditEvent): Promise<void> {
+    // Skip sending in build/SSR context
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
     try {
       await fetch('/api/v1/audit', {
         method: 'POST',

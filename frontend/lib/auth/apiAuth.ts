@@ -80,10 +80,15 @@ export async function withAuth(
   }
   
   // Add user to request headers for downstream use
-  const modifiedRequest = request.clone();
-  modifiedRequest.headers.set('x-user-id', validation.user!.sub);
-  modifiedRequest.headers.set('x-user-email', validation.user!.email || '');
-  modifiedRequest.headers.set('x-user-roles', JSON.stringify(validation.user!.roles || []));
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-user-id', validation.user!.sub);
+  requestHeaders.set('x-user-email', validation.user!.email || '');
+  requestHeaders.set('x-user-roles', JSON.stringify(validation.user!.roles || []));
+  
+  // Create a new request with modified headers
+  const modifiedRequest = new NextRequest(request, {
+    headers: requestHeaders,
+  });
   
   return handler(modifiedRequest, validation.user!);
 }
