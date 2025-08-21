@@ -37,6 +37,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/useToast'
 import { handleExport } from '@/lib/exportUtils'
 import ConfigurationDialog from '@/components/ConfigurationDialog'
+import { sanitizeMarkdown, textToSafeHTML } from '@/lib/sanitize'
 
 interface Message {
   id: string;
@@ -397,7 +398,7 @@ Just let me know how I can best assist you!`;
               <div 
                 className={isUser ? 'text-white' : 'text-gray-800'}
                 dangerouslySetInnerHTML={{ 
-                  __html: message.content.replace(/\n/g, '<br />').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                  __html: isUser ? textToSafeHTML(message.content) : sanitizeMarkdown(message.content.replace(/\n/g, '<br />').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'))
                 }}
               />
             </div>
