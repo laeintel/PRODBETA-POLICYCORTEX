@@ -49,6 +49,7 @@ import {
   Radar
 } from 'recharts';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/hooks/useToast'
 
 // KPI Card Component
 const KPICard = ({ 
@@ -115,6 +116,7 @@ const KPICard = ({
 
 // Alert Item Component
 const AlertItem = ({ alert }: any) => {
+  const router = useRouter();
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
@@ -149,7 +151,11 @@ const AlertItem = ({ alert }: any) => {
             <span>{alert.time}</span>
           </div>
         </div>
-        <button className="text-sm font-medium hover:underline">
+        <button
+          type="button"
+          className="text-sm font-medium hover:underline"
+          onClick={() => router.push('/operations/alerts')}
+        >
           View →
         </button>
       </div>
@@ -371,7 +377,11 @@ export default function DashboardPage() {
             <option value="30d">Last 30 Days</option>
             <option value="90d">Last Quarter</option>
           </select>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            onClick={() => toast({ title: 'Export started', description: `Generating ${timeRange} report...` })}
+          >
             Export Report
           </button>
         </div>
@@ -491,7 +501,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Recent Alerts</h3>
-            <button 
+            <button type="button" 
               onClick={() => router.push('/operations/alerts')}
               className="text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
@@ -602,7 +612,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <button 
+        <button type="button" 
           onClick={() => router.push('/ai/chat')}
           className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm"
         >
@@ -615,7 +625,7 @@ export default function DashboardPage() {
             <ChevronRight className="h-4 w-4 ml-auto" />
           </div>
         </button>
-        <button 
+        <button type="button" 
           onClick={() => router.push('/governance/policies')}
           className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all"
         >
@@ -628,7 +638,7 @@ export default function DashboardPage() {
             <ChevronRight className="h-4 w-4 ml-auto text-gray-400" />
           </div>
         </button>
-        <button 
+        <button type="button" 
           onClick={() => router.push('/operations/remediation')}
           className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all"
         >
@@ -641,7 +651,7 @@ export default function DashboardPage() {
             <ChevronRight className="h-4 w-4 ml-auto text-gray-400" />
           </div>
         </button>
-        <button 
+        <button type="button" 
           onClick={() => router.push('/governance/cost')}
           className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all"
         >
@@ -664,7 +674,7 @@ export default function DashboardPage() {
           { icon: Server, title: 'Resources', value: '342', subtitle: 'Total resources', link: '/operations/resources' },
           { icon: GitBranch, title: 'Deployments', value: '12', subtitle: 'This week', link: '/devops/deployments' }
         ].map((item, idx) => (
-          <button
+          <button type="button"
             key={idx}
             onClick={() => router.push(item.link)}
             className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all text-left"

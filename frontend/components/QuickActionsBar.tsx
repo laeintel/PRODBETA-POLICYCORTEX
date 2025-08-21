@@ -319,7 +319,7 @@ export default function QuickActionsBar() {
                 >
                   <AlertTriangle className="w-4 h-4 text-red-400" />
                   <span className="text-sm text-red-400">{recentAlert}</span>
-                  <button
+                  <button type="button"
                     onClick={() => setRecentAlert(null)}
                     className="ml-2 text-red-400 hover:text-red-300"
                   >

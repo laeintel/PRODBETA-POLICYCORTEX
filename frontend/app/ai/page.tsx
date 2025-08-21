@@ -10,6 +10,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { toast } from '@/hooks/useToast'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Brain,
@@ -490,7 +491,7 @@ export default function AIDashboardPage() {
                 <Target className="w-4 h-4 text-green-500" />
                 <span className="text-sm text-gray-400">{aiData.overview.accuracyScore}% AVG ACCURACY</span>
               </div>
-              <button 
+              <button type="button" 
                 onClick={() => setAutoRefresh(!autoRefresh)}
                 className={`p-2 rounded ${autoRefresh ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400'}`}
               >
@@ -506,7 +507,11 @@ export default function AIDashboardPage() {
                 <option value="7d">Last 7 Days</option>
                 <option value="30d">Last 30 Days</option>
               </select>
-              <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors">
+              <button
+                type="button"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors"
+                onClick={() => toast({ title: 'Deploy', description: 'Deploy model flow coming soon' })}
+              >
                 DEPLOY MODEL
               </button>
             </div>
@@ -516,7 +521,7 @@ export default function AIDashboardPage() {
         {/* Navigation Tabs */}
         <div className="px-6 flex space-x-6 border-t border-gray-800">
           {['overview', 'models', 'training', 'pipelines', 'experiments', 'data'].map((tab) => (
-            <button
+            <button type="button"
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`py-3 px-1 border-b-2 transition-colors capitalize ${
@@ -864,19 +869,35 @@ export default function AIDashboardPage() {
                   <h3 className="text-sm font-bold text-gray-400 uppercase">QUICK ACTIONS</h3>
                 </div>
                 <div className="p-4 space-y-2">
-                  <button className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group">
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
+                    onClick={() => toast({ title: 'Train model', description: 'Training job queued' })}
+                  >
                     <span>Train New Model</span>
                     <Beaker className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
-                  <button className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group">
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
+                    onClick={() => toast({ title: 'Experiment', description: 'Experiment started' })}
+                  >
                     <span>Run Experiment</span>
                     <Beaker className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
-                  <button className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group">
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
+                    onClick={() => toast({ title: 'Pipeline', description: 'Pipeline deployment queued' })}
+                  >
                     <span>Deploy Pipeline</span>
                     <Workflow className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
-                  <button className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group">
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
+                    onClick={() => toast({ title: 'Report', description: 'Generating performance report...' })}
+                  >
                     <span>Performance Report</span>
                     <Download className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
@@ -918,13 +939,13 @@ export default function AIDashboardPage() {
                   {selectedModels.length > 0 && (
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-400">{selectedModels.length} selected</span>
-                      <button 
+                      <button type="button" 
                         onClick={() => handleBulkAction('deploy')}
                         className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded"
                       >
                         Deploy
                       </button>
-                      <button 
+                      <button type="button" 
                         onClick={() => handleBulkAction('stop')}
                         className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded"
                       >
@@ -932,10 +953,10 @@ export default function AIDashboardPage() {
                       </button>
                     </div>
                   )}
-                  <button className="p-2 hover:bg-gray-800 rounded">
+                  <button type="button" className="p-2 hover:bg-gray-800 rounded" onClick={() => toast({ title: 'Filters', description: 'Filter dialog coming soon' })}>
                     <Filter className="w-4 h-4 text-gray-500" />
                   </button>
-                  <button className="p-2 hover:bg-gray-800 rounded">
+                  <button type="button" className="p-2 hover:bg-gray-800 rounded" onClick={() => toast({ title: 'Export', description: 'Exporting dashboard data...' })}>
                     <Download className="w-4 h-4 text-gray-500" />
                   </button>
                 </div>
@@ -1062,7 +1083,7 @@ export default function AIDashboardPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center space-x-1">
                             {model.status === 'serving' ? (
-                              <button 
+                              <button type="button" 
                                 onClick={() => handleModelAction('stop', model.id)}
                                 className="p-1 hover:bg-gray-700 rounded text-red-500"
                                 title="Stop Model"
@@ -1070,7 +1091,7 @@ export default function AIDashboardPage() {
                                 <StopCircle className="w-4 h-4" />
                               </button>
                             ) : (
-                              <button 
+                              <button type="button" 
                                 onClick={() => handleModelAction('deploy', model.id)}
                                 className="p-1 hover:bg-gray-700 rounded text-green-500"
                                 title="Deploy Model"
@@ -1078,17 +1099,17 @@ export default function AIDashboardPage() {
                                 <Play className="w-4 h-4" />
                               </button>
                             )}
-                            <button 
+                            <button type="button" 
                               onClick={() => handleModelAction('retrain', model.id)}
                               className="p-1 hover:bg-gray-700 rounded text-purple-500"
                               title="Retrain Model"
                             >
                               <RotateCcw className="w-4 h-4" />
                             </button>
-                            <button className="p-1 hover:bg-gray-700 rounded">
+                            <button type="button" className="p-1 hover:bg-gray-700 rounded" onClick={() => toast({ title: 'Monitor', description: 'Opening monitoring view (coming soon)' })}>
                               <Monitor className="w-4 h-4 text-gray-400" />
                             </button>
-                            <button className="p-1 hover:bg-gray-700 rounded">
+                            <button type="button" className="p-1 hover:bg-gray-700 rounded" onClick={() => toast({ title: 'More', description: 'More actions menu (coming soon)' })}>
                               <MoreVertical className="w-4 h-4 text-gray-400" />
                             </button>
                           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { toast } from '@/hooks/useToast'
 import {
   Activity,
   BarChart3,
@@ -356,7 +357,7 @@ export default function MonitoringObservabilityPage() {
                 <option value="24h">Last 24 hours</option>
                 <option value="7d">Last 7 days</option>
               </select>
-              <button
+              <button type="button"
                 onClick={() => setAutoRefresh(!autoRefresh)}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                   autoRefresh ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
@@ -365,7 +366,11 @@ export default function MonitoringObservabilityPage() {
                 <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
                 Auto Refresh
               </button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              <button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                onClick={() => toast({ title: 'Dashboard', description: 'Create dashboard flow coming soon' })}
+              >
                 <Plus className="w-4 h-4" />
                 New Dashboard
               </button>
@@ -505,7 +510,11 @@ export default function MonitoringObservabilityPage() {
                   className="bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg border border-gray-700 focus:border-blue-500 focus:outline-none"
                 />
               </div>
-              <button className="text-gray-400 hover:text-white">
+              <button
+                type="button"
+                className="text-gray-400 hover:text-white"
+                onClick={() => toast({ title: 'Filter', description: 'Opening metric filters' })}
+              >
                 <Filter className="w-5 h-5" />
               </button>
             </div>
@@ -556,7 +565,11 @@ export default function MonitoringObservabilityPage() {
         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-white">Alert Rules</h2>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm flex items-center gap-2">
+            <button
+              type="button"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm flex items-center gap-2"
+              onClick={() => toast({ title: 'Alert', description: 'Creating new alert rule...' })}
+            >
               <Plus className="w-4 h-4" />
               Add Rule
             </button>
@@ -582,7 +595,7 @@ export default function MonitoringObservabilityPage() {
                     }`}>
                       {rule.severity}
                     </span>
-                    <button className="text-gray-400 hover:text-white">
+                    <button type="button" className="text-gray-400 hover:text-white">
                       <Settings className="w-4 h-4" />
                     </button>
                   </div>

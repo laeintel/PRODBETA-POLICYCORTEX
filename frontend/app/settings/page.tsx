@@ -7,6 +7,7 @@ import {
   Smartphone, Mail, AlertCircle, CheckCircle, Activity,
   Settings as SettingsIcon, LogOut, RefreshCw, Trash2
 } from 'lucide-react';
+import { toast } from '@/hooks/useToast'
 
 interface SettingSection {
   id: string;
@@ -84,7 +85,7 @@ export default function SettingsPage() {
               {sections.map((section) => {
                 const Icon = section.icon;
                 return (
-                  <button
+                  <button type="button"
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
@@ -130,7 +131,11 @@ function ProfileSection() {
             <h3 className="text-xl font-semibold mb-2">John Doe</h3>
             <p className="text-gray-400 mb-1">john.doe@company.com</p>
             <p className="text-gray-400 text-sm">Cloud Administrator</p>
-            <button className="mt-3 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors">
+            <button
+              type="button"
+              className="mt-3 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+              onClick={() => toast({ title: 'Change avatar', description: 'Avatar change coming soon' })}
+            >
               Change Avatar
             </button>
           </div>
@@ -173,10 +178,18 @@ function ProfileSection() {
         </div>
 
         <div className="flex justify-end mt-6 space-x-4">
-          <button className="px-6 py-2 bg-gray-700 rounded hover:bg-gray-600 transition-colors">
+          <button
+            type="button"
+            className="px-6 py-2 bg-gray-700 rounded hover:bg-gray-600 transition-colors"
+            onClick={() => toast({ title: 'Cancelled', description: 'No changes were saved' })}
+          >
             Cancel
           </button>
-          <button className="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center space-x-2">
+          <button
+            type="button"
+            className="px-6 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            onClick={() => toast({ title: 'Saved', description: 'Profile updated successfully' })}
+          >
             <Save className="w-4 h-4" />
             <span>Save Changes</span>
           </button>
@@ -319,7 +332,11 @@ function APIKeysSection() {
             <h3 className="text-lg font-semibold">Active API Keys</h3>
             <p className="text-sm text-gray-400">Manage your API access tokens</p>
           </div>
-          <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center space-x-2">
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            onClick={() => toast({ title: 'API key', description: 'Generating new API key...' })}
+          >
             <Key className="w-4 h-4" />
             <span>Generate New Key</span>
           </button>
@@ -343,10 +360,18 @@ function APIKeysSection() {
                   }`}>
                     {apiKey.status}
                   </span>
-                  <button className="p-2 hover:bg-gray-600 rounded transition-colors">
+                  <button
+                    type="button"
+                    className="p-2 hover:bg-gray-600 rounded transition-colors"
+                    onClick={() => toast({ title: 'Rotated', description: 'API key rotated' })}
+                  >
                     <RefreshCw className="w-4 h-4" />
                   </button>
-                  <button className="p-2 hover:bg-red-600 rounded transition-colors">
+                  <button
+                    type="button"
+                    className="p-2 hover:bg-red-600 rounded transition-colors"
+                    onClick={() => toast({ title: 'Deleted', description: 'API key revoked' })}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -381,7 +406,7 @@ function AppearanceSection({ darkMode, setDarkMode }: any) {
       <div className="bg-gray-800 rounded-lg p-6 mb-6">
         <h3 className="text-lg font-semibold mb-4">Theme</h3>
         <div className="grid grid-cols-2 gap-4">
-          <button
+          <button type="button"
             onClick={() => setDarkMode(false)}
             className={`p-4 rounded-lg border-2 transition-all ${
               !darkMode ? 'border-blue-500 bg-gray-700' : 'border-gray-600 hover:border-gray-500'
@@ -392,7 +417,7 @@ function AppearanceSection({ darkMode, setDarkMode }: any) {
             <p className="text-sm text-gray-400">Bright interface for daytime</p>
           </button>
           
-          <button
+          <button type="button"
             onClick={() => setDarkMode(true)}
             className={`p-4 rounded-lg border-2 transition-all ${
               darkMode ? 'border-blue-500 bg-gray-700' : 'border-gray-600 hover:border-gray-500'
@@ -409,7 +434,7 @@ function AppearanceSection({ darkMode, setDarkMode }: any) {
         <h3 className="text-lg font-semibold mb-4">Accent Color</h3>
         <div className="flex space-x-4">
           {['blue', 'purple', 'green', 'orange', 'red', 'pink'].map((color) => (
-            <button
+            <button type="button"
               key={color}
               className={`w-12 h-12 rounded-lg bg-${color}-500 hover:scale-110 transition-transform`}
               style={{ backgroundColor: getColorHex(color) }}
@@ -492,7 +517,7 @@ function SecuritySection({ mfaEnabled, setMfaEnabled }: any) {
             <p className="font-medium">Enable 2FA</p>
             <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setMfaEnabled(!mfaEnabled)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full ${
               mfaEnabled ? 'bg-blue-600' : 'bg-gray-600'
@@ -507,7 +532,7 @@ function SecuritySection({ mfaEnabled, setMfaEnabled }: any) {
         {mfaEnabled && (
           <div className="bg-gray-700 rounded p-4">
             <p className="text-sm text-green-400 mb-2">✓ 2FA is enabled</p>
-            <button className="text-sm text-blue-400 hover:underline">Configure authenticator app</button>
+            <button type="button" className="text-sm text-blue-400 hover:underline">Configure authenticator app</button>
           </div>
         )}
       </div>
@@ -534,14 +559,18 @@ function SecuritySection({ mfaEnabled, setMfaEnabled }: any) {
                 <p className="text-sm text-gray-400">Seattle, WA</p>
               </div>
             </div>
-            <button className="text-xs text-red-400 hover:underline">Revoke</button>
+            <button type="button" className="text-xs text-red-400 hover:underline">Revoke</button>
           </div>
         </div>
       </div>
 
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4">Password</h3>
-        <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors">
+        <button
+          type="button"
+          className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+          onClick={() => toast({ title: 'Password', description: 'Password change flow coming soon' })}
+        >
           Change Password
         </button>
       </div>
@@ -577,11 +606,15 @@ function IntegrationsSection() {
                   </p>
                 </div>
               </div>
-              <button className={`px-3 py-1 rounded text-sm ${
+              <button
+                type="button"
+                className={`px-3 py-1 rounded text-sm ${
                 integration.status === 'connected'
                   ? 'bg-red-600 hover:bg-red-700'
                   : 'bg-blue-600 hover:bg-blue-700'
-              } transition-colors`}>
+              } transition-colors`}
+                onClick={() => toast({ title: 'Integration', description: `${integration.name}: ${integration.status === 'connected' ? 'Disconnecting' : 'Connecting'}...` })}
+              >
                 {integration.status === 'connected' ? 'Disconnect' : 'Connect'}
               </button>
             </div>
@@ -655,7 +688,11 @@ function ExportImportSection() {
         <h3 className="text-lg font-semibold mb-4">Export Data</h3>
         <p className="text-gray-400 mb-4">Download your settings and data for backup or migration</p>
         <div className="space-y-3">
-          <button className="w-full px-4 py-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left">
+          <button
+            type="button"
+            className="w-full px-4 py-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left"
+            onClick={() => toast({ title: 'Export', description: 'Exporting settings...' })}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Export Settings</p>
@@ -665,7 +702,11 @@ function ExportImportSection() {
             </div>
           </button>
           
-          <button className="w-full px-4 py-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left">
+          <button
+            type="button"
+            className="w-full px-4 py-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left"
+            onClick={() => toast({ title: 'Export', description: 'Exporting audit logs...' })}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Export Audit Logs</p>
@@ -675,7 +716,11 @@ function ExportImportSection() {
             </div>
           </button>
           
-          <button className="w-full px-4 py-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left">
+          <button
+            type="button"
+            className="w-full px-4 py-3 bg-gray-700 rounded hover:bg-gray-600 transition-colors text-left"
+            onClick={() => toast({ title: 'Export', description: 'Exporting full backup...' })}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Export Full Backup</p>
@@ -693,7 +738,11 @@ function ExportImportSection() {
         <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
           <Download className="w-12 h-12 mx-auto mb-3 text-gray-500" />
           <p className="text-gray-400 mb-2">Drop files here or click to browse</p>
-          <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors">
+          <button
+            type="button"
+            className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+            onClick={() => toast({ title: 'Import', description: 'Opening file picker...' })}
+          >
             Choose File
           </button>
         </div>
@@ -774,7 +823,11 @@ function DiagnosticsSection() {
           </div>
         </div>
         
-        <button className="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors">
+        <button
+          type="button"
+          className="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+          onClick={() => toast({ title: 'Diagnostics', description: 'Downloading diagnostic report...' })}
+        >
           Download Diagnostic Report
         </button>
       </div>

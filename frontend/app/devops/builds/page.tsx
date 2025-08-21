@@ -38,7 +38,7 @@ export default function BuildStatusPage() {
                 <td className="px-6 py-4">{b.branch}</td>
                 <td className="px-6 py-4">{b.status === 'success' ? <span className="text-green-400 inline-flex items-center gap-1 text-xs"><CheckCircle className="w-3 h-3"/> success</span> : <span className="text-red-400 inline-flex items-center gap-1 text-xs"><XCircle className="w-3 h-3"/> failed</span>}</td>
                 <td className="px-6 py-4 text-sm text-gray-400">{b.time}</td>
-                <td className="px-6 py-4"><button className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(b)}>Details</button></td>
+                <td className="px-6 py-4"><button type="button" className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(b)}>Details</button></td>
               </tr>
             ))}
           </tbody>
@@ -52,7 +52,7 @@ export default function BuildStatusPage() {
               <h2 className="text-lg font-semibold">Build {selected.id}</h2>
               <p className="text-xs text-gray-400">Branch: {selected.branch} • Status: {selected.status}</p>
             </div>
-            <button className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
+            <button type="button" className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="space-y-3">
             <div className="text-xs text-gray-300 font-mono bg-gray-900 p-3 rounded border border-gray-800">{`[build] install deps\n[build] run tests\n[build] compile\n[build] package`}</div>
@@ -66,7 +66,7 @@ export default function BuildStatusPage() {
                 </ul>
               )}
             </div>
-            <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Download artifacts</button>
+            <button type="button" className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Download artifacts</button>
           </div>
         </div>
       )}

@@ -1,11 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Activity, AlertCircle, CheckCircle, TrendingUp, Settings, Shield } from 'lucide-react'
+import { handleExport } from '@/lib/exportUtils'
+import ConfigurationDialog from '@/components/ConfigurationDialog'
 
 export default function UnifiedPlatformPatentPage() {
+  const router = useRouter()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [configOpen, setConfigOpen] = useState(false)
 
   useEffect(() => {
     // Fetch real data from backend
@@ -87,8 +92,19 @@ export default function UnifiedPlatformPatentPage() {
               {/* Quick Actions */}
               <div className="grid grid-cols-3 gap-4">
                 <ActionButton label="Refresh Data" onClick={() => window.location.reload()} />
-                <ActionButton label="Export Report" onClick={() => console.log('Export')} />
-                <ActionButton label="Configure" onClick={() => console.log('Configure')} />
+                <ActionButton 
+                  label="Export Report" 
+                  onClick={() => handleExport({
+                    data: data,
+                    filename: 'unified-platform-metrics',
+                    format: 'json',
+                    title: 'Unified AI Platform Metrics'
+                  })} 
+                />
+                <ActionButton 
+                  label="Configure" 
+                  onClick={() => setConfigOpen(true)} 
+                />
               </div>
             </div>
           )}
@@ -109,6 +125,13 @@ export default function UnifiedPlatformPatentPage() {
           ]} />
         </div>
       </div>
+      
+      <ConfigurationDialog
+        isOpen={configOpen}
+        onClose={() => setConfigOpen(false)}
+        title="Unified Platform"
+        configType="ai"
+      />
     </div>
   )
 }
@@ -130,7 +153,7 @@ function MetricCard({ title, value, trend, icon: Icon }: any) {
 
 function ActionButton({ label, onClick }: any) {
   return (
-    <button 
+    <button type="button" 
       onClick={onClick}
       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm transition-colors"
     >

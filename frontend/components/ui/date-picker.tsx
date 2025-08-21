@@ -24,8 +24,8 @@ export function DatePicker({ value, onChange, placeholder = "Pick a date", class
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
+        <Button type="button"
+          variant="outline"
           className={cn(
             "w-[280px] justify-start text-left font-normal",
             !value && "text-muted-foreground",

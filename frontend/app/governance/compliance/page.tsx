@@ -131,7 +131,7 @@ function FrameworksDrillDown() {
       {!selected ? (
         <div className="grid grid-cols-2 gap-4">
           {frameworks.map(f => (
-            <button key={f.name} onClick={() => setSelected(f.name)} className="p-4 bg-gray-800/50 rounded-lg text-left hover:bg-gray-800">
+            <button type="button" key={f.name} onClick={() => setSelected(f.name)} className="p-4 bg-gray-800/50 rounded-lg text-left hover:bg-gray-800">
               <h3 className="font-medium">{f.name}</h3>
               <p className={`text-sm ${f.status === 'Compliant' ? 'text-green-400' : 'text-yellow-400'}`}>{f.status}</p>
               <p className="text-sm text-gray-400">Coverage: {f.coverage}</p>
@@ -140,11 +140,11 @@ function FrameworksDrillDown() {
         </div>
       ) : !selectedControl ? (
         <div>
-          <button className="text-xs text-gray-400 mb-3" onClick={() => setSelected(null)}>← Back</button>
+          <button type="button" className="text-xs text-gray-400 mb-3" onClick={() => setSelected(null)}>← Back</button>
           <h3 className="font-medium mb-3">{selected} Controls</h3>
           <div className="space-y-2">
             {frameworks.find(f => f.name === selected)!.controls.map(c => (
-              <button key={c} onClick={() => setSelectedControl(c)} className="w-full text-left p-3 bg-gray-800/50 rounded hover:bg-gray-800">
+              <button type="button" key={c} onClick={() => setSelectedControl(c)} className="w-full text-left p-3 bg-gray-800/50 rounded hover:bg-gray-800">
                 {c}
               </button>
             ))}
@@ -152,7 +152,7 @@ function FrameworksDrillDown() {
         </div>
       ) : (
         <div>
-          <button className="text-xs text-gray-400 mb-3" onClick={() => setSelectedControl(null)}>← Back to controls</button>
+          <button type="button" className="text-xs text-gray-400 mb-3" onClick={() => setSelectedControl(null)}>← Back to controls</button>
           <h3 className="font-medium mb-3">Violations for: {selectedControl}</h3>
           <div className="space-y-2">
             {violations.map(v => (
@@ -164,7 +164,7 @@ function FrameworksDrillDown() {
                 <div className="flex items-center gap-3">
                   <span className={`text-sm ${v.severity === 'High' ? 'text-orange-400' : 'text-yellow-400'}`}>{v.severity}</span>
                   <span className="text-xs text-gray-500">{v.age}</span>
-                  <button className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Auto-remediate</button>
+                  <button type="button" className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Auto-remediate</button>
                 </div>
               </div>
             ))}
@@ -195,7 +195,7 @@ function RecentViolations() {
             <div className="flex items-center gap-4">
               <span className={`text-sm ${map[v.severity]}`}>{v.severity}</span>
               <span className="text-xs text-gray-500">{v.age}</span>
-              <button className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Remediate</button>
+              <button type="button" className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Remediate</button>
             </div>
           </div>
         ))}

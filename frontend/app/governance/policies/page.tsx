@@ -40,7 +40,7 @@ export default function PolicyManagementPage() {
                 <td className="px-6 py-4">{p.assignments}</td>
                 <td className="px-6 py-4">{p.nonCompliant}</td>
                 <td className="px-6 py-4">
-                  <button className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(p)}>View assignments</button>
+                  <button type="button" className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(p)}>View assignments</button>
                 </td>
               </tr>
             ))}
@@ -55,7 +55,7 @@ export default function PolicyManagementPage() {
               <h2 className="text-lg font-semibold">{selected.name}</h2>
               <p className="text-xs text-gray-400">Assignments • Non-compliant resources</p>
             </div>
-            <button className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
+            <button type="button" className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="space-y-2">
             {Array.from({ length: selected.assignments }).slice(0, 8).map((_, i) => (
@@ -64,7 +64,7 @@ export default function PolicyManagementPage() {
                   <p className="font-medium">/subscriptions/.../resourceGroups/rg-prod/providers/Microsoft.Storage/storageAccounts/stprod00{i}</p>
                   <p className="text-xs text-gray-400">Scope: subscription • Region: East US</p>
                 </div>
-                <button className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Remediate</button>
+                <button type="button" className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Remediate</button>
               </div>
             ))}
           </div>

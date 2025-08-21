@@ -37,7 +37,7 @@ export default function DeploymentManagementPage() {
                 <td className="px-6 py-4 font-mono text-sm">{d.version}</td>
                 <td className="px-6 py-4"><span className={`text-xs px-2 py-1 rounded ${d.status==='healthy'?'bg-green-900/40 text-green-400':d.status==='updating'?'bg-blue-900/40 text-blue-400':'bg-red-900/40 text-red-400'}`}>{d.status}</span></td>
                 <td className="px-6 py-4 text-sm text-gray-400">{d.time}</td>
-                <td className="px-6 py-4"><button className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(d)}>Details</button></td>
+                <td className="px-6 py-4"><button type="button" className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(d)}>Details</button></td>
               </tr>
             ))}
           </tbody>
@@ -51,14 +51,14 @@ export default function DeploymentManagementPage() {
               <h2 className="text-lg font-semibold">{selected.env} • {selected.version}</h2>
               <p className="text-xs text-gray-400">Status: {selected.status} • {selected.time}</p>
             </div>
-            <button className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
+            <button type="button" className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="space-y-3">
             <div className="text-xs text-gray-300 font-mono bg-gray-900 p-3 rounded border border-gray-800">
               {selected.changelog.map((c, i) => `- ${c}${i < selected.changelog.length-1 ? '\n' : ''}`)}
             </div>
-            <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Roll back</button>
-            <button className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded">Promote</button>
+            <button type="button" className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Roll back</button>
+            <button type="button" className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded">Promote</button>
           </div>
         </div>
       )}

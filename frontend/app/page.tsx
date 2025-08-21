@@ -94,9 +94,9 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <button className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><KeyRound className="w-4 h-4" /> SSO</button>
-          <button className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Fingerprint className="w-4 h-4" /> Passkey</button>
-          <button onClick={() => router.push('/dashboard')} className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Cpu className="w-4 h-4" /> Guest</button>
+          <button type="button" className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><KeyRound className="w-4 h-4" /> SSO</button>
+          <button type="button" className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Fingerprint className="w-4 h-4" /> Passkey</button>
+          <button type="button" onClick={() => router.push('/dashboard')} className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Cpu className="w-4 h-4" /> Guest</button>
         </div>
 
         <p className="mt-4 text-[10px] text-gray-500">Unauthorized access is prohibited. Activity may be monitored and logged.</p>

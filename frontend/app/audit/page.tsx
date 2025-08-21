@@ -350,7 +350,7 @@ export default function AuditTrailPage() {
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <button
+            <button type="button"
               onClick={() => setRealTimeEnabled(!realTimeEnabled)}
               className={`
                 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg flex items-center gap-2 transition-all text-sm sm:text-base
@@ -364,7 +364,7 @@ export default function AuditTrailPage() {
               <span className="hidden sm:inline">Real-time</span>
             </button>
             
-            <button
+            <button type="button"
               onClick={exportData}
               className="px-3 sm:px-4 py-1.5 sm:py-2 bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm sm:text-base"
             >
@@ -475,7 +475,7 @@ export default function AuditTrailPage() {
           </select>
           
           <div className="flex gap-2">
-            <button
+            <button type="button"
               onClick={() => setViewMode('timeline')}
               className={`
                 flex-1 px-3 py-2 rounded-lg transition-colors text-sm
@@ -487,7 +487,7 @@ export default function AuditTrailPage() {
             >
               Timeline
             </button>
-            <button
+            <button type="button"
               onClick={() => setViewMode('table')}
               className={`
                 flex-1 px-3 py-2 rounded-lg transition-colors text-sm
@@ -596,7 +596,7 @@ export default function AuditTrailPage() {
                           </div>
                         </div>
                         
-                        <button className="text-muted-foreground dark:text-gray-400">
+                        <button type="button" className="text-muted-foreground dark:text-gray-400">
                           {isExpanded ? (
                             <ChevronDown className="w-5 h-5" />
                           ) : (
@@ -696,7 +696,7 @@ export default function AuditTrailPage() {
                               View Resource
                             </Link>
                             
-                            <button
+                            <button type="button"
                               className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-xs hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -814,7 +814,7 @@ export default function AuditTrailPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-foreground dark:text-white">Event Details</h2>
-              <button
+              <button type="button"
                 onClick={() => setSelectedEvent(null)}
                 className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white"
               >

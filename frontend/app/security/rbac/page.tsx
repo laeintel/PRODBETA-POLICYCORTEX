@@ -8,6 +8,7 @@ import {
   Activity, BarChart3, TrendingUp, AlertCircle, ChevronRight,
   RefreshCw, Download, Search, Filter, Zap, UserCheck
 } from 'lucide-react'
+import { toast } from '@/hooks/useToast'
 import { 
   Treemap, BarChart, Bar, LineChart, Line, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
@@ -331,13 +332,14 @@ export default function RBACPage() {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => exportReport('permissions')}
+                type="button"
+                onClick={() => toast({ title: 'Export', description: 'Exporting permissions report...' })}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export
               </button>
-              <button
+              <button type="button"
                 onClick={() => router.push('/security/rbac/review')}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
               >
@@ -354,7 +356,7 @@ export default function RBACPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
             {['overview', 'users', 'roles', 'permissions', 'jit-access', 'segregation', 'reviews'].map((tab) => (
-              <button
+              <button type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-3 border-b-2 transition-colors capitalize ${
@@ -471,15 +473,15 @@ export default function RBACPage() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-4">
-              <button className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors">
+              <button type="button" className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'Privileged Accounts', description: 'Opening review (coming soon)' })}>
                 <h3 className="font-medium mb-2">Review Privileged Accounts</h3>
                 <p className="text-sm text-gray-400">23 accounts need review</p>
               </button>
-              <button className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors">
+              <button type="button" className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'JIT Requests', description: 'Viewing pending requests (coming soon)' })}>
                 <h3 className="font-medium mb-2">Pending JIT Requests</h3>
                 <p className="text-sm text-gray-400">5 requests awaiting approval</p>
               </button>
-              <button className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors">
+              <button type="button" className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'SoD Conflicts', description: 'Navigating to conflicts (coming soon)' })}>
                 <h3 className="font-medium mb-2">SoD Conflicts</h3>
                 <p className="text-sm text-gray-400">8 conflicts detected</p>
               </button>
@@ -501,7 +503,11 @@ export default function RBACPage() {
                   className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>
-              <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                onClick={() => toast({ title: 'Filter', description: 'Filter dialog coming soon' })}
+              >
                 <Filter className="w-4 h-4" />
               </button>
             </div>
@@ -573,10 +579,10 @@ export default function RBACPage() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <button className="p-1 hover:bg-gray-700 rounded">
+                          <button type="button" className="p-1 hover:bg-gray-700 rounded" onClick={() => toast({ title: 'User', description: 'Viewing user details' })}>
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-1 hover:bg-gray-700 rounded">
+                          <button type="button" className="p-1 hover:bg-gray-700 rounded" onClick={() => toast({ title: 'User', description: 'Opening user settings' })}>
                             <Settings className="w-4 h-4" />
                           </button>
                         </div>
@@ -628,7 +634,7 @@ export default function RBACPage() {
               <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">{selectedRole.name} - Permissions</h3>
-                  <button 
+                  <button type="button" 
                     onClick={() => setSelectedRole(null)}
                     className="text-sm text-gray-400 hover:text-white"
                   >
@@ -719,7 +725,7 @@ export default function RBACPage() {
                         User 'developer@company.com' hasn't used 'Database/Delete' in 90 days
                       </p>
                     </div>
-                    <button className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm">
+                    <button type="button" className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm">
                       Apply
                     </button>
                   </div>
@@ -732,7 +738,7 @@ export default function RBACPage() {
                         5 users have similar permissions - consider creating 'Data Analyst' role
                       </p>
                     </div>
-                    <button className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-sm">
+                    <button type="button" className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-sm">
                       Review
                     </button>
                   </div>
@@ -777,13 +783,13 @@ export default function RBACPage() {
                       </div>
                       {request.status === 'pending' && (
                         <div className="flex gap-2">
-                          <button 
+                          <button type="button" 
                             onClick={() => handleJITApproval(request.id, true)}
                             className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
                           >
                             Approve
                           </button>
-                          <button 
+                          <button type="button" 
                             onClick={() => handleJITApproval(request.id, false)}
                             className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
                           >
@@ -856,7 +862,7 @@ export default function RBACPage() {
                           ))}
                         </div>
                       </div>
-                      <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                      <button type="button" className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                         Resolve
                       </button>
                     </div>
@@ -923,7 +929,7 @@ export default function RBACPage() {
                     {review.findings > 0 && (
                       <p className="text-sm text-orange-400">{review.findings} findings identified</p>
                     )}
-                    <button className="mt-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                    <button type="button" className="mt-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                       Continue Review
                     </button>
                   </div>

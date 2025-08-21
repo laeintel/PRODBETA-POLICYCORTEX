@@ -89,11 +89,11 @@ export function DefaultErrorFallback({ error, retry }: ErrorFallbackProps) {
         </CardContent>
 
         <CardFooter className="flex gap-2">
-          <Button onClick={retry} className="flex-1">
+          <Button type="button" onClick={retry} className="flex-1">
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
-          <Button variant="outline" onClick={() => window.location.href = '/'} className="flex-1">
+          <Button type="button" variant="outline" onClick={() => window.location.href = '/'} className="flex-1">
             <Home className="h-4 w-4 mr-2" />
             Go Home
           </Button>
@@ -112,7 +112,7 @@ export function ComponentErrorFallback({ error, retry }: ErrorFallbackProps) {
       <p className="text-sm text-muted-foreground mb-3">
         This component failed to load properly.
       </p>
-      <Button size="sm" onClick={retry} variant="outline">
+      <Button type="button" size="sm" onClick={retry} variant="outline">
         <RefreshCw className="h-3 w-3 mr-1" />
         Retry
       </Button>

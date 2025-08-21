@@ -145,7 +145,7 @@ export default function SimplifiedNavigation() {
         <div className="flex items-center justify-between h-full px-4">
           <div className="flex items-center gap-2 sm:gap-4">
             {/* Mobile menu toggle */}
-            <button
+            <button type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Toggle menu"
@@ -172,7 +172,7 @@ export default function SimplifiedNavigation() {
             <ThemeToggle />
             
             {/* Command Palette Trigger */}
-            <button
+            <button type="button"
               onClick={() => setCommandPaletteOpen(true)}
               className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-gray-700 transition-colors"
             >
@@ -239,7 +239,7 @@ export default function SimplifiedNavigation() {
                     <div className="hidden xl:block text-xs opacity-70 truncate">{item.description}</div>
                   </div>
                   {item.subsections && (
-                    <button
+                    <button type="button"
                       className="ml-2 rounded p-1 hover:bg-accent dark:hover:bg-gray-800"
                       aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
                       onClick={(e) => {

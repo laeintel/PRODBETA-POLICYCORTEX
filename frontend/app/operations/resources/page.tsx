@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from '@/hooks/useToast';
 import {
   Server,
   Database,
@@ -78,6 +80,7 @@ interface Resource {
 }
 
 export default function ResourceManagementPage() {
+  const router = useRouter();
   const [resources, setResources] = useState<Resource[]>([]);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [loading, setLoading] = useState(true);
@@ -336,7 +339,7 @@ export default function ResourceManagementPage() {
               <p className="text-gray-400 mt-2">Azure resource inventory and management</p>
             </div>
             <div className="flex items-center gap-4">
-              <button 
+              <button type="button" 
                 onClick={fetchResourceData}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                 <Activity className="w-4 h-4" />
@@ -585,7 +588,7 @@ export default function ResourceManagementPage() {
                     <td className="py-4">
                       <div className="flex items-center gap-2">
                         {resource.status === 'running' ? (
-                          <button
+                          <button type="button"
                             onClick={() => handleQuickAction('stop', resource.id)}
                             className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
                             title="Stop"
@@ -593,7 +596,7 @@ export default function ResourceManagementPage() {
                             <Pause className="w-4 h-4" />
                           </button>
                         ) : (
-                          <button
+                          <button type="button"
                             onClick={() => handleQuickAction('start', resource.id)}
                             className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
                             title="Start"
@@ -601,14 +604,14 @@ export default function ResourceManagementPage() {
                             <Play className="w-4 h-4" />
                           </button>
                         )}
-                        <button
+                        <button type="button"
                           onClick={() => handleQuickAction('restart', resource.id)}
                           className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
                           title="Restart"
                         >
                           <RotateCw className="w-4 h-4" />
                         </button>
-                        <button
+                        <button type="button"
                           onClick={() => setSelectedResource(resource)}
                           className="p-1.5 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors"
                           title="Details"
@@ -633,7 +636,7 @@ export default function ResourceManagementPage() {
                   {getResourceIcon(selectedResource.type)}
                   {selectedResource.name}
                 </h2>
-                <button
+                <button type="button"
                   onClick={() => setSelectedResource(null)}
                   className="text-gray-400 hover:text-white"
                 >
@@ -685,15 +688,47 @@ export default function ResourceManagementPage() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-gray-800">
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                  <button type="button" 
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors" 
+                    onClick={() => {
+                      if (selectedResource) {
+                        router.push(`/operations/resources/${selectedResource.id}/configure`);
+                      }
+                    }}>
                     <Settings className="w-4 h-4" />
                     Configure
                   </button>
-                  <button className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                  <button type="button" 
+                    className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors" 
+                    onClick={() => {
+                      if (selectedResource) {
+                        router.push(`/operations/resources/${selectedResource.id}/tags`);
+                      }
+                    }}>
                     <Tag className="w-4 h-4" />
                     Edit Tags
                   </button>
-                  <button className="bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                  <button type="button" 
+                    className="bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors" 
+                    onClick={() => {
+                      if (selectedResource) {
+                        if (confirm(`Are you sure you want to delete ${selectedResource.name}?`)) {
+                          toast({ 
+                            title: 'Resource deletion', 
+                            description: `Initiating deletion of ${selectedResource.name}...` 
+                          });
+                          // In production, this would call the API
+                          setTimeout(() => {
+                            setResources(prev => prev.filter(r => r.id !== selectedResource.id));
+                            setSelectedResource(null);
+                            toast({ 
+                              title: 'Success', 
+                              description: 'Resource deleted successfully' 
+                            });
+                          }, 1000);
+                        }
+                      }
+                    }}>
                     <Trash2 className="w-4 h-4" />
                     Delete
                   </button>

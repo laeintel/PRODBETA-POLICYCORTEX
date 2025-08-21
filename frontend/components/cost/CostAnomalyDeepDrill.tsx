@@ -8,6 +8,7 @@ import {
   ArrowUp, ArrowDown, Minus, Info, Download, RefreshCw,
   Filter, Search, Settings, Target, Lightbulb, GitBranch
 } from 'lucide-react';
+import { toast } from '@/hooks/useToast'
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, formatDistanceToNow, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import {
@@ -174,7 +175,7 @@ export default function CostAnomalyDeepDrill() {
 
   const renderBreadcrumb = () => (
     <div className="flex items-center space-x-2 text-sm mb-6 p-3 bg-gray-50 rounded-lg">
-      <button
+      <button type="button"
         onClick={() => {
           setDrillPath([]);
           setSelectedAnomaly(null);
@@ -187,7 +188,7 @@ export default function CostAnomalyDeepDrill() {
       {drillPath.map((path, index) => (
         <React.Fragment key={`${path.type}-${path.id}`}>
           <ChevronRight className="w-4 h-4 text-gray-400" />
-          <button
+          <button type="button"
             onClick={() => navigateToDrillLevel(index)}
             className={`hover:text-blue-800 font-medium ${
               index === drillPath.length - 1 ? 'text-gray-900' : 'text-blue-600'
@@ -242,11 +243,15 @@ export default function CostAnomalyDeepDrill() {
               <p className="text-gray-600">{selectedAnomaly.description}</p>
             </div>
             <div className="flex space-x-2">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center">
+              <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center">
                 <Lightbulb className="w-4 h-4 mr-2" />
                 View Recommendations
               </button>
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                onClick={() => toast({ title: 'Export', description: 'Exporting analysis...' })}
+              >
                 <Download className="w-4 h-4 inline mr-2" />
                 Export Analysis
               </button>
@@ -296,7 +301,7 @@ export default function CostAnomalyDeepDrill() {
           <div className="flex justify-between items-center">
             <div className="flex space-x-2">
               {(['24h', '7d', '30d', '90d'] as const).map((range) => (
-                <button
+                <button type="button"
                   key={range}
                   onClick={() => setTimeRange(range)}
                   className={`px-4 py-2 rounded-md text-sm font-medium ${
@@ -311,7 +316,7 @@ export default function CostAnomalyDeepDrill() {
             </div>
             <div className="flex space-x-2">
               {(['line', 'bar', 'area'] as const).map((type) => (
-                <button
+                <button type="button"
                   key={type}
                   onClick={() => setChartType(type)}
                   className={`p-2 rounded-md ${
@@ -332,7 +337,7 @@ export default function CostAnomalyDeepDrill() {
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               {['overview', 'resources', 'patterns', 'recommendations', 'forecast'].map((tab) => (
-                <button
+                <button type="button"
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
@@ -485,7 +490,11 @@ export default function CostAnomalyDeepDrill() {
                       <option>Sort by: % Change</option>
                       <option>Sort by: Resource Type</option>
                     </select>
-                    <button className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm">
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
+                      onClick={() => toast({ title: 'Filter', description: 'Opening resource filters' })}
+                    >
                       <Filter className="w-4 h-4 inline mr-1" />
                       Filter
                     </button>
@@ -704,11 +713,19 @@ export default function CostAnomalyDeepDrill() {
 
                     <div className="mt-3 flex space-x-2">
                       {rec.automationAvailable && (
-                        <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
+                        <button
+                          type="button"
+                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                          onClick={() => toast({ title: 'Automation', description: 'Auto-implementation queued' })}
+                        >
                           Auto-Implement
                         </button>
                       )}
-                      <button className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200">
+                      <button
+                        type="button"
+                        className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200"
+                        onClick={() => toast({ title: 'Details', description: 'Opening recommendation details' })}
+                      >
                         View Details
                       </button>
                     </div>
@@ -800,10 +817,18 @@ export default function CostAnomalyDeepDrill() {
             </p>
           </div>
           <div className="flex space-x-2">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <button
+              type="button"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              onClick={() => toast({ title: 'Optimize', description: 'Optimization workflow coming soon' })}
+            >
               Optimize Resource
             </button>
-            <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+            <button
+              type="button"
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+              onClick={() => toast({ title: 'Azure', description: 'Opening Azure portal link' })}
+            >
               View in Azure
             </button>
           </div>
@@ -932,7 +957,7 @@ export default function CostAnomalyDeepDrill() {
               <p className="text-gray-600 mb-6">
                 Choose an anomaly from the cost management dashboard to begin deep-drill analysis
               </p>
-              <button 
+              <button type="button" 
                 onClick={() => fetchAnomalyDetails('anomaly-123')}
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >

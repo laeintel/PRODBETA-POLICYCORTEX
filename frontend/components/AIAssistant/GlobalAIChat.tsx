@@ -389,13 +389,13 @@ What would you like to know?`,
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <button type="button"
                 onClick={() => setIsMinimized(!isMinimized)}
                 className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
               >
                 {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
               </button>
-              <button
+              <button type="button"
                 onClick={onClose}
                 className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
               >
@@ -497,7 +497,7 @@ What would you like to know?`,
                       {message.actions && message.actions.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
                           {message.actions.map(action => (
-                            <button
+                            <button type="button"
                               key={action.id}
                               onClick={() => handleAction(action)}
                               className="text-xs px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 rounded-lg transition-colors"
@@ -511,14 +511,14 @@ What would you like to know?`,
                       {/* Feedback buttons */}
                       {message.role === 'assistant' && idx > 0 && (
                         <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-700">
-                          <button
+                          <button type="button"
                             onClick={() => copyMessage(message.content)}
                             className="p-1 text-gray-400 hover:text-white transition-colors"
                             title="Copy"
                           >
                             <Copy className="w-3 h-3" />
                           </button>
-                          <button
+                          <button type="button"
                             onClick={() => regenerateResponse(message.id)}
                             className="p-1 text-gray-400 hover:text-white transition-colors"
                             title="Regenerate"
@@ -526,7 +526,7 @@ What would you like to know?`,
                             <RefreshCw className="w-3 h-3" />
                           </button>
                           <div className="flex items-center gap-1 ml-auto">
-                            <button
+                            <button type="button"
                               onClick={() => handleFeedback(message.id, 'positive')}
                               className={`p-1 transition-colors ${
                                 message.feedback === 'positive' 
@@ -536,7 +536,7 @@ What would you like to know?`,
                             >
                               <ThumbsUp className="w-3 h-3" />
                             </button>
-                            <button
+                            <button type="button"
                               onClick={() => handleFeedback(message.id, 'negative')}
                               className={`p-1 transition-colors ${
                                 message.feedback === 'negative' 

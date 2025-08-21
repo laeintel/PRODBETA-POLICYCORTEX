@@ -12,7 +12,10 @@
     "test": "echo 'No tests configured yet' && exit 0",
     "test:ci": "echo 'No tests configured yet' && exit 0",
     "test:e2e": "playwright test --reporter=list",
-    "test:install": "npx playwright install --with-deps"
+    "test:install": "npx playwright install --with-deps",
+    "audit:clicks": "node ../scripts/audit-clickables.js",
+    "verify:clicks": "npm run audit:clicks && node ../scripts/verify-clickables.js",
+    "codemod:add-type": "node ../scripts/codemods/add-type-to-buttons.js"
   },
   "dependencies": {
     "@apollo/client": "^3.8.8",

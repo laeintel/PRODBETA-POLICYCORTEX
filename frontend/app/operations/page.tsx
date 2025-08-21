@@ -8,6 +8,7 @@ import {
   BarChart3, GitBranch, Package, Settings, Play,
   RefreshCw, Terminal, Clock, TrendingUp, AlertTriangle
 } from 'lucide-react'
+import { toast } from '@/hooks/useToast'
 import type {
   MetricCardProps,
   AlertItemProps,
@@ -64,7 +65,7 @@ export default function OperationsHub() {
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
-                <button
+                <button type="button"
                   key={tab.id}
                   onClick={() => {
                     setActiveTab(tab.id)
@@ -558,7 +559,7 @@ function AlertItem({ title, severity, time, action }: AlertItemProps) {
           <p className="text-xs text-gray-400">{time}</p>
         </div>
       </div>
-      <button className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">
+      <button type="button" className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">
         {action}
       </button>
     </div>
@@ -642,10 +643,18 @@ function ResourceTableRow({ name, type, region, status, cost }: ResourceTableRow
       </td>
       <td className="py-3 text-gray-400">{cost}</td>
       <td className="py-3">
-        <button className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded mr-2">
+        <button
+          type="button"
+          className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded mr-2"
+          onClick={() => toast({ title: 'Resource', description: `Viewing ${name}` })}
+        >
           View
         </button>
-        <button className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded">
+        <button
+          type="button"
+          className="text-xs px-2 py-1 bg-gray-800 hover:bg-gray-700 rounded"
+          onClick={() => toast({ title: 'Manage', description: `Managing ${name}` })}
+        >
           Manage
         </button>
       </td>
@@ -663,7 +672,11 @@ function OptimizationItem({ resource, issue, recommendation, savings }: Optimiza
       </div>
       <div className="text-right">
         <p className="text-lg font-bold text-green-400">{savings}</p>
-        <button className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded mt-1">
+        <button
+          type="button"
+          className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded mt-1"
+          onClick={() => toast({ title: 'Optimize', description: `Optimizing ${resource}` })}
+        >
           Optimize
         </button>
       </div>
@@ -824,7 +837,7 @@ function JobItem({ name, schedule, nextRun, enabled }: JobItemProps) {
         <p className="text-xs text-gray-400 font-mono">{schedule}</p>
         <p className="text-xs text-gray-500">{nextRun}</p>
       </div>
-      <button className={`text-xs px-3 py-1 rounded ${
+      <button type="button" className={`text-xs px-3 py-1 rounded ${
         enabled 
           ? 'bg-green-900/50 text-green-400' 
           : 'bg-gray-800 text-gray-400'

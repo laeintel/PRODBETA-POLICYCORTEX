@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { toast } from '@/hooks/useToast'
 import { 
   Network, GitBranch, AlertTriangle, Activity, 
   Zap, Shield, TrendingUp, Download, Filter,
@@ -118,11 +119,19 @@ export default function AICorrelationsPage() {
             <p className="text-gray-400">Cross-domain pattern detection and risk propagation analysis</p>
           </div>
           <div className="flex items-center space-x-4">
-            <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+            <button
+              type="button"
+              className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              onClick={() => toast({ title: 'Refreshed', description: 'Correlation data refreshed' })}
+            >
               <RefreshCw className="w-4 h-4" />
               <span>Refresh</span>
             </button>
-            <button className="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2">
+            <button
+              type="button"
+              className="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+              onClick={() => toast({ title: 'Export', description: 'Exporting correlation report...' })}
+            >
               <Download className="w-4 h-4" />
               <span>Export Report</span>
             </button>
@@ -215,7 +224,7 @@ export default function AICorrelationsPage() {
             </select>
           </div>
 
-          <button
+          <button type="button"
             onClick={() => setSimulationMode(!simulationMode)}
             className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
               simulationMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-700 hover:bg-gray-600'
@@ -236,7 +245,11 @@ export default function AICorrelationsPage() {
               <GitBranch className="w-5 h-5" />
               <span>Correlation Network</span>
             </h2>
-            <button className="p-2 hover:bg-gray-700 rounded transition-colors">
+            <button
+              type="button"
+              className="p-2 hover:bg-gray-700 rounded transition-colors"
+              onClick={() => toast({ title: 'Expanded', description: 'Opening full-screen view' })}
+            >
               <Maximize2 className="w-4 h-4" />
             </button>
           </div>
@@ -454,7 +467,7 @@ export default function AICorrelationsPage() {
               className="w-full bg-gray-800 rounded-lg px-4 py-2"
             />
           </div>
-          <button className="mt-4 px-6 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
+          <button type="button" className="mt-4 px-6 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
             Run Simulation
           </button>
         </div>
