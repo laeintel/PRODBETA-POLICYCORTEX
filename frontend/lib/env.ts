@@ -72,15 +72,45 @@ export function validateEnv(): Env {
   try {
     env = envSchema.parse(process.env);
     
-    // Additional validation logic
+    // Strict production validation
     if (env.NODE_ENV === 'production') {
-      // In production, certain variables become required
+      const errors: string[] = [];
+      
+      // Security requirements
       if (!env.JWT_SECRET && !env.NEXTAUTH_SECRET) {
-        throw new Error('JWT_SECRET or NEXTAUTH_SECRET is required in production');
+        errors.push('JWT_SECRET or NEXTAUTH_SECRET is required in production');
       }
       
-      if (env.USE_REAL_DATA && !env.AZURE_SUBSCRIPTION_ID) {
-        throw new Error('Azure credentials are required when USE_REAL_DATA is true');
+      if (env.DISABLE_CSP === true) {
+        errors.push('CSP cannot be disabled in production (DISABLE_CSP must be false or unset)');
+      }
+      
+      // Azure requirements when using real data
+      if (env.USE_REAL_DATA) {
+        if (!env.AZURE_SUBSCRIPTION_ID) {
+          errors.push('AZURE_SUBSCRIPTION_ID is required when USE_REAL_DATA is true');
+        }
+        if (!env.AZURE_TENANT_ID) {
+          errors.push('AZURE_TENANT_ID is required when USE_REAL_DATA is true');
+        }
+        if (!env.AZURE_CLIENT_ID) {
+          errors.push('AZURE_CLIENT_ID is required when USE_REAL_DATA is true');
+        }
+      }
+      
+      // Database requirements
+      if (!env.DATABASE_URL) {
+        errors.push('DATABASE_URL is required in production');
+      }
+      
+      // Monitoring requirements
+      if (!env.SENTRY_DSN && !env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+        console.warn('⚠️ Warning: No error tracking configured (SENTRY_DSN or OTEL_EXPORTER_OTLP_ENDPOINT)');
+      }
+      
+      // Fail fast if any errors
+      if (errors.length > 0) {
+        throw new Error(`Production environment validation failed:\n${errors.map(e => `  - ${e}`).join('\n')}`);
       }
     }
     
