@@ -1,7 +1,28 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/auth/apiAuth';
+import { apiRateLimiter } from '@/lib/middleware/rateLimiter';
+import { auditLogger, AuditEventType, AuditSeverity } from '@/lib/logging/auditLogger';
 
 // ML Predictions endpoint for Patent #4
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Apply rate limiting
+  return apiRateLimiter.middleware(request, async (req) => {
+    // Apply authentication
+    return withAuth(req, async (authenticatedReq, user) => {
+      try {
+        // Log access
+        auditLogger.log({
+          eventType: AuditEventType.RESOURCE_ACCESSED,
+          severity: AuditSeverity.INFO,
+          userId: user.sub,
+          userEmail: user.email,
+          success: true,
+          details: {
+            endpoint: '/api/v1/predictions',
+            method: 'GET',
+          },
+        });
+
   const predictions = {
     total: 47,
     active: 12,
