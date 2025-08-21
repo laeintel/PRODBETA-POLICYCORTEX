@@ -1,10 +1,18 @@
-import crypto from 'crypto';
 import { headers } from 'next/headers';
 
 /**
  * Generate a cryptographically secure nonce for CSP
  */
 export function generateNonce(): string {
+  // Use Web Crypto API for Edge Runtime compatibility
+  if (typeof globalThis.crypto !== 'undefined' && globalThis.crypto.getRandomValues) {
+    const array = new Uint8Array(16);
+    globalThis.crypto.getRandomValues(array);
+    return Buffer.from(array).toString('base64');
+  }
+  
+  // Fallback for Node.js environment
+  const crypto = require('crypto');
   return crypto.randomBytes(16).toString('base64');
 }
 

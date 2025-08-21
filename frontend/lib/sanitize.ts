@@ -1,7 +1,7 @@
 import DOMPurify from 'isomorphic-dompurify';
 
 // Configure DOMPurify for secure HTML sanitization
-const sanitizeConfig: DOMPurify.Config = {
+const sanitizeConfig = {
   ALLOWED_TAGS: [
     'b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li',
     'blockquote', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -18,11 +18,7 @@ const sanitizeConfig: DOMPurify.Config = {
   SANITIZE_DOM: true,
   KEEP_CONTENT: true,
   IN_PLACE: false,
-  USE_PROFILES: { html: true },
-  // Add rel="noopener noreferrer" to all external links
-  ADD_ATTR_TO_ELEMS: {
-    a: ['rel']
-  }
+  USE_PROFILES: { html: true }
 };
 
 /**
@@ -31,16 +27,19 @@ const sanitizeConfig: DOMPurify.Config = {
  * @param options - Optional DOMPurify configuration overrides
  * @returns Sanitized HTML string safe for rendering
  */
-export function sanitizeHTML(dirty: string, options?: Partial<DOMPurify.Config>): string {
+export function sanitizeHTML(dirty: string, options?: any): string {
   if (!dirty) return '';
   
   const config = options ? { ...sanitizeConfig, ...options } : sanitizeConfig;
   const clean = DOMPurify.sanitize(dirty, config);
   
+  // Convert to string if needed
+  const cleanString = typeof clean === 'string' ? clean : clean.toString();
+  
   // Additional security: ensure all links open in new tab with proper rel attributes
   if (typeof window !== 'undefined') {
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = clean;
+    tempDiv.innerHTML = cleanString;
     
     const links = tempDiv.getElementsByTagName('a');
     for (let i = 0; i < links.length; i++) {
@@ -54,7 +53,7 @@ export function sanitizeHTML(dirty: string, options?: Partial<DOMPurify.Config>)
     return tempDiv.innerHTML;
   }
   
-  return clean;
+  return cleanString;
 }
 
 /**
