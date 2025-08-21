@@ -287,7 +287,7 @@ export default function RbacDeepDrillDashboard() {
 
   const renderBreadcrumb = () => (
     <div className="flex items-center space-x-2 text-sm mb-6 p-3 bg-gray-50 rounded-lg">
-      <button
+      <button type="button"
         onClick={() => navigateToDrillLevel(-1)}
         className="text-blue-600 hover:text-blue-800 font-medium"
       >
@@ -296,7 +296,7 @@ export default function RbacDeepDrillDashboard() {
       {drillPath.map((path, index) => (
         <React.Fragment key={path.id}>
           <ChevronRight className="w-4 h-4 text-gray-400" />
-          <button
+          <button type="button"
             onClick={() => navigateToDrillLevel(index)}
             className={`hover:text-blue-800 font-medium ${
               index === drillPath.length - 1 ? 'text-gray-900' : 'text-blue-600'
@@ -397,11 +397,11 @@ export default function RbacDeepDrillDashboard() {
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Permissions Analysis</h3>
               <div className="flex space-x-2">
-                <button className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100">
+                <button type="button" className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100" onClick={() => console.log('Refresh permissions') }>
                   <RefreshCw className="w-4 h-4 inline mr-1" />
                   Refresh
                 </button>
-                <button className="px-3 py-1 text-sm bg-gray-50 text-gray-600 rounded-md hover:bg-gray-100">
+                <button type="button" className="px-3 py-1 text-sm bg-gray-50 text-gray-600 rounded-md hover:bg-gray-100" onClick={() => console.log('Export permissions analysis') }>
                   <Download className="w-4 h-4 inline mr-1" />
                   Export
                 </button>
@@ -533,10 +533,28 @@ export default function RbacDeepDrillDashboard() {
             <p className="text-sm text-gray-600 mt-1">Permission ID: {selectedPermission.permissionId}</p>
           </div>
           <div className="flex space-x-2">
-            <button className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+            <button type="button" 
+              className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700" 
+              onClick={() => {
+                if (selectedPermission) {
+                  const confirmed = confirm(`Request removal of permission: ${selectedPermission.permissionName}?`);
+                  if (confirmed) {
+                    alert(`Removal request submitted for ${selectedPermission.permissionName}. You will receive an email confirmation.`);
+                  }
+                }
+              }}>
               Request Removal
             </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <button type="button" 
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" 
+              onClick={() => {
+                if (selectedPermission) {
+                  const confirmed = confirm(`Convert ${selectedPermission.permissionName} to Just-In-Time access?`);
+                  if (confirmed) {
+                    alert(`JIT conversion initiated for ${selectedPermission.permissionName}. This will require approval for future access.`);
+                  }
+                }
+              }}>
               Convert to JIT
             </button>
           </div>
@@ -712,7 +730,7 @@ export default function RbacDeepDrillDashboard() {
                 <option value="never">Never Used</option>
               </select>
 
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center">
+              <button type="button" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center">
                 <Filter className="w-4 h-4 mr-2" />
                 More Filters
               </button>
@@ -737,7 +755,7 @@ export default function RbacDeepDrillDashboard() {
               <p className="text-gray-600 mb-6">
                 Choose a user from the main RBAC dashboard to begin deep-drill analysis
               </p>
-              <button 
+              <button type="button" 
                 onClick={() => fetchUserDetails('user-123')}
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >

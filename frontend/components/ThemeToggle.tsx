@@ -8,7 +8,7 @@ export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
 
   return (
-    <button
+    <button type="button"
       onClick={toggleTheme}
       className="
         relative p-2 rounded-lg transition-all duration-300

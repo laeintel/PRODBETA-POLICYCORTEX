@@ -38,7 +38,7 @@ export default function RiskManagementPage() {
                 <td className="px-6 py-4"><span className={`text-xs px-2 py-1 rounded ${r.level==='High'?'bg-red-900/40 text-red-400':r.level==='Medium'?'bg-yellow-900/40 text-yellow-400':'bg-green-900/40 text-green-400'}`}>{r.level}</span></td>
                 <td className="px-6 py-4 text-sm text-gray-300">{r.description}</td>
                 <td className="px-6 py-4 text-sm text-gray-400">{r.owners.join(', ')}</td>
-                <td className="px-6 py-4"><button className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Mitigate</button></td>
+                <td className="px-6 py-4"><button type="button" className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded">Mitigate</button></td>
               </tr>
             ))}
           </tbody>

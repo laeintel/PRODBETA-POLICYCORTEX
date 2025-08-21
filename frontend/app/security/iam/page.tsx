@@ -357,14 +357,14 @@ export default function IAMPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <button
+              <button type="button"
                 onClick={() => exportReport('iam')}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export
               </button>
-              <button
+              <button type="button"
                 onClick={() => router.push('/security/iam/users/new')}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
               >
@@ -381,7 +381,7 @@ export default function IAMPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6 overflow-x-auto">
             {['overview', 'users', 'groups', 'applications', 'conditional-access', 'risks', 'sign-ins', 'service-principals'].map((tab) => (
-              <button
+              <button type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-3 border-b-2 transition-colors capitalize whitespace-nowrap ${
@@ -594,7 +594,7 @@ export default function IAMPage() {
                         <span className="text-xs text-gray-500">
                           {new Date(risk.detectedDateTime).toLocaleString()}
                         </span>
-                        <button
+                        <button type="button"
                           onClick={() => handleRiskRemediation(risk.id)}
                           className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
                         >
@@ -634,7 +634,7 @@ export default function IAMPage() {
             <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Conditional Access Policies</h3>
-                <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                <button type="button" className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                   New Policy
                 </button>
               </div>
@@ -657,7 +657,7 @@ export default function IAMPage() {
                           {policy.state}
                         </span>
                       </div>
-                      <button className="text-sm text-blue-400 hover:text-blue-300">
+                      <button type="button" className="text-sm text-blue-400 hover:text-blue-300">
                         Edit
                       </button>
                     </div>
@@ -777,7 +777,7 @@ export default function IAMPage() {
             <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Service Principals & Apps</h3>
-                <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                <button type="button" className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                   Register App
                 </button>
               </div>
@@ -818,7 +818,7 @@ export default function IAMPage() {
                           </div>
                         </div>
                       </div>
-                      <button className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">
+                      <button type="button" className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">
                         Manage
                       </button>
                     </div>

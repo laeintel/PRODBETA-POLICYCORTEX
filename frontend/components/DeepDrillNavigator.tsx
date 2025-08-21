@@ -163,7 +163,7 @@ export default function DeepDrillNavigator({
               animate={{ opacity: 1, y: 0 }}
               className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-blue-50 to-transparent p-4 rounded-b-lg"
             >
-              <button className="w-full px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 flex items-center justify-center">
+              <button type="button" className="w-full px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 flex items-center justify-center">
                 Drill Down
                 <ChevronRight className="w-3 h-3 ml-1" />
               </button>
@@ -268,7 +268,7 @@ export default function DeepDrillNavigator({
 
           {/* View Mode Toggle */}
           <div className="flex bg-gray-100 rounded-md p-1">
-            <button
+            <button type="button"
               onClick={() => setCurrentViewMode('grid')}
               className={`p-2 rounded ${
                 currentViewMode === 'grid' 
@@ -278,7 +278,7 @@ export default function DeepDrillNavigator({
             >
               <Grid className="w-4 h-4" />
             </button>
-            <button
+            <button type="button"
               onClick={() => setCurrentViewMode('list')}
               className={`p-2 rounded ${
                 currentViewMode === 'list' 

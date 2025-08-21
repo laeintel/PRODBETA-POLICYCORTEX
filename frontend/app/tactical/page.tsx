@@ -8,6 +8,7 @@ import {
   ChevronRight, Cpu, HardDrive, Wifi, Target, Radio
 } from 'lucide-react';
 import ResponsiveGrid, { ResponsiveContainer, ResponsiveText } from '@/components/ResponsiveGrid';
+import { toast } from '@/hooks/useToast'
 
 interface Alert {
   id: string;
@@ -135,7 +136,7 @@ export default function TacticalOperationsPage() {
             <p className="text-gray-400">Real-time monitoring and incident response</p>
           </div>
           <div className="flex items-center space-x-4">
-            <button
+            <button type="button"
               onClick={() => setIsWarRoomActive(!isWarRoomActive)}
               className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
                 isWarRoomActive 
@@ -146,7 +147,11 @@ export default function TacticalOperationsPage() {
               <Radio className="w-5 h-5" />
               <span>{isWarRoomActive ? 'War Room Active' : 'Activate War Room'}</span>
             </button>
-            <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+            <button
+              type="button"
+              className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              onClick={() => toast({ title: 'Alert settings', description: 'Opening alert settings (coming soon)' })}
+            >
               <Bell className="w-4 h-4" />
               <span>Alert Settings</span>
             </button>
@@ -286,7 +291,7 @@ export default function TacticalOperationsPage() {
               {quickActions.map((action, index) => {
                 const Icon = action.icon;
                 return (
-                  <button
+                  <button type="button"
                     key={index}
                     className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors flex flex-col items-center space-y-2"
                   >
@@ -316,7 +321,11 @@ export default function TacticalOperationsPage() {
                   <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
-              <button className="w-full p-3 bg-orange-600 hover:bg-orange-700 rounded transition-colors">
+              <button
+                type="button"
+                className="w/full p-3 bg-orange-600 hover:bg-orange-700 rounded transition-colors"
+                onClick={() => toast({ title: 'Playbook', description: 'Executing emergency playbook...' })}
+              >
                 Execute Emergency Playbook
               </button>
             </div>
@@ -348,7 +357,11 @@ export default function TacticalOperationsPage() {
                 <span className="text-xs text-yellow-500">Stand-by</span>
               </div>
             </div>
-            <button className="w-full mt-3 p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm">
+            <button
+              type="button"
+              className="w-full mt-3 p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+              onClick={() => toast({ title: 'Broadcast', description: 'Broadcasting alert to channels...' })}
+            >
               Broadcast Alert
             </button>
           </div>
@@ -397,7 +410,7 @@ export default function TacticalOperationsPage() {
                   <span className="text-sm text-gray-400">{selectedAlert.time}</span>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={() => setSelectedAlert(null)}
                 className="text-gray-400 hover:text-white text-2xl"
               >
@@ -430,16 +443,32 @@ export default function TacticalOperationsPage() {
             </div>
 
             <div className="flex space-x-3">
-              <button className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors">
+              <button
+                type="button"
+                className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+                onClick={() => toast({ title: 'Acknowledged', description: `${selectedAlert.title}` })}
+              >
                 Acknowledge
               </button>
-              <button className="px-4 py-2 bg-green-600 rounded hover:bg-green-700 transition-colors">
+              <button
+                type="button"
+                className="px-4 py-2 bg-green-600 rounded hover:bg-green-700 transition-colors"
+                onClick={() => toast({ title: 'Resolved', description: `${selectedAlert.title}` })}
+              >
                 Mark Resolved
               </button>
-              <button className="px-4 py-2 bg-orange-600 rounded hover:bg-orange-700 transition-colors">
+              <button
+                type="button"
+                className="px-4 py-2 bg-orange-600 rounded hover:bg-orange-700 transition-colors"
+                onClick={() => toast({ title: 'Escalated', description: `${selectedAlert.title}` })}
+              >
                 Escalate
               </button>
-              <button className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600 transition-colors">
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600 transition-colors"
+                onClick={() => toast({ title: 'Note added', description: 'Added note to alert' })}
+              >
                 Add Note
               </button>
             </div>

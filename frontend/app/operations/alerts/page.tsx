@@ -39,7 +39,7 @@ export default function AlertManagementPage() {
                 <td className="px-6 py-4"><span className={`text-xs px-2 py-1 rounded ${a.severity==='Critical'?'bg-red-900/40 text-red-400':a.severity==='High'?'bg-orange-900/40 text-orange-400':a.severity==='Medium'?'bg-yellow-900/40 text-yellow-400':'bg-blue-900/40 text-blue-400'}`}>{a.severity}</span></td>
                 <td className="px-6 py-4 text-sm text-gray-400">{a.resource}</td>
                 <td className="px-6 py-4 text-sm text-gray-400">{a.age}</td>
-                <td className="px-6 py-4"><button className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(a)}>View</button></td>
+                <td className="px-6 py-4"><button type="button" className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(a)}>View</button></td>
               </tr>
             ))}
           </tbody>
@@ -53,14 +53,14 @@ export default function AlertManagementPage() {
               <h2 className="text-lg font-semibold">{selected.title}</h2>
               <p className="text-xs text-gray-400">{selected.id} • {selected.resource}</p>
             </div>
-            <button className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
+            <button type="button" className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="space-y-3">
             <Detail label="Severity" value={selected.severity} />
             <Detail label="Age" value={selected.age} />
             <Detail label="Recommended Action" value="Scale up VM or investigate noisy neighbor" />
-            <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Create Incident</button>
-            <button className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded">Silence 1h</button>
+            <button type="button" className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Create Incident</button>
+            <button type="button" className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded">Silence 1h</button>
           </div>
         </div>
       )}

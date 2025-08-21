@@ -52,7 +52,7 @@ export default function CICDPipelinesPage() {
                   <StatusBadge status={p.status} />
                 </td>
                 <td className="px-6 py-4">
-                  <button className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(p)}>View runs</button>
+                  <button type="button" className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(p)}>View runs</button>
                 </td>
               </tr>
             ))}
@@ -67,11 +67,11 @@ export default function CICDPipelinesPage() {
               <h2 className="text-lg font-semibold">{selected.name}</h2>
               <p className="text-xs text-gray-400">Branch: {selected.branch}</p>
             </div>
-            <button className="text-gray-400 hover:text-white text-2xl" onClick={() => { setSelected(null); setSelectedRun(null) }}>✕</button>
+            <button type="button" className="text-gray-400 hover:text-white text-2xl" onClick={() => { setSelected(null); setSelectedRun(null) }}>✕</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {selected.runs.map(run => (
-              <button key={run.id} onClick={() => setSelectedRun(run)} className="p-3 bg-gray-800/60 rounded hover:bg-gray-800 text-left">
+              <button type="button" key={run.id} onClick={() => setSelectedRun(run)} className="p-3 bg-gray-800/60 rounded hover:bg-gray-800 text-left">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-sm">{run.id}</span>
                   <RunStatus status={run.status} />

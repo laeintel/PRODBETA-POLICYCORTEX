@@ -330,14 +330,14 @@ export default function CostManagementPage() {
                 <option value="90d">Last 90 days</option>
                 <option value="12m">Last 12 months</option>
               </select>
-              <button
+              <button type="button"
                 onClick={() => exportReport('csv')}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export
               </button>
-              <button
+              <button type="button"
                 onClick={() => router.push('/governance/cost/optimize')}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
               >
@@ -354,7 +354,7 @@ export default function CostManagementPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
             {['overview', 'breakdown', 'anomalies', 'optimization', 'budgets', 'reserved', 'forecast'].map((tab) => (
-              <button
+              <button type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-3 border-b-2 transition-colors capitalize ${
@@ -573,7 +573,7 @@ export default function CostManagementPage() {
                         }`}>
                           {anomaly.status}
                         </span>
-                        <button className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
+                        <button type="button" className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                           Investigate
                         </button>
                       </div>
@@ -642,14 +642,14 @@ export default function CostManagementPage() {
                         </div>
                         <div className="flex gap-2">
                           {rec.automatable && (
-                            <button
+                            <button type="button"
                               onClick={() => handleOptimize(rec.id, true)}
                               className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
                             >
                               Auto-fix
                             </button>
                           )}
-                          <button
+                          <button type="button"
                             onClick={() => handleOptimize(rec.id, false)}
                             className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
                           >

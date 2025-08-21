@@ -97,7 +97,7 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
               Please sign in with your Azure AD account to access PolicyCortex
             </p>
             
-            <button
+            <button type="button"
               onClick={handleLogin}
               disabled={loginAttempted}
               className="w-full px-6 py-3 bg-primary dark:bg-purple-600 text-primary-foreground dark:text-white rounded-lg font-semibold hover:bg-primary/90 dark:hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"

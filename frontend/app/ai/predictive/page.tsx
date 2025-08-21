@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { toast } from '@/hooks/useToast'
 import { Brain, TrendingUp, AlertTriangle, Target, Zap, BarChart3, Clock, CheckCircle } from 'lucide-react'
 import { Line, Bar } from 'recharts'
 
@@ -258,7 +259,11 @@ export default function PredictiveCompliancePage() {
                       <p className="text-sm text-blue-400">{prediction.recommendation}</p>
                     </div>
                   </div>
-                  <button className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors">
+                  <button
+                    type="button"
+                    className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                    onClick={() => toast({ title: 'Action', description: 'Applying recommended action...' })}
+                  >
                     Take Action
                   </button>
                 </div>
@@ -273,7 +278,7 @@ export default function PredictiveCompliancePage() {
         <div className="fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-800 p-6 overflow-y-auto z-50">
           <div className="flex justify-between items-start mb-6">
             <h2 className="text-xl font-semibold">Prediction Details</h2>
-            <button 
+            <button type="button" 
               onClick={() => setSelectedPrediction(null)}
               className="text-gray-400 hover:text-white text-2xl"
             >
@@ -321,13 +326,25 @@ export default function PredictiveCompliancePage() {
             </div>
             
             <div className="pt-4 space-y-2">
-              <button className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors">
+              <button
+                type="button"
+                className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                onClick={() => toast({ title: 'Applied', description: 'Recommendation applied' })}
+              >
                 Apply Recommendation
               </button>
-              <button className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded transition-colors">
+              <button
+                type="button"
+                className="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded transition-colors"
+                onClick={() => toast({ title: 'Noted', description: 'Marked as false positive' })}
+              >
                 Mark as False Positive
               </button>
-              <button className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded transition-colors">
+              <button
+                type="button"
+                className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded transition-colors"
+                onClick={() => toast({ title: 'Retrain', description: 'Model retraining started' })}
+              >
                 Retrain Model
               </button>
             </div>

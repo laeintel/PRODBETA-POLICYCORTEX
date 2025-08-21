@@ -46,10 +46,10 @@ export default function PrivilegedIdentityManagementPage() {
                 <td className="px-6 py-4 text-yellow-400 text-sm">{e.expires}</td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
-                    <button className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(e)}>
+                    <button type="button" className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(e)}>
                       View
                     </button>
-                    <button className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 rounded inline-flex items-center gap-1">
+                    <button type="button" className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 rounded inline-flex items-center gap-1">
                       <UserX className="w-3 h-3" /> Revoke
                     </button>
                   </div>
@@ -67,14 +67,14 @@ export default function PrivilegedIdentityManagementPage() {
               <h2 className="text-lg font-semibold">Elevation Details</h2>
               <p className="text-xs text-gray-400">{selected.user} • {selected.role}</p>
             </div>
-            <button className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
+            <button type="button" className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="space-y-3">
             <Detail label="User" value={selected.user} />
             <Detail label="Role" value={selected.role} />
             <Detail label="Requested" value={selected.requested} />
             <Detail label="Expires" value={selected.expires} />
-            <button className="w-full py-2 bg-red-600 hover:bg-red-700 rounded">Revoke Access</button>
+            <button type="button" className="w-full py-2 bg-red-600 hover:bg-red-700 rounded">Revoke Access</button>
           </div>
         </div>
       )}

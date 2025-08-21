@@ -47,7 +47,7 @@ export default function GovernanceHub() {
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
-                <button
+                <button type="button"
                   key={tab.id}
                   onClick={() => {
                     setActiveTab(tab.id)
@@ -496,7 +496,7 @@ function ViolationItem({ policy, resource, severity, age }: {
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-400">{age}</span>
-        <button className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded">
+        <button type="button" className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded">
           Remediate
         </button>
       </div>
@@ -567,7 +567,7 @@ function OpportunityItem({ title, savings, effort, impact }: {
       </div>
       <div className="text-right">
         <p className="text-lg font-bold text-green-400">{savings}</p>
-        <button className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded mt-1">
+        <button type="button" className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded mt-1">
           Implement
         </button>
       </div>

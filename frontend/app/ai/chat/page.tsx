@@ -34,6 +34,9 @@ import {
   Archive
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/hooks/useToast'
+import { handleExport } from '@/lib/exportUtils'
+import ConfigurationDialog from '@/components/ConfigurationDialog'
 
 interface Message {
   id: string;
@@ -93,6 +96,7 @@ export default function AIChatPage() {
   const [selectedCommand, setSelectedCommand] = useState<number>(-1);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -401,7 +405,7 @@ Just let me know how I can best assist you!`;
             {message.actions && (
               <div className="flex gap-2 mt-4">
                 {message.actions.map((action, idx) => (
-                  <button
+                  <button type="button"
                     key={idx}
                     onClick={() => router.push(action.action)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -432,14 +436,14 @@ Just let me know how I can best assist you!`;
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <button
+                  <button type="button"
                     onClick={() => copyToClipboard(message.content)}
                     className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
                     title="Copy"
                   >
                     <Copy className="h-4 w-4" />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handleFeedback(message.id, 'positive')}
                     className={`p-1.5 rounded-lg ${
                       message.feedback === 'positive' 
@@ -450,7 +454,7 @@ Just let me know how I can best assist you!`;
                   >
                     <ThumbsUp className="h-4 w-4" />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handleFeedback(message.id, 'negative')}
                     className={`p-1.5 rounded-lg ${
                       message.feedback === 'negative' 
@@ -461,7 +465,7 @@ Just let me know how I can best assist you!`;
                   >
                     <ThumbsDown className="h-4 w-4" />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handlePin(message.id)}
                     className={`p-1.5 rounded-lg ${
                       message.pinned 
@@ -505,7 +509,7 @@ Just let me know how I can best assist you!`;
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Chat History</h2>
-            <button
+            <button type="button"
               onClick={() => setShowHistory(false)}
               className="p-1 text-gray-400 hover:text-gray-600"
             >
@@ -522,7 +526,7 @@ Just let me know how I can best assist you!`;
         </div>
         <div className="overflow-y-auto">
           {chatHistory.map((chat) => (
-            <button
+            <button type="button"
               key={chat.id}
               className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100"
             >
@@ -541,6 +545,7 @@ Just let me know how I can best assist you!`;
             <div className="flex items-center gap-4">
               {!showHistory && (
                 <button
+                  type="button"
                   onClick={() => setShowHistory(true)}
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
                   title="Show history"
@@ -554,16 +559,31 @@ Just let me know how I can best assist you!`;
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+              <button type="button" 
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg" 
+                onClick={() => handleExport({
+                  data: messages,
+                  filename: 'chat-conversation',
+                  format: 'json',
+                  title: 'AI Chat Conversation'
+                })}>
                 <Download className="h-5 w-5" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+              <button type="button" 
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg" 
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/ai/chat?session=${Date.now()}`;
+                  navigator.clipboard.writeText(shareUrl);
+                  toast({ title: 'Link copied', description: 'Share link copied to clipboard' });
+                }}>
                 <Share2 className="h-5 w-5" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+              <button type="button" 
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg" 
+                onClick={() => setConfigOpen(true)}>
                 <Settings className="h-5 w-5" />
               </button>
-              <button
+              <button type="button"
                 onClick={() => setMessages([messages[0]])}
                 className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg flex items-center gap-2"
               >
@@ -624,7 +644,7 @@ Just let me know how I can best assist you!`;
             <p className="text-sm text-gray-600 mb-3">Suggested questions:</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
               {predefinedSuggestions.map((suggestion, idx) => (
-                <button
+                <button type="button"
                   key={idx}
                   onClick={() => handleSuggestionClick(suggestion.text)}
                   className="p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left group"
@@ -652,7 +672,7 @@ Just let me know how I can best assist you!`;
             </div>
             <div className="max-h-64 overflow-y-auto">
               {commandPalette.map((cmd, idx) => (
-                <button
+                <button type="button"
                   key={idx}
                   onClick={() => {
                     setInput(cmd.command + ' ');
@@ -689,7 +709,7 @@ Just let me know how I can best assist you!`;
                   rows={1}
                   style={{ minHeight: '48px', maxHeight: '120px' }}
                 />
-                <button
+                <button type="button"
                   onClick={handleVoiceInput}
                   className={`absolute right-3 bottom-3 p-1.5 rounded-lg transition-colors ${
                     isListening 
@@ -708,7 +728,7 @@ Just let me know how I can best assist you!`;
                 <span>Shift+Enter for new line</span>
               </div>
             </div>
-            <button
+            <button type="button"
               onClick={handleSend}
               disabled={!input.trim()}
               className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
@@ -719,6 +739,13 @@ Just let me know how I can best assist you!`;
           </div>
         </div>
       </div>
+      
+      <ConfigurationDialog
+        isOpen={configOpen}
+        onClose={() => setConfigOpen(false)}
+        title="AI Chat"
+        configType="ai"
+      />
     </div>
   );
 }

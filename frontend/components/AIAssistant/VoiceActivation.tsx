@@ -321,7 +321,7 @@ export default function VoiceActivation({
           )}
           
           {/* Main indicator */}
-          <button
+          <button type="button"
             onClick={isListening ? stopListening : startListening}
             className={`
               relative flex items-center gap-2 px-4 py-2 rounded-full shadow-lg
@@ -369,7 +369,7 @@ export default function VoiceActivation({
                     <p className="text-sm text-gray-400 italic">{interimTranscript}</p>
                   )}
                 </div>
-                <button
+                <button type="button"
                   onClick={() => {
                     setTranscript('')
                     setInterimTranscript('')
@@ -397,7 +397,7 @@ export default function VoiceActivation({
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-red-400" />
                 <p className="text-sm text-red-400">{error}</p>
-                <button
+                <button type="button"
                   onClick={() => setError(null)}
                   className="ml-auto text-red-400 hover:text-red-300"
                 >

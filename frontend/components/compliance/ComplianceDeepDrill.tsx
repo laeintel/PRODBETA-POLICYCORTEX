@@ -8,6 +8,7 @@ import {
   Download, RefreshCw, Filter, Search, BarChart3, Activity,
   Code, GitBranch, Terminal, Database, Layers, Zap
 } from 'lucide-react';
+import { toast } from '@/hooks/useToast'
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -196,7 +197,7 @@ export default function ComplianceDeepDrill() {
 
   const renderBreadcrumb = () => (
     <div className="flex items-center space-x-2 text-sm mb-6 p-3 bg-gray-50 rounded-lg">
-      <button
+      <button type="button"
         onClick={() => {
           setDrillPath([]);
           setSelectedViolation(null);
@@ -210,7 +211,7 @@ export default function ComplianceDeepDrill() {
       {drillPath.map((path, index) => (
         <React.Fragment key={`${path.type}-${path.id}`}>
           <ChevronRight className="w-4 h-4 text-gray-400" />
-          <button
+          <button type="button"
             onClick={() => navigateToDrillLevel(index)}
             className={`hover:text-blue-800 font-medium ${
               index === drillPath.length - 1 ? 'text-gray-900' : 'text-blue-600'
@@ -246,12 +247,20 @@ export default function ComplianceDeepDrill() {
             </div>
             <div className="flex space-x-2">
               {selectedViolation.automationAvailable && (
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                  onClick={() => toast({ title: 'Auto-remediation', description: 'Queued automated remediation' })}
+                >
                   <Zap className="w-4 h-4 mr-2" />
                   Auto-Remediate
                 </button>
               )}
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                onClick={() => toast({ title: 'Export', description: 'Exporting violation report...' })}
+              >
                 <Download className="w-4 h-4 inline mr-2" />
                 Export
               </button>
@@ -299,7 +308,7 @@ export default function ComplianceDeepDrill() {
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               {['overview', 'resources', 'policies', 'remediation', 'timeline'].map((tab) => (
-                <button
+                <button type="button"
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
@@ -418,7 +427,11 @@ export default function ComplianceDeepDrill() {
                   <h3 className="text-lg font-semibold text-gray-900">
                     Remediation Steps ({selectedViolation.remediationSteps.filter(s => s.status === 'completed').length}/{selectedViolation.remediationSteps.length})
                   </h3>
-                  <button className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    onClick={() => toast({ title: 'Remediation', description: 'Executing automated steps...' })}
+                  >
                     Execute All Automated Steps
                   </button>
                 </div>
@@ -476,7 +489,7 @@ export default function ComplianceDeepDrill() {
                             
                             {step.status !== 'completed' && (
                               <div className="flex items-center space-x-3">
-                                <button
+                                <button type="button"
                                   onClick={() => executeRemediation(step)}
                                   className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
                                 >
@@ -511,7 +524,11 @@ export default function ComplianceDeepDrill() {
                             </div>
                             
                             {step.status !== 'completed' && (
-                              <button className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700">
+                              <button
+                                type="button"
+                                className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
+                                onClick={() => toast({ title: 'Step', description: 'Marked as complete' })}
+                              >
                                 Mark as Complete
                               </button>
                             )}
@@ -652,10 +669,18 @@ export default function ComplianceDeepDrill() {
             </p>
           </div>
           <div className="flex space-x-2">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <button
+              type="button"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              onClick={() => toast({ title: 'Azure', description: 'Opening Azure portal link' })}
+            >
               View in Azure Portal
             </button>
-            <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+            <button
+              type="button"
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+              onClick={() => toast({ title: 'Dependencies', description: 'Showing dependencies' })}
+            >
               View Dependencies
             </button>
           </div>
@@ -766,7 +791,7 @@ export default function ComplianceDeepDrill() {
               <p className="text-gray-600 mb-6">
                 Choose a violation from the compliance dashboard to begin deep-drill analysis
               </p>
-              <button 
+              <button type="button" 
                 onClick={() => fetchViolationDetails('violation-123')}
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >

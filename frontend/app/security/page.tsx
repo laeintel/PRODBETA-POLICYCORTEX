@@ -46,7 +46,7 @@ export default function SecurityAccessHub() {
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
-                <button
+                <button type="button"
                   key={tab.id}
                   onClick={() => {
                     setActiveTab(tab.id)
@@ -232,7 +232,7 @@ function AlertItem({ title, action }: {
   return (
     <div className="flex justify-between items-center p-3 bg-gray-900/50 rounded">
       <span>{title}</span>
-      <button className="text-xs px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded">
+      <button type="button" className="text-xs px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded">
         {action}
       </button>
     </div>
@@ -308,7 +308,7 @@ function ElevationItem({ user, role, expires }: {
       </div>
       <div className="text-right">
         <p className="text-sm text-yellow-400">Expires: {expires}</p>
-        <button className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 rounded mt-1">
+        <button type="button" className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 rounded mt-1">
           Revoke
         </button>
       </div>
