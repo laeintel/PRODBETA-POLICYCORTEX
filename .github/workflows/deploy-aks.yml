@@ -1,0 +1,149 @@
+name: Deploy to AKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'core/**'
+      - 'backend/**'
+      - 'graphql/**'
+      - '.github/workflows/deploy-aks.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  set-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      client-id: ${{ steps.set-env.outputs.client-id }}
+      subscription-id: ${{ steps.set-env.outputs.subscription-id }}
+      acr-name: ${{ steps.set-env.outputs.acr-name }}
+      aks-cluster: ${{ steps.set-env.outputs.aks-cluster }}
+      resource-group: ${{ steps.set-env.outputs.resource-group }}
+    steps:
+      - name: Set environment variables
+        id: set-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            # Default to dev for main branch pushes
+            ENV="dev"
+          fi
+          
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          
+          if [[ "${ENV}" == "prod" ]]; then
+            echo "client-id=${{ secrets.AZURE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "subscription-id=${{ secrets.AZURE_SUBSCRIPTION_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "acr-name=crcortexprodvb9v2h" >> $GITHUB_OUTPUT
+            echo "aks-cluster=policycortex-prod-aks" >> $GITHUB_OUTPUT
+            echo "resource-group=policycortex-prod-rg" >> $GITHUB_OUTPUT
+          else
+            echo "client-id=${{ secrets.AZURE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
+            echo "subscription-id=${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}" >> $GITHUB_OUTPUT
+            echo "acr-name=crpcxdev" >> $GITHUB_OUTPUT
+            echo "aks-cluster=pcx42178531-aks" >> $GITHUB_OUTPUT
+            echo "resource-group=pcx42178531-rg" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-push:
+    needs: set-environment
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-environment.outputs.environment }}
+    strategy:
+      matrix:
+        service:
+          - name: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+          - name: core
+            context: ./core
+            dockerfile: ./core/Dockerfile
+          - name: graphql
+            context: ./graphql
+            dockerfile: ./graphql/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.set-environment.outputs.client-id }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ needs.set-environment.outputs.subscription-id }}
+
+      - name: Login to ACR
+        run: |
+          az acr login --name ${{ needs.set-environment.outputs.acr-name }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: |
+            ${{ needs.set-environment.outputs.acr-name }}.azurecr.io/${{ matrix.service.name }}:${{ github.sha }}
+            ${{ needs.set-environment.outputs.acr-name }}.azurecr.io/${{ matrix.service.name }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-to-aks:
+    needs: [set-environment, build-and-push]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-environment.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ needs.set-environment.outputs.client-id }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ needs.set-environment.outputs.subscription-id }}
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ needs.set-environment.outputs.resource-group }} \
+            --name ${{ needs.set-environment.outputs.aks-cluster }} \
+            --overwrite-existing
+
+      - name: Deploy to AKS
+        run: |
+          # Update image tags in Kubernetes manifests
+          sed -i "s|IMAGE_TAG|${{ github.sha }}|g" k8s/${{ needs.set-environment.outputs.environment }}/*.yaml
+          sed -i "s|ACR_NAME|${{ needs.set-environment.outputs.acr-name }}|g" k8s/${{ needs.set-environment.outputs.environment }}/*.yaml
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f k8s/${{ needs.set-environment.outputs.environment }}/
+
+      - name: Verify Deployment
+        run: |
+          kubectl rollout status deployment/frontend -n policycortex-${{ needs.set-environment.outputs.environment }}
+          kubectl rollout status deployment/core -n policycortex-${{ needs.set-environment.outputs.environment }}
+          kubectl rollout status deployment/graphql -n policycortex-${{ needs.set-environment.outputs.environment }}
+          
+          echo "Deployment completed successfully!"
+          echo "Application endpoints:"
+          kubectl get ingress -n policycortex-${{ needs.set-environment.outputs.environment }}
