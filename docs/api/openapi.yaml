@@ -1,0 +1,132 @@
+openapi: 3.0.3
+info:
+  title: PolicyCortex Core API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /api/v1/metrics:
+    get:
+      summary: Unified metrics
+      responses:
+        '200': { description: OK }
+  /api/v1/predictions:
+    get:
+      summary: List predictions
+      responses:
+        '200': { description: OK }
+  /api/v1/predictions/violations:
+    get:
+      summary: Violation forecasts
+      responses:
+        '200': { description: OK }
+  /api/v1/predictions/risk-score/{resource_id}:
+    get:
+      summary: Risk score for resource
+      parameters:
+        - in: path
+          name: resource_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/v1/conversation/chat:
+    post:
+      summary: Chat with governance assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+  /api/v1/correlations:
+    get:
+      summary: Cross-domain correlations
+      responses:
+        '200': { description: OK }
+  /api/v1/resources:
+    get:
+      summary: List resources
+      responses:
+        '200': { description: OK }
+  /api/v2/resources/{id}:
+    get:
+      summary: Get resource by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/v2/resources/{id}/actions:
+    post:
+      summary: Execute action on resource (simulated in mock mode)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: OK }
+  /api/v1/actions:
+    post:
+      summary: Create action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Created }
+  /api/v1/actions/{id}:
+    get:
+      summary: Get action
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/v1/actions/{id}/events:
+    get:
+      summary: Stream action events (SSE)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/v1/approvals:
+    get:
+      summary: List approvals
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create approval request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '201': { description: Created }
+  /api/v1/policies:
+    get:
+      summary: List policies
+      responses:
+        '200': { description: OK }
+  /api/v1/frameworks:
+    get:
+      summary: List frameworks
+      responses:
+        '200': { description: OK }

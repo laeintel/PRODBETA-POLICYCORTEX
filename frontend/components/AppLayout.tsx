@@ -31,11 +31,7 @@ import {
   X
 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import ConnectionStatusBanner from './ConnectionStatusBanner'
-import DemoModeBanner from './DemoModeBanner'
-import { ModernSideMenu } from './ModernSideMenu'
 import { useMemo, useState as useStateReact, useEffect as useEffectReact } from 'react'
-import { CommandPalette, DEFAULT_CATEGORIES } from './CommandPalette'
 import { useRouter as useNextRouter } from 'next/navigation'
 
 interface AppLayoutProps {
@@ -82,41 +78,8 @@ function AppLayoutInner({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
-      {/* Global banners */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <ConnectionStatusBanner />
-        <DemoModeBanner />
-      </div>
-      
-      {/* Modern Side Menu */}
-      <ModernSideMenu 
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        onLogout={logout}
-        user={user}
-      />
-
-      {/* Sidebar Toggle Button (when collapsed) */}
-      {!sidebarOpen && (
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          onClick={() => setSidebarOpen(true)}
-          className="hidden lg:flex fixed left-4 top-4 z-30 w-10 h-10 bg-purple-600/20 backdrop-blur-xl border border-purple-500/50 rounded-lg items-center justify-center text-white hover:bg-purple-600/30 transition-colors"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </motion.button>
-      )}
-
       {/* Main Content */}
-      <div className={`flex-1 ${sidebarOpen ? 'lg:ml-80' : ''} transition-all duration-300`}>
-        {/* Command Palette global */}
-        <CommandPalette
-          commands={commands}
-          categories={DEFAULT_CATEGORIES}
-          isOpen={isPaletteOpen}
-          onOpenChange={setPaletteOpen}
-        />
+      <div className="flex-1">
         {children}
       </div>
     </div>

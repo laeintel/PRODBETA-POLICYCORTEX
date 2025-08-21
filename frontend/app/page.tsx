@@ -1,13 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Shield, Lock, KeyRound, Cpu, Fingerprint } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check for demo mode and redirect
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      router.push('/dashboard')
+    }
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,7 +29,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password })
       })
       if (!resp.ok) throw new Error('Invalid credentials')
-      window.location.href = '/tactical'
+      window.location.href = '/dashboard'
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {
@@ -87,7 +96,7 @@ export default function LoginPage() {
         <div className="mt-4 grid grid-cols-3 gap-2">
           <button className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><KeyRound className="w-4 h-4" /> SSO</button>
           <button className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Fingerprint className="w-4 h-4" /> Passkey</button>
-          <button className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Cpu className="w-4 h-4" /> Guest</button>
+          <button onClick={() => router.push('/dashboard')} className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Cpu className="w-4 h-4" /> Guest</button>
         </div>
 
         <p className="mt-4 text-[10px] text-gray-500">Unauthorized access is prohibited. Activity may be monitored and logged.</p>

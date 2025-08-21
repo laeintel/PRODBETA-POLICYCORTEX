@@ -94,7 +94,8 @@ const nextConfig = {
       { source: '/costs', destination: '/tactical/cost-governance', permanent: false },
       { source: '/devops', destination: '/tactical/devops', permanent: false },
       { source: '/monitoring', destination: '/tactical/monitoring-overview', permanent: false },
-      { source: '/governance', destination: '/policies', permanent: false },
+      // Ensure old /policies links route to the governance hub
+      { source: '/policies', destination: '/governance', permanent: false },
       { source: '/operations', destination: '/tactical', permanent: false },
     ]
   },
