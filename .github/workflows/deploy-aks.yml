@@ -87,9 +87,9 @@ jobs:
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ needs.set-environment.outputs.client-id }}
+          client-id: ${{ needs.set-environment.outputs.environment == 'prod' && secrets.AZURE_CLIENT_ID_PROD || secrets.AZURE_CLIENT_ID_DEV }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ needs.set-environment.outputs.subscription-id }}
+          subscription-id: ${{ needs.set-environment.outputs.environment == 'prod' && secrets.AZURE_SUBSCRIPTION_ID_PROD || secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
       - name: Login to ACR
         run: |
@@ -118,9 +118,9 @@ jobs:
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ needs.set-environment.outputs.client-id }}
+          client-id: ${{ needs.set-environment.outputs.environment == 'prod' && secrets.AZURE_CLIENT_ID_PROD || secrets.AZURE_CLIENT_ID_DEV }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ needs.set-environment.outputs.subscription-id }}
+          subscription-id: ${{ needs.set-environment.outputs.environment == 'prod' && secrets.AZURE_SUBSCRIPTION_ID_PROD || secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
       - name: Get AKS Credentials
         run: |
