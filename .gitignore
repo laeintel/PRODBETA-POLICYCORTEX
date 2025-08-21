@@ -97,6 +97,8 @@ policycortex.db
 *.old
 
 # Documentation build
+docs/
+/docs/
 docs/_build/
 docs/.doctrees/
 
