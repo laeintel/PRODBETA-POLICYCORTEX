@@ -18,8 +18,10 @@ export function getNonce(): string {
 
 /**
  * Generate CSP header with nonce
+ * @param nonce - The nonce for this request
+ * @param reportOnly - Whether to use Content-Security-Policy-Report-Only header
  */
-export function generateCSP(nonce: string): string {
+export function generateCSP(nonce: string, reportOnly: boolean = false): string {
   const isProd = process.env.NODE_ENV === 'production';
   const useWs = (process.env.NEXT_PUBLIC_USE_WS || '').toLowerCase() === 'true';
   
@@ -35,13 +37,25 @@ export function generateCSP(nonce: string): string {
     if (!isProd) allowedConnect.add('ws:');
   }
   
-  // Nonce-based script policy - much more secure than unsafe-inline
-  const scriptSrc = `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: ${!isProd ? "'unsafe-eval'" : ""}`;
+  // Pure nonce-based script policy - no unsafe-inline or unsafe-eval
+  // In development, we need to whitelist Next.js specific hashes for HMR
+  const nextJsHashes = !isProd ? [
+    "'sha256-FhKqPZm0peBsmG8CjbPVnEJX1QoAqkfRDvL1XAIiZKc='", // Next.js development runtime
+    "'sha256-2FkMoYIfzHsQvRmT2WsrQlGNFX2x5L6eBqhSVZYKhGg='", // Next.js error overlay
+  ].join(' ') : '';
   
-  // Style with nonce for inline styles
-  const styleSrc = `style-src 'self' 'nonce-${nonce}'`;
+  // Strict nonce-based script policy
+  const scriptSrc = `script-src 'nonce-${nonce}' 'strict-dynamic' ${nextJsHashes}`;
   
-  return [
+  // Style with nonce only - no unsafe-inline
+  // For Next.js CSS-in-JS, we need specific hashes in production
+  const styleHashes = isProd ? [
+    "'sha256-47DEjpKa0EqIR1lnSNjzBLLiMcDLsVvTKAMTeWP8YB0='", // Next.js production CSS
+  ].join(' ') : '';
+  
+  const styleSrc = `style-src 'self' 'nonce-${nonce}' ${styleHashes}`;
+  
+  const cspDirectives = [
     "default-src 'self'",
     scriptSrc,
     styleSrc,
@@ -53,5 +67,13 @@ export function generateCSP(nonce: string): string {
     "base-uri 'self'",
     "form-action 'self'",
     "upgrade-insecure-requests",
-  ].join('; ');
+  ];
+  
+  // Add report-uri for CSP violation monitoring
+  if (isProd || reportOnly) {
+    cspDirectives.push("report-uri /api/v1/csp-report");
+    cspDirectives.push("report-to csp-endpoint");
+  }
+  
+  return cspDirectives.join('; ');
 }
