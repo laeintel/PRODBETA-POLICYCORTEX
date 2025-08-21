@@ -7,6 +7,7 @@ import {
   Database, Cloud, Lock, Bell, Play, Pause, RefreshCw,
   ChevronRight, Cpu, HardDrive, Wifi, Target, Radio
 } from 'lucide-react';
+import ResponsiveGrid, { ResponsiveContainer, ResponsiveText } from '@/components/ResponsiveGrid';
 
 interface Alert {
   id: string;
@@ -122,15 +123,15 @@ export default function TacticalOperationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <ResponsiveContainer className="min-h-screen bg-gray-900 text-white py-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center space-x-3">
-              <Activity className="w-8 h-8 text-blue-500" />
+            <ResponsiveText variant="heading" className="mb-2 flex items-center space-x-3">
+              <Activity className="w-8 h-8 xl:w-10 xl:h-10 2xl:w-12 2xl:h-12 text-blue-500" />
               <span>Tactical Operations Center</span>
-            </h1>
+            </ResponsiveText>
             <p className="text-gray-400">Real-time monitoring and incident response</p>
           </div>
           <div className="flex items-center space-x-4">
@@ -167,7 +168,7 @@ export default function TacticalOperationsPage() {
       </div>
 
       {/* System Metrics Grid */}
-      <div className="grid grid-cols-6 gap-4 mb-6">
+      <ResponsiveGrid variant="metrics" className="mb-6">
         {systemMetrics.map((metric, index) => (
           <div key={index} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <div className="flex items-center justify-between mb-2">
@@ -191,10 +192,10 @@ export default function TacticalOperationsPage() {
             </div>
           </div>
         ))}
-      </div>
+      </ResponsiveGrid>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4 xl:gap-6 2xl:gap-8">
         {/* Alert Feed */}
         <div className="lg:col-span-2">
           <div className="bg-gray-800 rounded-lg border border-gray-700">
@@ -445,6 +446,6 @@ export default function TacticalOperationsPage() {
           </div>
         </div>
       )}
-    </div>
+    </ResponsiveContainer>
   );
 }
