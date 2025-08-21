@@ -71,10 +71,10 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   // Show loading state while checking authentication
   if (checking || authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-400 mx-auto mb-4 animate-spin" />
-          <p className="text-white text-lg">Verifying authentication...</p>
+          <Loader2 className="w-12 h-12 text-primary dark:text-purple-400 mx-auto mb-4 animate-spin" />
+          <p className="text-foreground dark:text-white text-lg">Verifying authentication...</p>
         </div>
       </div>
     )
@@ -83,24 +83,24 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
   // If authentication is required but user is not authenticated
   if (requireAuth && !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full mx-4 border border-white/20"
+          className="bg-card/90 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full mx-4 border border-border dark:border-white/20"
         >
           <div className="text-center">
-            <Shield className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
-            <p className="text-gray-300 mb-6">
+            <Shield className="w-16 h-16 text-primary dark:text-purple-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground dark:text-white mb-2">Authentication Required</h2>
+            <p className="text-muted-foreground dark:text-gray-300 mb-6">
               Please sign in with your Azure AD account to access PolicyCortex
             </p>
             
             <button
               onClick={handleLogin}
               disabled={loginAttempted}
-              className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-3 bg-primary dark:bg-purple-600 text-primary-foreground dark:text-white rounded-lg font-semibold hover:bg-primary/90 dark:hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loginAttempted ? (
                 <>
@@ -115,8 +115,8 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
               )}
             </button>
 
-            <div className="mt-6 p-4 bg-white/5 rounded-lg">
-              <p className="text-sm text-gray-400">
+            <div className="mt-6 p-4 bg-muted/20 dark:bg-white/5 rounded-lg">
+              <p className="text-sm text-muted-foreground dark:text-gray-400">
                 <strong>Note:</strong> You need appropriate Azure AD permissions to access this application.
               </p>
             </div>

@@ -1,0 +1,20 @@
+{
+  "info": {
+    "name": "PolicyCortex API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {"name":"core /health","request":{"method":"GET","url":{"raw":"{{baseUrl}}/health","host":["{{baseUrl}}"],"path":["health"]}}},
+    {"name":"core /api/v1/health","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/v1/health","host":["{{baseUrl}}"],"path":["api","v1","health"]}}},
+    {"name":"core /api/v1/config","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/v1/config","host":["{{baseUrl}}"],"path":["api","v1","config"]}}},
+    {"name":"core /api/v1/secrets/status","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/v1/secrets/status","host":["{{baseUrl}}"],"path":["api","v1","secrets","status"]}}},
+    {"name":"core /api/v1/secrets/reload","request":{"method":"POST","url":{"raw":"{{baseUrl}}/api/v1/secrets/reload","host":["{{baseUrl}}"],"path":["api","v1","secrets","reload"]}}},
+    {"name":"core /api/v1/roadmap","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/v1/roadmap","host":["{{baseUrl}}"],"path":["api","v1","roadmap"]}}},
+    {"name":"core /metrics","request":{"method":"GET","url":{"raw":"{{baseUrl}}/metrics","host":["{{baseUrl}}"],"path":["metrics"]}}},
+    {"name":"core /api/v1/metrics","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/v1/metrics","host":["{{baseUrl}}"],"path":["api","v1","metrics"]}}},
+    {"name":"core /api/v1/governance/unified","request":{"method":"GET","url":{"raw":"{{baseUrl}}/api/v1/governance/unified","host":["{{baseUrl}}"],"path":["api","v1","governance","unified"]}}}
+  ],
+  "variable": [
+    {"key":"baseUrl","value":"http://localhost:8080"}
+  ]
+}

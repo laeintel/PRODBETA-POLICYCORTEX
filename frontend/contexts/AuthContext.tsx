@@ -92,7 +92,17 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     process.env.NODE_ENV === 'development' &&
     process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
-  const [demoUser, setDemoUser] = useState<AccountInfo | null>(null)
+  // Initialize demo user immediately if in demo mode
+  const initialDemoUser: AccountInfo | null = demoMode ? {
+    username: 'demo@policycortex.local',
+    name: 'Demo User',
+    homeAccountId: 'demo-account',
+    environment: 'development',
+    tenantId: 'demo-tenant',
+    localAccountId: 'demo-local'
+  } : null
+
+  const [demoUser, setDemoUser] = useState<AccountInfo | null>(initialDemoUser)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
