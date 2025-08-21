@@ -9,12 +9,17 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_SUBSCRIPTION_ID_DEV: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
+  AZURE_SUBSCRIPTION_ID_PROD: ${{ secrets.AZURE_SUBSCRIPTION_ID_PROD }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-  AKS_CLUSTER_NAME: policycortex-aks
-  AKS_RESOURCE_GROUP: policycortex-rg
+  AZURE_CLIENT_ID_DEV: ${{ secrets.AZURE_CLIENT_ID_DEV }}
+  AZURE_CLIENT_ID_PROD: ${{ secrets.AZURE_CLIENT_ID_PROD }}
+  AZURE_CLIENT_SECRET_DEV: ${{ secrets.AZURE_CLIENT_SECRET_DEV }}
+  AZURE_CLIENT_SECRET_PROD: ${{ secrets.AZURE_CLIENT_SECRET_PROD }}
+  AKS_CLUSTER_NAME_DEV: pcx42178531-aks
+  AKS_CLUSTER_NAME_PROD: policycortex-prod-aks
+  AKS_RESOURCE_GROUP_DEV: pcx42178531-rg
+  AKS_RESOURCE_GROUP_PROD: policycortex-prod-rg
 
 jobs:
   deploy-istio:
@@ -23,22 +28,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Determine Environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "client_id=${{ env.AZURE_CLIENT_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "client_secret=${{ env.AZURE_CLIENT_SECRET_PROD }}" >> $GITHUB_OUTPUT
+            echo "subscription_id=${{ env.AZURE_SUBSCRIPTION_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "aks_cluster=${{ env.AKS_CLUSTER_NAME_PROD }}" >> $GITHUB_OUTPUT
+            echo "aks_rg=${{ env.AKS_RESOURCE_GROUP_PROD }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "client_id=${{ env.AZURE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
+            echo "client_secret=${{ env.AZURE_CLIENT_SECRET_DEV }}" >> $GITHUB_OUTPUT
+            echo "subscription_id=${{ env.AZURE_SUBSCRIPTION_ID_DEV }}" >> $GITHUB_OUTPUT
+            echo "aks_cluster=${{ env.AKS_CLUSTER_NAME_DEV }}" >> $GITHUB_OUTPUT
+            echo "aks_rg=${{ env.AKS_RESOURCE_GROUP_DEV }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: |
             {
-              "clientId": "${{ env.AZURE_CLIENT_ID }}",
-              "clientSecret": "${{ env.AZURE_CLIENT_SECRET }}",
-              "subscriptionId": "${{ env.AZURE_SUBSCRIPTION_ID }}",
+              "clientId": "${{ steps.env.outputs.client_id }}",
+              "clientSecret": "${{ steps.env.outputs.client_secret }}",
+              "subscriptionId": "${{ steps.env.outputs.subscription_id }}",
               "tenantId": "${{ env.AZURE_TENANT_ID }}"
             }
 
       - name: Get AKS credentials
         run: |
           az aks get-credentials \
-            --resource-group ${{ env.AKS_RESOURCE_GROUP }} \
-            --name ${{ env.AKS_CLUSTER_NAME }} \
+            --resource-group ${{ steps.env.outputs.aks_rg }} \
+            --name ${{ steps.env.outputs.aks_cluster }} \
             --overwrite-existing
 
       - name: Install Istio CLI

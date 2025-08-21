@@ -72,13 +72,13 @@ jobs:
       - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
       - name: Set subscription (optional)
         run: |
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
       - name: Register Azure Resource Providers (idempotent)
         shell: bash
@@ -155,9 +155,9 @@ jobs:
             -backend-config="key=${{ steps.names.outputs.TFSTATE_KEY }}" \
             -backend-config="access_key=${{ steps.storage_key.outputs.STORAGE_KEY }}"
         env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
           ARM_USE_OIDC: true
 
       - name: Select tfvars by environment
@@ -178,17 +178,17 @@ jobs:
             ./handle-existing-resources.sh || echo "Resource handling completed with warnings"
           fi
         env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
+          AZURE_SUBSCRIPTION_ID_DEV: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
       - name: Terraform Validate
         run: terraform validate -no-color
         env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
       - name: Import Existing Resources
         run: |
@@ -196,15 +196,15 @@ jobs:
           chmod +x ./import-existing.sh
           
           # Export required environment variables
-          export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          export AZURE_SUBSCRIPTION_ID_DEV="${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}"
           export GITHUB_REPOSITORY="${{ github.repository }}"
           
           # Run import script
-          ./import-existing.sh ${ENV_NAME} ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ./import-existing.sh ${ENV_NAME} ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
         env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
           ARM_USE_OIDC: true
         continue-on-error: true
       
@@ -217,9 +217,9 @@ jobs:
             terraform plan -input=false -no-color -out=tfplan || echo "Terraform plan failed, continuing..."
           fi
         env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
       - name: Show Plan (human)
         continue-on-error: true
@@ -259,9 +259,9 @@ jobs:
             echo "⚠️ No tfplan file found, skipping apply"
           fi
         env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
 
 
 

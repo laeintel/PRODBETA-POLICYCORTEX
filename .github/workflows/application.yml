@@ -719,10 +719,10 @@ jobs:
       - name: Import Existing Resources
         if: steps.check_images.outputs.images_available == 'true'
         env:
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
-          ARM_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
-          ARM_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
-          ARM_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_CLIENT_SECRET: ${{  }}
           ARM_USE_OIDC: false
         run: |
           echo "Importing existing Azure resources to prevent deletion..."
@@ -737,10 +737,10 @@ jobs:
       - name: Terraform Plan (Dev)
         if: steps.check_images.outputs.images_available == 'true'
         env:
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
-          AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
-          AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
-          AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{  }}
         run: |
           echo "📋 Running Terraform PLAN..."
           cd infrastructure/terraform/environments/dev
@@ -782,10 +782,10 @@ jobs:
       - name: Terraform Apply (Dev)
         if: steps.check_images.outputs.images_available == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
-          AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
-          AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
-          AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{  }}
           # Enable state locking
           ARM_USE_AZUREAD: 'true'
         run: |
@@ -993,12 +993,12 @@ jobs:
 
       - name: Terraform Deploy (Prod)
         env:
-          # Use secret if available, otherwise use the known prod subscription ID (same as dev for now)
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_PROD || '205b477d-17e7-4b3b-92c1-32cf02626b78' }}
+          # Use secret if available, otherwise use the known prod subscription ID
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_PROD }}
           # Expose SP credentials for Terraform (parsed from AZURE_CREDENTIALS JSON)
-          AZURE_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
-          AZURE_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
-          AZURE_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_PROD }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET_PROD }}
         run: |
           chmod +x infrastructure/terraform/ci-deploy.sh
           # Ensure import script is readable even if execute bit is lost

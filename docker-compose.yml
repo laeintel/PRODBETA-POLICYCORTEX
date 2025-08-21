@@ -94,22 +94,27 @@ services:
     container_name: policycortex-backend
     restart: unless-stopped
     environment:
-      # PROD Azure App Registration (separate from dev). Provide via env/secrets at deploy time.
-      - AZURE_TENANT_ID=${PROD_AZURE_TENANT_ID}
-      - AZURE_CLIENT_ID=${PROD_AZURE_CLIENT_ID}
+      # Azure App Registration - Use env-specific values
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:-9ef5b184-d371-462a-bc75-5024ce8baff7}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
       - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
       - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
-      - ENVIRONMENT=prod
+      # ACR and AKS Configuration
+      - ACR_NAME=${ACR_NAME}
+      - AKS_CLUSTER_NAME=${AKS_CLUSTER_NAME}
+      - AKS_RESOURCE_GROUP=${AKS_RESOURCE_GROUP}
+      - ENVIRONMENT=${ENVIRONMENT:-prod}
       - REQUIRE_STRICT_AUDIENCE=${REQUIRE_STRICT_AUDIENCE:-true}
       - USE_REAL_DATA=true
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/policycortex
-      - REDIS_URL=redis://redis:6379
-      - NATS_URL=nats://nats:4222
-      - EVENTSTORE_URL=tcp://eventstore:1113
-      - RUST_LOG=info
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/policycortex}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - NATS_URL=${NATS_URL:-nats://nats:4222}
+      - EVENTSTORE_URL=${EVENTSTORE_URL:-tcp://eventstore:1113}
+      - RUST_LOG=${RUST_LOG:-info}
       - PORT=8080
-      - ALLOWED_ORIGINS=https://policycortex.com,https://www.policycortex.com
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://policycortex.com,https://www.policycortex.com}
       - DEEP_API_BASE=http://api-gateway:8090
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ${USERPROFILE}/.azure:/home/policycortex/.azure:ro
     ports:
@@ -138,16 +143,27 @@ services:
     container_name: policycortex-frontend
     restart: unless-stopped
     environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - ENVIRONMENT=${ENVIRONMENT:-prod}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://policycortex.com}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.policycortex.com}
+      - NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL:-https://graphql.policycortex.com/graphql}
       - NEXT_PUBLIC_GRAPHQL_ENDPOINT=/graphql
-      # PROD SPA App Registration (separate from dev). Provide via env/secrets at deploy time.
-      - NEXT_PUBLIC_AZURE_CLIENT_ID=${PROD_AZURE_CLIENT_ID}
-      - NEXT_PUBLIC_AZURE_TENANT_ID=${PROD_AZURE_TENANT_ID}
-      - NEXT_PUBLIC_MSAL_REDIRECT_URI=https://policycortex.com
-      - NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI=https://policycortex.com
-      - NEXT_PUBLIC_CORE_API_SCOPE=${PROD_CORE_API_SCOPE}
+      # Azure SPA App Registration
+      - NEXT_PUBLIC_AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - NEXT_PUBLIC_AZURE_TENANT_ID=${AZURE_TENANT_ID:-9ef5b184-d371-462a-bc75-5024ce8baff7}
+      - NEXT_PUBLIC_AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+      - NEXT_PUBLIC_MSAL_REDIRECT_URI=${NEXT_PUBLIC_MSAL_REDIRECT_URI:-https://policycortex.com}
+      - NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI=${NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI:-https://policycortex.com}
+      - NEXT_PUBLIC_CORE_API_SCOPE=${NEXT_PUBLIC_CORE_API_SCOPE:-api://policycortex-prod/.default}
+      # ACR and AKS Configuration
+      - ACR_NAME=${ACR_NAME}
+      - AKS_CLUSTER_NAME=${AKS_CLUSTER_NAME}
+      - AKS_RESOURCE_GROUP=${AKS_RESOURCE_GROUP}
       - BACKEND_SERVICE_NAME=backend
       - IN_DOCKER=true
-      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://policycortex.com,https://www.policycortex.com}
     ports:
       - "3005:3000"
     depends_on:
@@ -179,7 +195,7 @@ services:
     networks:
       - policycortex-network
 
-  # Python API Gateway (Deep Insights) - production
+  # Python API Gateway (Deep Insights)
   api-gateway:
     build:
       context: ./backend/services/api_gateway
@@ -187,7 +203,12 @@ services:
     container_name: policycortex-api-gateway
     restart: unless-stopped
     environment:
-      - REQUIRE_AUTH=false
+      - REQUIRE_AUTH=${REQUIRE_AUTH:-true}
+      - ENVIRONMENT=${ENVIRONMENT:-prod}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:-9ef5b184-d371-462a-bc75-5024ce8baff7}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       - backend
     networks:
