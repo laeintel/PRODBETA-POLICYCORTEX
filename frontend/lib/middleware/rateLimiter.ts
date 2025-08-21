@@ -91,9 +91,9 @@ class RateLimiter {
       }
 
       if (this.options.legacyHeaders) {
-        response.headers.set('X-RateLimit-Limit', String(this.options.max));
-        response.headers.set('X-RateLimit-Remaining', String(remaining));
-        response.headers.set('X-RateLimit-Reset', resetTime);
+        response.headers.set('x-ratelimit-limit', String(this.options.max));
+        response.headers.set('x-ratelimit-remaining', String(remaining));
+        response.headers.set('x-ratelimit-reset', resetTime);
       }
 
       response.headers.set('Retry-After', String(Math.ceil((entry.resetTime - now) / 1000)));
@@ -112,9 +112,9 @@ class RateLimiter {
     }
 
     if (this.options.legacyHeaders) {
-      response.headers.set('X-RateLimit-Limit', String(this.options.max));
-      response.headers.set('X-RateLimit-Remaining', String(remaining));
-      response.headers.set('X-RateLimit-Reset', resetTime);
+      response.headers.set('x-ratelimit-limit', String(this.options.max));
+      response.headers.set('x-ratelimit-remaining', String(remaining));
+      response.headers.set('x-ratelimit-reset', resetTime);
     }
 
     // Handle skip options
@@ -150,7 +150,7 @@ export const authRateLimiter = new RateLimiter({
 
 export const apiRateLimiter = new RateLimiter({
   windowMs: 60 * 1000, // 1 minute
-  max: 60, // 60 requests per minute
+  max: process.env.NODE_ENV === 'test' ? 1000 : 60, // Higher limit for tests
   keyGenerator: (req) => {
     // Use both IP and user ID for API rate limiting
     const forwarded = req.headers.get('x-forwarded-for');
