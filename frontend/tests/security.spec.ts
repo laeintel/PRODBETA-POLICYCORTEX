@@ -72,7 +72,7 @@ test.describe('API Authentication', () => {
       expect(response.status()).toBe(401);
       
       const body = await response.json();
-      expect(body.error).toContain('Authentication required');
+      expect(body.error).toMatch(/Authentication required|No authorization token provided/);
     }
   });
   

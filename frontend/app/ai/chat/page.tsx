@@ -702,6 +702,7 @@ Just let me know how I can best assist you!`;
               <div className="relative">
                 <textarea
                   ref={inputRef}
+                  data-testid="chat-input"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
