@@ -12,68 +12,9 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   async headers() {
-    const isProd = process.env.NODE_ENV === 'production'
-    const useWs = (process.env.NEXT_PUBLIC_USE_WS || '').toLowerCase() === 'true'
-    const disableCSP = process.env.DISABLE_CSP === 'true' // Emergency CSP disable for local testing
-
-    const allowedConnect = new Set(["'self'", 'https:'])
-    if (!isProd) {
-      allowedConnect.add('http://localhost:8080')
-      allowedConnect.add('http://localhost:4000')
-    }
-    if (process.env.NEXT_PUBLIC_API_URL) allowedConnect.add(process.env.NEXT_PUBLIC_API_URL)
-    if (process.env.NEXT_PUBLIC_WS_URL) allowedConnect.add(process.env.NEXT_PUBLIC_WS_URL)
-    if (useWs) { allowedConnect.add('wss:'); if (!isProd) allowedConnect.add('ws:') }
-
-    // For both development and production, allow unsafe-inline and unsafe-eval
-    // This is required for Next.js to work properly
-    const scriptSrc = "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    
-    const styleSrc = isProd 
-      ? "style-src 'self' 'unsafe-inline'" // Next.js requires unsafe-inline for CSS-in-JS
-      : "style-src 'self' 'unsafe-inline'"
-
-    const ContentSecurityPolicy = [
-      "default-src 'self'",
-      scriptSrc,
-      styleSrc,
-      "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
-      `connect-src ${Array.from(allowedConnect).join(' ')} https://o921931.ingest.us.sentry.io`,
-      "frame-ancestors 'none'",
-      "object-src 'none'",
-      "base-uri 'self'",
-    ].join('; ')
-
-    // If CSP is disabled for local testing, return minimal headers
-    if (disableCSP) {
-      return [
-        {
-          source: '/:path*',
-          headers: [
-            { key: 'X-Frame-Options', value: 'DENY' },
-            { key: 'X-Content-Type-Options', value: 'nosniff' },
-          ],
-        },
-      ]
-    }
-
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          // Security Headers - Production Ready
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()' },
-          { key: 'Content-Security-Policy', value: ContentSecurityPolicy },
-          // HSTS - Only in production
-          ...(isProd ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' }] : []),
-        ],
-      },
-    ]
+    // Security headers are now handled by middleware.ts for better nonce support
+    // This empty headers function is kept for Next.js compatibility
+    return []
   },
   async rewrites() {
     const isDocker = process.env.IN_DOCKER === 'true' || process.env.DOCKER === 'true';
