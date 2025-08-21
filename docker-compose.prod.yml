@@ -1,0 +1,248 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: policycortex-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: policycortex
+      POSTGRES_INIT_DB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - policycortex-network-prod
+
+  # Redis/DragonflyDB (25x faster Redis)
+  redis:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: policycortex-redis-prod
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_prod:/data
+    command: ["dragonfly", "--logtostderr", "--cache_mode", "--requirepass=${REDIS_PASSWORD}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - policycortex-network-prod
+
+  # EventStore for Event Sourcing
+  eventstore:
+    image: eventstore/eventstore:latest
+    container_name: policycortex-eventstore-prod
+    restart: unless-stopped
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_DB=/var/lib/eventstore-data
+      - EVENTSTORE_INDEX=/var/lib/eventstore-index
+      - EVENTSTORE_LOG=/var/log/eventstore
+      - EVENTSTORE_INSECURE=false
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+      - EVENTSTORE_ADMIN_PASSWORD=${EVENTSTORE_PASSWORD}
+      - EVENTSTORE_OPS_PASSWORD=${EVENTSTORE_PASSWORD}
+    ports:
+      - "2113:2113"
+      - "1113:1113"
+    volumes:
+      - eventstore_data_prod:/var/lib/eventstore-data
+      - eventstore_index_prod:/var/lib/eventstore-index
+      - eventstore_logs_prod:/var/log/eventstore
+    networks:
+      - policycortex-network-prod
+
+  # NATS for messaging
+  nats:
+    image: nats:2.10-alpine
+    container_name: policycortex-nats-prod
+    restart: unless-stopped
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+      - "6222:6222"
+    command: ["--js", "--sd", "/data", "-m", "8222", "--user=${NATS_USER}", "--pass=${NATS_PASSWORD}"]
+    volumes:
+      - nats_data_prod:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4222"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - policycortex-network-prod
+
+  # Rust Backend Core API
+  backend:
+    image: crcortexprodvb9v2h.azurecr.io/policycortex-backend:${VERSION:-latest}
+    container_name: policycortex-backend-prod
+    restart: unless-stopped
+    environment:
+      # PROD Azure App Registration
+      - AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+      - AZURE_CLIENT_ID=8f0208b4-82b1-47cd-b02a-75e2f7afddb5
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET_PROD}
+      - AZURE_SUBSCRIPTION_ID=9f16cc88-89ce-49ba-a96d-308ed3169595
+      - ACR_NAME=crcortexprodvb9v2h
+      - AKS_CLUSTER_NAME=policycortex-prod-aks
+      - AKS_RESOURCE_GROUP=policycortex-prod-rg
+      - ENVIRONMENT=prod
+      - REQUIRE_STRICT_AUDIENCE=true
+      - USE_REAL_DATA=true
+      - DATABASE_URL=${DATABASE_URL_PROD}
+      - REDIS_URL=${REDIS_URL_PROD}
+      - NATS_URL=${NATS_URL_PROD}
+      - EVENTSTORE_URL=${EVENTSTORE_URL_PROD}
+      - RUST_LOG=info
+      - PORT=8080
+      - ALLOWED_ORIGINS=https://policycortex.com,https://www.policycortex.com,https://api.policycortex.com
+      - DEEP_API_BASE=http://api-gateway:8090
+      - JWT_SECRET=${JWT_SECRET_PROD}
+    volumes:
+      - ${USERPROFILE}/.azure:/home/policycortex/.azure:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - policycortex-network-prod
+
+  # Next.js Frontend
+  frontend:
+    image: crcortexprodvb9v2h.azurecr.io/policycortex-frontend:${VERSION:-latest}
+    container_name: policycortex-frontend-prod
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - ENVIRONMENT=prod
+      - NEXT_PUBLIC_APP_URL=https://policycortex.com
+      - NEXT_PUBLIC_API_URL=https://api.policycortex.com
+      - NEXT_PUBLIC_GRAPHQL_URL=https://graphql.policycortex.com/graphql
+      - NEXT_PUBLIC_GRAPHQL_ENDPOINT=/graphql
+      # PROD SPA App Registration
+      - NEXT_PUBLIC_AZURE_CLIENT_ID=8f0208b4-82b1-47cd-b02a-75e2f7afddb5
+      - NEXT_PUBLIC_AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+      - NEXT_PUBLIC_AZURE_SUBSCRIPTION_ID=9f16cc88-89ce-49ba-a96d-308ed3169595
+      - NEXT_PUBLIC_MSAL_REDIRECT_URI=https://policycortex.com
+      - NEXT_PUBLIC_MSAL_POST_LOGOUT_REDIRECT_URI=https://policycortex.com
+      - NEXT_PUBLIC_CORE_API_SCOPE=api://policycortex-prod/.default
+      - ACR_NAME=crcortexprodvb9v2h
+      - AKS_CLUSTER_NAME=policycortex-prod-aks
+      - AKS_RESOURCE_GROUP=policycortex-prod-rg
+      - BACKEND_SERVICE_NAME=backend
+      - IN_DOCKER=true
+      - JWT_SECRET=${JWT_SECRET_PROD}
+      - CORS_ORIGIN=https://policycortex.com,https://www.policycortex.com
+      - HSTS_MAX_AGE=31536000
+      - CSP_REPORT_URI=https://api.policycortex.com/api/v1/csp-report
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - policycortex-network-prod
+
+  # GraphQL Gateway
+  graphql:
+    image: crcortexprodvb9v2h.azurecr.io/policycortex-graphql:${VERSION:-latest}
+    container_name: policycortex-graphql-prod
+    restart: unless-stopped
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - NODE_ENV=production
+      - PORT=4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - backend
+    networks:
+      - policycortex-network-prod
+
+  # Python API Gateway (Deep Insights) - production
+  api-gateway:
+    image: crcortexprodvb9v2h.azurecr.io/policycortex-api-gateway:${VERSION:-latest}
+    container_name: policycortex-api-gateway-prod
+    restart: unless-stopped
+    environment:
+      - REQUIRE_AUTH=true
+      - ENVIRONMENT=prod
+      - AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+      - AZURE_CLIENT_ID=8f0208b4-82b1-47cd-b02a-75e2f7afddb5
+      - AZURE_SUBSCRIPTION_ID=9f16cc88-89ce-49ba-a96d-308ed3169595
+      - JWT_SECRET=${JWT_SECRET_PROD}
+    depends_on:
+      - backend
+    networks:
+      - policycortex-network-prod
+
+  # Nginx Reverse Proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: policycortex-nginx-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - policycortex-network-prod
+
+networks:
+  policycortex-network-prod:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/16
+
+volumes:
+  postgres_data_prod:
+    driver: local
+  redis_data_prod:
+    driver: local
+  eventstore_data_prod:
+    driver: local
+  eventstore_index_prod:
+    driver: local
+  eventstore_logs_prod:
+    driver: local
+  nats_data_prod:
+    driver: local

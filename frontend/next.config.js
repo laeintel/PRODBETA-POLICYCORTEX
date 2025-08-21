@@ -5,7 +5,7 @@ const nextConfig = {
   // Only use standalone for Docker builds
   output: process.env.DOCKER === 'true' ? 'standalone' : undefined,
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'policycortex.com', 'www.policycortex.com', 'api.policycortex.com'],
   },
   compiler: {
     // Remove console logs in production builds except warn/error
