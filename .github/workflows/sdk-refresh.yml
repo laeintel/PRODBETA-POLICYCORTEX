@@ -101,14 +101,17 @@ jobs:
       
       - name: Fetch Regulatory Compliance Data
         run: |
+          # Create directories first
+          mkdir -p data/compliance data/policies
+          
           # Fetch Azure Security Center regulatory compliance
-          az security regulatory-compliance-standard list --output json > data/compliance/standards.json
+          az security regulatory-compliance-standard list --output json > data/compliance/standards.json || echo "[]" > data/compliance/standards.json
           
           # Fetch assessment definitions
-          az security assessment-metadata list --output json > data/compliance/assessments.json
+          az security assessment-metadata list --output json > data/compliance/assessments.json || echo "[]" > data/compliance/assessments.json
           
           # Fetch Azure Policy initiatives
-          az policy set-definition list --output json > data/policies/initiatives.json
+          az policy set-definition list --output json > data/policies/initiatives.json || echo "[]" > data/policies/initiatives.json
       
       - name: Process and Store Data
         run: |
