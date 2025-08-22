@@ -359,27 +359,28 @@ jobs:
       apply: true
     secrets: inherit
 
-  app_pipeline:
-    name: Application CI/CD
-    needs: [detect-changes, infra]
-    # Run after infrastructure is created on push to main or CLEAN-DEFENSE-BRANCH  
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH') && needs.infra.result == 'success'
-    uses: ./.github/workflows/application-dynamic.yml
-    permissions:
-      contents: read
-      actions: read
-      packages: write
-      pull-requests: read
-    with:
-      target_env: 'dev'
-      run_tests: false
-      force_deploy: true
-      full_run: true
-    secrets: inherit
+  # Disabled - replaced with AKS deployment via application.yml
+  # app_pipeline:
+  #   name: Application CI/CD
+  #   needs: [detect-changes, infra]
+  #   # Run after infrastructure is created on push to main or CLEAN-DEFENSE-BRANCH  
+  #   if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CLEAN-DEFENSE-BRANCH') && needs.infra.result == 'success'
+  #   uses: ./.github/workflows/application-dynamic.yml
+  #   permissions:
+  #     contents: read
+  #     actions: read
+  #     packages: write
+  #     pull-requests: read
+  #   with:
+  #     target_env: 'dev'
+  #     run_tests: false
+  #     force_deploy: true
+  #     full_run: true
+  #   secrets: inherit
 
   deploy_tag:
     name: Deploy from Tag
-    needs: [app_pipeline]
+    needs: [infra]  # Changed from app_pipeline since that's disabled
     # Only deploy for tags - but ensure all previous steps ran
     if: |
       always() && 
