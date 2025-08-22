@@ -57,8 +57,8 @@ jobs:
             echo "client-id=${{ secrets.AZURE_CLIENT_ID_DEV }}" >> $GITHUB_OUTPUT
             echo "subscription-id=${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}" >> $GITHUB_OUTPUT
             echo "acr-name=crcortexdev3p0bata" >> $GITHUB_OUTPUT
-            echo "aks-cluster=pcx42178531-aks" >> $GITHUB_OUTPUT
-            echo "resource-group=pcx42178531-rg" >> $GITHUB_OUTPUT
+            echo "aks-cluster=cortex-dev-aks" >> $GITHUB_OUTPUT
+            echo "resource-group=rg-cortex-dev" >> $GITHUB_OUTPUT
           fi
 
   build-and-push:
