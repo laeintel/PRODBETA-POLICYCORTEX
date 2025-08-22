@@ -1,17 +1,41 @@
 name: Application CI/CD
 
 on:
-  # Main trigger for push to main branch
-  push:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
-      - 'core/**'
-      - 'backend/**'
-      - 'graphql/**'
-      - '.github/workflows/application.yml'
-      - 'k8s/**'
+  # Can be called from other workflows
+  workflow_call:
+    inputs:
+      target_env:
+        description: 'Environment to deploy'
+        required: false
+        default: 'dev'
+        type: string
+      force_deploy:
+        description: 'Force deployment (skip tests)'
+        required: false
+        default: false
+        type: boolean
+      run_tests:
+        description: 'Run tests before deployment'
+        required: false
+        default: true
+        type: boolean
+      full_run:
+        description: 'Ignore path filters and run all stages'
+        required: false
+        default: false
+        type: boolean
+  
+  # Disabled direct push trigger - now called from entry.yml
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'frontend/**'
+  #     - 'core/**'
+  #     - 'backend/**'
+  #     - 'graphql/**'
+  #     - '.github/workflows/application.yml'
+  #     - 'k8s/**'
   
   # Manual dispatch for ad-hoc runs
   workflow_dispatch:
