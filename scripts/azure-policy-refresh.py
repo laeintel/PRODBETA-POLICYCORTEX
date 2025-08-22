@@ -26,7 +26,7 @@ class AzurePolicyRefresh:
         
         self.credential = DefaultAzureCredential()
         self.policy_client = PolicyClient(self.credential, self.subscription_id)
-        self.policy_insights_client = PolicyInsightsClient(self.credential)
+        self.policy_insights_client = PolicyInsightsClient(self.credential, self.subscription_id)
         self.resource_client = ResourceManagementClient(self.credential, self.subscription_id)
         
         # Create data directories

@@ -711,7 +711,7 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_CLIENT_SECRET: ${{  }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET_DEV }}
           ARM_USE_OIDC: false
         run: |
           echo "Importing existing Azure resources to prevent deletion..."
