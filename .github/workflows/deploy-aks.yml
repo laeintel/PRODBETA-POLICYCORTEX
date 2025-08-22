@@ -10,15 +10,16 @@ on:
         options:
           - dev
           - prod
-  push:
-    branches:
-      - main
-    paths:
-      - 'frontend/**'
-      - 'core/**'
-      - 'backend/**'
-      - 'graphql/**'
-      - '.github/workflows/deploy-aks.yml'
+  # Disabled push trigger - this workflow is called from application.yml
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'frontend/**'
+  #     - 'core/**'
+  #     - 'backend/**'
+  #     - 'graphql/**'
+  #     - '.github/workflows/deploy-aks.yml'
 
 permissions:
   id-token: write

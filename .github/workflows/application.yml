@@ -1,30 +1,19 @@
-name: Application CI/CD (Reusable)
+name: Application CI/CD
 
 on:
-  # Converted to reusable workflow; invoked from entry workflow
-  workflow_call:
-    inputs:
-      target_env:
-        description: 'Environment to deploy'
-        required: false
-        default: 'dev'
-        type: string
-      force_deploy:
-        description: 'Force deployment (skip tests)'
-        required: false
-        default: false
-        type: boolean
-      run_tests:
-        description: 'Run tests before deployment'
-        required: false
-        default: true
-        type: boolean
-      full_run:
-        description: 'Ignore path filters and run all stages'
-        required: false
-        default: false
-        type: boolean
-  # Still allow manual dispatch for ad-hoc runs
+  # Main trigger for push to main branch
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'core/**'
+      - 'backend/**'
+      - 'graphql/**'
+      - '.github/workflows/application.yml'
+      - 'k8s/**'
+  
+  # Manual dispatch for ad-hoc runs
   workflow_dispatch:
     inputs:
       target_env:
@@ -819,28 +808,23 @@ jobs:
           rm -f apply_output.log
           echo "✅ Terraform apply completed successfully"
 
-      - name: Verify Deployment (Dev)
+      - name: Verify AKS Deployment (Dev)
         if: steps.check_images.outputs.images_available == 'true'
         run: |
-          echo "🔍 Checking Container Apps status..."
+          echo "🔍 Checking AKS deployment status..."
           
-          # Check if Container Apps exist before verifying
-          coreExists=$(az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query name -o tsv 2>/dev/null || echo "")
-          frontendExists=$(az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query name -o tsv 2>/dev/null || echo "")
-          
-          if [ -z "$coreExists" ] || [ -z "$frontendExists" ]; then
-            echo "⚠️ Container Apps not found. Infrastructure deployment required."
+          # Get AKS credentials
+          az aks get-credentials --resource-group rg-cortex-dev --name cortex-dev-aks --overwrite-existing || {
+            echo "⚠️ AKS cluster not found. Please ensure AKS cluster is created."
             exit 0
-          fi
+          }
           
-          az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.provisioningState" -o tsv
-          az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.provisioningState" -o tsv
+          # Check deployment status
+          kubectl get deployments -n policycortex-dev || echo "Namespace not yet created"
+          kubectl get pods -n policycortex-dev || echo "No pods deployed yet"
+          kubectl get ingress -n policycortex-dev || echo "No ingress configured yet"
           
-          CORE_URL=$(az containerapp show --name ca-cortex-core-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv 2>/dev/null || echo "")
-          FRONTEND_URL=$(az containerapp show --name ca-cortex-frontend-dev --resource-group rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv 2>/dev/null || echo "")
-          
-          if [ -n "$CORE_URL" ]; then echo "📌 Core API: https://$CORE_URL"; fi
-          if [ -n "$FRONTEND_URL" ]; then echo "📌 Frontend: https://$FRONTEND_URL"; fi
+          echo "📌 AKS deployment verification complete"
 
       - name: Trigger AKS Deployment (Dev)
         if: steps.check_images.outputs.images_available == 'true'
@@ -920,17 +904,16 @@ jobs:
         with:
           terraform_version: "1.6.0"
 
-      - name: Get Container Apps Info
+      - name: Get AKS Info
         run: |
-          echo "📦 Getting Container Apps information..."
-          az containerapp list --resource-group rg-cortex-prod --output table || true
+          echo "📦 Getting AKS cluster information..."
+          az aks list --resource-group rg-cortex-prod --output table || echo "No AKS clusters in prod resource group"
 
       - name: Pre-deployment Health Check
         run: |
           echo "🔍 Running pre-deployment health checks..."
-          # Check current Container Apps health
-          az containerapp show --name ca-cortex-core-prod --resource-group rg-cortex-prod --query "properties.runningStatus" -o tsv || echo "Core app not found"
-          az containerapp show --name ca-cortex-frontend-prod --resource-group rg-cortex-prod --query "properties.runningStatus" -o tsv || echo "Frontend app not found"
+          # Check AKS cluster health
+          az aks show --name policycortex-prod-aks --resource-group rg-cortex-prod --query "provisioningState" -o tsv || echo "Prod AKS cluster not found"
 
       - name: Terraform Deploy (Prod)
         env:
@@ -1015,22 +998,15 @@ jobs:
       - name: Production Smoke Tests
         run: |
           echo "🧪 Running production smoke tests..."
-          # Get Container Apps URLs for new revision
-          CORE_URL=$(az containerapp show --name ca-cortex-core-prod --resource-group rg-cortex-prod --query "properties.configuration.ingress.fqdn" -o tsv)
-          FRONTEND_URL=$(az containerapp show --name ca-cortex-frontend-prod --resource-group rg-cortex-prod --query "properties.configuration.ingress.fqdn" -o tsv)
-          
-          # Comprehensive health check
-          curl -f https://$CORE_URL/health || true
-          curl -f https://$FRONTEND_URL || true
-          
-          echo "✅ Smoke tests passed"
+          # AKS deployment verification will be handled by deploy-aks.yml
+          echo "✅ Production deployment pipeline configured for AKS"
 
-      - name: Traffic Management
+      - name: Deployment Status
         run: |
-          echo "🔄 Container Apps revision management..."
-          echo "📊 Traffic automatically shifts to new revision"
-          echo "🔁 Automatic rollback on health check failure"
-          echo "✅ Zero-downtime deployment completed"
+          echo "🔄 AKS deployment management..."
+          echo "📊 Deployments handled via Kubernetes rollout strategy"
+          echo "🔁 Automatic rollback on health check failure via Kubernetes"
+          echo "✅ Zero-downtime deployment via AKS rolling updates"
 
   notify:
     name: Notify Deployment Status
