@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core
+  namespace: policycortex-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: core
+  template:
+    metadata:
+      labels:
+        app: core
+    spec:
+      containers:
+      - name: core
+        image: ACR_NAME.azurecr.io/core:IMAGE_TAG
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: policycortex-config
+        env:
+        - name: RUST_LOG
+          value: "warn"
+        - name: SQLX_OFFLINE
+          value: "true"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-service
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: core
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP

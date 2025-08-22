@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql
+  namespace: policycortex-dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graphql
+  template:
+    metadata:
+      labels:
+        app: graphql
+    spec:
+      containers:
+      - name: graphql
+        image: ACR_NAME.azurecr.io/graphql:IMAGE_TAG
+        ports:
+        - containerPort: 4000
+        envFrom:
+        - configMapRef:
+            name: policycortex-config
+        env:
+        - name: APOLLO_KEY
+          value: "dev-key"
+        - name: APOLLO_GRAPH_REF
+          value: "policycortex@dev"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql-service
+  namespace: policycortex-dev
+spec:
+  selector:
+    app: graphql
+  ports:
+  - port: 4000
+    targetPort: 4000
+  type: ClusterIP

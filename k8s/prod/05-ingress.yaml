@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: policycortex-ingress
+  namespace: policycortex-prod
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - policycortex.azure.com
+    - api.policycortex.azure.com
+    - graphql.policycortex.azure.com
+    secretName: policycortex-tls
+  rules:
+  - host: api.policycortex.azure.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: core-service
+            port:
+              number: 8080
+  - host: graphql.policycortex.azure.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: graphql-service
+            port:
+              number: 4000
+  - host: policycortex.azure.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
