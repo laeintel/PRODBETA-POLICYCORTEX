@@ -842,11 +842,10 @@ jobs:
           if [ -n "$CORE_URL" ]; then echo "📌 Core API: https://$CORE_URL"; fi
           if [ -n "$FRONTEND_URL" ]; then echo "📌 Frontend: https://$FRONTEND_URL"; fi
 
-      - name: Configure Registry and Deploy Application Images (Dev)
+      - name: Trigger AKS Deployment (Dev)
         if: steps.check_images.outputs.images_available == 'true'
         env:
-          ACR_SERVER: ${{ env.REGISTRY_DEV }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          GH_TOKEN: ${{ github.token }}
           # Runtime config
           NEXT_PUBLIC_GRAPHQL_ENDPOINT: ${{ secrets.NEXT_PUBLIC_GRAPHQL_ENDPOINT_DEV || '' }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL_DEV || '' }}
@@ -855,68 +854,10 @@ jobs:
           NEXT_PUBLIC_AZURE_REDIRECT_URI: ${{ secrets.NEXT_PUBLIC_AZURE_REDIRECT_URI_DEV || '' }}
           NEXT_PUBLIC_AZURE_SCOPES: ${{ secrets.NEXT_PUBLIC_AZURE_SCOPES_DEV || '' }}
         run: |
-          set -e
-          
-          # Verify Azure CLI is authenticated
-          if ! az account show >/dev/null 2>&1; then
-            echo "⚠️ Azure CLI not authenticated. Skipping deployment."
-            echo "Please ensure Azure credentials are properly configured."
-            exit 0
-          fi
-          
-          echo "🔐 Fetching ACR credentials for $ACR_SERVER"
-          ACR_NAME=$(echo "$ACR_SERVER" | cut -d'.' -f1)
-          ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv 2>/dev/null || echo "")
-          ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query passwords[0].value -o tsv 2>/dev/null || echo "")
-          
-          if [ -z "$ACR_USER" ] || [ -z "$ACR_PASS" ]; then
-            echo "⚠️ Could not fetch ACR credentials. Skipping deployment."
-            exit 0
-          fi
-
-          echo "📝 Configuring registry on Container Apps"
-          for APP in ca-cortex-core-dev ca-cortex-frontend-dev; do
-            if az containerapp show -n "$APP" -g rg-cortex-dev >/dev/null 2>&1; then
-              az containerapp registry set \
-                -n "$APP" -g rg-cortex-dev \
-                --server "$ACR_SERVER" \
-                --username "$ACR_USER" \
-                --password "$ACR_PASS"
-            fi
-          done
-
-          echo "🚀 Updating images to ${IMAGE_TAG}"
-          az containerapp update -n ca-cortex-core-dev -g rg-cortex-dev \
-            --image "$ACR_SERVER/policycortex-core:$IMAGE_TAG" || true
-          az containerapp update -n ca-cortex-frontend-dev -g rg-cortex-dev \
-            --image "$ACR_SERVER/policycortex-frontend:$IMAGE_TAG" || true
-
-          echo "🧩 Ensure GraphQL app exists and updated"
-          CAE_ID=$(az containerapp env show -n cae-cortex-dev -g rg-cortex-dev --query id -o tsv)
-          if ! az containerapp show -n ca-cortex-graphql-dev -g rg-cortex-dev >/dev/null 2>&1; then
-            az containerapp create -n ca-cortex-graphql-dev -g rg-cortex-dev \
-              --environment "$CAE_ID" \
-              --image "$ACR_SERVER/policycortex-graphql:$IMAGE_TAG" \
-              --cpu 0.25 --memory 0.5Gi \
-              --ingress external --target-port 4000 \
-              --registry-server "$ACR_SERVER" --registry-username "$ACR_USER" --registry-password "$ACR_PASS"
-          else
-            az containerapp update -n ca-cortex-graphql-dev -g rg-cortex-dev \
-              --image "$ACR_SERVER/policycortex-graphql:$IMAGE_TAG"
-          fi
-
-          echo "🔗 Wiring frontend GraphQL endpoint"
-          GRAPHQL_FQDN=$(az containerapp show -n ca-cortex-graphql-dev -g rg-cortex-dev --query "properties.configuration.ingress.fqdn" -o tsv)
-          # Compose env vars
-          ENV_ARGS=(
-            --set-env-vars NEXT_PUBLIC_GRAPHQL_ENDPOINT="${NEXT_PUBLIC_GRAPHQL_ENDPOINT:-https://$GRAPHQL_FQDN/graphql}"
-          )
-          if [ -n "$NEXT_PUBLIC_API_URL" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_CLIENT_ID" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_CLIENT_ID="$NEXT_PUBLIC_AZURE_CLIENT_ID"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_TENANT_ID" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_TENANT_ID="$NEXT_PUBLIC_AZURE_TENANT_ID"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_REDIRECT_URI" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_REDIRECT_URI="$NEXT_PUBLIC_AZURE_REDIRECT_URI"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_SCOPES" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_SCOPES="$NEXT_PUBLIC_AZURE_SCOPES"); fi
-          az containerapp update -n ca-cortex-frontend-dev -g rg-cortex-dev "${ENV_ARGS[@]}"
+          echo "🚀 Triggering AKS deployment workflow..."
+          gh workflow run deploy-aks.yml --field environment=dev
+          echo "✅ AKS deployment workflow triggered"
+          echo "📌 View deployment progress at: https://github.com/${{ github.repository }}/actions/workflows/deploy-aks.yml"
 
   deploy-prod:
     name: Deploy to Production
@@ -1053,7 +994,7 @@ jobs:
             echo "✅ All images already present in PROD ACR"
           fi
 
-      - name: Configure Registry and Deploy Application Images (Prod)
+      - name: Trigger AKS Deployment (Prod)
         if: steps.check_images.outputs.images_available == 'true'
         env:
           ACR_SERVER: ${{ env.REGISTRY_PROD }}
@@ -1066,68 +1007,10 @@ jobs:
           NEXT_PUBLIC_AZURE_REDIRECT_URI: ${{ secrets.NEXT_PUBLIC_AZURE_REDIRECT_URI_PROD || '' }}
           NEXT_PUBLIC_AZURE_SCOPES: ${{ secrets.NEXT_PUBLIC_AZURE_SCOPES_PROD || '' }}
         run: |
-          set -e
-          
-          # Verify Azure CLI is authenticated
-          if ! az account show >/dev/null 2>&1; then
-            echo "⚠️ Azure CLI not authenticated. Skipping deployment."
-            echo "Please ensure Azure credentials are properly configured."
-            exit 0
-          fi
-          
-          echo "🔐 Fetching ACR credentials for $ACR_SERVER"
-          ACR_NAME=$(echo "$ACR_SERVER" | cut -d'.' -f1)
-          ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv 2>/dev/null || echo "")
-          ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query passwords[0].value -o tsv 2>/dev/null || echo "")
-          
-          if [ -z "$ACR_USER" ] || [ -z "$ACR_PASS" ]; then
-            echo "⚠️ Could not fetch ACR credentials. Skipping deployment."
-            exit 0
-          fi
-
-          echo "📝 Configuring registry on Container Apps"
-          for APP in ca-cortex-core-prod ca-cortex-frontend-prod; do
-            if az containerapp show -n "$APP" -g rg-cortex-prod >/dev/null 2>&1; then
-              az containerapp registry set \
-                -n "$APP" -g rg-cortex-prod \
-                --server "$ACR_SERVER" \
-                --username "$ACR_USER" \
-                --password "$ACR_PASS"
-            fi
-          done
-
-          echo "🚀 Updating images to ${IMAGE_TAG}"
-          az containerapp update -n ca-cortex-core-prod -g rg-cortex-prod \
-            --image "$ACR_SERVER/policycortex-core:$IMAGE_TAG" || true
-          az containerapp update -n ca-cortex-frontend-prod -g rg-cortex-prod \
-            --image "$ACR_SERVER/policycortex-frontend:$IMAGE_TAG" || true
-
-          echo "🧩 Ensure GraphQL app exists and updated"
-          CAE_ID=$(az containerapp env show -n cae-cortex-prod -g rg-cortex-prod --query id -o tsv)
-          if ! az containerapp show -n ca-cortex-graphql-prod -g rg-cortex-prod >/dev/null 2>&1; then
-            az containerapp create -n ca-cortex-graphql-prod -g rg-cortex-prod \
-              --environment "$CAE_ID" \
-              --image "$ACR_SERVER/policycortex-graphql:$IMAGE_TAG" \
-              --cpu 0.25 --memory 0.5Gi \
-              --ingress external --target-port 4000 \
-              --registry-server "$ACR_SERVER" --registry-username "$ACR_USER" --registry-password "$ACR_PASS"
-          else
-            az containerapp update -n ca-cortex-graphql-prod -g rg-cortex-prod \
-              --image "$ACR_SERVER/policycortex-graphql:$IMAGE_TAG"
-          fi
-
-          echo "🔗 Wiring frontend GraphQL endpoint"
-          GRAPHQL_FQDN=$(az containerapp show -n ca-cortex-graphql-prod -g rg-cortex-prod --query "properties.configuration.ingress.fqdn" -o tsv)
-          # Compose env vars
-          ENV_ARGS=(
-            --set-env-vars NEXT_PUBLIC_GRAPHQL_ENDPOINT="${NEXT_PUBLIC_GRAPHQL_ENDPOINT:-https://$GRAPHQL_FQDN/graphql}"
-          )
-          if [ -n "$NEXT_PUBLIC_API_URL" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_CLIENT_ID" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_CLIENT_ID="$NEXT_PUBLIC_AZURE_CLIENT_ID"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_TENANT_ID" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_TENANT_ID="$NEXT_PUBLIC_AZURE_TENANT_ID"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_REDIRECT_URI" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_REDIRECT_URI="$NEXT_PUBLIC_AZURE_REDIRECT_URI"); fi
-          if [ -n "$NEXT_PUBLIC_AZURE_SCOPES" ]; then ENV_ARGS+=(--set-env-vars NEXT_PUBLIC_AZURE_SCOPES="$NEXT_PUBLIC_AZURE_SCOPES"); fi
-          az containerapp update -n ca-cortex-frontend-prod -g rg-cortex-prod "${ENV_ARGS[@]}"
+          echo "🚀 Triggering AKS deployment workflow for production..."
+          gh workflow run deploy-aks.yml --field environment=prod
+          echo "✅ AKS deployment workflow triggered for production"
+          echo "📌 View deployment progress at: https://github.com/${{ github.repository }}/actions/workflows/deploy-aks.yml"
 
       - name: Production Smoke Tests
         run: |
