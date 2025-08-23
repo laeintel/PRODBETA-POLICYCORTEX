@@ -49,7 +49,7 @@ import {
   Radar
 } from 'recharts';
 import { useRouter } from 'next/navigation';
-import { toast } from '@/hooks/useToast'
+import { toast } from '@/hooks/useToast';
 
 // KPI Card Component
 const KPICard = ({ 
@@ -69,28 +69,27 @@ const KPICard = ({
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all cursor-pointer"
-      onClick={onClick}
-    >
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-all cursor-pointer"
+      onClick={onClick}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 bg-blue-50 rounded-lg">
               <Icon className="h-5 w-5 text-blue-600" />
             </div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{value}</h3>
             {subtitle && (
-              <span className="text-sm text-gray-500">{subtitle}</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</span>
             )}
           </div>
           {change && (
             <div className={`flex items-center gap-1 mt-2 ${changeColor}`}>
               <TrendIcon className="h-4 w-4" />
               <span className="text-sm font-medium">{change}</span>
-              <span className="text-xs text-gray-500">vs last period</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">vs last period</span>
             </div>
           )}
         </div>
@@ -119,11 +118,11 @@ const AlertItem = ({ alert }: any) => {
   const router = useRouter();
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'critical': return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800';
+      case 'high': return 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800';
+      case 'medium': return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800';
+      case 'low': return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-600';
     }
   };
 
@@ -154,8 +153,7 @@ const AlertItem = ({ alert }: any) => {
         <button
           type="button"
           className="text-sm font-medium hover:underline"
-          onClick={() => router.push('/operations/alerts')}
-        >
+          onClick={() => router.push('/operations/alerts')}>
           View →
         </button>
       </div>
@@ -169,18 +167,18 @@ const PredictiveInsights = ({ insights }: any) => {
     <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
       <div className="flex items-center gap-2 mb-4">
         <Activity className="h-5 w-5 text-purple-600" />
-        <h3 className="text-lg font-semibold text-gray-900">AI Predictions</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">AI Predictions</h3>
       </div>
       <div className="space-y-3">
         {insights.map((insight: any, index: number) => (
-          <div key={index} className="bg-white rounded-lg p-4 shadow-sm">
+          <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
             <div className="flex items-start gap-3">
               <div className={`w-2 h-2 rounded-full mt-2 ${
                 insight.type === 'warning' ? 'bg-yellow-500' : 
                 insight.type === 'danger' ? 'bg-red-500' : 'bg-green-500'
               }`} />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">{insight.title}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{insight.title}</p>
                 <p className="text-xs text-gray-600 mt-1">{insight.prediction}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
@@ -197,7 +195,7 @@ const PredictiveInsights = ({ insights }: any) => {
   );
 };
 
-export default function DashboardPage() {
+export default function DashboardPage(): JSX.Element {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
@@ -363,15 +361,14 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Executive Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Executive Dashboard</h1>
           <p className="text-gray-500 mt-1">Real-time governance insights powered by 4 patented AI technologies</p>
         </div>
         <div className="flex items-center gap-3">
           <select 
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="24h">Last 24 Hours</option>
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
@@ -380,8 +377,7 @@ export default function DashboardPage() {
           <button
             type="button"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            onClick={() => toast({ title: 'Export started', description: `Generating ${timeRange} report...` })}
-          >
+            onClick={() => toast({ title: 'Export started', description: `Generating ${timeRange} report...` })}>
             Export Report
           </button>
         </div>
@@ -405,14 +401,14 @@ export default function DashboardPage() {
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Compliance Trend */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Compliance Trend</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Compliance Trend</h3>
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-              <span className="text-sm text-gray-600">Score</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Score</span>
               <span className="w-3 h-3 bg-green-500 rounded-full ml-3"></span>
-              <span className="text-sm text-gray-600">Target</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Target</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={250}>
@@ -429,10 +425,11 @@ export default function DashboardPage() {
                 fillOpacity={0.1}
                 strokeWidth={2}
               />
-              <Line 
+              <Area 
                 type="monotone" 
                 dataKey="target" 
                 stroke="#10b981" 
+                fill="transparent"
                 strokeDasharray="5 5"
                 strokeWidth={2}
               />
@@ -441,10 +438,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Cost Breakdown */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Cost Distribution</h3>
-            <span className="text-sm text-gray-500">Total: $124.5K</span>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Cost Distribution</h3>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Total: $124.5K</span>
           </div>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
@@ -471,8 +468,8 @@ export default function DashboardPage() {
       {/* Risk Distribution and Alerts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Risk Radar */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk Assessment</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Risk Assessment</h3>
           <ResponsiveContainer width="100%" height={250}>
             <RadarChart data={riskDistributionData}>
               <PolarGrid stroke="#e5e7eb" />
@@ -498,13 +495,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Alerts */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Alerts</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Alerts</h3>
             <button type="button" 
               onClick={() => router.push('/operations/alerts')}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium">
               View All →
             </button>
           </div>
@@ -520,9 +516,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Resource Utilization */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Resource Utilization</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Resource Utilization</h3>
           <div className="flex items-center gap-4 text-sm">
             <span className="flex items-center gap-1">
               <span className="w-3 h-3 bg-blue-500 rounded"></span>
@@ -552,7 +548,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Patent Technologies Performance */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center gap-2 mb-4">
           <Brain className="h-5 w-5 text-purple-600" />
           <h3 className="text-lg font-semibold text-gray-900">Patent Technologies Performance</h3>
@@ -627,7 +623,7 @@ export default function DashboardPage() {
         </button>
         <button type="button" 
           onClick={() => router.push('/governance/policies')}
-          className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all"
+          className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all"
         >
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-gray-700" />
@@ -640,7 +636,7 @@ export default function DashboardPage() {
         </button>
         <button type="button" 
           onClick={() => router.push('/operations/remediation')}
-          className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all"
+          className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all"
         >
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-gray-700" />
@@ -653,7 +649,7 @@ export default function DashboardPage() {
         </button>
         <button type="button" 
           onClick={() => router.push('/governance/cost')}
-          className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all"
+          className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all"
         >
           <div className="flex items-center gap-3">
             <DollarSign className="h-5 w-5 text-gray-700" />
@@ -681,7 +677,7 @@ export default function DashboardPage() {
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-600">{item.title}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{item.title}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{item.value}</p>
                 <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
               </div>

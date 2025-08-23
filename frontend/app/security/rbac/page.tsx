@@ -319,14 +319,14 @@ export default function RBACPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur sticky top-0 z-10">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Role-Based Access Control</h1>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Manage user permissions, roles, and access policies
               </p>
             </div>
@@ -334,15 +334,13 @@ export default function RBACPage() {
               <button
                 type="button"
                 onClick={() => toast({ title: 'Export', description: 'Exporting permissions report...' })}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-              >
+                className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
                 <Download className="w-4 h-4" />
                 Export
               </button>
               <button type="button"
                 onClick={() => router.push('/security/rbac/review')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-              >
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
                 <UserCheck className="w-4 h-4" />
                 Start Review
               </button>
@@ -352,7 +350,7 @@ export default function RBACPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800 bg-gray-900/30">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/30 dark:bg-gray-900/30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
             {['overview', 'users', 'roles', 'permissions', 'jit-access', 'segregation', 'reviews'].map((tab) => (
@@ -361,10 +359,9 @@ export default function RBACPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-3 border-b-2 transition-colors capitalize ${
                   activeTab === tab 
-                    ? 'border-blue-500 text-white' 
-                    : 'border-transparent text-gray-400 hover:text-white'
-                }`}
-              >
+                    ? 'border-blue-500 text-gray-900 dark:text-white' 
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}>
                 {tab.replace('-', ' ')}
               </button>
             ))}
@@ -377,40 +374,40 @@ export default function RBACPage() {
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-4 gap-4">
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Total Users</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Total Users</h3>
                   <Users className="w-5 h-5 text-blue-400" />
                 </div>
                 <p className="text-3xl font-bold">1,247</p>
-                <p className="text-sm text-gray-500 mt-2">+52 this month</p>
+                <p className="text-sm text-gray-600 dark:text-gray-500 mt-2">+52 this month</p>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Active Roles</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Active Roles</h3>
                   <Shield className="w-5 h-5 text-green-400" />
                 </div>
                 <p className="text-3xl font-bold">68</p>
-                <p className="text-sm text-gray-500 mt-2">12 custom</p>
+                <p className="text-sm text-gray-600 dark:text-gray-500 mt-2">12 custom</p>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Over-provisioned</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Over-provisioned</h3>
                   <AlertTriangle className="w-5 h-5 text-yellow-400" />
                 </div>
                 <p className="text-3xl font-bold">234</p>
                 <p className="text-sm text-red-400 mt-2">Needs review</p>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">MFA Enabled</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">MFA Enabled</h3>
                   <Lock className="w-5 h-5 text-purple-400" />
                 </div>
                 <p className="text-3xl font-bold">89%</p>
-                <p className="text-sm text-gray-500 mt-2">137 without MFA</p>
+                <p className="text-sm text-gray-600 dark:text-gray-500 mt-2">137 without MFA</p>
               </div>
             </div>
 
@@ -421,16 +418,16 @@ export default function RBACPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr>
-                      <th className="text-left px-2 py-1 text-gray-400">Hour</th>
+                      <th className="text-left px-2 py-1 text-gray-600 dark:text-gray-400">Hour</th>
                       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                        <th key={day} className="px-2 py-1 text-gray-400">{day}</th>
+                        <th key={day} className="px-2 py-1 text-gray-600 dark:text-gray-400">{day}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {heatmapData.map((row) => (
                       <tr key={row.hour}>
-                        <td className="px-2 py-1 text-gray-400">{row.hour}:00</td>
+                        <td className="px-2 py-1 text-gray-600 dark:text-gray-400">{row.hour}:00</td>
                         {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
                           const value = row[day as keyof typeof row] as number
                           const intensity = value / 100
@@ -441,8 +438,7 @@ export default function RBACPage() {
                                 style={{
                                   backgroundColor: `rgba(59, 130, 246, ${intensity})`,
                                   color: intensity > 0.5 ? 'white' : '#9ca3af'
-                                }}
-                              >
+                                }}>
                                 {value}
                               </div>
                             </td>
@@ -473,17 +469,17 @@ export default function RBACPage() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-4">
-              <button type="button" className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'Privileged Accounts', description: 'Opening review (coming soon)' })}>
+              <button type="button" className="p-4 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'Privileged Accounts', description: 'Opening review (coming soon)' })}>
                 <h3 className="font-medium mb-2">Review Privileged Accounts</h3>
-                <p className="text-sm text-gray-400">23 accounts need review</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">23 accounts need review</p>
               </button>
-              <button type="button" className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'JIT Requests', description: 'Viewing pending requests (coming soon)' })}>
+              <button type="button" className="p-4 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'JIT Requests', description: 'Viewing pending requests (coming soon)' })}>
                 <h3 className="font-medium mb-2">Pending JIT Requests</h3>
-                <p className="text-sm text-gray-400">5 requests awaiting approval</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">5 requests awaiting approval</p>
               </button>
-              <button type="button" className="p-4 bg-gray-900/50 border border-gray-800 rounded-lg hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'SoD Conflicts', description: 'Navigating to conflicts (coming soon)' })}>
+              <button type="button" className="p-4 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors" onClick={() => toast({ title: 'SoD Conflicts', description: 'Navigating to conflicts (coming soon)' })}>
                 <h3 className="font-medium mb-2">SoD Conflicts</h3>
-                <p className="text-sm text-gray-400">8 conflicts detected</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">8 conflicts detected</p>
               </button>
             </div>
           </div>
@@ -494,30 +490,29 @@ export default function RBACPage() {
             {/* Search */}
             <div className="flex gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search users..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-800 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>
               <button
                 type="button"
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-                onClick={() => toast({ title: 'Filter', description: 'Filter dialog coming soon' })}
-              >
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                onClick={() => toast({ title: 'Filter', description: 'Filter dialog coming soon' })}>
                 <Filter className="w-4 h-4" />
               </button>
             </div>
 
             {/* Users Table */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-800/50">
+                <thead className="bg-gray-100 dark:bg-gray-800/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">User</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Department</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Roles</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Risk Score</th>
@@ -526,13 +521,13 @@ export default function RBACPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-800/30 transition-colors">
+                    <tr key={user.id} className="hover:bg-gray-100 dark:hover:bg-gray-800/30 transition-colors">
                       <td className="px-4 py-4">
                         <div>
                           <p className="font-medium">{user.name}</p>
-                          <p className="text-xs text-gray-400">{user.email}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">{user.email}</p>
                         </div>
                       </td>
                       <td className="px-4 py-4 text-sm">{user.department}</td>
@@ -543,10 +538,9 @@ export default function RBACPage() {
                               key={role.id}
                               className={`px-2 py-1 rounded-full text-xs ${
                                 role.critical 
-                                  ? 'bg-red-900/50 text-red-400' 
-                                  : 'bg-blue-900/50 text-blue-400'
-                              }`}
-                            >
+                                  ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400' 
+                                  : 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
+                              }`}>
                               {role.name}
                             </span>
                           ))}
@@ -554,7 +548,7 @@ export default function RBACPage() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 bg-gray-800 rounded-full overflow-hidden">
+                          <div className="w-16 h-2 bg-gray-300 dark:bg-gray-800 rounded-full overflow-hidden">
                             <div 
                               className={`h-full rounded-full ${
                                 user.riskScore > 70 ? 'bg-red-500' :
@@ -564,7 +558,7 @@ export default function RBACPage() {
                               style={{ width: `${user.riskScore}%` }}
                             />
                           </div>
-                          <span className="text-xs text-gray-400">{user.riskScore}</span>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">{user.riskScore}</span>
                         </div>
                       </td>
                       <td className="px-4 py-4">
@@ -574,15 +568,15 @@ export default function RBACPage() {
                           <AlertCircle className="w-4 h-4 text-red-400" />
                         )}
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-400">
+                      <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
                         {new Date(user.lastActive).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <button type="button" className="p-1 hover:bg-gray-700 rounded" onClick={() => toast({ title: 'User', description: 'Viewing user details' })}>
+                          <button type="button" className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" onClick={() => toast({ title: 'User', description: 'Viewing user details' })}>
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button type="button" className="p-1 hover:bg-gray-700 rounded" onClick={() => toast({ title: 'User', description: 'Opening user settings' })}>
+                          <button type="button" className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" onClick={() => toast({ title: 'User', description: 'Opening user settings' })}>
                             <Settings className="w-4 h-4" />
                           </button>
                         </div>
@@ -605,14 +599,13 @@ export default function RBACPage() {
                   {roles.map((role) => (
                     <div 
                       key={role.id}
-                      className="flex items-center justify-between p-3 bg-gray-800/50 rounded hover:bg-gray-800/70 transition-colors cursor-pointer"
-                      onClick={() => setSelectedRole(role)}
-                    >
+                      className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800/50 rounded hover:bg-gray-200 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
+                      onClick={() => setSelectedRole(role)}>
                       <div className="flex items-center gap-3">
                         <Shield className={`w-5 h-5 ${role.critical ? 'text-red-400' : 'text-blue-400'}`} />
                         <div>
                           <p className="font-medium">{role.name}</p>
-                          <p className="text-xs text-gray-400">{role.description}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">{role.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -621,7 +614,7 @@ export default function RBACPage() {
                         {role.custom && (
                           <span className="px-2 py-1 bg-purple-900/50 text-purple-400 rounded text-xs">Custom</span>
                         )}
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       </div>
                     </div>
                   ))}
@@ -631,13 +624,12 @@ export default function RBACPage() {
 
             {/* Selected Role Details */}
             {selectedRole && (
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">{selectedRole.name} - Permissions</h3>
                   <button type="button" 
                     onClick={() => setSelectedRole(null)}
-                    className="text-sm text-gray-400 hover:text-white"
-                  >
+                    className="text-sm text-gray-400 hover:text-white">
                     Close
                   </button>
                 </div>
@@ -683,10 +675,10 @@ export default function RBACPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr>
-                      <th className="text-left px-2 py-1 text-gray-400">Role</th>
+                      <th className="text-left px-2 py-1 text-gray-600 dark:text-gray-400">Role</th>
                       {['VMs', 'Storage', 'Network', 'Database', 'KeyVault'].map(resource => (
                         ['Read', 'Write', 'Delete', 'Admin'].map(action => (
-                          <th key={`${resource}-${action}`} className="px-1 py-1 text-xs text-gray-400">
+                          <th key={`${resource}-${action}`} className="px-1 py-1 text-xs text-gray-600 dark:text-gray-400">
                             <div className="writing-mode-vertical">{`${resource.slice(0,3)}-${action.slice(0,1)}`}</div>
                           </th>
                         ))
@@ -695,7 +687,7 @@ export default function RBACPage() {
                   </thead>
                   <tbody>
                     {permissionMatrix.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-gray-800/30">
+                      <tr key={idx} className="hover:bg-gray-200 dark:hover:bg-gray-800/30">
                         <td className="px-2 py-2 font-medium">{row.role}</td>
                         {Object.keys(row).filter(k => k !== 'role').map(key => (
                           <td key={key} className="px-1 py-2 text-center">
@@ -717,11 +709,11 @@ export default function RBACPage() {
             <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">AI-Powered Permission Recommendations</h3>
               <div className="space-y-3">
-                <div className="p-3 bg-green-900/20 border border-green-800 rounded">
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-green-400">Remove unused permission</p>
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="font-medium text-green-600 dark:text-green-400">Remove unused permission</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         User 'developer@company.com' hasn't used 'Database/Delete' in 90 days
                       </p>
                     </div>
@@ -730,11 +722,11 @@ export default function RBACPage() {
                     </button>
                   </div>
                 </div>
-                <div className="p-3 bg-yellow-900/20 border border-yellow-800 rounded">
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-yellow-400">Suggest role assignment</p>
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="font-medium text-yellow-600 dark:text-yellow-400">Suggest role assignment</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         5 users have similar permissions - consider creating 'Data Analyst' role
                       </p>
                     </div>
@@ -755,28 +747,28 @@ export default function RBACPage() {
               <h3 className="text-lg font-semibold mb-4">Just-In-Time Access Requests</h3>
               <div className="space-y-3">
                 {jitRequests.map((request) => (
-                  <div key={request.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={request.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
                           <p className="font-medium">{request.user}</p>
                           <span className={`px-2 py-1 rounded-full text-xs ${
-                            request.status === 'pending' ? 'bg-yellow-900/50 text-yellow-400' :
-                            request.status === 'approved' ? 'bg-green-900/50 text-green-400' :
-                            request.status === 'denied' ? 'bg-red-900/50 text-red-400' :
-                            'bg-gray-800 text-gray-400'
+                            request.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400' :
+                            request.status === 'approved' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' :
+                            request.status === 'denied' ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400' :
+                            'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                           }`}>
                             {request.status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-400">
-                          Requesting: <span className="text-white">{request.role}</span> for {request.duration}
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Requesting: <span className="text-gray-900 dark:text-white">{request.role}</span> for {request.duration}
                         </p>
-                        <p className="text-sm text-gray-400 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           Reason: {request.reason}
                         </p>
                         {request.approver && (
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-xs text-gray-600 dark:text-gray-500 mt-2">
                             Approved by: {request.approver}
                           </p>
                         )}
@@ -785,14 +777,12 @@ export default function RBACPage() {
                         <div className="flex gap-2">
                           <button type="button" 
                             onClick={() => handleJITApproval(request.id, true)}
-                            className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm"
-                          >
+                            className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm">
                             Approve
                           </button>
                           <button type="button" 
                             onClick={() => handleJITApproval(request.id, false)}
-                            className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm"
-                          >
+                            className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">
                             Deny
                           </button>
                         </div>
@@ -807,20 +797,20 @@ export default function RBACPage() {
             <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">JIT Access Configuration</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-800/50 rounded">
-                  <p className="text-sm text-gray-400">Max Duration</p>
+                <div className="p-3 bg-gray-100 dark:bg-gray-800/50 rounded">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Max Duration</p>
                   <p className="font-medium">8 hours</p>
                 </div>
-                <div className="p-3 bg-gray-800/50 rounded">
-                  <p className="text-sm text-gray-400">Auto-expire</p>
+                <div className="p-3 bg-gray-100 dark:bg-gray-800/50 rounded">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Auto-expire</p>
                   <p className="font-medium">Enabled</p>
                 </div>
-                <div className="p-3 bg-gray-800/50 rounded">
-                  <p className="text-sm text-gray-400">Approval Required</p>
+                <div className="p-3 bg-gray-100 dark:bg-gray-800/50 rounded">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Approval Required</p>
                   <p className="font-medium">Manager + Security</p>
                 </div>
-                <div className="p-3 bg-gray-800/50 rounded">
-                  <p className="text-sm text-gray-400">MFA Required</p>
+                <div className="p-3 bg-gray-100 dark:bg-gray-800/50 rounded">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">MFA Required</p>
                   <p className="font-medium">Yes</p>
                 </div>
               </div>
@@ -835,7 +825,7 @@ export default function RBACPage() {
               <h3 className="text-lg font-semibold mb-4">Segregation of Duties Conflicts</h3>
               <div className="space-y-3">
                 {sodConflicts.map((conflict) => (
-                  <div key={conflict.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={conflict.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
@@ -846,17 +836,17 @@ export default function RBACPage() {
                           }`} />
                           <p className="font-medium">{conflict.user}</p>
                           <span className={`px-2 py-1 rounded-full text-xs ${
-                            conflict.severity === 'high' ? 'bg-red-900/50 text-red-400' :
-                            conflict.severity === 'medium' ? 'bg-yellow-900/50 text-yellow-400' :
-                            'bg-blue-900/50 text-blue-400'
+                            conflict.severity === 'high' ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400' :
+                            conflict.severity === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400' :
+                            'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
                           }`}>
                             {conflict.severity} risk
                           </span>
                         </div>
-                        <p className="text-sm text-gray-400">{conflict.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{conflict.description}</p>
                         <div className="flex gap-2 mt-2">
                           {conflict.conflictingRoles.map((role) => (
-                            <span key={role} className="px-2 py-1 bg-gray-800 rounded text-xs">
+                            <span key={role} className="px-2 py-1 bg-gray-200 dark:bg-gray-800 rounded text-xs">
                               {role}
                             </span>
                           ))}
@@ -875,19 +865,19 @@ export default function RBACPage() {
             <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">Segregation Rules</h3>
               <div className="space-y-2">
-                <div className="p-3 bg-gray-800/50 rounded flex items-center justify-between">
+                <div className="p-3 bg-gray-100 dark:bg-gray-800/50 rounded flex items-center justify-between">
                   <div>
                     <p className="font-medium">Financial Approval Separation</p>
-                    <p className="text-sm text-gray-400">Users cannot both create and approve financial transactions</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Users cannot both create and approve financial transactions</p>
                   </div>
-                  <span className="text-xs px-2 py-1 bg-green-900/50 text-green-400 rounded">Active</span>
+                  <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded">Active</span>
                 </div>
-                <div className="p-3 bg-gray-800/50 rounded flex items-center justify-between">
+                <div className="p-3 bg-gray-100 dark:bg-gray-800/50 rounded flex items-center justify-between">
                   <div>
                     <p className="font-medium">Code Deployment Separation</p>
-                    <p className="text-sm text-gray-400">Developers cannot deploy to production without review</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Developers cannot deploy to production without review</p>
                   </div>
-                  <span className="text-xs px-2 py-1 bg-green-900/50 text-green-400 rounded">Active</span>
+                  <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded">Active</span>
                 </div>
               </div>
             </div>
@@ -901,25 +891,25 @@ export default function RBACPage() {
               <h3 className="text-lg font-semibold mb-4">Access Review Campaigns</h3>
               <div className="space-y-4">
                 {accessReviews.map((review) => (
-                  <div key={review.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={review.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <p className="font-medium">{review.name}</p>
-                        <p className="text-sm text-gray-400">Due: {review.dueDate}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Due: {review.dueDate}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs ${
-                        review.status === 'in-progress' ? 'bg-yellow-900/50 text-yellow-400' :
-                        'bg-gray-800 text-gray-400'
+                        review.status === 'in-progress' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400' :
+                        'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                       }`}>
                         {review.status}
                       </span>
                     </div>
                     <div className="mb-3">
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-400">Progress</span>
+                        <span className="text-gray-600 dark:text-gray-400">Progress</span>
                         <span>{review.reviewed}/{review.totalUsers} reviewed</span>
                       </div>
-                      <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-2 bg-gray-300 dark:bg-gray-800 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-blue-500 rounded-full"
                           style={{ width: `${review.progress}%` }}

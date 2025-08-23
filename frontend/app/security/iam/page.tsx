@@ -345,29 +345,27 @@ export default function IAMPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur sticky top-0 z-10">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Identity & Access Management</h1>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Manage users, groups, applications, and security policies
               </p>
             </div>
             <div className="flex items-center gap-3">
               <button type="button"
                 onClick={() => exportReport('iam')}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-              >
+                className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
                 <Download className="w-4 h-4" />
                 Export
               </button>
               <button type="button"
                 onClick={() => router.push('/security/iam/users/new')}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-              >
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
                 <UserPlus className="w-4 h-4" />
                 Add User
               </button>
@@ -377,7 +375,7 @@ export default function IAMPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800 bg-gray-900/30">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/30 dark:bg-gray-900/30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6 overflow-x-auto">
             {['overview', 'users', 'groups', 'applications', 'conditional-access', 'risks', 'sign-ins', 'service-principals'].map((tab) => (
@@ -386,10 +384,9 @@ export default function IAMPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-3 border-b-2 transition-colors capitalize whitespace-nowrap ${
                   activeTab === tab
-                    ? 'border-blue-500 text-white'
-                    : 'border-transparent text-gray-400 hover:text-white'
-                }`}
-              >
+                    ? 'border-blue-500 text-gray-900 dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}>
                 {tab.replace('-', ' ')}
               </button>
             ))}
@@ -402,9 +399,9 @@ export default function IAMPage() {
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-4 gap-4">
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Total Users</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Total Users</h3>
                   <Users className="w-5 h-5 text-blue-400" />
                 </div>
                 <p className="text-3xl font-bold">{metrics.totalUsers.toLocaleString()}</p>
@@ -415,46 +412,46 @@ export default function IAMPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">MFA Coverage</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">MFA Coverage</h3>
                   <ShieldCheck className="w-5 h-5 text-green-400" />
                 </div>
                 <p className="text-3xl font-bold">{metrics.mfaEnabled}%</p>
                 <div className="mt-2">
-                  <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-300 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-green-500 rounded-full"
                       style={{ width: `${metrics.mfaEnabled}%` }}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Target: 95%</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Target: 95%</p>
                 </div>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Risky Sign-ins</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Risky Sign-ins</h3>
                   <ShieldAlert className="w-5 h-5 text-red-400" />
                 </div>
                 <p className="text-3xl font-bold">{metrics.riskySignIns}</p>
                 <p className="text-sm text-red-400 mt-2">Requires attention</p>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">CA Policies</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">CA Policies</h3>
                   <Shield className="w-5 h-5 text-purple-400" />
                 </div>
                 <p className="text-3xl font-bold">{metrics.conditionalAccessPolicies}</p>
-                <p className="text-sm text-gray-500 mt-2">Active policies</p>
+                <p className="text-sm text-gray-600 dark:text-gray-500 mt-2">Active policies</p>
               </div>
             </div>
 
             {/* Charts */}
             <div className="grid grid-cols-2 gap-6">
               {/* MFA Enrollment Trend */}
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <h3 className="text-lg font-semibold mb-4">MFA Enrollment Progress</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <AreaChart data={mfaTrend}>
@@ -491,7 +488,7 @@ export default function IAMPage() {
               </div>
 
               {/* User Distribution */}
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <h3 className="text-lg font-semibold mb-4">Users by Department</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
@@ -502,8 +499,7 @@ export default function IAMPage() {
                       innerRadius={60}
                       outerRadius={80}
                       paddingAngle={5}
-                      dataKey="value"
-                    >
+                      dataKey="value">
                       {departmentDistribution.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -520,7 +516,7 @@ export default function IAMPage() {
                         className="w-3 h-3 rounded"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
                         {item.name} ({item.value})
                       </span>
                     </div>
@@ -530,7 +526,7 @@ export default function IAMPage() {
             </div>
 
             {/* Guest vs Internal Activity */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">User Activity (Internal vs Guest)</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={guestActivity}>
@@ -552,7 +548,7 @@ export default function IAMPage() {
         {activeTab === 'risks' && (
           <div className="space-y-6">
             {/* Risk Detections */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Identity Risk Detections</h3>
                 <span className="px-3 py-1 bg-red-900/50 text-red-400 rounded-full text-sm">
@@ -561,7 +557,7 @@ export default function IAMPage() {
               </div>
               <div className="space-y-3">
                 {riskDetections.map((risk) => (
-                  <div key={risk.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={risk.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <AlertTriangle className={`w-5 h-5 ${
@@ -580,24 +576,23 @@ export default function IAMPage() {
                               {risk.riskLevel} risk
                             </span>
                           </div>
-                          <p className="text-sm text-gray-400 mt-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             {risk.riskEventType}: {risk.riskDetail}
                           </p>
                           {risk.location !== 'N/A' && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">
                               Location: {risk.location} • IP: {risk.ipAddress}
                             </p>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-600 dark:text-gray-500">
                           {new Date(risk.detectedDateTime).toLocaleString()}
                         </span>
                         <button type="button"
                           onClick={() => handleRiskRemediation(risk.id)}
-                          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
-                        >
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
                           Remediate
                         </button>
                       </div>
@@ -610,19 +605,19 @@ export default function IAMPage() {
             {/* Risk Summary */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
-                <h4 className="text-sm text-gray-400 mb-2">High Risk Users</h4>
+                <h4 className="text-sm text-gray-600 dark:text-gray-400 mb-2">High Risk Users</h4>
                 <p className="text-2xl font-bold text-red-400">12</p>
-                <p className="text-xs text-gray-500 mt-1">Immediate action required</p>
+                <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Immediate action required</p>
               </div>
               <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
-                <h4 className="text-sm text-gray-400 mb-2">Medium Risk Users</h4>
+                <h4 className="text-sm text-gray-600 dark:text-gray-400 mb-2">Medium Risk Users</h4>
                 <p className="text-2xl font-bold text-yellow-400">28</p>
-                <p className="text-xs text-gray-500 mt-1">Monitor closely</p>
+                <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Monitor closely</p>
               </div>
               <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
-                <h4 className="text-sm text-gray-400 mb-2">Remediated Today</h4>
+                <h4 className="text-sm text-gray-600 dark:text-gray-400 mb-2">Remediated Today</h4>
                 <p className="text-2xl font-bold text-green-400">7</p>
-                <p className="text-xs text-gray-500 mt-1">Successfully resolved</p>
+                <p className="text-xs text-gray-600 dark:text-gray-500 mt-1">Successfully resolved</p>
               </div>
             </div>
           </div>
@@ -631,7 +626,7 @@ export default function IAMPage() {
         {activeTab === 'conditional-access' && (
           <div className="space-y-6">
             {/* Conditional Access Policies */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Conditional Access Policies</h3>
                 <button type="button" className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
@@ -640,7 +635,7 @@ export default function IAMPage() {
               </div>
               <div className="space-y-3">
                 {conditionalAccessPolicies.map((policy) => (
-                  <div key={policy.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={policy.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <Shield className={`w-5 h-5 ${
@@ -650,9 +645,9 @@ export default function IAMPage() {
                         }`} />
                         <h4 className="font-medium">{policy.displayName}</h4>
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          policy.state === 'enabled' ? 'bg-green-900/50 text-green-400' :
-                          policy.state === 'disabled' ? 'bg-gray-800 text-gray-400' :
-                          'bg-yellow-900/50 text-yellow-400'
+                          policy.state === 'enabled' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' :
+                          policy.state === 'disabled' ? 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400' :
+                          'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400'
                         }`}>
                           {policy.state}
                         </span>
@@ -663,7 +658,7 @@ export default function IAMPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-400 mb-1">Conditions:</p>
+                        <p className="text-gray-600 dark:text-gray-400 mb-1">Conditions:</p>
                         <ul className="text-xs space-y-1">
                           <li>• Users: {policy.conditions.users.join(', ')}</li>
                           <li>• Apps: {policy.conditions.applications.join(', ')}</li>
@@ -671,7 +666,7 @@ export default function IAMPage() {
                         </ul>
                       </div>
                       <div>
-                        <p className="text-gray-400 mb-1">Grant Controls:</p>
+                        <p className="text-gray-600 dark:text-gray-400 mb-1">Grant Controls:</p>
                         <ul className="text-xs space-y-1">
                           {policy.grantControls.requireMfa && <li>• Require MFA</li>}
                           {policy.grantControls.requireCompliantDevice && <li>• Require compliant device</li>}
@@ -686,20 +681,20 @@ export default function IAMPage() {
             </div>
 
             {/* Policy Impact */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">Policy Impact Analysis</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-green-400">98.2%</p>
-                  <p className="text-sm text-gray-400 mt-1">Sign-ins protected</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Sign-ins protected</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-yellow-400">1,234</p>
-                  <p className="text-sm text-gray-400 mt-1">Blocked attempts today</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Blocked attempts today</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-blue-400">45ms</p>
-                  <p className="text-sm text-gray-400 mt-1">Avg. evaluation time</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Avg. evaluation time</p>
                 </div>
               </div>
             </div>
@@ -709,7 +704,7 @@ export default function IAMPage() {
         {activeTab === 'sign-ins' && (
           <div className="space-y-6">
             {/* Sign-in Success Rate */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">Sign-in Success Rate (24h)</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={signInSuccessRate}>
@@ -739,10 +734,10 @@ export default function IAMPage() {
             </div>
 
             {/* Recent Sign-in Activity */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">Recent Sign-in Activity</h3>
               <div className="space-y-2">
-                <div className="grid grid-cols-6 gap-2 text-xs text-gray-400 font-medium uppercase pb-2 border-b border-gray-800">
+                <div className="grid grid-cols-6 gap-2 text-xs text-gray-600 dark:text-gray-400 font-medium uppercase pb-2 border-b border-gray-200 dark:border-gray-800">
                   <div>User</div>
                   <div>Application</div>
                   <div>Location</div>
@@ -751,19 +746,19 @@ export default function IAMPage() {
                   <div>Time</div>
                 </div>
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="grid grid-cols-6 gap-2 text-sm py-2 hover:bg-gray-800/50 rounded">
+                  <div key={i} className="grid grid-cols-6 gap-2 text-sm py-2 hover:bg-gray-200 dark:hover:bg-gray-800/50 rounded">
                     <div className="truncate">user{i}@company.com</div>
                     <div>Office 365</div>
                     <div>New York, US</div>
                     <div>Windows/Chrome</div>
                     <div>
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        i % 3 === 0 ? 'bg-red-900/50 text-red-400' : 'bg-green-900/50 text-green-400'
+                        i % 3 === 0 ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
                       }`}>
                         {i % 3 === 0 ? 'Failed' : 'Success'}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500">2 min ago</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-500">2 min ago</div>
                   </div>
                 ))}
               </div>
@@ -774,7 +769,7 @@ export default function IAMPage() {
         {activeTab === 'service-principals' && (
           <div className="space-y-6">
             {/* Service Principals */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Service Principals & Apps</h3>
                 <button type="button" className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm">
@@ -783,7 +778,7 @@ export default function IAMPage() {
               </div>
               <div className="space-y-3">
                 {servicePrincipals.map((sp) => (
-                  <div key={sp.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={sp.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
@@ -795,14 +790,14 @@ export default function IAMPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-gray-400">App ID: {sp.appId}</p>
-                            <p className="text-gray-400 mt-1">
+                            <p className="text-gray-600 dark:text-gray-400">App ID: {sp.appId}</p>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1">
                               Permissions: {sp.permissions.application.length} app, {sp.permissions.delegated.length} delegated
                             </p>
                           </div>
                           <div>
                             {sp.certificateExpiry && (
-                              <p className="text-gray-400">
+                              <p className="text-gray-600 dark:text-gray-400">
                                 Cert expires: <span className={new Date(sp.certificateExpiry) < new Date('2024-06-01') ? 'text-yellow-400' : ''}>
                                   {sp.certificateExpiry}
                                 </span>
@@ -818,7 +813,7 @@ export default function IAMPage() {
                           </div>
                         </div>
                       </div>
-                      <button type="button" className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">
+                      <button type="button" className="px-3 py-1 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 rounded text-sm">
                         Manage
                       </button>
                     </div>

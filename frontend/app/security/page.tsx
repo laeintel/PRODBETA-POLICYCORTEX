@@ -30,17 +30,17 @@ export default function SecurityAccessHub() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold">Security & Access Control</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Identity, RBAC, PIM, conditional access, and zero trust management
           </p>
         </div>
       </div>
 
-      <div className="border-b border-gray-800 bg-gray-900/30 overflow-x-auto">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/30 dark:bg-gray-900/30 overflow-x-auto">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-4">
             {tabs.map((tab) => {
@@ -57,8 +57,8 @@ export default function SecurityAccessHub() {
                   className={`
                     flex items-center gap-2 px-3 py-3 border-b-2 transition-colors whitespace-nowrap
                     ${activeTab === tab.id 
-                      ? 'border-orange-500 text-white' 
-                      : 'border-transparent text-gray-400 hover:text-white'}
+                      ? 'border-orange-500 text-gray-900 dark:text-white' 
+                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}
                   `}
                 >
                   <Icon className="w-4 h-4" />
@@ -93,8 +93,8 @@ function SecurityOverview() {
         <MetricCard title="Policy Violations" value="12" icon={AlertTriangle} />
       </div>
 
-      <div className="bg-red-900/20 border border-red-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-red-400 mb-4">Critical Security Items</h2>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Critical Security Items</h2>
         <div className="space-y-3">
           <AlertItem title="3 accounts with expired MFA" action="Enable MFA" />
           <AlertItem title="5 standing privileged access" action="Configure PIM" />
@@ -107,11 +107,11 @@ function SecurityOverview() {
 
 function IAMView() {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-semibold mb-4">Identity Management</h2>
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">User Accounts</h3>
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">User Accounts</h3>
           <div className="space-y-2">
             <UserRow type="Employees" count={847} />
             <UserRow type="Contractors" count={124} />
@@ -119,7 +119,7 @@ function IAMView() {
           </div>
         </div>
         <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Authentication</h3>
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Authentication</h3>
           <div className="space-y-2">
             <AuthRow method="Password + MFA" percentage={94} />
             <AuthRow method="Passwordless" percentage={20} />
@@ -133,7 +133,7 @@ function IAMView() {
 
 function RBACView() {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-semibold mb-4">Role Assignments</h2>
       <div className="grid grid-cols-3 gap-4">
         <RoleCard role="Owner" count={3} risk="Critical" />
@@ -146,8 +146,8 @@ function RBACView() {
 
 function PIMView() {
   return (
-    <div className="bg-orange-900/20 border border-orange-800 rounded-lg p-6">
-      <h2 className="text-lg font-semibold text-orange-400 mb-4">
+    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-6">
+      <h2 className="text-lg font-semibold text-orange-600 dark:text-orange-400 mb-4">
         Privileged Identity Management (JIT Access)
       </h2>
       <div className="grid grid-cols-3 gap-4">
@@ -165,7 +165,7 @@ function PIMView() {
 
 function ConditionalAccessView() {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-semibold mb-4">Conditional Access Policies</h2>
       <div className="space-y-3">
         <PolicyRow name="Require MFA for admins" status="enabled" />
@@ -180,7 +180,7 @@ function ConditionalAccessView() {
 
 function ZeroTrustView() {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-semibold mb-4">Zero Trust Maturity</h2>
       <div className="space-y-4">
         <MaturityBar category="Identity" level={3} />
@@ -195,7 +195,7 @@ function ZeroTrustView() {
 
 function AccessReviewsView() {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+    <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-lg font-semibold mb-4">Active Access Reviews</h2>
       <div className="space-y-3">
         <ReviewRow name="Q1 Privileged Review" progress={67} dueDate="7 days" />
@@ -213,13 +213,13 @@ function MetricCard({ title, value, icon: Icon }: {
   icon: React.ElementType
 }) {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+    <div className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-400">{title}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
           <p className="text-2xl font-bold mt-1">{value}</p>
         </div>
-        <Icon className="w-5 h-5 text-gray-400" />
+        <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
       </div>
     </div>
   )
@@ -230,7 +230,7 @@ function AlertItem({ title, action }: {
   action: string
 }) {
   return (
-    <div className="flex justify-between items-center p-3 bg-gray-900/50 rounded">
+    <div className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-900/50 rounded">
       <span>{title}</span>
       <button type="button" className="text-xs px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded">
         {action}
@@ -244,7 +244,7 @@ function UserRow({ type, count }: {
   count: number
 }) {
   return (
-    <div className="flex justify-between p-2 hover:bg-gray-800/50 rounded">
+    <div className="flex justify-between p-2 hover:bg-gray-200 dark:hover:bg-gray-800/50 rounded">
       <span>{type}</span>
       <span className="font-bold">{count}</span>
     </div>
@@ -256,7 +256,7 @@ function AuthRow({ method, percentage }: {
   percentage: number
 }) {
   return (
-    <div className="flex justify-between p-2 hover:bg-gray-800/50 rounded">
+    <div className="flex justify-between p-2 hover:bg-gray-200 dark:hover:bg-gray-800/50 rounded">
       <span>{method}</span>
       <span className="font-bold">{percentage}%</span>
     </div>
@@ -275,10 +275,10 @@ function RoleCard({ role, count, risk }: {
   }
   
   return (
-    <div className={`p-4 rounded-lg border ${riskColors[risk]} bg-gray-900/50`}>
+    <div className={`p-4 rounded-lg border ${riskColors[risk]} bg-white dark:bg-gray-900/50`}>
       <h3 className="font-medium">{role}</h3>
       <p className="text-2xl font-bold mt-1">{count} users</p>
-      <p className="text-xs text-gray-400 mt-2">Risk: {risk}</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Risk: {risk}</p>
     </div>
   )
 }
@@ -288,8 +288,8 @@ function PIMCard({ title, value }: {
   value: string | number
 }) {
   return (
-    <div className="bg-gray-900/50 rounded-lg p-4">
-      <p className="text-sm text-gray-400">{title}</p>
+    <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg p-4">
+      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
       <p className="text-2xl font-bold mt-1">{value}</p>
     </div>
   )
@@ -301,10 +301,10 @@ function ElevationItem({ user, role, expires }: {
   expires: string
 }) {
   return (
-    <div className="flex justify-between p-3 bg-gray-800/50 rounded">
+    <div className="flex justify-between p-3 bg-gray-200 dark:bg-gray-800/50 rounded">
       <div>
         <p className="font-medium">{user}</p>
-        <p className="text-sm text-orange-400">{role}</p>
+        <p className="text-sm text-orange-600 dark:text-orange-400">{role}</p>
       </div>
       <div className="text-right">
         <p className="text-sm text-yellow-400">Expires: {expires}</p>
@@ -321,10 +321,10 @@ function PolicyRow({ name, status }: {
   status: 'enabled' | 'disabled'
 }) {
   return (
-    <div className="flex justify-between p-3 bg-gray-800/50 rounded">
+    <div className="flex justify-between p-3 bg-gray-100 dark:bg-gray-800/50 rounded">
       <span>{name}</span>
       <span className={`text-xs px-2 py-1 rounded ${
-        status === 'enabled' ? 'bg-green-900/50 text-green-400' : 'bg-gray-800 text-gray-400'
+        status === 'enabled' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
       }`}>
         {status}
       </span>
@@ -340,9 +340,9 @@ function MaturityBar({ category, level }: {
     <div>
       <div className="flex justify-between mb-2">
         <span>{category}</span>
-        <span className="text-sm text-gray-400">Level {level}/5</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">Level {level}/5</span>
       </div>
-      <div className="bg-gray-800 rounded-full h-2">
+      <div className="bg-gray-300 dark:bg-gray-800 rounded-full h-2">
         <div 
           className="bg-gradient-to-r from-orange-500 to-green-500 h-2 rounded-full"
           style={{ width: `${(level / 5) * 100}%` }}
@@ -358,15 +358,15 @@ function ReviewRow({ name, progress, dueDate }: {
   dueDate: string
 }) {
   return (
-    <div className="p-4 bg-gray-800/50 rounded">
+    <div className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded">
       <div className="flex justify-between mb-2">
         <span className="font-medium">{name}</span>
-        <span className="text-sm text-yellow-400">Due: {dueDate}</span>
+        <span className="text-sm text-yellow-600 dark:text-yellow-400">Due: {dueDate}</span>
       </div>
-      <div className="bg-gray-700 rounded-full h-2">
+      <div className="bg-gray-300 dark:bg-gray-700 rounded-full h-2">
         <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${progress}%` }} />
       </div>
-      <p className="text-xs text-gray-400 mt-2">{progress}% complete</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">{progress}% complete</p>
     </div>
   )
 }

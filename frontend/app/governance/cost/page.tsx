@@ -308,14 +308,14 @@ export default function CostManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur sticky top-0 z-10">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Cost Management</h1>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Monitor spending, track budgets, and optimize cloud costs
               </p>
             </div>
@@ -323,8 +323,7 @@ export default function CostManagementPage() {
               <select
                 value={selectedTimeRange}
                 onChange={(e) => setSelectedTimeRange(e.target.value)}
-                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-              >
+                className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-blue-500">
                 <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
                 <option value="90d">Last 90 days</option>
@@ -332,7 +331,7 @@ export default function CostManagementPage() {
               </select>
               <button type="button"
                 onClick={() => exportReport('csv')}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export
@@ -350,7 +349,7 @@ export default function CostManagementPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800 bg-gray-900/30">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-gray-100/30 dark:bg-gray-900/30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
             {['overview', 'breakdown', 'anomalies', 'optimization', 'budgets', 'reserved', 'forecast'].map((tab) => (
@@ -359,8 +358,8 @@ export default function CostManagementPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-3 border-b-2 transition-colors capitalize ${
                   activeTab === tab
-                    ? 'border-blue-500 text-white'
-                    : 'border-transparent text-gray-400 hover:text-white'
+                    ? 'border-blue-500 text-gray-900 dark:text-white'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 {tab}
@@ -375,9 +374,9 @@ export default function CostManagementPage() {
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-4 gap-4">
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Current Spend</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Current Spend</h3>
                   <DollarSign className="w-5 h-5 text-green-400" />
                 </div>
                 <p className="text-3xl font-bold">${(metrics.currentSpend / 1000).toFixed(1)}K</p>
@@ -387,18 +386,18 @@ export default function CostManagementPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Budget</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Budget</h3>
                   <Target className="w-5 h-5 text-blue-400" />
                 </div>
                 <p className="text-3xl font-bold">${(metrics.budget / 1000).toFixed(0)}K</p>
                 <div className="mt-2">
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-400">Used</span>
+                    <span className="text-gray-600 dark:text-gray-400">Used</span>
                     <span>{((metrics.currentSpend / metrics.budget) * 100).toFixed(0)}%</span>
                   </div>
-                  <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 rounded-full"
                       style={{ width: `${(metrics.currentSpend / metrics.budget) * 100}%` }}
@@ -407,18 +406,18 @@ export default function CostManagementPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Forecast</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Forecast</h3>
                   <TrendingUp className="w-5 h-5 text-yellow-400" />
                 </div>
                 <p className="text-3xl font-bold">${(metrics.forecast / 1000).toFixed(0)}K</p>
-                <p className="text-sm text-gray-500 mt-2">End of month projection</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">End of month projection</p>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm text-gray-400">Savings Available</h3>
+                  <h3 className="text-sm text-gray-600 dark:text-gray-400">Savings Available</h3>
                   <Zap className="w-5 h-5 text-purple-400" />
                 </div>
                 <p className="text-3xl font-bold">${(metrics.savingsIdentified / 1000).toFixed(0)}K</p>
@@ -427,7 +426,7 @@ export default function CostManagementPage() {
             </div>
 
             {/* Cost Trend Chart */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <h3 className="text-lg font-semibold mb-4">Cost Trend Analysis</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={costTrend}>
@@ -474,7 +473,7 @@ export default function CostManagementPage() {
 
             {/* Service Costs */}
             <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <h3 className="text-lg font-semibold mb-4">Cost by Service</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={serviceCosts}>
@@ -490,7 +489,7 @@ export default function CostManagementPage() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+              <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                 <h3 className="text-lg font-semibold mb-4">Tag Distribution</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
@@ -520,7 +519,7 @@ export default function CostManagementPage() {
                         className="w-3 h-3 rounded"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
                         {item.name} (${(item.value / 1000).toFixed(0)}K)
                       </span>
                     </div>
@@ -534,7 +533,7 @@ export default function CostManagementPage() {
         {activeTab === 'anomalies' && (
           <div className="space-y-6">
             {/* Anomaly Detection */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Cost Anomalies Detected</h3>
                 <span className="px-3 py-1 bg-red-900/50 text-red-400 rounded-full text-sm">
@@ -543,7 +542,7 @@ export default function CostManagementPage() {
               </div>
               <div className="space-y-3">
                 {anomalies.map((anomaly) => (
-                  <div key={anomaly.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={anomaly.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <AlertTriangle className={`w-5 h-5 ${
@@ -554,7 +553,7 @@ export default function CostManagementPage() {
                         }`} />
                         <div>
                           <p className="font-medium">{anomaly.anomalyType}</p>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
                             {anomaly.resource} • {anomaly.service}
                           </p>
                         </div>
@@ -562,7 +561,7 @@ export default function CostManagementPage() {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <p className="text-lg font-bold text-red-400">+${anomaly.amount}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {new Date(anomaly.detectedAt).toLocaleDateString()}
                           </p>
                         </div>
@@ -588,11 +587,11 @@ export default function CostManagementPage() {
         {activeTab === 'optimization' && (
           <div className="space-y-6">
             {/* Optimization Recommendations */}
-            <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+            <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Cost Optimization Opportunities</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-400">Total potential savings:</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total potential savings:</span>
                   <span className="text-2xl font-bold text-green-400">
                     ${(recommendations.reduce((sum, r) => sum + r.estimatedSavings, 0) / 1000).toFixed(0)}K/mo
                   </span>
@@ -600,7 +599,7 @@ export default function CostManagementPage() {
               </div>
               <div className="space-y-3">
                 {recommendations.map((rec) => (
-                  <div key={rec.id} className="p-4 bg-gray-800/50 rounded-lg">
+                  <div key={rec.id} className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -612,23 +611,23 @@ export default function CostManagementPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-400 mb-2">{rec.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{rec.description}</p>
                         <div className="flex items-center gap-4 text-sm">
-                          <span className="text-gray-400">
+                          <span className="text-gray-600 dark:text-gray-400">
                             Effort: <span className={`${
                               rec.effort === 'low' ? 'text-green-400' :
                               rec.effort === 'medium' ? 'text-yellow-400' :
                               'text-red-400'
                             }`}>{rec.effort}</span>
                           </span>
-                          <span className="text-gray-400">
+                          <span className="text-gray-600 dark:text-gray-400">
                             Impact: <span className={`${
                               rec.impact === 'high' ? 'text-green-400' :
                               rec.impact === 'medium' ? 'text-yellow-400' :
                               'text-blue-400'
                             }`}>{rec.impact}</span>
                           </span>
-                          <span className="text-gray-400">
+                          <span className="text-gray-600 dark:text-gray-400">
                             Resources: {rec.resources.length}
                           </span>
                         </div>
@@ -638,7 +637,7 @@ export default function CostManagementPage() {
                           <p className="text-2xl font-bold text-green-400">
                             ${(rec.estimatedSavings / 1000).toFixed(1)}K
                           </p>
-                          <p className="text-xs text-gray-500">per month</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">per month</p>
                         </div>
                         <div className="flex gap-2">
                           {rec.automatable && (
@@ -670,11 +669,11 @@ export default function CostManagementPage() {
             {/* Budget Tracking */}
             <div className="grid grid-cols-1 gap-4">
               {budgets.map((budget) => (
-                <div key={budget.id} className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+                <div key={budget.id} className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="font-medium">{budget.name}</h3>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Owner: {budget.owner} • Period: {budget.period}
                       </p>
                     </div>
@@ -688,11 +687,11 @@ export default function CostManagementPage() {
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Budget</span>
+                      <span className="text-gray-600 dark:text-gray-400">Budget</span>
                       <span>${(budget.allocated / 1000).toFixed(0)}K</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Spent</span>
+                      <span className="text-gray-600 dark:text-gray-400">Spent</span>
                       <span className="text-yellow-400">${(budget.spent / 1000).toFixed(1)}K</span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -704,7 +703,7 @@ export default function CostManagementPage() {
                         <span className="text-gray-400">Threshold: {budget.threshold}%</span>
                         <span>{((budget.spent / budget.allocated) * 100).toFixed(0)}%</span>
                       </div>
-                      <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                         <div className="h-full flex">
                           <div
                             className="bg-blue-500"

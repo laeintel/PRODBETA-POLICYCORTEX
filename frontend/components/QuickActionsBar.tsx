@@ -140,9 +140,9 @@ export default function QuickActionsBar() {
       label: 'Compliance Status',
       shortLabel: 'Compliance',
       action: () => router.push('/governance?tab=compliance'),
-      color: (metrics?.compliance?.score ?? 0) >= 90 ? 'text-green-400' : 'text-yellow-400',
-      bgColor: (metrics?.compliance?.score ?? 0) >= 90 ? 'bg-green-500/10' : 'bg-yellow-500/10',
-      hoverColor: (metrics?.compliance?.score ?? 0) >= 90 ? 'hover:bg-green-500/20' : 'hover:bg-yellow-500/20',
+      color: (metrics?.compliance?.score ?? 0) >= 90 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400',
+      bgColor: (metrics?.compliance?.score ?? 0) >= 90 ? 'bg-green-100 dark:bg-green-500/10' : 'bg-yellow-100 dark:bg-yellow-500/10',
+      hoverColor: (metrics?.compliance?.score ?? 0) >= 90 ? 'hover:bg-green-200 dark:hover:bg-green-500/20' : 'hover:bg-yellow-200 dark:hover:bg-yellow-500/20',
       value: metrics?.compliance?.score ? `${metrics.compliance.score}%` : '...',
       trend: metrics?.compliance?.trend,
       loading: loading,
@@ -154,11 +154,11 @@ export default function QuickActionsBar() {
       label: 'Cost Savings',
       shortLabel: 'Savings',
       action: () => router.push('/governance?tab=cost'),
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10',
-      hoverColor: 'hover:bg-blue-500/20',
-      value: metrics ? `$${(metrics.costs.savings / 1000).toFixed(0)}K` : '...',
-      trend: metrics?.costs.trend,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-500/10',
+      hoverColor: 'hover:bg-blue-200 dark:hover:bg-blue-500/20',
+      value: metrics?.costs?.savings ? `$${(metrics.costs.savings / 1000).toFixed(0)}K` : '...',
+      trend: metrics?.costs?.trend,
       loading: loading
     },
     {
@@ -167,9 +167,9 @@ export default function QuickActionsBar() {
       label: 'Chat with AI',
       shortLabel: 'AI Chat',
       action: () => setAiChatOpen(true),
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10',
-      hoverColor: 'hover:bg-purple-500/20',
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-100 dark:bg-purple-500/10',
+      hoverColor: 'hover:bg-purple-200 dark:hover:bg-purple-500/20',
       value: 'Ask',
       loading: false,
       pulse: true
@@ -180,10 +180,10 @@ export default function QuickActionsBar() {
       label: 'View Predictions',
       shortLabel: 'Predictions',
       action: () => router.push('/ai/predictive'),
-      color: 'text-indigo-400',
-      bgColor: 'bg-indigo-500/10',
-      hoverColor: 'hover:bg-indigo-500/20',
-      value: metrics?.ai.predictions || 0,
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bgColor: 'bg-indigo-100 dark:bg-indigo-500/10',
+      hoverColor: 'hover:bg-indigo-200 dark:hover:bg-indigo-500/20',
+      value: metrics?.ai?.predictions || 0,
       loading: loading
     },
     {
@@ -192,8 +192,8 @@ export default function QuickActionsBar() {
       label: 'Active Risks',
       shortLabel: 'Risks',
       action: () => router.push('/governance?tab=risk'),
-      color: (metrics?.risks?.critical ?? 0) > 0 ? 'text-red-400' : 'text-orange-400',
-      bgColor: (metrics?.risks?.critical ?? 0) > 0 ? 'bg-red-500/10' : 'bg-orange-500/10',
+      color: (metrics?.risks?.critical ?? 0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400',
+      bgColor: (metrics?.risks?.critical ?? 0) > 0 ? 'bg-red-100 dark:bg-red-500/10' : 'bg-orange-100 dark:bg-orange-500/10',
       hoverColor: (metrics?.risks?.critical ?? 0) > 0 ? 'hover:bg-red-500/20' : 'hover:bg-orange-500/20',
       value: metrics?.risks?.active || 0,
       trend: metrics?.risks?.trend,
@@ -206,10 +206,10 @@ export default function QuickActionsBar() {
       label: 'View Resources',
       shortLabel: 'Resources',
       action: () => router.push('/operations/resources'),
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-500/10',
-      hoverColor: 'hover:bg-cyan-500/20',
-      value: metrics?.resources.total || 0,
+      color: 'text-cyan-600 dark:text-cyan-400',
+      bgColor: 'bg-cyan-100 dark:bg-cyan-500/10',
+      hoverColor: 'hover:bg-cyan-200 dark:hover:bg-cyan-500/20',
+      value: metrics?.resources?.total || 0,
       loading: loading
     }
   ]
@@ -236,7 +236,7 @@ export default function QuickActionsBar() {
   return (
     <>
       {/* Quick Actions Bar */}
-      <div className="fixed top-16 left-64 right-0 h-14 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 z-40">
+      <div className="fixed top-16 left-64 right-0 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-40">
         <div className="h-full px-4 flex items-center justify-between">
           {/* Left side - Quick Actions */}
           <div className="flex items-center gap-2">
@@ -292,11 +292,11 @@ export default function QuickActionsBar() {
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
-                        className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50"
+                        className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-xs rounded whitespace-nowrap z-50"
                       >
                         {action.label}
                         {action.id === 'ai-chat' && (
-                          <span className="ml-2 text-gray-400">⌘K</span>
+                          <span className="ml-2 text-gray-600 dark:text-gray-400">⌘K</span>
                         )}
                       </motion.div>
                     )}
@@ -333,7 +333,7 @@ export default function QuickActionsBar() {
             <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 rounded-lg">
               <Activity className="w-4 h-4 text-purple-400" />
               <span className="text-xs text-purple-400">
-                AI: {metrics?.ai.accuracy.predictiveCompliance.toFixed(1)}% Accuracy
+                AI: {metrics?.ai?.accuracy?.predictiveCompliance ? metrics.ai.accuracy.predictiveCompliance.toFixed(1) : '..'}% Accuracy
               </span>
             </div>
 
@@ -346,7 +346,7 @@ export default function QuickActionsBar() {
                 p-2 rounded-lg transition-all
                 ${voiceEnabled 
                   ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
-                  : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }
               `}
             >
@@ -354,11 +354,11 @@ export default function QuickActionsBar() {
             </motion.button>
 
             {/* Command Palette hint */}
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gray-800 rounded-lg">
-              <Command className="w-3 h-3 text-gray-400" />
-              <span className="text-xs text-gray-400">Press</span>
-              <kbd className="text-xs bg-gray-900 px-1.5 py-0.5 rounded text-gray-300">⌘K</kbd>
-              <span className="text-xs text-gray-400">for AI</span>
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <Command className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+              <span className="text-xs text-gray-600 dark:text-gray-400">Press</span>
+              <kbd className="text-xs bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300">⌘K</kbd>
+              <span className="text-xs text-gray-600 dark:text-gray-400">for AI</span>
             </div>
           </div>
         </div>

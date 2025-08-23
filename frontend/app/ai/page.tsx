@@ -460,7 +460,7 @@ export default function AIDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 dark:bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Initializing AI Intelligence Center...</p>
@@ -470,9 +470,9 @@ export default function AIDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-white dark:bg-black text-gray-900 dark:text-white">
       {/* Header */}
-      <header className="bg-gray-950 border-b border-gray-800 sticky top-0 z-50">
+      <header className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -493,15 +493,13 @@ export default function AIDashboardPage() {
               </div>
               <button type="button" 
                 onClick={() => setAutoRefresh(!autoRefresh)}
-                className={`p-2 rounded ${autoRefresh ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400'}`}
-              >
+                className={`p-2 rounded ${autoRefresh ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
                 <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
               </button>
               <select 
                 value={selectedTimeRange}
                 onChange={(e) => setSelectedTimeRange(e.target.value)}
-                className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm"
-              >
+                className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm">
                 <option value="1h">Last Hour</option>
                 <option value="24h">Last 24 Hours</option>
                 <option value="7d">Last 7 Days</option>
@@ -510,8 +508,7 @@ export default function AIDashboardPage() {
               <button
                 type="button"
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded transition-colors"
-                onClick={() => toast({ title: 'Deploy', description: 'Deploy model flow coming soon' })}
-              >
+                onClick={() => toast({ title: 'Deploy', description: 'Deploy model flow coming soon' })}>
                 DEPLOY MODEL
               </button>
             </div>
@@ -528,8 +525,7 @@ export default function AIDashboardPage() {
                 activeTab === tab
                   ? 'border-purple-500 text-purple-500'
                   : 'border-transparent text-gray-400 hover:text-white'
-              }`}
-            >
+              }`}>
               {tab}
             </button>
           ))}
@@ -544,8 +540,7 @@ export default function AIDashboardPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gray-900 border border-gray-800 rounded-lg p-4"
-              >
+                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Brain className="w-5 h-5 text-purple-500" />
                   <span className="text-xs text-gray-500">Total Models</span>
@@ -561,8 +556,7 @@ export default function AIDashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-gray-900 border border-gray-800 rounded-lg p-4"
-              >
+                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Target className="w-5 h-5 text-green-500" />
                   <span className="text-xs text-gray-500">Accuracy</span>
@@ -575,8 +569,7 @@ export default function AIDashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-gray-900 border border-gray-800 rounded-lg p-4"
-              >
+                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Zap className="w-5 h-5 text-yellow-500" />
                   <span className="text-xs text-gray-500">Latency</span>
@@ -589,8 +582,7 @@ export default function AIDashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-gray-900 border border-gray-800 rounded-lg p-4"
-              >
+                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Activity className="w-5 h-5 text-blue-500" />
                   <span className="text-xs text-gray-500">Predictions</span>
@@ -606,8 +598,7 @@ export default function AIDashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-gray-900 border border-gray-800 rounded-lg p-4"
-              >
+                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Beaker className="w-5 h-5 text-pink-500" />
                   <span className="text-xs text-gray-500">Training</span>
@@ -620,8 +611,7 @@ export default function AIDashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-gray-900 border border-gray-800 rounded-lg p-4"
-              >
+                className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <DollarSign className="w-5 h-5 text-orange-500" />
                   <span className="text-xs text-gray-500">Cost</span>
@@ -634,7 +624,7 @@ export default function AIDashboardPage() {
             {/* Charts Grid */}
             <div className="grid grid-cols-3 gap-6 mb-6">
               {/* Real-time Performance */}
-              <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold text-gray-400 uppercase">REAL-TIME PERFORMANCE</h3>
                   <div className="flex items-center space-x-2">
@@ -688,7 +678,7 @@ export default function AIDashboardPage() {
               </div>
 
               {/* Model Type Distribution */}
-              <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">MODEL TYPE DISTRIBUTION</h3>
                 <div className="h-64">
                   <Doughnut data={modelTypeData} options={{
@@ -705,7 +695,7 @@ export default function AIDashboardPage() {
               </div>
 
               {/* Framework Distribution */}
-              <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">FRAMEWORK DISTRIBUTION</h3>
                 <div className="h-64">
                   <Doughnut data={frameworkData} options={{
@@ -723,7 +713,7 @@ export default function AIDashboardPage() {
             </div>
 
             {/* Model Accuracy Trend */}
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-gray-400 uppercase">MODEL ACCURACY TREND</h3>
                 <div className="flex items-center space-x-2">
@@ -757,7 +747,7 @@ export default function AIDashboardPage() {
             </div>
 
             {/* AI Capabilities Radar */}
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 mb-6">
               <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">AI CAPABILITIES ASSESSMENT</h3>
               <div className="h-80">
                 <Radar data={modelCapabilitiesData} options={{
@@ -787,7 +777,7 @@ export default function AIDashboardPage() {
 
             {/* Status Cards Grid */}
             <div className="grid grid-cols-4 gap-6">
-              <div className="bg-gray-900 border border-gray-800 rounded-lg">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
                 <div className="p-4 border-b border-gray-800">
                   <h3 className="text-sm font-bold text-gray-400 uppercase">INFRASTRUCTURE</h3>
                 </div>
@@ -820,7 +810,7 @@ export default function AIDashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-900 border border-gray-800 rounded-lg">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
                 <div className="p-4 border-b border-gray-800">
                   <h3 className="text-sm font-bold text-gray-400 uppercase">DATA LAKES</h3>
                 </div>
@@ -844,7 +834,7 @@ export default function AIDashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-900 border border-gray-800 rounded-lg">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
                 <div className="p-4 border-b border-gray-800">
                   <h3 className="text-sm font-bold text-gray-400 uppercase">ACTIVE PIPELINES</h3>
                 </div>
@@ -864,7 +854,7 @@ export default function AIDashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-gray-900 border border-gray-800 rounded-lg">
+              <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
                 <div className="p-4 border-b border-gray-800">
                   <h3 className="text-sm font-bold text-gray-400 uppercase">QUICK ACTIONS</h3>
                 </div>
@@ -872,32 +862,28 @@ export default function AIDashboardPage() {
                   <button
                     type="button"
                     className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
-                    onClick={() => toast({ title: 'Train model', description: 'Training job queued' })}
-                  >
+                    onClick={() => toast({ title: 'Train model', description: 'Training job queued' })}>
                     <span>Train New Model</span>
                     <Beaker className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
                   <button
                     type="button"
                     className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
-                    onClick={() => toast({ title: 'Experiment', description: 'Experiment started' })}
-                  >
+                    onClick={() => toast({ title: 'Experiment', description: 'Experiment started' })}>
                     <span>Run Experiment</span>
                     <Beaker className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
                   <button
                     type="button"
                     className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
-                    onClick={() => toast({ title: 'Pipeline', description: 'Pipeline deployment queued' })}
-                  >
+                    onClick={() => toast({ title: 'Pipeline', description: 'Pipeline deployment queued' })}>
                     <span>Deploy Pipeline</span>
                     <Workflow className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
                   <button
                     type="button"
                     className="w-full px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-left flex items-center justify-between group"
-                    onClick={() => toast({ title: 'Report', description: 'Generating performance report...' })}
-                  >
+                    onClick={() => toast({ title: 'Report', description: 'Generating performance report...' })}>
                     <span>Performance Report</span>
                     <Download className="w-4 h-4 text-gray-500 group-hover:text-white" />
                   </button>
@@ -910,7 +896,7 @@ export default function AIDashboardPage() {
         {activeTab === 'models' && (
           <>
             {/* Model Management Controls */}
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
@@ -926,8 +912,7 @@ export default function AIDashboardPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm"
-                  >
+                    className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm">
                     <option value="all">All Status</option>
                     <option value="serving">Serving</option>
                     <option value="training">Training</option>
@@ -941,14 +926,12 @@ export default function AIDashboardPage() {
                       <span className="text-sm text-gray-400">{selectedModels.length} selected</span>
                       <button type="button" 
                         onClick={() => handleBulkAction('deploy')}
-                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded"
-                      >
+                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded">
                         Deploy
                       </button>
                       <button type="button" 
                         onClick={() => handleBulkAction('stop')}
-                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded"
-                      >
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded">
                         Stop
                       </button>
                     </div>
@@ -964,7 +947,7 @@ export default function AIDashboardPage() {
             </div>
 
             {/* Models Table */}
-            <div className="bg-gray-900 border border-gray-800 rounded-lg">
+            <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-800/50">
@@ -1000,8 +983,7 @@ export default function AIDashboardPage() {
                         key={model.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="hover:bg-gray-800/30 transition-colors"
-                      >
+                        className="hover:bg-gray-800/30 transition-colors">
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
@@ -1086,24 +1068,21 @@ export default function AIDashboardPage() {
                               <button type="button" 
                                 onClick={() => handleModelAction('stop', model.id)}
                                 className="p-1 hover:bg-gray-700 rounded text-red-500"
-                                title="Stop Model"
-                              >
+                                title="Stop Model">
                                 <StopCircle className="w-4 h-4" />
                               </button>
                             ) : (
                               <button type="button" 
                                 onClick={() => handleModelAction('deploy', model.id)}
                                 className="p-1 hover:bg-gray-700 rounded text-green-500"
-                                title="Deploy Model"
-                              >
+                                title="Deploy Model">
                                 <Play className="w-4 h-4" />
                               </button>
                             )}
                             <button type="button" 
                               onClick={() => handleModelAction('retrain', model.id)}
                               className="p-1 hover:bg-gray-700 rounded text-purple-500"
-                              title="Retrain Model"
-                            >
+                              title="Retrain Model">
                               <RotateCcw className="w-4 h-4" />
                             </button>
                             <button type="button" className="p-1 hover:bg-gray-700 rounded" onClick={() => toast({ title: 'Monitor', description: 'Opening monitoring view (coming soon)' })}>
@@ -1125,7 +1104,7 @@ export default function AIDashboardPage() {
 
         {/* Other tabs content would go here */}
         {!['overview', 'models'].includes(activeTab) && (
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+          <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6">
             <h2 className="text-xl font-bold mb-4 capitalize">{activeTab} Management</h2>
             <p className="text-gray-400">Detailed {activeTab} management interface coming soon...</p>
           </div>

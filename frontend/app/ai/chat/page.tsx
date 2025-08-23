@@ -392,11 +392,11 @@ Just let me know how I can best assist you!`;
           <div className={`rounded-lg p-4 ${
             isUser 
               ? 'bg-blue-600 text-white' 
-              : 'bg-white border border-gray-200'
+              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
           }`}>
             <div className="prose prose-sm max-w-none">
               <div 
-                className={isUser ? 'text-white' : 'text-gray-800'}
+                className={isUser ? 'text-white' : 'text-gray-800 dark:text-gray-200'}
                 dangerouslySetInnerHTML={{ 
                   __html: isUser ? textToSafeHTML(message.content) : sanitizeMarkdown(message.content.replace(/\n/g, '<br />').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'))
                 }}
@@ -412,7 +412,7 @@ Just let me know how I can best assist you!`;
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       action.type === 'primary'
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     <action.icon className="h-4 w-4" />
@@ -423,15 +423,15 @@ Just let me know how I can best assist you!`;
             )}
             
             {!isUser && (
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-4">
                   {message.confidence && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {message.confidence}% confidence
                     </span>
                   )}
                   {message.sources && message.sources.length > 0 && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       Sources: {message.sources.join(', ')}
                     </span>
                   )}
@@ -696,7 +696,7 @@ Just let me know how I can best assist you!`;
         )}
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 bg-white px-6 py-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-4">
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <div className="relative">

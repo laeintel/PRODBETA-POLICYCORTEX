@@ -29,19 +29,19 @@ export default function GovernanceHub() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold">Governance Hub</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Unified policies, compliance, risk management, and cost optimization
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800 bg-gray-900/30">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-gray-100/30 dark:bg-gray-900/30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
             {tabs.map((tab) => {
@@ -58,10 +58,9 @@ export default function GovernanceHub() {
                   className={`
                     flex items-center gap-2 px-4 py-3 border-b-2 transition-colors
                     ${activeTab === tab.id 
-                      ? 'border-blue-500 text-white' 
-                      : 'border-transparent text-gray-400 hover:text-white'}
-                  `}
-                >
+                      ? 'border-blue-500 text-gray-900 dark:text-white' 
+                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}
+                  `}>
                   <Icon className="w-4 h-4" />
                   {tab.label}
                 </button>
@@ -139,7 +138,7 @@ function GovernanceOverview() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4">Recent Governance Activity</h2>
         <div className="space-y-3">
           <ActivityItem
@@ -171,7 +170,7 @@ function ComplianceView() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         {/* Compliance Frameworks */}
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="text-lg font-semibold mb-4">Compliance Frameworks</h2>
           <div className="space-y-3">
             <FrameworkItem name="SOC 2" status="compliant" coverage="98%" />
@@ -183,7 +182,7 @@ function ComplianceView() {
         </div>
 
         {/* Policy Status */}
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="text-lg font-semibold mb-4">Policy Status</h2>
           <div className="space-y-3">
             <PolicyItem name="Data Encryption" status="active" violations={0} />
@@ -196,7 +195,7 @@ function ComplianceView() {
       </div>
 
       {/* Violations */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4">Active Violations</h2>
         <div className="space-y-2">
           <ViolationItem
@@ -227,7 +226,7 @@ function RiskView() {
   return (
     <div className="space-y-6">
       {/* Risk Matrix */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4">Risk Assessment Matrix</h2>
         <div className="grid grid-cols-3 gap-4">
           <RiskCategory
@@ -252,7 +251,7 @@ function RiskView() {
       </div>
 
       {/* Critical Risks */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4">Critical Risks Requiring Action</h2>
         <div className="space-y-3">
           <RiskItem
@@ -315,7 +314,7 @@ function CostView() {
       </div>
 
       {/* Optimization Opportunities */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4">Cost Optimization Opportunities</h2>
         <div className="space-y-3">
           <OpportunityItem
@@ -360,16 +359,16 @@ function MetricCard({ title, value, trend, status, icon: Icon }: {
     good: 'text-green-400 bg-green-900/20',
     warning: 'text-yellow-400 bg-yellow-900/20',
     critical: 'text-red-400 bg-red-900/20',
-    neutral: 'text-gray-400 bg-gray-800/50'
+    neutral: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/50'
   }
 
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+    <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-400">{title}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
           <p className="text-2xl font-bold mt-1">{value}</p>
-          <p className="text-sm text-gray-500 mt-1">{trend}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{trend}</p>
         </div>
         <div className={`p-2 rounded-lg ${statusColors[status]}`}>
           <Icon className="w-5 h-5" />
@@ -388,17 +387,16 @@ function QuickAction({ title, description, urgency, href }: {
   const urgencyColors = {
     high: 'border-red-800 bg-red-900/20',
     medium: 'border-yellow-800 bg-yellow-900/20',
-    low: 'border-gray-700 bg-gray-800/50'
+    low: 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/50'
   }
 
   return (
     <Link
       href={href}
-      className={`block p-4 rounded-lg border ${urgencyColors[urgency]} hover:bg-gray-800/50 transition-colors`}
-    >
+      className={`block p-4 rounded-lg border ${urgencyColors[urgency]} hover:bg-gray-200 dark:hover:bg-gray-800/50 transition-colors`}>
       <h3 className="font-medium">{title}</h3>
-      <p className="text-sm text-gray-400 mt-1">{description}</p>
-      <ArrowRight className="w-4 h-4 text-gray-500 mt-2" />
+      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</p>
+      <ArrowRight className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-2" />
     </Link>
   )
 }
@@ -417,12 +415,12 @@ function ActivityItem({ title, description, time, type }: {
   const Icon = typeIcons[type]
 
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-colors">
-      <Icon className="w-5 h-5 text-gray-400 mt-0.5" />
+    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800/50 transition-colors">
+      <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5" />
       <div className="flex-1">
         <p className="font-medium">{title}</p>
-        <p className="text-sm text-gray-400">{description}</p>
-        <p className="text-xs text-gray-500 mt-1">{time}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{time}</p>
       </div>
     </div>
   )
@@ -434,10 +432,10 @@ function FrameworkItem({ name, status, coverage }: {
   coverage: string
 }) {
   return (
-    <div className="flex items-center justify-between p-2 rounded hover:bg-gray-800/50">
+    <div className="flex items-center justify-between p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-800/50">
       <span>{name}</span>
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-400">{coverage}</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">{coverage}</span>
         <span className={`text-xs px-2 py-1 rounded ${
           status === 'compliant' ? 'bg-green-900/50 text-green-400' : 'bg-yellow-900/50 text-yellow-400'
         }`}>
@@ -454,7 +452,7 @@ function PolicyItem({ name, status, violations }: {
   violations: number
 }) {
   return (
-    <div className="flex items-center justify-between p-2 rounded hover:bg-gray-800/50">
+    <div className="flex items-center justify-between p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-800/50">
       <span>{name}</span>
       <div className="flex items-center gap-3">
         {violations > 0 && (
@@ -485,17 +483,17 @@ function ViolationItem({ policy, resource, severity, age }: {
   }
 
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded">
+    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800/50 rounded">
       <div className="flex items-center gap-4">
         <AlertCircle className={`w-4 h-4 ${severityColors[severity]}`} />
         <div>
           <span className="font-medium">{policy}</span>
-          <span className="text-gray-400 mx-2">→</span>
-          <span className="text-gray-300">{resource}</span>
+          <span className="text-gray-600 dark:text-gray-400 mx-2">→</span>
+          <span className="text-gray-700 dark:text-gray-300">{resource}</span>
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-400">{age}</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">{age}</span>
         <button type="button" className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded">
           Remediate
         </button>
@@ -520,8 +518,8 @@ function RiskCategory({ category, level, risks, trend }: {
     <div className={`p-4 rounded-lg border ${levelColors[level]}`}>
       <h3 className="font-medium">{category}</h3>
       <p className="text-2xl font-bold mt-2">{risks}</p>
-      <p className="text-sm text-gray-400">risks</p>
-      <p className="text-xs text-gray-500 mt-2">Trend: {trend}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400">risks</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Trend: {trend}</p>
     </div>
   )
 }
@@ -533,13 +531,13 @@ function RiskItem({ title, impact, likelihood, mitigation }: {
   mitigation: string
 }) {
   return (
-    <div className="p-4 bg-gray-800/50 rounded-lg">
+    <div className="p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg">
       <h3 className="font-medium">{title}</h3>
       <div className="flex gap-4 mt-2 text-sm">
-        <span className="text-gray-400">Impact: <span className="text-red-400">{impact}</span></span>
-        <span className="text-gray-400">Likelihood: <span className="text-yellow-400">{likelihood}</span></span>
+        <span className="text-gray-600 dark:text-gray-400">Impact: <span className="text-red-400">{impact}</span></span>
+        <span className="text-gray-600 dark:text-gray-400">Likelihood: <span className="text-yellow-400">{likelihood}</span></span>
       </div>
-      <p className="text-sm text-gray-400 mt-2">Mitigation: {mitigation}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Mitigation: {mitigation}</p>
     </div>
   )
 }
@@ -557,10 +555,10 @@ function OpportunityItem({ title, savings, effort, impact }: {
   }
 
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded hover:bg-gray-700/50 transition-colors">
+    <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800/50 rounded hover:bg-gray-200 dark:hover:bg-gray-700/50 transition-colors">
       <div>
         <p className="font-medium">{title}</p>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Effort: <span className={effortColors[effort]}>{effort}</span> • 
           Impact: <span className="text-blue-400 ml-2">{impact}</span>
         </p>

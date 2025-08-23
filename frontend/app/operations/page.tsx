@@ -47,19 +47,19 @@ export default function OperationsHub() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold">Operations Center</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Infrastructure resources, monitoring, and automation in one place
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800 bg-gray-900/30">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-gray-100/30 dark:bg-gray-900/30">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-6">
             {tabs.map((tab) => {

@@ -38,17 +38,17 @@ export default function DevOpsHub() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold">DevOps & CI/CD</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Continuous integration, deployment pipelines, and release management
           </p>
         </div>
       </div>
 
-      <div className="border-b border-gray-800 bg-gray-900/30 overflow-x-auto">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-gray-100/30 dark:bg-gray-900/30 overflow-x-auto">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex gap-4">
             {tabs.map((tab) => {
@@ -65,10 +65,9 @@ export default function DevOpsHub() {
                   className={`
                     flex items-center gap-2 px-3 py-3 border-b-2 transition-colors whitespace-nowrap
                     ${activeTab === tab.id 
-                      ? 'border-blue-500 text-white' 
-                      : 'border-transparent text-gray-400 hover:text-white'}
-                  `}
-                >
+                      ? 'border-blue-500 text-gray-900 dark:text-white' 
+                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}
+                  `}>
                   <Icon className="w-4 h-4" />
                   {tab.label}
                 </button>
@@ -178,7 +177,7 @@ function DevOpsOverview() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Build Metrics Chart */}
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-500" />
             Build Success/Failure Trends
@@ -199,7 +198,7 @@ function DevOpsOverview() {
         </div>
 
         {/* Team Velocity Chart */}
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-green-500" />
             Team Velocity
@@ -223,7 +222,7 @@ function DevOpsOverview() {
       </div>
 
       {/* Repository Health Radar */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Database className="w-5 h-5 text-purple-500" />
           Repository Health Metrics
@@ -242,9 +241,9 @@ function DevOpsOverview() {
           </ResponsiveContainer>
           <div className="space-y-3">
             {repoHealth.map((repo, index) => (
-              <div key={index} className="bg-gray-800 rounded-lg p-4">
+              <div key={index} className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-white font-medium">{repo.name}</h3>
+                  <h3 className="text-gray-900 dark:text-white font-medium">{repo.name}</h3>
                   <span className={`text-lg font-bold ${
                     repo.score >= 90 ? 'text-green-500' : 
                     repo.score >= 80 ? 'text-yellow-500' : 'text-red-500'
@@ -253,10 +252,10 @@ function DevOpsOverview() {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-gray-400">Coverage: <span className="text-white">{repo.coverage}%</span></div>
-                  <div className="text-gray-400">Bugs: <span className="text-white">{repo.bugs}</span></div>
-                  <div className="text-gray-400">Vulnerabilities: <span className="text-white">{repo.vulnerabilities}</span></div>
-                  <div className="text-gray-400">Quality Score: <span className="text-white">A</span></div>
+                  <div className="text-gray-600 dark:text-gray-400">Coverage: <span className="text-gray-900 dark:text-white">{repo.coverage}%</span></div>
+                  <div className="text-gray-600 dark:text-gray-400">Bugs: <span className="text-gray-900 dark:text-white">{repo.bugs}</span></div>
+                  <div className="text-gray-600 dark:text-gray-400">Vulnerabilities: <span className="text-gray-900 dark:text-white">{repo.vulnerabilities}</span></div>
+                  <div className="text-gray-600 dark:text-gray-400">Quality Score: <span className="text-gray-900 dark:text-white">A</span></div>
                 </div>
               </div>
             ))}
@@ -265,7 +264,7 @@ function DevOpsOverview() {
       </div>
 
       {/* Lead Time Analysis */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Timer className="w-5 h-5 text-orange-500" />
           Lead Time Analysis (Commit to Production)
@@ -286,7 +285,7 @@ function DevOpsOverview() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4">Recent Pipeline Activity</h2>
         <div className="space-y-3">
           <ActivityItem 
@@ -322,7 +321,7 @@ function DevOpsOverview() {
 
       {/* Deployment Stats */}
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h3 className="text-lg font-semibold mb-4">Deployment Frequency</h3>
           <div className="space-y-3">
             <FrequencyBar env="Production" count={12} percentage={30} />
@@ -330,7 +329,7 @@ function DevOpsOverview() {
             <FrequencyBar env="Development" count={156} percentage={100} />
           </div>
         </div>
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h3 className="text-lg font-semibold mb-4">Build Performance</h3>
           <div className="space-y-3">
             <PerformanceRow metric="Average Build Time" value="4m 32s" trend="improving" />
@@ -421,49 +420,49 @@ function PipelinesView() {
     <div className="space-y-6">
       {/* Pipeline Status Summary */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 text-green-400 mb-2">
             <CheckCircle className="w-5 h-5" />
             <span className="text-sm font-medium">Successful</span>
           </div>
-          <p className="text-2xl font-bold text-white">12</p>
-          <p className="text-xs text-gray-400">Last 24 hours</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">Last 24 hours</p>
         </div>
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 text-blue-400 mb-2">
             <Clock className="w-5 h-5" />
             <span className="text-sm font-medium">Running</span>
           </div>
-          <p className="text-2xl font-bold text-white">3</p>
-          <p className="text-xs text-gray-400">Active now</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">Active now</p>
         </div>
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 text-red-400 mb-2">
             <XCircle className="w-5 h-5" />
             <span className="text-sm font-medium">Failed</span>
           </div>
-          <p className="text-2xl font-bold text-white">2</p>
-          <p className="text-xs text-gray-400">Requires attention</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">2</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">Requires attention</p>
         </div>
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
           <div className="flex items-center gap-2 text-yellow-400 mb-2">
             <AlertCircle className="w-5 h-5" />
             <span className="text-sm font-medium">Queued</span>
           </div>
-          <p className="text-2xl font-bold text-white">5</p>
-          <p className="text-xs text-gray-400">Waiting to run</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">5</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">Waiting to run</p>
         </div>
       </div>
 
       {/* Active Pipelines */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <GitCommit className="w-5 h-5 text-blue-500" />
           Active Pipelines
         </h2>
         <div className="space-y-3">
           {pipelines.map((pipeline) => (
-            <div key={pipeline.id} className="bg-gray-800 rounded-lg p-4">
+            <div key={pipeline.id} className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium`}
@@ -474,9 +473,9 @@ function PipelinesView() {
                     {getStatusIcon(pipeline.status)}
                     {pipeline.status}
                   </div>
-                  <h3 className="text-white font-medium">{pipeline.name}</h3>
+                  <h3 className="text-gray-900 dark:text-white font-medium">{pipeline.name}</h3>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-400">
+                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                   <span className="flex items-center gap-1">
                     <GitBranch className="w-3 h-3" />
                     {pipeline.branch}
@@ -486,13 +485,13 @@ function PipelinesView() {
                   <span>{pipeline.duration}</span>
                 </div>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2">
                 <div 
                   className="bg-blue-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${(pipeline.completedStages / pipeline.stages) * 100}%` }}
                 ></div>
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
                 <span>Stage {pipeline.completedStages} of {pipeline.stages}</span>
                 <span>Success Rate: {pipeline.successRate}%</span>
               </div>
@@ -502,20 +501,20 @@ function PipelinesView() {
       </div>
 
       {/* Pipeline Templates */}
-      <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+      <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h2 className="text-lg font-semibold mb-4">Pipeline Templates</h2>
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700/50 cursor-pointer">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-200 dark:hover:bg-gray-700/50 cursor-pointer">
             <h3 className="font-medium mb-2">Node.js Application</h3>
-            <p className="text-sm text-gray-400">Build, test, and deploy Node.js apps</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Build, test, and deploy Node.js apps</p>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700/50 cursor-pointer">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-200 dark:hover:bg-gray-700/50 cursor-pointer">
             <h3 className="font-medium mb-2">Docker Container</h3>
-            <p className="text-sm text-gray-400">Build and push Docker images</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Build and push Docker images</p>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700/50 cursor-pointer">
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-200 dark:hover:bg-gray-700/50 cursor-pointer">
             <h3 className="font-medium mb-2">Kubernetes Deploy</h3>
-            <p className="text-sm text-gray-400">Deploy to Kubernetes clusters</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Deploy to Kubernetes clusters</p>
           </div>
         </div>
       </div>
@@ -614,14 +613,14 @@ function MetricCard({ title, value, trend, icon: Icon, status }: {
   }
 
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+    <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-400">{title}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
           <p className="text-2xl font-bold mt-1">{value}</p>
-          <p className="text-sm text-gray-500 mt-1">{trend}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{trend}</p>
         </div>
-        <Icon className={`w-5 h-5 ${statusColors[status] || 'text-gray-400'}`} />
+        <Icon className={`w-5 h-5 ${statusColors[status] || 'text-gray-600 dark:text-gray-400'}`} />
       </div>
     </div>
   )
@@ -644,15 +643,15 @@ function ActivityItem({ name, branch, status, time, duration }: {
   const StatusIcon = config.icon
 
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded">
+    <div className="flex items-center justify-between p-3 bg-gray-100/50 dark:bg-gray-800/50 rounded">
       <div className="flex items-center gap-3">
         <StatusIcon className={`w-5 h-5 ${config.color}`} />
         <div>
           <p className="font-medium">{name}</p>
-          <p className="text-sm text-gray-400">Branch: {branch} • Duration: {duration}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Branch: {branch} • Duration: {duration}</p>
         </div>
       </div>
-      <span className="text-sm text-gray-500">{time}</span>
+      <span className="text-sm text-gray-500 dark:text-gray-400">{time}</span>
     </div>
   )
 }
@@ -666,9 +665,9 @@ function FrequencyBar({ env, count, percentage }: {
     <div>
       <div className="flex justify-between mb-1">
         <span className="text-sm">{env}</span>
-        <span className="text-sm text-gray-400">{count} deploys</span>
+        <span className="text-sm text-gray-600 dark:text-gray-400">{count} deploys</span>
       </div>
-      <div className="bg-gray-800 rounded-full h-2">
+      <div className="bg-gray-300 dark:bg-gray-800 rounded-full h-2">
         <div 
           className="bg-blue-500 h-2 rounded-full"
           style={{ width: `${percentage}%` }}
@@ -685,12 +684,12 @@ function PerformanceRow({ metric, value, trend }: {
 }) {
   const trendColors = {
     improving: 'text-green-400',
-    stable: 'text-gray-400',
+    stable: 'text-gray-600 dark:text-gray-400',
     declining: 'text-red-400'
   }
 
   return (
-    <div className="flex justify-between p-2 hover:bg-gray-800/50 rounded">
+    <div className="flex justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded">
       <span className="text-sm">{metric}</span>
       <div className="flex items-center gap-2">
         <span className="font-medium">{value}</span>
@@ -708,18 +707,18 @@ function PipelineCard({ name, status, lastRun, successRate }: {
 }) {
   const statusColors = {
     running: 'bg-blue-900/50 text-blue-400',
-    idle: 'bg-gray-800 text-gray-400',
+    idle: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
     queued: 'bg-yellow-900/50 text-yellow-400'
   }
 
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+    <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
       <h3 className="font-medium mb-2">{name}</h3>
       <div className="space-y-2">
         <span className={`text-xs px-2 py-1 rounded ${statusColors[status]}`}>
           {status}
         </span>
-        <p className="text-sm text-gray-400">Last run: {lastRun}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Last run: {lastRun}</p>
         <p className="text-sm">Success rate: {successRate}%</p>
       </div>
     </div>
@@ -733,13 +732,13 @@ function ReleaseItem({ version, date, status, environment }: {
   environment: string
 }) {
   return (
-    <div className="flex justify-between p-3 bg-gray-800/50 rounded">
+    <div className="flex justify-between p-3 bg-gray-100/50 dark:bg-gray-800/50 rounded">
       <div>
         <p className="font-medium">{version}</p>
-        <p className="text-sm text-gray-400">{environment}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{environment}</p>
       </div>
       <div className="text-right">
-        <p className="text-sm text-gray-400">{date}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{date}</p>
         <span className="text-xs px-2 py-1 bg-green-900/50 text-green-400 rounded">
           {status}
         </span>
@@ -754,15 +753,15 @@ function ArtifactItem({ name, size, created }: {
   created: string
 }) {
   return (
-    <div className="flex justify-between p-3 bg-gray-800/50 rounded hover:bg-gray-700/50">
+    <div className="flex justify-between p-3 bg-gray-100/50 dark:bg-gray-800/50 rounded hover:bg-gray-200 dark:hover:bg-gray-700/50">
       <div className="flex items-center gap-3">
-        <Package className="w-5 h-5 text-gray-400" />
+        <Package className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         <div>
           <p className="font-medium">{name}</p>
-          <p className="text-sm text-gray-400">{size}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{size}</p>
         </div>
       </div>
-      <span className="text-sm text-gray-500">{created}</span>
+      <span className="text-sm text-gray-500 dark:text-gray-400">{created}</span>
     </div>
   )
 }
@@ -774,7 +773,7 @@ function DeploymentRow({ env, version, status, deployed }: {
   deployed: string
 }) {
   return (
-    <tr className="border-b border-gray-800/50">
+    <tr className="border-b border-gray-200/50 dark:border-gray-800/50">
       <td className="py-3">{env}</td>
       <td className="py-3 font-mono text-sm">{version}</td>
       <td className="py-3">
@@ -786,7 +785,7 @@ function DeploymentRow({ env, version, status, deployed }: {
           {status}
         </span>
       </td>
-      <td className="py-3 text-gray-400">{deployed}</td>
+      <td className="py-3 text-gray-600 dark:text-gray-400">{deployed}</td>
     </tr>
   )
 }
@@ -798,7 +797,7 @@ function BuildItem({ number, branch, status, time }: {
   time: string
 }) {
   return (
-    <div className="flex justify-between p-3 bg-gray-800/50 rounded">
+    <div className="flex justify-between p-3 bg-gray-100/50 dark:bg-gray-800/50 rounded">
       <div className="flex items-center gap-3">
         {status === 'success' ? (
           <CheckCircle className="w-5 h-5 text-green-400" />
@@ -807,10 +806,10 @@ function BuildItem({ number, branch, status, time }: {
         )}
         <div>
           <p className="font-medium">{number}</p>
-          <p className="text-sm text-gray-400">Branch: {branch}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Branch: {branch}</p>
         </div>
       </div>
-      <span className="text-sm text-gray-500">{time}</span>
+      <span className="text-sm text-gray-500 dark:text-gray-400">{time}</span>
     </div>
   )
 }
@@ -822,12 +821,12 @@ function RepoCard({ name, language, stars, lastCommit }: {
   lastCommit: string
 }) {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+    <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
       <h3 className="font-medium mb-2">{name}</h3>
       <div className="space-y-1 text-sm">
-        <p className="text-gray-400">Language: {language}</p>
-        <p className="text-gray-400">⭐ {stars} stars</p>
-        <p className="text-gray-400">Last commit: {lastCommit}</p>
+        <p className="text-gray-600 dark:text-gray-400">Language: {language}</p>
+        <p className="text-gray-600 dark:text-gray-400">⭐ {stars} stars</p>
+        <p className="text-gray-600 dark:text-gray-400">Last commit: {lastCommit}</p>
       </div>
     </div>
   )

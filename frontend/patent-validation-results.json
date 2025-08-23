@@ -1,0 +1,36 @@
+{
+  "patent1": {
+    "passed": 4,
+    "failed": 0,
+    "features": [
+      {
+        "name": "Correlation Graph Visualization",
+        "status": false
+      },
+      {
+        "name": "What-If Analysis",
+        "status": true
+      }
+    ]
+  },
+  "patent2": {
+    "passed": 0,
+    "failed": 0,
+    "features": [
+      {
+        "name": "Chat Input Interface",
+        "status": true
+      }
+    ]
+  },
+  "patent3": {
+    "passed": 0,
+    "failed": 0,
+    "features": []
+  },
+  "patent4": {
+    "passed": 0,
+    "failed": 0,
+    "features": []
+  }
+}

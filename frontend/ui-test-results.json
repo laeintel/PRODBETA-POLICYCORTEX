@@ -1,0 +1,27 @@
+{
+  "totalTests": 10,
+  "passed": [
+    "Homepage loads successfully",
+    "Navigation menu with 0 links",
+    "Dashboard page loads",
+    "Governance page with 0 cards",
+    "Security page with 2 sections",
+    "AI Chat page with input",
+    "Mobile responsive design",
+    "Performance metrics collected"
+  ],
+  "failed": [
+    {
+      "test": "Theme toggle",
+      "error": "Button not found"
+    },
+    {
+      "test": "Accessibility",
+      "issues": [
+        "1 buttons without accessible text",
+        "3 inputs without labels"
+      ]
+    }
+  ],
+  "timestamp": "2025-08-22T21:39:22.196Z"
+}

@@ -38,20 +38,20 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-md border border-gray-800 rounded-2xl bg-black/60 backdrop-blur-md p-6 shadow-2xl">
+    <main className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-6">
+      <div className="w-full max-w-md border border-gray-300 dark:border-gray-800 rounded-2xl bg-white dark:bg-black/60 backdrop-blur-md p-6 shadow-2xl">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center"><Shield className="w-5 h-5 text-white" /></div>
+          <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-800 flex items-center justify-center"><Shield className="w-5 h-5 text-gray-700 dark:text-white" /></div>
           <div>
-            <h1 className="text-xl font-bold text-white">POLICYCORTEX</h1>
-            <p className="text-xs text-gray-400">Tactical Access Portal</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">POLICYCORTEX</h1>
+            <p className="text-xs text-gray-600 dark:text-gray-400">Tactical Access Portal</p>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 mb-6 text-center">
-          <div className="text-gray-400 text-xs">Zero Trust</div>
-          <div className="text-gray-400 text-xs">MFA Ready</div>
-          <div className="text-gray-400 text-xs">Encrypted</div>
+          <div className="text-gray-600 dark:text-gray-400 text-xs">Zero Trust</div>
+          <div className="text-gray-600 dark:text-gray-400 text-xs">MFA Ready</div>
+          <div className="text-gray-600 dark:text-gray-400 text-xs">Encrypted</div>
         </div>
 
         {error && (
@@ -60,25 +60,25 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-3">
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Email</label>
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-800 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600"
+              className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600"
               placeholder="you@company.com"
               required
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Password</label>
+            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 px-3 py-2 rounded-lg bg-gray-900 border border-gray-800 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600"
+                className="w-full pl-9 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600"
                 placeholder="••••••••"
                 required
               />
@@ -94,9 +94,9 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-4 grid grid-cols-3 gap-2">
-          <button type="button" className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><KeyRound className="w-4 h-4" /> SSO</button>
-          <button type="button" className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Fingerprint className="w-4 h-4" /> Passkey</button>
-          <button type="button" onClick={() => router.push('/dashboard')} className="py-2 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg text-white flex items-center justify-center gap-2"><Cpu className="w-4 h-4" /> Guest</button>
+          <button type="button" className="py-2 text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-white flex items-center justify-center gap-2"><KeyRound className="w-4 h-4" /> SSO</button>
+          <button type="button" className="py-2 text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-white flex items-center justify-center gap-2"><Fingerprint className="w-4 h-4" /> Passkey</button>
+          <button type="button" onClick={() => router.push('/dashboard')} className="py-2 text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-white flex items-center justify-center gap-2"><Cpu className="w-4 h-4" /> Guest</button>
         </div>
 
         <p className="mt-4 text-[10px] text-gray-500">Unauthorized access is prohibited. Activity may be monitored and logged.</p>
