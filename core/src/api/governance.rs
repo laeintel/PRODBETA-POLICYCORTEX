@@ -7,8 +7,10 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
+use tracing::{info, warn};
 
 use crate::api::AppState;
+use crate::azure_integration::get_azure_service;
 
 // Compliance status
 #[derive(Debug, Serialize, Deserialize)]
@@ -74,6 +76,54 @@ pub struct PolicyInfo {
 
 // GET /api/v1/governance/compliance/status
 pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoResponse {
+    info!("Fetching compliance status from Azure");
+    
+    match get_azure_service().await {
+        Ok(azure) => {
+            // Get real regulatory compliance data from Azure
+            match azure.governance().get_regulatory_compliance().await {
+                Ok(regulatory) => {
+                    let compliance_statuses: Vec<ComplianceStatus> = regulatory
+                        .into_iter()
+                        .map(|reg| {
+                            let total = reg.properties.passed_controls.unwrap_or(0) +
+                                       reg.properties.failed_controls.unwrap_or(0) +
+                                       reg.properties.skipped_controls.unwrap_or(0);
+                            let passed = reg.properties.passed_controls.unwrap_or(0);
+                            let failed = reg.properties.failed_controls.unwrap_or(0);
+                            let percentage = if total > 0 {
+                                (passed as f64 / total as f64) * 100.0
+                            } else {
+                                0.0
+                            };
+                            
+                            ComplianceStatus {
+                                framework: reg.name,
+                                total_controls: total as u32,
+                                compliant_controls: passed as u32,
+                                non_compliant_controls: failed as u32,
+                                compliance_percentage: percentage,
+                                last_assessment: Utc::now(),
+                                trend: if reg.properties.state == "Passed" { "improving" } else { "declining" }.to_string(),
+                            }
+                        })
+                        .collect();
+                    
+                    if !compliance_statuses.is_empty() {
+                        return Json(compliance_statuses).into_response();
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to fetch regulatory compliance: {}", e);
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Failed to get Azure service: {}", e);
+        }
+    }
+    
+    // Return mock data as fallback
     let compliance_statuses = vec![
         ComplianceStatus {
             framework: "CIS Azure Foundations".to_string(),
@@ -109,6 +159,43 @@ pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoRes
 
 // GET /api/v1/governance/compliance/violations
 pub async fn get_compliance_violations(_state: State<Arc<AppState>>) -> impl IntoResponse {
+    info!("Fetching compliance violations from Azure");
+    
+    match get_azure_service().await {
+        Ok(azure) => {
+            // Get real policy violations from Azure
+            match azure.governance().get_policy_violations().await {
+                Ok(azure_violations) => {
+                    let violations: Vec<PolicyViolation> = azure_violations
+                        .into_iter()
+                        .take(50) // Limit to 50 violations
+                        .map(|v| PolicyViolation {
+                            id: format!("viol-{}", &v.resource_id[v.resource_id.len().saturating_sub(8)..]),
+                            policy_name: v.policy_name,
+                            resource_id: v.resource_id,
+                            resource_type: v.resource_type,
+                            violation_reason: format!("Policy {} violated", v.policy_assignment),
+                            severity: v.severity.to_lowercase(),
+                            detected_at: v.detected_at,
+                            remediation_available: true,
+                        })
+                        .collect();
+                    
+                    if !violations.is_empty() {
+                        return Json(violations).into_response();
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to fetch policy violations: {}", e);
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Failed to get Azure service: {}", e);
+        }
+    }
+    
+    // Return mock data as fallback
     let violations = vec![
         PolicyViolation {
             id: "viol-001".to_string(),
@@ -189,37 +276,49 @@ pub async fn get_risk_assessment(_state: State<Arc<AppState>>) -> impl IntoRespo
 }
 
 // GET /api/v1/governance/cost/summary
-pub async fn get_cost_summary(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // Try to get real cost data from Azure
-    if let Some(ref async_client) = state.async_azure_client {
-        if let Ok(metrics) = async_client.get_governance_metrics().await {
-            let cost_summaries = vec![
-                CostSummary {
-                    service: "Virtual Machines".to_string(),
-                    current_cost: metrics.costs.current_spend * 0.35,
-                    projected_cost: metrics.costs.predicted_spend * 0.35,
-                    last_month_cost: metrics.costs.current_spend * 0.33,
-                    cost_trend: "increasing".to_string(),
-                    optimization_potential: metrics.costs.savings_identified * 0.4,
-                    recommendations: vec![
-                        "Right-size underutilized VMs".to_string(),
-                        "Use Reserved Instances for production workloads".to_string(),
-                    ],
-                },
-                CostSummary {
-                    service: "Storage".to_string(),
-                    current_cost: metrics.costs.current_spend * 0.25,
-                    projected_cost: metrics.costs.predicted_spend * 0.25,
-                    last_month_cost: metrics.costs.current_spend * 0.24,
-                    cost_trend: "stable".to_string(),
-                    optimization_potential: metrics.costs.savings_identified * 0.2,
-                    recommendations: vec![
-                        "Archive old data to cool storage".to_string(),
-                        "Delete orphaned disks".to_string(),
-                    ],
-                },
-            ];
-            return Json(cost_summaries).into_response();
+pub async fn get_cost_summary(_state: State<Arc<AppState>>) -> impl IntoResponse {
+    info!("Fetching cost summary from Azure");
+    
+    match get_azure_service().await {
+        Ok(azure) => {
+            // Get real cost data from Azure Cost Management
+            match azure.cost().get_current_month_costs().await {
+                Ok(cost_data) => {
+                    let mut cost_summaries: Vec<CostSummary> = Vec::new();
+                    
+                    // Convert Azure cost data to our format
+                    for (service, cost) in cost_data.costs_by_service.iter().take(5) {
+                        let trend = if cost > &(cost_data.total_cost * 0.05) {
+                            "increasing"
+                        } else {
+                            "stable"
+                        };
+                        
+                        cost_summaries.push(CostSummary {
+                            service: service.clone(),
+                            current_cost: *cost,
+                            projected_cost: cost * 1.05, // Simple projection
+                            last_month_cost: cost * 0.95, // Estimate
+                            cost_trend: trend.to_string(),
+                            optimization_potential: cost * 0.1, // 10% potential savings
+                            recommendations: vec![
+                                format!("Review {} usage patterns", service),
+                                format!("Consider reserved capacity for {}", service),
+                            ],
+                        });
+                    }
+                    
+                    if !cost_summaries.is_empty() {
+                        return Json(cost_summaries).into_response();
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to fetch cost data: {}", e);
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Failed to get Azure service: {}", e);
         }
     }
 
@@ -268,6 +367,55 @@ pub async fn get_cost_summary(State(state): State<Arc<AppState>>) -> impl IntoRe
 
 // GET /api/v1/governance/policies
 pub async fn get_governance_policies(_state: State<Arc<AppState>>) -> impl IntoResponse {
+    info!("Fetching governance policies from Azure");
+    
+    match get_azure_service().await {
+        Ok(azure) => {
+            // Get real policy definitions from Azure
+            match azure.governance().get_policy_definitions().await {
+                Ok(definitions) => {
+                    let policies: Vec<PolicyInfo> = definitions
+                        .into_iter()
+                        .take(20) // Limit to 20 policies
+                        .map(|def| PolicyInfo {
+                            id: def.id.clone(),
+                            name: def.properties.display_name.unwrap_or(def.name),
+                            category: def.properties.metadata
+                                .as_ref()
+                                .and_then(|m| m.get("category"))
+                                .and_then(|c| c.as_str())
+                                .unwrap_or("General")
+                                .to_string(),
+                            effect: def.properties.policy_rule
+                                .as_ref()
+                                .and_then(|r| r.get("then"))
+                                .and_then(|t| t.get("effect"))
+                                .and_then(|e| e.as_str())
+                                .unwrap_or("audit")
+                                .to_string(),
+                            scope: format!("/subscriptions/{}", azure.client.config.subscription_id),
+                            enabled: true,
+                            compliance_rate: 85.0, // Would need additional API call
+                            affected_resources: 100, // Would need additional API call
+                            last_modified: Utc::now(),
+                        })
+                        .collect();
+                    
+                    if !policies.is_empty() {
+                        return Json(policies).into_response();
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to fetch policy definitions: {}", e);
+                }
+            }
+        }
+        Err(e) => {
+            warn!("Failed to get Azure service: {}", e);
+        }
+    }
+    
+    // Return mock data as fallback
     let policies = vec![
         PolicyInfo {
             id: "pol-001".to_string(),

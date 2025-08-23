@@ -36,6 +36,7 @@ mod auth;
 mod auth_middleware;
 mod azure_client;
 mod azure_client_async;
+mod azure_integration; // Azure live data integration
 mod cache;
 mod change_management;
 mod checkpoint;
@@ -360,6 +361,7 @@ async fn main() {
         // Health check
         .route("/health", get(health_check))
         .route("/api/v1/health", get(health_check))
+        .route("/api/v1/health/azure", get(api::health::azure_health_check))
         .route("/api/v1/config", get(get_config))
         .route("/api/v1/secrets/status", get(get_secrets_status))
         .route("/api/v1/roadmap", get(get_roadmap_status))
