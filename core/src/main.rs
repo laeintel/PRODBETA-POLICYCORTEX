@@ -84,6 +84,24 @@ use api::{
     // Correlation functions
     get_correlations, analyze_correlations, what_if_analysis,
     get_real_time_insights, get_correlation_graph,
+    // Dashboard functions
+    get_dashboard_metrics, get_dashboard_alerts, get_dashboard_activities,
+    // Governance functions
+    get_compliance_status, get_compliance_violations, get_risk_assessment,
+    get_cost_summary, get_governance_policies,
+    // Security navigation functions
+    get_iam_users, get_rbac_roles, get_pim_requests,
+    get_conditional_access_policies, get_zero_trust_status,
+    get_entitlements, get_access_reviews,
+    // Operations functions
+    get_operations_resources, get_monitoring_metrics, get_automation_workflows,
+    get_notifications, get_operations_alerts,
+    // DevOps functions
+    get_pipelines, get_releases, get_artifacts,
+    get_deployments, get_builds, get_repos,
+    // AI navigation functions
+    get_predictive_compliance, get_ai_correlations, handle_ai_chat,
+    get_unified_metrics,
 };
 use azure_client::AzureClient;
 use azure_client_async::AsyncAzureClient;
@@ -431,6 +449,42 @@ async fn main() {
         // Exceptions management
         .route("/api/v1/exceptions", get(api::list_exceptions))
         .route("/api/v1/exceptions/expire", post(api::expire_exceptions))
+        // Dashboard APIs
+        .route("/api/v1/dashboard/metrics", get(get_dashboard_metrics))
+        .route("/api/v1/dashboard/alerts", get(get_dashboard_alerts))
+        .route("/api/v1/dashboard/activities", get(get_dashboard_activities))
+        // Governance APIs
+        .route("/api/v1/governance/compliance/status", get(get_compliance_status))
+        .route("/api/v1/governance/compliance/violations", get(get_compliance_violations))
+        .route("/api/v1/governance/risk/assessment", get(get_risk_assessment))
+        .route("/api/v1/governance/cost/summary", get(get_cost_summary))
+        .route("/api/v1/governance/policies", get(get_governance_policies))
+        // Security Navigation APIs
+        .route("/api/v1/security/iam/users", get(get_iam_users))
+        .route("/api/v1/security/rbac/roles", get(get_rbac_roles))
+        .route("/api/v1/security/pim/requests", get(get_pim_requests))
+        .route("/api/v1/security/conditional-access/policies", get(get_conditional_access_policies))
+        .route("/api/v1/security/zero-trust/status", get(get_zero_trust_status))
+        .route("/api/v1/security/entitlements", get(get_entitlements))
+        .route("/api/v1/security/access-reviews", get(get_access_reviews))
+        // Operations APIs
+        .route("/api/v1/operations/resources", get(get_operations_resources))
+        .route("/api/v1/operations/monitoring/metrics", get(get_monitoring_metrics))
+        .route("/api/v1/operations/automation/workflows", get(get_automation_workflows))
+        .route("/api/v1/operations/notifications", get(get_notifications))
+        .route("/api/v1/operations/alerts", get(get_operations_alerts))
+        // DevOps APIs
+        .route("/api/v1/devops/pipelines", get(get_pipelines))
+        .route("/api/v1/devops/releases", get(get_releases))
+        .route("/api/v1/devops/artifacts", get(get_artifacts))
+        .route("/api/v1/devops/deployments", get(get_deployments))
+        .route("/api/v1/devops/builds", get(get_builds))
+        .route("/api/v1/devops/repos", get(get_repos))
+        // AI Navigation APIs
+        .route("/api/v1/ai/predictive/compliance", get(get_predictive_compliance))
+        .route("/api/v1/ai/correlations", get(get_ai_correlations))
+        .route("/api/v1/ai/chat", post(handle_ai_chat))
+        .route("/api/v1/ai/unified/metrics", get(get_unified_metrics))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         .layer(

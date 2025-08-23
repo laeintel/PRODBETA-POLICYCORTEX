@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-md border border-gray-300 dark:border-gray-800 rounded-2xl bg-white dark:bg-black/60 backdrop-blur-md p-6 shadow-2xl">
+      <div className="w-full max-w-md border border-gray-300 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900/90 backdrop-blur-md p-6 shadow-2xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-800 flex items-center justify-center"><Shield className="w-5 h-5 text-gray-700 dark:text-white" /></div>
           <div>

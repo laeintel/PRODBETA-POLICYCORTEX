@@ -48,6 +48,7 @@ import {
   PolarRadiusAxis,
   Radar
 } from 'recharts';
+import CloudIntegrationStatus from '@/components/CloudIntegrationStatus';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/useToast';
 
@@ -677,6 +678,9 @@ export default function DashboardPage(): JSX.Element {
           </div>
         </div>
       </div>
+
+      {/* Cloud Integration Status */}
+      <CloudIntegrationStatus />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -6,37 +6,146 @@ import Link from 'next/link'
 import { 
   Shield, AlertTriangle, DollarSign, FileCheck, 
   TrendingUp, TrendingDown, CheckCircle, XCircle,
-  ArrowRight, BarChart3, AlertCircle, FileText
+  ArrowRight, BarChart3, AlertCircle, FileText,
+  ChevronRight, ExternalLink, Activity, Clock,
+  Building, Scale, ShieldCheck, Target, Info,
+  ArrowLeft, Users, Briefcase, Zap
 } from 'lucide-react'
+
+interface GovernanceCard {
+  id: string
+  title: string
+  description: string
+  icon: any
+  href: string
+  color: string
+  stats?: {
+    label: string
+    value: string | number
+    trend?: 'up' | 'down' | 'stable'
+    status?: 'good' | 'warning' | 'critical'
+  }[]
+  quickActions?: {
+    label: string
+    href: string
+  }[]
+}
 
 export default function GovernanceHub() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('overview')
+  const [expandedCard, setExpandedCard] = useState<string | null>(null)
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['overview','compliance','risk','cost'].includes(tab)) {
+    if (tab && ['overview','compliance','risk','cost','policies'].includes(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'compliance', label: 'Policies & Compliance', icon: FileCheck },
+    { id: 'compliance', label: 'Compliance', icon: FileCheck },
     { id: 'risk', label: 'Risk Management', icon: AlertTriangle },
-    { id: 'cost', label: 'Cost Optimization', icon: DollarSign }
+    { id: 'cost', label: 'Cost Optimization', icon: DollarSign },
+    { id: 'policies', label: 'Policy Management', icon: Shield }
+  ]
+
+  const governanceCards: GovernanceCard[] = [
+    {
+      id: 'compliance',
+      title: 'Compliance Management',
+      description: 'Track and manage regulatory compliance across all cloud resources',
+      icon: FileCheck,
+      href: '/governance/compliance',
+      color: 'blue',
+      stats: [
+        { label: 'Overall Score', value: '94%', trend: 'up', status: 'good' },
+        { label: 'Active Policies', value: 127 },
+        { label: 'Violations', value: 3, status: 'warning' }
+      ],
+      quickActions: [
+        { label: 'Run Compliance Check', href: '/governance/compliance' },
+        { label: 'View Reports', href: '/governance/compliance#reports' }
+      ]
+    },
+    {
+      id: 'risk',
+      title: 'Risk Management',
+      description: 'Identify, assess, and mitigate risks across your infrastructure',
+      icon: AlertTriangle,
+      href: '/governance/risk',
+      color: 'orange',
+      stats: [
+        { label: 'Risk Score', value: 'Low', status: 'good' },
+        { label: 'Active Risks', value: 12, trend: 'down' },
+        { label: 'Critical', value: 0, status: 'good' }
+      ],
+      quickActions: [
+        { label: 'Risk Assessment', href: '/governance/risk#assessment' },
+        { label: 'Mitigation Plans', href: '/governance/risk#mitigation' }
+      ]
+    },
+    {
+      id: 'cost',
+      title: 'Cost Optimization',
+      description: 'Monitor spending, identify savings, and optimize cloud costs',
+      icon: DollarSign,
+      href: '/governance/cost',
+      color: 'green',
+      stats: [
+        { label: 'Monthly Spend', value: '$42,341', trend: 'down', status: 'good' },
+        { label: 'Budget', value: '$50,000' },
+        { label: 'Savings', value: '$4,523', trend: 'up' }
+      ],
+      quickActions: [
+        { label: 'Cost Analysis', href: '/governance/cost#analysis' },
+        { label: 'Recommendations', href: '/governance/cost#recommendations' }
+      ]
+    },
+    {
+      id: 'policies',
+      title: 'Policy Management',
+      description: 'Define, enforce, and audit governance policies',
+      icon: Shield,
+      href: '/governance/policies',
+      color: 'purple',
+      stats: [
+        { label: 'Total Policies', value: 234 },
+        { label: 'Enforced', value: 198, status: 'good' },
+        { label: 'Pending Review', value: 12, status: 'warning' }
+      ],
+      quickActions: [
+        { label: 'Create Policy', href: '/governance/policies#create' },
+        { label: 'Policy Library', href: '/governance/policies#library' }
+      ]
+    }
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       {/* Header */}
       <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold">Governance Hub</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Unified policies, compliance, risk management, and cost optimization
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold flex items-center space-x-3">
+                <Shield className="w-8 h-8 text-blue-500" />
+                <span>Governance Hub</span>
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Unified policies, compliance, risk management, and cost optimization
+              </p>
+            </div>
+            <button
+              onClick={() => router.push('/tactical')}
+              className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Command Center</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -71,48 +180,126 @@ export default function GovernanceHub() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {activeTab === 'overview' && <GovernanceOverview />}
-        {activeTab === 'compliance' && <ComplianceView />}
-        {activeTab === 'risk' && <RiskView />}
-        {activeTab === 'cost' && <CostView />}
+        {activeTab === 'overview' && <GovernanceOverview cards={governanceCards} router={router} />}
+        {activeTab === 'compliance' && <ComplianceView router={router} />}
+        {activeTab === 'risk' && <RiskView router={router} />}
+        {activeTab === 'cost' && <CostView router={router} />}
+        {activeTab === 'policies' && <PolicyView router={router} />}
       </div>
     </div>
   )
 }
 
-function GovernanceOverview() {
+function GovernanceOverview({ cards, router }: { cards: GovernanceCard[], router: any }) {
   return (
     <div className="space-y-6">
-      {/* Key Metrics */}
+      {/* Key Metrics - Clickable */}
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard
-          title="Overall Compliance"
-          value="94%"
-          trend="+2%"
-          status="good"
-          icon={CheckCircle}
-        />
-        <MetricCard
-          title="Active Policies"
-          value="127"
-          trend="+5"
-          status="neutral"
-          icon={FileText}
-        />
-        <MetricCard
-          title="Risk Score"
-          value="Medium"
-          trend="Stable"
-          status="warning"
-          icon={AlertTriangle}
-        />
-        <MetricCard
-          title="Monthly Savings"
-          value="$45K"
-          trend="+12%"
-          status="good"
-          icon={DollarSign}
-        />
+        <div onClick={() => router.push('/governance/compliance')} className="cursor-pointer hover:shadow-lg transition-all">
+          <MetricCard
+            title="Overall Compliance"
+            value="94%"
+            trend="+2%"
+            status="good"
+            icon={CheckCircle}
+          />
+        </div>
+        <div onClick={() => router.push('/governance/policies')} className="cursor-pointer hover:shadow-lg transition-all">
+          <MetricCard
+            title="Active Policies"
+            value="127"
+            trend="+5"
+            status="neutral"
+            icon={FileText}
+          />
+        </div>
+        <div onClick={() => router.push('/governance/risk')} className="cursor-pointer hover:shadow-lg transition-all">
+          <MetricCard
+            title="Risk Score"
+            value="Medium"
+            trend="Stable"
+            status="warning"
+            icon={AlertTriangle}
+          />
+        </div>
+        <div onClick={() => router.push('/governance/cost')} className="cursor-pointer hover:shadow-lg transition-all">
+          <MetricCard
+            title="Monthly Savings"
+            value="$45K"
+            trend="+12%"
+            status="good"
+            icon={DollarSign}
+          />
+        </div>
+      </div>
+
+      {/* Main Dashboard Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {cards.map((card) => {
+          const Icon = card.icon
+          return (
+            <div
+              key={card.id}
+              className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-xl transition-all"
+            >
+              <div
+                className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                onClick={() => router.push(card.href)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-lg bg-${card.color}-500/10`}>
+                      <Icon className={`w-6 h-6 text-${card.color}-500`} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{card.title}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {card.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                </div>
+
+                {/* Stats */}
+                {card.stats && (
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    {card.stats.map((stat, idx) => (
+                      <div key={idx} className="text-center">
+                        <div className="text-lg font-bold flex items-center justify-center space-x-1">
+                          <span className={stat.status === 'warning' ? 'text-yellow-500' : stat.status === 'critical' ? 'text-red-500' : ''}>
+                            {stat.value}
+                          </span>
+                          {stat.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
+                          {stat.trend === 'down' && <TrendingDown className="w-3 h-3 text-green-500" />}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quick Actions */}
+                {card.quickActions && (
+                  <div className="flex space-x-2">
+                    {card.quickActions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(action.href)
+                        }}
+                        className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Quick Actions */}
@@ -137,35 +324,55 @@ function GovernanceOverview() {
         />
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Governance Activity</h2>
-        <div className="space-y-3">
-          <ActivityItem
-            title="Policy Updated"
-            description="Data retention policy modified for GDPR compliance"
-            time="2 hours ago"
-            type="policy"
-          />
-          <ActivityItem
-            title="Risk Detected"
-            description="Elevated permissions on production resources"
-            time="5 hours ago"
-            type="risk"
-          />
-          <ActivityItem
-            title="Cost Alert"
-            description="Unexpected spike in compute costs (+$3K)"
-            time="1 day ago"
-            type="cost"
-          />
+      {/* Recent Activity - Clickable */}
+      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
+        <div 
+          className="p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+          onClick={() => router.push('/audit')}
+        >
+          <h2 className="text-lg font-semibold flex items-center justify-between">
+            <span>Recent Governance Activity</span>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </h2>
+        </div>
+        <div className="p-6 space-y-3">
+          <div onClick={() => router.push('/governance/policies')} className="cursor-pointer">
+            <ActivityItem
+              title="Policy Updated"
+              description="Data retention policy modified for GDPR compliance"
+              time="2 hours ago"
+              type="policy"
+            />
+          </div>
+          <div onClick={() => router.push('/governance/risk')} className="cursor-pointer">
+            <ActivityItem
+              title="Risk Detected"
+              description="Elevated permissions on production resources"
+              time="5 hours ago"
+              type="risk"
+            />
+          </div>
+          <div onClick={() => router.push('/governance/cost')} className="cursor-pointer">
+            <ActivityItem
+              title="Cost Alert"
+              description="Unexpected spike in compute costs (+$3K)"
+              time="1 day ago"
+              type="cost"
+            />
+          </div>
+          <button
+            onClick={() => router.push('/audit')}
+            className="w-full mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm"
+          >
+            View All Activities
+          </button>
         </div>
       </div>
     </div>
   )
 }
 
-function ComplianceView() {
+function ComplianceView({ router }: { router: any }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
@@ -203,18 +410,21 @@ function ComplianceView() {
             resource="prod-db-01"
             severity="high"
             age="2 days"
+            router={router}
           />
           <ViolationItem
             policy="Access Control"
             resource="staging-api"
             severity="medium"
             age="5 days"
+            router={router}
           />
           <ViolationItem
             policy="Backup Policy"
             resource="analytics-cluster"
             severity="low"
             age="1 week"
+            router={router}
           />
         </div>
       </div>
@@ -222,7 +432,7 @@ function ComplianceView() {
   )
 }
 
-function RiskView() {
+function RiskView({ router }: { router: any }) {
   return (
     <div className="space-y-6">
       {/* Risk Matrix */}
@@ -278,7 +488,7 @@ function RiskView() {
   )
 }
 
-function CostView() {
+function CostView({ router }: { router: any }) {
   return (
     <div className="space-y-6">
       {/* Cost Summary */}
@@ -322,26 +532,147 @@ function CostView() {
             savings="$12K/mo"
             effort="Low"
             impact="High"
+            router={router}
           />
           <OpportunityItem
             title="Purchase reserved instances"
             savings="$8K/mo"
             effort="Medium"
             impact="High"
+            router={router}
           />
           <OpportunityItem
             title="Delete unattached disks"
             savings="$3K/mo"
             effort="Low"
             impact="Medium"
+            router={router}
           />
           <OpportunityItem
             title="Optimize data transfer costs"
             savings="$5K/mo"
             effort="High"
             impact="Medium"
+            router={router}
           />
         </div>
+      </div>
+    </div>
+  )
+}
+
+function PolicyView({ router }: { router: any }) {
+  return (
+    <div className="space-y-6">
+      {/* Policy Summary */}
+      <div className="grid grid-cols-4 gap-4">
+        <MetricCard
+          title="Total Policies"
+          value="234"
+          trend="+12"
+          status="neutral"
+          icon={Shield}
+        />
+        <MetricCard
+          title="Enforced"
+          value="198"
+          trend="85%"
+          status="good"
+          icon={ShieldCheck}
+        />
+        <MetricCard
+          title="Pending Review"
+          value="12"
+          trend="-3"
+          status="warning"
+          icon={Clock}
+        />
+        <MetricCard
+          title="Violations Today"
+          value="3"
+          trend="-2"
+          status="good"
+          icon={AlertCircle}
+        />
+      </div>
+
+      {/* Policy Categories */}
+      <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
+        <h2 className="text-lg font-semibold mb-4">Policy Categories</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div 
+            onClick={() => router.push('/governance/policies#security')}
+            className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-blue-500 transition-all cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium">Security Policies</h3>
+              <Shield className="w-5 h-5 text-blue-500" />
+            </div>
+            <div className="text-2xl font-bold">89</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">12 require attention</div>
+          </div>
+          <div 
+            onClick={() => router.push('/governance/policies#compliance')}
+            className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-green-500 transition-all cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium">Compliance Policies</h3>
+              <FileCheck className="w-5 h-5 text-green-500" />
+            </div>
+            <div className="text-2xl font-bold">67</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">All active</div>
+          </div>
+          <div 
+            onClick={() => router.push('/governance/policies#operational')}
+            className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-purple-500 transition-all cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium">Operational Policies</h3>
+              <Activity className="w-5 h-5 text-purple-500" />
+            </div>
+            <div className="text-2xl font-bold">45</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">3 pending review</div>
+          </div>
+          <div 
+            onClick={() => router.push('/governance/policies#cost')}
+            className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md hover:border-yellow-500 transition-all cursor-pointer"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium">Cost Management</h3>
+              <DollarSign className="w-5 h-5 text-yellow-500" />
+            </div>
+            <div className="text-2xl font-bold">33</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">5 optimizations available</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-3 gap-4">
+        <button
+          onClick={() => router.push('/governance/policies#create')}
+          className="p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-center"
+        >
+          <Zap className="w-6 h-6 mx-auto mb-2" />
+          <div className="font-medium">Create New Policy</div>
+          <div className="text-sm opacity-90 mt-1">Define custom governance rules</div>
+        </button>
+        <button
+          onClick={() => router.push('/governance/policies#library')}
+          className="p-4 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-center"
+        >
+          <Building className="w-6 h-6 mx-auto mb-2" />
+          <div className="font-medium">Policy Library</div>
+          <div className="text-sm opacity-90 mt-1">Browse pre-built templates</div>
+        </button>
+        <button
+          onClick={() => router.push('/governance/policies#audit')}
+          className="p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-center"
+        >
+          <FileText className="w-6 h-6 mx-auto mb-2" />
+          <div className="font-medium">Audit Reports</div>
+          <div className="text-sm opacity-90 mt-1">View compliance history</div>
+        </button>
       </div>
     </div>
   )
@@ -470,11 +801,12 @@ function PolicyItem({ name, status, violations }: {
   )
 }
 
-function ViolationItem({ policy, resource, severity, age }: {
+function ViolationItem({ policy, resource, severity, age, router }: {
   policy: string
   resource: string
   severity: 'high' | 'medium' | 'low'
   age: string
+  router: any
 }) {
   const severityColors = {
     high: 'text-red-400',
@@ -494,7 +826,11 @@ function ViolationItem({ policy, resource, severity, age }: {
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm text-gray-600 dark:text-gray-400">{age}</span>
-        <button type="button" className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded">
+        <button 
+          type="button" 
+          onClick={() => router.push('/governance/compliance#remediation')}
+          className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded"
+        >
           Remediate
         </button>
       </div>
@@ -542,11 +878,12 @@ function RiskItem({ title, impact, likelihood, mitigation }: {
   )
 }
 
-function OpportunityItem({ title, savings, effort, impact }: {
+function OpportunityItem({ title, savings, effort, impact, router }: {
   title: string
   savings: string
   effort: 'Low' | 'Medium' | 'High'
   impact: string
+  router: any
 }) {
   const effortColors = {
     Low: 'text-green-400',
@@ -565,7 +902,11 @@ function OpportunityItem({ title, savings, effort, impact }: {
       </div>
       <div className="text-right">
         <p className="text-lg font-bold text-green-400">{savings}</p>
-        <button type="button" className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded mt-1">
+        <button 
+          type="button"
+          onClick={() => router.push('/governance/cost#implement')}
+          className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded mt-1"
+        >
           Implement
         </button>
       </div>

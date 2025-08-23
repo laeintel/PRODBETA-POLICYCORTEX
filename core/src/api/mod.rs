@@ -12,6 +12,12 @@ pub mod conversation;
 pub mod correlations;
 pub mod remediation;
 pub mod ml;
+pub mod dashboard;
+pub mod governance;
+pub mod security_nav;
+pub mod operations;
+pub mod devops;
+pub mod ai_nav;
 
 // Re-export resource API functions
 pub use resources::{
@@ -33,6 +39,42 @@ pub use conversation::{
 pub use correlations::{
     get_correlations, analyze_correlations, what_if_analysis, 
     get_real_time_insights, get_correlation_graph
+};
+
+// Re-export dashboard API functions
+pub use dashboard::{
+    get_dashboard_metrics, get_dashboard_alerts, get_dashboard_activities
+};
+
+// Re-export governance API functions
+pub use governance::{
+    get_compliance_status, get_compliance_violations, get_risk_assessment,
+    get_cost_summary, get_governance_policies
+};
+
+// Re-export security navigation API functions
+pub use security_nav::{
+    get_iam_users, get_rbac_roles, get_pim_requests,
+    get_conditional_access_policies, get_zero_trust_status,
+    get_entitlements, get_access_reviews
+};
+
+// Re-export operations API functions
+pub use operations::{
+    get_operations_resources, get_monitoring_metrics, get_automation_workflows,
+    get_notifications, get_operations_alerts
+};
+
+// Re-export devops API functions
+pub use devops::{
+    get_pipelines, get_releases, get_artifacts,
+    get_deployments, get_builds, get_repos
+};
+
+// Re-export AI navigation API functions
+pub use ai_nav::{
+    get_predictive_compliance, get_ai_correlations, handle_ai_chat,
+    get_unified_metrics
 };
 
 use crate::auth::{AuthUser, OptionalAuthUser, TenantContext, TokenValidator};
