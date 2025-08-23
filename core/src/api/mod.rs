@@ -19,6 +19,7 @@ pub mod operations;
 pub mod devops;
 pub mod ai_nav;
 pub mod health; // Health check endpoints
+pub mod itsm; // IT Service Management module
 
 // Re-export resource API functions
 pub use resources::{

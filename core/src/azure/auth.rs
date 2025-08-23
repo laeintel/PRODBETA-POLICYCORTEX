@@ -5,7 +5,7 @@ use anyhow::{Result, Context};
 use azure_core::auth::{AccessToken, TokenCredential};
 use azure_identity::{
     DefaultAzureCredential, DefaultAzureCredentialBuilder,
-    ClientSecretCredential, ManagedIdentityCredential,
+    ClientSecretCredential,
 };
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
