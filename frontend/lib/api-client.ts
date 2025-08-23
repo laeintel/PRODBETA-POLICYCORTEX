@@ -1,347 +1,200 @@
-// API Client for PolicyCortex Backend Services
-import { getApiUrl } from './api-config'
-import { useState, useEffect } from 'react'
+// API Client for PolicyCortex - Connects to Live Azure Data
 
-const GRAPHQL_URL =
-  process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ||
-  process.env.NEXT_PUBLIC_GRAPHQL_URL ||
-  'http://localhost:4000/graphql'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  status: number;
-}
-
-class PolicyCortexAPI {
-  private headers: HeadersInit
+class ApiClient {
+  private baseUrl: string;
+  private cache: Map<string, { data: any; timestamp: number }>;
+  private cacheTimeout: number = 30000; // 30 seconds
 
   constructor() {
-    this.headers = { 'Content-Type': 'application/json' }
+    this.baseUrl = API_BASE_URL;
+    this.cache = new Map();
   }
 
-  public async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  private async fetchWithCache(url: string): Promise<any> {
+    const cached = this.cache.get(url);
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      return cached.data;
+    }
+
     try {
-      // Compose absolute API URL respecting rewrites and NEXT_PUBLIC_API_URL
-      const url = getApiUrl(endpoint)
-
-      // Attach bearer token if present (AAD/OIDC flow stores token client-side)
-      const token =
-        (typeof window !== 'undefined' && localStorage.getItem('pcx_token')) || undefined
-
-      const response = await fetch(url, {
-        ...options,
-        credentials: 'include',
+      const response = await fetch(`${this.baseUrl}${url}`, {
         headers: {
-          ...this.headers,
-          ...options.headers,
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'Content-Type': 'application/json',
         },
-      })
+      });
 
-      const data = response.ok ? await response.json() : null
-
-      return {
-        data,
-        error: response.ok ? undefined : `Error: ${response.statusText}`,
-        status: response.status,
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
       }
+
+      const data = await response.json();
+      this.cache.set(url, { data, timestamp: Date.now() });
+      return data;
     } catch (error) {
-      return {
-        error: error instanceof Error ? error.message : 'Network error',
-        status: 0,
+      console.error(`Failed to fetch ${url}:`, error);
+      // Return cached data if available, even if expired
+      if (cached) {
+        return cached.data;
       }
+      throw error;
     }
   }
 
-  // Compliance APIs
-  async getComplianceStatus() {
-    return this.request<any>('/api/v1/compliance');
+  // Dashboard APIs
+  async getDashboardMetrics() {
+    return this.fetchWithCache('/api/v1/dashboard/metrics');
   }
 
-  async runComplianceScan() {
-    return this.request<any>('/api/v1/compliance/scan', {
-      method: 'POST',
-    });
+  async getDashboardAlerts() {
+    return this.fetchWithCache('/api/v1/dashboard/alerts');
+  }
+
+  async getDashboardActivities() {
+    return this.fetchWithCache('/api/v1/dashboard/activities');
+  }
+
+  // Governance APIs
+  async getComplianceStatus() {
+    return this.fetchWithCache('/api/v1/governance/compliance/status');
   }
 
   async getComplianceViolations() {
-    return this.request<any>('/api/v1/compliance/violations');
+    return this.fetchWithCache('/api/v1/governance/compliance/violations');
+  }
+
+  async getRiskAssessment() {
+    return this.fetchWithCache('/api/v1/governance/risk/assessment');
+  }
+
+  async getCostSummary() {
+    return this.fetchWithCache('/api/v1/governance/cost/summary');
+  }
+
+  async getPolicies() {
+    return this.fetchWithCache('/api/v1/governance/policies');
   }
 
   // Security APIs
-  async getSecurityThreats() {
-    return this.request<any>('/api/v1/security/threats');
+  async getIAMUsers() {
+    return this.fetchWithCache('/api/v1/security/iam/users');
   }
 
-  async mitigateThreat(threatId: string) {
-    return this.request<any>(`/api/v1/security/threats/${threatId}/mitigate`, {
-      method: 'POST',
-    });
+  async getRBACRoles() {
+    return this.fetchWithCache('/api/v1/security/rbac/roles');
   }
 
-  async getSecurityAlerts() {
-    return this.request<any>('/api/v1/security/alerts');
+  async getPIMRequests() {
+    return this.fetchWithCache('/api/v1/security/pim/requests');
   }
 
-  // Resource APIs
-  async getResources(filters?: any) {
-    const params = new URLSearchParams(filters).toString();
-    return this.request<any>(`/api/v1/resources${params ? `?${params}` : ''}`);
+  async getConditionalAccessPolicies() {
+    return this.fetchWithCache('/api/v1/security/conditional-access/policies');
   }
 
-  async getResourceDetails(resourceId: string) {
-    // Prefer v2 resource details if available; Next.js proxy/mocks handle fallback
-    return this.request<any>(`/api/v2/resources/${resourceId}`);
+  async getZeroTrustStatus() {
+    return this.fetchWithCache('/api/v1/security/zero-trust/status');
   }
 
-  async getResourceMetrics(resourceId: string) {
-    return this.request<any>(`/api/v1/resources/${resourceId}/metrics`);
+  async getEntitlements() {
+    return this.fetchWithCache('/api/v1/security/entitlements');
   }
 
-  // Cost APIs
-  async getCostAnalysis() {
-    return this.request<any>('/api/v1/cost/analysis');
+  async getAccessReviews() {
+    return this.fetchWithCache('/api/v1/security/access-reviews');
   }
 
-  async getCostForecast() {
-    return this.request<any>('/api/v1/cost/forecast');
+  // Operations APIs
+  async getResources() {
+    return this.fetchWithCache('/api/v1/operations/resources');
   }
 
-  async getCostRecommendations() {
-    return this.request<any>('/api/v1/cost/recommendations');
+  async getMonitoringMetrics() {
+    return this.fetchWithCache('/api/v1/operations/monitoring/metrics');
   }
 
-  // AI/ML APIs
-  async getAIPredictions() {
-    return this.request<any>('/api/v1/predictions');
+  async getAutomationWorkflows() {
+    return this.fetchWithCache('/api/v1/operations/automation/workflows');
+  }
+
+  async getNotifications() {
+    return this.fetchWithCache('/api/v1/operations/notifications');
+  }
+
+  async getAlerts() {
+    return this.fetchWithCache('/api/v1/operations/alerts');
+  }
+
+  // DevOps APIs
+  async getPipelines() {
+    return this.fetchWithCache('/api/v1/devops/pipelines');
+  }
+
+  async getReleases() {
+    return this.fetchWithCache('/api/v1/devops/releases');
+  }
+
+  async getArtifacts() {
+    return this.fetchWithCache('/api/v1/devops/artifacts');
+  }
+
+  async getDeployments() {
+    return this.fetchWithCache('/api/v1/devops/deployments');
+  }
+
+  async getBuilds() {
+    return this.fetchWithCache('/api/v1/devops/builds');
+  }
+
+  async getRepos() {
+    return this.fetchWithCache('/api/v1/devops/repos');
+  }
+
+  // AI APIs
+  async getPredictiveCompliance() {
+    return this.fetchWithCache('/api/v1/ai/predictive/compliance');
   }
 
   async getCorrelations() {
-    return this.request<any>('/api/v1/correlations')
+    return this.fetchWithCache('/api/v1/ai/correlations');
   }
 
-  async getRbacDeep() {
-    return this.request<any>('/api/v1/rbac/deep')
-  }
-
-  async getCostsDeep() {
-    return this.request<any>('/api/v1/costs/deep')
-  }
-
-  async askAI(query: string) {
-    return this.request<any>('/api/v1/conversation', {
+  async sendChatMessage(message: string) {
+    const response = await fetch(`${this.baseUrl}/api/v1/ai/chat`, {
       method: 'POST',
-      body: JSON.stringify({ query }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message }),
     });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    return response.json();
   }
 
-  // Metrics APIs
   async getUnifiedMetrics() {
-    return this.request<any>('/api/v1/metrics');
+    return this.fetchWithCache('/api/v1/ai/unified/metrics');
   }
 
-  async getHealthStatus() {
-    return this.request<any>('/health');
+  // Health check
+  async checkAzureHealth() {
+    return this.fetchWithCache('/api/v1/health/azure');
   }
 
-  // Server health (versioned)
-  async getServerHealth() {
-    return this.request<any>('/api/v1/health')
-  }
-
-  // Policy APIs
-  async getPolicies() {
-    return this.request<any>('/api/v1/policies');
-  }
-
-  async getPolicyDetails(policyId: string) {
-    return this.request<any>(`/api/v1/policies/${policyId}`);
-  }
-
-  async getPoliciesDeep() {
-    return this.request<any>('/api/v1/policies/deep')
-  }
-
-  // Performance & Monitoring
-  async getPerformance() {
-    return this.request<any>('/api/v1/performance')
-  }
-
-  async getMonitoring() {
-    return this.request<any>('/api/v1/monitoring')
-  }
-
-  // Security Operations Center (mock/proxy)
-  async getSOCData() {
-    // Use a Next.js API proxy if available, otherwise return a shaped mock
-    const resp = await this.request<any>('/api/v1/soc')
-    if (resp.status && resp.status !== 0) {
-      return resp
-    }
-    // Fallback mock (shape compatible with SOC page)
-    return {
-      status: 200,
-      data: {},
-    }
-  }
-
-  // Roadmap
-  async getRoadmap() {
-    return this.request<any>('/api/v1/roadmap', { cache: 'no-store' as any })
-  }
-
-  // Exceptions
-  async listExceptions() {
-    return this.request<any>('/api/v1/exceptions')
-  }
-
-  async createException(payload: { resource_id: string; policy_id: string; reason: string }) {
-    return this.request<any>('/api/v1/exception', { method: 'POST', body: JSON.stringify(payload) })
-  }
-
-  async expireExceptions() {
-    return this.request<any>('/api/v1/exceptions/expire', { method: 'POST' })
-  }
-
-  // Conversation
-  async chat(message: string, sessionId: string, includeSuggestions = true) {
-    return this.request<any>('/api/v1/conversation/chat', {
-      method: 'POST',
-      body: JSON.stringify({ message, session_id: sessionId, include_suggestions: includeSuggestions })
-    })
-  }
-
-  async enforcePolicies() {
-    return this.request<any>('/api/v1/policies/enforce', {
-      method: 'POST',
-    });
-  }
-
-  // WebSocket Connection for Real-time Updates
-  connectWebSocket(onMessage: (data: any) => void) {
-    const base = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080'
-    const ws = new WebSocket(`${base}/ws`)
-    
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
-      } catch (error) {
-        console.error('WebSocket message parse error:', error);
-      }
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      // Attempt to reconnect after 5 seconds
-      setTimeout(() => this.connectWebSocket(onMessage), 5000);
-    };
-    
-    return ws
-  }
-
-  // Action orchestration
-  async createAction(resourceId: string, actionType: string, params: any = {}) {
-    return this.request<any>('/api/v1/actions', {
-      method: 'POST',
-      body: JSON.stringify({ action_type: actionType, resource_id: resourceId, params }),
-    })
-  }
-
-  async getActionById(actionId: string) {
-    return this.request<any>(`/api/v1/actions/${actionId}`)
-  }
-
-  streamActionEvents(actionId: string, onEvent: (msg: string) => void) {
-    const url = getApiUrl(`/api/v1/actions/${actionId}/events`)
-    const es = new EventSource(url)
-    es.onmessage = (ev) => onEvent(ev.data)
-    es.onerror = () => {
-      try { es.close() } catch {}
-    }
-    return () => es.close()
+  // Clear cache
+  clearCache() {
+    this.cache.clear();
   }
 }
 
 // Export singleton instance
-export const api = new PolicyCortexAPI();
+export const apiClient = new ApiClient();
 
-// React Query hooks for data fetching
-export function useComplianceData() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.getComplianceStatus().then((response) => {
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setData(response.data);
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  return { data, loading, error };
-}
-
-export function useSecurityThreats() {
-  const [threats, setThreats] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.getSecurityThreats().then((response) => {
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setThreats(response.data?.threats || []);
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  return { threats, loading, error };
-}
-
-export function useResourceMetrics() {
-  const [metrics, setMetrics] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.getUnifiedMetrics().then((response) => {
-      if (response.error) {
-        setError(response.error);
-      } else {
-        setMetrics(response.data);
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  return { metrics, loading, error };
-}
-
-export function useRealTimeUpdates(onUpdate: (data: any) => void) {
-  useEffect(() => {
-    const ws = api.connectWebSocket(onUpdate);
-    
-    return () => {
-      ws.close();
-    };
-  }, [onUpdate]);
+// Export hooks for React components
+export function useApiClient() {
+  return apiClient;
 }

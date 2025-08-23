@@ -18,6 +18,7 @@ pub mod security_nav;
 pub mod operations;
 pub mod devops;
 pub mod ai_nav;
+pub mod health; // Health check endpoints
 
 // Re-export resource API functions
 pub use resources::{
