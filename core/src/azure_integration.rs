@@ -6,9 +6,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{info, warn, error};
 
-pub mod azure;
-
-use azure::{
+use crate::azure::{
     client::{AzureClient, create_shared_client},
     monitor::MonitorService,
     governance::GovernanceService,

@@ -5,7 +5,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { 
   LayoutDashboard, Shield, Settings, Cpu, Activity, Lock,
-  ChevronRight, Search, Command, GitBranch, Menu, X, History
+  ChevronRight, Search, Command, GitBranch, Menu, X, History,
+  Server, Package, AlertCircle, FileText, Database
 } from 'lucide-react'
 import { useState } from 'react'
 import QuickActionsBar from './QuickActionsBar'
@@ -88,6 +89,23 @@ export default function SimplifiedNavigation() {
         { name: 'Deployments', href: '/devops/deployments' },
         { name: 'Build Status', href: '/devops/builds' },
         { name: 'Repositories', href: '/devops/repos' }
+      ]
+    },
+    {
+      name: 'Cloud ITSM',
+      href: '/itsm',
+      icon: Server,
+      description: 'IT Service Management',
+      badge: 'NEW',
+      subsections: [
+        { name: 'Resource Inventory', href: '/itsm/inventory' },
+        { name: 'Applications', href: '/itsm/applications' },
+        { name: 'Service Catalog', href: '/itsm/services' },
+        { name: 'Incidents', href: '/itsm/incidents' },
+        { name: 'Changes', href: '/itsm/changes' },
+        { name: 'Problems', href: '/itsm/problems' },
+        { name: 'Assets', href: '/itsm/assets' },
+        { name: 'CMDB', href: '/itsm/cmdb' }
       ]
     },
     {
@@ -235,7 +253,12 @@ export default function SimplifiedNavigation() {
                 >
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm sm:text-base truncate">{item.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm sm:text-base truncate">{item.name}</span>
+                      {'badge' in item && item.badge && (
+                        <span className="text-xs bg-orange-600 text-white px-1.5 py-0.5 rounded">{item.badge}</span>
+                      )}
+                    </div>
                     <div className="hidden xl:block text-xs opacity-70 truncate">{item.description}</div>
                   </div>
                   {item.subsections && (

@@ -9,7 +9,7 @@
 use axum::{
     extract::State,
     http::{header, Method},
-    routing::{get, post},
+    routing::{get, post, put},
     Json, Router,
 };
 use opentelemetry::KeyValue;
@@ -487,6 +487,45 @@ async fn main() {
         .route("/api/v1/ai/correlations", get(get_ai_correlations))
         .route("/api/v1/ai/chat", post(handle_ai_chat))
         .route("/api/v1/ai/unified/metrics", get(get_unified_metrics))
+        // ITSM APIs
+        .route("/api/v1/itsm/dashboard", get(api::itsm::get_dashboard))
+        .route("/api/v1/itsm/resources/stats", get(api::itsm::get_resource_stats))
+        .route("/api/v1/itsm/health-score", get(api::itsm::get_health_score))
+        // Inventory Management
+        .route("/api/v1/itsm/inventory", get(api::itsm::list_inventory))
+        .route("/api/v1/itsm/inventory/bulk", post(api::itsm::bulk_inventory_operation))
+        .route("/api/v1/itsm/inventory/export", get(api::itsm::export_inventory))
+        .route("/api/v1/itsm/inventory/:id/action", post(api::itsm::execute_resource_action))
+        // Application Management
+        .route("/api/v1/itsm/applications", get(api::itsm::list_applications))
+        .route("/api/v1/itsm/applications/:id", get(api::itsm::get_application))
+        .route("/api/v1/itsm/applications/:id/dependencies", get(api::itsm::get_application_dependencies))
+        .route("/api/v1/itsm/applications/orphaned", get(api::itsm::list_orphaned_resources))
+        .route("/api/v1/itsm/applications/:id/action", post(api::itsm::execute_application_action))
+        // Service Management
+        .route("/api/v1/itsm/services", get(api::itsm::list_services))
+        .route("/api/v1/itsm/services/:id/health", get(api::itsm::get_service_health))
+        .route("/api/v1/itsm/services/:id/sla", get(api::itsm::get_service_sla))
+        .route("/api/v1/itsm/services/:id/dependencies", get(api::itsm::get_service_dependencies))
+        // Incident Management
+        .route("/api/v1/itsm/incidents", get(api::itsm::list_incidents))
+        .route("/api/v1/itsm/incidents", post(api::itsm::create_incident))
+        // Change Management
+        .route("/api/v1/itsm/changes", get(api::itsm::list_changes))
+        .route("/api/v1/itsm/changes", post(api::itsm::create_change))
+        // Problem Management
+        .route("/api/v1/itsm/problems", get(api::itsm::list_problems))
+        .route("/api/v1/itsm/problems", post(api::itsm::create_problem))
+        // Asset Management
+        .route("/api/v1/itsm/assets", get(api::itsm::list_assets))
+        .route("/api/v1/itsm/assets/:id", get(api::itsm::get_asset))
+        .route("/api/v1/itsm/assets", post(api::itsm::create_asset))
+        .route("/api/v1/itsm/assets/:id", put(api::itsm::update_asset))
+        // CMDB APIs
+        .route("/api/v1/itsm/cmdb/items", get(api::itsm::list_cmdb_items))
+        .route("/api/v1/itsm/cmdb/relationships", get(api::itsm::get_cmdb_relationships))
+        .route("/api/v1/itsm/cmdb/impact/:id", get(api::itsm::get_cmdb_impact))
+        .route("/api/v1/itsm/cmdb/discover", post(api::itsm::trigger_discovery))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         .layer(
