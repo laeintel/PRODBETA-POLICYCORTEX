@@ -6,7 +6,9 @@ import { useEffect } from 'react'
 import { 
   LayoutDashboard, Shield, Settings, Cpu, Activity, Lock,
   ChevronRight, Search, Command, GitBranch, Menu, X, History,
-  Server, Package, AlertCircle, FileText, Database
+  Server, Package, AlertCircle, FileText, Database,
+  DollarSign, Briefcase, GitMerge, Brain, Sparkles,
+  Link as LinkIcon, MessageSquare, Bot, Blocks, Atom, Network
 } from 'lucide-react'
 import { useState } from 'react'
 import QuickActionsBar from './QuickActionsBar'
@@ -28,14 +30,44 @@ export default function SimplifiedNavigation() {
     }
   }, [pathname])
 
-  // 6 PRIMARY SECTIONS - OPTIMAL FOR ENTERPRISE (80% REDUCTION FROM 200+ ITEMS)
+  // ENHANCED NAVIGATION WITH GROUNDBREAKING FEATURES
   const navigation = [
     {
       name: 'Dashboard',
       href: '/tactical',
       icon: LayoutDashboard,
-      description: 'Executive overview',
+      description: 'Command center overview',
       quickStats: { compliance: '94%', risks: 3, savings: '$45K/mo' }
+    },
+    {
+      name: 'Executive',
+      href: '/executive',
+      icon: Briefcase,
+      description: 'C-suite KPIs & ROI',
+      badge: 'NEW',
+      highlight: true,
+      subsections: [
+        { name: 'Business KPIs', href: '/executive/dashboard' },
+        { name: 'ROI Calculator', href: '/executive/roi' },
+        { name: 'Risk-to-Revenue Map', href: '/executive/risk-map' },
+        { name: 'Board Reports', href: '/executive/reports' }
+      ]
+    },
+    {
+      name: 'FinOps',
+      href: '/finops',
+      icon: DollarSign,
+      description: 'Cost optimization & anomalies',
+      badge: 'AI',
+      critical: true,
+      subsections: [
+        { name: 'Real-time Anomalies', href: '/finops/anomalies' },
+        { name: 'Auto Optimization', href: '/finops/optimization' },
+        { name: 'Spend Forecasting', href: '/finops/forecasting' },
+        { name: 'Department Billing', href: '/finops/chargeback' },
+        { name: 'Savings Plans', href: '/finops/savings-plans' },
+        { name: 'Multi-Cloud Arbitrage', href: '/finops/arbitrage' }
+      ]
     },
     {
       name: 'Governance',
@@ -92,6 +124,19 @@ export default function SimplifiedNavigation() {
       ]
     },
     {
+      name: 'DevSecOps',
+      href: '/devsecops',
+      icon: GitMerge,
+      description: 'Shift-left security & policy-as-code',
+      badge: 'NEW',
+      subsections: [
+        { name: 'CI/CD Integration', href: '/devsecops/pipelines' },
+        { name: 'Policy-as-Code', href: '/devsecops/policy-code' },
+        { name: 'Security Gates', href: '/devsecops/gates' },
+        { name: 'IDE Plugins', href: '/devsecops/ide-plugins' }
+      ]
+    },
+    {
       name: 'Cloud ITSM',
       href: '/itsm',
       icon: Server,
@@ -118,8 +163,39 @@ export default function SimplifiedNavigation() {
         { name: '🚀 Predictive Compliance', href: '/ai/predictive', patent: '#4' },
         { name: '🔗 Cross-Domain Analysis', href: '/ai/correlations', patent: '#1' },
         { name: '💬 Conversational AI', href: '/ai/chat', patent: '#2' },
-        { name: '📊 Unified Platform', href: '/ai/unified', patent: '#3' }
+        { name: '📊 Unified Platform', href: '/ai/unified', patent: '#3' },
+        { name: '📝 Policy Studio', href: '/ai/policy-studio', badge: 'NEW' }
       ]
+    },
+    {
+      name: 'Governance Copilot',
+      href: '/copilot',
+      icon: Bot,
+      description: 'AI assistant for cloud teams',
+      badge: 'AI',
+      highlight: true
+    },
+    {
+      name: 'Blockchain Audit',
+      href: '/blockchain',
+      icon: Blocks,
+      description: 'Immutable compliance evidence',
+      badge: 'NEW'
+    },
+    {
+      name: 'Quantum-Safe Secrets',
+      href: '/quantum',
+      icon: Atom,
+      description: 'Post-quantum cryptography',
+      badge: 'CRITICAL',
+      critical: true
+    },
+    {
+      name: 'Edge Governance',
+      href: '/edge',
+      icon: Network,
+      description: 'Distributed edge network',
+      badge: 'NEW'
     },
     {
       name: 'Audit Trail',

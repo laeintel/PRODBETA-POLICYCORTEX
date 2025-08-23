@@ -19,6 +19,17 @@ import {
   TrendingUp,
   ShieldCheck
 } from 'lucide-react';
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, AreaChart, Area, RadarChart,
+  PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+} from 'recharts';
+import ViewToggle from '@/components/ViewToggle';
+import MetricCard from '@/components/MetricCard';
+import ChartContainer from '@/components/ChartContainer';
+import DataExport from '@/components/DataExport';
+import { useViewPreference } from '@/hooks/useViewPreference';
 
 interface AICard {
   id: string;
@@ -40,6 +51,40 @@ interface AICard {
 export default function AIPage() {
   const router = useRouter();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const { view, setView } = useViewPreference('ai-view', 'cards');
+
+  // Mock data for AI charts
+  const modelAccuracyData = [
+    { date: '2024-01-01', accuracy: 96.8, predictions: 3200, latency: 92 },
+    { date: '2024-01-02', accuracy: 97.2, predictions: 3450, latency: 89 },
+    { date: '2024-01-03', accuracy: 97.5, predictions: 3678, latency: 87 },
+    { date: '2024-01-04', accuracy: 98.1, predictions: 3847, latency: 85 },
+    { date: '2024-01-05', accuracy: 98.7, predictions: 4023, latency: 83 },
+    { date: '2024-01-06', accuracy: 99.2, predictions: 4156, latency: 87 }
+  ];
+
+  const patentUsageData = [
+    { patent: 'Patent #1\nCorrelations', usage: 89, impact: 94 },
+    { patent: 'Patent #2\nConversational AI', usage: 76, impact: 91 },
+    { patent: 'Patent #3\nUnified Platform', usage: 93, impact: 96 },
+    { patent: 'Patent #4\nPredictive Engine', usage: 82, impact: 98 }
+  ];
+
+  const inferenceVolume = [
+    { name: 'Governance', value: 3847, color: '#3B82F6' },
+    { name: 'Security', value: 2341, color: '#EF4444' },
+    { name: 'Compliance', value: 1876, color: '#10B981' },
+    { name: 'Operations', value: 1234, color: '#F59E0B' }
+  ];
+
+  const aiCapabilities = [
+    { subject: 'Prediction', score: 99, fullMark: 100 },
+    { subject: 'Classification', score: 96, fullMark: 100 },
+    { subject: 'Correlation', score: 94, fullMark: 100 },
+    { subject: 'NLP Processing', score: 98, fullMark: 100 },
+    { subject: 'Pattern Recognition', score: 92, fullMark: 100 },
+    { subject: 'Anomaly Detection', score: 97, fullMark: 100 }
+  ];
 
   const aiCards: AICard[] = [
     {
@@ -180,7 +225,8 @@ export default function AIPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <ViewToggle view={view} onViewChange={setView} />
           <button
             onClick={() => router.push('/ai/chat')}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
@@ -214,109 +260,227 @@ export default function AIPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {quickStats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={index}
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
+      {view === 'cards' ? (
+        <>
+          {/* Quick Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <MetricCard
+              title="AI Models"
+              value={89}
+              change={8}
+              changeLabel="new models"
+              icon={<Cpu className="h-5 w-5 text-purple-600" />}
+              sparklineData={[81, 83, 85, 87, 88, 89]}
               onClick={() => router.push('/ai/unified')}
+              status="success"
+            />
+            <MetricCard
+              title="Accuracy Rate"
+              value="98.7%"
+              change={0.5}
+              changeLabel="improvement"
+              icon={<CheckCircle className="h-5 w-5 text-green-600" />}
+              sparklineData={[97.8, 98.1, 98.3, 98.5, 98.6, 98.7]}
+              onClick={() => router.push('/ai/predictive')}
+              status="success"
+            />
+            <MetricCard
+              title="Processing Speed"
+              value="124ms"
+              change={-12}
+              changeLabel="faster"
+              icon={<Clock className="h-5 w-5 text-blue-600" />}
+              sparklineData={[145, 138, 132, 128, 126, 124]}
+              onClick={() => router.push('/ai/unified')}
+              status="success"
+            />
+            <MetricCard
+              title="Active Jobs"
+              value={12}
+              change={20}
+              changeLabel="increase"
+              icon={<Beaker className="h-5 w-5 text-orange-600" />}
+              sparklineData={[8, 9, 10, 11, 12, 12]}
+              onClick={() => router.push('/ai/unified')}
+              status="neutral"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* AI Visualizations */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <ChartContainer 
+              title="Model Performance Trends" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/ai/predictive')}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                </div>
-                <div className={`p-3 rounded-lg bg-${stat.color}-50 dark:bg-${stat.color}-900/20`}>
-                  <Icon className={`h-6 w-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={modelAccuracyData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="date" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="accuracy" stroke="#10B981" strokeWidth={2} name="Accuracy %" />
+                  <Line type="monotone" dataKey="predictions" stroke="#3B82F6" strokeWidth={2} name="Daily Predictions" />
+                  <Line type="monotone" dataKey="latency" stroke="#F59E0B" strokeWidth={2} name="Latency (ms)" />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-      {/* AI Feature Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {aiCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer transform hover:scale-[1.02]"
-              onMouseEnter={() => setHoveredCard(card.id)}
-              onMouseLeave={() => setHoveredCard(null)}
-              onClick={() => router.push(card.route)}
+            <ChartContainer 
+              title="Patent Technology Usage" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/ai/unified')}
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg bg-${card.color}-50 dark:bg-${card.color}-900/20`}>
-                    <Icon className={`h-8 w-8 text-${card.color}-600 dark:text-${card.color}-400`} />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {card.patentNumber && (
-                      <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium">
-                        {card.patentNumber}
-                      </span>
-                    )}
-                    {hoveredCard === card.id && (
-                      <ArrowLeft className="h-5 w-5 rotate-180 text-gray-400" />
-                    )}
-                  </div>
-                </div>
-                
-                <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  {card.description}
-                </p>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={patentUsageData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="patent" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="usage" fill="#8B5CF6" name="Usage %" />
+                  <Bar dataKey="impact" fill="#3B82F6" name="Impact Score" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {card.stats.map((stat, index) => (
-                    <div key={index} className="text-sm">
-                      <p className="text-gray-500 dark:text-gray-400">{stat.label}</p>
-                      <p className={`font-semibold flex items-center gap-1 ${
-                        stat.status ? getStatusColor(stat.status) : ''
-                      }`}>
-                        {stat.value}
-                        {stat.trend && (
-                          <span className={`text-xs ${
-                            stat.trend === 'up' ? 'text-green-500' :
-                            stat.trend === 'down' ? 'text-red-500' :
-                            'text-gray-500'
-                          }`}>
-                            {getTrendSymbol(stat.trend)}
+            <ChartContainer 
+              title="AI Inference Volume" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/ai/correlations')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={inferenceVolume}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {inferenceVolume.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+
+            <ChartContainer 
+              title="AI Capability Matrix" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/ai/unified')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={aiCapabilities}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="subject" />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} />
+                  <Radar
+                    name="AI Capabilities"
+                    dataKey="score"
+                    stroke="#8B5CF6"
+                    fill="#8B5CF6"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
+        </>
+      )}
+
+      {view === 'cards' && (
+        <>
+          {/* AI Feature Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {aiCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.id}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer transform hover:scale-[1.02]"
+                  onMouseEnter={() => setHoveredCard(card.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  onClick={() => router.push(card.route)}
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`p-3 rounded-lg bg-${card.color}-50 dark:bg-${card.color}-900/20`}>
+                        <Icon className={`h-8 w-8 text-${card.color}-600 dark:text-${card.color}-400`} />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {card.patentNumber && (
+                          <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full font-medium">
+                            {card.patentNumber}
                           </span>
                         )}
-                      </p>
+                        {hoveredCard === card.id && (
+                          <ArrowLeft className="h-5 w-5 rotate-180 text-gray-400" />
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                    
+                    <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                      {card.description}
+                    </p>
 
-                {/* Action Buttons */}
-                {card.actions && (
-                  <div className="flex gap-2 pt-3 border-t dark:border-gray-700">
-                    {card.actions.map((action, index) => (
-                      <button
-                        key={index}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          action.onClick();
-                        }}
-                        className="flex-1 px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                      >
-                        {action.label}
-                      </button>
-                    ))}
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {card.stats.map((stat, index) => (
+                        <div key={index} className="text-sm">
+                          <p className="text-gray-500 dark:text-gray-400">{stat.label}</p>
+                          <p className={`font-semibold flex items-center gap-1 ${
+                            stat.status ? getStatusColor(stat.status) : ''
+                          }`}>
+                            {stat.value}
+                            {stat.trend && (
+                              <span className={`text-xs ${
+                                stat.trend === 'up' ? 'text-green-500' :
+                                stat.trend === 'down' ? 'text-red-500' :
+                                'text-gray-500'
+                              }`}>
+                                {getTrendSymbol(stat.trend)}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Action Buttons */}
+                    {card.actions && (
+                      <div className="flex gap-2 pt-3 border-t dark:border-gray-700">
+                        {card.actions.map((action, index) => (
+                          <button
+                            key={index}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              action.onClick();
+                            }}
+                            className="flex-1 px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                          >
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Recent AI Activity */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">

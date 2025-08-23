@@ -11,6 +11,16 @@ import {
   Building, Scale, ShieldCheck, Target, Info,
   ArrowLeft, Users, Briefcase, Zap
 } from 'lucide-react'
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, AreaChart, Area
+} from 'recharts'
+import ViewToggle from '@/components/ViewToggle'
+import MetricCard from '@/components/MetricCard'
+import ChartContainer from '@/components/ChartContainer'
+import DataExport from '@/components/DataExport'
+import { useViewPreference } from '@/hooks/useViewPreference'
 
 interface GovernanceCard {
   id: string
@@ -191,116 +201,261 @@ export default function GovernanceHub() {
 }
 
 function GovernanceOverview({ cards, router }: { cards: GovernanceCard[], router: any }) {
+  const { view, setView } = useViewPreference('governance-view', 'cards');
+
+  // Mock data for charts
+  const complianceData = [
+    { month: 'Jan', compliance: 89, policies: 120, violations: 8 },
+    { month: 'Feb', compliance: 92, policies: 123, violations: 6 },
+    { month: 'Mar', compliance: 91, policies: 125, violations: 7 },
+    { month: 'Apr', compliance: 94, policies: 127, violations: 3 },
+    { month: 'May', compliance: 96, policies: 129, violations: 2 },
+    { month: 'Jun', compliance: 94, policies: 127, violations: 3 }
+  ];
+
+  const riskData = [
+    { category: 'Security', high: 2, medium: 8, low: 15 },
+    { category: 'Compliance', high: 0, medium: 3, low: 9 },
+    { category: 'Operational', high: 1, medium: 5, low: 12 },
+    { category: 'Financial', high: 0, medium: 2, low: 7 }
+  ];
+
+  const costData = [
+    { month: 'Jan', spend: 145000, budget: 150000, savings: 8000 },
+    { month: 'Feb', spend: 138000, budget: 150000, savings: 12000 },
+    { month: 'Mar', spend: 142000, budget: 150000, savings: 15000 },
+    { month: 'Apr', spend: 135000, budget: 150000, savings: 18000 },
+    { month: 'May', spend: 127000, budget: 150000, savings: 23000 },
+    { month: 'Jun', spend: 127000, budget: 150000, savings: 23000 }
+  ];
+
+  const policyDistribution = [
+    { name: 'Security', value: 89, color: '#3B82F6' },
+    { name: 'Compliance', value: 67, color: '#10B981' },
+    { name: 'Operational', value: 45, color: '#8B5CF6' },
+    { name: 'Cost', value: 33, color: '#F59E0B' }
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Key Metrics - Clickable */}
-      <div className="grid grid-cols-4 gap-4">
-        <div onClick={() => router.push('/governance/compliance')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard
-            title="Overall Compliance"
-            value="94%"
-            trend="+2%"
-            status="good"
-            icon={CheckCircle}
-          />
-        </div>
-        <div onClick={() => router.push('/governance/policies')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard
-            title="Active Policies"
-            value="127"
-            trend="+5"
-            status="neutral"
-            icon={FileText}
-          />
-        </div>
-        <div onClick={() => router.push('/governance/risk')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard
-            title="Risk Score"
-            value="Medium"
-            trend="Stable"
-            status="warning"
-            icon={AlertTriangle}
-          />
-        </div>
-        <div onClick={() => router.push('/governance/cost')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard
-            title="Monthly Savings"
-            value="$45K"
-            trend="+12%"
-            status="good"
-            icon={DollarSign}
-          />
-        </div>
+      {/* View Toggle */}
+      <div className="flex justify-end">
+        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
-      {/* Main Dashboard Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {cards.map((card) => {
-          const Icon = card.icon
-          return (
-            <div
-              key={card.id}
-              className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-xl transition-all"
+      {view === 'cards' ? (
+        <>
+          {/* Key Metrics Cards */}
+          <div className="grid grid-cols-4 gap-4">
+            <MetricCard
+              title="Overall Compliance"
+              value="94%"
+              change={2}
+              changeLabel="vs last month"
+              icon={<CheckCircle className="h-5 w-5 text-blue-600" />}
+              sparklineData={complianceData.map(d => d.compliance)}
+              onClick={() => router.push('/governance/compliance')}
+              status="success"
+            />
+            <MetricCard
+              title="Active Policies"
+              value={127}
+              change={4}
+              changeLabel="this month"
+              icon={<FileText className="h-5 w-5 text-gray-600" />}
+              sparklineData={complianceData.map(d => d.policies)}
+              onClick={() => router.push('/governance/policies')}
+              status="neutral"
+            />
+            <MetricCard
+              title="Risk Score"
+              value="Low"
+              change={-15}
+              changeLabel="improvement"
+              icon={<AlertTriangle className="h-5 w-5 text-orange-600" />}
+              sparklineData={[25, 23, 28, 20, 18, 15]}
+              onClick={() => router.push('/governance/risk')}
+              status="warning"
+            />
+            <MetricCard
+              title="Monthly Savings"
+              value="$45K"
+              change={12}
+              changeLabel="vs target"
+              icon={<DollarSign className="h-5 w-5 text-green-600" />}
+              sparklineData={costData.map(d => d.savings / 1000)}
+              onClick={() => router.push('/governance/cost')}
+              status="success"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Visualizations */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ChartContainer 
+              title="Compliance Trends" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/governance/compliance')}
             >
-              <div
-                className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-                onClick={() => router.push(card.href)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-3 rounded-lg bg-${card.color}-500/10`}>
-                      <Icon className={`w-6 h-6 text-${card.color}-500`} />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">{card.title}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-gray-400" />
-                </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={complianceData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'var(--tw-bg-opacity)', 
+                      border: '1px solid var(--tw-border-opacity)',
+                      borderRadius: '0.5rem'
+                    }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="compliance" stroke="#3B82F6" strokeWidth={2} name="Compliance %" />
+                  <Line type="monotone" dataKey="violations" stroke="#EF4444" strokeWidth={2} name="Violations" />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-                {/* Stats */}
-                {card.stats && (
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    {card.stats.map((stat, idx) => (
-                      <div key={idx} className="text-center">
-                        <div className="text-lg font-bold flex items-center justify-center space-x-1">
-                          <span className={stat.status === 'warning' ? 'text-yellow-500' : stat.status === 'critical' ? 'text-red-500' : ''}>
-                            {stat.value}
-                          </span>
-                          {stat.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
-                          {stat.trend === 'down' && <TrendingDown className="w-3 h-3 text-green-500" />}
+            <ChartContainer 
+              title="Risk Distribution" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/governance/risk')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={riskData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="category" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="high" stackId="a" fill="#EF4444" name="High Risk" />
+                  <Bar dataKey="medium" stackId="a" fill="#F59E0B" name="Medium Risk" />
+                  <Bar dataKey="low" stackId="a" fill="#10B981" name="Low Risk" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+
+            <ChartContainer 
+              title="Cost Optimization" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/governance/cost')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={costData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
+                  <Legend />
+                  <Area type="monotone" dataKey="budget" stackId="1" stroke="#6B7280" fill="#6B7280" fillOpacity={0.3} name="Budget" />
+                  <Area type="monotone" dataKey="spend" stackId="2" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} name="Actual Spend" />
+                  <Area type="monotone" dataKey="savings" stackId="3" stroke="#10B981" fill="#10B981" fillOpacity={0.8} name="Savings" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+
+            <ChartContainer 
+              title="Policy Distribution" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/governance/policies')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={policyDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {policyDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
+        </>
+      )}
+
+      {view === 'cards' && (
+        <>
+          {/* Main Dashboard Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {cards.map((card) => {
+              const Icon = card.icon
+              return (
+                <div
+                  key={card.id}
+                  className="bg-white/50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-xl transition-all"
+                >
+                  <div
+                    className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                    onClick={() => router.push(card.href)}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-3 rounded-lg bg-${card.color}-500/10`}>
+                          <Icon className={`w-6 h-6 text-${card.color}-500`} />
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
+                        <div>
+                          <h3 className="text-lg font-semibold">{card.title}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            {card.description}
+                          </p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                    </div>
 
-                {/* Quick Actions */}
-                {card.quickActions && (
-                  <div className="flex space-x-2">
-                    {card.quickActions.map((action, idx) => (
-                      <button
-                        key={idx}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(action.href)
-                        }}
-                        className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm"
-                      >
-                        {action.label}
-                      </button>
-                    ))}
+                    {/* Stats */}
+                    {card.stats && (
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        {card.stats.map((stat, idx) => (
+                          <div key={idx} className="text-center">
+                            <div className="text-lg font-bold flex items-center justify-center space-x-1">
+                              <span className={stat.status === 'warning' ? 'text-yellow-500' : stat.status === 'critical' ? 'text-red-500' : ''}>
+                                {stat.value}
+                              </span>
+                              {stat.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
+                              {stat.trend === 'down' && <TrendingDown className="w-3 h-3 text-green-500" />}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Quick Actions */}
+                    {card.quickActions && (
+                      <div className="flex space-x-2">
+                        {card.quickActions.map((action, idx) => (
+                          <button
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(action.href)
+                            }}
+                            className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                          >
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-3 gap-4">
@@ -493,28 +648,28 @@ function CostView({ router }: { router: any }) {
     <div className="space-y-6">
       {/* Cost Summary */}
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard
+        <LegacyMetricCard
           title="Current Month"
           value="$127K"
           trend="-8%"
           status="good"
           icon={DollarSign}
         />
-        <MetricCard
+        <LegacyMetricCard
           title="Projected"
           value="$135K"
           trend="+6%"
           status="warning"
           icon={TrendingUp}
         />
-        <MetricCard
+        <LegacyMetricCard
           title="Budget"
           value="$150K"
           trend="Under"
           status="good"
           icon={BarChart3}
         />
-        <MetricCard
+        <LegacyMetricCard
           title="Savings YTD"
           value="$245K"
           trend="+32%"
@@ -566,28 +721,28 @@ function PolicyView({ router }: { router: any }) {
     <div className="space-y-6">
       {/* Policy Summary */}
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard
+        <LegacyMetricCard
           title="Total Policies"
           value="234"
           trend="+12"
           status="neutral"
           icon={Shield}
         />
-        <MetricCard
+        <LegacyMetricCard
           title="Enforced"
           value="198"
           trend="85%"
           status="good"
           icon={ShieldCheck}
         />
-        <MetricCard
+        <LegacyMetricCard
           title="Pending Review"
           value="12"
           trend="-3"
           status="warning"
           icon={Clock}
         />
-        <MetricCard
+        <LegacyMetricCard
           title="Violations Today"
           value="3"
           trend="-2"
@@ -679,7 +834,7 @@ function PolicyView({ router }: { router: any }) {
 }
 
 // Reusable Components
-function MetricCard({ title, value, trend, status, icon: Icon }: {
+function LegacyMetricCard({ title, value, trend, status, icon: Icon }: {
   title: string
   value: string | number
   trend: string
