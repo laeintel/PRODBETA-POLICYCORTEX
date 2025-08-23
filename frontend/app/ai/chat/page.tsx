@@ -506,7 +506,7 @@ Just let me know how I can best assist you!`;
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Chat History Sidebar */}
-      <div className={`${showHistory ? 'w-80' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 overflow-hidden`}>
+      <div className={`${showHistory ? 'w-80' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 overflow-hidden relative z-20`}>
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Chat History</h2>
@@ -667,7 +667,7 @@ Just let me know how I can best assist you!`;
 
         {/* Command Palette */}
         {showCommandPalette && (
-          <div className="absolute bottom-20 left-6 right-6 mx-auto max-w-2xl bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+          <div className="command-palette absolute bottom-20 left-6 right-6 mx-auto max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50" role="menu" data-testid="command-palette">
             <div className="p-2 border-b border-gray-200">
               <p className="text-xs text-gray-500 px-2">Commands</p>
             </div>
@@ -702,12 +702,13 @@ Just let me know how I can best assist you!`;
               <div className="relative">
                 <textarea
                   ref={inputRef}
-                  data-testid="chat-input"
+                  data-testid="chat-message-input"
+                  id="chat-message-input"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Type your message or / for commands..."
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={1}
                   style={{ minHeight: '48px', maxHeight: '120px' }}
                 />
@@ -731,9 +732,11 @@ Just let me know how I can best assist you!`;
               </div>
             </div>
             <button type="button"
+              data-testid="chat-send-button"
+              id="chat-send-button"
               onClick={handleSend}
               disabled={!input.trim()}
-              className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <Send className="h-5 w-5" />
               Send
