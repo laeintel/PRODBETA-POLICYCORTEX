@@ -20,7 +20,7 @@ export default function ThemeToggle() {
         focus:ring-blue-500 dark:focus:ring-yellow-500
         focus:ring-offset-gray-900 dark:focus:ring-offset-gray-800
       "
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      aria-label="Toggle theme"
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
       <div className="relative w-5 h-5">

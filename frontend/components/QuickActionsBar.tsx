@@ -236,7 +236,7 @@ export default function QuickActionsBar() {
   return (
     <>
       {/* Quick Actions Bar */}
-      <div className="fixed top-16 left-64 right-0 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-10">
+      <div className="fixed top-16 left-0 lg:left-64 xl:left-72 2xl:left-80 right-0 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-10">
         <div className="h-full px-4 flex items-center justify-between">
           {/* Left side - Quick Actions */}
           <div className="flex items-center gap-2">

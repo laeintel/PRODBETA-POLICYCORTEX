@@ -32,7 +32,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           pt-16 lg:pt-[7.5rem] 
           lg:pl-64 xl:pl-72 2xl:pl-80
           min-h-screen 
-          bg-background dark:bg-gray-950 
+          bg-gray-50 dark:bg-gray-900 
           transition-all duration-300
         ">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -52,7 +52,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             pt-16 lg:pt-[7.5rem] 
             lg:pl-64 xl:pl-72 2xl:pl-80
             min-h-screen 
-            bg-background dark:bg-gray-950 
+            bg-gray-50 dark:bg-gray-900 
             transition-all duration-300
           ">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">

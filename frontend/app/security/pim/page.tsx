@@ -14,7 +14,7 @@ export default function PrivilegedIdentityManagementPage() {
   ]), [])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Privileged Identity Management (JIT)</h1>
         <p className="text-sm text-gray-600 dark:text-gray-400">Active elevations and pending requests</p>

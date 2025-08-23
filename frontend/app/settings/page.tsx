@@ -122,7 +122,7 @@ function ProfileSection() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">User Profile</h2>
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <div className="flex items-start space-x-6 mb-6">
           <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-3xl font-bold">
             JD
@@ -258,7 +258,7 @@ function NotificationSection({ notifications, setNotifications }: any) {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Alert Types</h3>
         <div className="space-y-4">
           <label className="flex items-center justify-between">
@@ -430,7 +430,7 @@ function AppearanceSection({ darkMode, setDarkMode }: any) {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Accent Color</h3>
         <div className="flex space-x-4">
           {['blue', 'purple', 'green', 'orange', 'red', 'pink'].map((color) => (
@@ -564,7 +564,7 @@ function SecuritySection({ mfaEnabled, setMfaEnabled }: any) {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Password</h3>
         <button
           type="button"
@@ -657,7 +657,7 @@ function DataPrivacySection({ dataRetention, setDataRetention }: any) {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Privacy Options</h3>
         <div className="space-y-3">
           <label className="flex items-center space-x-3">
@@ -732,7 +732,7 @@ function ExportImportSection() {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Import Data</h3>
         <p className="text-gray-400 mb-4">Restore settings from a backup file</p>
         <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
@@ -791,7 +791,7 @@ function DiagnosticsSection() {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Performance Metrics</h3>
         <div className="space-y-3">
           <div>

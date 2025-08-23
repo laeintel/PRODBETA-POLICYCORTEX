@@ -1,14 +1,40 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   AlertTriangle, Shield, Activity, Zap, Terminal, Users,
   AlertCircle, CheckCircle, Clock, TrendingUp, Server,
   Database, Cloud, Lock, Bell, Play, Pause, RefreshCw,
-  ChevronRight, Cpu, HardDrive, Wifi, Target, Radio
+  ChevronRight, Cpu, HardDrive, Wifi, Target, Radio,
+  GitBranch, Settings, History, DollarSign, FileCheck,
+  ShieldAlert, UserCheck, Key, Package, Brain, MessageSquare,
+  BarChart3, Layers, Building, Workflow, Container, Rocket,
+  Monitor, BellRing, Bot, TrendingDown, ExternalLink, 
+  ArrowRight, ChevronDown
 } from 'lucide-react';
 import ResponsiveGrid, { ResponsiveContainer, ResponsiveText } from '@/components/ResponsiveGrid';
 import { toast } from '@/hooks/useToast';
+
+interface NavigationCard {
+  id: string;
+  title: string;
+  description: string;
+  icon: any;
+  href: string;
+  stats?: {
+    label: string;
+    value: string | number;
+    trend?: 'up' | 'down' | 'stable';
+  }[];
+  color: string;
+  badge?: string;
+  subItems?: {
+    label: string;
+    href: string;
+    count?: number;
+  }[];
+}
 
 interface Alert {
   id: string;
@@ -26,14 +52,17 @@ interface SystemMetric {
   unit: string;
   status: 'healthy' | 'warning' | 'critical';
   trend: 'up' | 'down' | 'stable';
+  onClick?: () => void;
 }
 
 export default function TacticalOperationsPage() {
+  const router = useRouter();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [commandInput, setCommandInput] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [isWarRoomActive, setIsWarRoomActive] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Simulate real-time alerts
@@ -78,22 +107,183 @@ export default function TacticalOperationsPage() {
     setAlerts(mockAlerts);
   }, []);
 
+  // Main navigation cards with comprehensive routing
+  const navigationCards: NavigationCard[] = [
+    {
+      id: 'governance',
+      title: 'Governance & Compliance',
+      description: 'Policies, compliance tracking, risk management, and cost optimization',
+      icon: Shield,
+      href: '/governance',
+      color: 'blue',
+      stats: [
+        { label: 'Compliance', value: '94%', trend: 'up' },
+        { label: 'Active Policies', value: 127 },
+        { label: 'Risk Score', value: 'Low', trend: 'down' }
+      ],
+      subItems: [
+        { label: 'Policies & Compliance', href: '/governance/compliance', count: 45 },
+        { label: 'Risk Management', href: '/governance/risk', count: 3 },
+        { label: 'Cost Optimization', href: '/governance/cost', count: 12 }
+      ]
+    },
+    {
+      id: 'security',
+      title: 'Security & Access Management',
+      description: 'Identity management, RBAC, PIM, and zero-trust security',
+      icon: Lock,
+      href: '/security',
+      color: 'red',
+      badge: 'CRITICAL',
+      stats: [
+        { label: 'Active Users', value: '2,451' },
+        { label: 'PIM Requests', value: 7 },
+        { label: 'Security Score', value: '82%', trend: 'up' }
+      ],
+      subItems: [
+        { label: 'Identity & Access (IAM)', href: '/security/iam', count: 234 },
+        { label: 'Role Management (RBAC)', href: '/security/rbac', count: 89 },
+        { label: 'Privileged Identity (PIM)', href: '/security/pim', count: 7 },
+        { label: 'Conditional Access', href: '/security/conditional-access', count: 23 },
+        { label: 'Zero Trust Policies', href: '/security/zero-trust', count: 15 },
+        { label: 'Entitlement Management', href: '/security/entitlements', count: 45 },
+        { label: 'Access Reviews', href: '/security/access-reviews', count: 12 }
+      ]
+    },
+    {
+      id: 'operations',
+      title: 'Operations & Monitoring',
+      description: 'Resource management, monitoring, automation, and alerts',
+      icon: Activity,
+      href: '/operations',
+      color: 'green',
+      stats: [
+        { label: 'Resources', value: 342 },
+        { label: 'Active Alerts', value: 8, trend: 'down' },
+        { label: 'Automation', value: '89%' }
+      ],
+      subItems: [
+        { label: 'Resources', href: '/operations/resources', count: 342 },
+        { label: 'Monitoring', href: '/operations/monitoring', count: 45 },
+        { label: 'Automation', href: '/operations/automation', count: 23 },
+        { label: 'Notifications', href: '/operations/notifications', count: 156 },
+        { label: 'Alerts', href: '/operations/alerts', count: 8 }
+      ]
+    },
+    {
+      id: 'devops',
+      title: 'DevOps & CI/CD',
+      description: 'Pipelines, releases, deployments, and artifact management',
+      icon: GitBranch,
+      href: '/devops',
+      color: 'purple',
+      stats: [
+        { label: 'Pipelines', value: 42 },
+        { label: 'Success Rate', value: '96%', trend: 'up' },
+        { label: 'Deployments', value: '12/day' }
+      ],
+      subItems: [
+        { label: 'Pipelines', href: '/devops/pipelines', count: 42 },
+        { label: 'Releases', href: '/devops/releases', count: 18 },
+        { label: 'Artifacts', href: '/devops/artifacts', count: 234 },
+        { label: 'Deployments', href: '/devops/deployments', count: 67 },
+        { label: 'Build Status', href: '/devops/builds', count: 12 },
+        { label: 'Repositories', href: '/devops/repos', count: 28 }
+      ]
+    },
+    {
+      id: 'ai',
+      title: 'AI Intelligence Hub',
+      description: 'Patented AI features for predictive compliance and analysis',
+      icon: Brain,
+      href: '/ai',
+      color: 'pink',
+      badge: 'PATENTED',
+      stats: [
+        { label: 'Predictions', value: '1,234' },
+        { label: 'Accuracy', value: '99.2%', trend: 'stable' },
+        { label: 'AI Insights', value: 45 }
+      ],
+      subItems: [
+        { label: 'Predictive Compliance', href: '/ai/predictive', count: 234 },
+        { label: 'Cross-Domain Analysis', href: '/ai/correlations', count: 56 },
+        { label: 'Conversational AI', href: '/ai/chat', count: 89 },
+        { label: 'Unified Platform', href: '/ai/unified', count: 12 }
+      ]
+    },
+    {
+      id: 'audit',
+      title: 'Audit Trail & History',
+      description: 'Complete activity history and audit logs',
+      icon: History,
+      href: '/audit',
+      color: 'yellow',
+      stats: [
+        { label: 'Events Today', value: '3,451' },
+        { label: 'Users Active', value: 234 },
+        { label: 'Compliance', value: '100%' }
+      ]
+    }
+  ];
+
   const systemMetrics: SystemMetric[] = [
-    { name: 'CPU Usage', value: 78, unit: '%', status: 'warning', trend: 'up' },
-    { name: 'Memory', value: 62, unit: '%', status: 'healthy', trend: 'stable' },
-    { name: 'Network', value: 245, unit: 'Mbps', status: 'healthy', trend: 'up' },
-    { name: 'Storage', value: 89, unit: '%', status: 'critical', trend: 'up' },
-    { name: 'API Latency', value: 142, unit: 'ms', status: 'healthy', trend: 'down' },
-    { name: 'Error Rate', value: 0.3, unit: '%', status: 'healthy', trend: 'down' }
+    { 
+      name: 'CPU Usage', 
+      value: 78, 
+      unit: '%', 
+      status: 'warning', 
+      trend: 'up',
+      onClick: () => router.push('/operations/monitoring')
+    },
+    { 
+      name: 'Memory', 
+      value: 62, 
+      unit: '%', 
+      status: 'healthy', 
+      trend: 'stable',
+      onClick: () => router.push('/operations/monitoring')
+    },
+    { 
+      name: 'Network', 
+      value: 245, 
+      unit: 'Mbps', 
+      status: 'healthy', 
+      trend: 'up',
+      onClick: () => router.push('/operations/monitoring')
+    },
+    { 
+      name: 'Storage', 
+      value: 89, 
+      unit: '%', 
+      status: 'critical', 
+      trend: 'up',
+      onClick: () => router.push('/operations/resources')
+    },
+    { 
+      name: 'API Latency', 
+      value: 142, 
+      unit: 'ms', 
+      status: 'healthy', 
+      trend: 'down',
+      onClick: () => router.push('/operations/monitoring')
+    },
+    { 
+      name: 'Error Rate', 
+      value: 0.3, 
+      unit: '%', 
+      status: 'healthy', 
+      trend: 'down',
+      onClick: () => router.push('/operations/alerts')
+    }
   ];
 
   const quickActions = [
-    { icon: Shield, label: 'Initiate Security Scan', color: 'blue' },
-    { icon: RefreshCw, label: 'Restart Services', color: 'green' },
-    { icon: Lock, label: 'Lock Down Resources', color: 'red' },
-    { icon: Database, label: 'Backup Database', color: 'purple' },
-    { icon: Users, label: 'Alert Team', color: 'yellow' },
-    { icon: Terminal, label: 'Execute Playbook', color: 'pink' }
+    { icon: Shield, label: 'Security Scan', color: 'blue', href: '/security' },
+    { icon: RefreshCw, label: 'Restart Services', color: 'green', href: '/operations/automation' },
+    { icon: Lock, label: 'Lock Resources', color: 'red', href: '/security/rbac' },
+    { icon: Database, label: 'Backup DB', color: 'purple', href: '/operations/automation' },
+    { icon: Users, label: 'Alert Team', color: 'yellow', href: '/operations/notifications' },
+    { icon: Terminal, label: 'Run Playbook', color: 'pink', href: '/operations/automation' }
   ];
 
   const handleCommand = (e: React.FormEvent) => {
@@ -123,6 +313,16 @@ export default function TacticalOperationsPage() {
     }
   };
 
+  const toggleCardExpansion = (cardId: string) => {
+    const newExpanded = new Set(expandedCards);
+    if (newExpanded.has(cardId)) {
+      newExpanded.delete(cardId);
+    } else {
+      newExpanded.add(cardId);
+    }
+    setExpandedCards(newExpanded);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white py-6">
       {/* Header */}
@@ -131,9 +331,9 @@ export default function TacticalOperationsPage() {
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center space-x-3">
               <Activity className="w-8 h-8 text-blue-500" />
-              <span>Tactical Operations Center</span>
+              <span>PolicyCortex Command Center</span>
             </h1>
-            <p className="text-gray-400">Real-time monitoring and incident response</p>
+            <p className="text-gray-400">Executive dashboard with complete system overview</p>
           </div>
           <div className="flex items-center space-x-4">
             <button type="button"
@@ -150,32 +350,42 @@ export default function TacticalOperationsPage() {
             <button
               type="button"
               className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              onClick={() => toast({ title: 'Alert settings', description: 'Opening alert settings (coming soon)' })}
+              onClick={() => router.push('/settings')}
             >
-              <Bell className="w-4 h-4" />
-              <span>Alert Settings</span>
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
             </button>
           </div>
         </div>
 
         {/* Critical Alert Banner */}
         {alerts.filter(a => a.severity === 'critical' && a.status === 'active').length > 0 && (
-          <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 mb-4 animate-pulse">
-            <div className="flex items-center space-x-3">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-              <div>
-                <p className="font-semibold text-red-500">CRITICAL ALERTS ACTIVE</p>
-                <p className="text-sm text-gray-300">Immediate action required - {alerts.filter(a => a.severity === 'critical').length} critical issues detected</p>
+          <div 
+            className="bg-red-900/20 border border-red-500 rounded-lg p-4 mb-4 animate-pulse cursor-pointer hover:bg-red-900/30 transition-colors"
+            onClick={() => router.push('/operations/alerts')}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="w-6 h-6 text-red-500" />
+                <div>
+                  <p className="font-semibold text-red-500">CRITICAL ALERTS ACTIVE</p>
+                  <p className="text-sm text-gray-300">Immediate action required - {alerts.filter(a => a.severity === 'critical').length} critical issues detected</p>
+                </div>
               </div>
+              <ChevronRight className="w-5 h-5 text-red-500" />
             </div>
           </div>
         )}
       </div>
 
-      {/* System Metrics Grid */}
+      {/* System Metrics Grid - Clickable */}
       <ResponsiveGrid variant="metrics" className="mb-6">
         {systemMetrics.map((metric, index) => (
-          <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div 
+            key={index} 
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg hover:border-blue-500 transition-all"
+            onClick={metric.onClick}
+          >
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-400">{metric.name}</span>
               {metric.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
@@ -199,18 +409,127 @@ export default function TacticalOperationsPage() {
         ))}
       </ResponsiveGrid>
 
-      {/* Main Grid */}
+      {/* Main Navigation Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {navigationCards.map((card) => {
+          const Icon = card.icon;
+          const isExpanded = expandedCards.has(card.id);
+          
+          return (
+            <div 
+              key={card.id}
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all"
+            >
+              {/* Card Header - Clickable */}
+              <div 
+                className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                onClick={() => router.push(card.href)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-lg bg-${card.color}-500/10`}>
+                      <Icon className={`w-6 h-6 text-${card.color}-500`} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">{card.title}</h3>
+                      {card.badge && (
+                        <span className={`inline-block mt-1 text-xs px-2 py-1 rounded-full bg-${card.color}-500/20 text-${card.color}-500 font-medium`}>
+                          {card.badge}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                </div>
+                
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  {card.description}
+                </p>
+
+                {/* Stats */}
+                {card.stats && (
+                  <div className="grid grid-cols-3 gap-3">
+                    {card.stats.map((stat, idx) => (
+                      <div key={idx} className="text-center">
+                        <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center justify-center space-x-1">
+                          <span>{stat.value}</span>
+                          {stat.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
+                          {stat.trend === 'down' && <TrendingDown className="w-3 h-3 text-red-500" />}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sub Items - Expandable */}
+              {card.subItems && (
+                <>
+                  <div className="border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCardExpansion(card.id);
+                      }}
+                    >
+                      <span className="text-sm font-medium">Quick Access</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 p-3">
+                      <div className="space-y-1">
+                        {card.subItems.map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between group"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(item.href);
+                            }}
+                          >
+                            <span className="text-sm">{item.label}</span>
+                            <div className="flex items-center space-x-2">
+                              {item.count !== undefined && (
+                                <span className="text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">
+                                  {item.count}
+                                </span>
+                              )}
+                              <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Main Grid - Alerts and Command Center */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Alert Feed */}
+        {/* Alert Feed - Clickable */}
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="p-4 border-b border-gray-700">
+            <div 
+              className="p-4 border-b border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              onClick={() => router.push('/operations/alerts')}
+            >
               <h2 className="text-lg font-semibold flex items-center space-x-2">
                 <AlertCircle className="w-5 h-5 text-red-500" />
                 <span>Active Alerts</span>
                 <span className="ml-auto text-sm bg-red-500 text-white px-2 py-1 rounded">
                   {alerts.filter(a => a.status === 'active').length}
                 </span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
               </h2>
             </div>
             <div className="divide-y divide-gray-700 max-h-96 overflow-y-auto">
@@ -218,7 +537,8 @@ export default function TacticalOperationsPage() {
                 <div
                   key={alert.id}
                   className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
-                  onClick={() => setSelectedAlert(alert)}>
+                  onClick={() => setSelectedAlert(alert)}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
@@ -240,6 +560,12 @@ export default function TacticalOperationsPage() {
                 </div>
               ))}
             </div>
+            <div 
+              className="p-3 border-t border-gray-700 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              onClick={() => router.push('/operations/alerts')}
+            >
+              <span className="text-sm text-blue-500 hover:text-blue-400">View All Alerts →</span>
+            </div>
           </div>
 
           {/* Command Center */}
@@ -251,7 +577,7 @@ export default function TacticalOperationsPage() {
               </h2>
             </div>
             <div className="p-4">
-              <div className="bg-gray-100 dark:bg-black rounded-lg p-4 font-mono text-sm mb-4 h-32 overflow-y-auto">
+              <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 font-mono text-sm mb-4 h-32 overflow-y-auto">
                 {commandHistory.length === 0 ? (
                   <div className="text-gray-500">Ready for commands...</div>
                 ) : (
@@ -283,7 +609,7 @@ export default function TacticalOperationsPage() {
 
         {/* Right Panel */}
         <div className="space-y-6">
-          {/* Quick Actions */}
+          {/* Quick Actions - Clickable */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -293,6 +619,7 @@ export default function TacticalOperationsPage() {
                   <button type="button"
                     key={index}
                     className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors flex flex-col items-center space-y-2"
+                    onClick={() => router.push(action.href)}
                   >
                     <Icon className={`w-6 h-6 text-${action.color}-500`} />
                     <span className="text-xs text-center">{action.label}</span>
@@ -302,93 +629,91 @@ export default function TacticalOperationsPage() {
             </div>
           </div>
 
-          {/* Incident Response */}
+          {/* Recent Activities - Clickable */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h2 className="text-lg font-semibold mb-4">Incident Response</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded">
-                <span className="text-sm">Auto-remediation</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded">
-                <span className="text-sm">Alert escalation</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-              <button
-                type="button"
-                className="w-full p-3 bg-orange-600 hover:bg-orange-700 rounded transition-colors"
-                onClick={() => toast({ title: 'Playbook', description: 'Executing emergency playbook...' })}
-              >
-                Execute Emergency Playbook
-              </button>
+            <div 
+              className="flex items-center justify-between mb-4 cursor-pointer hover:text-blue-500 transition-colors"
+              onClick={() => router.push('/audit')}
+            >
+              <h2 className="text-lg font-semibold">Recent Activities</h2>
+              <ChevronRight className="w-4 h-4" />
             </div>
-          </div>
-
-          {/* Communication Channels */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h2 className="text-lg font-semibold mb-4">Communication Channels</h2>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">Slack - #incidents</span>
+            <div className="space-y-3">
+              <div 
+                className="flex items-start space-x-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                onClick={() => router.push('/audit')}
+              >
+                <UserCheck className="w-4 h-4 text-green-500 mt-1" />
+                <div>
+                  <p className="text-sm">User john.doe@company.com logged in</p>
+                  <p className="text-xs text-gray-400">2 minutes ago</p>
                 </div>
-                <span className="text-xs text-green-500">Connected</span>
               </div>
-              <div className="flex items-center justify-between p-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm">Teams - Operations</span>
+              <div 
+                className="flex items-start space-x-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                onClick={() => router.push('/governance/policies')}
+              >
+                <FileCheck className="w-4 h-4 text-blue-500 mt-1" />
+                <div>
+                  <p className="text-sm">Policy PCI-DSS-2024 updated</p>
+                  <p className="text-xs text-gray-400">15 minutes ago</p>
                 </div>
-                <span className="text-xs text-green-500">Connected</span>
               </div>
-              <div className="flex items-center justify-between p-2">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm">PagerDuty</span>
+              <div 
+                className="flex items-start space-x-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                onClick={() => router.push('/devops/deployments')}
+              >
+                <Rocket className="w-4 h-4 text-purple-500 mt-1" />
+                <div>
+                  <p className="text-sm">Deployment to production completed</p>
+                  <p className="text-xs text-gray-400">1 hour ago</p>
                 </div>
-                <span className="text-xs text-yellow-500">Stand-by</span>
               </div>
             </div>
             <button
               type="button"
-              className="w-full mt-3 p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
-              onClick={() => toast({ title: 'Broadcast', description: 'Broadcasting alert to channels...' })}
+              className="w-full mt-3 p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors text-sm"
+              onClick={() => router.push('/audit')}
             >
-              Broadcast Alert
+              View All Activities
             </button>
           </div>
 
-          {/* Active Playbooks */}
+          {/* Cost Summary - Clickable */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <h2 className="text-lg font-semibold mb-4">Active Playbooks</h2>
+            <div 
+              className="flex items-center justify-between mb-4 cursor-pointer hover:text-blue-500 transition-colors"
+              onClick={() => router.push('/governance/cost')}
+            >
+              <h2 className="text-lg font-semibold flex items-center space-x-2">
+                <DollarSign className="w-5 h-5 text-green-500" />
+                <span>Cost Summary</span>
+              </h2>
+              <ChevronRight className="w-4 h-4" />
+            </div>
             <div className="space-y-3">
-              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Database Recovery</span>
-                  <Play className="w-4 h-4 text-green-500" />
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">Step 3 of 5</p>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Monthly Budget</span>
+                <span className="text-sm font-bold">$50,000</span>
               </div>
-              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Security Lockdown</span>
-                  <Pause className="w-4 h-4 text-yellow-500" />
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                  <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '30%' }}></div>
-                </div>
-                <p className="text-xs text-gray-400 mt-1">Paused - Awaiting approval</p>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Current Spend</span>
+                <span className="text-sm font-bold text-yellow-500">$42,341</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Savings This Month</span>
+                <span className="text-sm font-bold text-green-500">$4,523</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
+                <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '85%' }}></div>
+              </div>
+              <button
+                type="button"
+                className="w-full mt-2 p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm"
+                onClick={() => router.push('/governance/cost')}
+              >
+                View Cost Details
+              </button>
             </div>
           </div>
         </div>
@@ -445,30 +770,39 @@ export default function TacticalOperationsPage() {
               <button
                 type="button"
                 className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-                onClick={() => toast({ title: 'Acknowledged', description: `${selectedAlert.title}` })}
+                onClick={() => {
+                  toast({ title: 'Acknowledged', description: `${selectedAlert.title}` });
+                  setSelectedAlert(null);
+                }}
               >
                 Acknowledge
               </button>
               <button
                 type="button"
                 className="px-4 py-2 bg-green-600 rounded hover:bg-green-700 transition-colors"
-                onClick={() => toast({ title: 'Resolved', description: `${selectedAlert.title}` })}
+                onClick={() => {
+                  toast({ title: 'Resolved', description: `${selectedAlert.title}` });
+                  setSelectedAlert(null);
+                }}
               >
                 Mark Resolved
               </button>
               <button
                 type="button"
                 className="px-4 py-2 bg-orange-600 rounded hover:bg-orange-700 transition-colors"
-                onClick={() => toast({ title: 'Escalated', description: `${selectedAlert.title}` })}
+                onClick={() => {
+                  toast({ title: 'Escalated', description: `${selectedAlert.title}` });
+                  router.push('/operations/notifications');
+                }}
               >
                 Escalate
               </button>
               <button
                 type="button"
-                className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600 transition-colors"
-                onClick={() => toast({ title: 'Note added', description: 'Added note to alert' })}
+                className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition-colors"
+                onClick={() => router.push('/operations/automation')}
               >
-                Add Note
+                Run Playbook
               </button>
             </div>
           </div>
