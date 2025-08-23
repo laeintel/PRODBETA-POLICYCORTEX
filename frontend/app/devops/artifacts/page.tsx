@@ -36,11 +36,11 @@ export default function ArtifactManagementPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white">
+      <div className="border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold">Artifact Management</h1>
-          <p className="text-sm text-gray-400 mt-1">Store and manage build artifacts</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Store and manage build artifacts</p>
         </div>
       </div>
 
@@ -74,15 +74,15 @@ export default function ArtifactManagementPage() {
         </div>
 
         {/* Main Content Area */}
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
+        <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h2 className="text-lg font-semibold mb-4">Live Data</h2>
           {loading ? (
-            <div className="text-gray-400">Loading data from backend...</div>
+            <div className="text-gray-600 dark:text-gray-400">Loading data from backend...</div>
           ) : (
             <div className="space-y-4">
-              <div className="p-4 bg-gray-800/50 rounded">
-                <p className="text-sm text-gray-400 mb-2">API Response:</p>
-                <pre className="text-xs text-gray-300 overflow-auto max-h-96">
+              <div className="p-4 bg-gray-100/50 dark:bg-gray-800/50 rounded">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">API Response:</p>
+                <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-96">
                   {JSON.stringify(data, null, 2)}
                 </pre>
               </div>
@@ -129,14 +129,14 @@ export default function ArtifactManagementPage() {
 
 function MetricCard({ title, value, trend, icon: Icon }: any) {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+    <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-400">{title}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
           <p className="text-2xl font-bold mt-1">{value}</p>
-          <p className="text-sm text-gray-500 mt-1">{trend}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{trend}</p>
         </div>
-        <Icon className="w-5 h-5 text-gray-400" />
+        <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
       </div>
     </div>
   )
@@ -146,7 +146,7 @@ function ActionButton({ label, onClick }: any) {
   return (
     <button type="button" 
       onClick={onClick}
-      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm transition-colors"
+      className="px-4 py-2 bg-gray-200 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm transition-colors"
     >
       {label}
     </button>
@@ -155,12 +155,12 @@ function ActionButton({ label, onClick }: any) {
 
 function InfoCard({ title, items }: any) {
   return (
-    <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
+    <div className="bg-gray-100 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
       <h3 className="font-medium mb-3">{title}</h3>
       <ul className="space-y-2">
         {items.map((item: string, i: number) => (
-          <li key={i} className="text-sm text-gray-400 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-gray-600 rounded-full" />
+          <li key={i} className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-600 rounded-full" />
             {item}
           </li>
         ))}

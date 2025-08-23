@@ -37,6 +37,9 @@ export function generateCSP(nonce: string, reportOnly: boolean = false): string 
   if (!isProd) {
     allowedConnect.add('http://localhost:8080');
     allowedConnect.add('http://localhost:4000');
+    allowedConnect.add('http://localhost:3000');
+    allowedConnect.add('http://localhost:3001');
+    allowedConnect.add('http://localhost:3002');
   }
   if (process.env.NEXT_PUBLIC_API_URL) allowedConnect.add(process.env.NEXT_PUBLIC_API_URL);
   if (process.env.NEXT_PUBLIC_WS_URL) allowedConnect.add(process.env.NEXT_PUBLIC_WS_URL);
@@ -45,23 +48,28 @@ export function generateCSP(nonce: string, reportOnly: boolean = false): string 
     if (!isProd) allowedConnect.add('ws:');
   }
   
-  // Pure nonce-based script policy - no unsafe-inline or unsafe-eval
-  // In development, we need to whitelist Next.js specific hashes for HMR
-  const nextJsHashes = !isProd ? [
-    "'sha256-FhKqPZm0peBsmG8CjbPVnEJX1QoAqkfRDvL1XAIiZKc='", // Next.js development runtime
-    "'sha256-2FkMoYIfzHsQvRmT2WsrQlGNFX2x5L6eBqhSVZYKhGg='", // Next.js error overlay
-  ].join(' ') : '';
+  // Add Sentry endpoint only if configured
+  if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    // Extract the domain from the DSN
+    try {
+      const sentryUrl = new URL(process.env.NEXT_PUBLIC_SENTRY_DSN);
+      const sentryIngest = `https://${sentryUrl.hostname.replace('.ingest.', '.ingest.us.')}`;
+      allowedConnect.add(sentryIngest);
+    } catch (e) {
+      // Invalid Sentry DSN, skip
+    }
+  }
   
-  // Strict nonce-based script policy
-  const scriptSrc = `script-src 'nonce-${nonce}' 'strict-dynamic' ${nextJsHashes}`;
+  // In development, be more permissive with scripts to avoid breaking HMR
+  // React development mode requires unsafe-eval for hot reload functionality
+  const scriptSrc = !isProd 
+    ? `script-src 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' 'sha256-drs6v8sKWnmmrrD9KTCfeZyk9sh/EMNvzKJUm8rdVwo=' 'sha256-YoiTZbP35ftJSuqcXHIQKR0GkOgvwuSrIESq73qEh+4='`
+    : `script-src 'nonce-${nonce}' 'strict-dynamic'`;
   
-  // Style with nonce only - no unsafe-inline
-  // For Next.js CSS-in-JS, we need specific hashes in production
-  const styleHashes = isProd ? [
-    "'sha256-47DEjpKa0EqIR1lnSNjzBLLiMcDLsVvTKAMTeWP8YB0='", // Next.js production CSS
-  ].join(' ') : '';
-  
-  const styleSrc = `style-src 'self' 'nonce-${nonce}' ${styleHashes}`;
+  // Style needs unsafe-inline in development for hot reload to work properly
+  const styleSrc = !isProd
+    ? `style-src 'self' 'unsafe-inline'`
+    : `style-src 'self' 'nonce-${nonce}'`;
   
   const cspDirectives = [
     "default-src 'self'",
@@ -69,16 +77,20 @@ export function generateCSP(nonce: string, reportOnly: boolean = false): string 
     styleSrc,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src ${Array.from(allowedConnect).join(' ')} https://o921931.ingest.us.sentry.io`,
+    `connect-src ${Array.from(allowedConnect).join(' ')}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "upgrade-insecure-requests",
   ];
   
-  // Add report-uri for CSP violation monitoring
-  if (isProd || reportOnly) {
+  // Only add upgrade-insecure-requests in production
+  if (isProd) {
+    cspDirectives.push("upgrade-insecure-requests");
+  }
+  
+  // Add report-uri for CSP violation monitoring only in production
+  if (isProd) {
     cspDirectives.push("report-uri /api/v1/csp-report");
     cspDirectives.push("report-to csp-endpoint");
   }

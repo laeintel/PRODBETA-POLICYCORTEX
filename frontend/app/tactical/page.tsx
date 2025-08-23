@@ -8,7 +8,7 @@ import {
   ChevronRight, Cpu, HardDrive, Wifi, Target, Radio
 } from 'lucide-react';
 import ResponsiveGrid, { ResponsiveContainer, ResponsiveText } from '@/components/ResponsiveGrid';
-import { toast } from '@/hooks/useToast'
+import { toast } from '@/hooks/useToast';
 
 interface Alert {
   id: string;
@@ -124,7 +124,7 @@ export default function TacticalOperationsPage() {
   };
 
   return (
-    <ResponsiveContainer className="min-h-screen bg-gray-900 text-white py-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white py-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -175,17 +175,17 @@ export default function TacticalOperationsPage() {
       {/* System Metrics Grid */}
       <ResponsiveGrid variant="metrics" className="mb-6">
         {systemMetrics.map((metric, index) => (
-          <div key={index} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-gray-400">{metric.name}</span>
               {metric.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
               {metric.trend === 'down' && <TrendingUp className="w-3 h-3 text-red-500 rotate-180" />}
-              {metric.trend === 'stable' && <div className="w-3 h-3 bg-gray-500 rounded-full" />}
+              {metric.trend === 'stable' && <div className="w-3 h-3 bg-gray-400 dark:bg-gray-500 rounded-full" />}
             </div>
             <div className={`text-2xl font-bold ${getStatusColor(metric.status)}`}>
               {metric.value}{metric.unit}
             </div>
-            <div className="mt-2 h-1 bg-gray-700 rounded-full overflow-hidden">
+            <div className="mt-2 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div 
                 className={`h-full ${
                   metric.status === 'critical' ? 'bg-red-500' :
@@ -203,7 +203,7 @@ export default function TacticalOperationsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Alert Feed */}
         <div className="lg:col-span-2">
-          <div className="bg-gray-800 rounded-lg border border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="p-4 border-b border-gray-700">
               <h2 className="text-lg font-semibold flex items-center space-x-2">
                 <AlertCircle className="w-5 h-5 text-red-500" />
@@ -217,9 +217,8 @@ export default function TacticalOperationsPage() {
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="p-4 hover:bg-gray-700/50 cursor-pointer transition-colors"
-                  onClick={() => setSelectedAlert(alert)}
-                >
+                  className="p-4 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                  onClick={() => setSelectedAlert(alert)}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
@@ -244,7 +243,7 @@ export default function TacticalOperationsPage() {
           </div>
 
           {/* Command Center */}
-          <div className="mt-6 bg-gray-800 rounded-lg border border-gray-700">
+          <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="p-4 border-b border-gray-700">
               <h2 className="text-lg font-semibold flex items-center space-x-2">
                 <Terminal className="w-5 h-5 text-green-500" />
@@ -252,7 +251,7 @@ export default function TacticalOperationsPage() {
               </h2>
             </div>
             <div className="p-4">
-              <div className="bg-black rounded-lg p-4 font-mono text-sm mb-4 h-32 overflow-y-auto">
+              <div className="bg-gray-100 dark:bg-black rounded-lg p-4 font-mono text-sm mb-4 h-32 overflow-y-auto">
                 {commandHistory.length === 0 ? (
                   <div className="text-gray-500">Ready for commands...</div>
                 ) : (
@@ -269,7 +268,7 @@ export default function TacticalOperationsPage() {
                   value={commandInput}
                   onChange={(e) => setCommandInput(e.target.value)}
                   placeholder="Enter command..."
-                  className="flex-1 bg-gray-700 rounded px-4 py-2 text-sm"
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 rounded px-4 py-2 text-sm"
                 />
                 <button
                   type="submit"
@@ -285,7 +284,7 @@ export default function TacticalOperationsPage() {
         {/* Right Panel */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
               {quickActions.map((action, index) => {
@@ -293,7 +292,7 @@ export default function TacticalOperationsPage() {
                 return (
                   <button type="button"
                     key={index}
-                    className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors flex flex-col items-center space-y-2"
+                    className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors flex flex-col items-center space-y-2"
                   >
                     <Icon className={`w-6 h-6 text-${action.color}-500`} />
                     <span className="text-xs text-center">{action.label}</span>
@@ -304,26 +303,26 @@ export default function TacticalOperationsPage() {
           </div>
 
           {/* Incident Response */}
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <h2 className="text-lg font-semibold mb-4">Incident Response</h2>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-700 rounded">
+              <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded">
                 <span className="text-sm">Auto-remediation</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-700 rounded">
+              <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-700 rounded">
                 <span className="text-sm">Alert escalation</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
               </div>
               <button
                 type="button"
-                className="w/full p-3 bg-orange-600 hover:bg-orange-700 rounded transition-colors"
+                className="w-full p-3 bg-orange-600 hover:bg-orange-700 rounded transition-colors"
                 onClick={() => toast({ title: 'Playbook', description: 'Executing emergency playbook...' })}
               >
                 Execute Emergency Playbook
@@ -332,7 +331,7 @@ export default function TacticalOperationsPage() {
           </div>
 
           {/* Communication Channels */}
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <h2 className="text-lg font-semibold mb-4">Communication Channels</h2>
             <div className="space-y-2">
               <div className="flex items-center justify-between p-2">
@@ -367,25 +366,25 @@ export default function TacticalOperationsPage() {
           </div>
 
           {/* Active Playbooks */}
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <h2 className="text-lg font-semibold mb-4">Active Playbooks</h2>
             <div className="space-y-3">
-              <div className="p-3 bg-gray-700 rounded">
+              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Database Recovery</span>
                   <Play className="w-4 h-4 text-green-500" />
                 </div>
-                <div className="w-full bg-gray-600 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                   <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">Step 3 of 5</p>
               </div>
-              <div className="p-3 bg-gray-700 rounded">
+              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Security Lockdown</span>
                   <Pause className="w-4 h-4 text-yellow-500" />
                 </div>
-                <div className="w-full bg-gray-600 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                   <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '30%' }}></div>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">Paused - Awaiting approval</p>
@@ -475,6 +474,6 @@ export default function TacticalOperationsPage() {
           </div>
         </div>
       )}
-    </ResponsiveContainer>
+    </div>
   );
 }

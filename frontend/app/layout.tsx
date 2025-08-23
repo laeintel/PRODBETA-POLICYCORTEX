@@ -13,6 +13,10 @@ import { Inter, Orbitron, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import AppShell from '../components/AppShell'
+import { headers } from 'next/headers'
+import Script from 'next/script'
+import { PerformanceMonitor } from '../components/PerformanceMonitor'
+import { AccessibilityChecker } from '../components/AccessibilityChecker'
 
 const inter = Inter({ subsets: ['latin'] })
 const orbitron = Orbitron({ 
@@ -42,10 +46,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Get nonce from headers set by middleware
+  const nonce = headers().get('x-nonce') || ''
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script
+        <Script
+          id="theme-script"
+          nonce={nonce}
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -69,6 +79,13 @@ export default function RootLayout({
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>
+        {/* Development tools */}
+        {process.env.NODE_ENV === 'development' && (
+          <>
+            <PerformanceMonitor />
+            <AccessibilityChecker />
+          </>
+        )}
       </body>
     </html>
   )

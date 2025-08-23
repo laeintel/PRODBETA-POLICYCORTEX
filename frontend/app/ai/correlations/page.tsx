@@ -110,7 +110,7 @@ export default function AICorrelationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -254,7 +254,7 @@ export default function AICorrelationsPage() {
             </button>
           </div>
           
-          <div className="relative h-[600px] bg-gray-900 rounded-lg overflow-hidden">
+          <div className="relative h-[600px] bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
             <ForceGraph2D
               ref={graphRef}
               graphData={graphData}

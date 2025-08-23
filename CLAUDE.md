@@ -54,48 +54,35 @@ cd backend/services/api_gateway && uvicorn main:app --reload
 
 ### Building & Testing
 
-**Recommended: Use the comprehensive test scripts**
+**Frontend:**
 ```bash
-# Complete test suite (Windows)
-.\scripts\testing\test-all-windows.bat
-
-# Complete test suite (Linux/Mac)
-./scripts/testing/test-all-linux.sh
+cd frontend
+npm run build         # Production build
+npm run lint          # ESLint
+npm run type-check    # TypeScript validation
+npm run test          # Unit tests
+npm run test:e2e      # Playwright E2E tests
 ```
 
-**Manual component testing:**
+**Rust Backend:**
 ```bash
-# Frontend
-cd frontend
-npm run build
-npm run lint
-npm run type-check
-npm test
-
-# Rust backend
 cd core
-cargo build --release
-cargo test
-cargo clippy -- -D warnings
-cargo fmt --all -- --check
+cargo build --release      # Production build
+cargo test                  # Run all tests
+cargo test test_name        # Run specific test
+cargo clippy -- -D warnings # Linting
+cargo fmt --all            # Format code
+```
 
-# Run specific Rust test
-cd core && cargo test test_name
-
-# Format Rust code
-cd core && cargo fmt --all
-
-# Python services
+**Python Services:**
+```bash
 cd backend/services/api_gateway
 python -m pytest tests/ --verbose
+```
 
-# GraphQL gateway
+**GraphQL Gateway:**
+```bash
 cd graphql
-npm test
-
-# Edge functions
-cd edge
-npm run build
 npm test
 ```
 
@@ -149,6 +136,7 @@ Training configuration is in `training/` with Azure AI Foundry integration.
 - Frontend uses Zustand (not Redux) for state management
 - React Query for server state and caching
 - Real-time updates via GraphQL subscriptions
+- Theme system uses React Context with localStorage persistence
 
 ## Performance Considerations
 - Rust backend provides sub-millisecond response times
@@ -187,6 +175,8 @@ GitHub Actions workflow (`application.yml`) includes:
 - `core/src/api/mod.rs` - API route handlers
 - `frontend/app/layout.tsx` - Next.js root layout
 - `frontend/components/AppLayout.tsx` - Main app layout with navigation
+- `frontend/components/QuickActionsBar.tsx` - Theme toggle and quick actions
+- `frontend/contexts/ThemeContext.tsx` - Theme state management
 - `backend/services/ai_engine/domain_expert.py` - Core AI engine
 - `graphql/gateway.js` - GraphQL federation gateway
 

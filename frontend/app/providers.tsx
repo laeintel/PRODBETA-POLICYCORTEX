@@ -18,6 +18,7 @@ import { AuthProvider, AuthTokenRefresher } from '../contexts/AuthContext'
 import { DemoDataProvider } from '../contexts/DemoDataProvider'
 import { I18nProvider } from '../lib/i18n'
 import { AZURE_OPENAI } from '../lib/api-config'
+import { ThemeProvider } from '../contexts/ThemeContext'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
@@ -33,17 +34,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthProvider>
-      <I18nProvider>
-        <QueryClientProvider client={queryClient}>
-          <ApolloProvider client={client}>
-            <DemoDataProvider>
-              <AuthTokenRefresher />
-              {children}
-            </DemoDataProvider>
-          </ApolloProvider>
-        </QueryClientProvider>
-      </I18nProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <I18nProvider>
+          <QueryClientProvider client={queryClient}>
+            <ApolloProvider client={client}>
+              <DemoDataProvider>
+                <AuthTokenRefresher />
+                {children}
+              </DemoDataProvider>
+            </ApolloProvider>
+          </QueryClientProvider>
+        </I18nProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

@@ -7,7 +7,7 @@ import {
   Smartphone, Mail, AlertCircle, CheckCircle, Activity,
   Settings as SettingsIcon, LogOut, RefreshCw, Trash2
 } from 'lucide-react';
-import { toast } from '@/hooks/useToast'
+import { toast } from '@/hooks/useToast';
 
 interface SettingSection {
   id: string;
@@ -72,10 +72,10 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-64 bg-gray-800 border-r border-gray-700 min-h-screen">
+        <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen">
           <div className="p-6">
             <h1 className="text-2xl font-bold mb-6 flex items-center space-x-2">
               <SettingsIcon className="w-6 h-6" />
@@ -91,7 +91,7 @@ export default function SettingsPage() {
                     className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
                       activeSection === section.id
                         ? 'bg-blue-600 text-white'
-                        : 'hover:bg-gray-700 text-gray-300'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     <div className="flex items-center space-x-3">

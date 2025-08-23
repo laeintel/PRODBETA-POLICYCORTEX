@@ -14,10 +14,10 @@ export default function PrivilegedIdentityManagementPage() {
   ]), [])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Privileged Identity Management (JIT)</h1>
-        <p className="text-sm text-gray-400">Active elevations and pending requests</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Active elevations and pending requests</p>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -26,11 +26,11 @@ export default function PrivilegedIdentityManagementPage() {
         <Stat label="Pending" value={3} />
       </div>
 
-      <div className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-800/50 border-b border-gray-800">
+          <thead className="bg-gray-100 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
             <tr>
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-400">User</th>
+              <th className="text-left px-6 py-3 text-sm font-medium text-gray-600 dark:text-gray-400">User</th>
               <th className="text-left px-6 py-3 text-sm font-medium text-gray-400">Role</th>
               <th className="text-left px-6 py-3 text-sm font-medium text-gray-400">Requested</th>
               <th className="text-left px-6 py-3 text-sm font-medium text-gray-400">Expires</th>
@@ -39,14 +39,14 @@ export default function PrivilegedIdentityManagementPage() {
           </thead>
           <tbody>
             {elevations.map((e) => (
-              <tr key={`${e.user}-${e.role}`} className="border-b border-gray-800 hover:bg-gray-800/50">
+              <tr key={`${e.user}-${e.role}`} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50">
                 <td className="px-6 py-4">{e.user}</td>
                 <td className="px-6 py-4">{e.role}</td>
-                <td className="px-6 py-4 text-gray-400 text-sm">{e.requested}</td>
-                <td className="px-6 py-4 text-yellow-400 text-sm">{e.expires}</td>
+                <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">{e.requested}</td>
+                <td className="px-6 py-4 text-yellow-600 dark:text-yellow-400 text-sm">{e.expires}</td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2">
-                    <button type="button" className="text-xs px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded" onClick={() => setSelected(e)}>
+                    <button type="button" className="text-xs px-3 py-1 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded" onClick={() => setSelected(e)}>
                       View
                     </button>
                     <button type="button" className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 rounded inline-flex items-center gap-1">
@@ -61,13 +61,13 @@ export default function PrivilegedIdentityManagementPage() {
       </div>
 
       {selected && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-800 p-6 overflow-y-auto z-50">
+        <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 p-6 overflow-y-auto z-50">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h2 className="text-lg font-semibold">Elevation Details</h2>
-              <p className="text-xs text-gray-400">{selected.user} • {selected.role}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{selected.user} • {selected.role}</p>
             </div>
-            <button type="button" className="text-gray-400 hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
+            <button type="button" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-2xl" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="space-y-3">
             <Detail label="User" value={selected.user} />
@@ -84,8 +84,8 @@ export default function PrivilegedIdentityManagementPage() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-gray-900 rounded-lg border border-gray-800 p-4">
-      <p className="text-xs text-gray-400">{label}</p>
+    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+      <p className="text-xs text-gray-600 dark:text-gray-400">{label}</p>
       <p className="text-2xl font-bold mt-1">{value}</p>
     </div>
   )
@@ -94,7 +94,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-gray-400">{label}</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400">{label}</p>
       <p className="text-sm">{value}</p>
     </div>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Search, Filter, Download, RefreshCw, User, Shield, Key, 
   Activity, AlertCircle, CheckCircle, XCircle, Clock,
@@ -104,7 +104,7 @@ interface AuditEvent {
   }
 }
 
-export default function AuditTrailPage() {
+export default function AuditTrailPage(): JSX.Element {
   const [events, setEvents] = useState<AuditEvent[]>([])
   const [filteredEvents, setFilteredEvents] = useState<AuditEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -358,16 +358,14 @@ export default function AuditTrailPage() {
                   ? 'bg-green-600 text-white' 
                   : 'bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-gray-700'
                 }
-              `}
-            >
+              `}>
               <Activity className={`w-4 h-4 ${realTimeEnabled ? 'animate-pulse' : ''}`} />
               <span className="hidden sm:inline">Real-time</span>
             </button>
             
             <button type="button"
               onClick={exportData}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm sm:text-base"
-            >
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm sm:text-base">
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export</span>
             </button>
@@ -445,8 +443,7 @@ export default function AuditTrailPage() {
           <select
             value={filters.dateRange}
             onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value }))}
-            className="px-3 py-2 bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-sm"
-          >
+            className="px-3 py-2 bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-sm">
             <option value="24h">Last 24 Hours</option>
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
@@ -456,8 +453,7 @@ export default function AuditTrailPage() {
           <select
             value={filters.result}
             onChange={(e) => setFilters(prev => ({ ...prev, result: e.target.value }))}
-            className="px-3 py-2 bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-sm"
-          >
+            className="px-3 py-2 bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-sm">
             <option value="">All Results</option>
             <option value="SUCCESS">Success</option>
             <option value="FAILURE">Failure</option>
@@ -466,8 +462,7 @@ export default function AuditTrailPage() {
           <select
             value={filters.riskLevel}
             onChange={(e) => setFilters(prev => ({ ...prev, riskLevel: e.target.value }))}
-            className="px-3 py-2 bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-sm"
-          >
+            className="px-3 py-2 bg-background dark:bg-gray-900 border border-border dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-blue-500 text-sm">
             <option value="">All Risk Levels</option>
             <option value="HIGH">High Risk</option>
             <option value="MEDIUM">Medium Risk</option>
@@ -483,8 +478,7 @@ export default function AuditTrailPage() {
                   ? 'bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white' 
                   : 'bg-muted dark:bg-gray-700 text-muted-foreground dark:text-gray-300'
                 }
-              `}
-            >
+              `}>
               Timeline
             </button>
             <button type="button"
@@ -495,8 +489,7 @@ export default function AuditTrailPage() {
                   ? 'bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white' 
                   : 'bg-muted dark:bg-gray-700 text-muted-foreground dark:text-gray-300'
                 }
-              `}
-            >
+              `}>
               Table
             </button>
           </div>
@@ -545,8 +538,7 @@ export default function AuditTrailPage() {
                   <div className="flex-1 mb-4">
                     <div
                       className="bg-card dark:bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-accent dark:hover:bg-gray-700 transition-colors"
-                      onClick={() => toggleEventExpansion(event.id)}
-                    >
+                      onClick={() => toggleEventExpansion(event.id)}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
@@ -567,8 +559,7 @@ export default function AuditTrailPage() {
                               <Link
                                 href={`/security/rbac?user=${encodeURIComponent(event.actor)}`}
                                 className="text-blue-600 dark:text-blue-400 hover:underline truncate"
-                                onClick={(e) => e.stopPropagation()}
-                              >
+                                onClick={(e) => e.stopPropagation()}>
                                 {event.actor}
                               </Link>
                             </div>
@@ -675,24 +666,21 @@ export default function AuditTrailPage() {
                             <Link
                               href={`/security/rbac?user=${encodeURIComponent(event.actor)}`}
                               className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                              onClick={(e) => e.stopPropagation()}>
                               View User Profile
                             </Link>
                             
                             <Link
                               href={`/audit?session=${event.sessionId}`}
                               className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                              onClick={(e) => e.stopPropagation()}>
                               View Session Events
                             </Link>
                             
                             <Link
                               href={`/operations/resources?filter=${encodeURIComponent(event.target)}`}
                               className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                              onClick={(e) => e.stopPropagation()}>
                               View Resource
                             </Link>
                             
@@ -701,8 +689,7 @@ export default function AuditTrailPage() {
                               onClick={(e) => {
                                 e.stopPropagation()
                                 navigator.clipboard.writeText(JSON.stringify(event, null, 2))
-                              }}
-                            >
+                              }}>
                               <Copy className="w-3 h-3 inline mr-1" />
                               Copy JSON
                             </button>
@@ -746,8 +733,7 @@ export default function AuditTrailPage() {
                   <tr
                     key={event.id}
                     className="border-b border-border dark:border-gray-700 hover:bg-accent dark:hover:bg-gray-800 cursor-pointer"
-                    onClick={() => setSelectedEvent(event)}
-                  >
+                    onClick={() => setSelectedEvent(event)}>
                     <td className="p-2 text-xs sm:text-sm">
                       {format(event.timestamp, 'MMM d, HH:mm')}
                     </td>
@@ -806,18 +792,15 @@ export default function AuditTrailPage() {
       {selectedEvent && viewMode === 'table' && (
         <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedEvent(null)}
-        >
+          onClick={() => setSelectedEvent(null)}>
           <div
             className="bg-card dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-foreground dark:text-white">Event Details</h2>
               <button type="button"
                 onClick={() => setSelectedEvent(null)}
-                className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white"
-              >
+                className="text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
