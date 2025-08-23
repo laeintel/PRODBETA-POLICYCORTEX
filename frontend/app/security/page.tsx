@@ -9,6 +9,17 @@ import {
   TrendingDown, BarChart3, Activity, Zap, FileCheck,
   ShieldCheck, UserPlus, Settings, Eye, Building
 } from 'lucide-react'
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, AreaChart, Area, RadarChart,
+  PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+} from 'recharts'
+import ViewToggle from '@/components/ViewToggle'
+import MetricCard from '@/components/MetricCard'
+import ChartContainer from '@/components/ChartContainer'
+import DataExport from '@/components/DataExport'
+import { useViewPreference } from '@/hooks/useViewPreference'
 
 interface SecurityCard {
   id: string
@@ -251,145 +262,311 @@ export default function SecurityAccessHub() {
 }
 
 function SecurityOverview({ cards, router }: { cards: SecurityCard[], router: any }) {
+  const { view, setView } = useViewPreference('security-view', 'cards');
+
+  // Mock data for security charts
+  const securityScoreData = [
+    { month: 'Jan', score: 82, incidents: 15, mfa: 89 },
+    { month: 'Feb', score: 84, incidents: 12, mfa: 91 },
+    { month: 'Mar', score: 83, incidents: 18, mfa: 92 },
+    { month: 'Apr', score: 87, incidents: 8, mfa: 94 },
+    { month: 'May', score: 89, incidents: 5, mfa: 95 },
+    { month: 'Jun', score: 87, incidents: 12, mfa: 94 }
+  ];
+
+  const accessData = [
+    { category: 'Admin Access', attempts: 1234, blocked: 89, success: 1145 },
+    { category: 'User Access', attempts: 15678, blocked: 234, success: 15444 },
+    { category: 'Service Principal', attempts: 2345, blocked: 12, success: 2333 },
+    { category: 'Guest Access', attempts: 567, blocked: 45, success: 522 }
+  ];
+
+  const riskDistribution = [
+    { name: 'Critical', value: 12, color: '#EF4444' },
+    { name: 'High', value: 45, color: '#F97316' },
+    { name: 'Medium', value: 123, color: '#EAB308' },
+    { name: 'Low', value: 234, color: '#22C55E' }
+  ];
+
+  const complianceData = [
+    { subject: 'Identity', score: 95, fullMark: 100 },
+    { subject: 'Access', score: 87, fullMark: 100 },
+    { subject: 'Devices', score: 78, fullMark: 100 },
+    { subject: 'Network', score: 92, fullMark: 100 },
+    { subject: 'Data', score: 85, fullMark: 100 },
+    { subject: 'Apps', score: 89, fullMark: 100 }
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Key Security Metrics - Clickable */}
-      <div className="grid grid-cols-4 gap-4">
-        <div onClick={() => router.push('/security/iam')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard title="Security Score" value="87/100" icon={Shield} status="good" />
-        </div>
-        <div onClick={() => router.push('/security/iam')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard title="Active Users" value="2,451" icon={Users} />
-        </div>
-        <div onClick={() => router.push('/security/pim')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard title="Privileged Accounts" value="47" icon={Key} status="warning" />
-        </div>
-        <div onClick={() => router.push('/security/rbac')} className="cursor-pointer hover:shadow-lg transition-all">
-          <MetricCard title="Policy Violations" value="12" icon={AlertTriangle} status="critical" />
-        </div>
+      {/* View Toggle */}
+      <div className="flex justify-end">
+        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
-      {/* Critical Security Alert */}
-      <div 
-        onClick={() => router.push('/security/pim')}
-        className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-      >
-        <h2 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4 flex items-center justify-between">
-          <span>Critical Security Items</span>
-          <ChevronRight className="w-5 h-5" />
-        </h2>
-        <div className="space-y-3">
-          <AlertItem title="3 accounts with expired MFA" action="Enable MFA" onClick={() => router.push('/security/iam#mfa')} />
-          <AlertItem title="5 standing privileged access" action="Configure PIM" onClick={() => router.push('/security/pim')} />
-          <AlertItem title="17 stale access reviews" action="Complete Reviews" onClick={() => router.push('/security/access-reviews')} />
-        </div>
-      </div>
-
-      {/* Security Dashboard Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {cards.map((card) => {
-          const Icon = card.icon
-          return (
-            <div
-              key={card.id}
-              className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-xl transition-all"
+      {view === 'cards' ? (
+        <>
+          {/* Key Security Metrics Cards */}
+          <div className="grid grid-cols-4 gap-4">
+            <MetricCard
+              title="Security Score"
+              value="87/100"
+              change={2}
+              changeLabel="this month"
+              icon={<Shield className="h-5 w-5 text-blue-600" />}
+              sparklineData={securityScoreData.map(d => d.score)}
+              onClick={() => router.push('/security/iam')}
+              status="success"
+            />
+            <MetricCard
+              title="Active Users"
+              value={2451}
+              change={5}
+              changeLabel="new users"
+              icon={<Users className="h-5 w-5 text-purple-600" />}
+              sparklineData={[2400, 2420, 2435, 2440, 2445, 2451]}
+              onClick={() => router.push('/security/iam')}
+              status="neutral"
+            />
+            <MetricCard
+              title="Privileged Accounts"
+              value={47}
+              change={-8}
+              changeLabel="reduced"
+              icon={<Key className="h-5 w-5 text-orange-600" />}
+              sparklineData={[55, 52, 50, 49, 48, 47]}
+              onClick={() => router.push('/security/pim')}
+              status="warning"
+            />
+            <MetricCard
+              title="Policy Violations"
+              value={12}
+              change={-25}
+              changeLabel="improvement"
+              icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
+              sparklineData={[18, 16, 15, 14, 13, 12]}
+              onClick={() => router.push('/security/rbac')}
+              status="error"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Security Visualizations */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ChartContainer 
+              title="Security Score Trends" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/security/iam')}
             >
-              <div
-                className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-                onClick={() => router.push(card.href)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-3 rounded-lg bg-${card.color}-500/10`}>
-                      <Icon className={`w-6 h-6 text-${card.color}-500`} />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">{card.title}</h3>
-                    </div>
-                  </div>
-                  <ExternalLink className="w-4 h-4 text-gray-400" />
-                </div>
-                
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  {card.description}
-                </p>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={securityScoreData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="month" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="score" stroke="#3B82F6" strokeWidth={2} name="Security Score" />
+                  <Line type="monotone" dataKey="mfa" stroke="#10B981" strokeWidth={2} name="MFA Adoption %" />
+                  <Line type="monotone" dataKey="incidents" stroke="#EF4444" strokeWidth={2} name="Security Incidents" />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-                {/* Stats Grid */}
-                {card.stats && (
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    {card.stats.map((stat, idx) => (
-                      <div key={idx}>
-                        <div className="text-lg font-bold flex items-center space-x-1">
-                          <span className={
-                            stat.status === 'warning' ? 'text-yellow-500' : 
-                            stat.status === 'critical' ? 'text-red-500' :
-                            stat.status === 'good' ? 'text-green-500' : ''
-                          }>
-                            {stat.value}
-                          </span>
-                          {stat.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
-                          {stat.trend === 'down' && <TrendingDown className="w-3 h-3 text-red-500" />}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            <ChartContainer 
+              title="Access Patterns" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/security/conditional-access')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={accessData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="category" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="success" fill="#10B981" name="Successful" />
+                  <Bar dataKey="blocked" fill="#EF4444" name="Blocked" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-                {/* Quick Actions */}
-                {card.quickActions && (
-                  <div className="flex space-x-2">
-                    {card.quickActions.map((action, idx) => (
-                      <button
-                        key={idx}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(action.href)
-                        }}
-                        className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm"
-                      >
-                        {action.label}
-                      </button>
+            <ChartContainer 
+              title="Risk Distribution" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/security/rbac')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={riskDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {riskDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
-                  </div>
-                )}
-              </div>
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+
+            <ChartContainer 
+              title="Zero Trust Maturity" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/security/zero-trust')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={complianceData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="subject" />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} />
+                  <Radar
+                    name="Compliance Score"
+                    dataKey="score"
+                    stroke="#3B82F6"
+                    fill="#3B82F6"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
+        </>
+      )}
+
+      {view === 'cards' && (
+        <>
+          {/* Critical Security Alert */}
+          <div 
+            onClick={() => router.push('/security/pim')}
+            className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <h2 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4 flex items-center justify-between">
+              <span>Critical Security Items</span>
+              <ChevronRight className="w-5 h-5" />
+            </h2>
+            <div className="space-y-3">
+              <AlertItem title="3 accounts with expired MFA" action="Enable MFA" onClick={() => router.push('/security/iam#mfa')} />
+              <AlertItem title="5 standing privileged access" action="Configure PIM" onClick={() => router.push('/security/pim')} />
+              <AlertItem title="17 stale access reviews" action="Complete Reviews" onClick={() => router.push('/security/access-reviews')} />
             </div>
-          )
-        })}
-      </div>
+          </div>
 
-      {/* Quick Security Actions */}
-      <div className="grid grid-cols-4 gap-4">
-        <button
-          onClick={() => router.push('/security/iam#add-user')}
-          className="p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-center"
-        >
-          <UserPlus className="w-6 h-6 mx-auto mb-2" />
-          <div className="font-medium">Add User</div>
-        </button>
-        <button
-          onClick={() => router.push('/security/pim#request')}
-          className="p-4 bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors text-center"
-        >
-          <Key className="w-6 h-6 mx-auto mb-2" />
-          <div className="font-medium">Request PIM</div>
-        </button>
-        <button
-          onClick={() => router.push('/security/conditional-access#create')}
-          className="p-4 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-center"
-        >
-          <Lock className="w-6 h-6 mx-auto mb-2" />
-          <div className="font-medium">New Policy</div>
-        </button>
-        <button
-          onClick={() => router.push('/security/access-reviews#start')}
-          className="p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-center"
-        >
-          <RefreshCw className="w-6 h-6 mx-auto mb-2" />
-          <div className="font-medium">Start Review</div>
-        </button>
-      </div>
+          {/* Security Dashboard Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {cards.map((card) => {
+              const Icon = card.icon
+              return (
+                <div
+                  key={card.id}
+                  className="bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800 hover:shadow-xl transition-all"
+                >
+                  <div
+                    className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                    onClick={() => router.push(card.href)}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-3 rounded-lg bg-${card.color}-500/10`}>
+                          <Icon className={`w-6 h-6 text-${card.color}-500`} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold">{card.title}</h3>
+                        </div>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                    </div>
+                    
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      {card.description}
+                    </p>
+
+                    {/* Stats Grid */}
+                    {card.stats && (
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {card.stats.map((stat, idx) => (
+                          <div key={idx}>
+                            <div className="text-lg font-bold flex items-center space-x-1">
+                              <span className={
+                                stat.status === 'warning' ? 'text-yellow-500' : 
+                                stat.status === 'critical' ? 'text-red-500' :
+                                stat.status === 'good' ? 'text-green-500' : ''
+                              }>
+                                {stat.value}
+                              </span>
+                              {stat.trend === 'up' && <TrendingUp className="w-3 h-3 text-green-500" />}
+                              {stat.trend === 'down' && <TrendingDown className="w-3 h-3 text-red-500" />}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Quick Actions */}
+                    {card.quickActions && (
+                      <div className="flex space-x-2">
+                        {card.quickActions.map((action, idx) => (
+                          <button
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(action.href)
+                            }}
+                            className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm"
+                          >
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Quick Security Actions */}
+          <div className="grid grid-cols-4 gap-4">
+            <button
+              onClick={() => router.push('/security/iam#add-user')}
+              className="p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-center"
+            >
+              <UserPlus className="w-6 h-6 mx-auto mb-2" />
+              <div className="font-medium">Add User</div>
+            </button>
+            <button
+              onClick={() => router.push('/security/pim#request')}
+              className="p-4 bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors text-center"
+            >
+              <Key className="w-6 h-6 mx-auto mb-2" />
+              <div className="font-medium">Request PIM</div>
+            </button>
+            <button
+              onClick={() => router.push('/security/conditional-access#create')}
+              className="p-4 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-center"
+            >
+              <Lock className="w-6 h-6 mx-auto mb-2" />
+              <div className="font-medium">New Policy</div>
+            </button>
+            <button
+              onClick={() => router.push('/security/access-reviews#start')}
+              className="p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors text-center"
+            >
+              <RefreshCw className="w-6 h-6 mx-auto mb-2" />
+              <div className="font-medium">Start Review</div>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -722,7 +899,7 @@ function AccessReviewsView({ router }: { router: any }) {
 }
 
 // Component library
-function MetricCard({ title, value, icon: Icon, status }: {
+function LegacySecurityMetricCard({ title, value, icon: Icon, status }: {
   title: string
   value: string | number
   icon: React.ElementType

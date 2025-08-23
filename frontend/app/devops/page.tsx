@@ -21,6 +21,16 @@ import {
   ShieldCheck,
   Zap
 } from 'lucide-react';
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, AreaChart, Area, ComposedChart
+} from 'recharts';
+import ViewToggle from '@/components/ViewToggle';
+import MetricCard from '@/components/MetricCard';
+import ChartContainer from '@/components/ChartContainer';
+import DataExport from '@/components/DataExport';
+import { useViewPreference } from '@/hooks/useViewPreference';
 
 interface DevOpsCard {
   id: string;
@@ -41,6 +51,39 @@ interface DevOpsCard {
 export default function DevOpsPage() {
   const router = useRouter();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const { view, setView } = useViewPreference('devops-view', 'cards');
+
+  // Mock data for DevOps charts
+  const pipelineData = [
+    { date: '2024-01-01', success: 45, failed: 3, duration: 4.2 },
+    { date: '2024-01-02', success: 52, failed: 2, duration: 3.8 },
+    { date: '2024-01-03', success: 48, failed: 4, duration: 4.5 },
+    { date: '2024-01-04', success: 59, failed: 1, duration: 3.9 },
+    { date: '2024-01-05', success: 63, failed: 2, duration: 3.7 },
+    { date: '2024-01-06', success: 67, failed: 1, duration: 3.5 }
+  ];
+
+  const deploymentFrequency = [
+    { environment: 'Development', daily: 12, weekly: 84, monthly: 336 },
+    { environment: 'Staging', daily: 8, weekly: 56, monthly: 224 },
+    { environment: 'Production', daily: 3, weekly: 21, monthly: 84 },
+    { environment: 'Testing', daily: 15, weekly: 105, monthly: 420 }
+  ];
+
+  const buildMetrics = [
+    { week: 'W1', builds: 234, success: 221, failed: 13 },
+    { week: 'W2', builds: 267, success: 251, failed: 16 },
+    { week: 'W3', builds: 245, success: 235, failed: 10 },
+    { week: 'W4', builds: 289, success: 273, failed: 16 }
+  ];
+
+  const leadTimeData = [
+    { stage: 'Code Commit', time: 0.5 },
+    { stage: 'Build', time: 4.2 },
+    { stage: 'Test', time: 8.7 },
+    { stage: 'Deploy', time: 2.3 },
+    { stage: 'Verification', time: 1.8 }
+  ];
 
   const devopsCards: DevOpsCard[] = [
     {
@@ -213,7 +256,8 @@ export default function DevOpsPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <ViewToggle view={view} onViewChange={setView} />
           <button
             onClick={() => router.push('/devops/pipelines?action=create')}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -231,102 +275,208 @@ export default function DevOpsPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {quickStats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={index}
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
+      {view === 'cards' ? (
+        <>
+          {/* Quick Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <MetricCard
+              title="Pipeline Success"
+              value="94.2%"
+              change={2.1}
+              changeLabel="improvement"
+              icon={<CheckCircle className="h-5 w-5 text-green-600" />}
+              sparklineData={[92.1, 92.8, 93.2, 93.8, 94.0, 94.2]}
               onClick={() => router.push('/devops/pipelines')}
+              status="success"
+            />
+            <MetricCard
+              title="Active Builds"
+              value={8}
+              change={-20}
+              changeLabel="from yesterday"
+              icon={<Cpu className="h-5 w-5 text-blue-600" />}
+              sparklineData={[12, 10, 9, 8, 10, 8]}
+              onClick={() => router.push('/devops/builds')}
+              status="neutral"
+            />
+            <MetricCard
+              title="Deploy Frequency"
+              value="3.4/day"
+              change={13}
+              changeLabel="increase"
+              icon={<Rocket className="h-5 w-5 text-purple-600" />}
+              sparklineData={[2.8, 3.0, 3.1, 3.3, 3.4, 3.4]}
+              onClick={() => router.push('/devops/deployments')}
+              status="success"
+            />
+            <MetricCard
+              title="Lead Time"
+              value="2.5 hrs"
+              change={-15}
+              changeLabel="faster"
+              icon={<Clock className="h-5 w-5 text-orange-600" />}
+              sparklineData={[3.2, 3.0, 2.8, 2.6, 2.5, 2.5]}
+              onClick={() => router.push('/devops/pipelines')}
+              status="success"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* DevOps Visualizations */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <ChartContainer 
+              title="Pipeline Success Rate" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/devops/pipelines')}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                </div>
-                <div className={`p-3 rounded-lg bg-${stat.color}-50 dark:bg-${stat.color}-900/20`}>
-                  <Icon className={`h-6 w-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={pipelineData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="date" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="success" fill="#10B981" name="Successful" />
+                  <Bar dataKey="failed" fill="#EF4444" name="Failed" />
+                  <Line type="monotone" dataKey="duration" stroke="#F59E0B" strokeWidth={2} name="Avg Duration (min)" />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-      {/* DevOps Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {devopsCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer transform hover:scale-[1.02]"
-              onMouseEnter={() => setHoveredCard(card.id)}
-              onMouseLeave={() => setHoveredCard(null)}
-              onClick={() => router.push(card.route)}
+            <ChartContainer 
+              title="Deployment Frequency" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/devops/deployments')}
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg bg-${card.color}-50 dark:bg-${card.color}-900/20`}>
-                    <Icon className={`h-8 w-8 text-${card.color}-600 dark:text-${card.color}-400`} />
-                  </div>
-                  {hoveredCard === card.id && (
-                    <ArrowLeft className="h-5 w-5 rotate-180 text-gray-400" />
-                  )}
-                </div>
-                
-                <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  {card.description}
-                </p>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={deploymentFrequency}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="environment" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="daily" fill="#3B82F6" name="Daily" />
+                  <Bar dataKey="weekly" fill="#8B5CF6" name="Weekly" />
+                  <Bar dataKey="monthly" fill="#10B981" name="Monthly" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {card.stats.map((stat, index) => (
-                    <div key={index} className="text-sm">
-                      <p className="text-gray-500 dark:text-gray-400">{stat.label}</p>
-                      <p className={`font-semibold flex items-center gap-1 ${
-                        stat.status ? getStatusColor(stat.status) : ''
-                      }`}>
-                        {stat.value}
-                        {stat.trend && (
-                          <span className={`text-xs ${
-                            stat.trend === 'up' ? 'text-green-500' :
-                            stat.trend === 'down' ? 'text-red-500' :
-                            'text-gray-500'
-                          }`}>
-                            {getTrendSymbol(stat.trend)}
-                          </span>
-                        )}
-                      </p>
+            <ChartContainer 
+              title="Build Success Trends" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/devops/builds')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={buildMetrics}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis dataKey="week" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip />
+                  <Legend />
+                  <Area type="monotone" dataKey="builds" stackId="1" stroke="#6B7280" fill="#6B7280" fillOpacity={0.3} name="Total Builds" />
+                  <Area type="monotone" dataKey="success" stackId="2" stroke="#10B981" fill="#10B981" fillOpacity={0.6} name="Successful" />
+                  <Area type="monotone" dataKey="failed" stackId="3" stroke="#EF4444" fill="#EF4444" fillOpacity={0.8} name="Failed" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+
+            <ChartContainer 
+              title="Lead Time Breakdown" 
+              onExport={() => {}}
+              onDrillIn={() => router.push('/devops/pipelines')}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart layout="horizontal" data={leadTimeData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-700" />
+                  <XAxis type="number" className="text-gray-600 dark:text-gray-400" />
+                  <YAxis dataKey="stage" type="category" width={100} className="text-gray-600 dark:text-gray-400" />
+                  <Tooltip formatter={(value) => [`${value} hours`, 'Time']} />
+                  <Bar dataKey="time" fill="#F59E0B" name="Hours" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
+        </>
+      )}
+
+      {view === 'cards' && (
+        <>
+          {/* DevOps Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {devopsCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.id}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer transform hover:scale-[1.02]"
+                  onMouseEnter={() => setHoveredCard(card.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  onClick={() => router.push(card.route)}
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`p-3 rounded-lg bg-${card.color}-50 dark:bg-${card.color}-900/20`}>
+                        <Icon className={`h-8 w-8 text-${card.color}-600 dark:text-${card.color}-400`} />
+                      </div>
+                      {hoveredCard === card.id && (
+                        <ArrowLeft className="h-5 w-5 rotate-180 text-gray-400" />
+                      )}
                     </div>
-                  ))}
-                </div>
+                    
+                    <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                      {card.description}
+                    </p>
 
-                {/* Action Buttons */}
-                {card.actions && (
-                  <div className="flex gap-2 pt-3 border-t dark:border-gray-700">
-                    {card.actions.map((action, index) => (
-                      <button
-                        key={index}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          action.onClick();
-                        }}
-                        className="flex-1 px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                      >
-                        {action.label}
-                      </button>
-                    ))}
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {card.stats.map((stat, index) => (
+                        <div key={index} className="text-sm">
+                          <p className="text-gray-500 dark:text-gray-400">{stat.label}</p>
+                          <p className={`font-semibold flex items-center gap-1 ${
+                            stat.status ? getStatusColor(stat.status) : ''
+                          }`}>
+                            {stat.value}
+                            {stat.trend && (
+                              <span className={`text-xs ${
+                                stat.trend === 'up' ? 'text-green-500' :
+                                stat.trend === 'down' ? 'text-red-500' :
+                                'text-gray-500'
+                              }`}>
+                                {getTrendSymbol(stat.trend)}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Action Buttons */}
+                    {card.actions && (
+                      <div className="flex gap-2 pt-3 border-t dark:border-gray-700">
+                        {card.actions.map((action, index) => (
+                          <button
+                            key={index}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              action.onClick();
+                            }}
+                            className="flex-1 px-3 py-1.5 text-xs font-medium bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                          >
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Recent Activity */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
