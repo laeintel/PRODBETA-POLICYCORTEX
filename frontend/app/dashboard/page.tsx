@@ -398,6 +398,78 @@ export default function DashboardPage(): JSX.Element {
         ))}
       </div>
 
+      {/* Patent #3: Unified Platform Metrics */}
+      <div className="bg-gradient-to-r from-blue-900/10 to-purple-900/10 rounded-lg border border-blue-500/30 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Brain className="w-6 h-6 text-blue-400" />
+            <div>
+              <h2 className="text-xl font-bold">Unified AI-Driven Governance Platform</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Patent #3: Cross-Domain Metrics & Real-time Insights</p>
+            </div>
+          </div>
+          <span className="text-xs bg-green-500/20 text-green-400 px-3 py-1 rounded-full">Live</span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="bg-white/5 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+            <Cpu className="w-5 h-5 text-purple-400 mx-auto mb-2" />
+            <p className="text-2xl font-bold">12</p>
+            <p className="text-xs text-gray-400">AI Models Active</p>
+          </div>
+          <div className="bg-white/5 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+            <Activity className="w-5 h-5 text-green-400 mx-auto mb-2" />
+            <p className="text-2xl font-bold">99.8%</p>
+            <p className="text-xs text-gray-400">Service Uptime</p>
+          </div>
+          <div className="bg-white/5 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+            <Zap className="w-5 h-5 text-yellow-400 mx-auto mb-2" />
+            <p className="text-2xl font-bold">&lt;50ms</p>
+            <p className="text-xs text-gray-400">Avg Response</p>
+          </div>
+          <div className="bg-white/5 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+            <Database className="w-5 h-5 text-blue-400 mx-auto mb-2" />
+            <p className="text-2xl font-bold">458TB</p>
+            <p className="text-xs text-gray-400">Data Processed</p>
+          </div>
+          <div className="bg-white/5 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+            <Globe className="w-5 h-5 text-cyan-400 mx-auto mb-2" />
+            <p className="text-2xl font-bold">3</p>
+            <p className="text-xs text-gray-400">Cloud Providers</p>
+          </div>
+          <div className="bg-white/5 dark:bg-gray-900/50 rounded-lg p-3 text-center">
+            <Users className="w-5 h-5 text-pink-400 mx-auto mb-2" />
+            <p className="text-2xl font-bold">847</p>
+            <p className="text-xs text-gray-400">Active Users</p>
+          </div>
+        </div>
+
+        <div className="mt-4 p-3 bg-gray-800/50 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium">Cross-Domain Correlation Engine</p>
+            <span className="text-xs text-green-400">Active</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-gray-400">Security: 98%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-gray-400">Compliance: 94%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+              <span className="text-gray-400">Cost: 87%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-gray-400">Performance: 96%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Compliance Trend */}

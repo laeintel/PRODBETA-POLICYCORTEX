@@ -6,7 +6,7 @@ import {
   Network, GitBranch, AlertTriangle, Activity, 
   Zap, Shield, TrendingUp, Download, Filter,
   Maximize2, Settings, RefreshCw, Info, Search,
-  Layers, Target, Radio, Cpu, Clock
+  Layers, Target, Radio, Cpu, Clock, X
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
@@ -254,7 +254,7 @@ export default function AICorrelationsPage() {
             </button>
           </div>
           
-          <div className="relative h-[600px] bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
+          <div id="correlation-graph" data-testid="correlation-graph" className="relative h-[600px] bg-white dark:bg-gray-900 rounded-lg overflow-hidden">
             <ForceGraph2D
               ref={graphRef}
               graphData={graphData}
@@ -431,13 +431,22 @@ export default function AICorrelationsPage() {
         </div>
       </div>
 
-      {/* What-If Simulator */}
+      {/* What-If Simulator Modal */}
       {simulationMode && (
-        <div className="mt-6 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-lg p-6 border border-purple-500/30">
-          <h3 className="text-xl font-semibold mb-4 flex items-center space-x-2">
-            <Cpu className="w-6 h-6 text-purple-400" />
-            <span>What-If Scenario Simulator</span>
-          </h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="scenario-simulator modal bg-gray-900 rounded-lg p-6 border border-purple-500/30 max-w-2xl w-full max-h-[90vh] overflow-y-auto" role="dialog">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold flex items-center space-x-2">
+                <Cpu className="w-6 h-6 text-purple-400" />
+                <span>What-If Scenario Simulator</span>
+              </h3>
+              <button 
+                onClick={() => setSimulationMode(false)}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">Simulate Event</label>
@@ -470,6 +479,7 @@ export default function AICorrelationsPage() {
           <button type="button" className="mt-4 px-6 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
             Run Simulation
           </button>
+          </div>
         </div>
       )}
     </div>
