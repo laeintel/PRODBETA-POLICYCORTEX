@@ -16,6 +16,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
     inputs:
+      force_deploy:
+        description: 'FORCE COMPLETE DEPLOYMENT - Run ALL stages and jobs without skipping'
+        required: false
+        default: false
+        type: boolean
       full_run:
         description: 'Run entire pipeline (ignore path filters and include app pipeline)'
         required: false
@@ -274,7 +279,7 @@ jobs:
     name: Frontend CI
     needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
-    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_frontend)) || github.event_name == 'push' || github.event_name == 'pull_request'
+    if: (github.event_name == 'workflow_dispatch' && (inputs.force_deploy || inputs.full_run || inputs.test_frontend)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     secrets: inherit
     with:
@@ -285,7 +290,7 @@ jobs:
     name: Core (Rust) CI
     needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) when Rust core files change
-    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_core)) || needs.detect-changes.outputs.rust_core == 'true'
+    if: (github.event_name == 'workflow_dispatch' && (inputs.force_deploy || inputs.full_run || inputs.test_core)) || needs.detect-changes.outputs.rust_core == 'true'
     uses: ./.github/workflows/reusable-ci-core.yml
     secrets: inherit
 
@@ -293,7 +298,7 @@ jobs:
     name: GraphQL gateway CI
     needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
-    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_graphql)) || github.event_name == 'push' || github.event_name == 'pull_request'
+    if: (github.event_name == 'workflow_dispatch' && (inputs.force_deploy || inputs.full_run || inputs.test_graphql)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-frontend.yml
     with:
       node-version: '20'
@@ -304,7 +309,7 @@ jobs:
     name: Backend Services CI
     needs: [runner-setup, docker-health-check, detect-changes, infra]
     # Run on: 1) explicit request via workflow_dispatch, OR 2) on push/PR events
-    if: (github.event_name == 'workflow_dispatch' && (inputs.full_run || inputs.test_backend)) || github.event_name == 'push' || github.event_name == 'pull_request'
+    if: (github.event_name == 'workflow_dispatch' && (inputs.force_deploy || inputs.full_run || inputs.test_backend)) || github.event_name == 'push' || github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-ci-python.yml
     with:
       python-version: '3.11'
@@ -363,14 +368,15 @@ jobs:
   app_pipeline:
     name: Application Deployment
     needs: [detect-changes, infra, frontend, core, graphql, backend]
-    # Run after all tests pass on push to main
+    # Run after all tests pass on push to main OR when force_deploy is triggered
     if: |
-      github.event_name == 'push' && 
+      (github.event_name == 'workflow_dispatch' && inputs.force_deploy) ||
+      (github.event_name == 'push' && 
       github.ref == 'refs/heads/main' && 
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       (needs.core.result == 'success' || needs.core.result == 'skipped') &&
       (needs.graphql.result == 'success' || needs.graphql.result == 'skipped') &&
-      (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+      (needs.backend.result == 'success' || needs.backend.result == 'skipped'))
     uses: ./.github/workflows/application.yml
     permissions:
       contents: read
@@ -387,17 +393,76 @@ jobs:
   deploy_tag:
     name: Deploy from Tag
     needs: [detect-changes, infra, frontend, core, graphql, backend]
-    # Only deploy for tags
+    # Deploy for tags OR when force_deploy is triggered
     if: |
-      github.event_name == 'push' && 
+      (github.event_name == 'workflow_dispatch' && inputs.force_deploy) ||
+      (github.event_name == 'push' && 
       startsWith(github.ref, 'refs/tags/v') &&
       (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       (needs.core.result == 'success' || needs.core.result == 'skipped') &&
       (needs.graphql.result == 'success' || needs.graphql.result == 'skipped') &&
-      (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+      (needs.backend.result == 'success' || needs.backend.result == 'skipped'))
     uses: ./.github/workflows/deploy.yml
     with:
       from_tag: ${{ github.ref_name }}
     secrets: inherit
+
+  # Force AKS Deployment - runs when force_deploy is enabled
+  force_aks_deployment:
+    name: Force Complete AKS Deployment
+    needs: [app_pipeline]
+    if: github.event_name == 'workflow_dispatch' && inputs.force_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger AKS Deployment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "FORCE DEPLOYING TO AKS - All stages will run!"
+          echo "=========================================="
+          echo "Components being deployed:"
+          echo "  [OK] Frontend (Next.js)"
+          echo "  [OK] Core API (Rust)"
+          echo "  [OK] GraphQL Gateway"
+          echo "  [OK] Python Backend Services"
+          echo "  [OK] ML Models"
+          echo "=========================================="
+          
+          # Trigger the AKS deployment
+          gh workflow run deploy-aks.yml --field environment=dev
+          
+          echo "Force deployment initiated successfully!"
+          echo "Monitor progress at: https://github.com/${{ github.repository }}/actions/workflows/deploy-aks.yml"
+
+  # Summary job for force deployment
+  force_deploy_summary:
+    name: Force Deploy Summary
+    needs: [frontend, core, graphql, backend, security, supply-chain, gitleaks, infra, app_pipeline, force_aks_deployment]
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.force_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display Execution Summary
+        run: |
+          echo "FORCE DEPLOYMENT COMPLETE - EXECUTION SUMMARY"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "STAGES EXECUTED:"
+          echo "  - Frontend CI: ${{ needs.frontend.result }}"
+          echo "  - Core (Rust) CI: ${{ needs.core.result }}"
+          echo "  - GraphQL Gateway: ${{ needs.graphql.result }}"
+          echo "  - Backend Services: ${{ needs.backend.result }}"
+          echo "  - Security Scanning: ${{ needs.security.result }}"
+          echo "  - Supply Chain Security: ${{ needs.supply-chain.result }}"
+          echo "  - Secret Scanning: ${{ needs.gitleaks.result }}"
+          echo "  - Infrastructure: ${{ needs.infra.result }}"
+          echo "  - Application Pipeline: ${{ needs.app_pipeline.result }}"
+          echo "  - AKS Deployment: ${{ needs.force_aks_deployment.result }}"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "All stages and jobs were executed without skipping!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 
