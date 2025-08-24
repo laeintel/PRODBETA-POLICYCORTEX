@@ -11,7 +11,7 @@ use chrono::{DateTime, Utc};
 use tracing::{info, warn, error};
 
 use crate::api::AppState;
-use crate::azure_integration::get_azure_service;
+// use crate::azure_integration::get_azure_service; // Temporarily commented out
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HealthCheckResponse {
@@ -262,6 +262,7 @@ pub async fn azure_health_check(_state: State<Arc<AppState>>) -> impl IntoRespon
     }
 }
 
+/*
 async fn test_monitor_service(azure: &crate::azure_integration::AzureIntegrationService) -> anyhow::Result<()> {
     // Simple test - try to get system health
     let _ = azure.monitor().get_system_health().await?;
@@ -279,6 +280,7 @@ async fn test_cost_service(azure: &crate::azure_integration::AzureIntegrationSer
     let _ = azure.cost().get_current_month_costs().await?;
     Ok(())
 }
+*/
 
 async fn check_database_health(_state: &AppState) -> bool {
     // Database health check - currently not implemented

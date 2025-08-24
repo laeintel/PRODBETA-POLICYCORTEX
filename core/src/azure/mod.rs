@@ -12,6 +12,17 @@ pub mod cost;
 pub mod activity;
 pub mod resource_graph;
 
+// Re-export service structures
+pub use client::{AzureClient, create_shared_client};
+pub use monitor::MonitorService;
+pub use governance::GovernanceService;
+pub use security::SecurityService;
+pub use operations::OperationsService;
+pub use devops::DevOpsService;
+pub use cost::CostService;
+pub use activity::ActivityService;
+pub use resource_graph::ResourceGraphService;
+
 use std::sync::Arc;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};

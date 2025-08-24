@@ -64,7 +64,7 @@ pub struct StepStatus {
     pub output: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum StepExecutionStatus {
     Pending,
     Running,
