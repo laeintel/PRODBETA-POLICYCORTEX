@@ -36,7 +36,7 @@ mod auth;
 mod auth_middleware;
 mod azure_client;
 mod azure_client_async;
-mod azure_integration; // Azure live data integration
+// mod azure_integration; // Azure live data integration - temporarily disabled
 mod cache;
 mod change_management;
 mod checkpoint;
