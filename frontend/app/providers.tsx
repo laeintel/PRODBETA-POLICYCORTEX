@@ -19,6 +19,7 @@ import { DemoDataProvider } from '../contexts/DemoDataProvider'
 import { I18nProvider } from '../lib/i18n'
 import { AZURE_OPENAI } from '../lib/api-config'
 import { ThemeProvider } from '../contexts/ThemeContext'
+import { Toaster } from 'react-hot-toast'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
@@ -41,6 +42,26 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ApolloProvider client={client}>
               <DemoDataProvider>
                 <AuthTokenRefresher />
+                <Toaster 
+                  position="top-right"
+                  toastOptions={{
+                    duration: 4000,
+                    style: {
+                      background: '#363636',
+                      color: '#fff',
+                    },
+                    success: {
+                      style: {
+                        background: '#10b981',
+                      },
+                    },
+                    error: {
+                      style: {
+                        background: '#ef4444',
+                      },
+                    },
+                  }}
+                />
                 {children}
               </DemoDataProvider>
             </ApolloProvider>

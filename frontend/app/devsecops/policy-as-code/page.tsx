@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import {
   Terminal, Code, Package, PlayCircle, Pause, RefreshCw,
   Lock, Cpu, Cloud, Database, Users, FileCode
 } from 'lucide-react';
+import { useButtonActions } from '@/lib/button-actions';
+import { toast } from 'react-hot-toast';
 
 // Pipeline status data
 const pipelineStatus = [
@@ -120,6 +123,8 @@ const securityFindings = [
 ];
 
 export default function PolicyAsCodePage() {
+  const router = useRouter();
+  const actions = useButtonActions(router);
   const [selectedPipeline, setSelectedPipeline] = useState(pipelineStatus[0]);
   const [autoRemediationEnabled, setAutoRemediationEnabled] = useState(true);
   const [blockOnViolation, setBlockOnViolation] = useState(true);
@@ -310,7 +315,11 @@ export default function PolicyAsCodePage() {
                   {finding.autoFix && (
                     <div className="mt-2 flex items-center justify-between">
                       <span className="text-xs text-green-600">Auto-fix available</span>
-                      <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700">
+                      <Button 
+                        size="sm" 
+                        className="h-7 text-xs bg-green-600 hover:bg-green-700"
+                        onClick={() => actions.applySecurityFix(`finding-${finding.id}`)}
+                      >
                         <Zap className="w-3 h-3 mr-1" />
                         Apply Fix
                       </Button>
@@ -362,7 +371,12 @@ export default function PolicyAsCodePage() {
                     <span className="font-medium">{gate.avgTime}</span>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" className="w-full mt-3">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full mt-3"
+                  onClick={() => actions.configurePolicyGate()}
+                >
                   Configure
                 </Button>
               </div>

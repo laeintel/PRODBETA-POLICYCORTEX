@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import {
   FileText, Activity, Lock, RefreshCw, Zap, TrendingUp,
   Database, GitBranch, Users, Settings, AlertCircle
 } from 'lucide-react';
+import { useButtonActions } from '@/lib/button-actions';
+import { toast } from 'react-hot-toast';
 
 // Compliance frameworks with real-time status
 const complianceFrameworks = [
@@ -134,6 +137,8 @@ const policyViolations = [
 ];
 
 export default function ComplianceAutomationPage() {
+  const router = useRouter();
+  const actions = useButtonActions(router);
   const [autoRemediateEnabled, setAutoRemediateEnabled] = useState(true);
   const [continuousMonitoring, setContinuousMonitoring] = useState(true);
   const [complianceScore, setComplianceScore] = useState(87.5);
@@ -276,7 +281,13 @@ export default function ComplianceAutomationPage() {
                     <div className="text-2xl font-bold">{framework.coverage}%</div>
                     <div className="text-xs text-gray-500">Coverage</div>
                   </div>
-                  <Button size="sm" variant="outline">Audit Now</Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => actions.runAudit(framework.name)}
+                  >
+                    Audit Now
+                  </Button>
                 </div>
               </div>
             ))}
@@ -320,7 +331,14 @@ export default function ComplianceAutomationPage() {
                         Fix Now
                       </Button>
                     ) : (
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          toast(`Reviewing drift for ${drift.resource}`, { icon: '🔍' });
+                          router.push(`/governance/drift-detection?resource=${drift.id}`);
+                        }}
+                      >
                         Review
                       </Button>
                     )}
@@ -371,7 +389,11 @@ export default function ComplianceAutomationPage() {
                     <span className="text-xs text-gray-500">
                       Est. remediation: {violation.remediationTime}
                     </span>
-                    <Button size="sm" variant="outline">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => actions.remediateIssue(`policy-${violation.id}`)}
+                    >
                       Remediate
                     </Button>
                   </div>
@@ -428,7 +450,10 @@ export default function ComplianceAutomationPage() {
               <div className="font-medium">Audit Package Ready</div>
               <div className="text-sm text-gray-600">All evidence compiled for SOC 2 Type II audit</div>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => actions.downloadEvidence()}
+            >
               <FileText className="w-4 h-4 mr-2" />
               Download Evidence
             </Button>
