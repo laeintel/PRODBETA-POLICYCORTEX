@@ -34,8 +34,15 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, String, Float, DateTime, JSON, Text
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-# Always import via absolute package path when running as module
-from services.ai_engine.real_ai_service import ai_service
+# Import from relative path when in api_gateway directory
+try:
+    from ..ai_engine.real_ai_service import ai_service
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    from backend.services.ai_engine.real_ai_service import ai_service
 import base64
 from PIL import Image
 import io
@@ -46,11 +53,11 @@ logger = logging.getLogger(__name__)
 
 # Import enhanced auth and rate limiting
 try:
-    from services.api_gateway.auth_middleware import (
+    from auth_middleware import (
         AuthContext, get_auth_context, require_auth, require_roles, require_admin,
         TenantIsolation, ResourceAuthorization
     )
-    from services.api_gateway.rate_limiter import (
+    from rate_limiter import (
         rate_limiter, rate_limit, circuit_breaker, rate_limit_middleware,
         adaptive_limiter
     )
