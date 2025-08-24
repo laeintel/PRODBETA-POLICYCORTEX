@@ -154,27 +154,23 @@ export default function EdgeGovernancePage() {
               <MetricCard
                 title="Edge Nodes"
                 value="5"
-                subtitle="Across 3 continents"
                 icon={<Globe className="w-5 h-5 text-blue-500" />}
               />
               <MetricCard
                 title="Avg Latency"
                 value={`${networkLatency.toFixed(0)}ms`}
-                subtitle="Global P50"
                 trend={networkLatency < 15 ? 'up' : 'down'}
                 icon={<Activity className="w-5 h-5 text-green-500" />}
               />
               <MetricCard
                 title="Policy Evaluations"
                 value="4.7M"
-                subtitle="Per day"
                 trend="up"
                 icon={<Shield className="w-5 h-5 text-purple-500" />}
               />
               <MetricCard
                 title="Compliance Rate"
                 value="98.9%"
-                subtitle="All regions"
                 icon={<CheckCircle className="w-5 h-5 text-green-500" />}
               />
             </div>
@@ -391,19 +387,16 @@ export default function EdgeGovernancePage() {
               <MetricCard
                 title="Edge Availability"
                 value="99.99%"
-                subtitle="Last 30 days"
                 icon={<CheckCircle className="w-5 h-5 text-green-500" />}
               />
               <MetricCard
                 title="Failed Evaluations"
                 value="0.02%"
-                subtitle="1.2K of 5.8M"
                 icon={<AlertTriangle className="w-5 h-5 text-yellow-500" />}
               />
               <MetricCard
                 title="Cache Hit Rate"
                 value="94.3%"
-                subtitle="Edge cache efficiency"
                 trend="up"
                 icon={<Database className="w-5 h-5 text-blue-500" />}
               />

@@ -22,6 +22,7 @@ pub mod data_mode;
 pub mod utils;
 pub mod cache;
 pub mod ai;
+pub mod finops;
 
 // Re-export the main app state
 pub use api::AppState;
