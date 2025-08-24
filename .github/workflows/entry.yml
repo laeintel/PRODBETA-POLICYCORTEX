@@ -447,7 +447,7 @@ jobs:
       - name: Display Execution Summary
         run: |
           echo "FORCE DEPLOYMENT COMPLETE - EXECUTION SUMMARY"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "=========================================="
           echo ""
           echo "STAGES EXECUTED:"
           echo "  - Frontend CI: ${{ needs.frontend.result }}"
@@ -461,8 +461,8 @@ jobs:
           echo "  - Application Pipeline: ${{ needs.app_pipeline.result }}"
           echo "  - AKS Deployment: ${{ needs.force_aks_deployment.result }}"
           echo ""
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "=========================================="
           echo "All stages and jobs were executed without skipping!"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "=========================================="
 
 
