@@ -673,7 +673,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     enable_auto_scaling = true
     min_count           = 2
     max_count           = 5
-    
+
     node_labels = {
       "environment" = var.environment
       "nodepool"    = "default"
@@ -721,7 +721,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "ml" {
   min_count             = 0
   max_count             = 3
   vnet_subnet_id        = azurerm_subnet.aks.id
-  
+
   node_labels = {
     "workload" = "ml"
     "gpu"      = "true"
@@ -736,17 +736,17 @@ resource "azurerm_kubernetes_cluster_node_pool" "ml" {
 
 # Grant ACR pull permissions to AKS
 resource "azurerm_role_assignment" "aks_acr_pull" {
-  scope                = azurerm_container_registry.main.id
-  role_definition_name = "AcrPull"
-  principal_id         = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+  scope                            = azurerm_container_registry.main.id
+  role_definition_name             = "AcrPull"
+  principal_id                     = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
   skip_service_principal_aad_check = true
 }
 
 # Grant AKS access to Key Vault
 resource "azurerm_role_assignment" "aks_keyvault_secrets" {
-  scope                = azurerm_key_vault.main.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+  scope                            = azurerm_key_vault.main.id
+  role_definition_name             = "Key Vault Secrets User"
+  principal_id                     = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
   skip_service_principal_aad_check = true
 }
 
@@ -804,7 +804,7 @@ output "aks_host" {
 }
 
 output "aks_ingress_ip" {
-  value = "Application Gateway IP will be available after deployment"
+  value       = "Application Gateway IP will be available after deployment"
   description = "The public IP of the Application Gateway Ingress Controller"
 }
 

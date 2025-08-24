@@ -20,7 +20,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     enable_auto_scaling = true
     min_count           = 2
     max_count           = 5
-    
+
     node_labels = {
       "environment" = var.environment
       "nodepool"    = "default"
@@ -65,7 +65,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "ml" {
   min_count             = 0
   max_count             = 3
   vnet_subnet_id        = azurerm_subnet.aks.id
-  
+
   node_labels = {
     "workload" = "ml"
     "gpu"      = "true"
