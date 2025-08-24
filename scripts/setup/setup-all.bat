@@ -16,6 +16,9 @@ set SETUP_DIR=%~dp0
 set PROJECT_ROOT=%SETUP_DIR%\..\..
 set ERRORS_OCCURRED=0
 
+REM Jump to main execution
+goto :main
+
 REM Function to log messages
 :log_info
 echo [INFO] %~1
@@ -414,7 +417,6 @@ echo - GraphQL: http://localhost:4001/graphql
 echo - EventStore UI: http://localhost:2113 (admin/changeit)
 echo - Database UI: http://localhost:8081 (user: postgres, pass: postgres)
 echo.
-goto :eof
 
-REM Execute main function
-call :main
+REM End of main execution
+exit /b 0
