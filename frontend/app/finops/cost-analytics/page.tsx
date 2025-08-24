@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useButtonActions } from '@/lib/button-actions';
+import { toast } from 'react-hot-toast';
 import { 
   TrendingUp, TrendingDown, AlertTriangle, DollarSign, 
   Cloud, Activity, PieChart, BarChart3, Target, Zap,
@@ -62,6 +65,8 @@ const forecastData = [
 ];
 
 export default function CostAnalyticsPage() {
+  const router = useRouter();
+  const actions = useButtonActions(router);
   const [selectedPeriod, setSelectedPeriod] = useState('24h');
   const [refreshRate, setRefreshRate] = useState(5000);
   const [currentSpend, setCurrentSpend] = useState(145832);
@@ -91,7 +96,10 @@ export default function CostAnalyticsPage() {
           <Button variant="outline" onClick={() => setSelectedPeriod('24h')}>24 Hours</Button>
           <Button variant="outline" onClick={() => setSelectedPeriod('7d')}>7 Days</Button>
           <Button variant="outline" onClick={() => setSelectedPeriod('30d')}>30 Days</Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => actions.optimizeCosts()}
+          >
             <Zap className="w-4 h-4 mr-2" />
             Optimize Now
           </Button>
@@ -338,7 +346,13 @@ export default function CostAnalyticsPage() {
                 <span className="text-green-600 font-bold">$4,250/mo</span>
               </div>
               <p className="text-sm text-gray-600">Convert 42 on-demand instances to RIs for 35% savings</p>
-              <Button size="sm" className="mt-2 bg-green-600 hover:bg-green-700">Apply</Button>
+              <Button 
+                size="sm" 
+                className="mt-2 bg-green-600 hover:bg-green-700"
+                onClick={() => actions.applyReservation()}
+              >
+                Apply
+              </Button>
             </div>
 
             <div className="p-4 bg-blue-50 rounded-lg">
@@ -347,7 +361,13 @@ export default function CostAnalyticsPage() {
                 <span className="text-blue-600 font-bold">$2,180/mo</span>
               </div>
               <p className="text-sm text-gray-600">Enable auto-scaling for 18 workloads to reduce idle time</p>
-              <Button size="sm" className="mt-2 bg-blue-600 hover:bg-blue-700">Configure</Button>
+              <Button 
+                size="sm" 
+                className="mt-2 bg-blue-600 hover:bg-blue-700"
+                onClick={() => actions.configureAutoScaling()}
+              >
+                Configure
+              </Button>
             </div>
 
             <div className="p-4 bg-purple-50 rounded-lg">
@@ -356,7 +376,13 @@ export default function CostAnalyticsPage() {
                 <span className="text-purple-600 font-bold">$1,890/mo</span>
               </div>
               <p className="text-sm text-gray-600">Move 2.5TB to archive tier for infrequently accessed data</p>
-              <Button size="sm" className="mt-2 bg-purple-600 hover:bg-purple-700">Migrate</Button>
+              <Button 
+                size="sm" 
+                className="mt-2 bg-purple-600 hover:bg-purple-700"
+                onClick={() => actions.migrateStorage()}
+              >
+                Migrate
+              </Button>
             </div>
           </div>
         </CardContent>

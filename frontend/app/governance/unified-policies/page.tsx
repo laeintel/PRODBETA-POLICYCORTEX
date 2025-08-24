@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import {
   CheckCircle, XCircle, AlertTriangle, Zap, Globe,
   Users, Key, FileCode, Terminal, Eye, Link
 } from 'lucide-react';
+import { useButtonActions } from '@/lib/button-actions';
+import { toast } from 'react-hot-toast';
 
 // Multi-cloud policy mappings
 const unifiedPolicies = [
@@ -99,6 +102,8 @@ const policyConflicts = [
 ];
 
 export default function UnifiedPoliciesPage() {
+  const router = useRouter();
+  const actions = useButtonActions(router);
   const [selectedCloud, setSelectedCloud] = useState('all');
   const [policyLanguage, setPolicyLanguage] = useState('unified');
 
@@ -116,11 +121,17 @@ export default function UnifiedPoliciesPage() {
           <p className="text-gray-600 mt-1">Single policy framework across AWS, Azure, and GCP</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => actions.exportPolicies()}
+          >
             <FileCode className="w-4 h-4 mr-2" />
             Export Policies
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => actions.syncPolicies()}
+          >
             <Zap className="w-4 h-4 mr-2" />
             Sync All Clouds
           </Button>
@@ -403,11 +414,22 @@ export default function UnifiedPoliciesPage() {
                   <div className="flex justify-between items-center mt-3 pt-3 border-t">
                     <span className="text-xs text-gray-500">Last updated: {policy.lastUpdated}</span>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => actions.viewPolicyDetails(`unified-${policy.id}`)}
+                      >
                         <Eye className="w-3 h-3 mr-1" />
                         View Details
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          toast(`Configuring ${policy.name}`, { icon: '⚙️' });
+                          router.push(`/governance/policies/configure?id=${policy.id}`);
+                        }}
+                      >
                         <Settings className="w-3 h-3 mr-1" />
                         Configure
                       </Button>
@@ -441,7 +463,11 @@ export default function UnifiedPoliciesPage() {
                         Recommended: {conflict.resolution}
                       </div>
                     </div>
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                    <Button 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => actions.alignPolicies()}
+                    >
                       <Link className="w-3 h-3 mr-1" />
                       Align Policies
                     </Button>
@@ -518,7 +544,10 @@ params:
                     </pre>
                   </div>
                 </div>
-                <Button className="mt-4 bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  className="mt-4 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => actions.deployPolicy()}
+                >
                   <Zap className="w-4 h-4 mr-2" />
                   Deploy to All Clouds
                 </Button>

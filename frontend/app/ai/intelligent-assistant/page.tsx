@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,8 @@ import {
   TrendingUp, Shield, DollarSign, Users, Zap, Brain,
   ChevronRight, CheckCircle, AlertTriangle, Info
 } from 'lucide-react';
+import { useButtonActions } from '@/lib/button-actions';
+import { toast } from 'react-hot-toast';
 
 // Sample conversations
 const sampleQueries = [
@@ -114,13 +117,16 @@ const executiveInsights = [
 ];
 
 export default function IntelligentAssistantPage() {
+  const router = useRouter();
+  const actions = useButtonActions(router);
   const [message, setMessage] = useState('');
   const [selectedQuery, setSelectedQuery] = useState('');
 
   const handleSendMessage = () => {
     if (message.trim()) {
-      // Handle message sending
-      setMessage('');
+      actions.sendMessage(message, () => {
+        setMessage('');
+      });
     }
   };
 
@@ -133,11 +139,17 @@ export default function IntelligentAssistantPage() {
           <p className="text-gray-600 mt-1">Natural language interface for cloud governance - no expertise required</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => actions.openLearningCenter()}
+          >
             <BookOpen className="w-4 h-4 mr-2" />
             Learning Center
           </Button>
-          <Button className="bg-purple-600 hover:bg-purple-700">
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700"
+            onClick={() => actions.startAITraining()}
+          >
             <Brain className="w-4 h-4 mr-2" />
             AI Training
           </Button>
@@ -231,7 +243,26 @@ export default function IntelligentAssistantPage() {
                         {item.actions && (
                           <div className="flex gap-2 mt-3">
                             {item.actions.map((action, aidx) => (
-                              <Button key={aidx} size="sm" variant="secondary" className="text-xs">
+                              <Button 
+                                key={aidx} 
+                                size="sm" 
+                                variant="secondary" 
+                                className="text-xs"
+                                onClick={() => {
+                                  if (action === 'Enable Encryption') {
+                                    toast.success('Enabling encryption...');
+                                    setTimeout(() => {
+                                      toast.success('Encryption enabled successfully!');
+                                    }, 2000);
+                                  } else if (action === 'Create Exception') {
+                                    actions.createException();
+                                  } else if (action === 'View Details') {
+                                    actions.viewDetails('database', 'db-001');
+                                  } else {
+                                    actions.handleUnimplementedAction(action);
+                                  }
+                                }}
+                              >
                                 {action}
                               </Button>
                             ))}
@@ -269,7 +300,10 @@ export default function IntelligentAssistantPage() {
                   className="flex-1"
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 />
-                <Button onClick={handleSendMessage} className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  onClick={handleSendMessage} 
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
@@ -329,7 +363,16 @@ export default function IntelligentAssistantPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {learningResources.map((resource, idx) => (
-                <div key={idx} className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <div 
+                  key={idx} 
+                  className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    toast(`Opening ${resource.title} course...`, {
+                      icon: '📚',
+                    });
+                    router.push(`/ai/learning-center/${resource.title.toLowerCase().replace(/\s+/g, '-')}`);
+                  }}
+                >
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <div className="font-medium text-sm">{resource.title}</div>

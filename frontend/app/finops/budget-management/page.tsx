@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useButtonActions } from '@/lib/button-actions';
+import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,6 +79,8 @@ interface SpendingTrend {
 }
 
 const BudgetManagementPage = () => {
+  const router = useRouter();
+  const actions = useButtonActions(router);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [rules, setRules] = useState<BudgetRule[]>([]);
@@ -316,6 +321,31 @@ const BudgetManagementPage = () => {
     }
   };
 
+  const handleEditBudget = (budgetId: string) => {
+    toast(`Editing budget ${budgetId}`, { icon: '✏️' });
+    router.push(`/finops/budget-management/edit/${budgetId}`);
+  };
+
+  const handleDeleteBudget = (budgetId: string) => {
+    toast('Budget deletion requires confirmation', { icon: '⚠️' });
+    setBudgets(budgets.filter(b => b.id !== budgetId));
+    toast.success('Budget deleted successfully!');
+  };
+
+  const handleConfigureAlerts = (budgetId: string) => {
+    toast('Opening alert configuration...', { icon: '🔔' });
+    router.push(`/finops/budget-management/alerts/${budgetId}`);
+  };
+
+  const handleToggleRule = (ruleId: string) => {
+    const rule = rules.find(r => r.id === ruleId);
+    if (rule) {
+      rule.enabled = !rule.enabled;
+      setRules([...rules]);
+      toast.success(`Rule ${rule.enabled ? 'enabled' : 'disabled'}`);
+    }
+  };
+
   const handleCreateBudget = () => {
     const budget: Budget = {
       id: `BUD-${Date.now()}`,
@@ -506,7 +536,10 @@ const BudgetManagementPage = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => actions.configureSettings('budget-management')}
+          >
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </Button>
@@ -783,13 +816,25 @@ const BudgetManagementPage = () => {
                         </td>
                         <td className="p-2">
                           <div className="flex justify-center gap-1">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditBudget(budget.id)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleConfigureAlerts(budget.id)}
+                            >
                               <Bell className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteBudget(budget.id)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -880,7 +925,10 @@ const BudgetManagementPage = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <div className="font-medium">{rule.name}</div>
-                          <Switch checked={rule.enabled} />
+                          <Switch 
+                            checked={rule.enabled} 
+                            onCheckedChange={() => handleToggleRule(rule.id)}
+                          />
                         </div>
                         <div className="text-sm text-muted-foreground mt-1">
                           <div>Condition: {rule.condition}</div>
