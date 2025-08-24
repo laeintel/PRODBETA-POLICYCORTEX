@@ -138,6 +138,11 @@ impl AzureIntegrationService {
     pub async fn is_initialized(&self) -> bool {
         *self.initialized.read().await
     }
+
+    /// Get subscription ID
+    pub fn subscription_id(&self) -> &str {
+        &self.client.config.subscription_id
+    }
 }
 
 #[derive(Debug, Default, serde::Serialize)]

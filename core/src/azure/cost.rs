@@ -2,7 +2,7 @@
 // Provides cost analysis and budget data
 
 use anyhow::{Result, Context};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Utc, Duration, Datelike};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{info, debug};
@@ -140,14 +140,12 @@ impl CostService {
 
         let now = Utc::now();
         let start_of_month = now
+            .date_naive()
             .with_day(1)
             .unwrap()
-            .with_hour(0)
+            .and_hms_opt(0, 0, 0)
             .unwrap()
-            .with_minute(0)
-            .unwrap()
-            .with_second(0)
-            .unwrap();
+            .and_utc();
 
         let request = CostQueryRequest {
             query_type: "ActualCost".to_string(),
@@ -222,14 +220,12 @@ impl CostService {
 
         let now = Utc::now();
         let end_of_month = (now + Duration::days(30))
+            .date_naive()
             .with_day(1)
             .unwrap()
-            .with_hour(0)
+            .and_hms_opt(0, 0, 0)
             .unwrap()
-            .with_minute(0)
-            .unwrap()
-            .with_second(0)
-            .unwrap()
+            .and_utc()
             - Duration::days(1);
 
         let request = CostQueryRequest {
@@ -298,14 +294,12 @@ impl CostService {
     pub async fn get_costs_by_resource_group(&self) -> Result<HashMap<String, f64>> {
         let now = Utc::now();
         let start_of_month = now
+            .date_naive()
             .with_day(1)
             .unwrap()
-            .with_hour(0)
+            .and_hms_opt(0, 0, 0)
             .unwrap()
-            .with_minute(0)
-            .unwrap()
-            .with_second(0)
-            .unwrap();
+            .and_utc();
 
         let request = CostQueryRequest {
             query_type: "ActualCost".to_string(),

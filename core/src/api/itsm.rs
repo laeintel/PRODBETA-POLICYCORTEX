@@ -730,7 +730,7 @@ pub async fn get_dashboard(
         },
     };
 
-    Json(dashboard)
+    Json(dashboard).into_response()
 }
 
 pub async fn get_resource_stats(
