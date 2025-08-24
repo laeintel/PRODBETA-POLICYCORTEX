@@ -1,4 +1,4 @@
-version: '3.9'
+# Docker Compose v2 configuration (version attribute removed)
 
 # PolicyCortex Complete Infrastructure Services
 # This Docker Compose file includes all required services for PolicyCortex

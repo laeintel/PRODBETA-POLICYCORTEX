@@ -17,7 +17,7 @@ echo [OK] Docker is installed
 echo.
 echo [INFO] Starting Docker services...
 cd /d "%~dp0"
-docker-compose -f docker-services.yml up -d
+docker-compose -p policycortex -f docker-services.yml up -d
 if %errorLevel% neq 0 (
     echo [ERROR] Failed to start Docker services
     echo Please check if Docker Desktop is running
@@ -62,6 +62,6 @@ echo To start the application:
 echo 1. Frontend: cd frontend ^&^& npm run dev
 echo 2. Backend: cd core ^&^& cargo run
 echo.
-echo To stop services: docker-compose -f docker-services.yml down
+echo To stop services: docker-compose -p policycortex -f docker-services.yml down
 echo.
 pause
