@@ -78,21 +78,25 @@ pub async fn get_dashboard_metrics(State(state): State<Arc<AppState>>) -> impl I
                 compliant_resources: compliance_summary.as_ref().map_or(0, |c| c.compliant_resources as u32),
                 non_compliant_resources: compliance_summary.as_ref().map_or(0, |c| c.non_compliant_resources as u32),
                 critical_alerts: monitor_health.as_ref()
+                    .ok()
                     .and_then(|h| h.alert_severity_distribution.get("0"))
-                    .copied()
-                    .unwrap_or(0) as u32,
+                    .map(|&count| count as u32)
+                    .unwrap_or(0),
                 high_alerts: monitor_health.as_ref()
+                    .ok()
                     .and_then(|h| h.alert_severity_distribution.get("1"))
-                    .copied()
-                    .unwrap_or(0) as u32,
+                    .map(|&count| count as u32)
+                    .unwrap_or(0),
                 medium_alerts: monitor_health.as_ref()
+                    .ok()
                     .and_then(|h| h.alert_severity_distribution.get("2"))
-                    .copied()
-                    .unwrap_or(0) as u32,
+                    .map(|&count| count as u32)
+                    .unwrap_or(0),
                 low_alerts: monitor_health.as_ref()
+                    .ok()
                     .and_then(|h| h.alert_severity_distribution.get("3"))
-                    .copied()
-                    .unwrap_or(0) as u32,
+                    .map(|&count| count as u32)
+                    .unwrap_or(0),
                 total_cost: cost_summary.as_ref().map_or(0.0, |c| c.total_cost),
                 projected_cost: cost_summary.as_ref().map_or(0.0, |c| c.total_cost * 1.1), // Simple projection
                 cost_savings: cost_summary.as_ref().map_or(0.0, |c| c.total_cost * 0.05), // Estimated savings

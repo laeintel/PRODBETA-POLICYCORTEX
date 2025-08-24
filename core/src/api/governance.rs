@@ -393,7 +393,7 @@ pub async fn get_governance_policies(_state: State<Arc<AppState>>) -> impl IntoR
                                 .and_then(|e| e.as_str())
                                 .unwrap_or("audit")
                                 .to_string(),
-                            scope: format!("/subscriptions/{}", azure.client.config.subscription_id),
+                            scope: format!("/subscriptions/{}", azure.subscription_id()),
                             enabled: true,
                             compliance_rate: 85.0, // Would need additional API call
                             affected_resources: 100, // Would need additional API call

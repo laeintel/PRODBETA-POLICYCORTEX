@@ -36,7 +36,7 @@ pub struct FinOpsQuery {
 pub async fn get_finops_dashboard(
     Query(params): Query<FinOpsQuery>,
     State(state): State<Arc<crate::api::AppState>>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let metrics = get_finops_metrics(state.async_azure_client.as_ref()).await
         .map_err(|e| {
             tracing::error!("Failed to get FinOps metrics: {}", e);
