@@ -12,11 +12,27 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for demo mode and redirect
+    // Check for demo mode and auto-login
     if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-      router.push('/dashboard')
+      // Small delay to prevent race conditions with middleware
+      const timer = setTimeout(() => {
+        handleDemoLogin()
+      }, 100)
+      return () => clearTimeout(timer)
     }
   }, [])
+  
+  const handleDemoLogin = async () => {
+    setLoading(true)
+    try {
+      await login() // This will use demo mode in AuthContext
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err.message || 'Demo login failed')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogin = async (e: React.MouseEvent) => {
     e.preventDefault()
