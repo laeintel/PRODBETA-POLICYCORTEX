@@ -91,26 +91,13 @@ jobs:
       
       - name: Create issue if thresholds failed
         if: failure()
-        uses: actions/create-issue@v2
+        uses: peter-evans/create-issue-from-file@v5
         with:
           title: "Load Test Failed - Performance Degradation Detected"
-          body: |
-            ## Load Test Failure Report
-            
-            **Test Type:** ${{ github.event.inputs.test_type || 'standard' }}
-            **Environment:** ${{ github.event.inputs.target_env || 'dev' }}
-            **Duration:** ${{ github.event.inputs.duration || '300' }} seconds
-            **Run ID:** ${{ github.run_id }}
-            
-            ### Failed Thresholds
-            Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.
-            
-            ### Action Required
-            - Review performance metrics
-            - Identify bottlenecks
-            - Implement optimizations
+          content-filepath: ./reports/performance-summary.md
           labels: |
             performance
+            automated
             load-testing
             urgent
 
