@@ -1,6 +1,6 @@
 [package]
 name = "policycortex-core"
-version = "2.20.1"
+version = "2.20.2"
 edition = "2021"
 authors = ["AeoliTech"]
 description = "PolicyCortex - AI-Powered Azure Governance Platform"
