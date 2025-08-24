@@ -68,10 +68,9 @@ pub async fn get_dashboard_metrics(State(state): State<Arc<AppState>>) -> impl I
     info!("Fetching dashboard metrics from Azure");
     
     // Get Azure integration service (temporarily disabled)
-    // // Azure service temporarily disabled - using mock data
-    match mock_azure_result().await {
-    /*
     // Azure service temporarily disabled - using mock data
+    // Commented out match block to avoid compilation issues
+    /*
     match mock_azure_result().await {
         Ok(azure) => {
             // Fetch real data from multiple Azure services in parallel
@@ -119,27 +118,32 @@ pub async fn get_dashboard_metrics(State(state): State<Arc<AppState>>) -> impl I
             
             Json(dashboard_metrics).into_response()
         }
+        Err(e) => {
+            warn!("Failed to get Azure service: {}", e);
+            // Fall through to mock data below
+        }
+    }
     */
     
     // Use mock data (Azure integration temporarily disabled)
     warn!("Using mock dashboard data (Azure integration temporarily disabled)");
     Json(DashboardMetrics {
-                total_resources: 2843,
-                compliant_resources: 2456,
-                non_compliant_resources: 387,
-                critical_alerts: 3,
-                high_alerts: 7,
-                medium_alerts: 15,
-                low_alerts: 42,
-                total_cost: 145832.0,
-                projected_cost: 138500.0,
-                cost_savings: 7332.0,
-                security_score: 87.5,
-                compliance_rate: 86.4,
-                ai_predictions_made: 15234,
-                automations_executed: 8921,
-                timestamp: Utc::now(),
-            }).into_response()
+        total_resources: 2843,
+        compliant_resources: 2456,
+        non_compliant_resources: 387,
+        critical_alerts: 3,
+        high_alerts: 7,
+        medium_alerts: 15,
+        low_alerts: 42,
+        total_cost: 145832.0,
+        projected_cost: 138500.0,
+        cost_savings: 7332.0,
+        security_score: 87.5,
+        compliance_rate: 86.4,
+        ai_predictions_made: 15234,
+        automations_executed: 8921,
+        timestamp: Utc::now(),
+    }).into_response()
 }
 
 // GET /api/v1/dashboard/alerts
@@ -147,51 +151,6 @@ pub async fn get_dashboard_alerts(_state: State<Arc<AppState>>) -> impl IntoResp
     info!("Fetching dashboard alerts from Azure");
     
     // Azure service temporarily disabled - returning mock alerts data
-    let mock_alerts = vec![
-        Ok(azure) => {
-            // Get real alerts from Azure Monitor
-            match azure.monitor().get_alert_incidents().await {
-                Ok(incidents) => {
-                    let alerts: Vec<AlertSummary> = incidents
-                        .into_iter()
-                        .take(20) // Limit to 20 most recent
-                        .map(|incident| {
-                            let severity = if incident.rule_name.contains("Critical") {
-                                "critical"
-                            } else if incident.rule_name.contains("High") {
-                                "high"
-                            } else if incident.rule_name.contains("Warning") {
-                                "medium"
-                            } else {
-                                "low"
-                            };
-                            
-                            AlertSummary {
-                                id: incident.name,
-                                severity: severity.to_string(),
-                                category: "monitoring".to_string(),
-                                title: incident.rule_name.clone(),
-                                description: format!("Alert rule: {}", incident.rule_name),
-                                resource_count: 1,
-                                created_at: incident.activated_time,
-                                status: if incident.is_active { "active" } else { "resolved" }.to_string(),
-                            }
-                        })
-                        .collect();
-                    
-                    if !alerts.is_empty() {
-                        return Json(alerts).into_response();
-                    }
-                }
-                Err(e) => {
-                    warn!("Failed to fetch alerts from Azure: {}", e);
-                }
-            }
-        }
-        Err(e) => {
-            warn!("Failed to get Azure service: {}", e);
-        }
-    }
     
     // Return mock data as fallback
     let alerts = vec![
@@ -235,50 +194,17 @@ pub async fn get_dashboard_activities(_state: State<Arc<AppState>>) -> impl Into
     info!("Fetching dashboard activities from Azure");
     
     // Azure service temporarily disabled - using mock data
-    match mock_azure_result().await {
-        Ok(azure) => {
-            // Get real activities from Azure Activity Log
-            match azure.activity().get_recent_activities().await {
-                Ok(azure_activities) => {
-                    let activities: Vec<Activity> = azure_activities
-                        .into_iter()
-                        .take(20) // Limit to 20 most recent
-                        .map(|act| {
-                            let activity_type = if act.operation.contains("write") {
-                                "modification"
-                            } else if act.operation.contains("delete") {
-                                "deletion"
-                            } else if act.operation.contains("read") {
-                                "access"
-                            } else {
-                                "other"
-                            };
-                            
-                            Activity {
-                                id: act.id,
-                                activity_type: activity_type.to_string(),
-                                user: "Azure User".to_string(), // Would need additional API call for user details
-                                action: act.operation,
-                                resource: act.resource_id.unwrap_or_else(|| "N/A".to_string()),
-                                result: act.status,
-                                timestamp: act.timestamp,
-                            }
-                        })
-                        .collect();
-                    
-                    if !activities.is_empty() {
-                        return Json(activities).into_response();
-                    }
-                }
-                Err(e) => {
-                    warn!("Failed to fetch activities from Azure: {}", e);
-                }
-            }
+    /*
+    match mock_azure_result::<()>().await {
+        Ok(_) => {
+            // Would get real activities from Azure Activity Log
+            // Commented out due to Azure integration being temporarily disabled
         }
         Err(e) => {
             warn!("Failed to get Azure service: {}", e);
         }
     }
+    */
     
     // Return mock data as fallback
     let activities = vec![

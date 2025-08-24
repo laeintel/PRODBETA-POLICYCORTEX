@@ -83,8 +83,10 @@ pub struct PolicyInfo {
 pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoResponse {
     info!("Fetching compliance status from Azure");
     
-    match mock_azure_result().await {
-        Ok(azure) => {
+    // Azure integration temporarily disabled
+    /*
+    match mock_azure_result::<()>().await {
+        Ok(_) => {
             // Get real regulatory compliance data from Azure
             match azure.governance().get_regulatory_compliance().await {
                 Ok(regulatory) => {
@@ -127,6 +129,7 @@ pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoRes
             warn!("Failed to get Azure service: {}", e);
         }
     }
+    */
     
     // Return mock data as fallback
     let compliance_statuses = vec![
@@ -166,8 +169,10 @@ pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoRes
 pub async fn get_compliance_violations(_state: State<Arc<AppState>>) -> impl IntoResponse {
     info!("Fetching compliance violations from Azure");
     
-    match mock_azure_result().await {
-        Ok(azure) => {
+    // Azure integration temporarily disabled
+    /*
+    match mock_azure_result::<()>().await {
+        Ok(_) => {
             // Get real policy violations from Azure
             match azure.governance().get_policy_violations().await {
                 Ok(azure_violations) => {
@@ -199,6 +204,7 @@ pub async fn get_compliance_violations(_state: State<Arc<AppState>>) -> impl Int
             warn!("Failed to get Azure service: {}", e);
         }
     }
+    */
     
     // Return mock data as fallback
     let violations = vec![
@@ -284,8 +290,10 @@ pub async fn get_risk_assessment(_state: State<Arc<AppState>>) -> impl IntoRespo
 pub async fn get_cost_summary(_state: State<Arc<AppState>>) -> impl IntoResponse {
     info!("Fetching cost summary from Azure");
     
-    match mock_azure_result().await {
-        Ok(azure) => {
+    // Azure integration temporarily disabled
+    /*
+    match mock_azure_result::<()>().await {
+        Ok(_) => {
             // Get real cost data from Azure Cost Management
             match azure.cost().get_current_month_costs().await {
                 Ok(cost_data) => {
@@ -326,6 +334,7 @@ pub async fn get_cost_summary(_state: State<Arc<AppState>>) -> impl IntoResponse
             warn!("Failed to get Azure service: {}", e);
         }
     }
+    */
 
     // Return mock data
     let cost_summaries = vec![
@@ -374,8 +383,10 @@ pub async fn get_cost_summary(_state: State<Arc<AppState>>) -> impl IntoResponse
 pub async fn get_governance_policies(_state: State<Arc<AppState>>) -> impl IntoResponse {
     info!("Fetching governance policies from Azure");
     
-    match mock_azure_result().await {
-        Ok(azure) => {
+    // Azure integration temporarily disabled
+    /*
+    match mock_azure_result::<()>().await {
+        Ok(_) => {
             // Get real policy definitions from Azure
             match azure.governance().get_policy_definitions().await {
                 Ok(definitions) => {
@@ -419,6 +430,7 @@ pub async fn get_governance_policies(_state: State<Arc<AppState>>) -> impl IntoR
             warn!("Failed to get Azure service: {}", e);
         }
     }
+    */
     
     // Return mock data as fallback
     let policies = vec![

@@ -2,12 +2,18 @@
 // Tests complete remediation lifecycle including approval, execution, and rollback
 
 use super::*;
-use policycortex_core::remediation::*;
-use policycortex_core::remediation::workflow_engine::*;
-use policycortex_core::remediation::approval_manager::{ApprovalManager, ApprovalPolicy, ApprovalRule, ApprovalState};
-use policycortex_core::remediation::notification_system::{NotificationSystem, NotificationChannel, NotificationTemplate};
+use policycortex_core::remediation::approval_manager::{
+    ApprovalManager, ApprovalPolicy, ApprovalRule, ApprovalState,
+};
+use policycortex_core::remediation::notification_system::{
+    NotificationChannel, NotificationSystem, NotificationTemplate,
+};
 use policycortex_core::remediation::rollback_manager::{RollbackManager, RollbackStrategy};
-use policycortex_core::remediation::validation_engine::{ValidationEngine, ValidationResult, RiskLevel};
+use policycortex_core::remediation::validation_engine::{
+    RiskLevel, ValidationEngine, ValidationResult,
+};
+use policycortex_core::remediation::workflow_engine::*;
+use policycortex_core::remediation::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::time::{timeout, Duration};
@@ -20,23 +26,25 @@ mod tests {
     async fn test_complete_remediation_workflow() {
         let mut test_ctx = TestContext::new();
         let mut results = TestResults::new();
-        
+
         println!("🧪 Testing Complete Remediation Workflow");
-        
+
         // Setup test environment
         let workflow_engine = Arc::new(WorkflowEngine::new().await);
         let approval_manager = Arc::new(ApprovalWorkflowManager::new());
         let notification_system = Arc::new(NotificationSystem::new());
         let rollback_manager = Arc::new(RollbackManager::new());
         let validation_engine = Arc::new(ValidationEngine::new().await);
-        
+
         // Test Case 1: High-risk remediation requiring approval
         match test_high_risk_remediation_with_approval(
             &workflow_engine,
             &approval_manager,
             &notification_system,
             &validation_engine,
-        ).await {
+        )
+        .await
+        {
             Ok(_) => {
                 println!("  ✅ High-risk remediation with approval - PASSED");
                 results.record_pass();
@@ -46,12 +54,9 @@ mod tests {
                 results.record_failure(format!("High-risk remediation test: {}", e));
             }
         }
-        
+
         // Test Case 2: Low-risk auto-approved remediation
-        match test_low_risk_auto_remediation(
-            &workflow_engine,
-            &validation_engine,
-        ).await {
+        match test_low_risk_auto_remediation(&workflow_engine, &validation_engine).await {
             Ok(_) => {
                 println!("  ✅ Low-risk auto-remediation - PASSED");
                 results.record_pass();
@@ -61,12 +66,9 @@ mod tests {
                 results.record_failure(format!("Low-risk auto-remediation test: {}", e));
             }
         }
-        
+
         // Test Case 3: Bulk remediation with parallel execution
-        match test_bulk_remediation_workflow(
-            &workflow_engine,
-            &validation_engine,
-        ).await {
+        match test_bulk_remediation_workflow(&workflow_engine, &validation_engine).await {
             Ok(_) => {
                 println!("  ✅ Bulk remediation workflow - PASSED");
                 results.record_pass();
@@ -76,12 +78,9 @@ mod tests {
                 results.record_failure(format!("Bulk remediation test: {}", e));
             }
         }
-        
+
         // Test Case 4: Rollback workflow
-        match test_rollback_workflow(
-            &workflow_engine,
-            &rollback_manager,
-        ).await {
+        match test_rollback_workflow(&workflow_engine, &rollback_manager).await {
             Ok(_) => {
                 println!("  ✅ Rollback workflow - PASSED");
                 results.record_pass();
@@ -91,12 +90,9 @@ mod tests {
                 results.record_failure(format!("Rollback workflow test: {}", e));
             }
         }
-        
+
         // Test Case 5: Validation failure prevention
-        match test_validation_failure_prevention(
-            &workflow_engine,
-            &validation_engine,
-        ).await {
+        match test_validation_failure_prevention(&workflow_engine, &validation_engine).await {
             Ok(_) => {
                 println!("  ✅ Validation failure prevention - PASSED");
                 results.record_pass();
@@ -106,14 +102,14 @@ mod tests {
                 results.record_failure(format!("Validation failure test: {}", e));
             }
         }
-        
+
         test_ctx.cleanup().await;
-        
+
         println!("📊 Remediation Workflow Test Results:");
         println!("   Passed: {}", results.passed);
         println!("   Failed: {}", results.failed);
         println!("   Success Rate: {:.1}%", results.success_rate());
-        
+
         if results.failed > 0 {
             println!("❌ Failures:");
             for failure in &results.failures {
@@ -121,8 +117,11 @@ mod tests {
             }
             panic!("Integration tests failed");
         }
-        
-        assert!(results.success_rate() >= 100.0, "All integration tests must pass");
+
+        assert!(
+            results.success_rate() >= 100.0,
+            "All integration tests must pass"
+        );
     }
 
     async fn test_high_risk_remediation_with_approval(
@@ -136,13 +135,13 @@ mod tests {
             .with_high_risk()
             .with_auto_rollback(true)
             .build();
-        
+
         // Step 2: Submit for validation
         let validation_result = validation_engine.validate_pre_conditions(&request).await?;
         if validation_result.risk_level == RiskLevel::VeryHigh {
             return Err("Validation should block very high risk operations".to_string());
         }
-        
+
         // Step 3: Create approval request
         let approval_request = ApprovalRequest {
             id: uuid::Uuid::new_v4().to_string(),
@@ -155,24 +154,29 @@ mod tests {
             status: "pending".to_string(),
             decisions: std::collections::HashMap::new(),
         };
-        
+
         let approval_id = approval_manager.create_approval(approval_request).await?;
-        
+
         // Step 4: Simulate approval decision
         let approval_decision = ApprovalDecision::Approved;
-        let approval_result = approval_manager.process_approval(&approval_id, approval_decision).await?;
-        
+        let approval_result = approval_manager
+            .process_approval(&approval_id, approval_decision)
+            .await?;
+
         if !approval_result.approved || !approval_result.final_decision {
             return Err("Approval process failed".to_string());
         }
-        
+
         // Step 5: Execute remediation workflow
         let execution_result = workflow_engine.execute_remediation(request).await?;
-        
+
         if execution_result.status != RemediationStatus::Completed {
-            return Err(format!("Remediation execution failed: {:?}", execution_result.status));
+            return Err(format!(
+                "Remediation execution failed: {:?}",
+                execution_result.status
+            ));
         }
-        
+
         Ok(())
     }
 
@@ -183,21 +187,27 @@ mod tests {
         // Step 1: Create low-risk remediation request
         let mut request = RemediationRequestBuilder::new().build();
         request.approval_required = false; // Low risk - auto-approve
-        request.parameters.insert("risk_level".to_string(), serde_json::Value::String("low".to_string()));
-        
+        request.parameters.insert(
+            "risk_level".to_string(),
+            serde_json::Value::String("low".to_string()),
+        );
+
         // Step 2: Validate (should pass without approval)
         let validation_result = validation_engine.validate_pre_conditions(&request).await?;
         if validation_result.requires_approval {
             return Err("Low risk operations should not require approval".to_string());
         }
-        
+
         // Step 3: Execute directly (auto-approved)
         let execution_result = workflow_engine.execute_remediation(request).await?;
-        
+
         if execution_result.status != RemediationStatus::Completed {
-            return Err(format!("Auto-remediation failed: {:?}", execution_result.status));
+            return Err(format!(
+                "Auto-remediation failed: {:?}",
+                execution_result.status
+            ));
         }
-        
+
         Ok(())
     }
 
@@ -211,15 +221,20 @@ mod tests {
             RemediationRequestBuilder::new().build(),
             RemediationRequestBuilder::new().build(),
         ];
-        
+
         // Step 2: Execute bulk remediation
         let bulk_id = uuid::Uuid::new_v4().to_string();
-        let bulk_result = workflow_engine.execute_bulk_remediation(bulk_id, requests).await?;
-        
+        let bulk_result = workflow_engine
+            .execute_bulk_remediation(bulk_id, requests)
+            .await?;
+
         if bulk_result.successful < 3 {
-            return Err(format!("Bulk remediation failed: only {} of 3 succeeded", bulk_result.successful));
+            return Err(format!(
+                "Bulk remediation failed: only {} of 3 succeeded",
+                bulk_result.successful
+            ));
         }
-        
+
         Ok(())
     }
 
@@ -231,23 +246,23 @@ mod tests {
         let request = RemediationRequestBuilder::new()
             .with_auto_rollback(true)
             .build();
-        
+
         let execution_result = workflow_engine.execute_remediation(request).await?;
-        
+
         if execution_result.rollback_token.is_none() {
             return Err("No rollback token created".to_string());
         }
-        
+
         // Step 2: Execute rollback
         let rollback_token = execution_result.rollback_token.unwrap();
         let rollback_result = rollback_manager
             .execute_rollback(rollback_token, "Test rollback".to_string())
             .await?;
-        
+
         if !rollback_result.success {
             return Err("Rollback execution failed".to_string());
         }
-        
+
         Ok(())
     }
 
@@ -258,26 +273,32 @@ mod tests {
         // Step 1: Create dangerous remediation request
         let mut request = RemediationRequestBuilder::new().build();
         request.resource_id = "/subscriptions/test/resourceGroups/production/providers/Microsoft.Compute/virtualMachines/critical-vm".to_string();
-        request.parameters.insert("operation".to_string(), serde_json::Value::String("delete".to_string()));
-        request.parameters.insert("risk_level".to_string(), serde_json::Value::String("very_high".to_string()));
-        
+        request.parameters.insert(
+            "operation".to_string(),
+            serde_json::Value::String("delete".to_string()),
+        );
+        request.parameters.insert(
+            "risk_level".to_string(),
+            serde_json::Value::String("very_high".to_string()),
+        );
+
         // Step 2: Validation should block this
         let validation_result = validation_engine.validate_pre_conditions(&request).await?;
-        
+
         if validation_result.validation_status != ValidationStatus::Blocked {
             return Err("Validation should have blocked dangerous operation".to_string());
         }
-        
+
         if validation_result.blocking_rules.is_empty() {
             return Err("Validation should specify blocking rules".to_string());
         }
-        
+
         // Step 3: Attempt execution should fail
         let execution_result = workflow_engine.execute_remediation(request).await;
         if execution_result.is_ok() {
             return Err("Workflow should have rejected blocked operation".to_string());
         }
-        
+
         Ok(())
     }
 }
@@ -294,11 +315,14 @@ impl WorkflowEngine {
             azure_client: Arc::new(MockAzureClient::new()),
         }
     }
-    
-    pub async fn execute_remediation(&self, request: RemediationRequest) -> Result<RemediationResult, String> {
+
+    pub async fn execute_remediation(
+        &self,
+        request: RemediationRequest,
+    ) -> Result<RemediationResult, String> {
         // Mock implementation that simulates successful execution
         tokio::time::sleep(Duration::from_millis(100)).await; // Simulate work
-        
+
         Ok(RemediationResult {
             request_id: request.request_id,
             status: RemediationStatus::Completed,
@@ -315,20 +339,24 @@ impl WorkflowEngine {
                 timestamp: chrono::Utc::now(),
             }],
             rollback_available: request.auto_rollback,
-            rollback_token: if request.auto_rollback { 
-                Some(format!("rollback-{}", request.request_id)) 
-            } else { 
-                None 
+            rollback_token: if request.auto_rollback {
+                Some(format!("rollback-{}", request.request_id))
+            } else {
+                None
             },
             error: None,
             warnings: vec![],
         })
     }
-    
-    pub async fn execute_bulk_remediation(&self, _bulk_id: String, requests: Vec<RemediationRequest>) -> Result<BulkRemediationResult, String> {
+
+    pub async fn execute_bulk_remediation(
+        &self,
+        _bulk_id: String,
+        requests: Vec<RemediationRequest>,
+    ) -> Result<BulkRemediationResult, String> {
         // Mock implementation for bulk processing
         tokio::time::sleep(Duration::from_millis(200)).await; // Simulate work
-        
+
         Ok(BulkRemediationResult {
             bulk_id: _bulk_id,
             total_requested: requests.len(),
@@ -336,8 +364,9 @@ impl WorkflowEngine {
             failed: 0,
             skipped: 0,
             execution_time_ms: 200,
-            results: requests.into_iter().map(|req| {
-                RemediationResult {
+            results: requests
+                .into_iter()
+                .map(|req| RemediationResult {
                     request_id: req.request_id,
                     status: RemediationStatus::Completed,
                     started_at: chrono::Utc::now(),
@@ -348,8 +377,8 @@ impl WorkflowEngine {
                     rollback_token: None,
                     error: None,
                     warnings: vec![],
-                }
-            }).collect(),
+                })
+                .collect(),
         })
     }
 }
@@ -364,27 +393,38 @@ impl ValidationEngine {
             safety_rules: Arc::new(RwLock::new(std::collections::HashMap::new())),
         }
     }
-    
-    pub async fn validate_pre_conditions(&self, request: &RemediationRequest) -> Result<ValidationResult, String> {
+
+    pub async fn validate_pre_conditions(
+        &self,
+        request: &RemediationRequest,
+    ) -> Result<ValidationResult, String> {
         // Mock validation logic
-        let risk_level = if request.parameters.get("risk_level")
+        let risk_level = if request
+            .parameters
+            .get("risk_level")
             .and_then(|v| v.as_str())
-            .unwrap_or("medium") == "very_high" {
+            .unwrap_or("medium")
+            == "very_high"
+        {
             RiskLevel::VeryHigh
-        } else if request.parameters.get("risk_level")
+        } else if request
+            .parameters
+            .get("risk_level")
             .and_then(|v| v.as_str())
-            .unwrap_or("medium") == "high" {
+            .unwrap_or("medium")
+            == "high"
+        {
             RiskLevel::High
         } else {
             RiskLevel::Medium
         };
-        
+
         let validation_status = if risk_level == RiskLevel::VeryHigh {
             ValidationStatus::Blocked
         } else {
             ValidationStatus::Passed
         };
-        
+
         Ok(ValidationResult {
             validation_id: uuid::Uuid::new_v4(),
             request_id: request.request_id,
