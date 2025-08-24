@@ -1,22 +1,13 @@
 // Azure Integration Service - Main integration point for all Azure services
 // This module provides a unified interface for accessing Azure data
 
-use anyhow::{Result, Context};
+use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{info, warn, error};
 
-use crate::azure::{
-    client::{AzureClient, create_shared_client},
-    monitor::MonitorService,
-    governance::GovernanceService,
-    security::SecurityService,
-    operations::OperationsService,
-    devops::DevOpsService,
-    cost::CostService,
-    activity::ActivityService,
-    resource_graph::ResourceGraphService,
-};
+// For now, we'll use a simplified approach without importing all service types
+// The services will be created within the implementation
 
 /// Main Azure integration service that coordinates all Azure service interactions
 #[derive(Clone)]

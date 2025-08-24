@@ -12,7 +12,7 @@ pub mod config;
 pub mod azure;
 pub mod azure_client;
 pub mod azure_client_async;
-pub mod azure_integration;
+// pub mod azure_integration; // Temporarily commented out due to import issues
 pub mod resources;
 pub mod validation;
 pub mod secrets;

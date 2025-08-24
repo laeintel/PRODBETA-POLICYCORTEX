@@ -206,7 +206,7 @@ mod tests {
     }
 
     // Helper function to create test resources
-    fn create_test_resource(name: &str, category: ResourceCategory) -> AzureResource {
+    pub fn create_test_resource(name: &str, category: ResourceCategory) -> AzureResource {
         AzureResource {
             id: format!("{}-id", name),
             name: name.to_string(),
