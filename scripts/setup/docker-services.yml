@@ -356,7 +356,7 @@ services:
 
   # Vault for secrets management (development)
   vault:
-    image: vault:1.15.2
+    image: hashicorp/vault:1.15
     container_name: policycortex-vault
     restart: unless-stopped
     ports:
