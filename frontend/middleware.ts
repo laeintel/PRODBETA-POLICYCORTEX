@@ -12,8 +12,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { generateNonce, generateCSP } from '@/lib/security/nonce'
 
-// Bypass auth only when explicitly enabled (for demos). Never auto-bypass based on NODE_ENV.
-const BYPASS_ROUTE_AUTH = (process.env.NEXT_PUBLIC_DEMO_MODE === 'true')
+// Always enforce auth; demo bypass disabled for production readiness
+const BYPASS_ROUTE_AUTH = false
 
 // Protected routes that require authentication
 // Actually, we'll protect everything except login

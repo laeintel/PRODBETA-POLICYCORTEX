@@ -707,7 +707,6 @@ jobs:
           fi
 
       - name: Checkout
-        if: steps.check_images.outputs.images_available == 'true'
         uses: actions/checkout@v4
 
       - name: Azure Login
@@ -724,13 +723,11 @@ jobs:
           az account show --query "[name, id]" -o tsv
 
       - name: Setup Terraform
-        if: steps.check_images.outputs.images_available == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
 
       - name: Import Existing Resources
-        if: steps.check_images.outputs.images_available == 'true'
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
@@ -748,7 +745,6 @@ jobs:
           ./import-existing.sh dev "$AZURE_SUBSCRIPTION_ID" || echo "Import completed with some warnings"
           
       - name: Terraform Plan (Dev)
-        if: steps.check_images.outputs.images_available == 'true'
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
@@ -793,7 +789,7 @@ jobs:
           fi
 
       - name: Terraform Apply (Dev)
-        if: steps.check_images.outputs.images_available == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID_DEV }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID_DEV }}
@@ -833,7 +829,6 @@ jobs:
           echo "✅ Terraform apply completed successfully"
 
       - name: Verify AKS Deployment (Dev)
-        if: steps.check_images.outputs.images_available == 'true'
         run: |
           echo "🔍 Checking AKS deployment status..."
           
@@ -851,7 +846,6 @@ jobs:
           echo "📌 AKS deployment verification complete"
 
       - name: Trigger AKS Deployment (Dev)
-        if: steps.check_images.outputs.images_available == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           # Runtime config
@@ -906,7 +900,6 @@ jobs:
           fi
 
       - name: Checkout
-        if: steps.check_images.outputs.images_available == 'true'
         uses: actions/checkout@v4
 
       - name: Azure Login
@@ -923,7 +916,6 @@ jobs:
           az account show --query "[name, id]" -o tsv
 
       - name: Setup Terraform
-        if: steps.check_images.outputs.images_available == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
@@ -1002,7 +994,6 @@ jobs:
           fi
 
       - name: Trigger AKS Deployment (Prod)
-        if: steps.check_images.outputs.images_available == 'true'
         env:
           ACR_SERVER: ${{ env.REGISTRY_PROD }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
