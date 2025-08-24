@@ -117,27 +117,23 @@ export default function ChargebackPage() {
           <MetricCard
             title="Total Budget"
             value={`$${(totalBudget / 1000).toFixed(0)}K`}
-            subtitle="All departments"
             icon={<DollarSign className="w-5 h-5 text-blue-500" />}
           />
           <MetricCard
             title="Current Spend"
             value={`$${(totalSpent / 1000).toFixed(0)}K`}
-            subtitle={`${((totalSpent / totalBudget) * 100).toFixed(1)}% utilized`}
             trend={totalSpent < totalBudget ? 'up' : 'down'}
             icon={<TrendingUp className="w-5 h-5 text-green-500" />}
           />
           <MetricCard
             title="Untagged Costs"
             value={`$${(untaggedCost / 1000).toFixed(1)}K`}
-            subtitle="Requires allocation"
             alert="Action needed"
             icon={<AlertTriangle className="w-5 h-5 text-orange-500" />}
           />
           <MetricCard
             title="Tag Compliance"
             value="89%"
-            subtitle="Resources tagged"
             icon={<PieChart className="w-5 h-5 text-purple-500" />}
           />
         </div>

@@ -20,6 +20,13 @@ pub mod devops;
 pub mod ai_nav;
 pub mod health; // Health check endpoints
 pub mod itsm; // IT Service Management module
+pub mod finops; // FinOps module
+pub mod executive; // Executive dashboard module
+pub mod quantum; // Quantum-safe secrets module
+pub mod edge; // Edge governance module
+pub mod blockchain; // Blockchain audit module
+pub mod copilot; // AI Copilot module
+pub mod devsecops; // DevSecOps integration module
 
 // Re-export resource API functions
 pub use resources::{

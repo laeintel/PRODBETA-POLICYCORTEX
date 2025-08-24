@@ -125,28 +125,24 @@ export default function QuantumSafeSecretsPage() {
               <MetricCard
                 title="Quantum-Safe Secrets"
                 value="67%"
-                subtitle="156/234 migrated"
                 trend="up"
                 icon={<Shield className="w-5 h-5 text-green-500" />}
               />
               <MetricCard
                 title="Vulnerable Secrets"
                 value="78"
-                subtitle="Requires immediate action"
                 alert="High risk"
                 icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
               />
               <MetricCard
                 title="Migration Rate"
                 value="12/day"
-                subtitle="Est. completion: 6 days"
                 trend="up"
                 icon={<RefreshCw className="w-5 h-5 text-blue-500" />}
               />
               <MetricCard
                 title="Quantum Readiness"
                 value="Level 4"
-                subtitle="NIST PQC Compliant"
                 icon={<Cpu className="w-5 h-5 text-purple-500" />}
               />
             </div>
@@ -323,19 +319,16 @@ export default function QuantumSafeSecretsPage() {
               <MetricCard
                 title="NIST Compliance"
                 value="92%"
-                subtitle="PQC Standards Met"
                 icon={<CheckCircle className="w-5 h-5 text-green-500" />}
               />
               <MetricCard
                 title="CNSA 2.0"
                 value="88%"
-                subtitle="NSA Requirements"
                 icon={<Shield className="w-5 h-5 text-blue-500" />}
               />
               <MetricCard
                 title="ISO/IEC 23837"
                 value="95%"
-                subtitle="Quantum-Safe Standards"
                 icon={<Globe className="w-5 h-5 text-purple-500" />}
               />
             </div>

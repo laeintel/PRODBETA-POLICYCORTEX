@@ -130,26 +130,22 @@ export default function RiskMapPage() {
           <MetricCard
             title="Total Revenue"
             value={`$${(totalRevenue / 1000000).toFixed(1)}M`}
-            subtitle="Annual recurring"
             icon={<DollarSign className="w-5 h-5 text-green-500" />}
           />
           <MetricCard
             title="Revenue at Risk"
             value={`$${(totalAtRisk / 1000000).toFixed(1)}M`}
-            subtitle={`${((totalAtRisk / totalRevenue) * 100).toFixed(1)}% of total`}
             alert="High exposure"
             icon={<TrendingDown className="w-5 h-5 text-red-500" />}
           />
           <MetricCard
             title="Active Risks"
             value={riskCategories.filter(r => r.status !== 'resolved').length}
-            subtitle="Requiring attention"
             icon={<AlertTriangle className="w-5 h-5 text-orange-500" />}
           />
           <MetricCard
             title="Risk Reduction"
             value="67%"
-            subtitle="With PolicyCortex"
             trend="up"
             icon={<Shield className="w-5 h-5 text-blue-500" />}
           />

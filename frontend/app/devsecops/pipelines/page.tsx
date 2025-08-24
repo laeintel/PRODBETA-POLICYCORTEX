@@ -144,27 +144,23 @@ export default function DevSecOpsPipelinesPage() {
           <MetricCard
             title="Security Score"
             value="89%"
-            subtitle="Across all pipelines"
             trend="up"
             icon={<Shield className="w-5 h-5 text-green-500" />}
           />
           <MetricCard
             title="Vulnerabilities Blocked"
             value="234"
-            subtitle="This week"
             icon={<XCircle className="w-5 h-5 text-red-500" />}
           />
           <MetricCard
             title="Policy Violations"
             value="6"
-            subtitle="Requiring review"
             alert="Action needed"
             icon={<AlertTriangle className="w-5 h-5 text-orange-500" />}
           />
           <MetricCard
             title="Deploy Frequency"
             value="47/day"
-            subtitle="15% faster"
             trend="up"
             icon={<Zap className="w-5 h-5 text-blue-500" />}
           />
