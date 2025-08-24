@@ -12,7 +12,8 @@ export function generateNonce(): string {
   }
   
   // Fallback for Node.js environment
-  const crypto = require('crypto');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const crypto = require('crypto') as typeof import('crypto');
   return crypto.randomBytes(16).toString('base64');
 }
 
