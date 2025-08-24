@@ -1,0 +1,501 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: policycortex-prod
+---
+# ========================
+# PYTHON API GATEWAY (Primary Backend)
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: policycortex-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: ACR_NAME.azurecr.io/api-gateway:IMAGE_TAG
+        ports:
+        - containerPort: 8000
+        env:
+        - name: AZURE_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: tenant-id
+        - name: AZURE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: client-id
+        - name: AZURE_SUBSCRIPTION_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: subscription-id
+        - name: AZURE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: client-secret
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+  type: ClusterIP
+---
+# ========================
+# ML SERVICES
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  namespace: policycortex-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-service
+  template:
+    metadata:
+      labels:
+        app: ml-service
+    spec:
+      containers:
+      - name: ml-service
+        image: ACR_NAME.azurecr.io/ml-service:IMAGE_TAG
+        ports:
+        - containerPort: 8001
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-service
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: ml-service
+  ports:
+  - port: 8001
+    targetPort: 8001
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-models
+  namespace: policycortex-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml-models
+  template:
+    metadata:
+      labels:
+        app: ml-models
+    spec:
+      containers:
+      - name: ml-models
+        image: ACR_NAME.azurecr.io/ml-models:IMAGE_TAG
+        ports:
+        - containerPort: 8002
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: MODEL_PATH
+          value: "/models"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: ml-models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-models
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: ml-models
+  ports:
+  - port: 8002
+    targetPort: 8002
+  type: ClusterIP
+---
+# ========================
+# REAL-TIME SERVICES
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-server
+  namespace: policycortex-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: websocket-server
+  template:
+    metadata:
+      labels:
+        app: websocket-server
+    spec:
+      containers:
+      - name: websocket-server
+        image: ACR_NAME.azurecr.io/websocket-server:IMAGE_TAG
+        ports:
+        - containerPort: 8765
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket-server
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: websocket-server
+  ports:
+  - port: 8765
+    targetPort: 8765
+    name: websocket
+  type: ClusterIP
+---
+# ========================
+# CORE API (RUST)
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core-api
+  namespace: policycortex-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: core-api
+  template:
+    metadata:
+      labels:
+        app: core-api
+    spec:
+      containers:
+      - name: core-api
+        image: ACR_NAME.azurecr.io/core-api:IMAGE_TAG
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: AZURE_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: tenant-id
+        - name: AZURE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: client-id
+        - name: AZURE_SUBSCRIPTION_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: subscription-id
+        - name: AZURE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: client-secret
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        - name: REDIS_URL
+          value: "redis://redis:6379"
+        - name: RUST_LOG
+          value: "info"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/metrics  # Use working endpoint instead of /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-api
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: core-api
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+# ========================
+# GRAPHQL GATEWAY
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql
+  namespace: policycortex-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graphql
+  template:
+    metadata:
+      labels:
+        app: graphql
+    spec:
+      containers:
+      - name: graphql
+        image: ACR_NAME.azurecr.io/graphql:IMAGE_TAG
+        ports:
+        - containerPort: 4000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: CORE_API_URL
+          value: "http://core-api:8080"
+        - name: ML_SERVICE_URL
+          value: "http://ml-service:8001"
+        - name: API_GATEWAY_URL
+          value: "http://api-gateway:8000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /.well-known/apollo/server-health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: graphql
+  ports:
+  - port: 4000
+    targetPort: 4000
+  type: ClusterIP
+---
+# ========================
+# FRONTEND
+# ========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: policycortex-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ACR_NAME.azurecr.io/frontend:IMAGE_TAG
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://api-gateway:8000"
+        - name: NEXT_PUBLIC_GRAPHQL_URL
+          value: "http://graphql:4000/graphql"
+        - name: NEXT_PUBLIC_AZURE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: client-id
+        - name: NEXT_PUBLIC_AZURE_TENANT_ID
+          valueFrom:
+            secretKeyRef:
+              name: azure-secrets
+              key: tenant-id
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: policycortex-prod
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+---
+# ========================
+# PERSISTENT VOLUME CLAIMS
+# ========================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-models-pvc
+  namespace: policycortex-prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-premium
+  resources:
+    requests:
+      storage: 50Gi
+---
+# ========================
+# SECRETS (Template - populate with actual values)
+# ========================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: azure-secrets
+  namespace: policycortex-prod
+type: Opaque
+stringData:
+  tenant-id: "AZURE_TENANT_ID_VALUE"
+  client-id: "AZURE_CLIENT_ID_VALUE" 
+  subscription-id: "AZURE_SUBSCRIPTION_ID_VALUE"
+  client-secret: "AZURE_CLIENT_SECRET_VALUE"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: database-secrets
+  namespace: policycortex-prod
+type: Opaque
+stringData:
+  url: "postgresql://postgres:password@postgres:5432/policycortex"
