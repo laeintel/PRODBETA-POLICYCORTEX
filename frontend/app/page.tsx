@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Shield, Lock, KeyRound, Cpu, Fingerprint } from 'lucide-react'
+import { Shield, Lock } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const { login } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -18,18 +18,13 @@ export default function LoginPage() {
     }
   }, [])
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.MouseEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
     try {
-      const resp = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      if (!resp.ok) throw new Error('Invalid credentials')
-      window.location.href = '/dashboard'
+      await login()
+      router.push('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {
@@ -58,46 +53,18 @@ export default function LoginPage() {
           <div className="mb-3 text-sm text-red-400 bg-red-900/20 border border-red-900/40 rounded p-2">{error}</div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-3">
-          <div>
-            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600"
-              placeholder="you@company.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Password</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-          </div>
+        <div className="space-y-3">
           <button
-            type="submit"
+            type="button"
+            onClick={handleLogin}
             disabled={loading}
-            className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-70"
+            className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-70 flex items-center justify-center gap-2"
           >
-            {loading ? 'Signing in…' : 'Sign In'}
+            <Lock className="w-4 h-4" /> {loading ? 'Opening Microsoft sign-in…' : 'Sign in with Microsoft'}
           </button>
-        </form>
-
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <button type="button" className="py-2 text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-white flex items-center justify-center gap-2"><KeyRound className="w-4 h-4" /> SSO</button>
-          <button type="button" className="py-2 text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-white flex items-center justify-center gap-2"><Fingerprint className="w-4 h-4" /> Passkey</button>
-          <button type="button" onClick={() => router.push('/dashboard')} className="py-2 text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-white flex items-center justify-center gap-2"><Cpu className="w-4 h-4" /> Guest</button>
         </div>
+
+        {/* No guest access; authentication required before UI */}
 
         <p className="mt-4 text-[10px] text-gray-500">Unauthorized access is prohibited. Activity may be monitored and logged.</p>
       </div>
