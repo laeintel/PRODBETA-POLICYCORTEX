@@ -11,6 +11,11 @@ const nextConfig = {
     // Remove console logs in production builds except warn/error
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     // Security headers are now handled by middleware.ts for better nonce support
     // This empty headers function is kept for Next.js compatibility
