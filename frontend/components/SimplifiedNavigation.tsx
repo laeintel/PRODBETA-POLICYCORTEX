@@ -110,29 +110,22 @@ export default function SimplifiedNavigation() {
       ]
     },
     {
-      name: 'DevOps & CI/CD',
+      name: 'DevOps',
       href: '/devops',
       icon: GitBranch,
-      description: 'Pipelines, releases & artifacts',
+      description: 'Complete DevSecOps platform',
+      badge: 'ENHANCED',
       subsections: [
+        // CI/CD & Deployment
         { name: 'Pipelines', href: '/devops/pipelines' },
-        { name: 'Releases', href: '/devops/releases' },
-        { name: 'Artifacts', href: '/devops/artifacts' },
         { name: 'Deployments', href: '/devops/deployments' },
+        { name: 'Releases', href: '/devops/releases' },
         { name: 'Build Status', href: '/devops/builds' },
-        { name: 'Repositories', href: '/devops/repos' }
-      ]
-    },
-    {
-      name: 'DevSecOps',
-      href: '/devsecops',
-      icon: GitMerge,
-      description: 'Shift-left security & policy-as-code',
-      badge: 'NEW',
-      subsections: [
-        { name: 'CI/CD Integration', href: '/devsecops/pipelines' },
-        { name: 'Policy-as-Code', href: '/devsecops/policy-code' },
-        { name: 'Security Gates', href: '/devsecops/gates' },
+        { name: 'Artifacts', href: '/devops/artifacts' },
+        { name: 'Repositories', href: '/devops/repos' },
+        // DevSecOps
+        { name: 'Security Gates', href: '/devsecops/gates', badge: 'SECURITY' },
+        { name: 'Policy-as-Code', href: '/devsecops/policy-as-code', badge: 'NEW' },
         { name: 'IDE Plugins', href: '/devsecops/ide-plugins' }
       ]
     },

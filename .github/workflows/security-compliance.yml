@@ -172,9 +172,10 @@ jobs:
             },
           };
 
+          // AKS ingress endpoints (will be set dynamically based on ingress IP)
           const BASE_URL = __ENV.TARGET_ENV === 'prod' 
-            ? 'https://ca-cortex-core-prod.azurecontainerapps.io'
-            : 'https://ca-cortex-core-dev.azurecontainerapps.io';
+            ? 'https://policycortex-prod.eastus.cloudapp.azure.com'
+            : 'https://policycortex-dev.eastus.cloudapp.azure.com';
 
           export default function () {
             // Test health endpoint

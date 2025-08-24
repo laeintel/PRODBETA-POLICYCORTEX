@@ -36,7 +36,7 @@ export default function TacticalDevOpsPage() {
       status: 'success',
       lastRun: '2 minutes ago',
       duration: '3m 45s',
-      stages: ['Build', 'Test', 'Security Scan', 'Deploy'],
+      stages: ['Build', 'Test', 'SAST', 'Security Gates', 'Deploy'],
       successRate: 99.2
     },
     {
@@ -71,10 +71,10 @@ export default function TacticalDevOpsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Tactical DevOps
+            DevOps Command Center
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Real-time CI/CD pipeline monitoring and deployment management
+            Complete DevSecOps platform with security-first CI/CD and policy enforcement
           </p>
         </div>
 

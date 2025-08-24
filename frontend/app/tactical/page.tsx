@@ -172,21 +172,23 @@ export default function TacticalOperationsPage() {
     },
     {
       id: 'devops',
-      title: 'DevOps & CI/CD',
-      description: 'Pipelines, releases, deployments, and artifact management',
+      title: 'DevOps',
+      description: 'Complete DevSecOps platform with security-first CI/CD',
       icon: GitBranch,
       href: '/devops',
       color: 'purple',
       stats: [
         { label: 'Pipelines', value: 42 },
-        { label: 'Success Rate', value: '96%', trend: 'up' },
+        { label: 'Security Gates', value: '100%', trend: 'up' },
         { label: 'Deployments', value: '12/day' }
       ],
       subItems: [
         { label: 'Pipelines', href: '/devops/pipelines', count: 42 },
         { label: 'Releases', href: '/devops/releases', count: 18 },
-        { label: 'Artifacts', href: '/devops/artifacts', count: 234 },
         { label: 'Deployments', href: '/devops/deployments', count: 67 },
+        { label: 'Security Gates', href: '/devsecops/gates', count: 15 },
+        { label: 'Policy-as-Code', href: '/devsecops/policy-as-code', count: 23 },
+        { label: 'Artifacts', href: '/devops/artifacts', count: 234 },
         { label: 'Build Status', href: '/devops/builds', count: 12 },
         { label: 'Repositories', href: '/devops/repos', count: 28 }
       ]
