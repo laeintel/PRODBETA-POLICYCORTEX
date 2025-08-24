@@ -1,24 +1,24 @@
 // Basic Integration Test to verify test infrastructure works
 
+use chrono::Utc;
 use std::collections::HashMap;
 use uuid::Uuid;
-use chrono::Utc;
 
 #[tokio::test]
 async fn test_basic_functionality() {
     println!("🧪 Running basic integration test");
-    
+
     // Test basic data structures
     let request_id = Uuid::new_v4();
     let timestamp = Utc::now();
-    
+
     assert!(!request_id.to_string().is_empty(), "UUID generation failed");
     assert!(timestamp.timestamp() > 0, "Timestamp generation failed");
-    
+
     // Test async functionality
     let result = async_test_function().await;
     assert_eq!(result, "success", "Async function test failed");
-    
+
     println!("✅ Basic integration test passed");
 }
 
@@ -30,12 +30,18 @@ async fn async_test_function() -> String {
 #[tokio::test]
 async fn test_data_structures() {
     println!("🧪 Testing data structure creation");
-    
+
     // Test RemediationRequest creation
     let request = create_test_remediation_request();
-    assert!(!request.resource_id.is_empty(), "Resource ID should not be empty");
-    assert!(!request.policy_id.is_empty(), "Policy ID should not be empty");
-    
+    assert!(
+        !request.resource_id.is_empty(),
+        "Resource ID should not be empty"
+    );
+    assert!(
+        !request.policy_id.is_empty(),
+        "Policy ID should not be empty"
+    );
+
     println!("✅ Data structure test passed");
 }
 

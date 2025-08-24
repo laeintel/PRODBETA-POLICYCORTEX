@@ -14,9 +14,9 @@ mod tests {
     async fn test_approval_workflow() {
         let mut test_ctx = TestContext::new();
         let mut results = TestResults::new();
-        
+
         println!("🔄 Testing Approval Workflows");
-        
+
         // Test Case 1: Create approval request
         match test_create_approval_request().await {
             Ok(approval_id) => {
@@ -28,7 +28,7 @@ mod tests {
                 results.record_failure(format!("Approval creation: {}", e));
             }
         }
-        
+
         // Test Case 2: Process approval
         match test_process_approval().await {
             Ok(_) => {
@@ -40,7 +40,7 @@ mod tests {
                 results.record_failure(format!("Approval processing: {}", e));
             }
         }
-        
+
         // Test Case 3: Approval timeout handling
         match test_approval_timeout().await {
             Ok(_) => {
@@ -52,7 +52,7 @@ mod tests {
                 results.record_failure(format!("Timeout handling: {}", e));
             }
         }
-        
+
         // Test Case 4: Multi-level approval chain
         match test_multi_level_approval().await {
             Ok(_) => {
@@ -64,15 +64,18 @@ mod tests {
                 results.record_failure(format!("Multi-level: {}", e));
             }
         }
-        
+
         test_ctx.cleanup().await;
-        
-        assert!(results.success_rate() >= 75.0, "Approval workflow tests failed");
+
+        assert!(
+            results.success_rate() >= 75.0,
+            "Approval workflow tests failed"
+        );
     }
 
     async fn test_create_approval_request() -> Result<String, String> {
         let approval_manager = MockApprovalManager::new();
-        
+
         let request = ApprovalRequest {
             request_id: uuid::Uuid::new_v4(),
             resource_id: "/subscriptions/test/resourceGroups/test/providers/Microsoft.Storage/storageAccounts/test".to_string(),
@@ -85,16 +88,16 @@ mod tests {
             timeout_minutes: 60,
             metadata: std::collections::HashMap::new(),
         };
-        
+
         approval_manager.create_approval(request).await
     }
 
     async fn test_process_approval() -> Result<(), String> {
         let approval_manager = MockApprovalManager::new();
-        
+
         // Create an approval first
         let approval_id = test_create_approval_request().await?;
-        
+
         // Process the approval
         let decision = ApprovalDecision {
             approval_id: approval_id.clone(),
@@ -103,21 +106,21 @@ mod tests {
             comments: Some("Approved for immediate remediation".to_string()),
             decided_at: chrono::Utc::now(),
         };
-        
+
         approval_manager.process_decision(decision).await?;
-        
+
         // Verify status
         let status = approval_manager.get_approval_status(&approval_id).await?;
         if status != ApprovalStatus::Approved {
             return Err(format!("Expected Approved status, got {:?}", status));
         }
-        
+
         Ok(())
     }
 
     async fn test_approval_timeout() -> Result<(), String> {
         let approval_manager = MockApprovalManager::new();
-        
+
         // Create approval with very short timeout
         let request = ApprovalRequest {
             request_id: uuid::Uuid::new_v4(),
@@ -131,23 +134,23 @@ mod tests {
             timeout_minutes: 0, // Immediate timeout
             metadata: std::collections::HashMap::new(),
         };
-        
+
         let approval_id = approval_manager.create_approval(request).await?;
-        
+
         // Wait and check for timeout
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-        
+
         let status = approval_manager.get_approval_status(&approval_id).await?;
         if status != ApprovalStatus::TimedOut {
             return Err(format!("Expected TimedOut status, got {:?}", status));
         }
-        
+
         Ok(())
     }
 
     async fn test_multi_level_approval() -> Result<(), String> {
         let approval_manager = MockApprovalManager::new();
-        
+
         // Create multi-level approval request
         let request = ApprovalRequest {
             request_id: uuid::Uuid::new_v4(),
@@ -165,11 +168,15 @@ mod tests {
             timeout_minutes: 120,
             metadata: std::collections::HashMap::new(),
         };
-        
+
         let approval_id = approval_manager.create_approval(request).await?;
-        
+
         // Process approvals from each level
-        for approver in vec!["team-lead@company.com", "manager@company.com", "director@company.com"] {
+        for approver in vec![
+            "team-lead@company.com",
+            "manager@company.com",
+            "director@company.com",
+        ] {
             let decision = ApprovalDecision {
                 approval_id: approval_id.clone(),
                 decision: Decision::Approved,
@@ -177,16 +184,16 @@ mod tests {
                 comments: Some(format!("Approved by {}", approver)),
                 decided_at: chrono::Utc::now(),
             };
-            
+
             approval_manager.process_decision(decision).await?;
         }
-        
+
         // Verify all levels approved
         let status = approval_manager.get_approval_status(&approval_id).await?;
         if status != ApprovalStatus::Approved {
             return Err(format!("Multi-level approval failed, status: {:?}", status));
         }
-        
+
         Ok(())
     }
 }
@@ -202,10 +209,10 @@ impl MockApprovalManager {
             approvals: Arc::new(RwLock::new(std::collections::HashMap::new())),
         }
     }
-    
+
     pub async fn create_approval(&self, request: ApprovalRequest) -> Result<String, String> {
         let approval_id = uuid::Uuid::new_v4().to_string();
-        
+
         let record = ApprovalRecord {
             approval_id: approval_id.clone(),
             request,
@@ -214,21 +221,22 @@ impl MockApprovalManager {
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         };
-        
+
         let mut approvals = self.approvals.write().await;
         approvals.insert(approval_id.clone(), record);
-        
+
         Ok(approval_id)
     }
-    
+
     pub async fn process_decision(&self, decision: ApprovalDecision) -> Result<(), String> {
         let mut approvals = self.approvals.write().await;
-        
-        let record = approvals.get_mut(&decision.approval_id)
+
+        let record = approvals
+            .get_mut(&decision.approval_id)
             .ok_or_else(|| "Approval not found".to_string())?;
-        
+
         record.decisions.push(decision.clone());
-        
+
         // Update status based on decision
         record.status = match decision.decision {
             Decision::Approved => {
@@ -241,23 +249,24 @@ impl MockApprovalManager {
             }
             Decision::Rejected => ApprovalStatus::Rejected,
         };
-        
+
         record.updated_at = chrono::Utc::now();
-        
+
         Ok(())
     }
-    
+
     pub async fn get_approval_status(&self, approval_id: &str) -> Result<ApprovalStatus, String> {
         let approvals = self.approvals.read().await;
-        
-        let record = approvals.get(approval_id)
+
+        let record = approvals
+            .get(approval_id)
             .ok_or_else(|| "Approval not found".to_string())?;
-        
+
         // Check for timeout
         if record.request.timeout_minutes == 0 {
             return Ok(ApprovalStatus::TimedOut);
         }
-        
+
         Ok(record.status.clone())
     }
 }
