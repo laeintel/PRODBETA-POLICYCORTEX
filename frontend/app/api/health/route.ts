@@ -12,8 +12,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    // Proxy to backend health endpoint
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.IN_DOCKER === 'true' || process.env.DOCKER === 'true' ? 'http://core:8080' : 'http://localhost:8080')
+    // Proxy to backend health endpoint - using Python API Gateway which is working
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.IN_DOCKER === 'true' || process.env.DOCKER === 'true' ? 'http://api-gateway:8000' : 'http://localhost:8000')
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
     
