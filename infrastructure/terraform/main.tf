@@ -72,11 +72,9 @@ locals {
     # Networking
     vnet = "vnet-${local.project}-${var.environment}"
 
-    # Container Apps
-    container_env = "cae-${local.project}-${var.environment}"
-    core_app      = "ca-${local.project}-core-${var.environment}"
-    frontend_app  = "ca-${local.project}-frontend-${var.environment}"
-    graphql_app   = "ca-${local.project}-graphql-${var.environment}"
+    # AKS
+    aks_cluster = "aks-${local.project}-${var.environment}"
+    app_gateway = "agw-${local.project}-${var.environment}"
 
     # Storage & Registry
     container_registry = "cr${local.project}${var.environment}${local.hash_suffix}"
@@ -168,12 +166,12 @@ resource "azurerm_virtual_network" "main" {
   tags                = local.common_tags
 }
 
-# Subnet for Container Apps - NO DELEGATION (Container Apps Environment requires non-delegated subnet)
-resource "azurerm_subnet" "container_apps" {
-  name                 = "snet-container-apps"
+# Subnet for AKS Nodes
+resource "azurerm_subnet" "aks" {
+  name                 = "snet-aks"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = ["10.0.0.0/23"]
+  address_prefixes     = ["10.0.0.0/22"] # Large subnet for AKS nodes
 
   # Service endpoints for resources that need them
   service_endpoints = [
@@ -181,8 +179,17 @@ resource "azurerm_subnet" "container_apps" {
     "Microsoft.KeyVault",
     "Microsoft.ContainerRegistry",
     "Microsoft.AzureCosmosDB",
-    "Microsoft.Web"
+    "Microsoft.Web",
+    "Microsoft.Sql"
   ]
+}
+
+# Subnet for Application Gateway (AGIC)
+resource "azurerm_subnet" "appgateway" {
+  name                 = "snet-appgateway"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.12.0/24"]
 }
 
 # Subnet for Private Endpoints
@@ -646,202 +653,118 @@ resource "azurerm_machine_learning_workspace" "ai_hub" {
 }
 
 # ===========================
-# CONTAINER APPS ENVIRONMENT
+# AZURE KUBERNETES SERVICE (AKS)
 # ===========================
 
-resource "azurerm_container_app_environment" "main" {
-  name                       = local.resource_names.container_env
-  location                   = azurerm_resource_group.main.location
-  resource_group_name        = azurerm_resource_group.main.name
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-  infrastructure_subnet_id   = azurerm_subnet.container_apps.id
-
-  tags = local.common_tags
-}
-
-# ===========================
-# USER ASSIGNED IDENTITY FOR CONTAINER APPS
-# ===========================
-
-resource "azurerm_user_assigned_identity" "container_apps" {
-  name                = "id-container-apps-${var.environment}"
+resource "azurerm_kubernetes_cluster" "main" {
+  name                = local.resource_names.aks_cluster
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  tags                = local.common_tags
-}
+  dns_prefix          = "aks-${local.project}-${var.environment}"
+  kubernetes_version  = "1.29"
 
-# Role assignments - Commented out as service principal lacks authorization
-# These need to be created manually or by a user with proper permissions
-# resource "azurerm_role_assignment" "acr_pull" {
-#   scope                = azurerm_container_registry.main.id
-#   role_definition_name = "AcrPull"
-#   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
-# }
-
-# resource "azurerm_role_assignment" "keyvault_secrets" {
-#   scope                = azurerm_key_vault.main.id
-#   role_definition_name = "Key Vault Secrets User"
-#   principal_id         = azurerm_user_assigned_identity.container_apps.principal_id
-# }
-
-# ===========================
-# CONTAINER APPS
-# ===========================
-
-resource "azurerm_container_app" "core" {
-  name                         = local.resource_names.core_app
-  container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
-  revision_mode                = "Single"
-
-  template {
-    container {
-      name   = "core"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-core:latest"
-      cpu    = 0.5
-      memory = "1Gi"
-
-      env {
-        name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
-        value = azurerm_application_insights.main.connection_string
-      }
-
-      env {
-        name  = "DATABASE_URL"
-        value = "postgresql://psqladmin:${random_password.db_password.result}@${azurerm_postgresql_flexible_server.main.fqdn}/policycortex"
-      }
+  default_node_pool {
+    name                = "default"
+    node_count          = 3
+    vm_size             = "Standard_D4s_v3"
+    os_disk_size_gb     = 100
+    vnet_subnet_id      = azurerm_subnet.aks.id
+    type                = "VirtualMachineScaleSets"
+    enable_auto_scaling = true
+    min_count           = 2
+    max_count           = 5
+    
+    node_labels = {
+      "environment" = var.environment
+      "nodepool"    = "default"
     }
-    min_replicas = 0
-    max_replicas = 2
-  }
 
-  ingress {
-    external_enabled = true
-    target_port      = 8080 # Core API listens on port 8080
-    transport        = "http"
-    traffic_weight {
-      percentage      = 100
-      latest_revision = true
-    }
+    tags = local.common_tags
   }
 
   identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
+    type = "SystemAssigned"
   }
 
-  # Registry configuration removed - using public placeholder image
-  # Will be re-enabled once images are built and pushed
+  network_profile {
+    network_plugin    = "azure"
+    network_policy    = "azure"
+    load_balancer_sku = "standard"
+    service_cidr      = "10.1.0.0/16"
+    dns_service_ip    = "10.1.0.10"
+  }
+
+  ingress_application_gateway {
+    gateway_name = local.resource_names.app_gateway
+    subnet_id    = azurerm_subnet.appgateway.id
+  }
+
+  oms_agent {
+    log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  }
+
+  azure_policy_enabled = true
 
   tags = local.common_tags
-
-  lifecycle {
-    ignore_changes = [template[0].container[0].image]
-  }
 }
 
-resource "azurerm_container_app" "frontend" {
-  name                         = local.resource_names.frontend_app
-  container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
-  revision_mode                = "Single"
+# ===========================
+# AKS NODE POOL FOR ML WORKLOADS
+# ===========================
 
-  template {
-    container {
-      name   = "frontend"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-frontend:latest"
-      cpu    = 0.5
-      memory = "1Gi"
-
-      env {
-        name  = "NEXT_PUBLIC_API_URL"
-        value = "https://ca-cortex-core-${var.environment}.azurecontainerapps.io"
-      }
-
-      env {
-        name  = "NEXT_PUBLIC_GRAPHQL_URL"
-        value = "https://ca-cortex-graphql-${var.environment}.azurecontainerapps.io"
-      }
-    }
-    min_replicas = 0
-    max_replicas = 2
+resource "azurerm_kubernetes_cluster_node_pool" "ml" {
+  name                  = "ml"
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
+  vm_size               = "Standard_NC6s_v3" # GPU-enabled for ML
+  node_count            = 1
+  enable_auto_scaling   = true
+  min_count             = 0
+  max_count             = 3
+  vnet_subnet_id        = azurerm_subnet.aks.id
+  
+  node_labels = {
+    "workload" = "ml"
+    "gpu"      = "true"
   }
 
-  ingress {
-    external_enabled = true
-    target_port      = 3000 # Frontend listens on port 3000
-    transport        = "http"
-    traffic_weight {
-      percentage      = 100
-      latest_revision = true
-    }
-  }
-
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
-  }
-
-  # Registry configuration removed - using public placeholder image
-  # Will be re-enabled once images are built and pushed
-
-  tags = local.common_tags
-
-  lifecycle {
-    ignore_changes = [template[0].container[0].image]
-  }
-
-  depends_on = [
-    azurerm_container_app.core
+  node_taints = [
+    "ml=true:NoSchedule"
   ]
-}
-
-resource "azurerm_container_app" "graphql" {
-  name                         = local.resource_names.graphql_app
-  container_app_environment_id = azurerm_container_app_environment.main.id
-  resource_group_name          = azurerm_resource_group.main.name
-  revision_mode                = "Single"
-
-  template {
-    container {
-      name   = "graphql"
-      image  = "${azurerm_container_registry.main.login_server}/policycortex-graphql:latest"
-      cpu    = 0.5
-      memory = "1Gi"
-
-      env {
-        name  = "CORE_API_URL"
-        value = "https://ca-cortex-core-${var.environment}.azurecontainerapps.io"
-      }
-    }
-    min_replicas = 0
-    max_replicas = 2
-  }
-
-  ingress {
-    external_enabled = true
-    target_port      = 4000 # GraphQL listens on port 4000
-    transport        = "http"
-    traffic_weight {
-      percentage      = 100
-      latest_revision = true
-    }
-  }
-
-  identity {
-    type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.container_apps.id]
-  }
-
-  # Registry configuration removed - using public placeholder image
-  # Will be re-enabled once images are built and pushed
 
   tags = local.common_tags
-
-  lifecycle {
-    ignore_changes = [template[0].container[0].image]
-  }
 }
+
+# Grant ACR pull permissions to AKS
+resource "azurerm_role_assignment" "aks_acr_pull" {
+  scope                = azurerm_container_registry.main.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+  skip_service_principal_aad_check = true
+}
+
+# Grant AKS access to Key Vault
+resource "azurerm_role_assignment" "aks_keyvault_secrets" {
+  scope                = azurerm_key_vault.main.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id
+  skip_service_principal_aad_check = true
+}
+
+# ===========================
+# KUBERNETES DEPLOYMENTS
+# Note: The actual deployments are managed via kubectl apply
+# using the manifests in k8s/dev or k8s/prod directories
+# ===========================
+
+# The AKS cluster will host:
+# - Frontend (Next.js) on port 3000
+# - Core API (Rust) on port 8080
+# - GraphQL Gateway on port 4000
+# - ML Services
+# - Backend Python Services
+
+# Deployments are handled by CI/CD pipeline using:
+# kubectl apply -f k8s/${environment}/
 
 # ===========================
 # OUTPUTS
@@ -867,20 +790,22 @@ output "container_registry_url" {
   value = azurerm_container_registry.main.login_server
 }
 
-output "container_apps_environment_id" {
-  value = azurerm_container_app_environment.main.id
+output "aks_cluster_name" {
+  value = azurerm_kubernetes_cluster.main.name
 }
 
-output "core_app_url" {
-  value = "https://${azurerm_container_app.core.latest_revision_fqdn}"
+output "aks_kube_config" {
+  value     = azurerm_kubernetes_cluster.main.kube_config_raw
+  sensitive = true
 }
 
-output "frontend_app_url" {
-  value = "https://${azurerm_container_app.frontend.latest_revision_fqdn}"
+output "aks_host" {
+  value = azurerm_kubernetes_cluster.main.kube_config[0].host
 }
 
-output "graphql_app_url" {
-  value = "https://${azurerm_container_app.graphql.latest_revision_fqdn}"
+output "aks_ingress_ip" {
+  value = "Application Gateway IP will be available after deployment"
+  description = "The public IP of the Application Gateway Ingress Controller"
 }
 
 output "key_vault_name" {
