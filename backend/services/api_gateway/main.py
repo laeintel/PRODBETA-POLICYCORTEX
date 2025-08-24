@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 PATENT NOTICE: This code implements methods covered by:
 - US Patent Application 17/123,456 - Cross-Domain Governance Correlation Engine
@@ -12,7 +14,6 @@ Unauthorized use, reproduction, or distribution may constitute patent infringeme
 PolicyCortex API Gateway with GPT-5/GLM-4.5 Integration
 Fast, lightweight API with real Azure integration
 """
-from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException, Depends, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
