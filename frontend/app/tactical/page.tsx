@@ -11,10 +11,12 @@ import {
   ShieldAlert, UserCheck, Key, Package, Brain, MessageSquare,
   BarChart3, Layers, Building, Workflow, Container, Rocket,
   Monitor, BellRing, Bot, TrendingDown, ExternalLink, 
-  ArrowRight, ChevronDown
+  ArrowRight, ChevronDown, LayoutGrid, LineChart
 } from 'lucide-react';
 import ResponsiveGrid, { ResponsiveContainer, ResponsiveText } from '@/components/ResponsiveGrid';
 import { toast } from '@/hooks/useToast';
+import ViewToggle from '@/components/ViewToggle';
+import ChartContainer from '@/components/ChartContainer';
 
 interface NavigationCard {
   id: string;
@@ -57,6 +59,7 @@ interface SystemMetric {
 
 export default function TacticalOperationsPage() {
   const router = useRouter();
+  const [viewMode, setViewMode] = useState<'cards' | 'visualizations'>('visualizations');
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [commandInput, setCommandInput] = useState('');
@@ -338,6 +341,7 @@ export default function TacticalOperationsPage() {
             <p className="text-gray-400">Executive dashboard with complete system overview</p>
           </div>
           <div className="flex items-center space-x-4">
+            <ViewToggle view={viewMode} onViewChange={setViewMode} />
             <button type="button"
               onClick={() => setIsWarRoomActive(!isWarRoomActive)}
               className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
@@ -411,8 +415,10 @@ export default function TacticalOperationsPage() {
         ))}
       </ResponsiveGrid>
 
-      {/* Main Navigation Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      {/* Main Content - Switch between Card and Visualization Views */}
+      {viewMode === 'cards' ? (
+        // Card View
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {navigationCards.map((card) => {
           const Icon = card.icon;
           const isExpanded = expandedCards.has(card.id);
@@ -515,6 +521,160 @@ export default function TacticalOperationsPage() {
           );
         })}
       </div>
+      ) : (
+        // Visualization View
+        <div className="space-y-6 mb-8">
+          {/* System Performance Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ChartContainer title="System Performance">
+              <div className="h-64 flex items-end justify-around gap-4 p-4">
+                {[
+                  { name: 'CPU', value: 78, color: 'bg-blue-500' },
+                  { name: 'Memory', value: 62, color: 'bg-green-500' },
+                  { name: 'Storage', value: 89, color: 'bg-red-500' },
+                  { name: 'Network', value: 45, color: 'bg-purple-500' }
+                ].map((item) => (
+                  <div key={item.name} className="flex-1 flex flex-col items-center">
+                    <div 
+                      className={`w-full ${item.color} rounded-t transition-all hover:opacity-80`}
+                      style={{ height: `${item.value}%` }}
+                    />
+                    <span className="text-xs mt-2">{item.name}</span>
+                    <span className="text-sm font-bold">{item.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </ChartContainer>
+            <ChartContainer title="Alert Trends">
+              <div className="h-64 p-4">
+                <div className="relative h-full">
+                  {/* Simple line chart visualization */}
+                  <div className="absolute inset-0 flex items-end justify-between">
+                    {[
+                      { time: '00:00', total: 18 },
+                      { time: '04:00', total: 16 },
+                      { time: '08:00', total: 23 },
+                      { time: '12:00', total: 18 },
+                      { time: '16:00', total: 28 },
+                      { time: '20:00', total: 11 }
+                    ].map((point, i) => (
+                      <div key={i} className="flex flex-col items-center flex-1">
+                        <div className="w-2 bg-blue-500 rounded-t" style={{ height: `${(point.total / 30) * 100}%` }} />
+                        <span className="text-xs mt-2">{point.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </ChartContainer>
+          </div>
+
+          {/* Compliance & Security Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <ChartContainer title="Compliance Status">
+              <div className="h-64 flex items-center justify-center p-4">
+                <div className="relative w-48 h-48">
+                  <div className="absolute inset-0 rounded-full bg-green-500"></div>
+                  <div className="absolute inset-0 rounded-full bg-red-500" style={{ clipPath: 'polygon(50% 50%, 50% 0, 60% 0, 50% 50%)' }}></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold">94%</div>
+                      <div className="text-sm text-gray-500">Compliant</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ChartContainer>
+            <ChartContainer title="Security Score Trend">
+              <div className="h-64 p-4 flex items-end justify-between">
+                {[
+                  { day: 'Mon', score: 78 },
+                  { day: 'Tue', score: 82 },
+                  { day: 'Wed', score: 79 },
+                  { day: 'Thu', score: 85 },
+                  { day: 'Fri', score: 82 },
+                  { day: 'Sat', score: 87 },
+                  { day: 'Sun', score: 89 }
+                ].map((item) => (
+                  <div key={item.day} className="flex-1 flex flex-col items-center mx-1">
+                    <div className="w-full bg-gradient-to-t from-blue-500 to-blue-300 rounded-t" style={{ height: `${item.score}%` }} />
+                    <span className="text-xs mt-1">{item.day}</span>
+                  </div>
+                ))}
+              </div>
+            </ChartContainer>
+            <ChartContainer title="Resource Distribution">
+              <div className="h-64 p-4">
+                <div className="space-y-3">
+                  {[
+                    { name: 'Compute', value: 45, color: 'bg-blue-500' },
+                    { name: 'Storage', value: 30, color: 'bg-green-500' },
+                    { name: 'Network', value: 15, color: 'bg-yellow-500' },
+                    { name: 'Database', value: 10, color: 'bg-purple-500' }
+                  ].map((item) => (
+                    <div key={item.name}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>{item.name}</span>
+                        <span className="font-bold">{item.value}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div className={`h-2 rounded-full ${item.color}`} style={{ width: `${item.value}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </ChartContainer>
+          </div>
+
+          {/* Cost & DevOps Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ChartContainer title="Monthly Cost Trend">
+              <div className="h-64 p-4 flex items-end justify-between">
+                {[
+                  { month: 'Jan', cost: 42, budget: 50 },
+                  { month: 'Feb', cost: 38, budget: 50 },
+                  { month: 'Mar', cost: 45, budget: 50 },
+                  { month: 'Apr', cost: 47, budget: 50 },
+                  { month: 'May', cost: 43, budget: 50 },
+                  { month: 'Jun', cost: 42, budget: 50 }
+                ].map((item) => (
+                  <div key={item.month} className="flex-1 flex flex-col items-center mx-1">
+                    <div className="w-full flex flex-col items-center">
+                      <div className="w-8 bg-blue-500 rounded-t" style={{ height: `${(item.cost / 50) * 200}px` }} />
+                      <div className="w-8 border-2 border-dashed border-gray-400 absolute" style={{ height: '200px', bottom: '24px' }} />
+                    </div>
+                    <span className="text-xs mt-1">{item.month}</span>
+                  </div>
+                ))}
+              </div>
+            </ChartContainer>
+            <ChartContainer title="DevOps Pipeline Performance">
+              <div className="h-64 p-4">
+                <div className="space-y-4">
+                  {[
+                    { stage: 'Build', success: 89, failed: 11 },
+                    { stage: 'Test', success: 92, failed: 8 },
+                    { stage: 'Deploy', success: 95, failed: 5 },
+                    { stage: 'Release', success: 97, failed: 3 }
+                  ].map((item) => (
+                    <div key={item.stage}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>{item.stage}</span>
+                        <span className="text-green-500">{item.success}% success</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 flex">
+                        <div className="bg-green-500 rounded-l-full" style={{ width: `${item.success}%` }} />
+                        <div className="bg-red-500 rounded-r-full" style={{ width: `${item.failed}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </ChartContainer>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid - Alerts and Command Center */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
