@@ -1,0 +1,369 @@
+version: '3.9'
+
+# COMPREHENSIVE MICROSERVICES DOCKER COMPOSE
+# Includes all backend services deployed in development
+# Matches actual port configuration from running system
+
+services:
+  # ========================
+  # DATA LAYER
+  # ========================
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: pcx_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: policycortex
+      POSTGRES_INIT_DB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-database.sql:/docker-entrypoint-initdb.d/init-database.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pcx_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: pcx_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "notice"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pcx_network
+
+  eventstore:
+    image: eventstore/eventstore:20.10.2-buster-slim
+    container_name: pcx_eventstore
+    restart: unless-stopped
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+      - EVENTSTORE_ENABLE_EXTERNAL_TCP=true
+    ports:
+      - "2113:2113"
+      - "1113:1113"
+    volumes:
+      - eventstore_data:/var/lib/eventstore
+    networks:
+      - pcx_network
+
+  # ========================
+  # CORE APPLICATION SERVICES
+  # ========================
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: pcx_frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DOCKER: "true"
+      IN_DOCKER: "true"
+      NEXT_PUBLIC_API_URL: http://api-gateway:8000
+      NEXT_PUBLIC_GRAPHQL_URL: http://graphql:4000/graphql
+      NEXT_PUBLIC_AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      NEXT_PUBLIC_AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+      - graphql
+    networks:
+      - pcx_network
+
+  core-api:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    container_name: pcx_core
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/policycortex
+      REDIS_URL: redis://redis:6379
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_SUBSCRIPTION_ID: ${AZURE_SUBSCRIPTION_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+      RUST_LOG: info
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/v1/metrics"] # Use working endpoint
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pcx_network
+
+  graphql:
+    build:
+      context: ./graphql
+      dockerfile: Dockerfile
+    container_name: pcx_graphql
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      CORE_API_URL: http://core-api:8080
+      ML_SERVICE_URL: http://ml-service:8001
+    ports:
+      - "4000:4000"
+    depends_on:
+      - core-api
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/.well-known/apollo/server-health', r => { process.exit(r.statusCode===200?0:1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pcx_network
+
+  # ========================
+  # PATENT MICROSERVICES
+  # ========================
+
+  api-gateway:
+    build:
+      context: ./backend/services/api_gateway
+      dockerfile: Dockerfile
+    container_name: pcx_api_gateway
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/policycortex
+      REDIS_URL: redis://redis:6379
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_SUBSCRIPTION_ID: ${AZURE_SUBSCRIPTION_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pcx_network
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: pcx_ml_service
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pcx_network
+
+  ml-models:
+    build:
+      context: ./backend/services/ml_models
+      dockerfile: Dockerfile
+    container_name: pcx_ml_models
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      MODEL_PATH: /models
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8002:8002"
+    volumes:
+      - ml_models:/models
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pcx_network
+
+  # ========================
+  # REAL-TIME SERVICES
+  # ========================
+
+  websocket-server:
+    build:
+      context: ./backend/services
+      dockerfile: websocket.Dockerfile
+    container_name: pcx_websocket
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8765:8765"
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "python", "-c", "import websockets; import asyncio; asyncio.get_event_loop().run_until_complete(websockets.connect('ws://localhost:8765'))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - pcx_network
+
+  # ========================
+  # ADVANCED MICROSERVICES
+  # ========================
+
+  azure-sync:
+    build:
+      context: ./backend/services/azure_sync
+      dockerfile: Dockerfile
+    container_name: pcx_azure_sync
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_SUBSCRIPTION_ID: ${AZURE_SUBSCRIPTION_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/policycortex
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8003/health')"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+    networks:
+      - pcx_network
+
+  drift-detection:
+    build:
+      context: ./backend/services/drift_detection
+      dockerfile: Dockerfile
+    container_name: pcx_drift_detection
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8004:8004"
+    depends_on:
+      - redis
+    networks:
+      - pcx_network
+
+  usage-metering:
+    build:
+      context: ./backend/services/usage_metering
+      dockerfile: Dockerfile
+    container_name: pcx_usage_metering
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/policycortex
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8005:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pcx_network
+
+  # ========================
+  # MONITORING & OBSERVABILITY
+  # ========================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pcx_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    networks:
+      - pcx_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pcx_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana:/etc/grafana/provisioning
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - pcx_network
+
+# ========================
+# VOLUMES
+# ========================
+volumes:
+  postgres_data:
+  eventstore_data:
+  ml_models:
+  prometheus_data:
+  grafana_data:
+
+# ========================
+# NETWORKS
+# ========================
+networks:
+  pcx_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
