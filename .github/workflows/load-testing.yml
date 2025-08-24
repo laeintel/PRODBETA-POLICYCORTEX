@@ -53,14 +53,15 @@ jobs:
       - name: Determine test endpoints
         id: endpoints
         run: |
+          # AKS ingress endpoints - will be dynamically determined from ingress IP
           if [[ "${{ github.event.inputs.target_env || 'dev' }}" == "dev" ]]; then
-            echo "api_url=https://ca-cortex-core-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
-            echo "frontend_url=https://ca-cortex-frontend-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
-            echo "graphql_url=https://ca-cortex-graphql-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "api_url=https://policycortex-dev.eastus.cloudapp.azure.com/api" >> $GITHUB_OUTPUT
+            echo "frontend_url=https://policycortex-dev.eastus.cloudapp.azure.com" >> $GITHUB_OUTPUT
+            echo "graphql_url=https://policycortex-dev.eastus.cloudapp.azure.com/graphql" >> $GITHUB_OUTPUT
           else
-            echo "api_url=https://ca-cortex-core-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
-            echo "frontend_url=https://ca-cortex-frontend-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
-            echo "graphql_url=https://ca-cortex-graphql-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "api_url=https://policycortex-staging.eastus.cloudapp.azure.com/api" >> $GITHUB_OUTPUT
+            echo "frontend_url=https://policycortex-staging.eastus.cloudapp.azure.com" >> $GITHUB_OUTPUT
+            echo "graphql_url=https://policycortex-staging.eastus.cloudapp.azure.com/graphql" >> $GITHUB_OUTPUT
           fi
       
       - name: Run K6 Load Test
@@ -122,10 +123,11 @@ jobs:
       - name: Determine test endpoints
         id: endpoints
         run: |
+          # AKS ingress endpoints
           if [[ "${{ github.event.inputs.target_env || 'dev' }}" == "dev" ]]; then
-            echo "api_url=https://ca-cortex-core-dev.orangewave-11c5a9f4.eastus.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "api_url=https://policycortex-dev.eastus.cloudapp.azure.com/api" >> $GITHUB_OUTPUT
           else
-            echo "api_url=https://ca-cortex-core-staging.azurecontainerapps.io" >> $GITHUB_OUTPUT
+            echo "api_url=https://policycortex-staging.eastus.cloudapp.azure.com/api" >> $GITHUB_OUTPUT
           fi
       
       - name: Run Locust Test
