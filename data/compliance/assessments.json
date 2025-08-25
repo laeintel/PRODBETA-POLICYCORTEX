@@ -17400,7 +17400,7 @@
       "ga": null,
       "public": "06/01/2021"
     },
-    "remediationDescription": "To enable the key vault firewall: 1. In the Azure portal, open your key vault. 2.From the left sidebar, select Networking  (located under the \"Settings\" section). 3. Set the radio button to Private endpoint and selected networks and select Save.",
+    "remediationDescription": "1. Navigate to your Key Vault -> Settings -> Networking<br>2. Under \"Firewalls and virtual networks\", configure the access settings:<br><br>Allow access from:<br>- Allow public access from all networks<br>- Allow public access from specific virtual networks and IP addresses (recommended)<br>- Disable public access<br><br>3. For secure configuration, select \"Allow public access from specific virtual networks and IP addresses\"<br><br>Virtual networks<br>- Only networks you choose can access this key vault.<br><br>Firewall<br>- Add IP ranges to allow access from the internet or your on-premises networks.<br><br>Exception<br>- Enabling access to resources requires you allow trusted Microsoft services to bypass firewall<br>- Check: \"Allow trusted Microsoft services to bypass this firewall\"<br><br>4. Click Save to apply your changes",
     "severity": "Medium",
     "tactics": null,
     "techniques": null,
