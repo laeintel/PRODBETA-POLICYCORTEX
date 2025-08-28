@@ -28212,6 +28212,84 @@
   {
     "assessmentType": "BuiltIn",
     "categories": [
+      "Compute"
+    ],
+    "description": "Defender for Cloud identified that Reserved Concurrency is not implemented for a Lambda function. Without Reserved Concurrency, the function competes for concurrency with all other functions in the account. This can lead to resource exhaustion, especially during high-load scenarios, where a spike in one function may starve critical functions of execution capacity.",
+    "displayName": "Lambda function should implement Reserved Concurrency to prevent resource exhaustion",
+    "id": "/providers/Microsoft.Security/assessmentMetadata/a3f41639-19f7-408d-adb4-c90f3dce7157",
+    "implementationEffort": null,
+    "name": "a3f41639-19f7-408d-adb4-c90f3dce7157",
+    "partnerData": null,
+    "plannedDeprecationDate": null,
+    "policyDefinitionId": "",
+    "preview": true,
+    "publishDates": {
+      "ga": null,
+      "public": "08/29/2025"
+    },
+    "remediationDescription": "To configure Reserved Concurrency for a Lambda function: 1. Open the AWS Management Console and navigate to the Lambda service. 2. Select the function, go to the Configuration tab, then Concurrency, and choose Reserved Concurrency. 3. Set the desired concurrency value and save the configuration.",
+    "severity": "Low",
+    "tactics": [
+      "Persistence",
+      "Defense Evasion",
+      "Impact",
+      "Initial Access",
+      "Privilege Escalation"
+    ],
+    "techniques": [
+      "Supply Chain Compromise",
+      "Subvert Trust Controls",
+      "Masquerading",
+      "Valid Accounts",
+      "Exploit Public-Facing Application",
+      "External Remote Services"
+    ],
+    "threats": null,
+    "type": "Microsoft.Security/assessmentMetadata",
+    "userImpact": null
+  },
+  {
+    "assessmentType": "BuiltIn",
+    "categories": [
+      "Compute"
+    ],
+    "description": "Defender for Cloud identified that Lambda function is not configured with automatic runtime version update. Over time, this can lead to unpatched security vulnerabilities, deprecated runtimes, or missed performance improvements",
+    "displayName": "Lambda function should be configured with automatic runtime version updates.",
+    "id": "/providers/Microsoft.Security/assessmentMetadata/8138e284-1816-4574-a321-4f0e4164fd63",
+    "implementationEffort": null,
+    "name": "8138e284-1816-4574-a321-4f0e4164fd63",
+    "partnerData": null,
+    "plannedDeprecationDate": null,
+    "policyDefinitionId": "",
+    "preview": true,
+    "publishDates": {
+      "ga": null,
+      "public": "08/29/2025"
+    },
+    "remediationDescription": "To configure automatic runtime updates for a Lambda function: 1. Open the AWS Management Console and navigate to the Lambda service. 2. Select the function, go to Runtime settings 3. Edit the 'Update runtime version' to 'Auto'",
+    "severity": "High",
+    "tactics": [
+      "Persistence",
+      "Defense Evasion",
+      "Impact",
+      "Initial Access",
+      "Privilege Escalation"
+    ],
+    "techniques": [
+      "Supply Chain Compromise",
+      "Subvert Trust Controls",
+      "Masquerading",
+      "Valid Accounts",
+      "Exploit Public-Facing Application",
+      "External Remote Services"
+    ],
+    "threats": null,
+    "type": "Microsoft.Security/assessmentMetadata",
+    "userImpact": null
+  },
+  {
+    "assessmentType": "BuiltIn",
+    "categories": [
       "IdentityAndAccess"
     ],
     "description": "Accounts with read permissions that have been provisioned outside of the Azure Active Directory tenant (different domain names), should be removed from your Azure resources.<br> These guest accounts are not managed to the same standards as enterprise tenant identities.<br> This makes them potential targets for threat actors looking to find ways to access your data without being noticed.<br> By removing these accounts, you can reduce the risk of unauthorized data access and potential breaches.<br>",
