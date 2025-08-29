@@ -25005,55 +25005,6 @@
     ],
     "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
     "displayName": "[Preview] Containers running in Azure should have vulnerability findings resolved",
-    "id": "/providers/Microsoft.Security/assessmentMetadata/e9acaf48-d2cf-45a3-a6e7-3caa2ef769e0",
-    "implementationEffort": "Moderate",
-    "name": "e9acaf48-d2cf-45a3-a6e7-3caa2ef769e0",
-    "partnerData": null,
-    "plannedDeprecationDate": null,
-    "policyDefinitionId": "",
-    "preview": true,
-    "publishDates": {
-      "ga": null,
-      "public": "03/03/2024"
-    },
-    "remediationDescription": "To resolve container image vulnerabilities: <br>1. Review the set of known vulnerabilities found by their severity. <br>2. Select a vulnerability to view its full details and patch availability. <br>3. Check if there is a newer version of the image in the registry that already resolves this vulnerability, if not, remediate the vulnerability using the provided instructions described in the 'Remediation' field. <br>4. If a new image was created, push the new remediated image to your registry. <br>5. Delete the old image with the vulnerability from your registry. <br>6. Update the Kubernetes workloads using this image to use the new image.",
-    "severity": "High",
-    "tactics": [
-      "Initial Access",
-      "Execution",
-      "Lateral Movement",
-      "Defense Evasion",
-      "Credential Access",
-      "Privilege Escalation"
-    ],
-    "techniques": [
-      "Exploit Public-Facing Application",
-      "Exploitation for Client Execution",
-      "Drive-by Compromise",
-      "Exploitation of Remote Services",
-      "Exploitation for Defense Evasion",
-      "Exploitation for Credential Access",
-      "Exploitation for Privilege Escalation"
-    ],
-    "threats": [
-      "AccountBreach",
-      "DataExfiltration",
-      "DataSpillage",
-      "MaliciousInsider",
-      "ElevationOfPrivilege",
-      "ThreatResistance",
-      "DenialOfService"
-    ],
-    "type": "Microsoft.Security/assessmentMetadata",
-    "userImpact": "Low"
-  },
-  {
-    "assessmentType": "BuiltIn",
-    "categories": [
-      "Compute"
-    ],
-    "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
-    "displayName": "[Preview] Containers running in Azure should have vulnerability findings resolved",
     "id": "/providers/Microsoft.Security/assessmentMetadata/c5045ea3-afc6-4006-ab8f-86c8574dbf3d",
     "implementationEffort": "Moderate",
     "name": "c5045ea3-afc6-4006-ab8f-86c8574dbf3d",
@@ -25149,55 +25100,6 @@
     ],
     "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
     "displayName": "[Preview] Containers running in GCP should have vulnerability findings resolved",
-    "id": "/providers/Microsoft.Security/assessmentMetadata/c7c1d31d-a604-4b86-96df-63448618e165",
-    "implementationEffort": "Moderate",
-    "name": "c7c1d31d-a604-4b86-96df-63448618e165",
-    "partnerData": null,
-    "plannedDeprecationDate": null,
-    "policyDefinitionId": "",
-    "preview": true,
-    "publishDates": {
-      "ga": null,
-      "public": "03/03/2024"
-    },
-    "remediationDescription": "To resolve container image vulnerabilities: <br>1. Review the set of known vulnerabilities found by their severity. <br>2. Select a vulnerability to view its full details and patch availability. <br>3. Check if there is a newer version of the image in the registry that already resolves this vulnerability, if not, remediate the vulnerability using the provided instructions described in the 'Remediation' field. <br>4. If a new image was created, push the new remediated image to your registry. <br>5. Delete the old image with the vulnerability from your registry. <br>6. Update the Kubernetes workloads using this image to use the new image.",
-    "severity": "High",
-    "tactics": [
-      "Initial Access",
-      "Execution",
-      "Lateral Movement",
-      "Defense Evasion",
-      "Credential Access",
-      "Privilege Escalation"
-    ],
-    "techniques": [
-      "Exploit Public-Facing Application",
-      "Exploitation for Client Execution",
-      "Drive-by Compromise",
-      "Exploitation of Remote Services",
-      "Exploitation for Defense Evasion",
-      "Exploitation for Credential Access",
-      "Exploitation for Privilege Escalation"
-    ],
-    "threats": [
-      "AccountBreach",
-      "DataExfiltration",
-      "DataSpillage",
-      "MaliciousInsider",
-      "ElevationOfPrivilege",
-      "ThreatResistance",
-      "DenialOfService"
-    ],
-    "type": "Microsoft.Security/assessmentMetadata",
-    "userImpact": "Low"
-  },
-  {
-    "assessmentType": "BuiltIn",
-    "categories": [
-      "Compute"
-    ],
-    "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
-    "displayName": "[Preview] Containers running in GCP should have vulnerability findings resolved",
     "id": "/providers/Microsoft.Security/assessmentMetadata/1b3abfa4-9e53-46f1-9627-51f2957f8bba",
     "implementationEffort": "Moderate",
     "name": "1b3abfa4-9e53-46f1-9627-51f2957f8bba",
@@ -25282,55 +25184,6 @@
       "DataSpillage",
       "AccountBreach",
       "ElevationOfPrivilege"
-    ],
-    "type": "Microsoft.Security/assessmentMetadata",
-    "userImpact": "Low"
-  },
-  {
-    "assessmentType": "BuiltIn",
-    "categories": [
-      "Compute"
-    ],
-    "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
-    "displayName": "[Preview] Containers running in AWS should have vulnerability findings resolved",
-    "id": "/providers/Microsoft.Security/assessmentMetadata/d5d1e526-363a-4223-b860-f4b6e710859f",
-    "implementationEffort": "Moderate",
-    "name": "d5d1e526-363a-4223-b860-f4b6e710859f",
-    "partnerData": null,
-    "plannedDeprecationDate": null,
-    "policyDefinitionId": "",
-    "preview": true,
-    "publishDates": {
-      "ga": null,
-      "public": "03/03/2024"
-    },
-    "remediationDescription": "To resolve container image vulnerabilities: <br>1. Review the set of known vulnerabilities found by their severity. <br>2. Select a vulnerability to view its full details and patch availability. <br>3. Check if there is a newer version of the image in the registry that already resolves this vulnerability, if not, remediate the vulnerability using the provided instructions described in the 'Remediation' field. <br>4. If a new image was created, push the new remediated image to your registry. <br>5. Delete the old image with the vulnerability from your registry. <br>6. Update the Kubernetes workloads using this image to use the new image.",
-    "severity": "High",
-    "tactics": [
-      "Initial Access",
-      "Execution",
-      "Lateral Movement",
-      "Defense Evasion",
-      "Credential Access",
-      "Privilege Escalation"
-    ],
-    "techniques": [
-      "Exploit Public-Facing Application",
-      "Exploitation for Client Execution",
-      "Drive-by Compromise",
-      "Exploitation of Remote Services",
-      "Exploitation for Defense Evasion",
-      "Exploitation for Credential Access",
-      "Exploitation for Privilege Escalation"
-    ],
-    "threats": [
-      "AccountBreach",
-      "DataExfiltration",
-      "DataSpillage",
-      "MaliciousInsider",
-      "ElevationOfPrivilege",
-      "ThreatResistance",
-      "DenialOfService"
     ],
     "type": "Microsoft.Security/assessmentMetadata",
     "userImpact": "Low"
