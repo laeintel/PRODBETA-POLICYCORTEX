@@ -17400,7 +17400,7 @@
       "ga": null,
       "public": "06/01/2021"
     },
-    "remediationDescription": "To enable the key vault firewall: 1. In the Azure portal, open your key vault. 2.From the left sidebar, select Networking  (located under the \"Settings\" section). 3. Set the radio button to Private endpoint and selected networks and select Save.",
+    "remediationDescription": "1. Navigate to your Key Vault -> Settings -> Networking<br>2. Under \"Firewalls and virtual networks\", configure the access settings:<br><br>Allow access from:<br>- Allow public access from all networks<br>- Allow public access from specific virtual networks and IP addresses (recommended)<br>- Disable public access<br><br>3. For secure configuration, select \"Allow public access from specific virtual networks and IP addresses\"<br><br>Virtual networks<br>- Only networks you choose can access this key vault.<br><br>Firewall<br>- Add IP ranges to allow access from the internet or your on-premises networks.<br><br>Exception<br>- Enabling access to resources requires you allow trusted Microsoft services to bypass firewall<br>- Check: \"Allow trusted Microsoft services to bypass this firewall\"<br><br>4. Click Save to apply your changes",
     "severity": "Medium",
     "tactics": null,
     "techniques": null,
@@ -25005,55 +25005,6 @@
     ],
     "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
     "displayName": "[Preview] Containers running in Azure should have vulnerability findings resolved",
-    "id": "/providers/Microsoft.Security/assessmentMetadata/e9acaf48-d2cf-45a3-a6e7-3caa2ef769e0",
-    "implementationEffort": "Moderate",
-    "name": "e9acaf48-d2cf-45a3-a6e7-3caa2ef769e0",
-    "partnerData": null,
-    "plannedDeprecationDate": null,
-    "policyDefinitionId": "",
-    "preview": true,
-    "publishDates": {
-      "ga": null,
-      "public": "03/03/2024"
-    },
-    "remediationDescription": "To resolve container image vulnerabilities: <br>1. Review the set of known vulnerabilities found by their severity. <br>2. Select a vulnerability to view its full details and patch availability. <br>3. Check if there is a newer version of the image in the registry that already resolves this vulnerability, if not, remediate the vulnerability using the provided instructions described in the 'Remediation' field. <br>4. If a new image was created, push the new remediated image to your registry. <br>5. Delete the old image with the vulnerability from your registry. <br>6. Update the Kubernetes workloads using this image to use the new image.",
-    "severity": "High",
-    "tactics": [
-      "Initial Access",
-      "Execution",
-      "Lateral Movement",
-      "Defense Evasion",
-      "Credential Access",
-      "Privilege Escalation"
-    ],
-    "techniques": [
-      "Exploit Public-Facing Application",
-      "Exploitation for Client Execution",
-      "Drive-by Compromise",
-      "Exploitation of Remote Services",
-      "Exploitation for Defense Evasion",
-      "Exploitation for Credential Access",
-      "Exploitation for Privilege Escalation"
-    ],
-    "threats": [
-      "AccountBreach",
-      "DataExfiltration",
-      "DataSpillage",
-      "MaliciousInsider",
-      "ElevationOfPrivilege",
-      "ThreatResistance",
-      "DenialOfService"
-    ],
-    "type": "Microsoft.Security/assessmentMetadata",
-    "userImpact": "Low"
-  },
-  {
-    "assessmentType": "BuiltIn",
-    "categories": [
-      "Compute"
-    ],
-    "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
-    "displayName": "[Preview] Containers running in Azure should have vulnerability findings resolved",
     "id": "/providers/Microsoft.Security/assessmentMetadata/c5045ea3-afc6-4006-ab8f-86c8574dbf3d",
     "implementationEffort": "Moderate",
     "name": "c5045ea3-afc6-4006-ab8f-86c8574dbf3d",
@@ -25149,55 +25100,6 @@
     ],
     "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
     "displayName": "[Preview] Containers running in GCP should have vulnerability findings resolved",
-    "id": "/providers/Microsoft.Security/assessmentMetadata/c7c1d31d-a604-4b86-96df-63448618e165",
-    "implementationEffort": "Moderate",
-    "name": "c7c1d31d-a604-4b86-96df-63448618e165",
-    "partnerData": null,
-    "plannedDeprecationDate": null,
-    "policyDefinitionId": "",
-    "preview": true,
-    "publishDates": {
-      "ga": null,
-      "public": "03/03/2024"
-    },
-    "remediationDescription": "To resolve container image vulnerabilities: <br>1. Review the set of known vulnerabilities found by their severity. <br>2. Select a vulnerability to view its full details and patch availability. <br>3. Check if there is a newer version of the image in the registry that already resolves this vulnerability, if not, remediate the vulnerability using the provided instructions described in the 'Remediation' field. <br>4. If a new image was created, push the new remediated image to your registry. <br>5. Delete the old image with the vulnerability from your registry. <br>6. Update the Kubernetes workloads using this image to use the new image.",
-    "severity": "High",
-    "tactics": [
-      "Initial Access",
-      "Execution",
-      "Lateral Movement",
-      "Defense Evasion",
-      "Credential Access",
-      "Privilege Escalation"
-    ],
-    "techniques": [
-      "Exploit Public-Facing Application",
-      "Exploitation for Client Execution",
-      "Drive-by Compromise",
-      "Exploitation of Remote Services",
-      "Exploitation for Defense Evasion",
-      "Exploitation for Credential Access",
-      "Exploitation for Privilege Escalation"
-    ],
-    "threats": [
-      "AccountBreach",
-      "DataExfiltration",
-      "DataSpillage",
-      "MaliciousInsider",
-      "ElevationOfPrivilege",
-      "ThreatResistance",
-      "DenialOfService"
-    ],
-    "type": "Microsoft.Security/assessmentMetadata",
-    "userImpact": "Low"
-  },
-  {
-    "assessmentType": "BuiltIn",
-    "categories": [
-      "Compute"
-    ],
-    "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
-    "displayName": "[Preview] Containers running in GCP should have vulnerability findings resolved",
     "id": "/providers/Microsoft.Security/assessmentMetadata/1b3abfa4-9e53-46f1-9627-51f2957f8bba",
     "implementationEffort": "Moderate",
     "name": "1b3abfa4-9e53-46f1-9627-51f2957f8bba",
@@ -25282,55 +25184,6 @@
       "DataSpillage",
       "AccountBreach",
       "ElevationOfPrivilege"
-    ],
-    "type": "Microsoft.Security/assessmentMetadata",
-    "userImpact": "Low"
-  },
-  {
-    "assessmentType": "BuiltIn",
-    "categories": [
-      "Compute"
-    ],
-    "description": "Defender for Cloud creates an inventory of all container workloads currently running in your Kubernetes clusters and provide vulnerability reports for those workloads by matching the images being used and the vulnerability reports created for the registry images.<br> Scanning and remediating vulnerabilities of container workloads is critical to ensure a robust and secure software supply chain, reduce the risk of security incidents, and ensures compliance with industry standards.<br>",
-    "displayName": "[Preview] Containers running in AWS should have vulnerability findings resolved",
-    "id": "/providers/Microsoft.Security/assessmentMetadata/d5d1e526-363a-4223-b860-f4b6e710859f",
-    "implementationEffort": "Moderate",
-    "name": "d5d1e526-363a-4223-b860-f4b6e710859f",
-    "partnerData": null,
-    "plannedDeprecationDate": null,
-    "policyDefinitionId": "",
-    "preview": true,
-    "publishDates": {
-      "ga": null,
-      "public": "03/03/2024"
-    },
-    "remediationDescription": "To resolve container image vulnerabilities: <br>1. Review the set of known vulnerabilities found by their severity. <br>2. Select a vulnerability to view its full details and patch availability. <br>3. Check if there is a newer version of the image in the registry that already resolves this vulnerability, if not, remediate the vulnerability using the provided instructions described in the 'Remediation' field. <br>4. If a new image was created, push the new remediated image to your registry. <br>5. Delete the old image with the vulnerability from your registry. <br>6. Update the Kubernetes workloads using this image to use the new image.",
-    "severity": "High",
-    "tactics": [
-      "Initial Access",
-      "Execution",
-      "Lateral Movement",
-      "Defense Evasion",
-      "Credential Access",
-      "Privilege Escalation"
-    ],
-    "techniques": [
-      "Exploit Public-Facing Application",
-      "Exploitation for Client Execution",
-      "Drive-by Compromise",
-      "Exploitation of Remote Services",
-      "Exploitation for Defense Evasion",
-      "Exploitation for Credential Access",
-      "Exploitation for Privilege Escalation"
-    ],
-    "threats": [
-      "AccountBreach",
-      "DataExfiltration",
-      "DataSpillage",
-      "MaliciousInsider",
-      "ElevationOfPrivilege",
-      "ThreatResistance",
-      "DenialOfService"
     ],
     "type": "Microsoft.Security/assessmentMetadata",
     "userImpact": "Low"
@@ -28189,6 +28042,84 @@
       "public": "06/29/2025"
     },
     "remediationDescription": "To remediate overly permissive managed identities:<br>1. Navigate to your Function App, Web App or Logic App in Azure Portal.<br>2. Select 'Identity' under Settings.<br>3. Review both System-assigned and User-assigned identities.<br>4. Click 'Azure role assignments' for each identity.<br>5. Replace high-privilege roles with more specific roles that follow least privilege principles.",
+    "severity": "High",
+    "tactics": [
+      "Persistence",
+      "Defense Evasion",
+      "Impact",
+      "Initial Access",
+      "Privilege Escalation"
+    ],
+    "techniques": [
+      "Supply Chain Compromise",
+      "Subvert Trust Controls",
+      "Masquerading",
+      "Valid Accounts",
+      "Exploit Public-Facing Application",
+      "External Remote Services"
+    ],
+    "threats": null,
+    "type": "Microsoft.Security/assessmentMetadata",
+    "userImpact": null
+  },
+  {
+    "assessmentType": "BuiltIn",
+    "categories": [
+      "Compute"
+    ],
+    "description": "Defender for Cloud identified that Reserved Concurrency is not implemented for a Lambda function. Without Reserved Concurrency, the function competes for concurrency with all other functions in the account. This can lead to resource exhaustion, especially during high-load scenarios, where a spike in one function may starve critical functions of execution capacity.",
+    "displayName": "Lambda function should implement Reserved Concurrency to prevent resource exhaustion",
+    "id": "/providers/Microsoft.Security/assessmentMetadata/a3f41639-19f7-408d-adb4-c90f3dce7157",
+    "implementationEffort": null,
+    "name": "a3f41639-19f7-408d-adb4-c90f3dce7157",
+    "partnerData": null,
+    "plannedDeprecationDate": null,
+    "policyDefinitionId": "",
+    "preview": true,
+    "publishDates": {
+      "ga": null,
+      "public": "08/29/2025"
+    },
+    "remediationDescription": "To configure Reserved Concurrency for a Lambda function: 1. Open the AWS Management Console and navigate to the Lambda service. 2. Select the function, go to the Configuration tab, then Concurrency, and choose Reserved Concurrency. 3. Set the desired concurrency value and save the configuration.",
+    "severity": "Low",
+    "tactics": [
+      "Persistence",
+      "Defense Evasion",
+      "Impact",
+      "Initial Access",
+      "Privilege Escalation"
+    ],
+    "techniques": [
+      "Supply Chain Compromise",
+      "Subvert Trust Controls",
+      "Masquerading",
+      "Valid Accounts",
+      "Exploit Public-Facing Application",
+      "External Remote Services"
+    ],
+    "threats": null,
+    "type": "Microsoft.Security/assessmentMetadata",
+    "userImpact": null
+  },
+  {
+    "assessmentType": "BuiltIn",
+    "categories": [
+      "Compute"
+    ],
+    "description": "Defender for Cloud identified that Lambda function is not configured with automatic runtime version update. Over time, this can lead to unpatched security vulnerabilities, deprecated runtimes, or missed performance improvements",
+    "displayName": "Lambda function should be configured with automatic runtime version updates.",
+    "id": "/providers/Microsoft.Security/assessmentMetadata/8138e284-1816-4574-a321-4f0e4164fd63",
+    "implementationEffort": null,
+    "name": "8138e284-1816-4574-a321-4f0e4164fd63",
+    "partnerData": null,
+    "plannedDeprecationDate": null,
+    "policyDefinitionId": "",
+    "preview": true,
+    "publishDates": {
+      "ga": null,
+      "public": "08/29/2025"
+    },
+    "remediationDescription": "To configure automatic runtime updates for a Lambda function: 1. Open the AWS Management Console and navigate to the Lambda service. 2. Select the function, go to Runtime settings 3. Edit the 'Update runtime version' to 'Auto'",
     "severity": "High",
     "tactics": [
       "Persistence",
