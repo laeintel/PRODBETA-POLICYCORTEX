@@ -72,9 +72,9 @@ export function middleware(request: NextRequest) {
 
   // Only allow root (login) and auth endpoints without authentication
   if (pathname === '/' || pathname === '/login' || pathname.startsWith('/api/auth')) {
-    // If already authenticated and trying to access login pages, redirect to tactical
+    // If already authenticated and trying to access login pages, redirect to executive
     if (isAuthenticated && (pathname === '/' || pathname === '/login')) {
-      const response = NextResponse.redirect(new URL('/tactical', request.url))
+      const response = NextResponse.redirect(new URL('/executive', request.url))
       applySecurityHeaders(response, nonce)
       return response
     }

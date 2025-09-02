@@ -4,6 +4,7 @@ import React from 'react'
 import { usePathname } from 'next/navigation'
 import SimplifiedNavigation from './SimplifiedNavigation'
 import AuthGuard from './AuthGuard'
+import Breadcrumbs from './Breadcrumbs'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           transition-all duration-300
         ">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <Breadcrumbs />
             {children}
           </div>
         </div>
@@ -56,6 +58,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             transition-all duration-300
           ">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+              <Breadcrumbs />
               {children}
             </div>
           </div>

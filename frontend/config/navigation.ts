@@ -7,61 +7,61 @@ export type NavItem = {
   description?: string;
 }
 
-// Final nav per spec: clean, enterprise, Policy elevated to #2
+// Final nav per spec: Executive first, Policy second
 export const CORE: NavItem[] = [
   { 
-    label: 'Home', 
-    href: '/tactical', 
+    label: 'Executive', 
+    href: '/executive', 
     ready: true,
-    description: 'Executive dashboard with predictive insights and ROI metrics'
+    description: 'C-suite KPIs, ROI & business intelligence'
   },
   { 
     label: 'Policy', 
     href: '/policy', 
     ready: true,
-    description: 'Define, simulate, enforce, and evidence cloud guardrails'
+    description: 'Define, simulate, enforce, and evidence guardrails'
   },
   { 
     label: 'Audit Trail', 
     href: '/audit', 
     ready: true,
-    description: 'Tamper-evident blockchain-secured audit logs with verification'
+    description: 'Tamper-evident blockchain-secured logs'
   },
   { 
     label: 'Predict', 
     href: '/ai/predictions', 
     ready: true,
-    description: 'AI predictions with 7-day look-ahead and auto-remediation'
+    description: 'AI predictions with 7-day look-ahead'
   },
   { 
     label: 'FinOps & ROI', 
     href: '/finops', 
     ready: true,
-    description: 'Cost optimization, savings tracking, and executive ROI'
+    description: 'Cost optimization, savings & ROI'
   },
   { 
     label: 'Access Governance', 
     href: '/rbac', 
     ready: true,
-    description: 'Identity, permissions, and RBAC management'
+    description: 'Identity, permissions & RBAC'
   },
   { 
     label: 'Resources', 
     href: '/resources', 
     ready: true,
-    description: 'Cloud resource inventory and management'
+    description: 'Cloud resource inventory & management'
   },
   { 
     label: 'DevSecOps', 
     href: '/devsecops/pipelines', 
     ready: true,
-    description: 'CI/CD gates, policy-as-code, and auto-fix PRs'
+    description: 'CI/CD gates, policy-as-code, auto-fix'
   },
   {
     label: 'Settings',
     href: '/settings',
     ready: true,
-    description: 'System configuration and preferences'
+    description: 'System configuration'
   }
 ];
 
