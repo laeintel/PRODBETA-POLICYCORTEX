@@ -396,7 +396,7 @@ pub async fn detect_anomalies(
 /// Submit feedback for model improvement
 pub async fn submit_feedback(
     State(_state): State<Arc<AppState>>,
-    Json(feedback): Json<serde_json::Value>,
+    Json(_feedback): Json<serde_json::Value>,
 ) -> impl IntoResponse {
     // Process feedback for continuous learning
     let response = serde_json::json!({

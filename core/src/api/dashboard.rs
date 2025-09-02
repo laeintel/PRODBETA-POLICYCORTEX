@@ -73,8 +73,10 @@ pub async fn get_dashboard_metrics(State(state): State<Arc<AppState>>) -> impl I
     
     // Fail fast in real mode if Azure is not available
     if data_mode.is_real() {
-        // Try to get real Azure data
-        match state.async_azure_client.get_governance_metrics().await {
+        // Check if Azure client is available
+        if let Some(ref azure_client) = state.async_azure_client {
+            // Try to get real Azure data
+            match azure_client.get_governance_metrics().await {
             Ok(metrics) => {
                 // Build dashboard metrics from real Azure data
                 let dashboard_metrics = DashboardMetrics {
@@ -104,6 +106,13 @@ pub async fn get_dashboard_metrics(State(state): State<Arc<AppState>>) -> impl I
                     "details": e.to_string()
                 }))).into_response();
             }
+        }
+        } else {
+            // Azure client not configured in real mode
+            return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+                "error": "Azure client not configured",
+                "details": "Real data mode requires Azure credentials"
+            }))).into_response();
         }
     }
     

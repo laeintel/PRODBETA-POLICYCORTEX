@@ -407,7 +407,7 @@ impl NotificationSystem {
         }
     }
 
-    async fn send_email(&self, channel: &NotificationChannel, request: &NotificationRequest) -> Result<ChannelResult, String> {
+    async fn send_email(&self, channel: &NotificationChannel, _request: &NotificationRequest) -> Result<ChannelResult, String> {
         // Email implementation would use SMTP client
         tracing::info!("Sending email notification via channel {}", channel.channel_id);
         
