@@ -3,11 +3,12 @@ use axum::{
     extract::State,
     response::IntoResponse,
     Json,
+    http::StatusCode,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
-use tracing::{info, warn};
+use tracing::{info, warn, error};
 use anyhow::Result;
 
 use crate::api::AppState;
