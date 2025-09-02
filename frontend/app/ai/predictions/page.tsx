@@ -3,11 +3,30 @@ import { Brain, TrendingUp, AlertTriangle, DollarSign, Shield } from 'lucide-rea
 
 async function getPredictions() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/v1/predictions`, {
+    // For server components in Next.js, we can use relative URLs
+    const res = await fetch('http://localhost:3000/api/v1/predictions', {
       cache: 'no-store'
     })
     if (res.ok) {
-      return await res.json()
+      const data = await res.json()
+      // Transform the API response to match our component structure
+      if (data.predictions) {
+        return data.predictions.map((p: any) => ({
+          id: p.id,
+          title: p.resource,
+          kind: p.type,
+          confidence: p.confidence / 100, // Convert percentage to decimal
+          explanation: p.prediction,
+          eta: p.timeframe,
+          impact: p.impact,
+          recommendation: p.recommendation,
+          riskLevel: p.impact === 'High' ? 'HIGH' : p.impact === 'Medium' ? 'MEDIUM' : 'LOW',
+          category: p.type.includes('Security') ? 'Security' : 
+                    p.type.includes('Cost') ? 'FinOps' : 
+                    p.type.includes('Compliance') ? 'Compliance' : 'Operations'
+        }))
+      }
+      return data
     }
   } catch (error) {
     console.error('Failed to fetch predictions:', error)
