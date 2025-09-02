@@ -13,6 +13,7 @@ import {
 import { useState } from 'react'
 import QuickActionsBar from './QuickActionsBar'
 import ThemeToggle from './ThemeToggle'
+import { CORE, LABS } from '@/config/navigation'
 
 export default function SimplifiedNavigation() {
   const pathname = usePathname()
@@ -30,127 +31,101 @@ export default function SimplifiedNavigation() {
     }
   }, [pathname])
 
-  // Clean enterprise navigation - Policy elevated to #2
+  // Map icons to nav items
+  const iconMap: Record<string, any> = {
+    'Executive': Briefcase,
+    'Policy': FileText,
+    'Audit Trail': Shield,
+    'Predict': Brain,
+    'FinOps & ROI': DollarSign,
+    'Access Governance': Lock,
+    'Resources': Database,
+    'DevSecOps': GitBranch,
+    'Settings': Settings,
+    'Blockchain Explorer': Blocks,
+    'Copilot': Bot,
+    'Cloud ITSM': Server,
+    'Quantum-Safe': Atom,
+    'Edge Governance': Network
+  }
+
+  // Build navigation with subsections
   const navigation = [
-    {
-      name: 'Home',
-      href: '/tactical',
-      icon: LayoutDashboard,
-      description: 'Command center with predictive insights',
-      quickStats: { compliance: '94%', risks: 3, savings: '$45K/mo' }
-    },
-    {
-      name: 'Executive',
-      href: '/executive',
-      icon: Briefcase,
-      description: 'C-suite KPIs, ROI & business intelligence',
-      highlight: true,
-      subsections: [
-        { name: 'Dashboard', href: '/executive' },
-        { name: 'ROI Analysis', href: '/executive/roi' },
-        { name: 'Risk Map', href: '/executive/risk-map' },
-        { name: 'Board Reports', href: '/executive/reports' }
-      ]
-    },
-    {
-      name: 'Policy',
-      href: '/policy',
-      icon: FileText,
-      description: 'Define, simulate, enforce, and evidence cloud guardrails',
-      highlight: true,
-      subsections: [
-        { name: 'Policy Hub', href: '/policy' },
-        { name: 'Policy Packs', href: '/policy/packs' },
-        { name: 'Composer', href: '/policy/composer' },
-        { name: 'Enforcement & Gates', href: '/policy/enforcement' },
-        { name: 'Exceptions', href: '/policy/exceptions' },
-        { name: 'Evidence & Mapping', href: '/policy/evidence' }
-      ]
-    },
-    {
-      name: 'Audit Trail',
-      href: '/audit',
-      icon: Shield,
-      description: 'Tamper-evident blockchain-secured logs',
-      highlight: true
-    },
-    {
-      name: 'Predict',
-      href: '/ai/predictions',
-      icon: Brain,
-      description: 'AI predictions with 7-day look-ahead',
-      highlight: true
-    },
-    {
-      name: 'FinOps & ROI',
-      href: '/finops',
-      icon: DollarSign,
-      description: 'Cost optimization, savings & ROI',
-      subsections: [
-        { name: 'Real-time Anomalies', href: '/finops/anomalies' },
-        { name: 'Auto Optimization', href: '/finops/optimization' },
-        { name: 'Spend Forecasting', href: '/finops/forecasting' },
-        { name: 'Department Billing', href: '/finops/chargeback' },
-        { name: 'Savings Plans', href: '/finops/savings-plans' },
-        { name: 'Multi-Cloud Arbitrage', href: '/finops/arbitrage' }
-      ]
-    },
-    {
-      name: 'Access Governance',
-      href: '/rbac',
-      icon: Lock,
-      description: 'Identity, permissions & RBAC',
-      subsections: [
-        { name: 'Identity & Access', href: '/rbac' },
-        { name: 'Role Management', href: '/rbac/roles' },
-        { name: 'Access Reviews', href: '/rbac/reviews' }
-      ]
-    },
-    {
-      name: 'Resources',
-      href: '/resources',
-      icon: Database,
-      description: 'Cloud resource inventory & management',
-      subsections: [
-        { name: 'Resource Inventory', href: '/resources' },
-        { name: 'Monitoring', href: '/resources/monitoring' },
-        { name: 'Alerts', href: '/resources/alerts' }
-      ]
-    },
-    {
-      name: 'DevSecOps',
-      href: '/devsecops/pipelines',
-      icon: GitBranch,
-      description: 'CI/CD gates, policy-as-code, auto-fix',
-      subsections: [
-        { name: 'Pipelines', href: '/devsecops/pipelines' },
-        { name: 'Security Gates', href: '/devsecops/gates' },
-        { name: 'Policy-as-Code', href: '/devsecops/policy-code' },
-        { name: 'Gate Results', href: '/devsecops/results' },
-        { name: 'Policies', href: '/devsecops/policies', badge: 'Beta' }
-      ]
-    },
-    {
-      name: 'Settings',
-      href: '/settings',
-      icon: Settings,
-      description: 'System configuration'
-    },
+    // Core navigation items from config
+    ...CORE.map(item => ({
+      name: item.label,
+      href: item.href,
+      icon: iconMap[item.label] || LayoutDashboard,
+      description: item.description,
+      highlight: ['Executive', 'Policy', 'Audit Trail', 'Predict'].includes(item.label),
+      subsections: getSubsections(item.label)
+    })),
+    // Labs section with subsections
     {
       name: 'Labs',
       href: '#',
       icon: Sparkles,
       description: 'Experimental features',
-      badge: 'Labs',
-      subsections: [
-        { name: 'Blockchain Explorer', href: '/blockchain' },
-        { name: 'Copilot', href: '/copilot' },
-        { name: 'Cloud ITSM', href: '/itsm' },
-        { name: 'Quantum-Safe', href: '/quantum' },
-        { name: 'Edge Governance', href: '/edge' }
-      ]
+      badge: 'Labs' as const,
+      subsections: LABS.map(lab => ({
+        name: lab.label,
+        href: lab.href
+      }))
     }
   ]
+
+  // Helper function to get subsections for specific items
+  function getSubsections(label: string) {
+    switch(label) {
+      case 'Executive':
+        return [
+          { name: 'Dashboard', href: '/executive' },
+          { name: 'ROI Analysis', href: '/executive/roi' },
+          { name: 'Risk Map', href: '/executive/risk-map' },
+          { name: 'Board Reports', href: '/executive/reports' }
+        ]
+      case 'Policy':
+        return [
+          { name: 'Policy Hub', href: '/policy' },
+          { name: 'Policy Packs', href: '/policy/packs' },
+          { name: 'Composer', href: '/policy/composer' },
+          { name: 'Enforcement', href: '/policy/enforcement' },
+          { name: 'Exceptions', href: '/policy/exceptions' },
+          { name: 'Evidence', href: '/policy/evidence' }
+        ]
+      case 'FinOps & ROI':
+        return [
+          { name: 'Anomalies', href: '/finops/anomalies' },
+          { name: 'Optimization', href: '/finops/optimization' },
+          { name: 'Forecasting', href: '/finops/forecasting' },
+          { name: 'Chargeback', href: '/finops/chargeback' },
+          { name: 'Savings Plans', href: '/finops/savings-plans' },
+          { name: 'Arbitrage', href: '/finops/arbitrage' }
+        ]
+      case 'Access Governance':
+        return [
+          { name: 'Identity & Access', href: '/rbac' },
+          { name: 'Role Management', href: '/rbac/roles' },
+          { name: 'Access Reviews', href: '/rbac/reviews' }
+        ]
+      case 'Resources':
+        return [
+          { name: 'Inventory', href: '/resources' },
+          { name: 'Monitoring', href: '/resources/monitoring' },
+          { name: 'Alerts', href: '/resources/alerts' }
+        ]
+      case 'DevSecOps':
+        return [
+          { name: 'Pipelines', href: '/devsecops/pipelines' },
+          { name: 'Security Gates', href: '/devsecops/gates' },
+          { name: 'Policy-as-Code', href: '/devsecops/policy-code' },
+          { name: 'Gate Results', href: '/devsecops/results' },
+          { name: 'Policies', href: '/devsecops/policies', badge: 'Beta' as const }
+        ]
+      default:
+        return undefined
+    }
+  }
 
   // Command Palette for quick access (Cmd+K)
   const quickActions = [
