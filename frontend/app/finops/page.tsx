@@ -50,10 +50,45 @@ export default function FinOpsCommandCenter() {
   // Real-time cost anomaly detection
   useEffect(() => {
     const loadPredictions = async () => {
-      const costPrediction = await MLPredictionEngine.predictCostSpike('main-account');
-      const wastePrediction = await MLPredictionEngine.predictResourceWaste('production-rg');
-      const budgetPrediction = await MLPredictionEngine.predictBudgetOverrun('engineering');
-      setPredictions([costPrediction, wastePrediction, budgetPrediction]);
+      try {
+        // Fetch predictions from API
+        const res = await fetch('/api/v1/predictions', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          // Transform API predictions to match interface
+          const apiPredictions = data.predictions?.slice(0, 3).map((pred: any) => ({
+            prediction: pred.prediction || pred.drift_probability || 0.85,
+            confidence: pred.confidence || 0.92,
+            timeframe: pred.timeframe || '7 days',
+            impact: pred.impact || 'high',
+            factors: pred.factors || ['Historical patterns', 'Recent changes'],
+            recommendation: pred.recommendation || 'Review and optimize'
+          })) || [];
+          
+          if (apiPredictions.length > 0) {
+            setPredictions(apiPredictions);
+          } else {
+            // Fallback to ML engine if no API data
+            const costPrediction = await MLPredictionEngine.predictCostSpike('main-account');
+            const wastePrediction = await MLPredictionEngine.predictResourceWaste('production-rg');
+            const budgetPrediction = await MLPredictionEngine.predictBudgetOverrun('engineering');
+            setPredictions([costPrediction, wastePrediction, budgetPrediction]);
+          }
+        } else {
+          // Fallback to ML engine if API fails
+          const costPrediction = await MLPredictionEngine.predictCostSpike('main-account');
+          const wastePrediction = await MLPredictionEngine.predictResourceWaste('production-rg');
+          const budgetPrediction = await MLPredictionEngine.predictBudgetOverrun('engineering');
+          setPredictions([costPrediction, wastePrediction, budgetPrediction]);
+        }
+      } catch (error) {
+        console.error('Failed to load predictions:', error);
+        // Fallback to ML engine
+        const costPrediction = await MLPredictionEngine.predictCostSpike('main-account');
+        const wastePrediction = await MLPredictionEngine.predictResourceWaste('production-rg');
+        const budgetPrediction = await MLPredictionEngine.predictBudgetOverrun('engineering');
+        setPredictions([costPrediction, wastePrediction, budgetPrediction]);
+      }
       setLoading(false);
     };
 
