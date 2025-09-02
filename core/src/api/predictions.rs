@@ -179,7 +179,7 @@ pub async fn get_violation_predictions(
         metadata,
     };
     
-    Json(response)
+    Json(response).into_response()
 }
 
 // GET /api/v1/predictions/violations/{resource_id}
