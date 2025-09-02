@@ -1,7 +1,6 @@
 // ITSM (IT Service Management) Module for Cloud Infrastructure Management
 // Provides comprehensive IT asset, service, and incident management capabilities
 
-use crate::error::ApiError;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,

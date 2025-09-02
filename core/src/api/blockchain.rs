@@ -2,10 +2,9 @@
 use axum::{
     extract::{Query, State, Path},
     Json,
-    http::StatusCode,
     response::IntoResponse,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
 

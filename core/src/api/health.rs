@@ -8,7 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
-use tracing::{info, warn, error};
+use tracing::info;
 
 use crate::api::AppState;
 // use crate::azure_integration::get_azure_service; // Temporarily commented out
@@ -62,7 +62,7 @@ pub async fn health_check(State(state): State<Arc<AppState>>) -> impl IntoRespon
         details: Vec::new(),
     };
 
-    let mut azure_integration_healthy = false;
+    let azure_integration_healthy = false;
 
     // Check Azure integration (temporarily disabled)
     /*

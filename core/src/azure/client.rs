@@ -4,7 +4,7 @@
 use anyhow::{Result, Context};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tracing::{info, warn, error, debug};
+use tracing::{info, warn, error};
 use tokio::time::{sleep, Duration};
 
 use super::{AzureConfig, AzureResponse, auth::AzureAuthProvider};

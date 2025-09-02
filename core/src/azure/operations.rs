@@ -1,11 +1,11 @@
 // Azure Operations Integration
 // Provides automation, notifications, and operational data
 
-use anyhow::{Result, Context};
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{info, debug};
+use tracing::info;
 
 use super::client::AzureClient;
 use super::api_versions;
