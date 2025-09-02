@@ -1,12 +1,11 @@
 // Azure Resource Graph Integration
 // Provides resource inventory and queries
 
-use anyhow::{Result, Context};
-use chrono::{DateTime, Utc};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use tracing::{info, debug};
+use tracing::info;
 
 use super::client::AzureClient;
 use super::api_versions;
@@ -126,7 +125,7 @@ impl ResourceGraphService {
         let mut skip_token: Option<String> = None;
 
         loop {
-            let mut request = QueryRequest {
+            let request = QueryRequest {
                 subscriptions: vec![self.client.config.subscription_id.clone()],
                 query: query.to_string(),
                 options: Some(QueryOptions {

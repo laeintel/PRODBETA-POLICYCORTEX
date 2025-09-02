@@ -2,16 +2,15 @@
 // Handles Azure AD authentication and token management
 
 use anyhow::{Result, Context};
-use azure_core::auth::{AccessToken, TokenCredential};
+use azure_core::auth::TokenCredential;
 use azure_identity::{
     DefaultAzureCredential, DefaultAzureCredentialBuilder,
-    ClientSecretCredential,
 };
 use chrono::{DateTime, Utc, Duration};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, warn, debug};
+use tracing::{info, debug};
 
 /// Azure authentication provider
 #[derive(Clone)]

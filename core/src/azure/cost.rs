@@ -1,11 +1,11 @@
 // Azure Cost Management Integration
 // Provides cost analysis and budget data
 
-use anyhow::{Result, Context};
+use anyhow::Result;
 use chrono::{DateTime, Utc, Duration, Datelike};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{info, debug};
+use tracing::info;
 
 use super::client::AzureClient;
 use super::api_versions;

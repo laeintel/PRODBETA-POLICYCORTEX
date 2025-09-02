@@ -1,13 +1,13 @@
 // Governance API handlers for comprehensive navigation system
 use axum::{
-    extract::{Path, State},
+    extract::State,
     response::IntoResponse,
     Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::api::AppState;
 // use crate::azure_integration::get_azure_service; // Temporarily commented out

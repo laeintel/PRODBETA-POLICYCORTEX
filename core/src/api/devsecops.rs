@@ -1,11 +1,10 @@
 // DevSecOps Integration API endpoints
 use axum::{
-    extract::{Query, State, Path},
+    extract::State,
     Json,
-    http::StatusCode,
     response::IntoResponse,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
 

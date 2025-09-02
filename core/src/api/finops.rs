@@ -10,7 +10,7 @@
 // Implements GitHub Issues #52-55: FinOps Autopilot features
 
 use axum::{
-    extract::{Query, State, Path},
+    extract::{Query, State},
     Json,
     http::StatusCode,
     response::IntoResponse,
@@ -19,8 +19,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use crate::finops::{
-    FinOpsMetrics, IdleResource, RightsizingOpportunity,
-    CommitmentRecommendation, CostAnomaly, OptimizationResult,
+    FinOpsMetrics, OptimizationResult,
     get_finops_metrics, FinOpsEngine, AzureFinOpsEngine
 };
 
