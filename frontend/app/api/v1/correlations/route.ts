@@ -58,6 +58,37 @@ export async function GET(request: NextRequest) {
           },
         });
 
+        // Check if we're in real data mode
+        if (process.env.NEXT_PUBLIC_DEMO_MODE === 'false' || process.env.NEXT_PUBLIC_USE_REAL_DATA === 'true') {
+          // In real mode, try to fetch from backend
+          try {
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const queryString = authenticatedReq.nextUrl.searchParams.toString();
+            const response = await fetch(`${backendUrl}/api/v1/correlations${queryString ? `?${queryString}` : ''}`, {
+              headers: {
+                'Authorization': authenticatedReq.headers.get('authorization') || '',
+              },
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              return NextResponse.json(data);
+            } else {
+              // Fail-fast in real mode
+              return NextResponse.json(
+                { error: 'Backend service unavailable', details: 'Real data mode requires backend connection' },
+                { status: 503 }
+              );
+            }
+          } catch (error) {
+            return NextResponse.json(
+              { error: 'Failed to fetch correlations from backend', details: error },
+              { status: 503 }
+            );
+          }
+        }
+
+        // Only return mock data in demo mode
         const correlations = {
           total: 23,
           critical: 3,
