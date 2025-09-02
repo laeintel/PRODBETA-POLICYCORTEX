@@ -1,2681 +1,4 @@
-   |        ---------- fields in this struct
-81 |     checkpoint_id: Uuid,
-   |     ^^^^^^^^^^^^^
-82 |     step_id: String,
-   |     ^^^^^^^
-83 |     timestamp: DateTime<Utc>,
-   |     ^^^^^^^^^
-84 |     state_snapshot: serde_json::Value,
-   |     ^^^^^^^^^^^^^^
-85 |     can_rollback: bool,
-   |     ^^^^^^^^^^^^
-   |
-   = note: `Checkpoint` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `variables`, `resource_states`, `policy_states`, and `azure_context` are never read
-  --> src\remediation\workflow_engine.rs:90:5
-   |
-89 | struct ExecutionContext {
-   |        ---------------- fields in this struct
-90 |     variables: HashMap<String, serde_json::Value>,
-   |     ^^^^^^^^^
-91 |     resource_states: HashMap<String, serde_json::Value>,
-   |     ^^^^^^^^^^^^^^^
-92 |     policy_states: HashMap<String, PolicyState>,
-   |     ^^^^^^^^^^^^^
-93 |     azure_context: AzureContext,
-   |     ^^^^^^^^^^^^^
-   |
-   = note: `ExecutionContext` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `policy_id`, `compliance_state`, `last_evaluated`, and `violations` are never read
-   --> src\remediation\workflow_engine.rs:98:5
-    |
-97  | struct PolicyState {
-    |        ----------- fields in this struct
-98  |     policy_id: String,
-    |     ^^^^^^^^^
-99  |     compliance_state: String,
-    |     ^^^^^^^^^^^^^^^^
-100 |     last_evaluated: DateTime<Utc>,
-    |     ^^^^^^^^^^^^^^
-101 |     violations: Vec<String>,
-    |     ^^^^^^^^^^
-    |
-    = note: `PolicyState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `subscription_id`, `resource_group`, `tenant_id`, and `client_id` are never read
-   --> src\remediation\workflow_engine.rs:106:5
-    |
-105 | struct AzureContext {
-    |        ------------ fields in this struct
-106 |     subscription_id: String,
-    |     ^^^^^^^^^^^^^^^
-107 |     resource_group: Option<String>,
-    |     ^^^^^^^^^^^^^^
-108 |     tenant_id: String,
-    |     ^^^^^^^^^
-109 |     client_id: String,
-    |     ^^^^^^^^^
-    |
-    = note: `AzureContext` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `pending_approvals` and `approval_history` are never read
-   --> src\remediation\workflow_engine.rs:113:5
-    |
-112 | struct ApprovalManager {
-    |        --------------- fields in this struct
-113 |     pending_approvals: Arc<RwLock<HashMap<String, PendingApproval>>>,
-    |     ^^^^^^^^^^^^^^^^^
-114 |     approval_history: Arc<RwLock<Vec<ApprovalRecord>>>,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: fields `approval_id`, `gate`, `requested_at`, `expires_at`, and `approvers_responded` are never read
-   --> src\remediation\workflow_engine.rs:118:5
-    |
-117 | struct PendingApproval {
-    |        --------------- fields in this struct
-118 |     approval_id: String,
-    |     ^^^^^^^^^^^
-119 |     gate: ApprovalGate,
-    |     ^^^^
-120 |     requested_at: DateTime<Utc>,
-    |     ^^^^^^^^^^^^
-121 |     expires_at: DateTime<Utc>,
-    |     ^^^^^^^^^^
-122 |     approvers_responded: HashMap<String, ApprovalResponse>,
-    |     ^^^^^^^^^^^^^^^^^^^
-
-warning: fields `approver`, `decision`, `responded_at`, and `comments` are never read
-   --> src\remediation\workflow_engine.rs:127:5
-    |
-126 | struct ApprovalResponse {
-    |        ---------------- fields in this struct
-127 |     approver: String,
-    |     ^^^^^^^^
-128 |     decision: ApprovalDecision,
-    |     ^^^^^^^^
-129 |     responded_at: DateTime<Utc>,
-    |     ^^^^^^^^^^^^
-130 |     comments: Option<String>,
-    |     ^^^^^^^^
-    |
-    = note: `ApprovalResponse` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: variants `Approved`, `Rejected`, and `Deferred` are never constructed
-   --> src\remediation\workflow_engine.rs:135:5
-    |
-134 | enum ApprovalDecision {
-    |      ---------------- variants in this enum
-135 |     Approved,
-    |     ^^^^^^^^
-136 |     Rejected,
-    |     ^^^^^^^^
-137 |     Deferred,
-    |     ^^^^^^^^
-    |
-    = note: `ApprovalDecision` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `approval_id`, `workflow_id`, `gate_id`, `outcome`, and `completed_at` are never read
-   --> src\remediation\workflow_engine.rs:142:5
-    |
-141 | struct ApprovalRecord {
-    |        -------------- fields in this struct
-142 |     approval_id: String,
-    |     ^^^^^^^^^^^
-143 |     workflow_id: Uuid,
-    |     ^^^^^^^^^^^
-144 |     gate_id: String,
-    |     ^^^^^^^
-145 |     outcome: ApprovalOutcome,
-    |     ^^^^^^^
-146 |     completed_at: DateTime<Utc>,
-    |     ^^^^^^^^^^^^
-    |
-    = note: `ApprovalRecord` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: variants `Approved`, `Rejected`, `TimedOut`, and `AutoApproved` are never constructed
-   --> src\remediation\workflow_engine.rs:151:5
-    |
-150 | enum ApprovalOutcome {
-    |      --------------- variants in this enum
-151 |     Approved,
-    |     ^^^^^^^^
-152 |     Rejected,
-    |     ^^^^^^^^
-153 |     TimedOut,
-    |     ^^^^^^^^
-154 |     AutoApproved,
-    |     ^^^^^^^^^^^^
-    |
-    = note: `ApprovalOutcome` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `rollback_points` and `rollback_history` are never read
-   --> src\remediation\workflow_engine.rs:158:5
-    |
-157 | struct RollbackManager {
-    |        --------------- fields in this struct
-158 |     rollback_points: Arc<RwLock<HashMap<String, RollbackPoint>>>,
-    |     ^^^^^^^^^^^^^^^
-159 |     rollback_history: Arc<RwLock<Vec<RollbackRecord>>>,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: fields `token`, `workflow_id`, `checkpoint`, `created_at`, `expires_at`, and `rollback_steps` are never read
-   --> src\remediation\workflow_engine.rs:163:5
-    |
-162 | struct RollbackPoint {
-    |        ------------- fields in this struct
-163 |     token: String,
-    |     ^^^^^
-164 |     workflow_id: Uuid,
-    |     ^^^^^^^^^^^
-165 |     checkpoint: Checkpoint,
-    |     ^^^^^^^^^^
-166 |     created_at: DateTime<Utc>,
-    |     ^^^^^^^^^^
-167 |     expires_at: DateTime<Utc>,
-    |     ^^^^^^^^^^
-168 |     rollback_steps: Vec<RollbackStep>,
-    |     ^^^^^^^^^^^^^^
-
-warning: fields `step_id`, `action`, `resource_id`, and `original_state` are never read
-   --> src\remediation\workflow_engine.rs:172:5
-    |
-171 | struct RollbackStep {
-    |        ------------ fields in this struct
-172 |     step_id: String,
-    |     ^^^^^^^
-173 |     action: RollbackAction,
-    |     ^^^^^^
-174 |     resource_id: String,
-    |     ^^^^^^^^^^^
-175 |     original_state: serde_json::Value,
-    |     ^^^^^^^^^^^^^^
-
-warning: variants `RestoreConfiguration`, `DeleteResource`, `RevertPolicyAssignment`, `RestoreAccessControl`, and `Custom` are never constructed
-   --> src\remediation\workflow_engine.rs:179:5
-    |
-178 | enum RollbackAction {
-    |      -------------- variants in this enum
-179 |     RestoreConfiguration,
-    |     ^^^^^^^^^^^^^^^^^^^^
-180 |     DeleteResource,
-    |     ^^^^^^^^^^^^^^
-181 |     RevertPolicyAssignment,
-    |     ^^^^^^^^^^^^^^^^^^^^^^
-182 |     RestoreAccessControl,
-    |     ^^^^^^^^^^^^^^^^^^^^
-183 |     Custom(String),
-    |     ^^^^^^
-
-warning: multiple fields are never read
-   --> src\remediation\workflow_engine.rs:187:5
-    |
-186 | struct RollbackRecord {
-    |        -------------- fields in this struct
-187 |     rollback_id: Uuid,
-    |     ^^^^^^^^^^^
-188 |     workflow_id: Uuid,
-    |     ^^^^^^^^^^^
-189 |     initiated_at: DateTime<Utc>,
-    |     ^^^^^^^^^^^^
-190 |     completed_at: Option<DateTime<Utc>>,
-    |     ^^^^^^^^^^^^
-191 |     success: bool,
-    |     ^^^^^^^
-192 |     steps_rolled_back: usize,
-    |     ^^^^^^^^^^^^^^^^^
-193 |     error: Option<String>,
-    |     ^^^^^
-
-warning: fields `email_client`, `teams_client`, and `slack_client` are never read
-   --> src\remediation\approval_manager.rs:223:5
-    |
-222 | pub struct NotificationService {
-    |            ------------------- fields in this struct
-223 |     email_client: Option<EmailClient>,
-    |     ^^^^^^^^^^^^
-224 |     teams_client: Option<TeamsClient>,
-    |     ^^^^^^^^^^^^
-225 |     slack_client: Option<SlackClient>,
-    |     ^^^^^^^^^^^^
-
-warning: method `get_snapshots` is never used
-   --> src\remediation\rollback_manager.rs:446:14
-    |
-434 | impl SnapshotStore {
-    | ------------------ method in this implementation
-...
-446 |     async fn get_snapshots(&self, token: &str) -> Result<Vec<ResourceSnapshot>, String> {
-    |              ^^^^^^^^^^^^^
-
-warning: field `patterns` is never read
-   --> src\remediation\bulk_remediation.rs:382:5
-    |
-381 | pub struct PatternAnalyzer {
-    |            --------------- field in this struct
-382 |     patterns: Arc<RwLock<HashMap<String, String>>>,
-    |     ^^^^^^^^
-
-warning: field `azure_client` is never read
-  --> src\remediation\validation_engine.rs:23:5
-   |
-22 | pub struct ValidationEngine {
-   |            ---------------- field in this struct
-23 |     azure_client: Arc<AsyncAzureClient>,
-   |     ^^^^^^^^^^^^
-   |
-   = note: `ValidationEngine` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
-
-warning: fields `dependency_graph` and `resource_registry` are never read
-   --> src\remediation\validation_engine.rs:299:5
-    |
-298 | pub struct DependencyChecker {
-    |            ----------------- fields in this struct
-299 |     dependency_graph: petgraph::Graph<String, DependencyRelation>,
-    |     ^^^^^^^^^^^^^^^^
-300 |     resource_registry: HashMap<String, ResourceInfo>,
-    |     ^^^^^^^^^^^^^^^^^
-    |
-    = note: `DependencyChecker` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: function `mock_azure_result` is never used
-  --> src\api\dashboard.rs:18:10
-   |
-18 | async fn mock_azure_result<T>() -> Result<T> where T: Default {
-   |          ^^^^^^^^^^^^^^^^^
-
-warning: function `mock_azure_result` is never used
-  --> src\api\governance.rs:16:10
-   |
-16 | async fn mock_azure_result<T>() -> anyhow::Result<T> where T: Default {
-   |          ^^^^^^^^^^^^^^^^^
-
-warning: fields `azure_client`, `models`, `violation_history`, and `pattern_cache` are never read
-  --> src\ml\predictive_compliance.rs:16:5
-   |
-15 | pub struct PredictiveComplianceEngine {
-   |            -------------------------- fields in this struct
-16 |     azure_client: AzureClient,
-   |     ^^^^^^^^^^^^
-17 |     models: HashMap<String, Box<dyn PredictiveModel + Send + Sync>>,
-   |     ^^^^^^
-18 |     violation_history: Vec<ViolationHistory>,
-   |     ^^^^^^^^^^^^^^^^^
-19 |     pattern_cache: HashMap<String, PatternSignature>,
-   |     ^^^^^^^^^^^^^
-
-warning: field `historical_data` is never read
-  --> src\ml\risk_scoring.rs:16:5
-   |
-13 | pub struct RiskScoringEngine {
-   |            ----------------- field in this struct
-...
-16 |     historical_data: HashMap<String, Vec<RiskEvent>>,
-   |     ^^^^^^^^^^^^^^^
-
-warning: field `time_decay_factor` is never read
-  --> src\ml\risk_scoring.rs:25:5
-   |
-20 | struct RiskWeights {
-   |        ----------- field in this struct
-...
-25 |     time_decay_factor: f64,
-   |     ^^^^^^^^^^^^^^^^^
-   |
-   = note: `RiskWeights` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: field `low` is never read
-  --> src\ml\risk_scoring.rs:33:5
-   |
-29 | struct RiskThresholds {
-   |        -------------- field in this struct
-...
-33 |     low: f64,
-   |     ^^^
-   |
-   = note: `RiskThresholds` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: field `sensitivity` is never read
-  --> src\ml\pattern_analysis.rs:57:5
-   |
-56 | struct AnomalyDetector {
-   |        --------------- field in this struct
-57 |     sensitivity: f64,
-   |     ^^^^^^^^^^^
-
-warning: field `knowledge_base` is never read
-  --> src\ml\natural_language.rs:22:5
-   |
-17 | pub struct NaturalLanguageEngine {
-   |            --------------------- field in this struct
-...
-22 |     knowledge_base: GovernanceKnowledgeBase,
-   |     ^^^^^^^^^^^^^^
-
-warning: field `patterns` is never read
-   --> src\ml\natural_language.rs:149:5
-    |
-148 | struct EntityExtractor {
-    |        --------------- field in this struct
-149 |     patterns: HashMap<EntityType, Vec<String>>,
-    |     ^^^^^^^^
-
-warning: fields `concepts`, `policies`, `best_practices`, and `compliance_mappings` are never read
-   --> src\ml\natural_language.rs:177:5
-    |
-176 | struct GovernanceKnowledgeBase {
-    |        ----------------------- fields in this struct
-177 |     concepts: HashMap<String, ConceptDefinition>,
-    |     ^^^^^^^^
-178 |     policies: HashMap<String, PolicyInfo>,
-    |     ^^^^^^^^
-179 |     best_practices: Vec<BestPractice>,
-    |     ^^^^^^^^^^^^^^
-180 |     compliance_mappings: HashMap<String, Vec<String>>,
-    |     ^^^^^^^^^^^^^^^^^^^
-
-warning: fields `layer_type`, `weights`, `biases`, and `activation` are never read
-  --> src\ml\graph_neural_network.rs:76:5
-   |
-75 | struct GraphLayer {
-   |        ---------- fields in this struct
-76 |     layer_type: LayerType,
-   |     ^^^^^^^^^^
-77 |     weights: Vec<Vec<f64>>,
-   |     ^^^^^^^
-78 |     biases: Vec<f64>,
-   |     ^^^^^^
-79 |     activation: ActivationFunction,
-   |     ^^^^^^^^^^
-   |
-   = note: `GraphLayer` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: variants `Tanh` and `Softmax` are never constructed
-  --> src\ml\graph_neural_network.rs:94:5
-   |
-91 | enum ActivationFunction {
-   |      ------------------ variants in this enum
-...
-94 |     Tanh,
-   |     ^^^^
-95 |     Softmax,
-   |     ^^^^^^^
-   |
-   = note: `ActivationFunction` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `known_patterns`, `pattern_history`, and `ml_model` are never read
-   --> src\ml\correlation_engine.rs:101:5
-    |
-100 | struct PatternDetector {
-    |        --------------- fields in this struct
-101 |     known_patterns: HashMap<String, PatternTemplate>,
-    |     ^^^^^^^^^^^^^^
-102 |     pattern_history: Vec<DetectedPattern>,
-    |     ^^^^^^^^^^^^^^^
-103 |     ml_model: PatternMLModel,
-    |     ^^^^^^^^
-
-warning: fields `pattern_id`, `pattern_type`, `detection_rules`, and `min_confidence` are never read
-   --> src\ml\correlation_engine.rs:107:5
-    |
-106 | struct PatternTemplate {
-    |        --------------- fields in this struct
-107 |     pattern_id: String,
-    |     ^^^^^^^^^^
-108 |     pattern_type: PatternType,
-    |     ^^^^^^^^^^^^
-109 |     detection_rules: Vec<DetectionRule>,
-    |     ^^^^^^^^^^^^^^^
-110 |     min_confidence: f64,
-    |     ^^^^^^^^^^^^^^
-
-warning: fields `rule_type`, `condition`, and `weight` are never read
-   --> src\ml\correlation_engine.rs:114:5
-    |
-113 | struct DetectionRule {
-    |        ------------- fields in this struct
-114 |     rule_type: String,
-    |     ^^^^^^^^^
-115 |     condition: String,
-    |     ^^^^^^^^^
-116 |     weight: f64,
-    |     ^^^^^^
-
-warning: fields `pattern`, `detection_time`, and `matched_template` are never read
-   --> src\ml\correlation_engine.rs:120:5
-    |
-119 | struct DetectedPattern {
-    |        --------------- fields in this struct
-120 |     pattern: CorrelationPattern,
-    |     ^^^^^^^
-121 |     detection_time: DateTime<Utc>,
-    |     ^^^^^^^^^^^^^^
-122 |     matched_template: String,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: fields `weights`, `biases`, and `threshold` are never read
-   --> src\ml\correlation_engine.rs:126:5
-    |
-125 | struct PatternMLModel {
-    |        -------------- fields in this struct
-126 |     weights: Vec<Vec<f64>>,
-    |     ^^^^^^^
-127 |     biases: Vec<f64>,
-    |     ^^^^^^
-128 |     threshold: f64,
-    |     ^^^^^^^^^
-
-warning: fields `baseline_metrics`, `anomaly_threshold`, and `ml_detector` are never read
-   --> src\ml\correlation_engine.rs:132:5
-    |
-131 | struct AnomalyDetector {
-    |        --------------- fields in this struct
-132 |     baseline_metrics: HashMap<String, BaselineMetric>,
-    |     ^^^^^^^^^^^^^^^^
-133 |     anomaly_threshold: f64,
-    |     ^^^^^^^^^^^^^^^^^
-134 |     ml_detector: AnomalyMLModel,
-    |     ^^^^^^^^^^^
-
-warning: fields `resource_id`, `metric_name`, `mean`, `std_dev`, and `last_updated` are never read
-   --> src\ml\correlation_engine.rs:138:5
-    |
-137 | struct BaselineMetric {
-    |        -------------- fields in this struct
-138 |     resource_id: String,
-    |     ^^^^^^^^^^^
-139 |     metric_name: String,
-    |     ^^^^^^^^^^^
-140 |     mean: f64,
-    |     ^^^^
-141 |     std_dev: f64,
-    |     ^^^^^^^
-142 |     last_updated: DateTime<Utc>,
-    |     ^^^^^^^^^^^^
-
-warning: fields `isolation_forest` and `autoencoder` are never read
-   --> src\ml\correlation_engine.rs:146:5
-    |
-145 | struct AnomalyMLModel {
-    |        -------------- fields in this struct
-146 |     isolation_forest: IsolationForest,
-    |     ^^^^^^^^^^^^^^^^
-147 |     autoencoder: Autoencoder,
-    |     ^^^^^^^^^^^
-
-warning: fields `trees` and `sample_size` are never read
-   --> src\ml\correlation_engine.rs:151:5
-    |
-150 | struct IsolationForest {
-    |        --------------- fields in this struct
-151 |     trees: Vec<IsolationTree>,
-    |     ^^^^^
-152 |     sample_size: usize,
-    |     ^^^^^^^^^^^
-
-warning: fields `root` and `max_depth` are never read
-   --> src\ml\correlation_engine.rs:156:5
-    |
-155 | struct IsolationTree {
-    |        ------------- fields in this struct
-156 |     root: TreeNode,
-    |     ^^^^
-157 |     max_depth: usize,
-    |     ^^^^^^^^^
-
-warning: fields `split_feature`, `split_value`, `left`, and `right` are never read
-   --> src\ml\correlation_engine.rs:161:5
-    |
-160 | struct TreeNode {
-    |        -------- fields in this struct
-161 |     split_feature: usize,
-    |     ^^^^^^^^^^^^^
-162 |     split_value: f64,
-    |     ^^^^^^^^^^^
-163 |     left: Option<Box<TreeNode>>,
-    |     ^^^^
-164 |     right: Option<Box<TreeNode>>,
-    |     ^^^^^
-
-warning: fields `encoder_weights`, `decoder_weights`, and `latent_dim` are never read
-   --> src\ml\correlation_engine.rs:168:5
-    |
-167 | struct Autoencoder {
-    |        ----------- fields in this struct
-168 |     encoder_weights: Vec<Vec<f64>>,
-    |     ^^^^^^^^^^^^^^^
-169 |     decoder_weights: Vec<Vec<f64>>,
-    |     ^^^^^^^^^^^^^^^
-170 |     latent_dim: usize,
-    |     ^^^^^^^^^^
-
-warning: field `processing_interval` is never read
-   --> src\ml\correlation_engine.rs:175:5
-    |
-173 | struct RealTimeProcessor {
-    |        ----------------- field in this struct
-174 |     event_buffer: Arc<RwLock<Vec<GovernanceEvent>>>,
-175 |     processing_interval: Duration,
-    |     ^^^^^^^^^^^^^^^^^^^
-
-warning: field `explanation_templates` is never read
-  --> src\ml\explainability.rs:21:5
-   |
-18 | pub struct PredictionExplainer {
-   |            ------------------- field in this struct
-...
-21 |     explanation_templates: HashMap<String, String>,
-   |     ^^^^^^^^^^^^^^^^^^^^^
-
-warning: field `pattern_matchers` is never read
-  --> src\ml\pattern_library.rs:19:5
-   |
-17 | pub struct ViolationPatternLibrary {
-   |            ----------------------- field in this struct
-18 |     patterns: HashMap<String, ViolationPattern>,
-19 |     pattern_matchers: Vec<Box<dyn PatternMatcher>>,
-   |     ^^^^^^^^^^^^^^^^
-
-warning: field `resource_models` is never read
-  --> src\ml\cost_prediction.rs:21:5
-   |
-17 | pub struct CostPredictionModel {
-   |            ------------------- field in this struct
-...
-21 |     resource_models: HashMap<String, ResourceCostModel>,
-   |     ^^^^^^^^^^^^^^^
-
-warning: fields `resource_type`, `pricing_model`, and `usage_patterns` are never read
-   --> src\ml\cost_prediction.rs:236:5
-    |
-235 | pub struct ResourceCostModel {
-    |            ----------------- fields in this struct
-236 |     resource_type: String,
-    |     ^^^^^^^^^^^^^
-237 |     pricing_model: PricingModel,
-    |     ^^^^^^^^^^^^^
-238 |     usage_patterns: UsagePattern,
-    |     ^^^^^^^^^^^^^^
-
-warning: fields `num_trees`, `sample_size`, and `trees` are never read
-   --> src\ml\anomaly_detection.rs:149:5
-    |
-148 | pub struct IsolationForest {
-    |            --------------- fields in this struct
-149 |     num_trees: usize,
-    |     ^^^^^^^^^
-150 |     sample_size: usize,
-    |     ^^^^^^^^^^^
-151 |     trees: Vec<IsolationTree>,
-    |     ^^^^^
-
-warning: fields `split_feature`, `split_value`, `left`, and `right` are never read
-   --> src\ml\anomaly_detection.rs:180:5
-    |
-179 | struct IsolationTree {
-    |        ------------- fields in this struct
-180 |     split_feature: usize,
-    |     ^^^^^^^^^^^^^
-181 |     split_value: f64,
-    |     ^^^^^^^^^^^
-182 |     left: Option<Box<IsolationTree>>,
-    |     ^^^^
-183 |     right: Option<Box<IsolationTree>>,
-    |     ^^^^^
-
-warning: field `name` is never read
-   --> src\ml\anomaly_detection.rs:301:5
-    |
-300 | struct Pattern {
-    |        ------- field in this struct
-301 |     name: String,
-    |     ^^^^
-
-warning: field `policies` is never read
-  --> src\ml\entity_extractor.rs:51:5
-   |
-47 | pub struct EntityExtractor {
-   |            --------------- field in this struct
-...
-51 |     policies: Vec<String>,
-   |     ^^^^^^^^
-
-warning: struct `HttpResponse` is never constructed
-   --> src\governance\resource_graph.rs:591:8
-    |
-591 | struct HttpResponse {
-    |        ^^^^^^^^^^^^
-
-warning: field `azure_client` is never read
-  --> src\governance\identity.rs:20:5
-   |
-19 | pub struct IdentityGovernanceClient {
-   |            ------------------------ field in this struct
-20 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-
-warning: field `azure_client` is never read
-  --> src\governance\monitoring.rs:20:5
-   |
-19 | pub struct GovernanceMonitor {
-   |            ----------------- field in this struct
-20 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-
-warning: field `azure_client` is never read
-  --> src\governance\cost_management.rs:21:5
-   |
-20 | pub struct CostGovernanceEngine {
-   |            -------------------- field in this struct
-21 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-
-warning: field `alert_thresholds` is never read
-   --> src\governance\cost_management.rs:322:5
-    |
-321 | pub struct BudgetMonitor {
-    |            ------------- field in this struct
-322 |     alert_thresholds: Vec<f64>,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: field `historical_periods` is never read
-   --> src\governance\cost_management.rs:344:5
-    |
-343 | pub struct ForecastEngine {
-    |            -------------- field in this struct
-344 |     historical_periods: u32,
-    |     ^^^^^^^^^^^^^^^^^^
-
-warning: field `savings_thresholds` is never read
-   --> src\governance\cost_management.rs:400:5
-    |
-399 | pub struct OptimizationAnalyzer {
-    |            -------------------- field in this struct
-400 |     savings_thresholds: HashMap<OptimizationType, f64>,
-    |     ^^^^^^^^^^^^^^^^^^
-
-warning: field `azure_client` is never read
-  --> src\governance\security_posture.rs:21:5
-   |
-20 | pub struct SecurityPostureEngine {
-   |            --------------------- field in this struct
-21 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-
-warning: field `ml_models` is never read
-   --> src\governance\security_posture.rs:314:5
-    |
-312 | pub struct ThreatDetector {
-    |            -------------- field in this struct
-313 |     alert_rules: Vec<ThreatRule>,
-314 |     ml_models: HashMap<String, ThreatModel>,
-    |     ^^^^^^^^^
-
-warning: field `assessment_cache` is never read
-   --> src\governance\security_posture.rs:338:5
-    |
-336 | pub struct ComplianceMonitor {
-    |            ----------------- field in this struct
-337 |     frameworks: Vec<String>,
-338 |     assessment_cache: HashMap<String, DateTime<Utc>>,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: fields `scan_frequency`, `last_scan`, and `vulnerability_database` are never read
-   --> src\governance\security_posture.rs:343:5
-    |
-342 | pub struct VulnerabilityScanner {
-    |            -------------------- fields in this struct
-343 |     scan_frequency: Duration,
-    |     ^^^^^^^^^^^^^^
-344 |     last_scan: HashMap<String, DateTime<Utc>>,
-    |     ^^^^^^^^^
-345 |     vulnerability_database: HashMap<String, VulnerabilityData>,
-    |     ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: fields `azure_client` and `identity_tracker` are never read
-  --> src\governance\access_control.rs:21:5
-   |
-20 | pub struct AccessGovernanceEngine {
-   |            ---------------------- fields in this struct
-21 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-...
-25 |     identity_tracker: IdentityTracker,
-   |     ^^^^^^^^^^^^^^^^
-
-warning: field `role_relationships` is never read
-   --> src\governance\access_control.rs:336:5
-    |
-334 | pub struct RoleAnalyzer {
-    |            ------------ field in this struct
-335 |     privilege_matrix: HashMap<String, PrivilegeLevel>,
-336 |     role_relationships: HashMap<String, Vec<String>>,
-    |     ^^^^^^^^^^^^^^^^^^
-
-warning: field `baseline_permissions` is never read
-   --> src\governance\access_control.rs:342:5
-    |
-340 | pub struct PermissionMonitor {
-    |            ----------------- field in this struct
-341 |     permission_usage_tracking: HashMap<String, PermissionUsage>,
-342 |     baseline_permissions: HashMap<String, Vec<String>>,
-    |     ^^^^^^^^^^^^^^^^^^^^
-
-warning: field `identity_cache` is never read
-   --> src\governance\access_control.rs:355:5
-    |
-354 | pub struct IdentityTracker {
-    |            --------------- field in this struct
-355 |     identity_cache: HashMap<String, IdentityInfo>,
-    |     ^^^^^^^^^^^^^^
-
-warning: fields `azure_client` and `vnet_manager` are never read
-  --> src\governance\network.rs:22:5
-   |
-21 | pub struct NetworkGovernanceEngine {
-   |            ----------------------- fields in this struct
-22 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-...
-26 |     vnet_manager: VNetManager,
-   |     ^^^^^^^^^^^^
-
-warning: field `rule_patterns` is never read
-   --> src\governance\network.rs:517:5
-    |
-516 | pub struct NetworkSecurityAnalyzer {
-    |            ----------------------- field in this struct
-517 |     rule_patterns: HashMap<String, SecurityRiskLevel>,
-    |     ^^^^^^^^^^^^^
-
-warning: field `traffic_patterns` is never read
-   --> src\governance\network.rs:532:5
-    |
-530 | pub struct FirewallMonitor {
-    |            --------------- field in this struct
-531 |     policy_cache: HashMap<String, FirewallPolicy>,
-532 |     traffic_patterns: HashMap<String, TrafficPattern>,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: fields `peering_relationships` and `address_space_allocations` are never read
-   --> src\governance\network.rs:555:5
-    |
-554 | pub struct VNetManager {
-    |            ----------- fields in this struct
-555 |     peering_relationships: HashMap<String, Vec<String>>,
-    |     ^^^^^^^^^^^^^^^^^^^^^
-556 |     address_space_allocations: HashMap<String, Vec<String>>,
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: field `azure_client` is never read
-  --> src\governance\optimization.rs:22:5
-   |
-21 | pub struct OptimizationEngine {
-   |            ------------------ field in this struct
-22 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-
-warning: field `reservation_opportunities` is never read
-   --> src\governance\optimization.rs:347:5
-    |
-344 | pub struct CostOptimizationAnalyzer {
-    |            ------------------------ field in this struct
-...
-347 |     reservation_opportunities: HashMap<String, ReservationOpportunity>,
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: field `bottleneck_detector` is never read
-   --> src\governance\optimization.rs:389:5
-    |
-387 | pub struct PerformanceAnalyzer {
-    |            ------------------- field in this struct
-388 |     performance_baselines: HashMap<String, PerformanceBaseline>,
-389 |     bottleneck_detector: BottleneckDetector,
-    |     ^^^^^^^^^^^^^^^^^^^
-
-warning: fields `cpu_threshold`, `memory_threshold`, `storage_threshold`, and `network_threshold` are never read
-   --> src\governance\optimization.rs:403:5
-    |
-402 | pub struct BottleneckDetector {
-    |            ------------------ fields in this struct
-403 |     cpu_threshold: f64,
-    |     ^^^^^^^^^^^^^
-404 |     memory_threshold: f64,
-    |     ^^^^^^^^^^^^^^^^
-405 |     storage_threshold: f64,
-    |     ^^^^^^^^^^^^^^^^^
-406 |     network_threshold: f64,
-    |     ^^^^^^^^^^^^^^^^^
-
-warning: field `vulnerability_database` is never read
-   --> src\governance\optimization.rs:412:5
-    |
-410 | pub struct SecurityOptimizer {
-    |            ----------------- field in this struct
-411 |     security_policies: HashMap<String, SecurityPolicy>,
-412 |     vulnerability_database: HashMap<String, VulnerabilityInfo>,
-    |     ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: field `azure_client` is never read
-  --> src\governance\blueprints.rs:22:5
-   |
-21 | pub struct GovernanceBlueprints {
-   |            -------------------- field in this struct
-22 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-
-warning: field `parameter_validators` is never read
-   --> src\governance\blueprints.rs:718:5
-    |
-716 | pub struct BlueprintTemplateEngine {
-    |            ----------------------- field in this struct
-717 |     template_library: HashMap<String, BlueprintTemplate>,
-718 |     parameter_validators: HashMap<String, ParameterValidator>,
-    |     ^^^^^^^^^^^^^^^^^^^^
-
-warning: field `evaluation_engine` is never read
-   --> src\governance\blueprints.rs:753:5
-    |
-751 | pub struct BlueprintComplianceMonitor {
-    |            -------------------------- field in this struct
-752 |     compliance_policies: HashMap<String, CompliancePolicy>,
-753 |     evaluation_engine: ComplianceEvaluationEngine,
-    |     ^^^^^^^^^^^^^^^^^
-
-warning: fields `deployment_history` and `performance_metrics` are never read
-   --> src\governance\blueprints.rs:798:5
-    |
-797 | pub struct DeploymentTracker {
-    |            ----------------- fields in this struct
-798 |     deployment_history: HashMap<String, Vec<DeploymentRecord>>,
-    |     ^^^^^^^^^^^^^^^^^^
-799 |     performance_metrics: HashMap<String, PerformanceMetrics>,
-    |     ^^^^^^^^^^^^^^^^^^^
-
-warning: field `policy_engine` is never read
-   --> src\governance\blueprints.rs:812:5
-    |
-810 | pub struct GovernanceValidator {
-    |            ------------------- field in this struct
-811 |     validation_rules: HashMap<String, GovernanceRule>,
-812 |     policy_engine: PolicyValidationEngine,
-    |     ^^^^^^^^^^^^^
-
-warning: fields `policy_definitions` and `validation_cache` are never read
-   --> src\governance\blueprints.rs:834:5
-    |
-833 | pub struct PolicyValidationEngine {
-    |            ---------------------- fields in this struct
-834 |     policy_definitions: HashMap<String, PolicyDefinition>,
-    |     ^^^^^^^^^^^^^^^^^^
-835 |     validation_cache: HashMap<String, ValidationCacheEntry>,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: fields `policy_engine`, `monitoring`, and `ai_engine` are never read
-  --> src\governance\unified_api.rs:23:5
-   |
-21 | pub struct UnifiedGovernanceAPI {
-   |            -------------------- fields in this struct
-22 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
-23 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
-   |     ^^^^^^^^^^^^^
-24 |     identity: Arc<crate::governance::identity::IdentityGovernanceClient>,
-25 |     monitoring: Arc<crate::governance::monitoring::GovernanceMonitor>,
-   |     ^^^^^^^^^^
-26 |     ai_engine: Arc<crate::governance::ai::AIGovernanceEngine>,
-   |     ^^^^^^^^^
-
-warning: fields `resource_graph`, `policy_engine`, `identity`, and `monitoring` are never read
-  --> src\governance\ai\mod.rs:28:5
-   |
-27 | pub struct AIGovernanceEngine {
-   |            ------------------ fields in this struct
-28 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
-   |     ^^^^^^^^^^^^^^
-29 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
-   |     ^^^^^^^^^^^^^
-30 |     identity: Arc<crate::governance::identity::IdentityGovernanceClient>,
-   |     ^^^^^^^^
-31 |     monitoring: Arc<crate::governance::monitoring::GovernanceMonitor>,
-   |     ^^^^^^^^^^
-
-warning: fields `identity`, `monitoring`, and `context_manager` are never read
-  --> src\governance\ai\conversation.rs:21:5
-   |
-18 | pub struct ConversationalGovernance {
-   |            ------------------------ fields in this struct
-...
-21 |     identity: Arc<crate::governance::identity::IdentityGovernanceClient>,
-   |     ^^^^^^^^
-22 |     monitoring: Arc<crate::governance::monitoring::GovernanceMonitor>,
-   |     ^^^^^^^^^^
-23 |     intent_classifier: IntentClassifier,
-24 |     context_manager: ContextManager,
-   |     ^^^^^^^^^^^^^^^
-
-warning: fields `policy_engine`, `correlation_cache`, and `pattern_analyzer` are never read
-  --> src\governance\ai\correlation.rs:20:5
-   |
-18 | pub struct CrossDomainCorrelationEngine {
-   |            ---------------------------- fields in this struct
-19 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
-20 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
-   |     ^^^^^^^^^^^^^
-21 |     correlation_cache: HashMap<String, Vec<CorrelationPattern>>,
-   |     ^^^^^^^^^^^^^^^^^
-22 |     pattern_analyzer: PatternAnalyzer,
-   |     ^^^^^^^^^^^^^^^^
-
-warning: field `correlation_rules` is never read
-  --> src\governance\ai\correlation.rs:96:5
-   |
-93 | pub struct PatternAnalyzer {
-   |            --------------- field in this struct
-...
-96 |     correlation_rules: Vec<CorrelationRule>,
-   |     ^^^^^^^^^^^^^^^^^
-
-warning: field `policy_engine` is never read
-  --> src\governance\ai\prediction.rs:20:5
-   |
-18 | pub struct PredictiveComplianceEngine {
-   |            -------------------------- field in this struct
-19 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
-20 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
-   |     ^^^^^^^^^^^^^
-
-warning: fields `model_type` and `features` are never read
-  --> src\governance\ai\prediction.rs:90:5
-   |
-89 | pub struct PredictionModel {
-   |            --------------- fields in this struct
-90 |     model_type: ModelType,
-   |     ^^^^^^^^^^
-...
-93 |     features: Vec<String>,
-   |     ^^^^^^^^
-
-warning: fields `violation_history` and `resource_history` are never read
-   --> src\governance\ai\prediction.rs:107:5
-    |
-105 | pub struct HistoricalDataStore {
-    |            ------------------- fields in this struct
-106 |     compliance_history: Vec<HistoricalCompliance>,
-107 |     violation_history: Vec<HistoricalViolation>,
-    |     ^^^^^^^^^^^^^^^^^
-108 |     resource_history: Vec<HistoricalResource>,
-    |     ^^^^^^^^^^^^^^^^
-
-warning: field `confidence_threshold` is never read
-   --> src\governance\ai\prediction.rs:142:5
-    |
-139 | pub struct TrendAnalyzer {
-    |            ------------- field in this struct
-...
-142 |     confidence_threshold: f64,
-    |     ^^^^^^^^^^^^^^^^^^^^
-
-warning: field `impact_calculator` is never read
-  --> src\correlation\cross_domain_engine.rs:22:5
-   |
-18 | pub struct CrossDomainEngine {
-   |            ----------------- field in this struct
-...
-22 |     impact_calculator: ImpactCalculator,
-   |     ^^^^^^^^^^^^^^^^^
-
-warning: fields `id`, `name`, `resource_type`, `location`, and `metadata` are never read
-   --> src\correlation\resource_mapper.rs:433:5
-    |
-432 | struct Resource {
-    |        -------- fields in this struct
-433 |     id: String,
-    |     ^^
-434 |     name: String,
-    |     ^^^^
-435 |     resource_type: String,
-    |     ^^^^^^^^^^^^^
-436 |     location: String,
-    |     ^^^^^^^^
-437 |     metadata: HashMap<String, String>,
-    |     ^^^^^^^^
-    |
-    = note: `Resource` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
-
-warning: fields `domain`, `base_impact`, and `recovery_time_hours` are never read
-   --> src\correlation\impact_analyzer.rs:384:5
-    |
-383 | struct ImpactModel {
-    |        ----------- fields in this struct
-384 |     domain: String,
-    |     ^^^^^^
-385 |     base_impact: f64,
-    |     ^^^^^^^^^^^
-386 |     propagation_factor: f64,
-387 |     recovery_time_hours: u32,
-    |     ^^^^^^^^^^^^^^^^^^^
-
-warning: fields `name`, `source_type`, `affected_types`, and `impact_multiplier` are never read
-   --> src\correlation\impact_analyzer.rs:391:5
-    |
-390 | struct PropagationRule {
-    |        --------------- fields in this struct
-391 |     name: String,
-    |     ^^^^
-392 |     source_type: String,
-    |     ^^^^^^^^^^^
-393 |     affected_types: Vec<String>,
-    |     ^^^^^^^^^^^^^^
-394 |     impact_multiplier: f64,
-    |     ^^^^^^^^^^^^^^^^^
-
-warning: field `what_if_analyzer` is never read
-  --> src\correlation\predictive_impact_analyzer.rs:41:5
-   |
-37 | pub struct PredictiveImpactAnalyzer {
-   |            ------------------------ field in this struct
-...
-41 |     what_if_analyzer: WhatIfAnalyzer,
-   |     ^^^^^^^^^^^^^^^^
-
-warning: field `historical_patterns` is never read
-   --> src\correlation\predictive_impact_analyzer.rs:765:5
-    |
-764 | pub struct PredictiveEngine {
-    |            ---------------- field in this struct
-765 |     historical_patterns: Vec<ImpactPattern>,
-    |     ^^^^^^^^^^^^^^^^^^^
-
-warning: field `scenario_templates` is never read
-   --> src\correlation\predictive_impact_analyzer.rs:812:5
-    |
-811 | pub struct WhatIfAnalyzer {
-    |            -------------- field in this struct
-812 |     scenario_templates: Vec<ScenarioTemplate>,
-    |     ^^^^^^^^^^^^^^^^^^
-
-warning: field `quantification_models` is never read
-   --> src\correlation\predictive_impact_analyzer.rs:824:5
-    |
-823 | pub struct RiskQuantifier {
-    |            -------------- field in this struct
-824 |     quantification_models: HashMap<String, QuantificationModel>,
-    |     ^^^^^^^^^^^^^^^^^^^^^
-
-warning: field `inference_models` is never read
-    --> src\correlation\smart_dependency_mapper.rs:1034:5
-     |
-1033 | pub struct DependencyInferenceEngine {
-     |            ------------------------- field in this struct
-1034 |     inference_models: HashMap<String, InferenceModel>,
-     |     ^^^^^^^^^^^^^^^^
-
-warning: field `network_analyzers` is never read
-    --> src\correlation\smart_dependency_mapper.rs:1054:5
-     |
-1053 | pub struct TopologyAnalyzer {
-     |            ---------------- field in this struct
-1054 |     network_analyzers: Vec<Box<dyn NetworkAnalyzer>>,
-     |     ^^^^^^^^^^^^^^^^^
-
-warning: field `prediction_models` is never read
-    --> src\correlation\smart_dependency_mapper.rs:1074:5
-     |
-1073 | pub struct DependencyPredictor {
-     |            ------------------- field in this struct
-1074 |     prediction_models: HashMap<String, PredictionModel>,
-     |     ^^^^^^^^^^^^^^^^^
-
-warning: fields `event_buffer` and `pattern_detectors` are never read
-    --> src\correlation\smart_dependency_mapper.rs:1102:5
-     |
-1101 | pub struct RealTimeDependencyTracker {
-     |            ------------------------- fields in this struct
-1102 |     event_buffer: VecDeque<ResourceEvent>,
-     |     ^^^^^^^^^^^^
-1103 |     pattern_detectors: Vec<Box<dyn PatternDetector>>,
-     |     ^^^^^^^^^^^^^^^^^
-
-warning: method `find_key` is never used
-   --> src\auth.rs:159:8
-    |
-106 | impl TokenValidator {
-    | ------------------- method in this implementation
-...
-159 |     fn find_key<'a>(&self, kid: &str, jwks: &'a JwksResponse) -> Option<&'a Jwk> {
-    |        ^^^^^^^^
-
-warning: field `config` is never read
-  --> src\azure\auth.rs:21:5
-   |
-18 | pub struct AzureAuthProvider {
-   |            ----------------- field in this struct
-...
-21 |     config: super::AzureConfig,
-   |     ^^^^^^
-   |
-   = note: `AzureAuthProvider` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
-
-warning: fields `id`, `name`, `resource_type`, `location`, and `tags` are never read
-  --> src\azure_client.rs:32:5
-   |
-31 | struct AzureResource {
-   |        ------------- fields in this struct
-32 |     id: String,
-   |     ^^
-33 |     name: String,
-   |     ^^^^
-34 |     #[serde(rename = "type")]
-35 |     resource_type: String,
-   |     ^^^^^^^^^^^^^
-36 |     location: String,
-   |     ^^^^^^^^
-37 |     tags: Option<serde_json::Value>,
-   |     ^^^^
-
-warning: fields `id`, `name`, `display_name`, `policy_definition_id`, and `enforcement_mode` are never read
-  --> src\azure_client.rs:42:5
-   |
-41 | struct AzurePolicyAssignment {
-   |        --------------------- fields in this struct
-42 |     id: String,
-   |     ^^
-43 |     name: String,
-   |     ^^^^
-44 |     #[serde(rename = "displayName")]
-45 |     display_name: String,
-   |     ^^^^^^^^^^^^
-46 |     #[serde(rename = "policyDefinitionId")]
-47 |     policy_definition_id: String,
-   |     ^^^^^^^^^^^^^^^^^^^^
-48 |     enforcement_mode: Option<String>,
-   |     ^^^^^^^^^^^^^^^^
-
-warning: fields `id`, `principal_id`, `role_definition_id`, and `scope` are never read
-  --> src\azure_client.rs:53:5
-   |
-52 | struct AzureRoleAssignment {
-   |        ------------------- fields in this struct
-53 |     id: String,
-   |     ^^
-54 |     #[serde(rename = "principalId")]
-55 |     principal_id: String,
-   |     ^^^^^^^^^^^^
-56 |     #[serde(rename = "roleDefinitionId")]
-57 |     role_definition_id: String,
-   |     ^^^^^^^^^^^^^^^^^^
-58 |     scope: String,
-   |     ^^^^^
-
-warning: fields `billing_period`, `usage_start`, `usage_end`, `pretax_cost`, and `currency` are never read
-  --> src\azure_client.rs:64:5
-   |
-62 | struct CostManagementUsage {
-   |        ------------------- fields in this struct
-63 |     #[serde(rename = "billingPeriod")]
-64 |     billing_period: String,
-   |     ^^^^^^^^^^^^^^
-65 |     #[serde(rename = "usageStart")]
-66 |     usage_start: DateTime<Utc>,
-   |     ^^^^^^^^^^^
-67 |     #[serde(rename = "usageEnd")]
-68 |     usage_end: DateTime<Utc>,
-   |     ^^^^^^^^^
-69 |     #[serde(rename = "pretaxCost")]
-70 |     pretax_cost: f64,
-   |     ^^^^^^^^^^^
-71 |     currency: String,
-   |     ^^^^^^^^
-
-warning: fields `azure_client` and `catalog` are never read
-  --> src\resources\manager.rs:18:5
-   |
-17 | pub struct ResourceManager {
-   |            --------------- fields in this struct
-18 |     azure_client: Arc<AzureClient>,
-   |     ^^^^^^^^^^^^
-19 |     resources: Arc<RwLock<Vec<AzureResource>>>,
-20 |     catalog: Arc<ResourceCatalog>,
-   |     ^^^^^^^
-
-warning: field `model_registry` is never read
-  --> src\resources\correlations.rs:74:5
-   |
-73 | pub struct CrossDomainCorrelationEngine {
-   |            ---------------------------- field in this struct
-74 |     model_registry: Arc<ModelRegistry>,
-   |     ^^^^^^^^^^^^^^
-
-warning: fields `vault_url` and `rotation_check_interval` are never read
-  --> src\secrets.rs:24:5
-   |
-21 | pub struct SecretsManager {
-   |            -------------- fields in this struct
-...
-24 |     vault_url: String,
-   |     ^^^^^^^^^
-25 |     cache_ttl: Duration,
-26 |     rotation_check_interval: Duration,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: `SecretsManager` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
-
-warning: field `version` is never read
-  --> src\secrets.rs:33:5
-   |
-30 | struct CachedSecret {
-   |        ------------ field in this struct
-...
-33 |     version: Option<String>,
-   |     ^^^^^^^
-   |
-   = note: `CachedSecret` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
-
-warning: fields `redis_url` and `default_ttl` are never read
-  --> src\cache.rs:19:5
-   |
-18 | pub struct CacheManager {
-   |            ------------ fields in this struct
-19 |     redis_url: String,
-   |     ^^^^^^^^^
-20 |     default_ttl: Duration,
-   |     ^^^^^^^^^^^
-   |
-   = note: `CacheManager` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
-
-warning: field `cache` is never read
-   --> src\finops\mod.rs:150:5
-    |
-148 | pub struct AzureFinOpsEngine {
-    |            ----------------- field in this struct
-149 |     azure_client: crate::azure_client_async::AsyncAzureClient,
-150 |     cache: std::sync::Arc<tokio::sync::RwLock<HashMap<String, CachedMetrics>>>,
-    |     ^^^^^
-
-warning: fields `data` and `timestamp` are never read
-   --> src\finops\mod.rs:155:5
-    |
-154 | struct CachedMetrics {
-    |        ------------- fields in this struct
-155 |     data: Vec<u8>,
-    |     ^^^^
-156 |     timestamp: DateTime<Utc>,
-    |     ^^^^^^^^^
-    |
-    = note: `CachedMetrics` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
-
-warning: methods `generate_idle_recommendation`, `calculate_rightsizing`, and `find_smaller_sku` are never used
-   --> src\finops\mod.rs:211:14
-    |
-159 | impl AzureFinOpsEngine {
-    | ---------------------- methods in this implementation
-...
-211 |     async fn generate_idle_recommendation(
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-...
-351 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
-    |        ^^^^^^^^^^^^^^^^^^^^^
-...
-462 |     fn find_smaller_sku(&self, current: &VmSku) -> Option<VmSku> {
-    |        ^^^^^^^^^^^^^^^^
-
-warning: struct `ResourceMetrics` is never constructed
-   --> src\finops\mod.rs:505:8
-    |
-505 | struct ResourceMetrics {
-    |        ^^^^^^^^^^^^^^^
-
-warning: struct `VmSku` is never constructed
-   --> src\finops\mod.rs:516:8
-    |
-516 | struct VmSku {
-    |        ^^^^^
-
-warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
-   --> src\remediation\mod.rs:359:5
-    |
-359 |     async fn execute(&self, request: RemediationRequest) -> Result<RemediationResult, String>;
-    |     ^^^^^
-    |
-    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
-    = note: `#[warn(async_fn_in_trait)]` on by default
-help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
-    |
-359 -     async fn execute(&self, request: RemediationRequest) -> Result<RemediationResult, String>;
-359 +     fn execute(&self, request: RemediationRequest) -> impl std::future::Future<Output = Result<RemediationResult, String>> + Send;
-    |
-
-warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
-   --> src\remediation\mod.rs:360:5
-    |
-360 |     async fn validate(&self, request: &RemediationRequest) -> Result<bool, String>;
-    |     ^^^^^
-    |
-    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
-help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
-    |
-360 -     async fn validate(&self, request: &RemediationRequest) -> Result<bool, String>;
-360 +     fn validate(&self, request: &RemediationRequest) -> impl std::future::Future<Output = Result<bool, String>> + Send;
-    |
-
-warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
-   --> src\remediation\mod.rs:361:5
-    |
-361 |     async fn rollback(&self, rollback_token: String) -> Result<RemediationResult, String>;
-    |     ^^^^^
-    |
-    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
-help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
-    |
-361 -     async fn rollback(&self, rollback_token: String) -> Result<RemediationResult, String>;
-361 +     fn rollback(&self, rollback_token: String) -> impl std::future::Future<Output = Result<RemediationResult, String>> + Send;
-    |
-
-warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
-   --> src\remediation\mod.rs:362:5
-    |
-362 |     async fn get_status(&self, request_id: Uuid) -> Result<RemediationStatus, String>;
-    |     ^^^^^
-    |
-    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
-help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
-    |
-362 -     async fn get_status(&self, request_id: Uuid) -> Result<RemediationStatus, String>;
-362 +     fn get_status(&self, request_id: Uuid) -> impl std::future::Future<Output = Result<RemediationStatus, String>> + Send;
-    |
-
-warning: `policycortex-core` (lib) generated 351 warnings (run `cargo fix --lib -p policycortex-core` to apply 42 suggestions)
-warning: unused variable: `state`
-  --> src\api\predictions.rs:83:11
-   |
-83 |     State(state): State<Arc<crate::api::AppState>>,
-   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
-   |
-   = note: `#[warn(unused_variables)]` on by default
-
-warning: unused variable: `query`
-   --> src\audit_chain.rs:367:13
-    |
-367 |         let query = r#"
-    |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
-
-warning: unused variable: `control`
-   --> src\compliance\mod.rs:439:9
-    |
-439 |         control: &ComplianceControl,
-    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_control`
-
-warning: unused variable: `key_id`
-   --> src\evidence_pipeline.rs:450:9
-    |
-450 |         key_id: &str,
-    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_key_id`
-
-warning: unused variable: `request`
-   --> src\remediation\approval_manager.rs:355:45
-    |
-355 |     async fn determine_approval_gate(&self, request: &ApprovalRequest) -> Result<ApprovalGate, String> {
-    |                                             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
-
-warning: unused variable: `rule`
-   --> src\approvals.rs:292:21
-    |
-292 |         if let Some(rule) = policy.sod_rules.first() {
-    |                     ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
-
-warning: unused variable: `requester_id`
-   --> src\approvals.rs:288:9
-    |
-288 |         requester_id: &str,
-    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_requester_id`
-
-warning: unused variable: `approver_id`
-   --> src\approvals.rs:289:9
-    |
-289 |         approver_id: &str,
-    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_approver_id`
-
-warning: unused variable: `result`
-   --> src\change_management.rs:445:17
-    |
-445 |             let result: serde_json::Value = response
-    |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_result`
-
-warning: value assigned to `circular_dependency_groups` is never read
-   --> src\correlation\smart_dependency_mapper.rs:585:17
-    |
-585 |         let mut circular_dependency_groups = 0;
-    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = help: maybe it is overwritten before being read?
-    = note: `#[warn(unused_assignments)]` on by default
-
-warning: value assigned to `risk` is never read
-   --> src\ml\risk_scoring.rs:191:17
-    |
-191 |         let mut risk = 0.0;
-    |                 ^^^^
-    |
-    = help: maybe it is overwritten before being read?
-
-warning: type `StorageBackend` is more private than the item `EvidencePipeline::new`
-   --> src\evidence_pipeline.rs:155:5
-    |
-155 | /     pub async fn new(
-156 | |         storage_backend: StorageBackend,
-157 | |         db_pool: Option<sqlx::PgPool>,
-158 | |     ) -> Result<Self, String> {
-    | |_____________________________^ associated function `EvidencePipeline::new` is reachable at visibility `pub(crate)`
-    |
-note: but type `StorageBackend` is only usable at visibility `pub(self)`
-   --> src\evidence_pipeline.rs:135:1
-    |
-135 | enum StorageBackend {
-    | ^^^^^^^^^^^^^^^^^^^
-    = note: `#[warn(private_interfaces)]` on by default
-
-warning: type `TemporalEvent` is more private than the item `pattern_analysis::ViolationPattern::temporal_sequence`
-  --> src\ml\pattern_analysis.rs:24:5
-   |
-24 |     pub temporal_sequence: Vec<TemporalEvent>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `pattern_analysis::ViolationPattern::temporal_sequence` is reachable at visibility `pub(crate)`
-   |
-note: but type `TemporalEvent` is only usable at visibility `pub(self)`
-  --> src\ml\pattern_analysis.rs:49:1
-   |
-49 | struct TemporalEvent {
-   | ^^^^^^^^^^^^^^^^^^^^
-
-warning: type `GraphLayer` is more private than the item `GraphNeuralNetwork::layers`
-  --> src\ml\graph_neural_network.rs:21:5
-   |
-21 |     pub layers: Vec<GraphLayer>,
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `GraphNeuralNetwork::layers` is reachable at visibility `pub(crate)`
-   |
-note: but type `GraphLayer` is only usable at visibility `pub(self)`
-  --> src\ml\graph_neural_network.rs:75:1
-   |
-75 | struct GraphLayer {
-   | ^^^^^^^^^^^^^^^^^
-
-warning: type `correlation_engine::GovernanceEvent` is more private than the item `CorrelationEngine::process_event`
-   --> src\ml\correlation_engine.rs:397:5
-    |
-397 |     pub async fn process_event(&self, event: GovernanceEvent) {
-    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `CorrelationEngine::process_event` is reachable at visibility `pub(crate)`
-    |
-note: but type `correlation_engine::GovernanceEvent` is only usable at visibility `pub(self)`
-   --> src\ml\correlation_engine.rs:180:1
-    |
-180 | struct GovernanceEvent {
-    | ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `ActionOrchestrator` is never constructed
-  --> src\action_orchestrator.rs:21:12
-   |
-21 | pub struct ActionOrchestrator {
-   |            ^^^^^^^^^^^^^^^^^^
-   |
-   = note: `#[warn(dead_code)]` on by default
-
-warning: struct `IdempotencyRecord` is never constructed
-   --> src\action_orchestrator.rs:107:8
-    |
-107 | struct IdempotencyRecord {
-    |        ^^^^^^^^^^^^^^^^^
-
-warning: struct `RetryPolicy` is never constructed
-   --> src\action_orchestrator.rs:116:12
-    |
-116 | pub struct RetryPolicy {
-    |            ^^^^^^^^^^^
-
-warning: multiple associated items are never used
-   --> src\action_orchestrator.rs:137:18
-    |
-136 | impl ActionOrchestrator {
-    | ----------------------- associated items in this implementation
-137 |     pub async fn new(db_pool: Option<sqlx::PgPool>) -> Self {
-    |                  ^^^
-...
-148 |     pub async fn submit_action(&self, mut action: Action) -> Result<Uuid, String> {
-    |                  ^^^^^^^^^^^^^
-...
-210 |     async fn execute_action(&self, action: Action) {
-    |              ^^^^^^^^^^^^^^
-...
-270 |     fn data_mode_allows_write(&self) -> Result<bool, String> {
-    |        ^^^^^^^^^^^^^^^^^^^^^^
-...
-276 |     async fn execute_action_internal(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^^^^^^^^^^
-...
-293 |     async fn simulate_action(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^^
-...
-309 |     async fn create_resource(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^^
-...
-322 |     async fn update_resource(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^^
-...
-334 |     async fn delete_resource(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^^
-...
-346 |     async fn modify_policy(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^
-...
-358 |     async fn grant_access(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^
-...
-370 |     async fn revoke_access(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^
-...
-382 |     async fn restart_service(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^^
-...
-394 |     async fn scale_resource(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^
-...
-412 |     async fn apply_configuration(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^^^^^^
-...
-424 |     async fn execute_script(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^^^^^^
-...
-437 |     async fn remediate(&self, action: &Action) -> Result<ActionResult, String> {
-    |              ^^^^^^^^^
-...
-449 |     fn generate_idempotency_key(&self, action: &Action) -> String {
-    |        ^^^^^^^^^^^^^^^^^^^^^^^^
-...
-463 |     async fn check_idempotency(&self, key: &str) -> Result<Option<IdempotencyRecord>, String> {
-    |              ^^^^^^^^^^^^^^^^^
-...
-504 |     async fn store_idempotency_record(&self, action: &Action) -> Result<(), String> {
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^
-...
-535 |     fn validate_action(&self, action: &Action) -> Result<(), String> {
-    |        ^^^^^^^^^^^^^^^
-...
-550 |     async fn has_approval(&self, action: &Action) -> Result<bool, String> {
-    |              ^^^^^^^^^^^^
-...
-573 |     fn generate_rollback_actions(&self, action: &Action) -> Vec<Action> {
-    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
-...
-610 |     async fn update_action_status(&self, key: &str, status: ActionStatus) {
-    |              ^^^^^^^^^^^^^^^^^^^^
-...
-619 |     async fn update_action_error(&self, key: &str, error: String) {
-    |              ^^^^^^^^^^^^^^^^^^^
-...
-629 |     async fn complete_action(&self, action: Action, result: ActionResult) {
-    |              ^^^^^^^^^^^^^^^
-...
-653 |     async fn fail_action(&self, action: Action, error: String) {
-    |              ^^^^^^^^^^^
-...
-659 |     fn is_retryable_error(&self, error: &str) -> bool {
-    |        ^^^^^^^^^^^^^^^^^^
-...
-669 |     fn calculate_next_delay(&self, current_delay: Duration) -> Duration {
-    |        ^^^^^^^^^^^^^^^^^^^^
-...
-686 |     async fn persist_action(&self, pool: &sqlx::PgPool, action: &Action) -> Result<(), String> {
-    |              ^^^^^^^^^^^^^^
-...
-715 |     pub async fn get_action_status(&self, action_id: Uuid) -> Option<ActionStatus> {
-    |                  ^^^^^^^^^^^^^^^^^
-...
-736 |     pub async fn rollback_action(&self, action_id: Uuid) -> Result<(), String> {
-    |                  ^^^^^^^^^^^^^^^
-
-warning: method `to_string` is never used
-   --> src\action_orchestrator.rs:769:8
-    |
-768 | impl ActionType {
-    | --------------- method in this implementation
-769 |     fn to_string(&self) -> String {
-    |        ^^^^^^^^^
-
-warning: struct `ModelRegistry` is never constructed
-   --> src\ai\model_registry.rs:172:12
-    |
-172 | pub struct ModelRegistry {
-    |            ^^^^^^^^^^^^^
-
-warning: associated items `new`, `register_model`, `get_model`, `get_latest_version`, `register_harness`, and `evaluate_model` are never used
-   --> src\ai\model_registry.rs:178:12
-    |
-177 | impl ModelRegistry {
-    | ------------------ associated items in this implementation
-178 |     pub fn new() -> Self {
-    |            ^^^
-...
-185 |     pub fn register_model(&mut self, model: ModelCard) -> Result<Uuid, String> {
-    |            ^^^^^^^^^^^^^^
-...
-194 |     pub fn get_model(&self, id: &Uuid) -> Option<&ModelCard> {
-    |            ^^^^^^^^^
-...
-198 |     pub fn get_latest_version(&self, name: &str) -> Option<&ModelCard> {
-    |            ^^^^^^^^^^^^^^^^^^
-...
-205 |     pub fn register_harness(&mut self, harness: EvaluationHarness) -> Result<Uuid, String> {
-    |            ^^^^^^^^^^^^^^^^
-...
-214 |     pub fn evaluate_model(
-    |            ^^^^^^^^^^^^^^
-
-warning: fields `start_time`, `slo_manager`, `approval_manager`, `bulk_remediation_engine`, `rollback_manager`, and `bulk_remediation_channels` are never read
-   --> src\api\mod.rs:274:9
-    |
-270 | pub struct AppState {
-    |            -------- fields in this struct
-...
-274 |     pub start_time: std::time::Instant,
-    |         ^^^^^^^^^^
-...
-282 |     pub slo_manager: SLOManager,
-    |         ^^^^^^^^^^^
-...
-287 |     pub approval_manager: Option<Arc<crate::remediation::approval_manager::ApprovalManager>>,
-    |         ^^^^^^^^^^^^^^^^
-288 |     pub bulk_remediation_engine: Option<Arc<crate::remediation::bulk_remediation::BulkRemediationEngine>>,
-    |         ^^^^^^^^^^^^^^^^^^^^^^^
-289 |     pub rollback_manager: Option<Arc<crate::remediation::rollback_manager::RollbackManager>>,
-    |         ^^^^^^^^^^^^^^^^
-290 |     pub bulk_remediation_channels: Option<Arc<RwLock<std::collections::HashMap<String, broadcast::Sender<String>>>>>,
-    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: field `stage` is never read
-    --> src\api\mod.rs:2186:9
-     |
-2185 | pub struct StageAdvance {
-     |            ------------ field in this struct
-2186 |     pub stage: Option<u8>,
-     |         ^^^^^
-     |
-     = note: `StageAdvance` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: function `advance_stage` is never used
-    --> src\api\mod.rs:2189:14
-     |
-2189 | pub async fn advance_stage(
-     |              ^^^^^^^^^^^^^
-
-warning: function `rollback_action` is never used
-    --> src\api\mod.rs:2211:14
-     |
-2211 | pub async fn rollback_action(
-     |              ^^^^^^^^^^^^^^^
-
-warning: function `get_action_impact` is never used
-    --> src\api\mod.rs:2237:14
-     |
-2237 | pub async fn get_action_impact(
-     |              ^^^^^^^^^^^^^^^^^
-
-warning: struct `PredictionState` is never constructed
-  --> src\api\predictions.rs:28:12
-   |
-28 | pub struct PredictionState {
-   |            ^^^^^^^^^^^^^^^
-
-warning: field `risk_threshold` is never read
-  --> src\api\predictions.rs:38:9
-   |
-36 | pub struct PredictionQuery {
-   |            --------------- field in this struct
-37 |     pub lookahead_hours: Option<i64>,
-38 |     pub risk_threshold: Option<String>,
-   |         ^^^^^^^^^^^^^^
-   |
-   = note: `PredictionQuery` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: fields `auto_approve`, `notification_email`, and `schedule` are never read
-   --> src\api\predictions.rs:262:9
-    |
-261 | pub struct RemediationRequest {
-    |            ------------------ fields in this struct
-262 |     pub auto_approve: bool,
-    |         ^^^^^^^^^^^^
-263 |     pub notification_email: Option<String>,
-    |         ^^^^^^^^^^^^^^^^^^
-264 |     pub schedule: Option<String>,
-    |         ^^^^^^^^
-    |
-    = note: `RemediationRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: struct `ConversationState` is never constructed
-  --> src\api\conversation.rs:24:12
-   |
-24 | pub struct ConversationState {
-   |            ^^^^^^^^^^^^^^^^^
-
-warning: field `reset_context` is never read
-  --> src\api\conversation.rs:32:9
-   |
-30 | pub struct ChatQuery {
-   |            --------- field in this struct
-31 |     pub session_id: Option<String>,
-32 |     pub reset_context: Option<bool>,
-   |         ^^^^^^^^^^^^^
-   |
-   = note: `ChatQuery` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: struct `CorrelationState` is never constructed
-  --> src\api\correlations.rs:27:12
-   |
-27 | pub struct CorrelationState {
-   |            ^^^^^^^^^^^^^^^^
-
-warning: fields `domain`, `include_indirect`, and `depth` are never read
-  --> src\api\correlations.rs:34:9
-   |
-32 | pub struct CorrelationQuery {
-   |            ---------------- fields in this struct
-33 |     pub resource_ids: Option<String>, // Comma-separated list
-34 |     pub domain: Option<String>,
-   |         ^^^^^^
-35 |     pub include_indirect: Option<bool>,
-   |         ^^^^^^^^^^^^^^^^
-36 |     pub depth: Option<u32>,
-   |         ^^^^^
-   |
-   = note: `CorrelationQuery` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: fields `remediation_request`, `approvers`, `require_all`, `timeout_hours`, and `auto_approve_conditions` are never read
-  --> src\api\remediation.rs:34:9
-   |
-33 | pub struct CreateApprovalRequest {
-   |            --------------------- fields in this struct
-34 |     pub remediation_request: RemediationRequest,
-   |         ^^^^^^^^^^^^^^^^^^^
-35 |     pub approvers: Vec<String>,
-   |         ^^^^^^^^^
-36 |     pub require_all: bool,
-   |         ^^^^^^^^^^^
-37 |     pub timeout_hours: u64,
-   |         ^^^^^^^^^^^^^
-38 |     pub auto_approve_conditions: Option<Vec<String>>,
-   |         ^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: `CreateApprovalRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: struct `CreateApprovalResponse` is never constructed
-  --> src\api\remediation.rs:42:12
-   |
-42 | pub struct CreateApprovalResponse {
-   |            ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: fields `decision`, `reason`, and `conditions` are never read
-  --> src\api\remediation.rs:51:9
-   |
-50 | pub struct ApprovalDecisionRequest {
-   |            ----------------------- fields in this struct
-51 |     pub decision: String, // "approve" or "reject"
-   |         ^^^^^^^^
-52 |     pub reason: Option<String>,
-   |         ^^^^^^
-53 |     pub conditions: Option<Vec<String>>,
-   |         ^^^^^^^^^^
-   |
-   = note: `ApprovalDecisionRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: struct `ApprovalDecisionResponse` is never constructed
-  --> src\api\remediation.rs:57:12
-   |
-57 | pub struct ApprovalDecisionResponse {
-   |            ^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: fields `violations`, `dry_run`, `parallel`, `max_parallel`, and `stop_on_error` are never read
-  --> src\api\remediation.rs:66:9
-   |
-65 | pub struct BulkRemediationRequest {
-   |            ---------------------- fields in this struct
-66 |     pub violations: Vec<ViolationDto>,
-   |         ^^^^^^^^^^
-67 |     pub dry_run: bool,
-   |         ^^^^^^^
-68 |     pub parallel: bool,
-   |         ^^^^^^^^
-69 |     pub max_parallel: Option<usize>,
-   |         ^^^^^^^^^^^^
-70 |     pub stop_on_error: bool,
-   |         ^^^^^^^^^^^^^
-   |
-   = note: `BulkRemediationRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: struct `BulkRemediationResponse` is never constructed
-  --> src\api\remediation.rs:84:12
-   |
-84 | pub struct BulkRemediationResponse {
-   |            ^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: fields `reason` and `force` are never read
-  --> src\api\remediation.rs:93:9
-   |
-92 | pub struct RollbackRequest {
-   |            --------------- fields in this struct
-93 |     pub reason: String,
-   |         ^^^^^^
-94 |     pub force: bool,
-   |         ^^^^^
-   |
-   = note: `RollbackRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: struct `RollbackResponse` is never constructed
-  --> src\api\remediation.rs:98:12
-   |
-98 | pub struct RollbackResponse {
-   |            ^^^^^^^^^^^^^^^^
-
-warning: fields `include_details`, `page`, and `limit` are never read
-   --> src\api\remediation.rs:107:9
-    |
-106 | pub struct RemediationStatusQuery {
-    |            ---------------------- fields in this struct
-107 |     pub include_details: bool,
-    |         ^^^^^^^^^^^^^^^
-108 |     pub page: Option<u32>,
-    |         ^^^^
-109 |     pub limit: Option<u32>,
-    |         ^^^^^
-    |
-    = note: `RemediationStatusQuery` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: function `create_approval_request` is never used
-   --> src\api\remediation.rs:115:14
-    |
-115 | pub async fn create_approval_request(
-    |              ^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `approve_remediation` is never used
-   --> src\api\remediation.rs:171:14
-    |
-171 | pub async fn approve_remediation(
-    |              ^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_approval_status` is never used
-   --> src\api\remediation.rs:226:14
-    |
-226 | pub async fn get_approval_status(
-    |              ^^^^^^^^^^^^^^^^^^^
-
-warning: function `list_pending_approvals` is never used
-   --> src\api\remediation.rs:246:14
-    |
-246 | pub async fn list_pending_approvals(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `execute_bulk_remediation` is never used
-   --> src\api\remediation.rs:270:14
-    |
-270 | pub async fn execute_bulk_remediation(
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `stream_bulk_remediation` is never used
-   --> src\api\remediation.rs:345:14
-    |
-345 | pub async fn stream_bulk_remediation(
-    |              ^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `rollback_remediation` is never used
-   --> src\api\remediation.rs:371:14
-    |
-371 | pub async fn rollback_remediation(
-    |              ^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_rollback_status` is never used
-   --> src\api\remediation.rs:405:14
-    |
-405 | pub async fn get_rollback_status(
-    |              ^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_remediation_status` is never used
-   --> src\api\remediation.rs:422:14
-    |
-422 | pub async fn get_remediation_status(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `list_remediations` is never used
-   --> src\api\remediation.rs:440:14
-    |
-440 | pub async fn list_remediations(
-    |              ^^^^^^^^^^^^^^^^^
-
-warning: function `parse_severity` is never used
-   --> src\api\remediation.rs:458:4
-    |
-458 | fn parse_severity(severity: &str) -> crate::remediation::bulk_remediation::ViolationSeverity {
-    |    ^^^^^^^^^^^^^^
-
-warning: function `start_remediation` is never used
-   --> src\api\remediation.rs:468:10
-    |
-468 | async fn start_remediation(_state: &Arc<AppState>, approval_id: &str) -> Result<String, String> {
-    |          ^^^^^^^^^^^^^^^^^
-
-warning: function `remediation_routes` is never used
-   --> src\api\remediation.rs:482:8
-    |
-482 | pub fn remediation_routes() -> axum::Router<Arc<AppState>> {
-    |        ^^^^^^^^^^^^^^^^^^
-
-warning: field `resource_id` is never read
-  --> src\api\ml.rs:25:9
-   |
-24 | pub struct PredictionRequest {
-   |            ----------------- field in this struct
-25 |     pub resource_id: String,
-   |         ^^^^^^^^^^^
-   |
-   = note: `PredictionRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: fields `model_a_version`, `model_b_version`, and `metrics_to_track` are never read
-   --> src\api\ml.rs:110:9
-    |
-108 | pub struct ABTestRequest {
-    |            ------------- fields in this struct
-109 |     pub test_name: String,
-110 |     pub model_a_version: String,
-    |         ^^^^^^^^^^^^^^^
-111 |     pub model_b_version: String,
-    |         ^^^^^^^^^^^^^^^
-112 |     pub traffic_split: f64,
-113 |     pub metrics_to_track: Vec<String>,
-    |         ^^^^^^^^^^^^^^^^
-    |
-    = note: `ABTestRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: function `health_check` is never used
-  --> src\api\health.rs:52:14
-   |
-52 | pub async fn health_check(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-   |              ^^^^^^^^^^^^
-
-warning: function `check_database_health` is never used
-   --> src\api\health.rs:268:10
-    |
-268 | async fn check_database_health(_state: &AppState) -> bool {
-    |          ^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `check_cache_health` is never used
-   --> src\api\health.rs:274:10
-    |
-274 | async fn check_cache_health(_state: &AppState) -> bool {
-    |          ^^^^^^^^^^^^^^^^^^
-
-warning: fields `resource_type`, `health`, `environment`, `owner`, and `search` are never read
-   --> src\api\itsm.rs:172:9
-    |
-170 | pub struct InventoryFilter {
-    |            --------------- fields in this struct
-171 |     pub cloud_provider: Option<String>,
-172 |     pub resource_type: Option<String>,
-    |         ^^^^^^^^^^^^^
-173 |     pub state: Option<String>,
-174 |     pub health: Option<String>,
-    |         ^^^^^^
-175 |     pub environment: Option<String>,
-    |         ^^^^^^^^^^^
-176 |     pub owner: Option<String>,
-    |         ^^^^^
-177 |     pub search: Option<String>,
-    |         ^^^^^^
-    |
-    = note: `InventoryFilter` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: fields `operation` and `parameters` are never read
-   --> src\api\itsm.rs:194:9
-    |
-192 | pub struct BulkOperation {
-    |            ------------- fields in this struct
-193 |     pub resource_ids: Vec<String>,
-194 |     pub operation: String,
-    |         ^^^^^^^^^
-195 |     pub parameters: Option<serde_json::Value>,
-    |         ^^^^^^^^^^
-    |
-    = note: `BulkOperation` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: fields `include_idle`, `include_rightsizing`, `include_commitments`, and `include_anomalies` are never read
-  --> src\api\finops.rs:29:9
-   |
-28 | pub struct FinOpsQuery {
-   |            ----------- fields in this struct
-29 |     pub include_idle: Option<bool>,
-   |         ^^^^^^^^^^^^
-30 |     pub include_rightsizing: Option<bool>,
-   |         ^^^^^^^^^^^^^^^^^^^
-31 |     pub include_commitments: Option<bool>,
-   |         ^^^^^^^^^^^^^^^^^^^
-32 |     pub include_anomalies: Option<bool>,
-   |         ^^^^^^^^^^^^^^^^^
-   |
-   = note: `FinOpsQuery` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: function `get_finops_dashboard` is never used
-  --> src\api\finops.rs:36:14
-   |
-36 | pub async fn get_finops_dashboard(
-   |              ^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_idle_resources` is never used
-  --> src\api\finops.rs:77:14
-   |
-77 | pub async fn get_idle_resources(
-   |              ^^^^^^^^^^^^^^^^^^
-
-warning: function `get_rightsizing_opportunities` is never used
-  --> src\api\finops.rs:95:14
-   |
-95 | pub async fn get_rightsizing_opportunities(
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_commitment_recommendations` is never used
-   --> src\api\finops.rs:113:14
-    |
-113 | pub async fn get_commitment_recommendations(
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_cost_anomalies` is never used
-   --> src\api\finops.rs:131:14
-    |
-131 | pub async fn get_cost_anomalies(
-    |              ^^^^^^^^^^^^^^^^^^
-
-warning: fields `optimization_type`, `resource_ids`, and `dry_run` are never read
-   --> src\api\finops.rs:150:9
-    |
-149 | pub struct OptimizationRequest {
-    |            ------------------- fields in this struct
-150 |     pub optimization_type: String, // "idle", "rightsize", "commitment"
-    |         ^^^^^^^^^^^^^^^^^
-151 |     pub resource_ids: Vec<String>,
-    |         ^^^^^^^^^^^^
-152 |     pub dry_run: bool,
-    |         ^^^^^^^
-    |
-    = note: `OptimizationRequest` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: function `execute_optimization` is never used
-   --> src\api\finops.rs:156:14
-    |
-156 | pub async fn execute_optimization(
-    |              ^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_savings_forecast` is never used
-   --> src\api\finops.rs:196:14
-    |
-196 | pub async fn get_savings_forecast(
-    |              ^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `SavingsForecast` is never constructed
-   --> src\api\finops.rs:222:8
-    |
-222 | struct SavingsForecast {
-    |        ^^^^^^^^^^^^^^^
-
-warning: struct `MonthlyProjection` is never constructed
-   --> src\api\finops.rs:230:8
-    |
-230 | struct MonthlyProjection {
-    |        ^^^^^^^^^^^^^^^^^
-
-warning: struct `BusinessKPI` is never constructed
-  --> src\api\executive.rs:13:12
-   |
-13 | pub struct BusinessKPI {
-   |            ^^^^^^^^^^^
-
-warning: struct `ROIMetrics` is never constructed
-  --> src\api\executive.rs:22:12
-   |
-22 | pub struct ROIMetrics {
-   |            ^^^^^^^^^^
-
-warning: struct `CostSavings` is never constructed
-  --> src\api\executive.rs:33:12
-   |
-33 | pub struct CostSavings {
-   |            ^^^^^^^^^^^
-
-warning: struct `BusinessRisk` is never constructed
-  --> src\api\executive.rs:42:12
-   |
-42 | pub struct BusinessRisk {
-   |            ^^^^^^^^^^^^
-
-warning: struct `DepartmentMetrics` is never constructed
-  --> src\api\executive.rs:54:12
-   |
-54 | pub struct DepartmentMetrics {
-   |            ^^^^^^^^^^^^^^^^^
-
-warning: struct `ExecutiveReport` is never constructed
-  --> src\api\executive.rs:65:12
-   |
-65 | pub struct ExecutiveReport {
-   |            ^^^^^^^^^^^^^^^
-
-warning: fields `period`, `department`, and `include_forecast` are never read
-  --> src\api\executive.rs:79:9
-   |
-78 | pub struct ExecutiveQuery {
-   |            -------------- fields in this struct
-79 |     pub period: Option<String>,
-   |         ^^^^^^
-80 |     pub department: Option<String>,
-   |         ^^^^^^^^^^
-81 |     pub include_forecast: Option<bool>,
-   |         ^^^^^^^^^^^^^^^^
-   |
-   = note: `ExecutiveQuery` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: function `get_business_kpis` is never used
-  --> src\api\executive.rs:85:14
-   |
-85 | pub async fn get_business_kpis(
-   |              ^^^^^^^^^^^^^^^^^
-
-warning: function `get_roi_metrics` is never used
-   --> src\api\executive.rs:132:14
-    |
-132 | pub async fn get_roi_metrics(
-    |              ^^^^^^^^^^^^^^^
-
-warning: function `get_business_risks` is never used
-   --> src\api\executive.rs:157:14
-    |
-157 | pub async fn get_business_risks(
-    |              ^^^^^^^^^^^^^^^^^^
-
-warning: function `get_department_metrics` is never used
-   --> src\api\executive.rs:197:14
-    |
-197 | pub async fn get_department_metrics(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_executive_reports` is never used
-   --> src\api\executive.rs:243:14
-    |
-243 | pub async fn get_executive_reports(
-    |              ^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `generate_report` is never used
-   --> src\api\executive.rs:287:14
-    |
-287 | pub async fn generate_report(
-    |              ^^^^^^^^^^^^^^^
-
-warning: function `calculate_custom_roi` is never used
-   --> src\api\executive.rs:301:14
-    |
-301 | pub async fn calculate_custom_roi(
-    |              ^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `QuantumSecret` is never constructed
-  --> src\api\quantum.rs:13:12
-   |
-13 | pub struct QuantumSecret {
-   |            ^^^^^^^^^^^^^
-
-warning: struct `QuantumAlgorithm` is never constructed
-  --> src\api\quantum.rs:26:12
-   |
-26 | pub struct QuantumAlgorithm {
-   |            ^^^^^^^^^^^^^^^^
-
-warning: struct `MigrationProgress` is never constructed
-  --> src\api\quantum.rs:39:12
-   |
-39 | pub struct MigrationProgress {
-   |            ^^^^^^^^^^^^^^^^^
-
-warning: struct `QuantumCompliance` is never constructed
-  --> src\api\quantum.rs:50:12
-   |
-50 | pub struct QuantumCompliance {
-   |            ^^^^^^^^^^^^^^^^^
-
-warning: struct `ComplianceIssue` is never constructed
-  --> src\api\quantum.rs:61:12
-   |
-61 | pub struct ComplianceIssue {
-   |            ^^^^^^^^^^^^^^^
-
-warning: struct `QuantumThreat` is never constructed
-  --> src\api\quantum.rs:69:12
-   |
-69 | pub struct QuantumThreat {
-   |            ^^^^^^^^^^^^^
-
-warning: function `get_quantum_secrets` is never used
-  --> src\api\quantum.rs:80:14
-   |
-80 | pub async fn get_quantum_secrets(
-   |              ^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_quantum_algorithms` is never used
-   --> src\api\quantum.rs:123:14
-    |
-123 | pub async fn get_quantum_algorithms(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_migration_progress` is never used
-   --> src\api\quantum.rs:166:14
-    |
-166 | pub async fn get_migration_progress(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_quantum_compliance` is never used
-   --> src\api\quantum.rs:183:14
-    |
-183 | pub async fn get_quantum_compliance(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_quantum_threats` is never used
-   --> src\api\quantum.rs:225:14
-    |
-225 | pub async fn get_quantum_threats(
-    |              ^^^^^^^^^^^^^^^^^^^
-
-warning: function `migrate_secret` is never used
-   --> src\api\quantum.rs:262:14
-    |
-262 | pub async fn migrate_secret(
-    |              ^^^^^^^^^^^^^^
-
-warning: function `bulk_migrate_secrets` is never used
-   --> src\api\quantum.rs:278:14
-    |
-278 | pub async fn bulk_migrate_secrets(
-    |              ^^^^^^^^^^^^^^^^^^^^
-
-warning: function `rotate_quantum_secret` is never used
-   --> src\api\quantum.rs:296:14
-    |
-296 | pub async fn rotate_quantum_secret(
-    |              ^^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `EdgeNode` is never constructed
-  --> src\api\edge.rs:14:12
-   |
-14 | pub struct EdgeNode {
-   |            ^^^^^^^^
-
-warning: struct `EdgePolicy` is never constructed
-  --> src\api\edge.rs:29:12
-   |
-29 | pub struct EdgePolicy {
-   |            ^^^^^^^^^^
-
-warning: struct `PolicyCondition` is never constructed
-  --> src\api\edge.rs:43:12
-   |
-43 | pub struct PolicyCondition {
-   |            ^^^^^^^^^^^^^^^
-
-warning: struct `PolicyAction` is never constructed
-  --> src\api\edge.rs:49:12
-   |
-49 | pub struct PolicyAction {
-   |            ^^^^^^^^^^^^
-
-warning: struct `EdgeWorkload` is never constructed
-  --> src\api\edge.rs:55:12
-   |
-55 | pub struct EdgeWorkload {
-   |            ^^^^^^^^^^^^
-
-warning: struct `EdgeMonitoring` is never constructed
-  --> src\api\edge.rs:67:12
-   |
-67 | pub struct EdgeMonitoring {
-   |            ^^^^^^^^^^^^^^
-
-warning: struct `EdgeIncident` is never constructed
-  --> src\api\edge.rs:79:12
-   |
-79 | pub struct EdgeIncident {
-   |            ^^^^^^^^^^^^
-
-warning: fields `region`, `status`, and `include_metrics` are never read
-  --> src\api\edge.rs:91:9
-   |
-90 | pub struct EdgeQuery {
-   |            --------- fields in this struct
-91 |     pub region: Option<String>,
-   |         ^^^^^^
-92 |     pub status: Option<String>,
-   |         ^^^^^^
-93 |     pub include_metrics: Option<bool>,
-   |         ^^^^^^^^^^^^^^^
-   |
-   = note: `EdgeQuery` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
-
-warning: function `get_edge_nodes` is never used
-  --> src\api\edge.rs:97:14
-   |
-97 | pub async fn get_edge_nodes(
-   |              ^^^^^^^^^^^^^^
-
-warning: function `get_edge_policies` is never used
-   --> src\api\edge.rs:170:14
-    |
-170 | pub async fn get_edge_policies(
-    |              ^^^^^^^^^^^^^^^^^
-
-warning: function `get_edge_workloads` is never used
-   --> src\api\edge.rs:259:14
-    |
-259 | pub async fn get_edge_workloads(
-    |              ^^^^^^^^^^^^^^^^^^
-
-warning: function `get_edge_monitoring` is never used
-   --> src\api\edge.rs:299:14
-    |
-299 | pub async fn get_edge_monitoring(
-    |              ^^^^^^^^^^^^^^^^^^^
-
-warning: function `deploy_edge_policy` is never used
-   --> src\api\edge.rs:327:14
-    |
-327 | pub async fn deploy_edge_policy(
-    |              ^^^^^^^^^^^^^^^^^^
-
-warning: function `optimize_edge_workload` is never used
-   --> src\api\edge.rs:343:14
-    |
-343 | pub async fn optimize_edge_workload(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_node_metrics` is never used
-   --> src\api\edge.rs:362:14
-    |
-362 | pub async fn get_node_metrics(
-    |              ^^^^^^^^^^^^^^^^
-
-warning: struct `BlockchainEntry` is never constructed
-  --> src\api\blockchain.rs:13:12
-   |
-13 | pub struct BlockchainEntry {
-   |            ^^^^^^^^^^^^^^^
-
-warning: struct `AuditData` is never constructed
-  --> src\api\blockchain.rs:26:12
-   |
-26 | pub struct AuditData {
-   |            ^^^^^^^^^
-
-warning: struct `BlockchainVerification` is never constructed
-  --> src\api\blockchain.rs:36:12
-   |
-36 | pub struct BlockchainVerification {
-   |            ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `SmartContract` is never constructed
-  --> src\api\blockchain.rs:46:12
-   |
-46 | pub struct SmartContract {
-   |            ^^^^^^^^^^^^^
-
-warning: struct `ContractRule` is never constructed
-  --> src\api\blockchain.rs:57:12
-   |
-57 | pub struct ContractRule {
-   |            ^^^^^^^^^^^^
-
-warning: struct `BlockchainStats` is never constructed
-  --> src\api\blockchain.rs:65:12
-   |
-65 | pub struct BlockchainStats {
-   |            ^^^^^^^^^^^^^^^
-
-warning: function `get_audit_trail` is never used
-  --> src\api\blockchain.rs:75:14
-   |
-75 | pub async fn get_audit_trail(
-   |              ^^^^^^^^^^^^^^^
-
-warning: function `verify_blockchain` is never used
-   --> src\api\blockchain.rs:130:14
-    |
-130 | pub async fn verify_blockchain(
-    |              ^^^^^^^^^^^^^^^^^
-
-warning: function `verify_entry` is never used
-   --> src\api\blockchain.rs:146:14
-    |
-146 | pub async fn verify_entry(
-    |              ^^^^^^^^^^^^
-
-warning: function `get_smart_contracts` is never used
-   --> src\api\blockchain.rs:165:14
-    |
-165 | pub async fn get_smart_contracts(
-    |              ^^^^^^^^^^^^^^^^^^^
-
-warning: function `get_blockchain_stats` is never used
-   --> src\api\blockchain.rs:213:14
-    |
-213 | pub async fn get_blockchain_stats(
-    |              ^^^^^^^^^^^^^^^^^^^^
-
-warning: function `add_audit_entry` is never used
-   --> src\api\blockchain.rs:229:14
-    |
-229 | pub async fn add_audit_entry(
-    |              ^^^^^^^^^^^^^^^
-
-warning: function `execute_smart_contract` is never used
-   --> src\api\blockchain.rs:247:14
-    |
-247 | pub async fn execute_smart_contract(
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `export_blockchain_proof` is never used
-   --> src\api\blockchain.rs:267:14
-    |
-267 | pub async fn export_blockchain_proof(
-    |              ^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `CopilotSuggestion` is never constructed
-  --> src\api\copilot.rs:36:12
-   |
-36 | pub struct CopilotSuggestion {
-   |            ^^^^^^^^^^^^^^^^^
-
-warning: struct `SuggestedAction` is never constructed
-  --> src\api\copilot.rs:47:12
-   |
-47 | pub struct SuggestedAction {
-   |            ^^^^^^^^^^^^^^^
-
-warning: struct `Impact` is never constructed
-  --> src\api\copilot.rs:55:12
-   |
-55 | pub struct Impact {
-   |            ^^^^^^
-
-warning: struct `CodeGeneration` is never constructed
-  --> src\api\copilot.rs:63:12
-   |
-63 | pub struct CodeGeneration {
-   |            ^^^^^^^^^^^^^^
-
-warning: struct `LearningProgress` is never constructed
-  --> src\api\copilot.rs:72:12
-   |
-72 | pub struct LearningProgress {
-   |            ^^^^^^^^^^^^^^^^
-
-warning: function `chat_with_copilot` is never used
-  --> src\api\copilot.rs:81:14
-   |
-81 | pub async fn chat_with_copilot(
-   |              ^^^^^^^^^^^^^^^^^
-
-warning: function `get_suggestions` is never used
-   --> src\api\copilot.rs:106:14
-    |
-106 | pub async fn get_suggestions(
-    |              ^^^^^^^^^^^^^^^
-
-warning: function `generate_code` is never used
-   --> src\api\copilot.rs:180:14
-    |
-180 | pub async fn generate_code(
-    |              ^^^^^^^^^^^^^
-
-warning: function `get_learning_progress` is never used
-   --> src\api\copilot.rs:237:14
-    |
-237 | pub async fn get_learning_progress(
-    |              ^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `stream_copilot_updates` is never used
-   --> src\api\copilot.rs:258:14
-    |
-258 | pub async fn stream_copilot_updates() -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    |              ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `execute_suggestion` is never used
-   --> src\api\copilot.rs:278:14
-    |
-278 | pub async fn execute_suggestion(
-    |              ^^^^^^^^^^^^^^^^^^
-
-warning: function `submit_feedback` is never used
-   --> src\api\copilot.rs:314:14
-    |
-314 | pub async fn submit_feedback(
-    |              ^^^^^^^^^^^^^^^
-
-warning: struct `Pipeline` is never constructed
-  --> src\api\devsecops.rs:13:12
-   |
-13 | pub struct Pipeline {
-   |            ^^^^^^^^
-
-warning: struct `PipelineStage` is never constructed
-  --> src\api\devsecops.rs:26:12
-   |
-26 | pub struct PipelineStage {
-   |            ^^^^^^^^^^^^^
-
-warning: struct `VulnerabilitySummary` is never constructed
-  --> src\api\devsecops.rs:33:12
-   |
-33 | pub struct VulnerabilitySummary {
-   |            ^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `SecurityGate` is never constructed
-  --> src\api\devsecops.rs:41:12
-   |
-41 | pub struct SecurityGate {
-   |            ^^^^^^^^^^^^
-
-warning: struct `VulnerabilityScan` is never constructed
-  --> src\api\devsecops.rs:52:12
-   |
-52 | pub struct VulnerabilityScan {
-   |            ^^^^^^^^^^^^^^^^^
-
-warning: function `get_pipelines` is never used
-  --> src\api\devsecops.rs:63:14
-   |
-63 | pub async fn get_pipelines(
-   |              ^^^^^^^^^^^^^
-
-warning: function `get_security_gates` is never used
-   --> src\api\devsecops.rs:105:14
-    |
-105 | pub async fn get_security_gates(
-    |              ^^^^^^^^^^^^^^^^^^
-
-warning: function `get_vulnerability_scans` is never used
-   --> src\api\devsecops.rs:142:14
-    |
-142 | pub async fn get_vulnerability_scans(
-    |              ^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `trigger_scan` is never used
-   --> src\api\devsecops.rs:180:14
-    |
-180 | pub async fn trigger_scan(
-    |              ^^^^^^^^^^^^
-
-warning: function `auto_remediate` is never used
-   --> src\api\devsecops.rs:194:14
-    |
-194 | pub async fn auto_remediate(
-    |              ^^^^^^^^^^^^^^
-
-warning: struct `ApprovalWorkflowEngine` is never constructed
-  --> src\approval_workflow.rs:22:12
-   |
-22 | pub struct ApprovalWorkflowEngine {
-   |            ^^^^^^^^^^^^^^^^^^^^^^
-
-warning: struct `NotificationService` is never constructed
-  --> src\approval_workflow.rs:73:12
-   |
-73 | pub struct NotificationService {
-   |            ^^^^^^^^^^^^^^^^^^^
-
-warning: struct `AuditService` is never constructed
-  --> src\approval_workflow.rs:80:12
-   |
-80 | pub struct AuditService {
-   |            ^^^^^^^^^^^^
-
-warning: struct `EmailClient` is never constructed
-  --> src\approval_workflow.rs:85:8
-   |
-85 | struct EmailClient;
-   |        ^^^^^^^^^^^
-
-warning: struct `TeamsClient` is never constructed
-  --> src\approval_workflow.rs:86:8
-   |
-86 | struct TeamsClient;
-   |        ^^^^^^^^^^^
-
-warning: struct `SlackClient` is never constructed
-  --> src\approval_workflow.rs:87:8
-   |
-87 | struct SlackClient;
-   |        ^^^^^^^^^^^
-
-warning: multiple associated items are never used
-   --> src\approval_workflow.rs:90:18
-    |
-89  | impl ApprovalWorkflowEngine {
-    | --------------------------- associated items in this implementation
-90  |     pub async fn new() -> Self {
-    |                  ^^^
-...
-100 |     pub async fn create_approval_request(
-    |                  ^^^^^^^^^^^^^^^^^^^^^^^
-...
-180 |     pub async fn process_approval(
-    |                  ^^^^^^^^^^^^^^^^
-...
-253 |     pub async fn get_pending_approvals(&self, user: &AuthUser) -> Vec<ApprovalRequest> {
-    |                  ^^^^^^^^^^^^^^^^^^^^^
-...
-268 |     pub async fn cancel_approval(&self, request_id: Uuid, user: &AuthUser) -> Result<(), String> {
-    |                  ^^^^^^^^^^^^^^^
-...
-291 |     fn check_approval_requirements(&self, request: &ApprovalRequest) -> bool {
-    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-...
-310 |     fn check_hierarchical_approval(&self, _request: &ApprovalRequest) -> bool {
+  fn check_hierarchical_approval(&self, _request: &ApprovalRequest) -> bool {
     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ...
 315 |     async fn get_applicable_policy(
@@ -9009,34 +6332,2659 @@ warning: function `is_azure_throttled_error` is never used
 101 | pub fn is_azure_throttled_error(error_message: &str) -> bool {
     |        ^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Building [=======================> ] 503/504: policycortex-core(bin)
-
-    arning: associated function `for_critical_operations` is never used
-  --> src\utils\retry.rs:34:12
-   |
-24 | impl RetryConfig {
-   | ---------------- associated function in this implementation
-...
-34 |     pub fn for_critical_operations() -> Self {
-   |            ^^^^^^^^^^^^^^^^^^^^^^^
-
-warning: function `is_azure_throttled_error` is never used
-   --> src\utils\retry.rs:101:8
-    |
-101 | pub fn is_azure_throttled_error(error_message: &str) -> bool {
-    |        ^^^^^^^^^^^^^^^^^^^^^^^^
-
 warning: `policycortex-core` (bin "policycortex-core") generated 946 warnings (234 duplicates)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 55s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.89s
 warning: the following packages contain code that will be rejected by a future version of Rust: redis v0.24.0, sqlx-postgres v0.7.4
 note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 3`
      Running `target\debug\policycortex-core.exe`
-2025-09-02T20:26:41.744482Z  INFO policycortex_core: Starting PolicyCortex Core Service
-2025-09-02T20:26:41.744916Z  INFO policycortex_core: Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation
-2025-09-02T20:27:02.334297Z  WARN policycortex_core: ⚠️ Failed to initialize async Azure client: No connection could be made because the target machine actively refused it. (os error 10061)
-2025-09-02T20:27:02.334862Z  INFO policycortex_core::azure_client: Initializing Azure client for subscription: 205b477d-17e7-4b3b-92c1-32cf02626b78
-2025-09-02T20:27:02.335963Z  INFO policycortex_core: ✅ Fallback Azure client initialized
-2025-09-02T20:27:02.536795Z  INFO policycortex_core::secrets: ✅ Connected to Azure Key Vault: https://policycortex-kv.vault.azure.net/
-2025-09-02T20:28:24.510508Z  WARN policycortex_core::secrets: Failed to get secret 'DATABASE_URL' from Key Vault: retry policy expired and the request will no longer be retried
-2025-09-02T20:28:54.523355Z  WARN policycortex_core: DB pool connection failed: pool timed out while waiting for an open connection
-2025-09-02T20:28:54.728363Z  INFO policycortex_core: PolicyCortex Core API listening on 0.0.0.0:8080
+2025-09-02T20:51:10.770739Z  INFO policycortex_core: Starting PolicyCortex Core Service
+2025-09-02T20:51:10.770981Z  INFO policycortex_core: Patents: Unified AI Platform | Predictive Compliance | Conversational Intelligence | Cross-Domain Correlation
+2025-09-02T20:51:31.585113Z  WARN policycortex_core: ⚠️ Failed to initialize async Azure client: No connection could be made because the target machine actively refused it. (os error 10061)
+2025-09-02T20:51:31.585554Z  INFO policycortex_core::azure_client: Initializing Azure client for subscription: 205b477d-17e7-4b3b-92c1-32cf02626b78
+2025-09-02T20:51:31.586250Z  INFO policycortex_core: ✅ Fallback Azure client initialized
+2025-09-02T20:51:31.588268Z  INFO policycortex_core::secrets: ✅ Connected to Azure Key Vault: https://policycortex-kv.vault.azure.net/
+2025-09-02T20:52:53.787233Z  WARN policycortex_core::secrets: Failed to get secret 'DATABASE_URL' from Key Vault: retry policy expired and the request will no longer be retried
+2025-09-02T20:53:23.800478Z  WARN policycortex_core: DB pool connection failed: pool timed out while waiting for an open connection
+2025-09-02T20:53:24.007277Z  INFO policycortex_core: PolicyCortex Core API listening on 0.0.0.0:8080
+error: process didn't exit successfully: `target\debug\policycortex-core.exe` (exit code: 0xc000013a, STATUS_CONTROL_C_EXIT)
+PS C:\Users\leona\Documents\policycortex\core> ^C
+PS C:\Users\leona\Documents\policycortex\core> cargo fix --lib -p policycortex-core
+error: the working directory of this package has uncommitted changes, and `cargo fix` can potentially perform destructive changes; if you'd like to suppress this error pass `--allow-dirty`, or commit the changes to these files:
+
+  * core/Cargo.lock (dirty)
+  * corerunissues.md (dirty)
+  * nul (dirty)
+
+
+PS C:\Users\leona\Documents\policycortex\core> cd ..
+PS C:\Users\leona\Documents\policycortex> cargo fix --lib -p policycortex-core
+error: the working directory of this package has uncommitted changes, and `cargo fix` can potentially perform destructive changes; if you'd like to suppress this error pass `--allow-dirty`, or commit the changes to these files:
+
+  * core/Cargo.lock (dirty)
+  * corerunissues.md (dirty)
+  * nul (dirty)
+
+
+PS C:\Users\leona\Documents\policycortex> cd .\core\
+PS C:\Users\leona\Documents\policycortex\core> cargo fix --lib -p policycortex-core
+error: the working directory of this package has uncommitted changes, and `cargo fix` can potentially perform destructive changes; if you'd like to suppress this error pass `--allow-dirty`, or commit the changes to these files:
+
+  * core/Cargo.lock (dirty)
+  * corerunissues.md (dirty)
+  * nul (dirty)
+
+
+PS C:\Users\leona\Documents\policycortex\core> cargo fix --lib -p policycortex-core --allow-dirty
+    Checking policycortex-core v2.24.4 (C:\Users\leona\Documents\policycortex\core)
+       Fixed src\azure\security.rs (3 fixes)
+       Fixed src\api\quantum.rs (2 fixes)
+       Fixed src\azure\client.rs (1 fix)
+       Fixed src\azure\activity.rs (2 fixes)
+       Fixed src\azure\governance.rs (2 fixes)
+       Fixed src\azure\operations.rs (2 fixes)
+       Fixed src\azure\resource_graph.rs (4 fixes)
+       Fixed src\api\blockchain.rs (2 fixes)
+       Fixed src\api\devsecops.rs (2 fixes)
+       Fixed src\api\itsm.rs (1 fix)
+       Fixed src\api\governance.rs (2 fixes)
+       Fixed src\azure\mod.rs (1 fix)
+       Fixed src\azure\devops.rs (4 fixes)
+       Fixed src\api\executive.rs (1 fix)
+       Fixed src\api\finops.rs (2 fixes)
+       Fixed src\azure\cost.rs (2 fixes)
+       Fixed src\api\edge.rs (1 fix)
+       Fixed src\azure\monitor.rs (2 fixes)
+       Fixed src\api\health.rs (2 fixes)
+       Fixed src\azure\auth.rs (3 fixes)
+       Fixed src\api\copilot.rs (1 fix)
+warning: unused variable: `request`
+   --> src\remediation\approval_manager.rs:355:45
+    |
+355 |     async fn determine_approval_gate(&self, request: &ApprovalRequest) -> Result<ApprovalGate, String> {
+    |                                             ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `policy`
+   --> src\remediation\approval_manager.rs:357:13
+    |
+357 |         let policy = policies.get("standard").ok_or("No approval policy found")?;
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_policy`
+
+warning: unused variable: `request`
+   --> src\remediation\approval_manager.rs:435:53
+    |
+435 |     async fn auto_approve(&self, approval_id: &str, request: &ApprovalRequest) -> Result<(), String> {
+    |                                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `config`
+   --> src\remediation\rollback_manager.rs:385:50
+    |
+385 |             RollbackAction::RestoreConfiguration(config) => {
+    |                                                  ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `deployment_result`
+   --> src\remediation\arm_executor.rs:187:13
+    |
+187 |         let deployment_result = DeploymentResult {
+    |             ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_deployment_result`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:593:42
+    |
+593 |     async fn validate_permissions(&self, request: &RemediationRequest, template: &RemediationTemplate) -> Result<ValidationChe...
+    |                                          ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `template`
+   --> src\remediation\validation_engine.rs:593:72
+    |
+593 | ...&RemediationRequest, template: &RemediationTemplate) -> Result<ValidationCheck, String> {
+    |                         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_template`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:764:50
+    |
+764 | ...iation_success(&self, request: &RemediationRequest, result: &RemediationResult) -> Result<ValidationCheck, String> {
+    |                          ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:805:50
+    |
+805 |     async fn validate_post_resource_state(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |                                                  ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:843:46
+    |
+843 |     async fn validate_post_compliance(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |                                              ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:881:49
+    |
+881 |     async fn validate_performance_impact(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |                                                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:927:47
+    |
+927 |     async fn validate_security_posture(&self, request: &RemediationRequest) -> Result<ValidationCheck, String> {
+    |                                               ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `rule`
+   --> src\remediation\validation_engine.rs:965:42
+    |
+965 |     async fn evaluate_safety_rule(&self, rule: &SafetyRule, request: &RemediationRequest, template: &RemediationTemplate) -> R...
+    |                                          ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
+
+warning: unused variable: `request`
+   --> src\remediation\validation_engine.rs:965:61
+    |
+965 | ...f, rule: &SafetyRule, request: &RemediationRequest, template: &RemediationTemplate) -> Result<bool, String> {
+    |                          ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `template`
+   --> src\remediation\validation_engine.rs:965:91
+    |
+965 | ...&RemediationRequest, template: &RemediationTemplate) -> Result<bool, String> {
+    |                         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_template`
+
+warning: unused variable: `template`
+    --> src\remediation\validation_engine.rs:1089:9
+     |
+1089 |         template: &RemediationTemplate,
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_template`
+
+warning: unused variable: `resource_id`
+    --> src\remediation\validation_engine.rs:1134:42
+     |
+1134 |     pub async fn get_dependencies(&self, resource_id: &str) -> Result<Vec<ResourceInfo>, String> {
+     |                                          ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resource_id`
+
+warning: unused variable: `state`
+  --> src\api\predictions.rs:83:11
+   |
+83 |     State(state): State<Arc<crate::api::AppState>>,
+   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\itsm.rs:736:11
+    |
+736 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\itsm.rs:770:11
+    |
+770 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\itsm.rs:803:11
+    |
+803 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\itsm.rs:896:11
+    |
+896 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\itsm.rs:911:11
+    |
+911 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\itsm.rs:946:11
+    |
+946 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\itsm.rs:964:11
+    |
+964 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1021:11
+     |
+1021 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1057:11
+     |
+1057 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1079:11
+     |
+1079 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1111:11
+     |
+1111 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1126:11
+     |
+1126 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1164:11
+     |
+1164 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `id`
+    --> src\api\itsm.rs:1165:10
+     |
+1165 |     Path(id): Path<String>,
+     |          ^^ help: if this is intentional, prefix it with an underscore: `_id`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1193:11
+     |
+1193 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `id`
+    --> src\api\itsm.rs:1194:10
+     |
+1194 |     Path(id): Path<String>,
+     |          ^^ help: if this is intentional, prefix it with an underscore: `_id`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1209:11
+     |
+1209 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `id`
+    --> src\api\itsm.rs:1210:10
+     |
+1210 |     Path(id): Path<String>,
+     |          ^^ help: if this is intentional, prefix it with an underscore: `_id`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1234:11
+     |
+1234 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1260:11
+     |
+1260 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1286:11
+     |
+1286 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1314:11
+     |
+1314 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1342:11
+     |
+1342 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1367:11
+     |
+1367 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1392:11
+     |
+1392 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1430:11
+     |
+1430 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1458:11
+     |
+1458 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1486:11
+     |
+1486 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1500:11
+     |
+1500 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1538:11
+     |
+1538 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1560:11
+     |
+1560 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+    --> src\api\itsm.rs:1588:11
+     |
+1588 |     State(state): State<Arc<crate::api::AppState>>,
+     |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `request`
+   --> src\api\finops.rs:157:10
+    |
+157 |     Json(request): Json<OptimizationRequest>,
+    |          ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_request`
+
+warning: unused variable: `state`
+   --> src\api\finops.rs:196:11
+    |
+196 |     State(state): State<Arc<crate::api::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `params`
+  --> src\api\executive.rs:85:11
+   |
+85 |     Query(params): Query<ExecutiveQuery>,
+   |           ^^^^^^ help: if this is intentional, prefix it with an underscore: `_params`
+
+warning: unused variable: `state`
+  --> src\api\executive.rs:86:11
+   |
+86 |     State(state): State<Arc<crate::AppState>>,
+   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `params`
+   --> src\api\executive.rs:132:11
+    |
+132 |     Query(params): Query<ExecutiveQuery>,
+    |           ^^^^^^ help: if this is intentional, prefix it with an underscore: `_params`
+
+warning: unused variable: `state`
+   --> src\api\executive.rs:133:11
+    |
+133 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\executive.rs:157:11
+    |
+157 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\executive.rs:197:11
+    |
+197 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\executive.rs:243:11
+    |
+243 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\executive.rs:288:11
+    |
+288 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\executive.rs:302:11
+    |
+302 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+  --> src\api\quantum.rs:80:11
+   |
+80 |     State(state): State<Arc<crate::AppState>>,
+   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\quantum.rs:123:11
+    |
+123 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\quantum.rs:166:11
+    |
+166 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\quantum.rs:183:11
+    |
+183 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\quantum.rs:225:11
+    |
+225 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\quantum.rs:264:11
+    |
+264 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\quantum.rs:279:11
+    |
+279 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\quantum.rs:297:11
+    |
+297 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+  --> src\api\edge.rs:98:11
+   |
+98 |     State(state): State<Arc<crate::AppState>>,
+   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\edge.rs:170:11
+    |
+170 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\edge.rs:259:11
+    |
+259 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\edge.rs:299:11
+    |
+299 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\edge.rs:329:11
+    |
+329 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\edge.rs:344:11
+    |
+344 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\edge.rs:363:11
+    |
+363 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `params`
+  --> src\api\blockchain.rs:75:11
+   |
+75 |     Query(params): Query<serde_json::Value>,
+   |           ^^^^^^ help: if this is intentional, prefix it with an underscore: `_params`
+
+warning: unused variable: `state`
+  --> src\api\blockchain.rs:76:11
+   |
+76 |     State(state): State<Arc<crate::AppState>>,
+   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\blockchain.rs:130:11
+    |
+130 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\blockchain.rs:147:11
+    |
+147 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\blockchain.rs:165:11
+    |
+165 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\blockchain.rs:213:11
+    |
+213 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `entry`
+   --> src\api\blockchain.rs:229:10
+    |
+229 |     Json(entry): Json<serde_json::Value>,
+    |          ^^^^^ help: if this is intentional, prefix it with an underscore: `_entry`
+
+warning: unused variable: `state`
+   --> src\api\blockchain.rs:230:11
+    |
+230 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `params`
+   --> src\api\blockchain.rs:248:10
+    |
+248 |     Json(params): Json<serde_json::Value>,
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_params`
+
+warning: unused variable: `state`
+   --> src\api\blockchain.rs:249:11
+    |
+249 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `params`
+   --> src\api\blockchain.rs:267:11
+    |
+267 |     Query(params): Query<serde_json::Value>,
+    |           ^^^^^^ help: if this is intentional, prefix it with an underscore: `_params`
+
+warning: unused variable: `state`
+   --> src\api\blockchain.rs:268:11
+    |
+268 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+  --> src\api\copilot.rs:82:11
+   |
+82 |     State(state): State<Arc<crate::AppState>>,
+   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `params`
+   --> src\api\copilot.rs:106:11
+    |
+106 |     Query(params): Query<serde_json::Value>,
+    |           ^^^^^^ help: if this is intentional, prefix it with an underscore: `_params`
+
+warning: unused variable: `state`
+   --> src\api\copilot.rs:107:11
+    |
+107 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\copilot.rs:181:11
+    |
+181 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `resource`
+   --> src\api\copilot.rs:184:9
+    |
+184 |     let resource = request["resource"].as_str().unwrap_or("virtual_machine");
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resource`
+
+warning: unused variable: `state`
+   --> src\api\copilot.rs:237:11
+    |
+237 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\copilot.rs:279:11
+    |
+279 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `feedback`
+   --> src\api\copilot.rs:314:10
+    |
+314 |     Json(feedback): Json<serde_json::Value>,
+    |          ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_feedback`
+
+warning: unused variable: `state`
+   --> src\api\copilot.rs:315:11
+    |
+315 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+  --> src\api\devsecops.rs:63:11
+   |
+63 |     State(state): State<Arc<crate::AppState>>,
+   |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\devsecops.rs:105:11
+    |
+105 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\devsecops.rs:142:11
+    |
+142 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\devsecops.rs:181:11
+    |
+181 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `state`
+   --> src\api\devsecops.rs:195:11
+    |
+195 |     State(state): State<Arc<crate::AppState>>,
+    |           ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: unused variable: `query`
+  --> src\ml\predictive_compliance.rs:89:13
+   |
+89 |         let query = format!(
+   |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: unused variable: `resource`
+   --> src\ml\predictive_compliance.rs:112:45
+    |
+112 |     async fn get_applicable_policies(&self, resource: &serde_json::Value) -> Result<Vec<PolicyDefinition>, String> {
+    |                                             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resource`
+
+warning: unused variable: `entities`
+   --> src\ml\natural_language.rs:292:46
+    |
+292 |     async fn handle_policy_violations(&self, entities: &[EntityInfo]) -> ConversationResponse {
+    |                                              ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `entities`
+   --> src\ml\natural_language.rs:366:40
+    |
+366 |     async fn handle_remediation(&self, entities: &[EntityInfo]) -> ConversationResponse {
+    |                                        ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `validation_data`
+   --> src\ml\continuous_training.rs:206:58
+    |
+206 | ...ModelVersion, validation_data: &[TrainingSample]) -> Result<ValidationMetrics, String> {
+    |                  ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_validation_data`
+
+warning: unused variable: `task_data`
+   --> src\governance\policy_engine.rs:553:13
+    |
+553 |         let task_data: serde_json::Value = serde_json::from_str(&response_text)
+    |             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_task_data`
+
+warning: unused variable: `budget_request`
+   --> src\governance\cost_management.rs:539:13
+    |
+539 |         let budget_request = self.build_budget_request(&budget)?;
+    |             ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_budget_request`
+
+warning: unused variable: `budget_id`
+   --> src\governance\cost_management.rs:787:45
+    |
+787 |     async fn setup_budget_monitoring(&self, budget_id: &str, budget: &BudgetDefinition) -> GovernanceResult<()> {
+    |                                             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_budget_id`
+
+warning: unused variable: `budget`
+   --> src\governance\cost_management.rs:787:62
+    |
+787 |     async fn setup_budget_monitoring(&self, budget_id: &str, budget: &BudgetDefinition) -> GovernanceResult<()> {
+    |                                                              ^^^^^^ help: if this is intentional, prefix it with an underscore: `_budget`
+
+warning: unused variable: `cost_data`
+   --> src\governance\cost_management.rs:798:13
+    |
+798 |         let cost_data = self.fetch_cost_data(scope, 30).await?;
+    |             ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_cost_data`
+
+warning: unused variable: `permission_set`
+   --> src\governance\access_control.rs:509:14
+    |
+509 |         for (permission_set, usage_count) in frequent_permissions {
+    |              ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_permission_set`
+
+warning: unused variable: `review_definition`
+   --> src\governance\access_control.rs:609:46
+    |
+609 |     pub async fn create_access_review(&self, review_definition: AccessReviewDefinition) -> GovernanceResult<String> {
+    |                                              ^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_review_definition`
+
+warning: unused variable: `blueprint_id`
+   --> src\governance\blueprints.rs:927:43
+    |
+927 |     pub async fn publish_blueprint(&self, blueprint_id: &str, version: &str) -> GovernanceResult<BlueprintVersion> {
+    |                                           ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_blueprint_id`
+
+warning: unused variable: `query`
+   --> src\governance\ai\conversation.rs:116:43
+    |
+116 |     async fn handle_resource_query(&self, query: &str, intent: &Intent, _context: &ConversationContext) -> GovernanceResult<Qu...
+    |                                           ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: unused variable: `events`
+   --> src\governance\ai\correlation.rs:267:59
+    |
+267 | ...icy_correlation(&self, events: &[CrossDomainEvent]) -> GovernanceResult<Vec<CorrelationPattern>> {
+    |                           ^^^^^^ help: if this is intentional, prefix it with an underscore: `_events`
+
+warning: unused variable: `correlation_id`
+   --> src\governance\ai\correlation.rs:427:46
+    |
+427 |     pub async fn monitor_correlations(&self, correlation_id: &str) -> GovernanceResult<CorrelationPattern> {
+    |                                              ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_correlation_id`
+
+warning: unused variable: `header`
+   --> src\auth.rs:213:23
+    |
+213 |             if let Ok(header) = jsonwebtoken::decode_header(token) {
+    |                       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_header`
+
+warning: unused import: `super`
+  --> src\ml\confidence_scoring.rs:12:5
+   |
+12 | use super::*;
+   |     ^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `lookahead_hours`
+   --> src\api\predictions.rs:277:30
+    |
+277 | fn generate_demo_predictions(lookahead_hours: i64) -> Vec<ViolationPrediction> {
+    |                              ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_lookahead_hours`
+
+warning: unused variable: `policy`
+   --> src\ml\predictive_compliance.rs:222:71
+    |
+222 |     fn calculate_business_impact(&self, resource: &serde_json::Value, policy: &PolicyDefinition) -> BusinessImpact {
+    |                                                                       ^^^^^^ help: if this is intentional, prefix it with an underscore: `_policy`
+
+warning: unused variable: `resource`
+   --> src\ml\predictive_compliance.rs:235:9
+    |
+235 |         resource: &serde_json::Value,
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resource`
+
+warning: unused variable: `policy`
+   --> src\ml\predictive_compliance.rs:236:9
+    |
+236 |         policy: &PolicyDefinition,
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_policy`
+
+warning: value assigned to `risk` is never read
+   --> src\ml\risk_scoring.rs:191:17
+    |
+191 |         let mut risk = 0.0;
+    |                 ^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` on by default
+
+warning: unused variable: `pattern_id`
+   --> src\ml\pattern_analysis.rs:180:18
+    |
+180 |             for (pattern_id, pattern) in &self.pattern_library {
+    |                  ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pattern_id`
+
+warning: unused variable: `time_window`
+   --> src\ml\pattern_analysis.rs:197:9
+    |
+197 |         time_window: Duration,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_time_window`
+
+warning: unused variable: `time_series`
+   --> src\ml\pattern_analysis.rs:281:9
+    |
+281 |         time_series: &VecDeque<TimeSeriesPoint>,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_time_series`
+
+warning: unused variable: `sequence`
+   --> src\ml\pattern_analysis.rs:282:9
+    |
+282 |         sequence: &[TemporalEvent],
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sequence`
+
+warning: unused variable: `time_series`
+   --> src\ml\pattern_analysis.rs:291:9
+    |
+291 |         time_series: &VecDeque<TimeSeriesPoint>,
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_time_series`
+
+warning: unused variable: `configuration`
+  --> src\ml\drift_detector.rs:95:44
+   |
+95 |     fn identify_critical_properties(&self, configuration: &serde_json::Value) -> Vec<String> {
+   |                                            ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_configuration`
+
+warning: unused variable: `entities`
+   --> src\ml\natural_language.rs:766:48
+    |
+766 |     fn translate_to_policy(&self, input: &str, entities: &[EntityInfo]) -> serde_json::Value {
+    |                                                ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_entities`
+
+warning: unused variable: `p`
+   --> src\governance\cost_management.rs:336:13
+    |
+336 |             p if budget.forecasted_spend > budget.budget.amount => BudgetHealthStatus::ExceededForecasted,
+    |             ^ help: if this is intentional, prefix it with an underscore: `_p`
+
+warning: unused variable: `i`
+   --> src\governance\cost_management.rs:731:14
+    |
+731 |         for (i, trend) in trends.iter().enumerate() {
+    |              ^ help: if this is intentional, prefix it with an underscore: `_i`
+
+warning: unused variable: `events`
+   --> src\governance\ai\correlation.rs:463:35
+    |
+463 |     pub fn analyze_pattern(&self, events: &[CrossDomainEvent]) -> Vec<CorrelationPattern> {
+    |                                   ^^^^^^ help: if this is intentional, prefix it with an underscore: `_events`
+
+warning: unused variable: `rule`
+   --> src\correlation\cross_domain_engine.rs:258:84
+    |
+258 |     fn resources_correlated(&self, source: &AzureResource, target: &AzureResource, rule: &CorrelationRule) -> bool {
+    |                                                                                    ^^^^ help: if this is intentional, prefix it with an underscore: `_rule`
+
+warning: unused variable: `out_degree`
+   --> src\correlation\resource_mapper.rs:285:17
+    |
+285 |             let out_degree = self.dependency_graph.edges_directed(node_idx, petgraph::Direction::Outgoing).count();
+    |                 ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_out_degree`
+
+warning: unused variable: `resource`
+   --> src\correlation\impact_analyzer.rs:195:58
+    |
+195 |     fn determine_impact_type(&self, event: &ImpactEvent, resource: &ResourceContext) -> ImpactType {
+    |                                                          ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resource`
+
+warning: unused variable: `resources`
+   --> src\correlation\advanced_correlation_engine.rs:101:9
+    |
+101 |         resources: &[AzureResource],
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `timeline`
+   --> src\correlation\predictive_impact_analyzer.rs:234:9
+    |
+234 |         timeline: &ImpactTimeline
+    |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_timeline`
+
+warning: unused variable: `base`
+   --> src\correlation\predictive_impact_analyzer.rs:320:9
+    |
+320 |         base: &PredictiveImpactResult,
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_base`
+
+warning: unused variable: `source`
+   --> src\correlation\predictive_impact_analyzer.rs:549:44
+    |
+549 |     fn calculate_cascade_confidence(&self, source: &str, target: &str, impact: f64) -> f64 {
+    |                                            ^^^^^^ help: if this is intentional, prefix it with an underscore: `_source`
+
+warning: unused variable: `target`
+   --> src\correlation\predictive_impact_analyzer.rs:549:58
+    |
+549 |     fn calculate_cascade_confidence(&self, source: &str, target: &str, impact: f64) -> f64 {
+    |                                                          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_target`
+
+warning: unused variable: `resources`
+   --> src\correlation\predictive_impact_analyzer.rs:557:66
+    |
+557 |     fn trace_propagation_path(&self, source: &str, target: &str, resources: &[ResourceContext]) -> Vec<String> {
+    |                                                                  ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `historical_data`
+   --> src\correlation\predictive_impact_analyzer.rs:629:45
+    |
+629 |     fn calculate_historical_accuracy(&self, historical_data: &[HistoricalEvent]) -> f64 {
+    |                                             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_historical_data`
+
+warning: unused variable: `event`
+   --> src\correlation\predictive_impact_analyzer.rs:666:39
+    |
+666 |     fn assess_current_severity(&self, event: &OngoingEvent) -> Severity {
+    |                                       ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+
+warning: unused variable: `event`
+   --> src\correlation\predictive_impact_analyzer.rs:671:42
+    |
+671 |     fn calculate_propagation_rate(&self, event: &OngoingEvent) -> f64 {
+    |                                          ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+
+warning: unused variable: `event`
+   --> src\correlation\predictive_impact_analyzer.rs:676:41
+    |
+676 |     fn predict_remaining_cascade(&self, event: &OngoingEvent, _state: &SystemState, resources: &[ResourceContext]) -> ImpactTi...
+    |                                         ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+
+warning: unused variable: `resources`
+   --> src\correlation\predictive_impact_analyzer.rs:676:85
+    |
+676 | ...tate: &SystemState, resources: &[ResourceContext]) -> ImpactTimeline {
+    |                        ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `event`
+   --> src\correlation\predictive_impact_analyzer.rs:683:49
+    |
+683 |     fn update_mitigation_recommendations(&self, event: &OngoingEvent, current_impact: &CurrentImpactState) -> Vec<DynamicMitig...
+    |                                                 ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+
+warning: unused variable: `current_impact`
+   --> src\correlation\predictive_impact_analyzer.rs:683:71
+    |
+683 | ...&OngoingEvent, current_impact: &CurrentImpactState) -> Vec<DynamicMitigation> {
+    |                   ^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current_impact`
+
+warning: unused variable: `timeline`
+   --> src\correlation\predictive_impact_analyzer.rs:694:45
+    |
+694 |     fn identify_intervention_windows(&self, timeline: &ImpactTimeline) -> Vec<InterventionWindow> {
+    |                                             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_timeline`
+
+warning: unused variable: `event`
+   --> src\correlation\predictive_impact_analyzer.rs:698:44
+    |
+698 |     fn calculate_real_time_accuracy(&self, event: &OngoingEvent) -> f64 {
+    |                                            ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+
+warning: unused variable: `scenario`
+   --> src\correlation\predictive_impact_analyzer.rs:710:44
+    |
+710 |     fn perform_sensitivity_analysis(&self, scenario: &ImpactScenario, resources: &[ResourceContext]) -> SensitivityAnalysis {
+    |                                            ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_scenario`
+
+warning: unused variable: `resources`
+   --> src\correlation\predictive_impact_analyzer.rs:710:71
+    |
+710 |     fn perform_sensitivity_analysis(&self, scenario: &ImpactScenario, resources: &[ResourceContext]) -> SensitivityAnalysis {
+    |                                                                       ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `resources`
+   --> src\correlation\predictive_impact_analyzer.rs:777:9
+    |
+777 |         resources: &[ResourceContext],
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `historical_data`
+   --> src\correlation\predictive_impact_analyzer.rs:778:9
+    |
+778 |         historical_data: &[HistoricalEvent]
+    |         ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_historical_data`
+
+warning: unused variable: `source`
+   --> src\correlation\smart_dependency_mapper.rs:577:44
+    |
+577 |     fn identify_bottlenecks_in_path(&self, source: NodeIndex, target: NodeIndex) -> Vec<String> {
+    |                                            ^^^^^^ help: if this is intentional, prefix it with an underscore: `_source`
+
+warning: unused variable: `target`
+   --> src\correlation\smart_dependency_mapper.rs:577:63
+    |
+577 |     fn identify_bottlenecks_in_path(&self, source: NodeIndex, target: NodeIndex) -> Vec<String> {
+    |                                                               ^^^^^^ help: if this is intentional, prefix it with an underscore: `_target`
+
+warning: value assigned to `circular_dependency_groups` is never read
+   --> src\correlation\smart_dependency_mapper.rs:585:17
+    |
+585 |         let mut circular_dependency_groups = 0;
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: unused variable: `metrics`
+   --> src\correlation\smart_dependency_mapper.rs:892:69
+    |
+892 |     fn detect_dependency_anomalies(&self, events: &[ResourceEvent], metrics: &[RuntimeMetric]) -> Vec<DependencyAnomaly> {
+    |                                                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
+warning: unused variable: `test_graph`
+   --> src\correlation\smart_dependency_mapper.rs:993:9
+    |
+993 |         test_graph: &DiGraph<SmartResource, SmartDependency>,
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_test_graph`
+
+warning: unused variable: `test_graph`
+    --> src\correlation\smart_dependency_mapper.rs:1020:39
+     |
+1020 |     fn find_new_critical_paths(&self, test_graph: &DiGraph<SmartResource, SmartDependency>) -> Vec<String> {
+     |                                       ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_test_graph`
+
+warning: unused variable: `test_graph`
+    --> src\correlation\smart_dependency_mapper.rs:1025:37
+     |
+1025 |     fn calculate_risk_change(&self, test_graph: &DiGraph<SmartResource, SmartDependency>) -> f64 {
+     |                                     ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_test_graph`
+
+warning: unused variable: `topology`
+    --> src\correlation\smart_dependency_mapper.rs:1065:9
+     |
+1065 |         topology: &NetworkTopology,
+     |         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_topology`
+
+warning: unused variable: `resources`
+    --> src\correlation\smart_dependency_mapper.rs:1066:9
+     |
+1066 |         resources: &[SmartResourceInfo]
+     |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_resources`
+
+warning: unused variable: `events`
+    --> src\correlation\smart_dependency_mapper.rs:1115:9
+     |
+1115 |         events: &[ResourceEvent],
+     |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_events`
+
+warning: unused variable: `metrics`
+    --> src\correlation\smart_dependency_mapper.rs:1116:9
+     |
+1116 |         metrics: &[RuntimeMetric]
+     |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
+warning: unused variable: `row`
+   --> src\correlation\graph_driver.rs:305:21
+    |
+305 |         if let Some(row) = result.next().await.map_err(|e| e.to_string())? {
+    |                     ^^^ help: if this is intentional, prefix it with an underscore: `_row`
+
+warning: unused variable: `row`
+   --> src\correlation\graph_driver.rs:422:24
+    |
+422 |         while let Some(row) = result.next().await.map_err(|e| e.to_string())? {
+    |                        ^^^ help: if this is intentional, prefix it with an underscore: `_row`
+
+warning: unused variable: `row`
+   --> src\correlation\graph_driver.rs:451:21
+    |
+451 |         if let Some(row) = result.next().await.map_err(|e| e.to_string())? {
+    |                     ^^^ help: if this is intentional, prefix it with an underscore: `_row`
+
+warning: unused variable: `algorithm`
+   --> src\correlation\graph_driver.rs:514:42
+    |
+514 |     async fn calculate_centrality(&self, algorithm: &str) -> Result<HashMap<String, f64>, String> {
+    |                                          ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_algorithm`
+
+warning: unused variable: `model`
+   --> src\ai\model_registry.rs:219:13
+    |
+219 |         let model = self
+    |             ^^^^^ help: if this is intentional, prefix it with an underscore: `_model`
+
+warning: unused variable: `pricing`
+   --> src\finops\mod.rs:295:9
+    |
+295 |         pricing: &serde_json::Value,
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_pricing`
+
+warning: unused variable: `current`
+   --> src\finops\mod.rs:351:37
+    |
+351 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
+    |                                     ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current`
+
+warning: unused variable: `metrics`
+   --> src\finops\mod.rs:351:54
+    |
+351 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
+    |                                                      ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_metrics`
+
+warning: value assigned to `savings_achieved` is never read
+   --> src\finops\mod.rs:962:17
+    |
+962 |         let mut savings_achieved = 0.0;
+    |                 ^^^^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+warning: type `TemporalEvent` is more private than the item `pattern_analysis::ViolationPattern::temporal_sequence`
+  --> src\ml\pattern_analysis.rs:24:5
+   |
+24 |     pub temporal_sequence: Vec<TemporalEvent>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `pattern_analysis::ViolationPattern::temporal_sequence` is reachable at visibility `pub`
+   |
+note: but type `TemporalEvent` is only usable at visibility `pub(self)`
+  --> src\ml\pattern_analysis.rs:49:1
+   |
+49 | struct TemporalEvent {
+   | ^^^^^^^^^^^^^^^^^^^^
+   = note: `#[warn(private_interfaces)]` on by default
+
+warning: type `GraphLayer` is more private than the item `GraphNeuralNetwork::layers`
+  --> src\ml\graph_neural_network.rs:21:5
+   |
+21 |     pub layers: Vec<GraphLayer>,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `GraphNeuralNetwork::layers` is reachable at visibility `pub`
+   |
+note: but type `GraphLayer` is only usable at visibility `pub(self)`
+  --> src\ml\graph_neural_network.rs:75:1
+   |
+75 | struct GraphLayer {
+   | ^^^^^^^^^^^^^^^^^
+
+warning: type `GovernanceEvent` is more private than the item `CorrelationEngine::process_event`
+   --> src\ml\correlation_engine.rs:397:5
+    |
+397 |     pub async fn process_event(&self, event: GovernanceEvent) {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `CorrelationEngine::process_event` is reachable at visibility `pub`
+    |
+note: but type `GovernanceEvent` is only usable at visibility `pub(self)`
+   --> src\ml\correlation_engine.rs:180:1
+    |
+180 | struct GovernanceEvent {
+    | ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `execution_id`, `started_at`, `pending_approvals`, and `checkpoints` are never read
+  --> src\remediation\workflow_engine.rs:26:5
+   |
+24 | struct WorkflowExecution {
+   |        ----------------- fields in this struct
+25 |     workflow_id: Uuid,
+26 |     execution_id: Uuid,
+   |     ^^^^^^^^^^^^
+...
+29 |     started_at: DateTime<Utc>,
+   |     ^^^^^^^^^^
+30 |     completed_steps: Vec<CompletedStep>,
+31 |     pending_approvals: Vec<String>,
+   |     ^^^^^^^^^^^^^^^^^
+32 |     checkpoints: Vec<Checkpoint>,
+   |     ^^^^^^^^^^^
+   |
+   = note: `WorkflowExecution` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: variants `WaitingForApproval`, `Paused`, `RollingBack`, and `Cancelled` are never constructed
+  --> src\remediation\workflow_engine.rs:47:5
+   |
+44 | enum WorkflowState {
+   |      ------------- variants in this enum
+...
+47 |     WaitingForApproval,
+   |     ^^^^^^^^^^^^^^^^^^
+48 |     Paused,
+   |     ^^^^^^
+...
+51 |     RollingBack,
+   |     ^^^^^^^^^^^
+52 |     Cancelled,
+   |     ^^^^^^^^^
+   |
+   = note: `WorkflowState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `step_id`, `started_at`, `completed_at`, `result`, and `changes` are never read
+  --> src\remediation\workflow_engine.rs:57:5
+   |
+56 | struct CompletedStep {
+   |        ------------- fields in this struct
+57 |     step_id: String,
+   |     ^^^^^^^
+58 |     started_at: DateTime<Utc>,
+   |     ^^^^^^^^^^
+59 |     completed_at: DateTime<Utc>,
+   |     ^^^^^^^^^^^^
+60 |     result: StepResult,
+   |     ^^^^^^
+61 |     changes: Vec<AppliedChange>,
+   |     ^^^^^^^
+   |
+   = note: `CompletedStep` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `success`, `output`, and `metrics` are never read
+  --> src\remediation\workflow_engine.rs:66:5
+   |
+65 | struct StepResult {
+   |        ---------- fields in this struct
+66 |     success: bool,
+   |     ^^^^^^^
+67 |     output: serde_json::Value,
+   |     ^^^^^^
+68 |     metrics: StepMetrics,
+   |     ^^^^^^^
+   |
+   = note: `StepResult` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `execution_time_ms`, `resources_modified`, `api_calls_made`, and `retry_count` are never read
+  --> src\remediation\workflow_engine.rs:73:5
+   |
+72 | struct StepMetrics {
+   |        ----------- fields in this struct
+73 |     execution_time_ms: u64,
+   |     ^^^^^^^^^^^^^^^^^
+74 |     resources_modified: usize,
+   |     ^^^^^^^^^^^^^^^^^^
+75 |     api_calls_made: usize,
+   |     ^^^^^^^^^^^^^^
+76 |     retry_count: u32,
+   |     ^^^^^^^^^^^
+   |
+   = note: `StepMetrics` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `checkpoint_id`, `step_id`, `timestamp`, `state_snapshot`, and `can_rollback` are never read
+  --> src\remediation\workflow_engine.rs:81:5
+   |
+80 | struct Checkpoint {
+   |        ---------- fields in this struct
+81 |     checkpoint_id: Uuid,
+   |     ^^^^^^^^^^^^^
+82 |     step_id: String,
+   |     ^^^^^^^
+83 |     timestamp: DateTime<Utc>,
+   |     ^^^^^^^^^
+84 |     state_snapshot: serde_json::Value,
+   |     ^^^^^^^^^^^^^^
+85 |     can_rollback: bool,
+   |     ^^^^^^^^^^^^
+   |
+   = note: `Checkpoint` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `variables`, `resource_states`, `policy_states`, and `azure_context` are never read
+  --> src\remediation\workflow_engine.rs:90:5
+   |
+89 | struct ExecutionContext {
+   |        ---------------- fields in this struct
+90 |     variables: HashMap<String, serde_json::Value>,
+   |     ^^^^^^^^^
+91 |     resource_states: HashMap<String, serde_json::Value>,
+   |     ^^^^^^^^^^^^^^^
+92 |     policy_states: HashMap<String, PolicyState>,
+   |     ^^^^^^^^^^^^^
+93 |     azure_context: AzureContext,
+   |     ^^^^^^^^^^^^^
+   |
+   = note: `ExecutionContext` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `policy_id`, `compliance_state`, `last_evaluated`, and `violations` are never read
+   --> src\remediation\workflow_engine.rs:98:5
+    |
+97  | struct PolicyState {
+    |        ----------- fields in this struct
+98  |     policy_id: String,
+    |     ^^^^^^^^^
+99  |     compliance_state: String,
+    |     ^^^^^^^^^^^^^^^^
+100 |     last_evaluated: DateTime<Utc>,
+    |     ^^^^^^^^^^^^^^
+101 |     violations: Vec<String>,
+    |     ^^^^^^^^^^
+    |
+    = note: `PolicyState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `subscription_id`, `resource_group`, `tenant_id`, and `client_id` are never read
+   --> src\remediation\workflow_engine.rs:106:5
+    |
+105 | struct AzureContext {
+    |        ------------ fields in this struct
+106 |     subscription_id: String,
+    |     ^^^^^^^^^^^^^^^
+107 |     resource_group: Option<String>,
+    |     ^^^^^^^^^^^^^^
+108 |     tenant_id: String,
+    |     ^^^^^^^^^
+109 |     client_id: String,
+    |     ^^^^^^^^^
+    |
+    = note: `AzureContext` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `pending_approvals` and `approval_history` are never read
+   --> src\remediation\workflow_engine.rs:113:5
+    |
+112 | struct ApprovalManager {
+    |        --------------- fields in this struct
+113 |     pending_approvals: Arc<RwLock<HashMap<String, PendingApproval>>>,
+    |     ^^^^^^^^^^^^^^^^^
+114 |     approval_history: Arc<RwLock<Vec<ApprovalRecord>>>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: fields `approval_id`, `gate`, `requested_at`, `expires_at`, and `approvers_responded` are never read
+   --> src\remediation\workflow_engine.rs:118:5
+    |
+117 | struct PendingApproval {
+    |        --------------- fields in this struct
+118 |     approval_id: String,
+    |     ^^^^^^^^^^^
+119 |     gate: ApprovalGate,
+    |     ^^^^
+120 |     requested_at: DateTime<Utc>,
+    |     ^^^^^^^^^^^^
+121 |     expires_at: DateTime<Utc>,
+    |     ^^^^^^^^^^
+122 |     approvers_responded: HashMap<String, ApprovalResponse>,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: fields `approver`, `decision`, `responded_at`, and `comments` are never read
+   --> src\remediation\workflow_engine.rs:127:5
+    |
+126 | struct ApprovalResponse {
+    |        ---------------- fields in this struct
+127 |     approver: String,
+    |     ^^^^^^^^
+128 |     decision: ApprovalDecision,
+    |     ^^^^^^^^
+129 |     responded_at: DateTime<Utc>,
+    |     ^^^^^^^^^^^^
+130 |     comments: Option<String>,
+    |     ^^^^^^^^
+    |
+    = note: `ApprovalResponse` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: variants `Approved`, `Rejected`, and `Deferred` are never constructed
+   --> src\remediation\workflow_engine.rs:135:5
+    |
+134 | enum ApprovalDecision {
+    |      ---------------- variants in this enum
+135 |     Approved,
+    |     ^^^^^^^^
+136 |     Rejected,
+    |     ^^^^^^^^
+137 |     Deferred,
+    |     ^^^^^^^^
+    |
+    = note: `ApprovalDecision` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `approval_id`, `workflow_id`, `gate_id`, `outcome`, and `completed_at` are never read
+   --> src\remediation\workflow_engine.rs:142:5
+    |
+141 | struct ApprovalRecord {
+    |        -------------- fields in this struct
+142 |     approval_id: String,
+    |     ^^^^^^^^^^^
+143 |     workflow_id: Uuid,
+    |     ^^^^^^^^^^^
+144 |     gate_id: String,
+    |     ^^^^^^^
+145 |     outcome: ApprovalOutcome,
+    |     ^^^^^^^
+146 |     completed_at: DateTime<Utc>,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `ApprovalRecord` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: variants `Approved`, `Rejected`, `TimedOut`, and `AutoApproved` are never constructed
+   --> src\remediation\workflow_engine.rs:151:5
+    |
+150 | enum ApprovalOutcome {
+    |      --------------- variants in this enum
+151 |     Approved,
+    |     ^^^^^^^^
+152 |     Rejected,
+    |     ^^^^^^^^
+153 |     TimedOut,
+    |     ^^^^^^^^
+154 |     AutoApproved,
+    |     ^^^^^^^^^^^^
+    |
+    = note: `ApprovalOutcome` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `rollback_points` and `rollback_history` are never read
+   --> src\remediation\workflow_engine.rs:158:5
+    |
+157 | struct RollbackManager {
+    |        --------------- fields in this struct
+158 |     rollback_points: Arc<RwLock<HashMap<String, RollbackPoint>>>,
+    |     ^^^^^^^^^^^^^^^
+159 |     rollback_history: Arc<RwLock<Vec<RollbackRecord>>>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: fields `token`, `workflow_id`, `checkpoint`, `created_at`, `expires_at`, and `rollback_steps` are never read
+   --> src\remediation\workflow_engine.rs:163:5
+    |
+162 | struct RollbackPoint {
+    |        ------------- fields in this struct
+163 |     token: String,
+    |     ^^^^^
+164 |     workflow_id: Uuid,
+    |     ^^^^^^^^^^^
+165 |     checkpoint: Checkpoint,
+    |     ^^^^^^^^^^
+166 |     created_at: DateTime<Utc>,
+    |     ^^^^^^^^^^
+167 |     expires_at: DateTime<Utc>,
+    |     ^^^^^^^^^^
+168 |     rollback_steps: Vec<RollbackStep>,
+    |     ^^^^^^^^^^^^^^
+
+warning: fields `step_id`, `action`, `resource_id`, and `original_state` are never read
+   --> src\remediation\workflow_engine.rs:172:5
+    |
+171 | struct RollbackStep {
+    |        ------------ fields in this struct
+172 |     step_id: String,
+    |     ^^^^^^^
+173 |     action: RollbackAction,
+    |     ^^^^^^
+174 |     resource_id: String,
+    |     ^^^^^^^^^^^
+175 |     original_state: serde_json::Value,
+    |     ^^^^^^^^^^^^^^
+
+warning: variants `RestoreConfiguration`, `DeleteResource`, `RevertPolicyAssignment`, `RestoreAccessControl`, and `Custom` are never constructed
+   --> src\remediation\workflow_engine.rs:179:5
+    |
+178 | enum RollbackAction {
+    |      -------------- variants in this enum
+179 |     RestoreConfiguration,
+    |     ^^^^^^^^^^^^^^^^^^^^
+180 |     DeleteResource,
+    |     ^^^^^^^^^^^^^^
+181 |     RevertPolicyAssignment,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+182 |     RestoreAccessControl,
+    |     ^^^^^^^^^^^^^^^^^^^^
+183 |     Custom(String),
+    |     ^^^^^^
+
+warning: multiple fields are never read
+   --> src\remediation\workflow_engine.rs:187:5
+    |
+186 | struct RollbackRecord {
+    |        -------------- fields in this struct
+187 |     rollback_id: Uuid,
+    |     ^^^^^^^^^^^
+188 |     workflow_id: Uuid,
+    |     ^^^^^^^^^^^
+189 |     initiated_at: DateTime<Utc>,
+    |     ^^^^^^^^^^^^
+190 |     completed_at: Option<DateTime<Utc>>,
+    |     ^^^^^^^^^^^^
+191 |     success: bool,
+    |     ^^^^^^^
+192 |     steps_rolled_back: usize,
+    |     ^^^^^^^^^^^^^^^^^
+193 |     error: Option<String>,
+    |     ^^^^^
+
+warning: fields `email_client`, `teams_client`, and `slack_client` are never read
+   --> src\remediation\approval_manager.rs:223:5
+    |
+222 | pub struct NotificationService {
+    |            ------------------- fields in this struct
+223 |     email_client: Option<EmailClient>,
+    |     ^^^^^^^^^^^^
+224 |     teams_client: Option<TeamsClient>,
+    |     ^^^^^^^^^^^^
+225 |     slack_client: Option<SlackClient>,
+    |     ^^^^^^^^^^^^
+
+warning: method `get_snapshots` is never used
+   --> src\remediation\rollback_manager.rs:446:14
+    |
+434 | impl SnapshotStore {
+    | ------------------ method in this implementation
+...
+446 |     async fn get_snapshots(&self, token: &str) -> Result<Vec<ResourceSnapshot>, String> {
+    |              ^^^^^^^^^^^^^
+
+warning: field `patterns` is never read
+   --> src\remediation\bulk_remediation.rs:382:5
+    |
+381 | pub struct PatternAnalyzer {
+    |            --------------- field in this struct
+382 |     patterns: Arc<RwLock<HashMap<String, String>>>,
+    |     ^^^^^^^^
+
+warning: field `azure_client` is never read
+  --> src\remediation\validation_engine.rs:23:5
+   |
+22 | pub struct ValidationEngine {
+   |            ---------------- field in this struct
+23 |     azure_client: Arc<AsyncAzureClient>,
+   |     ^^^^^^^^^^^^
+   |
+   = note: `ValidationEngine` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: fields `dependency_graph` and `resource_registry` are never read
+   --> src\remediation\validation_engine.rs:299:5
+    |
+298 | pub struct DependencyChecker {
+    |            ----------------- fields in this struct
+299 |     dependency_graph: petgraph::Graph<String, DependencyRelation>,
+    |     ^^^^^^^^^^^^^^^^
+300 |     resource_registry: HashMap<String, ResourceInfo>,
+    |     ^^^^^^^^^^^^^^^^^
+    |
+    = note: `DependencyChecker` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: function `mock_azure_result` is never used
+  --> src\api\dashboard.rs:18:10
+   |
+18 | async fn mock_azure_result<T>() -> Result<T> where T: Default {
+   |          ^^^^^^^^^^^^^^^^^
+
+warning: function `mock_azure_result` is never used
+  --> src\api\governance.rs:16:10
+   |
+16 | async fn mock_azure_result<T>() -> anyhow::Result<T> where T: Default {
+   |          ^^^^^^^^^^^^^^^^^
+
+warning: fields `azure_client`, `models`, `violation_history`, and `pattern_cache` are never read
+  --> src\ml\predictive_compliance.rs:16:5
+   |
+15 | pub struct PredictiveComplianceEngine {
+   |            -------------------------- fields in this struct
+16 |     azure_client: AzureClient,
+   |     ^^^^^^^^^^^^
+17 |     models: HashMap<String, Box<dyn PredictiveModel + Send + Sync>>,
+   |     ^^^^^^
+18 |     violation_history: Vec<ViolationHistory>,
+   |     ^^^^^^^^^^^^^^^^^
+19 |     pattern_cache: HashMap<String, PatternSignature>,
+   |     ^^^^^^^^^^^^^
+
+warning: field `historical_data` is never read
+  --> src\ml\risk_scoring.rs:16:5
+   |
+13 | pub struct RiskScoringEngine {
+   |            ----------------- field in this struct
+...
+16 |     historical_data: HashMap<String, Vec<RiskEvent>>,
+   |     ^^^^^^^^^^^^^^^
+
+warning: field `time_decay_factor` is never read
+  --> src\ml\risk_scoring.rs:25:5
+   |
+20 | struct RiskWeights {
+   |        ----------- field in this struct
+...
+25 |     time_decay_factor: f64,
+   |     ^^^^^^^^^^^^^^^^^
+   |
+   = note: `RiskWeights` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `low` is never read
+  --> src\ml\risk_scoring.rs:33:5
+   |
+29 | struct RiskThresholds {
+   |        -------------- field in this struct
+...
+33 |     low: f64,
+   |     ^^^
+   |
+   = note: `RiskThresholds` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `sensitivity` is never read
+  --> src\ml\pattern_analysis.rs:57:5
+   |
+56 | struct AnomalyDetector {
+   |        --------------- field in this struct
+57 |     sensitivity: f64,
+   |     ^^^^^^^^^^^
+
+warning: field `knowledge_base` is never read
+  --> src\ml\natural_language.rs:22:5
+   |
+17 | pub struct NaturalLanguageEngine {
+   |            --------------------- field in this struct
+...
+22 |     knowledge_base: GovernanceKnowledgeBase,
+   |     ^^^^^^^^^^^^^^
+
+warning: field `patterns` is never read
+   --> src\ml\natural_language.rs:149:5
+    |
+148 | struct EntityExtractor {
+    |        --------------- field in this struct
+149 |     patterns: HashMap<EntityType, Vec<String>>,
+    |     ^^^^^^^^
+
+warning: fields `concepts`, `policies`, `best_practices`, and `compliance_mappings` are never read
+   --> src\ml\natural_language.rs:177:5
+    |
+176 | struct GovernanceKnowledgeBase {
+    |        ----------------------- fields in this struct
+177 |     concepts: HashMap<String, ConceptDefinition>,
+    |     ^^^^^^^^
+178 |     policies: HashMap<String, PolicyInfo>,
+    |     ^^^^^^^^
+179 |     best_practices: Vec<BestPractice>,
+    |     ^^^^^^^^^^^^^^
+180 |     compliance_mappings: HashMap<String, Vec<String>>,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: fields `layer_type`, `weights`, `biases`, and `activation` are never read
+  --> src\ml\graph_neural_network.rs:76:5
+   |
+75 | struct GraphLayer {
+   |        ---------- fields in this struct
+76 |     layer_type: LayerType,
+   |     ^^^^^^^^^^
+77 |     weights: Vec<Vec<f64>>,
+   |     ^^^^^^^
+78 |     biases: Vec<f64>,
+   |     ^^^^^^
+79 |     activation: ActivationFunction,
+   |     ^^^^^^^^^^
+   |
+   = note: `GraphLayer` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: variants `Tanh` and `Softmax` are never constructed
+  --> src\ml\graph_neural_network.rs:94:5
+   |
+91 | enum ActivationFunction {
+   |      ------------------ variants in this enum
+...
+94 |     Tanh,
+   |     ^^^^
+95 |     Softmax,
+   |     ^^^^^^^
+   |
+   = note: `ActivationFunction` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `known_patterns`, `pattern_history`, and `ml_model` are never read
+   --> src\ml\correlation_engine.rs:101:5
+    |
+100 | struct PatternDetector {
+    |        --------------- fields in this struct
+101 |     known_patterns: HashMap<String, PatternTemplate>,
+    |     ^^^^^^^^^^^^^^
+102 |     pattern_history: Vec<DetectedPattern>,
+    |     ^^^^^^^^^^^^^^^
+103 |     ml_model: PatternMLModel,
+    |     ^^^^^^^^
+
+warning: fields `pattern_id`, `pattern_type`, `detection_rules`, and `min_confidence` are never read
+   --> src\ml\correlation_engine.rs:107:5
+    |
+106 | struct PatternTemplate {
+    |        --------------- fields in this struct
+107 |     pattern_id: String,
+    |     ^^^^^^^^^^
+108 |     pattern_type: PatternType,
+    |     ^^^^^^^^^^^^
+109 |     detection_rules: Vec<DetectionRule>,
+    |     ^^^^^^^^^^^^^^^
+110 |     min_confidence: f64,
+    |     ^^^^^^^^^^^^^^
+
+warning: fields `rule_type`, `condition`, and `weight` are never read
+   --> src\ml\correlation_engine.rs:114:5
+    |
+113 | struct DetectionRule {
+    |        ------------- fields in this struct
+114 |     rule_type: String,
+    |     ^^^^^^^^^
+115 |     condition: String,
+    |     ^^^^^^^^^
+116 |     weight: f64,
+    |     ^^^^^^
+
+warning: fields `pattern`, `detection_time`, and `matched_template` are never read
+   --> src\ml\correlation_engine.rs:120:5
+    |
+119 | struct DetectedPattern {
+    |        --------------- fields in this struct
+120 |     pattern: CorrelationPattern,
+    |     ^^^^^^^
+121 |     detection_time: DateTime<Utc>,
+    |     ^^^^^^^^^^^^^^
+122 |     matched_template: String,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: fields `weights`, `biases`, and `threshold` are never read
+   --> src\ml\correlation_engine.rs:126:5
+    |
+125 | struct PatternMLModel {
+    |        -------------- fields in this struct
+126 |     weights: Vec<Vec<f64>>,
+    |     ^^^^^^^
+127 |     biases: Vec<f64>,
+    |     ^^^^^^
+128 |     threshold: f64,
+    |     ^^^^^^^^^
+
+warning: fields `baseline_metrics`, `anomaly_threshold`, and `ml_detector` are never read
+   --> src\ml\correlation_engine.rs:132:5
+    |
+131 | struct AnomalyDetector {
+    |        --------------- fields in this struct
+132 |     baseline_metrics: HashMap<String, BaselineMetric>,
+    |     ^^^^^^^^^^^^^^^^
+133 |     anomaly_threshold: f64,
+    |     ^^^^^^^^^^^^^^^^^
+134 |     ml_detector: AnomalyMLModel,
+    |     ^^^^^^^^^^^
+
+warning: fields `resource_id`, `metric_name`, `mean`, `std_dev`, and `last_updated` are never read
+   --> src\ml\correlation_engine.rs:138:5
+    |
+137 | struct BaselineMetric {
+    |        -------------- fields in this struct
+138 |     resource_id: String,
+    |     ^^^^^^^^^^^
+139 |     metric_name: String,
+    |     ^^^^^^^^^^^
+140 |     mean: f64,
+    |     ^^^^
+141 |     std_dev: f64,
+    |     ^^^^^^^
+142 |     last_updated: DateTime<Utc>,
+    |     ^^^^^^^^^^^^
+
+warning: fields `isolation_forest` and `autoencoder` are never read
+   --> src\ml\correlation_engine.rs:146:5
+    |
+145 | struct AnomalyMLModel {
+    |        -------------- fields in this struct
+146 |     isolation_forest: IsolationForest,
+    |     ^^^^^^^^^^^^^^^^
+147 |     autoencoder: Autoencoder,
+    |     ^^^^^^^^^^^
+
+warning: fields `trees` and `sample_size` are never read
+   --> src\ml\correlation_engine.rs:151:5
+    |
+150 | struct IsolationForest {
+    |        --------------- fields in this struct
+151 |     trees: Vec<IsolationTree>,
+    |     ^^^^^
+152 |     sample_size: usize,
+    |     ^^^^^^^^^^^
+
+warning: fields `root` and `max_depth` are never read
+   --> src\ml\correlation_engine.rs:156:5
+    |
+155 | struct IsolationTree {
+    |        ------------- fields in this struct
+156 |     root: TreeNode,
+    |     ^^^^
+157 |     max_depth: usize,
+    |     ^^^^^^^^^
+
+warning: fields `split_feature`, `split_value`, `left`, and `right` are never read
+   --> src\ml\correlation_engine.rs:161:5
+    |
+160 | struct TreeNode {
+    |        -------- fields in this struct
+161 |     split_feature: usize,
+    |     ^^^^^^^^^^^^^
+162 |     split_value: f64,
+    |     ^^^^^^^^^^^
+163 |     left: Option<Box<TreeNode>>,
+    |     ^^^^
+164 |     right: Option<Box<TreeNode>>,
+    |     ^^^^^
+
+warning: fields `encoder_weights`, `decoder_weights`, and `latent_dim` are never read
+   --> src\ml\correlation_engine.rs:168:5
+    |
+167 | struct Autoencoder {
+    |        ----------- fields in this struct
+168 |     encoder_weights: Vec<Vec<f64>>,
+    |     ^^^^^^^^^^^^^^^
+169 |     decoder_weights: Vec<Vec<f64>>,
+    |     ^^^^^^^^^^^^^^^
+170 |     latent_dim: usize,
+    |     ^^^^^^^^^^
+
+warning: field `processing_interval` is never read
+   --> src\ml\correlation_engine.rs:175:5
+    |
+173 | struct RealTimeProcessor {
+    |        ----------------- field in this struct
+174 |     event_buffer: Arc<RwLock<Vec<GovernanceEvent>>>,
+175 |     processing_interval: Duration,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: field `explanation_templates` is never read
+  --> src\ml\explainability.rs:21:5
+   |
+18 | pub struct PredictionExplainer {
+   |            ------------------- field in this struct
+...
+21 |     explanation_templates: HashMap<String, String>,
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `pattern_matchers` is never read
+  --> src\ml\pattern_library.rs:19:5
+   |
+17 | pub struct ViolationPatternLibrary {
+   |            ----------------------- field in this struct
+18 |     patterns: HashMap<String, ViolationPattern>,
+19 |     pattern_matchers: Vec<Box<dyn PatternMatcher>>,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: field `resource_models` is never read
+  --> src\ml\cost_prediction.rs:21:5
+   |
+17 | pub struct CostPredictionModel {
+   |            ------------------- field in this struct
+...
+21 |     resource_models: HashMap<String, ResourceCostModel>,
+   |     ^^^^^^^^^^^^^^^
+
+warning: fields `resource_type`, `pricing_model`, and `usage_patterns` are never read
+   --> src\ml\cost_prediction.rs:236:5
+    |
+235 | pub struct ResourceCostModel {
+    |            ----------------- fields in this struct
+236 |     resource_type: String,
+    |     ^^^^^^^^^^^^^
+237 |     pricing_model: PricingModel,
+    |     ^^^^^^^^^^^^^
+238 |     usage_patterns: UsagePattern,
+    |     ^^^^^^^^^^^^^^
+
+warning: fields `num_trees`, `sample_size`, and `trees` are never read
+   --> src\ml\anomaly_detection.rs:149:5
+    |
+148 | pub struct IsolationForest {
+    |            --------------- fields in this struct
+149 |     num_trees: usize,
+    |     ^^^^^^^^^
+150 |     sample_size: usize,
+    |     ^^^^^^^^^^^
+151 |     trees: Vec<IsolationTree>,
+    |     ^^^^^
+
+warning: fields `split_feature`, `split_value`, `left`, and `right` are never read
+   --> src\ml\anomaly_detection.rs:180:5
+    |
+179 | struct IsolationTree {
+    |        ------------- fields in this struct
+180 |     split_feature: usize,
+    |     ^^^^^^^^^^^^^
+181 |     split_value: f64,
+    |     ^^^^^^^^^^^
+182 |     left: Option<Box<IsolationTree>>,
+    |     ^^^^
+183 |     right: Option<Box<IsolationTree>>,
+    |     ^^^^^
+
+warning: field `name` is never read
+   --> src\ml\anomaly_detection.rs:301:5
+    |
+300 | struct Pattern {
+    |        ------- field in this struct
+301 |     name: String,
+    |     ^^^^
+
+warning: field `policies` is never read
+  --> src\ml\entity_extractor.rs:51:5
+   |
+47 | pub struct EntityExtractor {
+   |            --------------- field in this struct
+...
+51 |     policies: Vec<String>,
+   |     ^^^^^^^^
+
+warning: struct `HttpResponse` is never constructed
+   --> src\governance\resource_graph.rs:591:8
+    |
+591 | struct HttpResponse {
+    |        ^^^^^^^^^^^^
+
+warning: field `azure_client` is never read
+  --> src\governance\identity.rs:20:5
+   |
+19 | pub struct IdentityGovernanceClient {
+   |            ------------------------ field in this struct
+20 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+
+warning: field `azure_client` is never read
+  --> src\governance\monitoring.rs:20:5
+   |
+19 | pub struct GovernanceMonitor {
+   |            ----------------- field in this struct
+20 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+
+warning: field `azure_client` is never read
+  --> src\governance\cost_management.rs:21:5
+   |
+20 | pub struct CostGovernanceEngine {
+   |            -------------------- field in this struct
+21 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+
+warning: field `alert_thresholds` is never read
+   --> src\governance\cost_management.rs:322:5
+    |
+321 | pub struct BudgetMonitor {
+    |            ------------- field in this struct
+322 |     alert_thresholds: Vec<f64>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: field `historical_periods` is never read
+   --> src\governance\cost_management.rs:344:5
+    |
+343 | pub struct ForecastEngine {
+    |            -------------- field in this struct
+344 |     historical_periods: u32,
+    |     ^^^^^^^^^^^^^^^^^^
+
+warning: field `savings_thresholds` is never read
+   --> src\governance\cost_management.rs:400:5
+    |
+399 | pub struct OptimizationAnalyzer {
+    |            -------------------- field in this struct
+400 |     savings_thresholds: HashMap<OptimizationType, f64>,
+    |     ^^^^^^^^^^^^^^^^^^
+
+warning: field `azure_client` is never read
+  --> src\governance\security_posture.rs:21:5
+   |
+20 | pub struct SecurityPostureEngine {
+   |            --------------------- field in this struct
+21 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+
+warning: field `ml_models` is never read
+   --> src\governance\security_posture.rs:314:5
+    |
+312 | pub struct ThreatDetector {
+    |            -------------- field in this struct
+313 |     alert_rules: Vec<ThreatRule>,
+314 |     ml_models: HashMap<String, ThreatModel>,
+    |     ^^^^^^^^^
+
+warning: field `assessment_cache` is never read
+   --> src\governance\security_posture.rs:338:5
+    |
+336 | pub struct ComplianceMonitor {
+    |            ----------------- field in this struct
+337 |     frameworks: Vec<String>,
+338 |     assessment_cache: HashMap<String, DateTime<Utc>>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: fields `scan_frequency`, `last_scan`, and `vulnerability_database` are never read
+   --> src\governance\security_posture.rs:343:5
+    |
+342 | pub struct VulnerabilityScanner {
+    |            -------------------- fields in this struct
+343 |     scan_frequency: Duration,
+    |     ^^^^^^^^^^^^^^
+344 |     last_scan: HashMap<String, DateTime<Utc>>,
+    |     ^^^^^^^^^
+345 |     vulnerability_database: HashMap<String, VulnerabilityData>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: fields `azure_client` and `identity_tracker` are never read
+  --> src\governance\access_control.rs:21:5
+   |
+20 | pub struct AccessGovernanceEngine {
+   |            ---------------------- fields in this struct
+21 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+...
+25 |     identity_tracker: IdentityTracker,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: field `role_relationships` is never read
+   --> src\governance\access_control.rs:336:5
+    |
+334 | pub struct RoleAnalyzer {
+    |            ------------ field in this struct
+335 |     privilege_matrix: HashMap<String, PrivilegeLevel>,
+336 |     role_relationships: HashMap<String, Vec<String>>,
+    |     ^^^^^^^^^^^^^^^^^^
+
+warning: field `baseline_permissions` is never read
+   --> src\governance\access_control.rs:342:5
+    |
+340 | pub struct PermissionMonitor {
+    |            ----------------- field in this struct
+341 |     permission_usage_tracking: HashMap<String, PermissionUsage>,
+342 |     baseline_permissions: HashMap<String, Vec<String>>,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: field `identity_cache` is never read
+   --> src\governance\access_control.rs:355:5
+    |
+354 | pub struct IdentityTracker {
+    |            --------------- field in this struct
+355 |     identity_cache: HashMap<String, IdentityInfo>,
+    |     ^^^^^^^^^^^^^^
+
+warning: fields `azure_client` and `vnet_manager` are never read
+  --> src\governance\network.rs:22:5
+   |
+21 | pub struct NetworkGovernanceEngine {
+   |            ----------------------- fields in this struct
+22 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+...
+26 |     vnet_manager: VNetManager,
+   |     ^^^^^^^^^^^^
+
+warning: field `rule_patterns` is never read
+   --> src\governance\network.rs:517:5
+    |
+516 | pub struct NetworkSecurityAnalyzer {
+    |            ----------------------- field in this struct
+517 |     rule_patterns: HashMap<String, SecurityRiskLevel>,
+    |     ^^^^^^^^^^^^^
+
+warning: field `traffic_patterns` is never read
+   --> src\governance\network.rs:532:5
+    |
+530 | pub struct FirewallMonitor {
+    |            --------------- field in this struct
+531 |     policy_cache: HashMap<String, FirewallPolicy>,
+532 |     traffic_patterns: HashMap<String, TrafficPattern>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: fields `peering_relationships` and `address_space_allocations` are never read
+   --> src\governance\network.rs:555:5
+    |
+554 | pub struct VNetManager {
+    |            ----------- fields in this struct
+555 |     peering_relationships: HashMap<String, Vec<String>>,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+556 |     address_space_allocations: HashMap<String, Vec<String>>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `azure_client` is never read
+  --> src\governance\optimization.rs:22:5
+   |
+21 | pub struct OptimizationEngine {
+   |            ------------------ field in this struct
+22 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+
+warning: field `reservation_opportunities` is never read
+   --> src\governance\optimization.rs:347:5
+    |
+344 | pub struct CostOptimizationAnalyzer {
+    |            ------------------------ field in this struct
+...
+347 |     reservation_opportunities: HashMap<String, ReservationOpportunity>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `bottleneck_detector` is never read
+   --> src\governance\optimization.rs:389:5
+    |
+387 | pub struct PerformanceAnalyzer {
+    |            ------------------- field in this struct
+388 |     performance_baselines: HashMap<String, PerformanceBaseline>,
+389 |     bottleneck_detector: BottleneckDetector,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: fields `cpu_threshold`, `memory_threshold`, `storage_threshold`, and `network_threshold` are never read
+   --> src\governance\optimization.rs:403:5
+    |
+402 | pub struct BottleneckDetector {
+    |            ------------------ fields in this struct
+403 |     cpu_threshold: f64,
+    |     ^^^^^^^^^^^^^
+404 |     memory_threshold: f64,
+    |     ^^^^^^^^^^^^^^^^
+405 |     storage_threshold: f64,
+    |     ^^^^^^^^^^^^^^^^^
+406 |     network_threshold: f64,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: field `vulnerability_database` is never read
+   --> src\governance\optimization.rs:412:5
+    |
+410 | pub struct SecurityOptimizer {
+    |            ----------------- field in this struct
+411 |     security_policies: HashMap<String, SecurityPolicy>,
+412 |     vulnerability_database: HashMap<String, VulnerabilityInfo>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `azure_client` is never read
+  --> src\governance\blueprints.rs:22:5
+   |
+21 | pub struct GovernanceBlueprints {
+   |            -------------------- field in this struct
+22 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+
+warning: field `parameter_validators` is never read
+   --> src\governance\blueprints.rs:718:5
+    |
+716 | pub struct BlueprintTemplateEngine {
+    |            ----------------------- field in this struct
+717 |     template_library: HashMap<String, BlueprintTemplate>,
+718 |     parameter_validators: HashMap<String, ParameterValidator>,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: field `evaluation_engine` is never read
+   --> src\governance\blueprints.rs:753:5
+    |
+751 | pub struct BlueprintComplianceMonitor {
+    |            -------------------------- field in this struct
+752 |     compliance_policies: HashMap<String, CompliancePolicy>,
+753 |     evaluation_engine: ComplianceEvaluationEngine,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: fields `deployment_history` and `performance_metrics` are never read
+   --> src\governance\blueprints.rs:798:5
+    |
+797 | pub struct DeploymentTracker {
+    |            ----------------- fields in this struct
+798 |     deployment_history: HashMap<String, Vec<DeploymentRecord>>,
+    |     ^^^^^^^^^^^^^^^^^^
+799 |     performance_metrics: HashMap<String, PerformanceMetrics>,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: field `policy_engine` is never read
+   --> src\governance\blueprints.rs:812:5
+    |
+810 | pub struct GovernanceValidator {
+    |            ------------------- field in this struct
+811 |     validation_rules: HashMap<String, GovernanceRule>,
+812 |     policy_engine: PolicyValidationEngine,
+    |     ^^^^^^^^^^^^^
+
+warning: fields `policy_definitions` and `validation_cache` are never read
+   --> src\governance\blueprints.rs:834:5
+    |
+833 | pub struct PolicyValidationEngine {
+    |            ---------------------- fields in this struct
+834 |     policy_definitions: HashMap<String, PolicyDefinition>,
+    |     ^^^^^^^^^^^^^^^^^^
+835 |     validation_cache: HashMap<String, ValidationCacheEntry>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: fields `policy_engine`, `monitoring`, and `ai_engine` are never read
+  --> src\governance\unified_api.rs:23:5
+   |
+21 | pub struct UnifiedGovernanceAPI {
+   |            -------------------- fields in this struct
+22 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
+23 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
+   |     ^^^^^^^^^^^^^
+24 |     identity: Arc<crate::governance::identity::IdentityGovernanceClient>,
+25 |     monitoring: Arc<crate::governance::monitoring::GovernanceMonitor>,
+   |     ^^^^^^^^^^
+26 |     ai_engine: Arc<crate::governance::ai::AIGovernanceEngine>,
+   |     ^^^^^^^^^
+
+warning: fields `resource_graph`, `policy_engine`, `identity`, and `monitoring` are never read
+  --> src\governance\ai\mod.rs:28:5
+   |
+27 | pub struct AIGovernanceEngine {
+   |            ------------------ fields in this struct
+28 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
+   |     ^^^^^^^^^^^^^^
+29 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
+   |     ^^^^^^^^^^^^^
+30 |     identity: Arc<crate::governance::identity::IdentityGovernanceClient>,
+   |     ^^^^^^^^
+31 |     monitoring: Arc<crate::governance::monitoring::GovernanceMonitor>,
+   |     ^^^^^^^^^^
+
+warning: fields `identity`, `monitoring`, and `context_manager` are never read
+  --> src\governance\ai\conversation.rs:21:5
+   |
+18 | pub struct ConversationalGovernance {
+   |            ------------------------ fields in this struct
+...
+21 |     identity: Arc<crate::governance::identity::IdentityGovernanceClient>,
+   |     ^^^^^^^^
+22 |     monitoring: Arc<crate::governance::monitoring::GovernanceMonitor>,
+   |     ^^^^^^^^^^
+23 |     intent_classifier: IntentClassifier,
+24 |     context_manager: ContextManager,
+   |     ^^^^^^^^^^^^^^^
+
+warning: fields `policy_engine`, `correlation_cache`, and `pattern_analyzer` are never read
+  --> src\governance\ai\correlation.rs:20:5
+   |
+18 | pub struct CrossDomainCorrelationEngine {
+   |            ---------------------------- fields in this struct
+19 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
+20 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
+   |     ^^^^^^^^^^^^^
+21 |     correlation_cache: HashMap<String, Vec<CorrelationPattern>>,
+   |     ^^^^^^^^^^^^^^^^^
+22 |     pattern_analyzer: PatternAnalyzer,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: field `correlation_rules` is never read
+  --> src\governance\ai\correlation.rs:96:5
+   |
+93 | pub struct PatternAnalyzer {
+   |            --------------- field in this struct
+...
+96 |     correlation_rules: Vec<CorrelationRule>,
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: field `policy_engine` is never read
+  --> src\governance\ai\prediction.rs:20:5
+   |
+18 | pub struct PredictiveComplianceEngine {
+   |            -------------------------- field in this struct
+19 |     resource_graph: Arc<crate::governance::resource_graph::ResourceGraphClient>,
+20 |     policy_engine: Arc<crate::governance::policy_engine::PolicyEngine>,
+   |     ^^^^^^^^^^^^^
+
+warning: fields `model_type` and `features` are never read
+  --> src\governance\ai\prediction.rs:90:5
+   |
+89 | pub struct PredictionModel {
+   |            --------------- fields in this struct
+90 |     model_type: ModelType,
+   |     ^^^^^^^^^^
+...
+93 |     features: Vec<String>,
+   |     ^^^^^^^^
+
+warning: fields `violation_history` and `resource_history` are never read
+   --> src\governance\ai\prediction.rs:107:5
+    |
+105 | pub struct HistoricalDataStore {
+    |            ------------------- fields in this struct
+106 |     compliance_history: Vec<HistoricalCompliance>,
+107 |     violation_history: Vec<HistoricalViolation>,
+    |     ^^^^^^^^^^^^^^^^^
+108 |     resource_history: Vec<HistoricalResource>,
+    |     ^^^^^^^^^^^^^^^^
+
+warning: field `confidence_threshold` is never read
+   --> src\governance\ai\prediction.rs:142:5
+    |
+139 | pub struct TrendAnalyzer {
+    |            ------------- field in this struct
+...
+142 |     confidence_threshold: f64,
+    |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: field `impact_calculator` is never read
+  --> src\correlation\cross_domain_engine.rs:22:5
+   |
+18 | pub struct CrossDomainEngine {
+   |            ----------------- field in this struct
+...
+22 |     impact_calculator: ImpactCalculator,
+   |     ^^^^^^^^^^^^^^^^^
+
+warning: fields `id`, `name`, `resource_type`, `location`, and `metadata` are never read
+   --> src\correlation\resource_mapper.rs:433:5
+    |
+432 | struct Resource {
+    |        -------- fields in this struct
+433 |     id: String,
+    |     ^^
+434 |     name: String,
+    |     ^^^^
+435 |     resource_type: String,
+    |     ^^^^^^^^^^^^^
+436 |     location: String,
+    |     ^^^^^^^^
+437 |     metadata: HashMap<String, String>,
+    |     ^^^^^^^^
+    |
+    = note: `Resource` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `domain`, `base_impact`, and `recovery_time_hours` are never read
+   --> src\correlation\impact_analyzer.rs:384:5
+    |
+383 | struct ImpactModel {
+    |        ----------- fields in this struct
+384 |     domain: String,
+    |     ^^^^^^
+385 |     base_impact: f64,
+    |     ^^^^^^^^^^^
+386 |     propagation_factor: f64,
+387 |     recovery_time_hours: u32,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: fields `name`, `source_type`, `affected_types`, and `impact_multiplier` are never read
+   --> src\correlation\impact_analyzer.rs:391:5
+    |
+390 | struct PropagationRule {
+    |        --------------- fields in this struct
+391 |     name: String,
+    |     ^^^^
+392 |     source_type: String,
+    |     ^^^^^^^^^^^
+393 |     affected_types: Vec<String>,
+    |     ^^^^^^^^^^^^^^
+394 |     impact_multiplier: f64,
+    |     ^^^^^^^^^^^^^^^^^
+
+warning: field `what_if_analyzer` is never read
+  --> src\correlation\predictive_impact_analyzer.rs:41:5
+   |
+37 | pub struct PredictiveImpactAnalyzer {
+   |            ------------------------ field in this struct
+...
+41 |     what_if_analyzer: WhatIfAnalyzer,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: field `historical_patterns` is never read
+   --> src\correlation\predictive_impact_analyzer.rs:765:5
+    |
+764 | pub struct PredictiveEngine {
+    |            ---------------- field in this struct
+765 |     historical_patterns: Vec<ImpactPattern>,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: field `scenario_templates` is never read
+   --> src\correlation\predictive_impact_analyzer.rs:812:5
+    |
+811 | pub struct WhatIfAnalyzer {
+    |            -------------- field in this struct
+812 |     scenario_templates: Vec<ScenarioTemplate>,
+    |     ^^^^^^^^^^^^^^^^^^
+
+warning: field `quantification_models` is never read
+   --> src\correlation\predictive_impact_analyzer.rs:824:5
+    |
+823 | pub struct RiskQuantifier {
+    |            -------------- field in this struct
+824 |     quantification_models: HashMap<String, QuantificationModel>,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `inference_models` is never read
+    --> src\correlation\smart_dependency_mapper.rs:1034:5
+     |
+1033 | pub struct DependencyInferenceEngine {
+     |            ------------------------- field in this struct
+1034 |     inference_models: HashMap<String, InferenceModel>,
+     |     ^^^^^^^^^^^^^^^^
+
+warning: field `network_analyzers` is never read
+    --> src\correlation\smart_dependency_mapper.rs:1054:5
+     |
+1053 | pub struct TopologyAnalyzer {
+     |            ---------------- field in this struct
+1054 |     network_analyzers: Vec<Box<dyn NetworkAnalyzer>>,
+     |     ^^^^^^^^^^^^^^^^^
+
+warning: field `prediction_models` is never read
+    --> src\correlation\smart_dependency_mapper.rs:1074:5
+     |
+1073 | pub struct DependencyPredictor {
+     |            ------------------- field in this struct
+1074 |     prediction_models: HashMap<String, PredictionModel>,
+     |     ^^^^^^^^^^^^^^^^^
+
+warning: fields `event_buffer` and `pattern_detectors` are never read
+    --> src\correlation\smart_dependency_mapper.rs:1102:5
+     |
+1101 | pub struct RealTimeDependencyTracker {
+     |            ------------------------- fields in this struct
+1102 |     event_buffer: VecDeque<ResourceEvent>,
+     |     ^^^^^^^^^^^^
+1103 |     pattern_detectors: Vec<Box<dyn PatternDetector>>,
+     |     ^^^^^^^^^^^^^^^^^
+
+warning: method `find_key` is never used
+   --> src\auth.rs:159:8
+    |
+106 | impl TokenValidator {
+    | ------------------- method in this implementation
+...
+159 |     fn find_key<'a>(&self, kid: &str, jwks: &'a JwksResponse) -> Option<&'a Jwk> {
+    |        ^^^^^^^^
+
+warning: field `config` is never read
+  --> src\azure\auth.rs:20:5
+   |
+17 | pub struct AzureAuthProvider {
+   |            ----------------- field in this struct
+...
+20 |     config: super::AzureConfig,
+   |     ^^^^^^
+   |
+   = note: `AzureAuthProvider` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: fields `id`, `name`, `resource_type`, `location`, and `tags` are never read
+  --> src\azure_client.rs:32:5
+   |
+31 | struct AzureResource {
+   |        ------------- fields in this struct
+32 |     id: String,
+   |     ^^
+33 |     name: String,
+   |     ^^^^
+34 |     #[serde(rename = "type")]
+35 |     resource_type: String,
+   |     ^^^^^^^^^^^^^
+36 |     location: String,
+   |     ^^^^^^^^
+37 |     tags: Option<serde_json::Value>,
+   |     ^^^^
+
+warning: fields `id`, `name`, `display_name`, `policy_definition_id`, and `enforcement_mode` are never read
+  --> src\azure_client.rs:42:5
+   |
+41 | struct AzurePolicyAssignment {
+   |        --------------------- fields in this struct
+42 |     id: String,
+   |     ^^
+43 |     name: String,
+   |     ^^^^
+44 |     #[serde(rename = "displayName")]
+45 |     display_name: String,
+   |     ^^^^^^^^^^^^
+46 |     #[serde(rename = "policyDefinitionId")]
+47 |     policy_definition_id: String,
+   |     ^^^^^^^^^^^^^^^^^^^^
+48 |     enforcement_mode: Option<String>,
+   |     ^^^^^^^^^^^^^^^^
+
+warning: fields `id`, `principal_id`, `role_definition_id`, and `scope` are never read
+  --> src\azure_client.rs:53:5
+   |
+52 | struct AzureRoleAssignment {
+   |        ------------------- fields in this struct
+53 |     id: String,
+   |     ^^
+54 |     #[serde(rename = "principalId")]
+55 |     principal_id: String,
+   |     ^^^^^^^^^^^^
+56 |     #[serde(rename = "roleDefinitionId")]
+57 |     role_definition_id: String,
+   |     ^^^^^^^^^^^^^^^^^^
+58 |     scope: String,
+   |     ^^^^^
+
+warning: fields `billing_period`, `usage_start`, `usage_end`, `pretax_cost`, and `currency` are never read
+  --> src\azure_client.rs:64:5
+   |
+62 | struct CostManagementUsage {
+   |        ------------------- fields in this struct
+63 |     #[serde(rename = "billingPeriod")]
+64 |     billing_period: String,
+   |     ^^^^^^^^^^^^^^
+65 |     #[serde(rename = "usageStart")]
+66 |     usage_start: DateTime<Utc>,
+   |     ^^^^^^^^^^^
+67 |     #[serde(rename = "usageEnd")]
+68 |     usage_end: DateTime<Utc>,
+   |     ^^^^^^^^^
+69 |     #[serde(rename = "pretaxCost")]
+70 |     pretax_cost: f64,
+   |     ^^^^^^^^^^^
+71 |     currency: String,
+   |     ^^^^^^^^
+
+warning: fields `azure_client` and `catalog` are never read
+  --> src\resources\manager.rs:18:5
+   |
+17 | pub struct ResourceManager {
+   |            --------------- fields in this struct
+18 |     azure_client: Arc<AzureClient>,
+   |     ^^^^^^^^^^^^
+19 |     resources: Arc<RwLock<Vec<AzureResource>>>,
+20 |     catalog: Arc<ResourceCatalog>,
+   |     ^^^^^^^
+
+warning: field `model_registry` is never read
+  --> src\resources\correlations.rs:74:5
+   |
+73 | pub struct CrossDomainCorrelationEngine {
+   |            ---------------------------- field in this struct
+74 |     model_registry: Arc<ModelRegistry>,
+   |     ^^^^^^^^^^^^^^
+
+warning: fields `vault_url` and `rotation_check_interval` are never read
+  --> src\secrets.rs:24:5
+   |
+21 | pub struct SecretsManager {
+   |            -------------- fields in this struct
+...
+24 |     vault_url: String,
+   |     ^^^^^^^^^
+25 |     cache_ttl: Duration,
+26 |     rotation_check_interval: Duration,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `SecretsManager` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: field `version` is never read
+  --> src\secrets.rs:33:5
+   |
+30 | struct CachedSecret {
+   |        ------------ field in this struct
+...
+33 |     version: Option<String>,
+   |     ^^^^^^^
+   |
+   = note: `CachedSecret` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: fields `redis_url` and `default_ttl` are never read
+  --> src\cache.rs:19:5
+   |
+18 | pub struct CacheManager {
+   |            ------------ fields in this struct
+19 |     redis_url: String,
+   |     ^^^^^^^^^
+20 |     default_ttl: Duration,
+   |     ^^^^^^^^^^^
+   |
+   = note: `CacheManager` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: field `cache` is never read
+   --> src\finops\mod.rs:150:5
+    |
+148 | pub struct AzureFinOpsEngine {
+    |            ----------------- field in this struct
+149 |     azure_client: crate::azure_client_async::AsyncAzureClient,
+150 |     cache: std::sync::Arc<tokio::sync::RwLock<HashMap<String, CachedMetrics>>>,
+    |     ^^^^^
+
+warning: fields `data` and `timestamp` are never read
+   --> src\finops\mod.rs:155:5
+    |
+154 | struct CachedMetrics {
+    |        ------------- fields in this struct
+155 |     data: Vec<u8>,
+    |     ^^^^
+156 |     timestamp: DateTime<Utc>,
+    |     ^^^^^^^^^
+    |
+    = note: `CachedMetrics` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: methods `generate_idle_recommendation`, `calculate_rightsizing`, and `find_smaller_sku` are never used
+   --> src\finops\mod.rs:211:14
+    |
+159 | impl AzureFinOpsEngine {
+    | ---------------------- methods in this implementation
+...
+211 |     async fn generate_idle_recommendation(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+351 |     fn calculate_rightsizing(&self, current: &VmSku, metrics: &ResourceMetrics) -> Option<VmSku> {
+    |        ^^^^^^^^^^^^^^^^^^^^^
+...
+462 |     fn find_smaller_sku(&self, current: &VmSku) -> Option<VmSku> {
+    |        ^^^^^^^^^^^^^^^^
+
+warning: struct `ResourceMetrics` is never constructed
+   --> src\finops\mod.rs:505:8
+    |
+505 | struct ResourceMetrics {
+    |        ^^^^^^^^^^^^^^^
+
+warning: struct `VmSku` is never constructed
+   --> src\finops\mod.rs:516:8
+    |
+516 | struct VmSku {
+    |        ^^^^^
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\remediation\mod.rs:359:5
+    |
+359 |     async fn execute(&self, request: RemediationRequest) -> Result<RemediationResult, String>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+    = note: `#[warn(async_fn_in_trait)]` on by default
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+359 -     async fn execute(&self, request: RemediationRequest) -> Result<RemediationResult, String>;
+359 +     fn execute(&self, request: RemediationRequest) -> impl std::future::Future<Output = Result<RemediationResult, String>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\remediation\mod.rs:360:5
+    |
+360 |     async fn validate(&self, request: &RemediationRequest) -> Result<bool, String>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+360 -     async fn validate(&self, request: &RemediationRequest) -> Result<bool, String>;
+360 +     fn validate(&self, request: &RemediationRequest) -> impl std::future::Future<Output = Result<bool, String>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\remediation\mod.rs:361:5
+    |
+361 |     async fn rollback(&self, rollback_token: String) -> Result<RemediationResult, String>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+361 -     async fn rollback(&self, rollback_token: String) -> Result<RemediationResult, String>;
+361 +     fn rollback(&self, rollback_token: String) -> impl std::future::Future<Output = Result<RemediationResult, String>> + Send;
+    |
+
+warning: use of `async fn` in public traits is discouraged as auto trait bounds cannot be specified
+   --> src\remediation\mod.rs:362:5
+    |
+362 |     async fn get_status(&self, request_id: Uuid) -> Result<RemediationStatus, String>;
+    |     ^^^^^
+    |
+    = note: you can suppress this lint if you plan to use the trait only in your own code, or do not care about auto traits like `Send` on the `Future`
+help: you can alternatively desugar to a normal `fn` that returns `impl Future` and add any desired bounds such as `Send`, but these cannot be relaxed without a breaking API change
+    |
+362 -     async fn get_status(&self, request_id: Uuid) -> Result<RemediationStatus, String>;
+362 +     fn get_status(&self, request_id: Uuid) -> impl std::future::Future<Output = Result<RemediationStatus, String>> + Send;
+    |
+
+warning: `policycortex-core` (lib) generated 309 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 06s
+warning: the following packages contain code that will be rejected by a future version of Rust: redis v0.24.0, sqlx-postgres v0.7.4
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 
