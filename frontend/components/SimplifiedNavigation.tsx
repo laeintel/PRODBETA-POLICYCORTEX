@@ -30,14 +30,42 @@ export default function SimplifiedNavigation() {
     }
   }, [pathname])
 
-  // Clean enterprise navigation - 7-8 core items
+  // Clean enterprise navigation - Policy elevated to #2
   const navigation = [
     {
       name: 'Home',
       href: '/tactical',
       icon: LayoutDashboard,
-      description: 'Executive dashboard with predictive insights',
+      description: 'Command center with predictive insights',
       quickStats: { compliance: '94%', risks: 3, savings: '$45K/mo' }
+    },
+    {
+      name: 'Executive',
+      href: '/executive',
+      icon: Briefcase,
+      description: 'C-suite KPIs, ROI & business intelligence',
+      highlight: true,
+      subsections: [
+        { name: 'Dashboard', href: '/executive' },
+        { name: 'ROI Analysis', href: '/executive/roi' },
+        { name: 'Risk Map', href: '/executive/risk-map' },
+        { name: 'Board Reports', href: '/executive/reports' }
+      ]
+    },
+    {
+      name: 'Policy',
+      href: '/policy',
+      icon: FileText,
+      description: 'Define, simulate, enforce, and evidence cloud guardrails',
+      highlight: true,
+      subsections: [
+        { name: 'Policy Hub', href: '/policy' },
+        { name: 'Policy Packs', href: '/policy/packs' },
+        { name: 'Composer', href: '/policy/composer' },
+        { name: 'Enforcement & Gates', href: '/policy/enforcement' },
+        { name: 'Exceptions', href: '/policy/exceptions' },
+        { name: 'Evidence & Mapping', href: '/policy/evidence' }
+      ]
     },
     {
       name: 'Audit Trail',
@@ -48,7 +76,7 @@ export default function SimplifiedNavigation() {
     },
     {
       name: 'Predict',
-      href: '/predict',
+      href: '/ai/predictions',
       icon: Brain,
       description: 'AI predictions with 7-day look-ahead',
       highlight: true
@@ -91,7 +119,7 @@ export default function SimplifiedNavigation() {
     },
     {
       name: 'DevSecOps',
-      href: '/devsecops',
+      href: '/devsecops/pipelines',
       icon: GitBranch,
       description: 'CI/CD gates, policy-as-code, auto-fix',
       subsections: [
@@ -115,11 +143,11 @@ export default function SimplifiedNavigation() {
       description: 'Experimental features',
       badge: 'Labs',
       subsections: [
+        { name: 'Blockchain Explorer', href: '/blockchain' },
         { name: 'Copilot', href: '/copilot' },
         { name: 'Cloud ITSM', href: '/itsm' },
         { name: 'Quantum-Safe', href: '/quantum' },
-        { name: 'Edge Governance', href: '/edge' },
-        { name: 'Governance Policies', href: '/governance' }
+        { name: 'Edge Governance', href: '/edge' }
       ]
     }
   ]
@@ -297,12 +325,6 @@ export default function SimplifiedNavigation() {
                           }`}
                         >
                           {sub.name}
-                          {'patent' in sub && sub.patent && (
-                            <span className="ml-2 text-xs text-purple-400">Patent {sub.patent}</span>
-                          )}
-                          {'badge' in sub && sub.badge && (
-                            <span className="ml-2 text-xs bg-orange-600 text-white px-1.5 py-0.5 rounded">{sub.badge}</span>
-                          )}
                         </Link>
                       )
                     })}
