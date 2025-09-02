@@ -3,8 +3,9 @@ import { Brain, TrendingUp, AlertTriangle, DollarSign, Shield } from 'lucide-rea
 
 async function getPredictions() {
   try {
-    // Use environment variable for base URL, fallback to empty string for same-origin requests
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
+    // For server-side rendering, we need a full URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   (typeof window === 'undefined' ? 'http://localhost:3000' : '')
     const res = await fetch(`${baseUrl}/api/v1/predictions`, {
       cache: 'no-store'
     })
