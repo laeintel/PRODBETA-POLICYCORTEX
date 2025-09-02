@@ -253,3 +253,8 @@ PolicyCortex is positioned as the **intelligent alternative** to traditional rea
 **Remember**: We don't just report problems, we prevent them. We don't just automate tasks, we eliminate them. We don't just support governance, we make it invisible.
 
 **The future of cloud governance is predictive, automated, and intelligent. The future is PolicyCortex.**
+
+---
+
+## Related
+- Value guide: `./value/README.md`

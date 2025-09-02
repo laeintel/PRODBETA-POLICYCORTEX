@@ -12,6 +12,12 @@
 - **Why now**: Azure adoption + AI-native ops; regulators and boards demand provable controls; teams must do more with less.
 - **Business value**: Fewer incidents, faster audits, lower spend, higher engineering velocity.
 
+## Core proposition: unified multi‑cloud governance (single app, single dashboard)
+- **One console, all clouds**: Aggregate and govern resources, policies, identities, and spend across clouds from a single UI and API.
+- **Federated data model**: Multi‑cloud provider abstraction feeds a consistent GraphQL and REST surface so teams don’t swivel-chair across siloed tools.
+- **Action hub**: Remediate via PRs/Terraform or direct API calls with tenant isolation and role/scope checks.
+- **Proof points (code references)**: See “Repository references” at the end for exact file paths and line anchors your writer can cite.
+
 ## The problem
 - **Fragmentation**: Security, FinOps, and platform teams use different tools that don’t agree.
 - **Noise**: High alert-to-action ratio; false positives burn cycles.
@@ -73,7 +79,7 @@ graph LR
 ## Differentiation (why we win)
 - **Cross-domain correlation**: Not another scanner—connects identity, config, runtime, and spend to calculate real risk and business impact.
 - **Explainable AI**: Human-readable rationales and remediation steps; integrates with PR workflows for trust and auditability.
-- **Azure-first depth**: Native MSAL, ACR/AKS, Terraform OIDC, Azure Policy mapping.
+- **Azure-first depth + multi‑cloud reach**: Native MSAL, ACR/AKS, Terraform OIDC, Azure Policy mapping, with provider layer for AWS/GCP expansion via the multi‑cloud subsystem.
 - **Shift-left + guardrails**: PR-based changes, infra state awareness, and rollbacks.
 - **Compliance-as-evidence**: Exportable evidence packs mapped to controls, not just dashboards.
 - **Performance & safety**: Rust core for critical logic; zero-trust session model.
@@ -112,6 +118,102 @@ graph LR
 - **Secrets**: Key Vault and GitHub OIDC (no long-lived secrets).
 - **Isolation**: Customer data stays in their Azure; images in ACR; workloads in AKS.
 - **Compliance**: Map detections to SOC2/ISO 27001/CIS; export evidence packs.
+
+## Repository references (for writers without repo access)
+Use the exact paths/anchors below when citing implementation evidence in the deck or narrative.
+
+### Authentication and route gating (UI blocked until sign‑in)
+```69:86:frontend/middleware.ts
+  // Only trust server-issued auth token presence (httpOnly). Do NOT trust client-set flags.
+  const authToken = request.cookies.get('auth-token')
+  const isAuthenticated = !!authToken
+
+  // Only allow root (login) and auth endpoints without authentication
+  if (pathname === '/' || pathname === '/login' || pathname.startsWith('/api/auth')) {
+    // If already authenticated and trying to access login pages, redirect to tactical
+```
+
+### Session cookie endpoint (sets secure httpOnly session)
+```1:18:frontend/app/api/auth/set-cookie/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function POST(req: NextRequest) {
+  const { token } = await req.json()
+  const res = NextResponse.json({ ok: true })
+  res.cookies.set({
+    name: 'auth-token',
+    value: token,
+    httpOnly: true,
+```
+
+### Multi‑cloud provider APIs (single dashboard across clouds)
+```1769:1799:backend/services/api_gateway/main.py
+@app.get("/api/v1/multi-cloud/resources")
+async def get_multi_cloud_resources(
+    provider: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Get resources from multiple cloud providers"""
+    resources = await multi_cloud_provider.get_resources(cloud_provider, resource_type)
+    return {
+        "resources": resources,
+        "total": len(resources),
+```
+
+```1827:1867:backend/services/api_gateway/main.py
+@app.get("/api/v1/multi-cloud/compliance")
+async def get_multi_cloud_compliance(
+    provider: Optional[str] = None,
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Get compliance status from multiple cloud providers"""
+    compliance = await multi_cloud_provider.get_compliance_status(cloud_provider)
+    return compliance
+```
+
+```1869:1904:backend/services/api_gateway/main.py
+@app.get("/api/v1/multi-cloud/security")
+async def get_multi_cloud_security(
+    provider: Optional[str] = None,
+    request: Request = None,
+    auth: Any = Depends(get_auth_context) if AUTH_ENHANCED else Depends(auth_dependency)
+):
+    """Get security findings from multiple cloud providers"""
+    findings = await multi_cloud_provider.get_security_findings(cloud_provider)
+    return {
+        "findings": findings,
+        "total": len(findings),
+```
+
+### GraphQL gateway (federated API surface)
+```160:185:graphql/gateway.js
+async function startGateway() {
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    csrfPrevention: isProd,
+    introspection: !isProd,
+  })
+  const { url } = await startStandaloneServer(server, { listen: { port: 4000 } })
+  console.log(`🚀 PolicyCortex GraphQL Gateway ready at ${url}`)
+}
+```
+
+### Terraform/OIDC infra pipeline (Azure‑native, keyless)
+```149:161:.github/workflows/azure-infra.yml
+      - name: Terraform Init (AzureRM backend)
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ steps.names.outputs.TFSTATE_RG }}" \
+            -backend-config="storage_account_name=${{ steps.names.outputs.TFSTATE_SA }}" \
+            -backend-config="container_name=${{ steps.names.outputs.TFSTATE_CONTAINER }}" \
+            -backend-config="key=${{ steps.names.outputs.TFSTATE_KEY }}" \
+            -backend-config="access_key=${{ steps.storage_key.outputs.STORAGE_KEY }}"
+```
+
 
 ## Roadmap (next 2–3 quarters)
 - Deeper Azure Policy graph and drift prevention

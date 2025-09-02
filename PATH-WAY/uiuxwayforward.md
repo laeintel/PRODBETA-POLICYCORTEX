@@ -1,299 +1,313 @@
-Below is an enterprise‑grade UI design spec you can hand to an AI coder. It’s grounded in your repo’s current UI and APIs, so it’s fast to implement and focuses on removing friction while showcasing your moats (predictive + tamper‑evident audit + ROI).
+What I’m delivering here
 
-0) Executive summary — The product story in the first 60 seconds
+Nav & routing fixes so Executive is the front door and Policy is first-class.
 
-What the user sees first: a clean Tactical Home with three cards (Predict → Prevent, Tamper‑Evident Audit, CFO ROI). Each card shows live numbers and a single primary action.
+Audit Trail wired to blockchain verify (per-row + full-chain + evidence export).
 
-What they can do immediately: open an audit entry, click Verify → see Merkle proof / signature valid; open a prediction, click Create Fix PR (template PR is OK on day 1); open FinOps and see savings-to-date.
+Predict page + home widget using your predictions endpoint and “Create Fix PR” action.
 
-How it feels: simple, fast, keyboard‑friendly, consistent.
+FinOps & ROI wired card + board.
 
-These are already possible with your endpoints; we’re prioritizing wiring and UX polish over net‑new scope. Your Audit Trail UI exists but runs on mock data; your predictions API and blockchain verify endpoints are implemented and ready to surface. 
- 
- 
+Policy Hub + Packs + Composer + Enforcement + Exceptions + Evidence (scaffolds you can wire incrementally).
 
-1) App shell & navigation
+Labs route-group to hide experimental areas without deleting them.
 
-Shell layout
+Omnibar & Quick Actions so core flows are 1–2 clicks.
 
-Left rail (collapsible): Core nav; Labs behind a single “Labs” entry.
+If your paths differ, keep the same structure and adjust folder names; the components are self-contained.
 
-Top bar: Environment switcher, global search/command (⌘/Ctrl‑K), user menu.
+PR-01 — Executive-first + Policy as top-level
+A) Make Executive the default landing after login
 
-Content area: Breadcrumbs → Page title → Primary actions → Content.
+File: frontend/middleware.ts
 
-Core nav (order + labels)
+- const DEFAULT_APP_ROUTE = '/tactical'
++ const DEFAULT_APP_ROUTE = '/executive'
 
-Home (Tactical) → /tactical
+B) Centralize nav (clean order + labels)
 
-Audit Trail → /audit (tamper‑evident first)
+ADD: frontend/config/navigation.ts
 
-Predict → /ai/predictions (list + detail)
+export type NavItem = { label: string; href: string; badge?: 'Beta'|'Labs' }
 
-FinOps → /finops (ROI, anomalies, forecasts)
+export const CORE: NavItem[] = [
+  { label: 'Executive', href: '/executive' },
+  { label: 'Policy', href: '/policy' },
+  { label: 'Audit Trail', href: '/audit' },
+  { label: 'Predict', href: '/ai/predictions' },
+  { label: 'FinOps & ROI', href: '/finops' },
+  { label: 'Access Governance', href: '/rbac' },
+  { label: 'Resources', href: '/resources' },
+  { label: 'DevSecOps', href: '/devsecops/pipelines' },
+  { label: 'Settings', href: '/settings' },
+]
 
-RBAC → /rbac
+export const LABS: NavItem[] = [
+  { label: 'Blockchain Explorer', href: '/blockchain', badge: 'Labs' },
+  { label: 'Copilot', href: '/copilot', badge: 'Labs' },
+  { label: 'Cloud ITSM', href: '/itsm', badge: 'Labs' },
+  { label: 'Quantum-Safe', href: '/quantum', badge: 'Labs' },
+  { label: 'Edge Governance', href: '/edge', badge: 'Labs' },
+]
 
-Resources → /resources
+C) Render that nav
 
-DevSecOps → /devsecops/pipelines
+File: frontend/components/SimplifiedNavigation.tsx
 
-Labs menu (single collapsed entry)
+- // Existing hard-coded items ...
++ import { CORE, LABS } from '@/config/navigation'
++ // Render CORE in order, then one “Labs” group that expands to LABS
 
-Blockchain Explorer, Copilot, Quantum, Edge (migrate Blockchain to Core once fully wired).
-Use a route group (labs) for noindex + visual flagging. (Your middleware already enforces auth across app pages and /api/v1/*.) 
 
-2) Page blueprints (what to build & how it should behave)
-A) Home / Tactical (/tactical)
+(Keep your existing icon set; only swap the data source to CORE/LABS.)
 
-Goal: A CFO/CISO sees value in <60s.
+PR-02 — Move experiments to Labs (noindex)
 
-Hero row (3 cards):
+ADD: frontend/app/(labs)/layout.tsx
 
-Predict → Prevent: GET /api/v1/predictions
+export const metadata = { robots: { index: false, follow: true } }
+export default function LabsLayout({ children }: { children: React.ReactNode }) {
+  return <div data-section="labs">{children}</div>
+}
 
-KPI chips: Active, ETA soon, model version, precision/recall. Primary action: View Predictions → detail page. 
 
-Tamper‑Evident Audit: GET /api/v1/blockchain/verify
+Move directories (no URL change): put /copilot, /quantum, /edge, /blockchain under app/(labs)/….
+(Blockchain Explorer stays in Labs until Audit Trail has full verify & export—in PR-03 we add that.)
 
-Status: Integrity OK (green) or Tampering detected (red). Primary: Open Audit Trail. 
+PR-03 — Audit Trail → live blockchain verify + evidence export
+A) Replace mock list with real fetch
 
-CFO ROI: /api/v1/executive/roi (backend)
+File: frontend/app/audit/page.tsx
 
-KPIs: Savings this quarter and Risk avoided. Primary: Open FinOps. (Your frontend already references FinOps/Predictions routes.) 
+- const [rows, setRows] = useState<AuditRow[]>(MOCK_ROWS)
+- useEffect(() => { setTimeout(() => setRows(generateMock()), 600) }, [])
++ const [rows, setRows] = useState<AuditRow[]>([])
++ useEffect(() => {
++   fetch('/api/v1/blockchain/audit', { cache: 'no-store' })
++     .then(r => r.json())
++     .then(setRows)
++     .catch(console.error)
++ }, [])
 
-Secondary row: “Recent Activity” (audit timeline preview), “Open PRs from Auto‑Fix,” and “Upcoming Audits”.
+B) Per-row Verify action + integrity chip
 
-B) Audit Trail (/audit)
+File: frontend/app/audit/components/AuditTable.tsx
 
-You already have a rich Audit Trail page with filters, timeline/table views, stats — replace mocks with APIs and add Verify. 
++ async function verifyHash(hash: string) {
++   const r = await fetch(`/api/v1/blockchain/verify?hash=${encodeURIComponent(hash)}`, { cache: 'no-store' })
++   return r.json() as Promise<{ chain_integrity: boolean; merkle_proof_valid: boolean; signature_valid: boolean }>
++ }
+...
+- <Badge variant="outline">Unknown</Badge>
++ <IntegrityChip verify={() => verifyHash(row.hash)} />
+
+
+ADD: frontend/components/IntegrityChip.tsx
+
+export function IntegrityChip({ verify }: { verify: () => Promise<{chain_integrity:boolean; merkle_proof_valid:boolean; signature_valid:boolean}> }) {
+  const [state, setState] = useState<'idle'|'ok'|'fail'|'checking'>('idle')
+  useEffect(() => { setState('checking'); verify().then(v => setState(v.chain_integrity && v.merkle_proof_valid && v.signature_valid ? 'ok' : 'fail')).catch(() => setState('fail')) }, [])
+  const cls = state==='ok' ? 'bg-emerald-100 text-emerald-700' : state==='fail' ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-700'
+  const label = state==='ok' ? 'Integrity OK' : state==='fail' ? 'Integrity FAIL' : 'Checking…'
+  return <span className={`rounded-full px-2 py-0.5 text-xs ${cls}`}>{label}</span>
+}
+
+C) Full-chain verify banner + export
+
+File: frontend/app/audit/page.tsx
+
++ const [chainStatus, setChainStatus] = useState<'checking'|'ok'|'fail'>('checking')
++ async function verifyChain() {
++   setChainStatus('checking')
++   const r = await fetch('/api/v1/blockchain/verify', { cache: 'no-store' })
++   const v = await r.json()
++   setChainStatus(v.chain_integrity ? 'ok' : 'fail')
++ }
++ useEffect(() => { verifyChain() }, [])
+...
++ <div className="flex items-center justify-between mb-3">
++   <div className="text-sm">
++     {chainStatus==='checking' ? 'Verifying chain…' : chainStatus==='ok' ? 'Chain integrity: OK' : 'Chain integrity: FAILED'}
++   </div>
++   <div className="flex gap-2">
++     <button onClick={verifyChain} className="btn btn-outline">Re-verify</button>
++     <button onClick={() => downloadEvidence(rows)} className="btn btn-primary">Export Signed Evidence</button>
++   </div>
++ </div>
+
+
+ADD: frontend/lib/downloadEvidence.ts
+
+export function downloadEvidence(rows: {hash:string; merkle_root?:string; signature?:string; [k:string]:any}[]) {
+  const payload = { exported_at: new Date().toISOString(), count: rows.length, entries: rows }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'policycortex-evidence.json'; a.click()
+}
+
+PR-04 — Predict page + home widget
+
+ADD: frontend/app/ai/predictions/page.tsx
+
+export default async function Predictions() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/v1/predictions`, { cache: 'no-store' })
+  const items = await res.json()
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold">Predictions</h1>
+      <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {items.map((p:any) => <PredictionCard key={p.id} p={p} />)}
+      </ul>
+    </div>
+  )
+}
+
+
+ADD: frontend/components/PredictionCard.tsx
+
+export function PredictionCard({ p }: { p: any }) {
+  return (
+    <div className="rounded-xl border p-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium">{p.title ?? p.kind}</h3>
+        <span className="text-xs opacity-70">{Math.round((p.confidence??0)*100)}%</span>
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground">{p.explanation ?? 'Pending explanation'}</p>
+      <div className="mt-3 flex items-center justify-between text-xs">
+        <span>ETA: {p.eta ?? 'soon'}</span>
+        <button className="btn btn-link px-0" onClick={() => window.open(p.fixPrUrl ?? '/devsecops/pipelines', '_self')}>Create Fix PR</button>
+      </div>
+    </div>
+  )
+}
 
-Data sources
 
-List: GET /api/v1/blockchain/audit
+Home/Tactical widget: add a small “Top 3 predictions” panel that links to /ai/predictions (same card component in compact mode).
 
-Verify entry: GET /api/v1/blockchain/verify/{hash} (per row button)
+PR-05 — FinOps & ROI (card + board)
 
-Verify chain: GET /api/v1/blockchain/verify (page banner) 
- 
+File: frontend/app/finops/page.tsx
 
-Top pattern
++ const roi = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/v1/executive/roi`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)
+...
++ <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
++   <div className="rounded-xl border p-4">
++     <h3 className="font-medium mb-2">Savings this Quarter</h3>
++     <div className="text-3xl font-semibold">${roi?.savings_q ?? 0}</div>
++     <p className="text-xs text-muted-foreground mt-1">Forecast next 90d: ${roi?.forecast_90d ?? 0}</p>
++     <div className="mt-3"><a className="btn btn-primary" href="/finops/roi">Open ROI Board</a></div>
++   </div>
++   {/* add Anomalies + Forecast panels adjacent */}
++ </section>
 
-Title + subtitle
+PR-06 — Policy suite (Hub, Packs, Composer, Enforcement, Exceptions, Evidence)
 
-Right‑aligned actions: Real‑time toggle, Export (JSON/CSV with hashes & Merkle root), Verify Chain.
+ADD: frontend/app/(core)/policy/page.tsx
 
-Filter bar (compact)
+export default function PolicyHub() {
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold">Policy</h1>
+        <p className="text-muted-foreground">Define, simulate, enforce, and evidence guardrails.</p>
+      </header>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+        {/* Coverage, Predicted Drift, Prevented, $ Impact cards (fetch + render) */}
+      </div>
+      <div className="flex gap-2">
+        <a className="btn btn-primary" href="/policy/composer">New Policy</a>
+        <a className="btn" href="/policy/packs">Install Policy Pack</a>
+        <a className="btn btn-outline" href="/policy/enforcement">Enforcement</a>
+      </div>
+      {/* Active Policies table; Exceptions expiring; Recent prevention events */}
+    </div>
+  )
+}
 
-Search (actor, target, ip, location), Date range, Result, Risk level, Saved filters.
 
-Overview strip (4 cards)
+ADD empty pages (scaffolds you’ll wire over time):
 
-Total events, Failure rate, Top actor, Risk trend mini‑spark (already in page; keep). 
+frontend/app/(core)/policy/packs/page.tsx
+frontend/app/(core)/policy/composer/page.tsx
+frontend/app/(core)/policy/enforcement/page.tsx
+frontend/app/(core)/policy/exceptions/page.tsx
+frontend/app/(core)/policy/evidence/page.tsx
 
-Data views (tabs)
 
-Timeline (default). Keep your current timeline but add “Integrity: OK/Fail” chips on each expanded card if signature_valid && merkle_proof_valid (and a Verify button that calls /verify/{hash}). 
- 
+Each page: title + placeholder sections. Keep Composer steps: Baseline → Scope → Parameters → Enforcement → Simulate (prediction + $$ impact) → Create.
 
-Table (virtualized for 100k+ rows). Columns: Timestamp, Actor, Action, Target, Result, Risk, Integrity (badge), Actions. Column chooser + saved views. 
+You keep DevSecOps as the place gates actually run; link both ways (Policy ▸ Enforcement lists bindings; Gates detail links “Managed by Policy”).
 
-Right drawer (details)
+PR-07 — Quick Actions & Omnibar (fast paths)
 
-Opens on row click; shows metadata, changes (JSON diff), compliance impact pill, “View Session Events”, “View Resource”, Verify Entry (inline result). You already link to related views; preserve that. 
+File: frontend/components/QuickActionsBar.tsx
 
-Empty, loading, error
++ { id: 'board-report', label: 'Board Report', action: () => router.push('/executive/reports') },
++ { id: 'verify-chain', label: 'Verify Audit Chain', action: async () => { await fetch('/api/v1/blockchain/verify', { cache: 'no-store' }); router.push('/audit') } },
++ { id: 'new-policy', label: 'New Policy', action: () => router.push('/policy/composer') },
 
-Keep your skeleton loaders and empty state patterns; add retry and “clear filters” on empty. 
 
-C) Predict (/ai/predictions)
+ADD (optional): frontend/components/OmniK.tsx (Ctrl/⌘+K) with jump targets to Executive, Policy, Audit, Predict, FinOps.
 
-List page
+PR-08 — Consistent “Labs” badging inside pages
 
-Segmented controls: All / Compliance drift / Security risk / Cost anomaly.
+At top of each Labs page, add:
 
-Cards or rows with: Prediction, ETA, Confidence, Impact, Recommendation. Primary action: Create Fix PR (stub PR ok). Source: GET /api/v1/predictions. 
+<div className="mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
+  <span>Labs</span>
+  <span className="opacity-70">Feature preview — functionality limited</span>
+</div>
 
-Detail drawer
+PR-09 — Theming & density nits
 
-Feature attributions (you already return features), model version, last training, “Why this prediction” explainer, Simulate policy (dropdown) → expected $$ impact. 
+Use Comfortable (default) + Compact toggle on large tables (audit/resources).
 
-D) FinOps (/finops)
+Keep semantic chips only (Success/Warning/Danger/Info). Remove “NEW/AI/ENHANCED/CRITICAL” labels from the core nav; put Beta chips inside headers only if a page is limited.
 
-Top KPIs
+Smoke-test checklist (10 minutes)
 
-This month spend vs budget, Savings to date, Forecasted savings.
+Login lands on /executive; left-nav shows Executive first, Policy second.
 
-Anomalies panel (confidence & % overrun), and Actions taken (from PRs).
+Audit Trail lists real entries; Integrity chip evaluates; Verify Chain banner works; Export Signed Evidence downloads JSON.
 
-ROI board
+Predict shows cards, confidence, ETA; Create Fix PR opens your PR flow (can be a template link).
 
-Per‑policy $ impact (top 10), “What‑if” sim (enable control → 30/60/90‑day savings).
+FinOps & ROI displays numbers; link to ROI board.
 
-Wire ROI card to backend ROI endpoint; wire predictions here, too. 
+Policy Hub loads with scaffolded cards and actions; Composer/Packs/Enforcement pages routable.
 
-E) RBAC (/rbac) & Resources (/resources)
+Labs menu collapses non-core areas; pages show the Labs badge; search engines won’t index them.
 
-Shared patterns
+How to apply this quickly
 
-Left filter rail (cloud, account/subscription, service, tag).
+Create a branch (ui/enterprise-cut-2025-09-02), paste the diffs/adds above, and run:
+pnpm i (or npm i) → pnpm dev → verify the smoke-test.
 
-Main table with saved views and bulk actions.
+If your folder names differ (e.g., apps/web/), keep the same relative structure under that root.
 
-Right drawer: ownership, permissions graph, violations, predicted drift.
+If your API base isn’t /api/v1, set NEXT_PUBLIC_BASE_URL or swap the fetch URLs.
 
-Quick actions
+If you want me to tailor the diffs to your exact file layout, paste (or share) the nav component file and the audit page file contents and I’ll output just the precise corrections for those files.
 
-“Grant time‑boxed access” or “Revoke drifted role”.
+Worked for 36 seconds
 
-“Open in DevSecOps gate” for policies as code.
+I took a look at the container you shared, and unfortunately it doesn’t include any of your actual PolicyCortex UI code (there’s just the slides template in answer.js). Because of that, I can’t run or modify your UI directly.
 
-F) DevSecOps (/devsecops/pipelines)
+To move forward, I would suggest the following high‑impact refactors, based on the architecture we discussed earlier. These changes make the UI enterprise‑grade while keeping your core business flows intact:
 
-Pipelines list + Gate Result history.
+Executive as the Landing Page. Redirect authenticated users to /executive instead of /tactical, so that C‑suite KPIs, ROI metrics and board reports are the first thing they see. This matches your existing Executive dashboard code.
 
-Clicking a failed gate opens a drawer with fix suggestion and Create Fix PR.
+Top‑level “Policy” Section. In your nav component, replace “Governance Hub” with “Policy” and make it the second item in the list. The policy hub should show coverage, predicted drift, prevented violations and $ impact, with quick actions to create a policy, install packs and view enforcement status.
 
-3) Interaction model (no friction)
+Audit Trail Wiring. Replace mock audit data with a fetch to /api/v1/blockchain/audit. Add a Verify button per log entry calling /api/v1/blockchain/verify?hash=…, and a banner that verifies the whole chain. Include an “Export Signed Evidence” button to download Merkle roots and signatures as JSON.
 
-Global omnibar (⌘/Ctrl‑K): jump to pages, search actors/resources, run quick commands (“Verify chain”, “New policy from template”, “Create Fix PR”).
+Prediction UI. Create a /ai/predictions page that lists predictions returned by /api/v1/predictions (title, ETA, confidence, recommended fix), with a “Create Fix PR” action that opens your DevSecOps pipeline.
 
-Toast & task pattern: all long actions go async with status toasts; never block the UI.
+FinOps & ROI Dashboard. On /finops, call the backend ROI endpoint and render savings this quarter, forecasted savings and anomalies. Provide a “View ROI Board” button leading to a more detailed ROI analysis.
 
-Drawers over modals: to preserve context.
+DevSecOps & Enforcement. Keep your CI/CD gates in a dedicated DevSecOps section, but link each gate back to the policy that governs it. Conversely, in your policy hub, show which gates each policy is attached to.
 
-Saved views & personal defaults: remember filters/sort/density per page.
+Labs Route Group. Move experimental pages like Blockchain Explorer, Copilot, Quantum‑Safe and Edge Governance into a (labs) route group. Label them clearly as “Labs” and set robots: { index: false } so they’re not indexed until you’re ready.
 
-Keyboard first: ? opens shortcuts; arrows to navigate table; Enter opens drawer; V verifies an audit entry; E exports current view.
+Navigation Refactor. Create a central navigation config (navigation.ts) with two arrays: CORE and LABS. Render CORE items as your main nav and LABS as a single collapsed “Labs” entry. Use descriptive labels like “FinOps & ROI”, “Access Governance” and “Resources” instead of vague terms.
 
-4) Visual system (simple, sophisticated, enterprise)
-
-Typography: Inter 14/16/20/24, mono only where it helps (hashes, JSON).
-
-Density: default “Comfortable”, toggle “Compact” (enterprise users love it in tables).
-
-Color: restrained neutrals; semantic status colors only (success, warning, danger, info).
-
-Components: build on Radix primitives + Tailwind (matches your current classes) + shadcn patterns for consistency. Your pages already use Tailwind‑style tokens like bg-card, text-muted-foreground, etc. Lean into that system. 
-
-5) Accessibility & internationalization
-
-AA contrast, focus rings, ARIA for status chips (“Integrity OK”), semantic table headers.
-
-All actions reachable by keyboard; announce verification results to screen readers.
-
-Copyable hashes/IDs have explicit copy buttons (you already render a copy action in Audit). 
-
-6) Performance & reliability
-
-Virtualized lists for Audit / Resources (50k–100k+ rows).
-
-Skeletons + optimistic UI for toggles and quick edits (you already show skeleton/loader patterns). 
-
-Streaming where possible; no-store for live panels.
-
-Auth & security headers stay enforced via your middleware (nonce+CSP, HSTS in prod). 
-
-7) What to de‑center (so Core feels crisp)
-
-Put Blockchain Explorer, Copilot, Quantum, Edge under one Labs menu with a “Feature preview” badge until their UIs call real endpoints (Blockchain can graduate to Core as soon as verify is wired end‑to‑end). Your validation code and API already exist — this is about wiring and UI clarity. 
- 
-
-8) What the AI coder should build first (acceptance criteria)
-Milestone A — “Tamper‑evident in 10 minutes”
-
-Audit list → live data
-
-Replace mock generator with GET /api/v1/blockchain/audit.
-
-Each row shows Integrity (OK/Fail/Unknown) computed by calling GET /api/v1/blockchain/verify/{hash} on demand (debounced, cached).
-
-Chain banner uses GET /api/v1/blockchain/verify; shows time of last full verify and a Re‑verify button.
-
-Export JSON includes hash, merkle_root, signature.
-Done when: a user can verify any entry and the whole chain in‑UI. 
- 
-
-Predict widget + page
-
-Home card and /ai/predictions consume GET /api/v1/predictions.
-
-Detail drawer shows attributions (features) and Create Fix PR (open template PR).
-Done when: predictions render with confidence/ETA and a working “Create Fix PR” link. 
-
-FinOps ROI mini
-
-Home ROI card wired to backend ROI endpoint; show $ this quarter + forecast.
-Done when: CFO card displays numbers and link to FinOps board.
-
-Milestone B — “Enterprise table patterns”
-
-Virtualized table (Audit, Resources) with column chooser, saved views, density toggle, CSV/JSON export.
-
-Right drawer detail with JSON diff (you already render changes JSON — retain that pattern). 
-
-Milestone C — “Frictionless”
-
-Omnibar (⌘/Ctrl‑K) with jump to pages, quick verify, search actor/resource.
-
-Keyboard shortcuts (? help sheet).
-
-Toasts + retry patterns standardized.
-
-9) Component inventory & responsibilities
-
-AppShell: TopBar, SideNav, Content, Breadcrumbs, Env Switcher.
-
-KPI Card: title, metric, subtext, action.
-
-FilterBar: search, selects, saved views, chip summary.
-
-DataTable (virtualized): render prop for cells, row actions, selection, column manager.
-
-TimelineList: icon mapping (you already map actions → icons), density toggle. 
-
-Right Drawer: tabs (Overview, JSON, Linked), footer actions (Verify, Copy JSON).
-
-StatusChip: success/warn/danger/info + “Integrity” variants.
-
-PredictCard: ETA, confidence, impact, “Fix PR”.
-
-ROIWidget: savings, forecast, time range.
-
-10) Content & wording (enterprise tone)
-
-Buttons: “Verify Chain”, “Verify Entry”, “Create Fix PR”, “Export Evidence (JSON)”, “Open FinOps”.
-
-Empty states: “No events match your filters. Clear filters or adjust timeframe.”
-
-Help text: a 1‑line “Why tamper‑evident?” linking to docs; show Merkle root & signature on hover.
-
-11) Where this design maps to current code
-
-Audit Trail page exists with filters, timeline/table, stats — currently uses mock data → swap in blockchain APIs and add verify chips. 
- 
-
-Predictions API route exists (/api/v1/predictions) — render on Home and Predict pages. 
-
-Blockchain endpoints exist (/api/v1/blockchain/audit, /verify, /verify/{hash}) — back UI verification features. 
- 
-
-Auth, CSP, HSTS in middleware — keep as is; all routes except login/auth are protected. 
-
-12) Definition of Done (for each page)
-
-Predict: loads < 1s cached; list + detail drawer; “Fix PR” opens template PR; keyboard nav. 
-
-Audit: chain banner + per‑row verify; export includes crypto fields; table virtualization; saved views. 
-
-FinOps: ROI numbers render; link to detail board; forecasts visible.
-
-RBAC/Resources: filters + drawer + bulk actions; saved views.
-
-DevSecOps: pipeline list; gate results; detail drawer; “Fix PR”.
-
-Optional (nice-to-have, low effort)
-
-Recent activity widget on Home reuses your timeline card visual with 5 latest events (from blockchain audit) for consistency. 
-
-Copy buttons for hashes, user IDs (you already have a copy action—extract into a reusable component). 
+Quick Actions & Omnibar. Add shortcuts such as “New Policy”, “Board Report”, “Verify Audit Chain” and “Create Fix PR” to your quick actions bar. Implement an omnibar (⌘/Ctrl‑K) to jump quickly to pages.

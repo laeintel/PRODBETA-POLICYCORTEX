@@ -96,11 +96,13 @@ policycortex.db
 *.bak
 *.old
 
-# Documentation build
+# Documentation and decks (exclude from repo)
 docs/
 /docs/
 docs/_build/
 docs/.doctrees/
+DECK/
+/DECK/
 
 # Package files
 *.tar.gz
