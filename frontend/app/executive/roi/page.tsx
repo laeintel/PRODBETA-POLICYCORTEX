@@ -1,11 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calculator, TrendingUp, DollarSign, Clock, BarChart3, ArrowUpRight, ArrowDownRight, Target } from 'lucide-react'
 import MetricCard from '@/components/MetricCard'
 import ChartContainer from '@/components/ChartContainer'
 
 export default function ROICalculatorPage() {
+  const [apiData, setApiData] = useState<any>(null)
+  
+  // Fetch real ROI data from API
+  useEffect(() => {
+    const fetchROI = async () => {
+      try {
+        const res = await fetch('/api/v1/executive/roi', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setApiData(data)
+        }
+      } catch (error) {
+        console.log('Using calculator mode - API not available')
+      }
+    }
+    fetchROI()
+  }, [])
   const [inputs, setInputs] = useState({
     cloudSpend: 500000,
     teamSize: 25,

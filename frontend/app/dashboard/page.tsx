@@ -49,6 +49,7 @@ import {
   Radar
 } from 'recharts';
 import CloudIntegrationStatus from '@/components/CloudIntegrationStatus';
+import PageContainer from '@/components/PageContainer';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/useToast';
 
@@ -81,9 +82,9 @@ const KPICard = ({
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-fluid-xl font-bold text-gray-900 dark:text-gray-100">{value}</h3>
+            <h3 className="font-bold tabular-nums text-[var(--font-kpi)] text-gray-900 dark:text-gray-100">{value}</h3>
             {subtitle && (
-              <span className="text-fluid-sm text-gray-500 dark:text-gray-400">{subtitle}</span>
+              <span className="text-[var(--font-kpi-label)] text-gray-500 dark:text-gray-400">{subtitle}</span>
             )}
           </div>
           {change && (
@@ -358,11 +359,11 @@ export default function DashboardPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen">
+    <PageContainer className="min-h-screen py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Executive Dashboard</h1>
+          <h1 className="font-bold text-[var(--font-title)] text-gray-900 dark:text-gray-100">Executive Dashboard</h1>
           <p className="text-gray-500 mt-1">Real-time governance insights powered by 4 patented AI technologies</p>
         </div>
         <div className="flex items-center gap-3">
@@ -385,7 +386,7 @@ export default function DashboardPage(): JSX.Element {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {kpiData.map((kpi, index) => (
           <KPICard 
             key={index} 
@@ -762,6 +763,6 @@ export default function DashboardPage(): JSX.Element {
           </button>
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

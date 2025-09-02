@@ -33,11 +33,11 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     
-    /* Reasonable fluid typography scales */
-    --font-body: clamp(0.95rem, 0.25vw + 0.9rem, 1rem);
-    --font-title: clamp(1.25rem, 1vw + 1rem, 1.75rem);
-    --font-kpi: clamp(1.25rem, 0.8vw + 1.1rem, 1.75rem);
-    --font-kpi-label: clamp(0.75rem, 0.2vw + 0.7rem, 0.875rem);
+    /* Splunk-grade dense fluid typography */
+    --font-body: clamp(0.875rem, 0.25vw + 0.85rem, 0.95rem);
+    --font-title: clamp(1.125rem, 0.5vw + 1rem, 1.5rem);
+    --font-kpi: clamp(1.125rem, 0.6vw + 1rem, 1.5rem);
+    --font-kpi-label: clamp(0.6875rem, 0.15vw + 0.65rem, 0.8125rem);
     
     /* Step scales - reduced for better readability */
     --step--2: clamp(0.75rem, 0.15vw + 0.7rem, 0.8rem);
@@ -118,12 +118,18 @@
   
   body {
     @apply bg-background text-foreground;
-    font-size: var(--step-0);
+    font-size: var(--font-body);
     line-height: 1.6;
     transition: background-color 0.3s ease, color 0.3s ease;
     /* Add safe area padding for mobile devices */
     padding-top: var(--inset-top);
     padding-bottom: var(--inset-bottom);
+  }
+  
+  /* Prevent overflow with aggressive word breaking */
+  .wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   
   /* Fluid typography for headings */
