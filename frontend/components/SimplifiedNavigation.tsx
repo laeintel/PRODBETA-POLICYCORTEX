@@ -220,7 +220,7 @@ export default function SimplifiedNavigation() {
                       ? 'bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white border-primary dark:border-blue-400' 
                       : 'text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-gray-800 border-transparent'
                     }
-                    ${item.highlight ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-background dark:ring-offset-gray-900' : ''}
+                    ${'highlight' in item && item.highlight ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-background dark:ring-offset-gray-900' : ''}
                   `}
                   role="button"
                   tabIndex={0}
