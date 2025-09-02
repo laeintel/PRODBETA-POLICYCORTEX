@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import SimplifiedNavigation from './SimplifiedNavigation'
 import AuthGuard from './AuthGuard'
 import Breadcrumbs from './Breadcrumbs'
-import Footer from './Footer'
+import StatusBar from './StatusBar'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -29,7 +29,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (isDemoMode) {
     return (
       <ThemeProvider>
-        <div className="min-h-screen-safe flex flex-col">
+        <div className="min-h-screen flex flex-col">
           <SimplifiedNavigation />
           <main 
             id="main-content"
@@ -46,7 +46,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </main>
           <div className="lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300">
-            <Footer />
+            <StatusBar />
           </div>
         </div>
       </ThemeProvider>
@@ -56,7 +56,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <AuthGuard requireAuth={true}>
-        <div className="min-h-screen-safe flex flex-col">
+        <div className="min-h-screen flex flex-col">
           <SimplifiedNavigation />
           <main 
             id="main-content"
@@ -73,7 +73,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </main>
           <div className="lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300">
-            <Footer />
+            <StatusBar />
           </div>
         </div>
       </AuthGuard>
