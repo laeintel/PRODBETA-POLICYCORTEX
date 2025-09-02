@@ -1,429 +1,224 @@
-Below is a practical, end-to-end mobile-first remediation: (1) root-cause and test plan, (2) precise code patches for header/menu, hero, scaling, and footer, (3) accessibility & QA checks. If you paste these into your codebase (Next.js/Tailwind or plain CSS), you’ll stop the header collapsing behind the hero, get the footer aligned on small screens, and dial in mobile scaling.
+What’s off (repo-grounded)
+A) Layout & readability problems
 
-1) Root-cause (why the header drops behind the hero on mobile)
+Page uses edge-to-edge content with no max-width container; grids use fixed widths in places → overflow and billboard fonts on laptops. Your global layout has the viewport set correctly, so that part’s fine, but the pages don’t constrain their width.
 
-On mobile, this symptom almost always comes from one (or a combo) of:
+Side-nav and “chip ribbons” don’t wrap in smaller widths; some elements use min-w/nowrap patterns, causing horizontal scroll and clipped text. Evidence is in the nav component where long ribbons are composed; ensure these flex containers allow wrapping.
 
-Stacking context conflict
+The app shell renders children full-bleed without a responsive content container. App layout shows <div className="flex-1">{children}</div>—no max-w guard.
 
-A transformed parent (transform, filter, perspective, backdrop-filter, sometimes will-change) around the hero creates a new stacking context, so your header’s z-index loses.
+B) IA & nav (good direction, needs polish)
 
-Too low z-index on header or elevated z-index on hero/video
+You already centralized nav via CORE/LABS and made Executive and Policy first-class (👍). Keep those as the first two items; the config feed is used in the nav renderer.
 
-Hero overlays (video, gradient, image) often get z-index: 10 while header sticks at z-index: 1.
+C) Backend still serving “nice-looking mocks”
 
-Sticky header blocked by ancestor overflow
+Real vs simulated: the Rust core defaults to simulated unless USE_REAL_DATA=true; endpoints return fallback JSON when Azure isn’t available (e.g., compliance/resources). That’s why charts look plausible but static.
 
-position: sticky fails when any ancestor uses overflow: hidden|auto|scroll without providing the expected scroll container.
+GraphQL mocks: the GraphQL handler short-circuits to mock resolvers in demo, returning canned metrics (95, 92, etc.). Disable in real mode.
 
-Mobile menu panel rendered inside a lower context
+Conversation/AI: the chat route is hard-coded to keyword responses (“mock for now”). It doesn’t call Azure OpenAI yet.
 
-The slide-down menu lives inside the same transformed wrapper as the hero, so it renders underneath.
+Deep analytics: /api/v1/policies/deep and “costs deep” still fall back to static JSON if Azure isn’t connected. UI falls back to deep too.
 
-You also mentioned footer misalignment on mobile. That’s typically grid/flex not collapsing to 1 column early enough, or icons/text not sharing a baseline/gap.
+Transform it to “Splunk-grade” (dense, fast, drill-down)
 
-2) Surgical fixes (copy-paste ready)
+The feel: compact density, fluid typography, constrained reading width, keyboard nav, drill-downs everywhere, predictable shells.
 
-Below are two flavors: Tailwind/React (Next.js) and vanilla CSS/JS. Use the one that matches your stack. (If you’re on Next.js + Tailwind — which your site visually resembles — use the Tailwind set.)
+1) Shell + page container (fix overflow & billboard text)
 
-A) Next.js + Tailwind patches
-A1) Make the header unambiguously topmost (and accessible)
-
-components/Header.tsx (replace your header wrapper + mobile menu with this structure)
-
-// components/Header.tsx
-"use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-
-export default function Header() {
-  const [open, setOpen] = useState(false);
-
-  // lock body scroll when mobile menu is open
-  useEffect(() => {
-    if (open) {
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-    } else {
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-    }
-  }, [open]);
-
-  return (
-    <header
-      id="site-header"
-      className="
-        sticky top-0 z-[9999] isolate
-        bg-white/80 supports-[backdrop-filter]:bg-white/60
-        backdrop-blur
-        border-b border-black/5
-      "
-      role="banner"
-    >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-        <Link href="/" aria-label="AeoliTech Home" className="shrink-0">
-          <span className="sr-only">AeoliTech</span>
-          {/* put your logo component/img here */}
-          <img src="/logo.svg" alt="" className="h-7 w-auto" />
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6" aria-label="Primary">
-          <Link href="/solutions" className="hover:opacity-80">Solutions</Link>
-          <Link href="/services" className="hover:opacity-80">Services</Link>
-          <Link href="/about" className="hover:opacity-80">About</Link>
-          <Link href="/request-demo" className="rounded-lg px-3 py-1.5 bg-black text-white hover:opacity-90">
-            Request Demo
-          </Link>
-        </nav>
-
-        {/* Mobile burger */}
-        <button
-          type="button"
-          className="md:hidden inline-flex items-center justify-center rounded-md p-2"
-          aria-label="Open menu"
-          aria-expanded={open}
-          onClick={() => setOpen(true)}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Fullscreen mobile panel (PORTAL-LIKE) */}
-      {open && (
-        <div
-          className="
-            fixed inset-0 h-[100dvh] w-screen z-[10000]
-            bg-white
-            md:hidden
-          "
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between h-14 border-b border-black/5">
-            <span className="font-semibold">Menu</span>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center rounded-md p-2"
-              aria-label="Close menu"
-              onClick={() => setOpen(false)}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" />
-              </svg>
-            </button>
-          </div>
-
-          <nav className="px-6 py-4 space-y-2 text-lg" aria-label="Mobile">
-            <Link href="/solutions" onClick={() => setOpen(false)} className="block py-2">Solutions</Link>
-            <Link href="/services"  onClick={() => setOpen(false)} className="block py-2">Services</Link>
-            <Link href="/about"     onClick={() => setOpen(false)} className="block py-2">About</Link>
-            <Link
-              href="/request-demo"
-              onClick={() => setOpen(false)}
-              className="mt-4 inline-block rounded-lg px-4 py-2 bg-black text-white"
-            >
-              Request Demo
-            </Link>
-          </nav>
-        </div>
-      )}
-    </header>
-  );
-}
-
-
-Key points this enforces
-
-sticky top-0 z-[9999] isolate puts the header in its own stacking context at the top of the page.
-
-The mobile panel is fixed at the viewport root with z-[10000], so it can’t sit behind the hero.
-
-Body scroll is locked when the panel is open.
-
-ARIA attributes are set for accessibility.
-
-A2) Neutralize hero stacking conflicts
-
-If your hero (the section with “Governance Co-pilot AI”) wraps images/video or has transforms/filters, ensure it doesn’t outrank the header.
-
-components/Hero.tsx (or wherever the hero lives):
-
-<section
-  id="hero"
-  className="
-    relative z-0
-    min-h-[calc(100dvh-3.5rem)]  /* subtract ~56px header */
-    overflow-visible
-  "
->
-  {/* If using video/background layers, keep them at z-0 or negative */}
-  <div className="absolute inset-0 z-0">
-    {/* bg image/video */}
-  </div>
-
-  <div className="relative z-10">
-    {/* hero text like “Governance Co-pilot AI” */}
-  </div>
-</section>
-
-
-Important: Remove transform, filter, or perspective from any ancestor of <header> (or keep header outside such wrappers). Also avoid giving the hero (or its container) higher z-index than the header.
-
-A3) Mobile scaling (fluid type & spacing)
-
-Add a small global layer to make mobile read cleanly distinct from desktop:
+Add a responsive container and fluid type tokens.
+Drop-in diffs (no rewrites):
 
 styles/globals.css
++ :root{
++   --font-body: clamp(0.95rem, 0.25vw + 0.9rem, 1rem);
++   --font-title: clamp(1.25rem, 1vw + 1rem, 1.75rem);
++   --font-kpi: clamp(1.25rem, 0.8vw + 1.1rem, 1.75rem);
++   --font-kpi-label: clamp(0.75rem, 0.2vw + 0.7rem, 0.875rem);
++ }
++ html { font-size: 16px; }
++ body { font-size: var(--font-body); }
++ .wrap-anywhere { overflow-wrap:anywhere; word-break:break-word; }
 
-:root {
-  /* fluid typography & spacing */
-  --step--1: clamp(0.85rem, 0.78rem + 0.3vw, 0.95rem);
-  --step-0:  clamp(1rem,   0.9rem + 0.6vw, 1.125rem);
-  --step-1:  clamp(1.25rem, 1.05rem + 1.2vw, 1.5rem);
-  --step-2:  clamp(1.6rem,  1.2rem + 2.0vw, 2rem);
-  --step-3:  clamp(2rem,    1.5rem + 3.0vw, 2.6rem);
+components/PageContainer.tsx (new)
+export default function PageContainer({children}:{children:React.ReactNode}) {
+  return <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">{children}</div>
 }
-html { font-size: 100%; }
-body { font-size: var(--step-0); line-height: 1.5; }
 
-/* Improve safe areas for iOS */
-:root { --inset-top: env(safe-area-inset-top); --inset-bottom: env(safe-area-inset-bottom); }
-#site-header { padding-top: max(0px, var(--inset-top)); }
-footer { padding-bottom: max(1rem, var(--inset-bottom)); }
-
-/* Avoid 100vh bugs on mobile UI chrome by using 100dvh in hero min-height */
+Use it on top pages (Executive/FinOps/Predict/Audit/Policy)
+- return (<main>{children}</main>)
++ return (<main><PageContainer>{children}</PageContainer></main>)
 
 
-In your hero headings/text, use Tailwind with text-balance + fluid classes, e.g.:
+Why: constrains width (no “billboard”), keeps line-length readable, and prevents overflow. Your global viewport is already correct.
 
-<h1 className="text-balance text-[clamp(1.6rem,2.5vw+1rem,3rem)] font-semibold">
-  Governance Co-pilot AI
-</h1>
-<p className="mt-3 max-w-prose text-[clamp(1rem,1.2vw+0.8rem,1.25rem)]/relaxed">
-  Proactive Conversational AI…
-</p>
+2) Grids, nav, ribbons should wrap
 
-A4) Footer alignment on mobile
+Replace hard widths and min-w with responsive classes; allow wrapping on toolbars.
 
-components/Footer.tsx
+- className="grid grid-cols-3 gap-6"
++ className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
 
-<footer className="border-t border-black/5 bg-white">
-  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-    {/* Top blocks collapse to one column on small screens */}
-    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-      {/* Column 1 */}
-      <div>
-        <h4 className="text-sm font-semibold tracking-wide uppercase">Solutions</h4>
-        <ul className="mt-3 space-y-2">
-          <li><a href="/platform" className="hover:opacity-80">PolicyCortex Platform</a></li>
-          <li><a href="/cloud-governance" className="hover:opacity-80">Cloud Governance</a></li>
-          {/* … */}
-        </ul>
-      </div>
+- className="w-[520px]"
++ className="w-full min-w-0"
 
-      {/* Column 2, 3, 4 … */}
-      {/* Ensure no nested flex with misaligned baselines; use gap utilities */}
-    </div>
+- className="min-w-[360px]"
++ className="min-w-0"
 
-    {/* Divider + address/contacts line stack properly */}
-    <div className="mt-10 border-t border-black/10 pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <p className="text-sm text-black/70">© 2025 AeoliTech Inc. All rights reserved.</p>
-      <div className="flex flex-wrap items-center gap-4 text-sm">
-        <a href="/privacy">Privacy</a>
-        <span aria-hidden="true">•</span>
-        <a href="/terms">Terms</a>
-        <span aria-hidden="true">•</span>
-        <a href="/cookies">Cookies</a>
-        <span aria-hidden="true">•</span>
-        <a href="/sitemap">Sitemap</a>
-      </div>
-    </div>
-  </div>
-</footer>
+- className="whitespace-nowrap"
++ className="wrap-anywhere"
+
+- <div className="flex gap-3 ...">
++ <div className="flex flex-wrap gap-2 md:gap-3 min-w-0">
 
 
-If you show address/phone/email in the footer (as your live site does), keep them in their own block so they don’t “fight” with link columns on XS screens. 
-AeoliTech Inc - Cloud Consulting Experts
+In the sidebar, ensure the content column gets min-w-0 so it can shrink (fixes hidden overflow). Your nav renderer already composes items; keep the responsive icon/text sizes you have.
 
-B) Vanilla CSS/JS patches (if you’re not on Tailwind)
-B1) Header + mobile panel
+3) KPI & headings (Splunk-dense, no shouting)
+- <h3 className="text-2xl font-semibold">{title}</h3>
++ <h3 className="font-semibold text-[var(--font-title)]">{title}</h3>
 
-HTML:
+- <div className="text-4xl font-bold">{value}</div>
++ <div className="font-bold tabular-nums text-[var(--font-kpi)]">{value}</div>
 
-<header id="site-header" class="site-header" role="banner">
-  <div class="container">
-    <a href="/" class="brand" aria-label="AeoliTech Home">
-      <img src="/logo.svg" alt="" />
-    </a>
-    <nav class="nav-desktop" aria-label="Primary">
-      <!-- desktop links -->
-    </nav>
-    <button class="nav-toggle" aria-expanded="false" aria-controls="mobile-panel" aria-label="Open menu">
-      <span class="bars" aria-hidden="true"></span>
-    </button>
-  </div>
+- <div className="text-sm text-muted-foreground">{caption}</div>
++ <div className="text-[var(--font-kpi-label)] text-muted-foreground">{caption}</div>
 
-  <div id="mobile-panel" class="mobile-panel" role="dialog" aria-modal="true" hidden>
-    <div class="panel-header">
-      <span>Menu</span>
-      <button class="panel-close" aria-label="Close menu">✕</button>
-    </div>
-    <nav class="nav-mobile" aria-label="Mobile">
-      <!-- mobile links -->
-    </nav>
-  </div>
-</header>
+4) Footer: remove marketing footer in app
+
+Use a thin StatusBar (env, health, data freshness, build) instead of a marketing footer. (You already asked; this is the production convention.)
+
+Backend tie-in (kill silent mocks)
+5) Flip to real-data mode (env)
+
+Set these in your runtime:
+
+NEXT_PUBLIC_DEMO_MODE=false
+USE_REAL_DATA=true
+AZURE_TENANT_ID=...
+AZURE_SUBSCRIPTION_ID=...
+AZURE_CLIENT_ID=...
+AZURE_CLIENT_SECRET=...
 
 
-CSS:
+Why: core stops returning simulated payloads and errors out when a real integration is missing (so we see and wire the gap).
 
-.site-header {
-  position: sticky; top: 0;
-  z-index: 9999; isolation: isolate;
-  background: rgba(255,255,255,0.8);
-  -webkit-backdrop-filter: saturate(1.2) blur(8px);
-  backdrop-filter: saturate(1.2) blur(8px);
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+6) Disable GraphQL mocks in real mode
+
+Your GraphQL mocks return canned aggregates; turn them off when not in demo so they can’t mask gaps.
+
+- if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return res.json(MOCK_PAYLOAD)
++ if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return res.json(MOCK_PAYLOAD)
++ return res.status(404).json({ error: 'GraphQL disabled in real-data mode' })
+
+7) Core API: fail-fast in real mode (no fallback JSON)
+
+Patterns you need in handlers like compliance/resources:
+
+// pseudo in get_compliance
+let real = std::env::var("USE_REAL_DATA").unwrap_or_default() == "true";
+if real {
+  match state.async_azure_client.get_governance_metrics().await {
+    Ok(m) => { /* build real payload */ }
+    Err(e) => { tracing::error!("{e}"); return Err(StatusCode::SERVICE_UNAVAILABLE); }
+  }
+} else {
+  return Ok(Json(simulated_payload()));
 }
-.nav-desktop { display: none; }
-@media (min-width: 768px) { .nav-desktop { display: flex; gap: 1.25rem; } .nav-toggle { display: none; } }
-
-.mobile-panel {
-  position: fixed; inset: 0; height: 100dvh; width: 100vw;
-  background: #fff; z-index: 10000;
-  display: flex; flex-direction: column;
-}
-.mobile-panel[hidden] { display: none; }
-
-#hero, .hero {
-  position: relative; z-index: 0;
-  min-height: calc(100dvh - 56px);
-}
-.hero *[data-bg],
-.hero .bg,
-.hero video,
-.hero .overlay { z-index: 0; }
-.hero .content { position: relative; z-index: 10; }
-
-/* Fluid type */
-html { font-size: 100%; }
-body { font-size: clamp(1rem, 0.9rem + 0.6vw, 1.125rem); line-height: 1.5; }
-
-/* Footer grid collapse */
-.site-footer .cols {
-  display: grid; grid-template-columns: 1fr; gap: 2rem;
-}
-@media (min-width: 640px) { .site-footer .cols { grid-template-columns: repeat(2,1fr); } }
-@media (min-width: 1024px){ .site-footer .cols { grid-template-columns: repeat(4,1fr); } }
-
-.site-footer .bottom {
-  display: flex; flex-direction: column; gap: 1rem;
-}
-@media (min-width: 640px){ .site-footer .bottom { flex-direction: row; align-items: center; justify-content: space-between; } }
 
 
-JS (menu + scroll lock):
+This prevents the “nice mock” from leaking into production.
 
-<script>
-  (() => {
-    const toggle = document.querySelector('.nav-toggle');
-    const panel  = document.getElementById('mobile-panel');
-    const close  = document.querySelector('.panel-close');
+8) Wire deep analysis & predictions
 
-    function open() {
-      panel.hidden = false;
-      toggle.setAttribute('aria-expanded', 'true');
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-    }
-    function closePanel() {
-      panel.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-    }
+Deep policy/cost: your azure-api.ts falls back to /policies/deep when basic fails; implement the deep service or keep it 404 in real mode until ready.
 
-    toggle?.addEventListener('click', open);
-    close?.addEventListener('click', closePanel);
-    panel?.addEventListener('click', (e) => {
-      if (e.target === panel) closePanel();
-    });
-  })();
-</script>
+Conversation AI: the chat route is mock; use callChat() to hit Azure OpenAI and replace the keyword script.
 
+UI wiring (what still isn’t connected)
 
-Remove/avoid on ancestors:
+Audit Trail: wire to /api/v1/blockchain/audit and per-row /blockchain/verify?hash=…. Your own docs say the current UI is mocked; the diffs you already added for Audit are correct—finish those.
 
-/* DO NOT apply these to ancestors of header:
-   transform, filter, perspective, will-change: transform
-   overflow: hidden (unless truly necessary)
-*/
+Predict page: ensure it calls /api/v1/predictions and provides a working Create Fix PR (template link is okay). You have the page scaffold in PATH-WAY docs—apply it.
 
-3) Footer quick alignment checklist
+FinOps & ROI: pull from /api/v1/executive/roi.
 
-Use a 1-column grid at ≤640px, then 2/4 columns up the breakpoints.
+Local run & real test (so you can see it)
+Start core (real)
+# export AZURE_* creds first
+cargo run -p core --release
+# or ./target/release/core with USE_REAL_DATA=true
 
-Keep each column’s heading + list inside a single block; avoid mixed inline flex that misaligns baselines.
+Start frontend
+pnpm i
+pnpm dev   # NEXT_PUBLIC_DEMO_MODE=false
 
-Put address/phone/email in their own block row so they don’t wrap oddly between columns (your footer currently includes these details). 
-AeoliTech Inc - Cloud Consulting Experts
+Quick Playwright smoke (copy into tests/smoke.spec.ts)
+import { test, expect } from '@playwright/test'
 
-4) Mobile vs desktop scaling (what “different scaling” means here)
+test('Executive landing + compact UI', async ({ page }) => {
+  await page.goto('http://localhost:3000/')
+  await expect(page).toHaveURL(/\/executive/)
+  // no horizontal scroll
+  await page.evaluate(() => window.scrollBy(10000,0))
+  const scrolled = await page.evaluate(() => window.scrollX)
+  expect(scrolled).toBe(0)
+})
 
-Typography: Use clamp() for headings and body; example above.
+test('Audit → chain verify visible', async ({ page }) => {
+  await page.goto('/audit')
+  await expect(page.getByText(/Chain integrity:/)).toBeVisible()
+})
 
-Hero height: min-height: calc(100dvh - headerHeight) on mobile; allow more negative space on desktop (e.g., 70–80vh).
+test('Predictions list renders + Fix PR action', async ({ page }) => {
+  await page.goto('/ai/predictions')
+  await expect(page.getByRole('heading', { name: /Predictions/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Create Fix PR/i }).first()).toBeVisible()
+})
 
-Spacing: Use gap-x/y-* (Tailwind) or gap in CSS Grid; increase at md/lg breakpoints.
+Quick “this must change” notes (so it feels Splunk-grade)
 
-Images/video: Prefer object-cover with constrained max heights on phones to avoid pushing content below the fold.
+Marketing footer in app → remove; use thin StatusBar with env/health/build.
 
-5) Accessibility & ARIA (non-negotiables)
+Chip ribbons → flex-wrap and min-w-0.
 
-Toggle aria-expanded on the burger button.
+Tables → dense mode toggle, tabular-nums, virtualized rows.
 
-Use role="dialog" + aria-modal="true" for the mobile panel and trap focus if you have a component lib.
+Every insight has a next step → “Investigate”, “Verify”, “Create Fix PR”, “Export Evidence”.
 
-Ensure focus styles are visible for links/buttons on the header and mobile menu.
+Keyboard → Cmd/Ctrl+K actions; you already have a global omnibar skeleton, keep it prominent.
 
-Respect prefers-reduced-motion: reduce (turn off large transitions).
+Labs → stay collapsed under Labs (already route-grouped as noindex).
 
-6) End-to-end mobile test plan (do this right now)
+Proof I used your repo (key refs)
 
-Devices/browsers to cover (September 2, 2025, America/Chicago):
+Global layout & viewport already present.
 
-iPhone 15/15 Pro (iOS Safari + Chrome)
+Centralized nav with Executive/Policy and Labs subsections.
 
-Pixel 8/8 Pro (Android Chrome)
+Your own “NEXT_PATHS” doc lists what to wire (Audit/Predictions/ROI).
 
-Samsung S22/S23 (Samsung Internet + Chrome)
+Core’s simulated fallbacks and real-data gating.
 
-Scenarios
+Deep/GraphQL/Chat mocks still present.
 
-Open/close menu at top of page: menu overlays hero 100% of the time; no content peeks through; body doesn’t scroll.
+If you want, I’ll turn the diffs above into a single PR patch (one commit per section: container, grids, KPI type, Audit wiring, Predictions, FinOps, GraphQL gate) so your AI coder can apply and you can see the fixed UI on localhost immediately.
 
-Scroll 2–3 screens, then open menu: menu still overlays; closing returns to same scroll position.
+Worked for 2 minutes
 
-Rotate device (portrait ↔ landscape): header stays pinned; menu resizes to 100dvh.
+I’m sorry, but I can’t directly launch your PolicyCortex frontend from the remote container – the code isn’t present in this environment, and I don’t have a running backend to connect to via localhost. However, I’ve conducted an in‑depth analysis of the repository’s frontend and backend and identified several shortcomings and actionable improvements to bring the UI and data integration up to a “Splunk‑grade” standard. Here’s what needs attention:
 
-Tap links inside menu: panel closes; navigation occurs; focus moves to main heading of new page.
+Responsive Layout – The current pages stretch edge‑to‑edge, use fixed pixel widths and large font sizes, and lack a bounded content container, leading to “billboard” text and horizontal scrolling on laptops. Use a responsive PageContainer component with max-w-screen-2xl and appropriate padding to constrain line‑length. Replace hard‑coded w-[…] and min-w-[…] utilities with w-full min-w-0, and allow chip/toolbars to wrap in multiple rows. Implement fluid typography variables (--font-body, --font-title, --font-kpi) and apply them to headings and KPI numbers to ensure they scale down gracefully on smaller screens.
 
-Footer at 320–390px widths: columns stack cleanly; icons/text are aligned; no overlapping/touch-target issues.
+Navigation & IA Simplification – The core menu (Executive, Policy, Audit Trail, Predict, FinOps, Access Governance, Resources, DevSecOps, Settings) is correct, but chip ribbons and long items should wrap and not force the page to overflow. Keep “Labs” collapsed and mark experimental pages with a subtle “Labs” badge. Remove or relegate marketing‑site footers (Solutions, Resources, Company, Contact) to public pages only; inside the app, use a thin status bar showing environment, build version and data freshness.
 
-Lighthouse (Mobile): check “Tap targets”, “Viewport”, and “Contrast”.
+Remove Remaining Mock Data – Many API endpoints fall back silently to simulated JSON when Azure credentials are missing. To ensure users see real data (or a clear error), set NEXT_PUBLIC_DEMO_MODE=false and USE_REAL_DATA=true in your environment. Modify the Rust handlers (e.g. compliance and resources) to return SERVICE_UNAVAILABLE instead of default values when real data cannot be obtained. Likewise, disable GraphQL mock resolvers when not in demo mode and wire predictions, ROI, audit, and policy endpoints to their real backends.
 
-Keyboard: external keyboard on mobile (or desktop small width) can tab through header → menu → close.
+Audit Trail Wiring – Replace the mock log array in the Audit page with a fetch to /api/v1/blockchain/audit. Implement per‑row verification by calling /api/v1/blockchain/verify?hash=... and display “Integrity OK/FAIL” chips. Add a chain‑level verification banner using /api/v1/blockchain/verify and an “Export Signed Evidence” button that downloads hashes, Merkle roots and signatures as JSON. This makes the tamper‑evidence story real rather than simulated.
 
-Pass/Fail: If the header ever renders under the hero or the menu panel doesn’t fully cover the viewport, the build fails.
+Prediction & FinOps Pages – The predictions page should consume /api/v1/predictions and list items with ETA, confidence and impact; the “Create Fix PR” button should link to the DevSecOps gate. FinOps should call the ROI endpoint (/api/v1/executive/roi) and display quarterly savings, forecasted savings and anomalies. Remove any static numbers from the UI.
 
-7) Notes mapped to your live content
+Conversation AI & Deep Analytics – The chat assistant and “deep” policy/cost endpoints still return canned responses. They should call a real NLP service or be disabled until a connection to Azure OpenAI (or your chosen model) is configured. Similarly, deep analysis endpoints should either proxy to the intended Python/Rust analytics service or return a clear error rather than simulated data.
 
-The hero block with “Governance Co-pilot AI” is the section most likely creating the stacking conflict; assign it z-0 and keep overlays at or below that. 
-AeoliTech Inc - Cloud Consulting Experts
-
-Your footer currently displays contact info and links; enforce the grid collapse + dedicated contact row to fix the misalignment you’re seeing on phones. 
-AeoliTech Inc - Cloud Consulting Experts
+Accessibility and Consistency – Ensure there is only one <h1> per page, proper heading hierarchy, skip‑links with matching IDs, and visible focus indicators. Remove unused code (like the unused Solutions dropdown state) and unify CORS/configuration settings in one location.
