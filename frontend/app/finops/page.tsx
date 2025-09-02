@@ -46,13 +46,32 @@ export default function FinOpsCommandCenter() {
   const [realTimeAlerts, setRealTimeAlerts] = useState<any[]>([]);
   const [optimizationRecommendations, setOptimizationRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roiData, setRoiData] = useState<any>(null);
+
+  // Fetch ROI data
+  useEffect(() => {
+    const loadRoiData = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+        const roiRes = await fetch(`${baseUrl}/api/v1/executive/roi`, { cache: 'no-store' });
+        if (roiRes.ok) {
+          const data = await roiRes.json();
+          setRoiData(data);
+        }
+      } catch (error) {
+        console.error('Failed to load ROI data:', error);
+      }
+    };
+    loadRoiData();
+  }, []);
 
   // Real-time cost anomaly detection
   useEffect(() => {
     const loadPredictions = async () => {
       try {
         // Fetch predictions from API
-        const res = await fetch('/api/v1/predictions', { cache: 'no-store' });
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+        const res = await fetch(`${baseUrl}/api/v1/predictions`, { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           // Transform API predictions to match interface
@@ -113,19 +132,19 @@ export default function FinOpsCommandCenter() {
     {
       id: 'total-spend',
       title: 'Current Month Spend',
-      value: '$287,432',
-      change: 12.5,
-      trend: 'up',
-      sparklineData: [220000, 235000, 250000, 265000, 275000, 287432],
-      alert: 'Trending 23% above budget'
+      value: roiData?.current_spend ? `$${roiData.current_spend.toLocaleString()}` : '$287,432',
+      change: roiData?.spend_change || 12.5,
+      trend: (roiData?.spend_change || 12.5) > 0 ? 'up' : 'down',
+      sparklineData: roiData?.spend_trend || [220000, 235000, 250000, 265000, 275000, 287432],
+      alert: roiData?.spend_alert || 'Trending 23% above budget'
     },
     {
       id: 'cost-savings',
       title: 'Identified Savings',
-      value: '$45,230',
-      change: 34.2,
+      value: roiData?.savings_q ? `$${roiData.savings_q.toLocaleString()}` : '$45,230',
+      change: roiData?.savings_change || 34.2,
       trend: 'up',
-      sparklineData: [30000, 32000, 38000, 41000, 43000, 45230],
+      sparklineData: roiData?.savings_trend || [30000, 32000, 38000, 41000, 43000, 45230],
       prediction: predictions[1]
     },
     {
@@ -303,6 +322,65 @@ export default function FinOpsCommandCenter() {
           />
         ))}
       </div>
+
+      {/* Executive ROI Summary */}
+      {roiData && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800 p-4">
+            <h3 className="font-medium mb-2 text-green-900 dark:text-green-100">Savings this Quarter</h3>
+            <div className="text-3xl font-semibold text-green-700 dark:text-green-300">
+              ${roiData.savings_q?.toLocaleString() || 0}
+            </div>
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+              Forecast next 90d: ${roiData.forecast_90d?.toLocaleString() || 0}
+            </p>
+            <div className="mt-3">
+              <button 
+                onClick={() => router.push('/finops/roi')}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Open ROI Board
+              </button>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800 p-4">
+            <h3 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Anomalies Detected</h3>
+            <div className="text-3xl font-semibold text-blue-700 dark:text-blue-300">
+              {roiData.anomalies_count || realTimeAlerts.length}
+            </div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              Potential impact: ${roiData.anomaly_impact?.toLocaleString() || '25,000'}
+            </p>
+            <div className="mt-3">
+              <button 
+                onClick={() => router.push('/finops/anomalies')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Review Anomalies
+              </button>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800 p-4">
+            <h3 className="font-medium mb-2 text-purple-900 dark:text-purple-100">Optimization Opportunities</h3>
+            <div className="text-3xl font-semibold text-purple-700 dark:text-purple-300">
+              {roiData.optimization_count || 47}
+            </div>
+            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+              Potential savings: ${roiData.optimization_potential?.toLocaleString() || '125,000'}/year
+            </p>
+            <div className="mt-3">
+              <button 
+                onClick={() => router.push('/finops/optimization')}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                View Opportunities
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {view === 'cards' ? (
         <>

@@ -6,6 +6,21 @@ build/
 .next/
 out/
 
+# Python venvs
+.venv/
+.venv_local/
+venv/
+env/
+ENV/
+**/.venv/
+**/.venv_local/
+
+# Mock servers (only for dev, not committed)
+scripts/mock-ml-server.py
+scripts/mock-backend.js
+**/mock-server.*
+**/mock-data/
+
 # Environment variables
 .env
 .env.local

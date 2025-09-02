@@ -49,12 +49,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-6">
-      <div className="w-full max-w-md border border-gray-300 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900/90 backdrop-blur-md p-6 shadow-2xl">
+    <main className="min-h-screen-safe bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4 sm:p-6 relative z-0 isolate">
+      <div className="w-full max-w-md border border-gray-300 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900/90 backdrop-blur-md p-4 sm:p-6 shadow-2xl relative z-10">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-800 flex items-center justify-center"><Shield className="w-5 h-5 text-gray-700 dark:text-white" /></div>
+          <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-800 flex items-center justify-center touch-target">
+            <Shield className="w-5 h-5 text-gray-700 dark:text-white" aria-hidden="true" />
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">POLICYCORTEX</h1>
+            <h1 className="text-fluid-lg font-bold text-gray-900 dark:text-white">POLICYCORTEX</h1>
             <p className="text-xs text-gray-600 dark:text-gray-400">Tactical Access Portal</p>
           </div>
         </div>
@@ -74,9 +76,11 @@ export default function LoginPage() {
             type="button"
             onClick={handleLogin}
             disabled={loading}
-            className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-70 flex items-center justify-center gap-2"
+            className="w-full py-3 touch-target rounded-lg bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-white text-sm font-medium disabled:opacity-70 flex items-center justify-center gap-2 transition-colors"
+            aria-busy={loading}
           >
-            <Lock className="w-4 h-4" /> {loading ? 'Opening Microsoft sign-in…' : 'Sign in with Microsoft'}
+            <Lock className="w-4 h-4" aria-hidden="true" /> 
+            <span>{loading ? 'Opening Microsoft sign-in…' : 'Sign in with Microsoft'}</span>
           </button>
         </div>
 
