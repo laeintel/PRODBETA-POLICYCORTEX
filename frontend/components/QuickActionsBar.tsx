@@ -22,7 +22,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Briefcase
 } from 'lucide-react'
 import GlobalAIChat from './AIAssistant/GlobalAIChat'
 import VoiceActivation from './AIAssistant/VoiceActivation'
@@ -134,6 +135,18 @@ export default function QuickActionsBar() {
   }, [aiChatOpen, router])
 
   const quickActions: QuickActionItem[] = [
+    {
+      id: 'executive',
+      icon: Briefcase,
+      label: 'Executive Dashboard',
+      shortLabel: 'Executive',
+      action: () => router.push('/executive'),
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bgColor: 'bg-indigo-100 dark:bg-indigo-500/10',
+      hoverColor: 'hover:bg-indigo-200 dark:hover:bg-indigo-500/20',
+      value: '287% ROI',
+      loading: false
+    },
     {
       id: 'compliance',
       icon: Shield,

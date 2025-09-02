@@ -7,13 +7,19 @@ export type NavItem = {
   description?: string;
 }
 
-// Final nav per spec: clean, enterprise, 7-8 core items
+// Final nav per spec: clean, enterprise, Policy elevated to #2
 export const CORE: NavItem[] = [
   { 
     label: 'Home', 
     href: '/tactical', 
     ready: true,
     description: 'Executive dashboard with predictive insights and ROI metrics'
+  },
+  { 
+    label: 'Policy', 
+    href: '/policy', 
+    ready: true,
+    description: 'Define, simulate, enforce, and evidence cloud guardrails'
   },
   { 
     label: 'Audit Trail', 
@@ -23,7 +29,7 @@ export const CORE: NavItem[] = [
   },
   { 
     label: 'Predict', 
-    href: '/predict', 
+    href: '/ai/predictions', 
     ready: true,
     description: 'AI predictions with 7-day look-ahead and auto-remediation'
   },
@@ -47,7 +53,7 @@ export const CORE: NavItem[] = [
   },
   { 
     label: 'DevSecOps', 
-    href: '/devsecops', 
+    href: '/devsecops/pipelines', 
     ready: true,
     description: 'CI/CD gates, policy-as-code, and auto-fix PRs'
   },
@@ -61,6 +67,12 @@ export const CORE: NavItem[] = [
 
 // Labs: powerful but not-yet-central capabilities
 export const LABS: NavItem[] = [
+  { 
+    label: 'Blockchain Explorer', 
+    href: '/blockchain', 
+    badge: 'Labs',
+    description: 'Blockchain verification and explorer tools'
+  },
   { 
     label: 'Copilot', 
     href: '/copilot', 
@@ -84,12 +96,6 @@ export const LABS: NavItem[] = [
     href: '/edge', 
     badge: 'Labs',
     description: 'Edge computing governance and management'
-  },
-  {
-    label: 'Governance Policies',
-    href: '/governance',
-    badge: 'Labs',
-    description: 'Advanced policy management (beta)'
   }
 ];
 
