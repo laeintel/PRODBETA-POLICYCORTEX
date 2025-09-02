@@ -56,8 +56,54 @@ export default function ExecutiveDashboard() {
   useEffect(() => {
     // Load business-focused metrics
     const loadExecutiveData = async () => {
-      // Simulate loading business KPIs
-      setKpis([
+      try {
+        // Fetch ROI data from API
+        const roiRes = await fetch('/api/v1/executive/roi', { cache: 'no-store' });
+        if (roiRes.ok) {
+          const roiData = await roiRes.json();
+          setRoiMetrics(roiData);
+          
+          // Transform API data to KPIs if available
+          if (roiData.metrics) {
+            const apiKpis = [
+              {
+                id: 'cloud-roi',
+                name: 'Cloud ROI',
+                value: roiData.metrics.roi_percentage || '287%',
+                change: roiData.metrics.roi_change || 23,
+                trend: (roiData.metrics.roi_trend || 'up') as 'up' | 'down' | 'stable',
+                target: roiData.metrics.roi_target || '250%',
+                status: (roiData.metrics.roi_status || 'on-track') as 'on-track' | 'at-risk' | 'off-track',
+                businessImpact: roiData.metrics.roi_impact || 'Every $1 invested returns $2.87 in business value'
+              },
+              {
+                id: 'cost-savings',
+                name: 'Annual Cost Savings',
+                value: roiData.metrics.savings || '$3.2M',
+                change: roiData.metrics.savings_change || 45,
+                trend: (roiData.metrics.savings_trend || 'up') as 'up' | 'down' | 'stable',
+                target: roiData.metrics.savings_target || '$2.5M',
+                status: (roiData.metrics.savings_status || 'on-track') as 'on-track' | 'at-risk' | 'off-track',
+                businessImpact: roiData.metrics.savings_impact || '28% reduction in operational expenses'
+              },
+              ...roiData.metrics.additional_kpis || []
+            ];
+            setKpis(apiKpis);
+          } else {
+            // Use default KPIs if API doesn't have metrics
+            setDefaultKpis();
+          }
+        } else {
+          // Fallback to default KPIs
+          setDefaultKpis();
+        }
+      } catch (error) {
+        console.error('Failed to load executive data:', error);
+        setDefaultKpis();
+      }
+      
+      function setDefaultKpis() {
+        setKpis([
         {
           id: 'cloud-roi',
           name: 'Cloud ROI',
@@ -119,6 +165,7 @@ export default function ExecutiveDashboard() {
           businessImpact: 'Exceeding SLA commitments to enterprise clients'
         }
       ]);
+      }
 
       setRisks([
         {

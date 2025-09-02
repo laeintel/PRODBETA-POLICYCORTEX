@@ -13,6 +13,7 @@ import { Inter, Orbitron, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import AppShell from '../components/AppShell'
+import GlobalOmnibar from '../components/GlobalOmnibar'
 import { headers } from 'next/headers'
 import Script from 'next/script'
 import { PerformanceMonitor } from '../components/PerformanceMonitor'
@@ -77,6 +78,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} ${orbitron.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
         <Providers>
+          <GlobalOmnibar />
           <AppShell>{children}</AppShell>
         </Providers>
         {/* Development tools */}

@@ -30,36 +30,34 @@ export default function SimplifiedNavigation() {
     }
   }, [pathname])
 
-  // ENHANCED NAVIGATION WITH GROUNDBREAKING FEATURES
+  // Clean enterprise navigation - 7-8 core items
   const navigation = [
     {
-      name: 'Dashboard',
+      name: 'Home',
       href: '/tactical',
       icon: LayoutDashboard,
-      description: 'Command center overview',
+      description: 'Executive dashboard with predictive insights',
       quickStats: { compliance: '94%', risks: 3, savings: '$45K/mo' }
     },
     {
-      name: 'Executive',
-      href: '/executive',
-      icon: Briefcase,
-      description: 'C-suite KPIs & ROI',
-      badge: 'NEW',
-      highlight: true,
-      subsections: [
-        { name: 'Business KPIs', href: '/executive/dashboard' },
-        { name: 'ROI Calculator', href: '/executive/roi' },
-        { name: 'Risk-to-Revenue Map', href: '/executive/risk-map' },
-        { name: 'Board Reports', href: '/executive/reports' }
-      ]
+      name: 'Audit Trail',
+      href: '/audit',
+      icon: Shield,
+      description: 'Tamper-evident blockchain-secured logs',
+      highlight: true
     },
     {
-      name: 'FinOps',
+      name: 'Predict',
+      href: '/predict',
+      icon: Brain,
+      description: 'AI predictions with 7-day look-ahead',
+      highlight: true
+    },
+    {
+      name: 'FinOps & ROI',
       href: '/finops',
       icon: DollarSign,
-      description: 'Cost optimization & anomalies',
-      badge: 'AI',
-      critical: true,
+      description: 'Cost optimization, savings & ROI',
       subsections: [
         { name: 'Real-time Anomalies', href: '/finops/anomalies' },
         { name: 'Auto Optimization', href: '/finops/optimization' },
@@ -70,149 +68,70 @@ export default function SimplifiedNavigation() {
       ]
     },
     {
-      name: 'Governance',
-      href: '/governance',
-      icon: Shield,
-      description: 'Policies, compliance & cost',
-      subsections: [
-        { name: 'Policies & Compliance', href: '/governance?tab=compliance' },
-        { name: 'Risk Management', href: '/governance?tab=risk' },
-        { name: 'Cost Optimization', href: '/governance?tab=cost' }
-      ]
-    },
-    {
-      name: 'Security & Access',
-      href: '/security',
+      name: 'Access Governance',
+      href: '/rbac',
       icon: Lock,
-      description: 'Identity, RBAC, PIM & policies',
-      critical: true, // Visual indicator for security section
+      description: 'Identity, permissions & RBAC',
       subsections: [
-        { name: 'Identity & Access (IAM)', href: '/security?tab=iam' },
-        { name: 'Role Management (RBAC)', href: '/security/rbac' },
-        { name: 'Privileged Identity (PIM)', href: '/security/pim', badge: 'JIT' },
-        { name: 'Conditional Access', href: '/security/conditional-access' },
-        { name: 'Zero Trust Policies', href: '/security/zero-trust' },
-        { name: 'Entitlement Management', href: '/security/entitlements' },
-        { name: 'Access Reviews', href: '/security/access-reviews' }
+        { name: 'Identity & Access', href: '/rbac' },
+        { name: 'Role Management', href: '/rbac/roles' },
+        { name: 'Access Reviews', href: '/rbac/reviews' }
       ]
     },
     {
-      name: 'Operations',
-      href: '/operations',
-      icon: Activity,
-      description: 'Resources, monitoring & alerts',
+      name: 'Resources',
+      href: '/resources',
+      icon: Database,
+      description: 'Cloud resource inventory & management',
       subsections: [
-        { name: 'Resources', href: '/operations/resources' },
-        { name: 'Monitoring', href: '/operations/monitoring' },
-        { name: 'Automation', href: '/operations/automation' },
-        { name: 'Notifications', href: '/operations/notifications' },
-        { name: 'Alerts', href: '/operations/alerts' }
+        { name: 'Resource Inventory', href: '/resources' },
+        { name: 'Monitoring', href: '/resources/monitoring' },
+        { name: 'Alerts', href: '/resources/alerts' }
       ]
     },
     {
-      name: 'DevOps',
-      href: '/devops',
+      name: 'DevSecOps',
+      href: '/devsecops',
       icon: GitBranch,
-      description: 'Complete DevSecOps platform',
-      badge: 'ENHANCED',
+      description: 'CI/CD gates, policy-as-code, auto-fix',
       subsections: [
-        // CI/CD & Deployment
-        { name: 'Pipelines', href: '/devops/pipelines' },
-        { name: 'Deployments', href: '/devops/deployments' },
-        { name: 'Releases', href: '/devops/releases' },
-        { name: 'Build Status', href: '/devops/builds' },
-        { name: 'Artifacts', href: '/devops/artifacts' },
-        { name: 'Repositories', href: '/devops/repos' },
-        // DevSecOps
-        { name: 'Security Gates', href: '/devsecops/gates', badge: 'SECURITY' },
-        { name: 'Policy-as-Code', href: '/devsecops/policy-as-code', badge: 'NEW' },
-        { name: 'IDE Plugins', href: '/devsecops/ide-plugins' }
+        { name: 'Pipelines', href: '/devsecops/pipelines' },
+        { name: 'Security Gates', href: '/devsecops/gates' },
+        { name: 'Policy-as-Code', href: '/devsecops/policy-code' },
+        { name: 'Gate Results', href: '/devsecops/results' },
+        { name: 'Policies', href: '/devsecops/policies', badge: 'Beta' }
       ]
-    },
-    {
-      name: 'Cloud ITSM',
-      href: '/itsm',
-      icon: Server,
-      description: 'IT Service Management',
-      badge: 'NEW',
-      subsections: [
-        { name: 'Resource Inventory', href: '/itsm/inventory' },
-        { name: 'Applications', href: '/itsm/applications' },
-        { name: 'Service Catalog', href: '/itsm/services' },
-        { name: 'Incidents', href: '/itsm/incidents' },
-        { name: 'Changes', href: '/itsm/changes' },
-        { name: 'Problems', href: '/itsm/problems' },
-        { name: 'Assets', href: '/itsm/assets' },
-        { name: 'CMDB', href: '/itsm/cmdb' }
-      ]
-    },
-    {
-      name: 'AI Intelligence',
-      href: '/ai',
-      icon: Cpu,
-      description: 'Patented AI features',
-      highlight: true, // Make this stand out!
-      subsections: [
-        { name: '🚀 Predictive Compliance', href: '/ai/predictive', patent: '#4' },
-        { name: '🔗 Cross-Domain Analysis', href: '/ai/correlations', patent: '#1' },
-        { name: '💬 Conversational AI', href: '/ai/chat', patent: '#2' },
-        { name: '📊 Unified Platform', href: '/ai/unified', patent: '#3' },
-        { name: '📝 Policy Studio', href: '/ai/policy-studio', badge: 'NEW' }
-      ]
-    },
-    {
-      name: 'Governance Copilot',
-      href: '/copilot',
-      icon: Bot,
-      description: 'AI assistant for cloud teams',
-      badge: 'AI',
-      highlight: true
-    },
-    {
-      name: 'Blockchain Audit',
-      href: '/blockchain',
-      icon: Blocks,
-      description: 'Immutable compliance evidence',
-      badge: 'NEW'
-    },
-    {
-      name: 'Quantum-Safe Secrets',
-      href: '/quantum',
-      icon: Atom,
-      description: 'Post-quantum cryptography',
-      badge: 'CRITICAL',
-      critical: true
-    },
-    {
-      name: 'Edge Governance',
-      href: '/edge',
-      icon: Network,
-      description: 'Distributed edge network',
-      badge: 'NEW'
-    },
-    {
-      name: 'Audit Trail',
-      href: '/audit',
-      icon: History,
-      description: 'Activity history',
-      badge: 'NEW'
     },
     {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
-      description: 'Configuration'
+      description: 'System configuration'
+    },
+    {
+      name: 'Labs',
+      href: '#',
+      icon: Sparkles,
+      description: 'Experimental features',
+      badge: 'Labs',
+      subsections: [
+        { name: 'Copilot', href: '/copilot' },
+        { name: 'Cloud ITSM', href: '/itsm' },
+        { name: 'Quantum-Safe', href: '/quantum' },
+        { name: 'Edge Governance', href: '/edge' },
+        { name: 'Governance Policies', href: '/governance' }
+      ]
     }
   ]
 
   // Command Palette for quick access (Cmd+K)
   const quickActions = [
-    { name: 'Check Compliance Status', action: '/governance/compliance' },
-    { name: 'View Cost Savings', action: '/governance/cost' },
-    { name: 'Chat with AI', action: '/ai/chat' },
-    { name: 'View Predictions', action: '/ai/predictive' },
-    { name: 'Check Active Risks', action: '/governance/risk' },
-    { name: 'View Resources', action: '/operations/resources' }
+    { name: 'View Predictions', action: '/predict' },
+    { name: 'Verify Audit Chain', action: '/audit' },
+    { name: 'View Cost Savings', action: '/finops' },
+    { name: 'Check Resources', action: '/resources' },
+    { name: 'Access Governance', action: '/rbac' },
+    { name: 'DevSecOps Gates', action: '/devsecops' }
   ]
 
   const toggleSection = (sectionName: string) => {
@@ -299,7 +218,6 @@ export default function SimplifiedNavigation() {
                       : 'text-muted-foreground dark:text-gray-300 hover:bg-accent dark:hover:bg-gray-800 border-transparent'
                     }
                     ${item.highlight ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-background dark:ring-offset-gray-900' : ''}
-                    ${item.critical ? 'border-l-2 border-orange-500' : ''}
                   `}
                   role="button"
                   tabIndex={0}
