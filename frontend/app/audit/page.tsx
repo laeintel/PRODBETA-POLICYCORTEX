@@ -7,10 +7,12 @@ import {
   ChevronRight, ChevronDown, Calendar, MapPin, Monitor,
   Database, Lock, Unlock, Settings, FileText, Trash2,
   UserPlus, UserMinus, Edit, Eye, Copy, Info, TrendingUp,
-  ArrowUpRight, ArrowDownRight, BarChart3, Globe, X
+  ArrowUpRight, ArrowDownRight, BarChart3, Globe, X, ShieldCheck
 } from 'lucide-react'
 import { format, formatDistanceToNow, subDays, startOfDay, endOfDay } from 'date-fns'
 import Link from 'next/link'
+import { IntegrityChip } from '@/components/IntegrityChip'
+import { downloadEvidence } from '@/lib/downloadEvidence'
 
 // Mock data for audit events
 const generateMockAuditEvents = () => {
@@ -124,6 +126,8 @@ export default function AuditTrailPage(): JSX.Element {
   })
   const [viewMode, setViewMode] = useState<'timeline' | 'table' | 'graph'>('timeline')
   const [realTimeEnabled, setRealTimeEnabled] = useState(false)
+  const [chainStatus, setChainStatus] = useState<'checking' | 'ok' | 'fail'>('checking')
+  const [lastVerified, setLastVerified] = useState<Date | null>(null)
   const [stats, setStats] = useState({
     totalEvents: 0,
     failureRate: 0,
@@ -131,6 +135,37 @@ export default function AuditTrailPage(): JSX.Element {
     topActions: [] as any[],
     riskTrend: [] as any[]
   })
+
+  // Verify chain integrity
+  const verifyChain = async () => {
+    setChainStatus('checking')
+    try {
+      const res = await fetch('/api/v1/blockchain/verify', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setChainStatus(data.chain_integrity ? 'ok' : 'fail')
+        setLastVerified(new Date())
+      } else {
+        setChainStatus('fail')
+      }
+    } catch (error) {
+      console.error('Failed to verify chain:', error)
+      setChainStatus('fail')
+    }
+  }
+
+  // Verify individual entry
+  const verifyHash = async (hash: string): Promise<any> => {
+    try {
+      const res = await fetch(`/api/v1/blockchain/verify?hash=${encodeURIComponent(hash)}`, { cache: 'no-store' })
+      if (res.ok) {
+        return res.json()
+      }
+    } catch (error) {
+      console.error('Failed to verify hash:', error)
+    }
+    return { chain_integrity: false, merkle_proof_valid: false, signature_valid: false }
+  }
 
   // Load initial data from blockchain API
   useEffect(() => {
@@ -187,6 +222,7 @@ export default function AuditTrailPage(): JSX.Element {
     }
     
     loadAuditData()
+    verifyChain()
   }, [])
 
   // Apply filters
@@ -390,26 +426,7 @@ export default function AuditTrailPage(): JSX.Element {
   }
 
   const exportData = () => {
-    // Include blockchain verification data in export
-    const jsonData = {
-      export_timestamp: new Date().toISOString(),
-      total_events: filteredEvents.length,
-      events: filteredEvents.map(e => ({
-        ...e,
-        timestamp: e.timestamp.toISOString(),
-        hash: e.hash || null,
-        merkle_proof: e.merkleProof || null,
-        signature_valid: e.signatureValid || false,
-        chain_integrity: e.chainIntegrity || false
-      }))
-    }
-    
-    const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `audit-trail-${format(new Date(), 'yyyy-MM-dd')}.json`
-    a.click()
+    downloadEvidence(filteredEvents)
   }
 
   return (
@@ -441,13 +458,53 @@ export default function AuditTrailPage(): JSX.Element {
             </button>
             
             <button type="button"
+              onClick={verifyChain}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm sm:text-base">
+              <ShieldCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Verify Chain</span>
+            </button>
+            
+            <button type="button"
               onClick={exportData}
               className="px-3 sm:px-4 py-1.5 sm:py-2 bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-sm sm:text-base">
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">Export Evidence</span>
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Chain Verification Banner */}
+      <div className={`mb-4 px-4 py-3 rounded-lg flex items-center justify-between ${
+        chainStatus === 'checking' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' :
+        chainStatus === 'ok' ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' :
+        'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+      }`}>
+        <div className="flex items-center gap-3">
+          <ShieldCheck className={`w-5 h-5 ${
+            chainStatus === 'checking' ? 'text-blue-600 dark:text-blue-400 animate-pulse' :
+            chainStatus === 'ok' ? 'text-green-600 dark:text-green-400' :
+            'text-red-600 dark:text-red-400'
+          }`} />
+          <div>
+            <div className="font-medium text-sm">
+              {chainStatus === 'checking' ? 'Verifying blockchain integrity...' :
+               chainStatus === 'ok' ? 'Blockchain integrity verified' :
+               'Blockchain integrity check failed'}
+            </div>
+            {lastVerified && (
+              <div className="text-xs text-muted-foreground dark:text-gray-400">
+                Last verified: {formatDistanceToNow(lastVerified, { addSuffix: true })}
+              </div>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={verifyChain}
+          className="px-3 py-1 text-xs font-medium rounded-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          Re-verify
+        </button>
       </div>
 
       {/* Stats Overview */}
@@ -628,27 +685,11 @@ export default function AuditTrailPage(): JSX.Element {
                             <span className="text-xs text-muted-foreground dark:text-gray-400">
                               {formatDistanceToNow(event.timestamp, { addSuffix: true })}
                             </span>
-                            {/* Blockchain integrity badges */}
+                            {/* Blockchain integrity chip */}
                             {event.hash && (
-                              <div className="flex items-center gap-1">
-                                {event.chainIntegrity && (
-                                  <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs font-medium flex items-center gap-1">
-                                    <Shield className="w-3 h-3" />
-                                    Integrity OK
-                                  </span>
-                                )}
-                                {event.signatureValid && (
-                                  <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-medium flex items-center gap-1">
-                                    <Lock className="w-3 h-3" />
-                                    Signed
-                                  </span>
-                                )}
-                                {event.merkleProof && (
-                                  <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-medium">
-                                    Merkle Proof
-                                  </span>
-                                )}
-                              </div>
+                              <IntegrityChip 
+                                verify={() => verifyHash(event.hash!)} 
+                              />
                             )}
                           </div>
                           
