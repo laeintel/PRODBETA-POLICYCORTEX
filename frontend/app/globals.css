@@ -33,15 +33,21 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     
-    /* Fluid typography scales */
-    --step--2: clamp(0.69rem, 0.66rem + 0.18vw, 0.80rem);
-    --step--1: clamp(0.83rem, 0.78rem + 0.29vw, 1.00rem);
-    --step-0: clamp(1.00rem, 0.91rem + 0.43vw, 1.25rem);
-    --step-1: clamp(1.20rem, 1.07rem + 0.63vw, 1.56rem);
-    --step-2: clamp(1.44rem, 1.26rem + 0.89vw, 1.95rem);
-    --step-3: clamp(1.73rem, 1.48rem + 1.24vw, 2.44rem);
-    --step-4: clamp(2.07rem, 1.73rem + 1.70vw, 3.05rem);
-    --step-5: clamp(2.49rem, 2.03rem + 2.31vw, 3.82rem);
+    /* Reasonable fluid typography scales */
+    --font-body: clamp(0.95rem, 0.25vw + 0.9rem, 1rem);
+    --font-title: clamp(1.25rem, 1vw + 1rem, 1.75rem);
+    --font-kpi: clamp(1.25rem, 0.8vw + 1.1rem, 1.75rem);
+    --font-kpi-label: clamp(0.75rem, 0.2vw + 0.7rem, 0.875rem);
+    
+    /* Step scales - reduced for better readability */
+    --step--2: clamp(0.75rem, 0.15vw + 0.7rem, 0.8rem);
+    --step--1: clamp(0.875rem, 0.2vw + 0.82rem, 0.95rem);
+    --step-0: clamp(0.95rem, 0.25vw + 0.9rem, 1rem);
+    --step-1: clamp(1.125rem, 0.5vw + 1rem, 1.25rem);
+    --step-2: clamp(1.25rem, 0.6vw + 1.1rem, 1.5rem);
+    --step-3: clamp(1.5rem, 0.8vw + 1.25rem, 1.875rem);
+    --step-4: clamp(1.75rem, 1vw + 1.4rem, 2.25rem);
+    --step-5: clamp(2rem, 1.2vw + 1.6rem, 2.5rem);
     
     /* Safe area insets for mobile devices */
     --inset-top: env(safe-area-inset-top, 0px);
