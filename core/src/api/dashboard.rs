@@ -80,20 +80,20 @@ pub async fn get_dashboard_metrics(State(state): State<Arc<AppState>>) -> impl I
             Ok(metrics) => {
                 // Build dashboard metrics from real Azure data
                 let dashboard_metrics = DashboardMetrics {
-                    total_resources: metrics.total_resources as u32,
-                    compliant_resources: metrics.compliant_resources as u32,
-                    non_compliant_resources: metrics.non_compliant_resources as u32,
-                    critical_alerts: metrics.critical_violations as u32,
+                    total_resources: metrics.resources.total,
+                    compliant_resources: metrics.resources.optimized, // Using optimized as proxy for compliant
+                    non_compliant_resources: metrics.resources.idle + metrics.resources.overprovisioned,
+                    critical_alerts: metrics.policies.violations, // Using policy violations as critical alerts
                     high_alerts: 7, // Would need real alert data
                     medium_alerts: 15,
                     low_alerts: 42,
-                    total_cost: metrics.total_cost,
-                    projected_cost: metrics.total_cost * 1.1,
-                    cost_savings: metrics.savings_identified,
-                    security_score: metrics.security_score,
-                    compliance_rate: metrics.compliance_percentage,
-                    ai_predictions_made: 15234, // Would need AI service integration
-                    automations_executed: 8921, // Would need automation service integration
+                    total_cost: metrics.costs.current_spend,
+                    projected_cost: metrics.costs.predicted_spend,
+                    cost_savings: metrics.costs.savings_identified,
+                    security_score: metrics.rbac.risk_score * 100.0, // Convert risk score to percentage
+                    compliance_rate: metrics.policies.compliance_rate,
+                    ai_predictions_made: metrics.ai.predictions_made,
+                    automations_executed: metrics.ai.automations_executed,
                     timestamp: Utc::now(),
                 };
                 
