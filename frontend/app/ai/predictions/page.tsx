@@ -3,8 +3,9 @@ import { Brain, TrendingUp, AlertTriangle, DollarSign, Shield } from 'lucide-rea
 
 async function getPredictions() {
   try {
-    // For server components in Next.js, we can use relative URLs
-    const res = await fetch('http://localhost:3000/api/v1/predictions', {
+    // Use environment variable for base URL, fallback to empty string for same-origin requests
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
+    const res = await fetch(`${baseUrl}/api/v1/predictions`, {
       cache: 'no-store'
     })
     if (res.ok) {

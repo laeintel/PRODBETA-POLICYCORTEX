@@ -4,8 +4,13 @@
 
 export const mockGraphQLResolver = async (query: string, variables?: any) => {
   // Only return mock data if demo mode is enabled
-  if (process.env.DEMO_MODE !== 'true' && process.env.USE_MOCK_GRAPHQL !== 'true') {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE !== 'true' && process.env.USE_MOCK_GRAPHQL !== 'true') {
     throw new Error('Mock GraphQL is disabled in production mode');
+  }
+  
+  // Additional check for real data mode
+  if (process.env.USE_REAL_DATA === 'true') {
+    throw new Error('GraphQL mocks disabled when USE_REAL_DATA is true');
   }
   // Parse the query to determine the requested operation
   const operationMatch = query.match(/query\s+(\w+)|mutation\s+(\w+)/);
@@ -108,6 +113,8 @@ export const graphQLMockMiddleware = async (req: any, res: any) => {
 export const shouldUseMockGraphQL = (): boolean => {
   // Only use mock in demo mode or when explicitly enabled
   // In production, this should always be false unless DEMO_MODE is set
-  return process.env.DEMO_MODE === 'true' || 
-         process.env.USE_MOCK_GRAPHQL === 'true';
+  // Never use mocks when USE_REAL_DATA is true
+  return (process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || 
+          process.env.USE_MOCK_GRAPHQL === 'true') &&
+         process.env.USE_REAL_DATA !== 'true';
 };

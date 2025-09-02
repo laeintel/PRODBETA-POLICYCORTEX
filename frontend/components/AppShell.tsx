@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import SimplifiedNavigation from './SimplifiedNavigation'
 import AuthGuard from './AuthGuard'
 import Breadcrumbs from './Breadcrumbs'
+import Footer from './Footer'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -28,17 +29,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (isDemoMode) {
     return (
       <ThemeProvider>
-        <SimplifiedNavigation />
-        <div className="
-          pt-16 lg:pt-[7.5rem] 
-          lg:pl-64 xl:pl-72 2xl:pl-80
-          min-h-screen 
-          bg-gray-50 dark:bg-gray-900 
-          transition-all duration-300
-        ">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-            <Breadcrumbs />
-            {children}
+        <div className="min-h-screen-safe flex flex-col">
+          <SimplifiedNavigation />
+          <main 
+            id="main-content"
+            className="
+            flex-1
+            pt-16 
+            lg:pl-64 xl:pl-72 2xl:pl-80
+            bg-gray-50 dark:bg-gray-900 
+            transition-all duration-300
+          ">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+              <Breadcrumbs />
+              {children}
+            </div>
+          </main>
+          <div className="lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300">
+            <Footer />
           </div>
         </div>
       </ThemeProvider>
@@ -48,12 +56,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <AuthGuard requireAuth={true}>
-        <>
+        <div className="min-h-screen-safe flex flex-col">
           <SimplifiedNavigation />
-          <div className="
-            pt-16 lg:pt-[7.5rem] 
+          <main 
+            id="main-content"
+            className="
+            flex-1
+            pt-16 
             lg:pl-64 xl:pl-72 2xl:pl-80
-            min-h-screen 
             bg-gray-50 dark:bg-gray-900 
             transition-all duration-300
           ">
@@ -61,8 +71,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Breadcrumbs />
               {children}
             </div>
+          </main>
+          <div className="lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300">
+            <Footer />
           </div>
-        </>
+        </div>
       </AuthGuard>
     </ThemeProvider>
   )

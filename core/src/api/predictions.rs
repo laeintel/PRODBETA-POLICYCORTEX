@@ -80,10 +80,72 @@ pub struct PredictionMetadata {
 
 // GET /api/v1/predictions/violations
 pub async fn get_violation_predictions(
-    State(_state): State<Arc<crate::api::AppState>>,
+    State(state): State<Arc<crate::api::AppState>>,
     Query(query): Query<PredictionQuery>,
 ) -> impl IntoResponse {
     let lookahead_hours = query.lookahead_hours.unwrap_or(24);
+    
+    // Check data mode
+    let data_mode = crate::data_mode::DataMode::from_env();
+    
+    // In real mode, try to get predictions from ML service
+    if data_mode.is_real() {
+        // Check if ML predictions URL is configured
+        if let Ok(ml_url) = std::env::var("PREDICTIONS_URL") {
+            // Try to fetch from ML service
+            match reqwest::Client::new()
+                .get(format!("{}/predictions", ml_url))
+                .query(&[("lookahead_hours", lookahead_hours.to_string())])
+                .send()
+                .await
+            {
+                Ok(response) if response.status().is_success() => {
+                    match response.json::<Vec<ViolationPrediction>>().await {
+                        Ok(predictions) => {
+                            // Process real predictions
+                            let risk_engine = RiskScoringEngine::new();
+                            let risk_summary = risk_engine.get_risk_summary(&predictions);
+                            
+                            let metadata = PredictionMetadata {
+                                generated_at: Utc::now(),
+                                lookahead_hours,
+                                total_predictions: predictions.len(),
+                                critical_count: predictions.iter().filter(|p| matches!(p.risk_level, RiskLevel::Critical)).count(),
+                                high_count: predictions.iter().filter(|p| matches!(p.risk_level, RiskLevel::High)).count(),
+                                medium_count: predictions.iter().filter(|p| matches!(p.risk_level, RiskLevel::Medium)).count(),
+                                low_count: predictions.iter().filter(|p| matches!(p.risk_level, RiskLevel::Low)).count(),
+                            };
+                            
+                            let response = PredictionResponse {
+                                predictions,
+                                risk_summary,
+                                patterns: None,
+                                drift_analysis: None,
+                                metadata,
+                            };
+                            
+                            return Json(response).into_response();
+                        }
+                        Err(e) => {
+                            tracing::error!("Failed to parse ML predictions: {}", e);
+                        }
+                    }
+                }
+                Ok(response) => {
+                    tracing::error!("ML service returned error: {}", response.status());
+                }
+                Err(e) => {
+                    tracing::error!("Failed to connect to ML service: {}", e);
+                }
+            }
+        }
+        
+        // In real mode, fail if ML service is not available
+        return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+            "error": "ML prediction service unavailable in real data mode",
+            "details": "PREDICTIONS_URL not configured or service unreachable"
+        }))).into_response();
+    }
     
     // For demo/MVP, return realistic mock predictions
     let predictions = generate_demo_predictions(lookahead_hours);
