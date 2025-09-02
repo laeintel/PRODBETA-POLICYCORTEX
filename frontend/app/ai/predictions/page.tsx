@@ -101,7 +101,7 @@ export default async function PredictionsPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Brain className="w-8 h-8 text-primary dark:text-blue-400" />
-          <h1 className="text-3xl font-bold text-foreground dark:text-white">
+          <h1 className="text-fluid-2xl font-bold text-foreground dark:text-white">
             Predictions
           </h1>
         </div>
@@ -116,7 +116,7 @@ export default async function PredictionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground dark:text-gray-400">Total Predictions</p>
-              <p className="text-2xl font-bold text-foreground dark:text-white">{stats.total}</p>
+              <p className="text-fluid-xl font-bold text-foreground dark:text-white">{stats.total}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
@@ -126,7 +126,7 @@ export default async function PredictionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground dark:text-gray-400">High Risk</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.high}</p>
+              <p className="text-fluid-xl font-bold text-red-600 dark:text-red-400">{stats.high}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
@@ -136,7 +136,7 @@ export default async function PredictionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground dark:text-gray-400">Medium Risk</p>
-              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.medium}</p>
+              <p className="text-fluid-xl font-bold text-yellow-600 dark:text-yellow-400">{stats.medium}</p>
             </div>
             <Shield className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
           </div>
@@ -146,7 +146,7 @@ export default async function PredictionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground dark:text-gray-400">Low Risk</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.low}</p>
+              <p className="text-fluid-xl font-bold text-green-600 dark:text-green-400">{stats.low}</p>
             </div>
             <Shield className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
@@ -156,7 +156,7 @@ export default async function PredictionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground dark:text-gray-400">Avg Confidence</p>
-              <p className="text-2xl font-bold text-foreground dark:text-white">
+              <p className="text-fluid-xl font-bold text-foreground dark:text-white">
                 {Math.round(stats.avgConfidence * 100)}%
               </p>
             </div>

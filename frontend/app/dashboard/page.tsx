@@ -81,9 +81,9 @@ const KPICard = ({
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
           </div>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{value}</h3>
+            <h3 className="text-fluid-xl font-bold text-gray-900 dark:text-gray-100">{value}</h3>
             {subtitle && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</span>
+              <span className="text-fluid-sm text-gray-500 dark:text-gray-400">{subtitle}</span>
             )}
           </div>
           {change && (
@@ -358,9 +358,9 @@ export default function DashboardPage(): JSX.Element {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-gray-50 min-h-screen">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Executive Dashboard</h1>
           <p className="text-gray-500 mt-1">Real-time governance insights powered by 4 patented AI technologies</p>
@@ -385,7 +385,7 @@ export default function DashboardPage(): JSX.Element {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiData.map((kpi, index) => (
           <KPICard 
             key={index} 
