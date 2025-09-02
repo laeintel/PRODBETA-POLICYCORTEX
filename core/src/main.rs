@@ -139,6 +139,9 @@ async fn health_check(State(state): State<Arc<AppState>>) -> Json<HealthResponse
 
 #[tokio::main]
 async fn main() {
+    // Load .env file if it exists
+    dotenv::dotenv().ok();
+    
     // Initialize tracing + OpenTelemetry if OTLP endpoint configured
     let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| "policycortex_core=debug,tower_http=info".into());
