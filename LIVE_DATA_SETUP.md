@@ -173,3 +173,7 @@ CACHE_TTL_SECONDS=300
 ## 🎉 Ready to Use!
 
 Your PolicyCortex instance is now displaying live data from your Azure subscription. No additional configuration is required!
+
+---
+
+See also: Value Guide at `docs/value/README.md` for stakeholder outcomes and ROI.

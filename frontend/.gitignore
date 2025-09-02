@@ -1,2 +1,6 @@
 test-results/
 playwright-report/
+
+# Ignore docs and deck in workspace
+/DECK/
+/docs/
