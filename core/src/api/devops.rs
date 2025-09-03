@@ -1,6 +1,7 @@
 // DevOps API handlers for comprehensive navigation system
 use axum::{
     extract::State,
+    http::StatusCode,
     response::IntoResponse,
     Json,
 };
@@ -8,7 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
 
-use crate::api::AppState;
+use crate::{
+    api::AppState,
+    data_mode::{DataMode, DataResponse},
+};
 
 // Pipeline info
 #[derive(Debug, Serialize, Deserialize)]
@@ -97,12 +101,55 @@ pub struct Repository {
 }
 
 // GET /api/v1/devops/pipelines
-pub async fn get_pipelines(_state: State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn get_pipelines(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let mode = DataMode::from_env();
+    
+    // In real mode, we must have real data or fail
+    if mode.is_real() {
+        if let Some(ref async_client) = state.async_azure_client {
+            // DevOps pipelines not yet implemented in Azure client
+            // For now, fail fast in real mode
+            return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+                "error": "DevOps pipelines not available in real data mode",
+                "details": "Azure DevOps integration pending implementation"
+            }))).into_response();
+            
+            #[allow(unreachable_code)]
+            match async_client.get_governance_metrics().await {
+                Ok(pipelines) => {
+                    return Json(DataResponse::new(pipelines, mode)).into_response();
+                }
+                Err(e) => {
+                    tracing::error!("Failed to get pipelines from Azure DevOps: {}", e);
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "Azure DevOps service unavailable",
+                            "message": format!("Failed to retrieve pipelines: {}", e),
+                            "mode": "real"
+                        }))
+                    ).into_response();
+                }
+            }
+        } else {
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
+    }
+    
+    // Only return simulated data in simulated mode
     let pipelines = vec![
         Pipeline {
             id: "pipe-001".to_string(),
-            name: "Main CI/CD Pipeline".to_string(),
-            repository: "policycortex/main".to_string(),
+            name: "Main CI/CD Pipeline (SIMULATED)".to_string(),
+            repository: "policycortex/main (SIMULATED)".to_string(),
             branch: "main".to_string(),
             status: "success".to_string(),
             last_run: Some(Utc::now() - chrono::Duration::hours(1)),
@@ -134,7 +181,8 @@ pub async fn get_pipelines(_state: State<Arc<AppState>>) -> impl IntoResponse {
         },
     ];
 
-    Json(pipelines).into_response()
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(pipelines, mode)).into_response()
 }
 
 // GET /api/v1/devops/releases
@@ -164,7 +212,8 @@ pub async fn get_releases(_state: State<Arc<AppState>>) -> impl IntoResponse {
         },
     ];
 
-    Json(releases).into_response()
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(releases, mode)).into_response()
 }
 
 // GET /api/v1/devops/artifacts
@@ -205,7 +254,8 @@ pub async fn get_artifacts(_state: State<Arc<AppState>>) -> impl IntoResponse {
         },
     ];
 
-    Json(artifacts).into_response()
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(artifacts, mode)).into_response()
 }
 
 // GET /api/v1/devops/deployments
@@ -246,7 +296,8 @@ pub async fn get_deployments(_state: State<Arc<AppState>>) -> impl IntoResponse 
         },
     ];
 
-    Json(deployments).into_response()
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(deployments, mode)).into_response()
 }
 
 // GET /api/v1/devops/builds
@@ -290,7 +341,8 @@ pub async fn get_builds(_state: State<Arc<AppState>>) -> impl IntoResponse {
         },
     ];
 
-    Json(builds).into_response()
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(builds, mode)).into_response()
 }
 
 // GET /api/v1/devops/repos
@@ -334,5 +386,6 @@ pub async fn get_repos(_state: State<Arc<AppState>>) -> impl IntoResponse {
         },
     ];
 
-    Json(repos).into_response()
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(repos, mode)).into_response()
 }

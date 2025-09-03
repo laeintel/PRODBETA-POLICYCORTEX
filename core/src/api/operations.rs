@@ -1,6 +1,7 @@
 // Operations API handlers for comprehensive navigation system
 use axum::{
     extract::State,
+    http::StatusCode,
     response::IntoResponse,
     Json,
 };
@@ -8,7 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
 
-use crate::api::AppState;
+use crate::{
+    api::AppState,
+    data_mode::{DataMode, DataResponse},
+};
 
 // Resource info
 #[derive(Debug, Serialize, Deserialize)]
@@ -88,9 +92,13 @@ pub struct Alert {
 
 // GET /api/v1/operations/resources
 pub async fn get_operations_resources(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // Try to get real resources from Azure
-    if let Some(ref async_client) = state.async_azure_client {
-        if let Ok(resources_data) = async_client.get_all_resources_with_health().await {
+    let mode = DataMode::from_env();
+    
+    // In real mode, we must have real data or fail
+    if mode.is_real() {
+        if let Some(ref async_client) = state.async_azure_client {
+            match async_client.get_all_resources_with_health().await {
+                Ok(resources_data) => {
             if let Some(items) = resources_data.get("items").and_then(|v| v.as_array()) {
                 let resources: Vec<ResourceInfo> = items
                     .iter()
@@ -109,33 +117,76 @@ pub async fn get_operations_resources(State(state): State<Arc<AppState>>) -> imp
                     })
                     .collect();
                 
-                if !resources.is_empty() {
-                    return Json(resources).into_response();
+                    if !resources.is_empty() {
+                        return Json(DataResponse::new(resources, mode)).into_response();
+                    } else {
+                        tracing::error!("No resources found in Azure response");
+                        return (
+                            StatusCode::SERVICE_UNAVAILABLE,
+                            Json(serde_json::json!({
+                                "error": "No resources found",
+                                "message": "Azure returned empty resource list",
+                                "mode": "real"
+                            }))
+                        ).into_response();
+                    }
+                } else {
+                    tracing::error!("Invalid Azure response format");
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "Invalid response format",
+                            "message": "Azure response does not contain expected data structure",
+                            "mode": "real"
+                        }))
+                    ).into_response();
+                }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to get resources from Azure: {}", e);
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "Azure service unavailable",
+                            "message": format!("Failed to retrieve resources: {}", e),
+                            "mode": "real"
+                        }))
+                    ).into_response();
                 }
             }
+        } else {
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration",
+                    "mode": "real"
+                }))
+            ).into_response();
         }
     }
 
-    // Return mock data
+    // Only return simulated data in simulated mode
     let resources = vec![
         ResourceInfo {
-            id: "/subscriptions/xxx/resourceGroups/rg-prod/providers/Microsoft.Compute/virtualMachines/vm-prod-001".to_string(),
-            name: "vm-prod-001".to_string(),
+            id: "/subscriptions/xxx/resourceGroups/rg-prod/providers/Microsoft.Compute/virtualMachines/vm-prod-001 (SIMULATED)".to_string(),
+            name: "vm-prod-001 (SIMULATED)".to_string(),
             resource_type: "Microsoft.Compute/virtualMachines".to_string(),
             resource_group: "rg-prod".to_string(),
             location: "eastus".to_string(),
             status: "running".to_string(),
             health: "healthy".to_string(),
             tags: vec![
-                Tag { key: "Environment".to_string(), value: "Production".to_string() },
-                Tag { key: "Owner".to_string(), value: "DevOps".to_string() },
+                Tag { key: "Environment".to_string(), value: "Production (SIMULATED)".to_string() },
+                Tag { key: "Owner".to_string(), value: "DevOps (SIMULATED)".to_string() },
             ],
             created_at: Utc::now() - chrono::Duration::days(90),
             cost_per_month: 450.0,
         },
         ResourceInfo {
             id: "/subscriptions/xxx/resourceGroups/rg-prod/providers/Microsoft.Storage/storageAccounts/stprod001".to_string(),
-            name: "stprod001".to_string(),
+            name: "stprod001 (SIMULATED)".to_string(),
             resource_type: "Microsoft.Storage/storageAccounts".to_string(),
             resource_group: "rg-prod".to_string(),
             location: "eastus".to_string(),
@@ -333,5 +384,6 @@ pub async fn get_operations_alerts(_state: State<Arc<AppState>>) -> impl IntoRes
         },
     ];
 
-    Json(alerts).into_response()
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(alerts, mode)).into_response()
 }

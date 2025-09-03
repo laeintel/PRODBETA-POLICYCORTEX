@@ -19,11 +19,27 @@ pub enum DataMode {
 }
 
 impl DataMode {
-    /// Get current data mode from environment
+    /// Get current data mode from environment - STRICT LIVE DATA CHECK
     pub fn from_env() -> Self {
-        match env::var("USE_REAL_DATA").as_deref() {
-            Ok("true") | Ok("1") => DataMode::Real,
-            _ => DataMode::Simulated,
+        // Check ALL critical flags for live data mode
+        let use_real_data = env::var("USE_REAL_DATA").as_deref() == Ok("true");
+        let use_azure_data = env::var("USE_AZURE_DATA").as_deref() == Ok("true");
+        let disable_mock = env::var("DISABLE_MOCK_DATA").as_deref() == Ok("true");
+        let fail_fast = env::var("FAIL_FAST_MODE").as_deref() == Ok("true");
+        
+        // ALL flags must be true for real data mode
+        if use_real_data && use_azure_data && disable_mock && fail_fast {
+            DataMode::Real
+        } else {
+            // Log warning if partial configuration
+            if use_real_data || use_azure_data {
+                tracing::warn!(
+                    "Partial live data configuration detected. ALL flags required: \
+                    USE_REAL_DATA={}, USE_AZURE_DATA={}, DISABLE_MOCK_DATA={}, FAIL_FAST_MODE={}",
+                    use_real_data, use_azure_data, disable_mock, fail_fast
+                );
+            }
+            DataMode::Simulated
         }
     }
 

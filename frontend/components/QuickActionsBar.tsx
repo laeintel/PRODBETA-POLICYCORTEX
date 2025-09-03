@@ -85,6 +85,32 @@ export default function QuickActionsBar() {
   const [hoveredAction, setHoveredAction] = useState<string | null>(null)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [recentAlert, setRecentAlert] = useState<string | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  // Handle scroll behavior for collapsing
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      // Collapse when scrolling down more than 50px, expand when scrolling up
+      if (currentScrollY > 50 && currentScrollY > lastScrollY) {
+        setIsCollapsed(true)
+      } else if (currentScrollY < lastScrollY) {
+        setIsCollapsed(false)
+      }
+      
+      // Always show when at the top
+      if (currentScrollY < 10) {
+        setIsCollapsed(false)
+      }
+      
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
 
   // Fetch real-time metrics
   useEffect(() => {
@@ -123,6 +149,11 @@ export default function QuickActionsBar() {
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault()
         router.push('/search')
+      }
+      // Cmd/Ctrl + B to toggle Quick Actions Bar
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault()
+        setIsCollapsed(prev => !prev)
       }
       // Escape to close AI Chat
       if (e.key === 'Escape' && aiChatOpen) {
@@ -248,52 +279,123 @@ export default function QuickActionsBar() {
 
   return (
     <>
-      {/* Quick Actions Bar */}
-      <div className="fixed top-16 left-0 lg:left-64 xl:left-72 2xl:left-80 right-0 h-14 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-10">
-        <div className="h-full px-4 flex items-center justify-between">
+      {/* Hover Zone - Invisible area to trigger expansion when collapsed */}
+      {isCollapsed && (
+        <div 
+          className="fixed top-16 left-0 lg:left-64 xl:left-72 2xl:left-80 right-0 h-20 z-20"
+          onMouseEnter={() => setIsCollapsed(false)}
+        />
+      )}
+      
+      {/* Quick Actions Bar with Collapse Animation */}
+      <motion.div 
+        initial={{ y: 0, height: 48 }}
+        animate={{ 
+          y: isCollapsed ? -44 : 0,
+          height: isCollapsed ? 4 : 48
+        }}
+        transition={{ 
+          type: "spring", 
+          stiffness: 300, 
+          damping: 30 
+        }}
+        className="fixed top-16 left-0 lg:left-64 xl:left-72 2xl:left-80 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 z-10 overflow-hidden"
+        onMouseLeave={() => {
+          // Auto-collapse when mouse leaves if scrolled down
+          if (window.scrollY > 50) {
+            setIsCollapsed(true)
+          }
+        }}
+      >
+        {/* Collapsed State Indicator */}
+        {isCollapsed && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="h-1 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 flex items-center justify-center cursor-pointer group hover:bg-gradient-to-r hover:from-purple-500/20 hover:via-indigo-500/20 hover:to-blue-500/20 transition-all"
+            onClick={() => setIsCollapsed(false)}
+          >
+            <div className="flex items-center gap-1">
+              {/* Minimal dots */}
+              <div className="flex gap-0.5">
+                {[...Array(3)].map((_, i) => (
+                  <motion.div 
+                    key={i} 
+                    className="w-0.5 h-0.5 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full"
+                    animate={{ 
+                      opacity: [0.3, 0.8, 0.3]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      delay: i * 0.3,
+                      repeat: Infinity
+                    }}
+                  />
+                ))}
+              </div>
+              
+              {/* Alert indicator if there are critical issues */}
+              {(metrics?.risks?.critical ?? 0) > 0 && (
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="w-1 h-1 bg-red-500 rounded-full ml-1"
+                />
+              )}
+            </div>
+          </motion.div>
+        )}
+        
+        {/* Main Content */}
+        <motion.div 
+          animate={{ opacity: isCollapsed ? 0 : 1 }}
+          transition={{ duration: 0.2 }}
+          className="h-12 px-3 flex items-center justify-between"
+        >
           {/* Left side - Quick Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {quickActions.map((action) => {
               const Icon = action.icon
               return (
                 <motion.button
                   key={action.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={action.action}
                   onMouseEnter={() => setHoveredAction(action.id)}
                   onMouseLeave={() => setHoveredAction(null)}
                   className={`
-                    relative flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all
+                    relative flex items-center gap-1.5 px-2 py-1 rounded-md transition-all
                     ${action.bgColor} ${action.hoverColor} border border-gray-700
                     ${action.pulse ? 'animate-pulse' : ''}
                   `}
                 >
                   {/* Loading state */}
                   {action.loading ? (
-                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <Icon className={`w-4 h-4 ${action.color}`} />
+                    <Icon className={`w-3 h-3 ${action.color}`} />
                   )}
                   
                   {/* Label - show short on mobile, full on desktop */}
-                  <span className={`text-sm font-medium ${action.color} hidden sm:inline`}>
+                  <span className={`text-xs font-medium ${action.color} hidden lg:inline`}>
                     {action.label}
                   </span>
-                  <span className={`text-sm font-medium ${action.color} sm:hidden`}>
+                  <span className={`text-xs font-medium ${action.color} lg:hidden`}>
                     {action.shortLabel}
                   </span>
                   
                   {/* Value/Badge */}
                   {action.value && (
-                    <span className={`text-xs font-bold ${action.color}`}>
+                    <span className={`text-[10px] font-bold ${action.color}`}>
                       {action.value}
                     </span>
                   )}
                   
                   {/* Trend indicator */}
                   {action.trend !== undefined && action.trend !== 0 && (
-                    <span className={`text-xs ${action.trend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <span className={`text-[10px] ${action.trend > 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {action.trend > 0 ? '↑' : '↓'}{Math.abs(action.trend)}%
                     </span>
                   )}
@@ -302,14 +404,14 @@ export default function QuickActionsBar() {
                   <AnimatePresence>
                     {hoveredAction === action.id && (
                       <motion.div
-                        initial={{ opacity: 0, y: -5 }}
+                        initial={{ opacity: 0, y: -3 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-xs rounded whitespace-nowrap z-50"
+                        exit={{ opacity: 0, y: -3 }}
+                        className="absolute top-full mt-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white text-[10px] rounded whitespace-nowrap z-50"
                       >
                         {action.label}
                         {action.id === 'ai-chat' && (
-                          <span className="ml-2 text-gray-600 dark:text-gray-400">⌘K</span>
+                          <span className="ml-1 text-gray-600 dark:text-gray-400 text-[9px]">⌘K</span>
                         )}
                       </motion.div>
                     )}
@@ -320,7 +422,7 @@ export default function QuickActionsBar() {
           </div>
 
           {/* Right side - Status indicators and voice */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Recent Alert */}
             <AnimatePresence>
               {recentAlert && (
@@ -328,54 +430,54 @@ export default function QuickActionsBar() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg"
+                  className="flex items-center gap-1 px-2 py-0.5 bg-red-500/10 border border-red-500/20 rounded-md"
                 >
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
-                  <span className="text-sm text-red-400">{recentAlert}</span>
+                  <AlertTriangle className="w-3 h-3 text-red-400" />
+                  <span className="text-[10px] text-red-400">{recentAlert}</span>
                   <button type="button"
                     onClick={() => setRecentAlert(null)}
-                    className="ml-2 text-red-400 hover:text-red-300"
+                    className="ml-1 text-red-400 hover:text-red-300"
                   >
-                    <XCircle className="w-3 h-3" />
+                    <XCircle className="w-2.5 h-2.5" />
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* AI Status */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 rounded-lg">
-              <Activity className="w-4 h-4 text-purple-400" />
-              <span className="text-xs text-purple-400">
-                AI: {metrics?.ai?.accuracy?.predictiveCompliance ? metrics.ai.accuracy.predictiveCompliance.toFixed(1) : '..'}% Accuracy
+            <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 bg-purple-500/10 rounded-md">
+              <Activity className="w-3 h-3 text-purple-400" />
+              <span className="text-[10px] text-purple-400">
+                AI: {metrics?.ai?.accuracy?.predictiveCompliance ? metrics.ai.accuracy.predictiveCompliance.toFixed(0) : '..'}%
               </span>
             </div>
 
             {/* Voice Toggle */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setVoiceEnabled(!voiceEnabled)}
               className={`
-                p-2 rounded-lg transition-all
+                p-1 rounded-md transition-all
                 ${voiceEnabled 
                   ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' 
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }
               `}
             >
-              <Mic className="w-4 h-4" />
+              <Mic className="w-3 h-3" />
             </motion.button>
 
             {/* Command Palette hint */}
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <Command className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Press</span>
-              <kbd className="text-xs bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300">⌘K</kbd>
-              <span className="text-xs text-gray-600 dark:text-gray-400">for AI</span>
+            <div className="hidden xl:flex items-center gap-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-md">
+              <Command className="w-2.5 h-2.5 text-gray-600 dark:text-gray-400" />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400">Press</span>
+              <kbd className="text-[10px] bg-white dark:bg-gray-900 px-1 py-0.5 rounded text-gray-700 dark:text-gray-300">⌘K</kbd>
+              <span className="text-[10px] text-gray-600 dark:text-gray-400">AI</span>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Global AI Chat Interface */}
       <GlobalAIChat 
@@ -399,7 +501,32 @@ export default function QuickActionsBar() {
       {/* Adjust main content padding to account for Quick Actions Bar */}
       <style jsx global>{`
         .pt-16 {
-          padding-top: 7.5rem !important; /* 4rem (header) + 3.5rem (quick actions) */
+          padding-top: ${isCollapsed ? '4.25rem' : '7rem'} !important;
+          transition: padding-top 0.3s ease;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+          scroll-behavior: smooth;
+        }
+        
+        /* Keyboard shortcut hint */
+        @media (min-width: 1024px) {
+          .quick-actions-hint::after {
+            content: 'Ctrl+B to toggle';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
+          
+          .quick-actions-hint:hover::after {
+            opacity: 1;
+          }
         }
       `}</style>
     </>

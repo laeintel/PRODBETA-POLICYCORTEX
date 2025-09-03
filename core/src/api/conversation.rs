@@ -10,8 +10,10 @@ use crate::ml::natural_language::{
     NaturalLanguageEngine, ConversationQuery, ConversationResponse,
     ResponseType, SuggestedAction, ConversationContext,
 };
+use crate::data_mode::{DataMode, DataResponse};
 use axum::{
     extract::{Query as AxumQuery, State},
+    http::StatusCode,
     response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};
@@ -75,11 +77,52 @@ pub struct PolicyTranslationResponse {
 
 // POST /api/v1/conversation/chat
 pub async fn chat(
-    State(_state): State<Arc<crate::api::AppState>>,
+    State(state): State<Arc<crate::api::AppState>>,
     Json(request): Json<ChatRequest>,
 ) -> impl IntoResponse {
+    let mode = DataMode::from_env();
     let start_time = std::time::Instant::now();
     
+    // In real mode, we must have real Azure AI service or fail
+    if mode.is_real() {
+        if let Some(ref async_client) = state.async_azure_client {
+            // Try to get real AI chat response
+            // AI chat processing not yet implemented in Azure client
+            // For now, fail fast in real mode
+            return (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+                "error": "AI chat processing not available in real data mode",
+                "details": "Azure AI integration pending implementation"
+            }))).into_response();
+            
+            // The rest of the code is unreachable but kept for future implementation
+            #[allow(unreachable_code)]
+            {
+                let thinking_time_ms = start_time.elapsed().as_millis() as u64;
+                let response = ChatResponse {
+                    session_id: request.session_id.unwrap_or_else(|| Uuid::new_v4().to_string()),
+                    message: "AI chat not yet implemented".to_string(),
+                    response_type: "error".to_string(),
+                    data: None,
+                    actions: vec![],
+                    confidence: 0.0,
+                    thinking_time_ms,
+                };
+                return Json(DataResponse::new(response, mode)).into_response();
+            }
+        } else {
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration for AI chat",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
+    }
+    
+    // Only use simulated chat in simulated mode
     // Get or create session
     let session_id = request.session_id.unwrap_or_else(|| Uuid::new_v4().to_string());
     
@@ -97,10 +140,10 @@ pub async fn chat(
     
     let thinking_time_ms = start_time.elapsed().as_millis() as u64;
     
-    // Convert response
+    // Convert response and mark as simulated
     let response = ChatResponse {
         session_id,
-        message: nlp_response.message,
+        message: format!("(SIMULATED) {}", nlp_response.message),
         response_type: format!("{:?}", nlp_response.response_type),
         data: nlp_response.data,
         actions: nlp_response.actions.into_iter().map(|a| ActionSuggestion {
@@ -113,7 +156,7 @@ pub async fn chat(
         thinking_time_ms,
     };
     
-    Json(response)
+    Json(DataResponse::new(response, mode)).into_response()
 }
 
 // POST /api/v1/conversation/translate-policy
@@ -135,7 +178,8 @@ pub async fn translate_policy(
         },
     };
     
-    Json(response)
+    let mode = DataMode::from_env();
+    Json(DataResponse::new(response, mode)).into_response()
 }
 
 // GET /api/v1/conversation/suggestions

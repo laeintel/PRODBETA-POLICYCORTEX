@@ -11,6 +11,7 @@
 
 use crate::api::{AppState, ApiError};
 use crate::auth::{AuthUser, TokenValidator};
+use crate::data_mode::{DataMode, DataResponse};
 use crate::remediation::*;
 use crate::remediation::approval_manager::{ApprovalManager, ApprovalRequest, ApprovalDecision};
 use crate::remediation::bulk_remediation::{BulkRemediationEngine, Violation};
@@ -18,6 +19,7 @@ use crate::remediation::rollback_manager::RollbackManager;
 // use crate::remediation::quick_fixes::*;
 use axum::{
     extract::{Path, Query, State},
+    http::StatusCode,
     response::{IntoResponse, Json, sse::{Event, Sse}},
 };
 use serde::{Deserialize, Serialize};
@@ -117,10 +119,27 @@ pub async fn create_approval_request(
     State(state): State<Arc<AppState>>,
     Json(request): Json<CreateApprovalRequest>,
 ) -> impl IntoResponse {
+    let mode = DataMode::from_env();
+    
     // Verify user has permission to create approvals
     if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Remediate"]) {
         return ApiError::Forbidden("Insufficient permissions to create remediation approvals".to_string())
             .into_response();
+    }
+    
+    // In real mode, we must have real Azure connection or fail
+    if mode.is_real() {
+        if state.async_azure_client.is_none() {
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
     }
 
     let approval_id = Uuid::new_v4().to_string();
@@ -153,12 +172,13 @@ pub async fn create_approval_request(
                 tracing::info!("Sending approval notifications for {}", approval_id_clone);
             });
             
-            Json(CreateApprovalResponse {
-                approval_id: id.clone(),
-                status: "pending".to_string(),
+            let response = CreateApprovalResponse {
+                approval_id: if mode.is_simulated() { format!("{} (SIMULATED)", id) } else { id.clone() },
+                status: if mode.is_simulated() { "pending (SIMULATED)".to_string() } else { "pending".to_string() },
                 expires_at,
                 approval_url: format!("/api/v1/remediation/approvals/{}", id),
-            }).into_response()
+            };
+            Json(DataResponse::new(response, mode)).into_response()
         }
         Err(e) => {
             ApiError::internal_server(format!("Failed to create approval: {}", e))
@@ -174,10 +194,27 @@ pub async fn approve_remediation(
     Path(approval_id): Path<String>,
     Json(decision): Json<ApprovalDecisionRequest>,
 ) -> impl IntoResponse {
+    let mode = DataMode::from_env();
+    
     // Verify user has permission to approve
     if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Approve"]) {
         return ApiError::Forbidden("Insufficient permissions to approve remediations".to_string())
             .into_response();
+    }
+    
+    // In real mode, we must have real Azure connection or fail
+    if mode.is_real() {
+        if state.async_azure_client.is_none() {
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration for approval processing",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
     }
     
     let approval_manager = match state.approval_manager.clone() {
@@ -208,12 +245,17 @@ pub async fn approve_remediation(
                 }
             }
             
-            Json(ApprovalDecisionResponse {
+            let response = ApprovalDecisionResponse {
                 success: true,
-                status: if result.approved { "approved".to_string() } else { "rejected".to_string() },
+                status: if mode.is_simulated() {
+                    format!("{} (SIMULATED)", if result.approved { "approved" } else { "rejected" })
+                } else {
+                    if result.approved { "approved".to_string() } else { "rejected".to_string() }
+                },
                 remediation_started,
-                remediation_id,
-            }).into_response()
+                remediation_id: remediation_id.map(|id| if mode.is_simulated() { format!("{} (SIMULATED)", id) } else { id }),
+            };
+            Json(DataResponse::new(response, mode)).into_response()
         }
         Err(e) => {
             ApiError::BadRequest(format!("Failed to process approval: {}", e))
@@ -272,10 +314,27 @@ pub async fn execute_bulk_remediation(
     State(state): State<Arc<AppState>>,
     Json(request): Json<BulkRemediationRequest>,
 ) -> impl IntoResponse {
+    let mode = DataMode::from_env();
+    
     // Verify permissions
     if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Remediate"]) {
         return ApiError::Forbidden("Insufficient permissions for bulk remediation".to_string())
             .into_response();
+    }
+    
+    // In real mode, we must have real Azure connection or fail
+    if mode.is_real() {
+        if state.async_azure_client.is_none() {
+            tracing::error!("Real mode enabled but Azure client not initialized for bulk remediation");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration for bulk remediation",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
     }
     
     let bulk_id = Uuid::new_v4().to_string();
@@ -333,12 +392,13 @@ pub async fn execute_bulk_remediation(
         channels.write().await.insert(bulk_id_clone.clone(), tx);
     }
     
-    Json(BulkRemediationResponse {
-        bulk_id: bulk_id.clone(),
+    let response = BulkRemediationResponse {
+        bulk_id: if mode.is_simulated() { format!("{} (SIMULATED)", bulk_id) } else { bulk_id.clone() },
         total_violations: violations.len(),
         processing: violations.len(),
         stream_url: format!("/api/v1/remediation/bulk/{}/stream", bulk_id),
-    }).into_response()
+    };
+    Json(DataResponse::new(response, mode)).into_response()
 }
 
 /// Stream bulk remediation progress
@@ -374,10 +434,27 @@ pub async fn rollback_remediation(
     Path(rollback_token): Path<String>,
     Json(request): Json<RollbackRequest>,
 ) -> impl IntoResponse {
+    let mode = DataMode::from_env();
+    
     // Verify permissions
     if !TokenValidator::new().check_permissions(&auth_user.claims, &["PolicyCortex.Remediate"]) {
         return ApiError::Forbidden("Insufficient permissions for rollback".to_string())
             .into_response();
+    }
+    
+    // In real mode, we must have real Azure connection or fail
+    if mode.is_real() {
+        if state.async_azure_client.is_none() {
+            tracing::error!("Real mode enabled but Azure client not initialized for rollback");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration for rollback operations",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
     }
     
     let rollback_manager = state.rollback_manager.clone()
@@ -387,12 +464,17 @@ pub async fn rollback_remediation(
     
     match rollback_manager.execute_rollback(rollback_token, request.reason).await {
         Ok(result) => {
-            Json(RollbackResponse {
+            let response = RollbackResponse {
                 success: true,
                 resources_restored: result.resources_restored,
                 duration_ms: start_time.elapsed().as_millis() as u64,
-                details: vec![format!("{} resources restored", result.resources_restored)],
-            }).into_response()
+                details: if mode.is_simulated() {
+                    vec![format!("{} resources restored (SIMULATED)", result.resources_restored)]
+                } else {
+                    vec![format!("{} resources restored", result.resources_restored)]
+                },
+            };
+            Json(DataResponse::new(response, mode)).into_response()
         }
         Err(e) => {
             ApiError::internal_server(format!("Rollback failed: {}", e))
@@ -420,37 +502,92 @@ pub async fn get_rollback_status(
 
 /// Get remediation status
 pub async fn get_remediation_status(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Path(request_id): Path<String>,
     Query(params): Query<RemediationStatusQuery>,
 ) -> impl IntoResponse {
-    // In production, fetch from database
-    Json(serde_json::json!({
-        "request_id": request_id,
-        "status": "in_progress",
+    let mode = DataMode::from_env();
+    
+    // In real mode, we must have real data or fail
+    if mode.is_real() {
+        if state.async_azure_client.is_none() {
+            tracing::error!("Real mode enabled but Azure client not initialized for status check");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
+        // In real mode, try to get actual status from Azure
+        // For now, return service unavailable as we don't have the implementation
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "Real remediation status not yet implemented",
+                "message": "Azure remediation status retrieval is being developed",
+                "mode": "real"
+            }))
+        ).into_response();
+    }
+    
+    // Only return simulated data in simulated mode
+    let response = serde_json::json!({
+        "request_id": format!("{} (SIMULATED)", request_id),
+        "status": "in_progress (SIMULATED)",
         "stage": 2,
         "total_stages": 5,
         "started_at": Utc::now() - chrono::Duration::minutes(5),
         "estimated_completion": Utc::now() + chrono::Duration::minutes(2),
         "include_details": params.include_details,
-    })).into_response()
+    });
+    Json(DataResponse::new(response, mode)).into_response()
 }
 
 /// List all remediations
 pub async fn list_remediations(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Query(params): Query<RemediationStatusQuery>,
 ) -> impl IntoResponse {
+    let mode = DataMode::from_env();
     let page = params.page.unwrap_or(1);
     let limit = params.limit.unwrap_or(20).min(100);
     
-    // In production, fetch from database with pagination
-    Json(serde_json::json!({
+    // In real mode, we must have real data or fail
+    if mode.is_real() {
+        if state.async_azure_client.is_none() {
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
+        // In real mode, return service unavailable as we don't have the implementation
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "Real remediation list not yet implemented",
+                "message": "Azure remediation listing is being developed",
+                "mode": "real"
+            }))
+        ).into_response();
+    }
+    
+    // Only return simulated data in simulated mode
+    let response = serde_json::json!({
         "remediations": [],
         "total": 0,
         "page": page,
         "limit": limit,
-    })).into_response()
+        "mode": "SIMULATED"
+    });
+    Json(DataResponse::new(response, mode)).into_response()
 }
 
 // ========== Helper Functions ==========
