@@ -4,14 +4,28 @@ echo PolicyCortex - Live Azure Data Mode
 echo ========================================
 echo.
 
-REM Set Azure credentials
-set AZURE_SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78
+REM Set Azure credentials - UPDATED TO CORRECT SUBSCRIPTION
+set AZURE_SUBSCRIPTION_ID=632a3b06-2a6c-4b07-8f4f-6bf4c6184095
 set AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
 set AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
 
-REM Enable Azure integration
+REM CRITICAL: Enable Azure integration and disable ALL mock data
 set USE_AZURE_DATA=true
+set USE_REAL_DATA=true
+set DISABLE_MOCK_DATA=true
+set FAIL_FAST_MODE=true
 set AZURE_AUTH_MODE=cli
+set AZURE_USE_CLI_AUTH=true
+
+REM CRITICAL: Disable demo/mock modes
+set NEXT_PUBLIC_DEMO_MODE=false
+set DEMO_MODE=false
+set USE_MOCK_DATA=false
+set ENABLE_MOCK_FALLBACK=false
+
+REM Enable debugging
+set RUST_LOG=debug,policycortex_core=debug
+set LOG_AZURE_REQUESTS=true
 
 echo Checking Azure connection...
 call az account show >nul 2>&1

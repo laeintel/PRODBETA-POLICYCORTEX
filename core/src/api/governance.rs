@@ -7,7 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
-use tracing::info;
+use tracing::{info, error};
 
 use crate::api::AppState;
 // use crate::azure_integration::get_azure_service; // Temporarily commented out
@@ -80,61 +80,63 @@ pub struct PolicyInfo {
 }
 
 // GET /api/v1/governance/compliance/status
-pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn get_compliance_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     info!("Fetching compliance status from Azure");
     
-    // Azure integration temporarily disabled
-    /*
-    match mock_azure_result::<()>().await {
-        Ok(_) => {
-            // Get real regulatory compliance data from Azure
-            match azure.governance().get_regulatory_compliance().await {
-                Ok(regulatory) => {
-                    let compliance_statuses: Vec<ComplianceStatus> = regulatory
-                        .into_iter()
-                        .map(|reg| {
-                            let total = reg.properties.passed_controls.unwrap_or(0) +
-                                       reg.properties.failed_controls.unwrap_or(0) +
-                                       reg.properties.skipped_controls.unwrap_or(0);
-                            let passed = reg.properties.passed_controls.unwrap_or(0);
-                            let failed = reg.properties.failed_controls.unwrap_or(0);
-                            let percentage = if total > 0 {
-                                (passed as f64 / total as f64) * 100.0
-                            } else {
-                                0.0
-                            };
-                            
-                            ComplianceStatus {
-                                framework: reg.name,
-                                total_controls: total as u32,
-                                compliant_controls: passed as u32,
-                                non_compliant_controls: failed as u32,
-                                compliance_percentage: percentage,
-                                last_assessment: Utc::now(),
-                                trend: if reg.properties.state == "Passed" { "improving" } else { "declining" }.to_string(),
-                            }
-                        })
-                        .collect();
+    // Check data mode and fail fast if real mode is enabled
+    let data_mode = crate::data_mode::DataMode::from_env();
+    
+    if data_mode.is_real() {
+        // FAIL FAST: No mock data in real mode
+        if let Some(ref azure_client) = state.async_azure_client {
+            // Try to get real Azure data
+            match azure_client.get_governance_metrics().await {
+                Ok(metrics) => {
+                    // Build compliance status from real Azure data
+                    let compliance_statuses = vec![
+                        ComplianceStatus {
+                            framework: "Azure Policy".to_string(),
+                            total_controls: 100, // Using default since total_policies field doesn't exist
+                            compliant_controls: (metrics.policies.compliance_rate as u32),
+                            non_compliant_controls: metrics.policies.violations as u32,
+                            compliance_percentage: metrics.policies.compliance_rate,
+                            last_assessment: Utc::now(),
+                            trend: if metrics.policies.compliance_rate > 85.0 { "improving" } else { "declining" }.to_string(),
+                        },
+                    ];
                     
-                    if !compliance_statuses.is_empty() {
-                        return Json(compliance_statuses).into_response();
-                    }
+                    return Json(compliance_statuses).into_response();
                 }
                 Err(e) => {
-                    warn!("Failed to fetch regulatory compliance: {}", e);
+                    error!("Failed to get Azure metrics in real mode: {}", e);
+                    return (axum::http::StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+                        "error": "Azure service unavailable in real data mode",
+                        "details": e.to_string(),
+                        "mode": "REAL_DATA_REQUIRED"
+                    }))).into_response();
                 }
             }
-        }
-        Err(e) => {
-            warn!("Failed to get Azure service: {}", e);
+        } else {
+            return (axum::http::StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+                "error": "Azure client not configured",
+                "details": "Real data mode requires Azure credentials",
+                "mode": "REAL_DATA_REQUIRED"
+            }))).into_response();
         }
     }
-    */
     
-    // Return mock data as fallback
+    // ONLY return mock data if explicitly in simulated mode
+    if !data_mode.is_simulated() {
+        return (axum::http::StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+            "error": "Data mode not configured",
+            "details": "Please configure USE_REAL_DATA or enable simulated mode"
+        }))).into_response();
+    }
+    
+    // Simulated data for development
     let compliance_statuses = vec![
         ComplianceStatus {
-            framework: "CIS Azure Foundations".to_string(),
+            framework: "CIS Azure Foundations (SIMULATED)".to_string(),
             total_controls: 92,
             compliant_controls: 78,
             non_compliant_controls: 14,
@@ -143,7 +145,7 @@ pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoRes
             trend: "improving".to_string(),
         },
         ComplianceStatus {
-            framework: "NIST 800-53".to_string(),
+            framework: "NIST 800-53 (SIMULATED)".to_string(),
             total_controls: 110,
             compliant_controls: 95,
             non_compliant_controls: 15,
@@ -152,7 +154,7 @@ pub async fn get_compliance_status(_state: State<Arc<AppState>>) -> impl IntoRes
             trend: "stable".to_string(),
         },
         ComplianceStatus {
-            framework: "ISO 27001".to_string(),
+            framework: "ISO 27001 (SIMULATED)".to_string(),
             total_controls: 114,
             compliant_controls: 102,
             non_compliant_controls: 12,

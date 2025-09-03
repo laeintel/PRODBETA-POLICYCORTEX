@@ -1,6 +1,7 @@
 // AI Navigation API handlers for comprehensive navigation system
 use axum::{
     extract::State,
+    http::StatusCode,
     response::IntoResponse,
     Json,
 };
@@ -8,7 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
 
-use crate::api::AppState;
+use crate::{
+    api::AppState,
+    data_mode::{DataMode, DataResponse},
+};
 
 // Predictive compliance data (Patent #4)
 #[derive(Debug, Serialize, Deserialize)]
@@ -243,67 +247,93 @@ pub async fn handle_ai_chat(
 
 // GET /api/v1/ai/unified/metrics (Patent #3)
 pub async fn get_unified_metrics(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // Try to get real metrics from Azure
-    let metrics = if let Some(ref async_client) = state.async_azure_client {
-        if let Ok(gov_metrics) = async_client.get_governance_metrics().await {
-            vec![
-                UnifiedMetric {
-                    domain: "Cost".to_string(),
-                    metric_name: "Monthly Spend".to_string(),
-                    value: gov_metrics.costs.current_spend,
-                    unit: "USD".to_string(),
-                    trend: "decreasing".to_string(),
-                    change_24h: -2.3,
-                    ai_insights: vec![
-                        format!("${:.2} in savings identified", gov_metrics.costs.savings_identified),
-                        "Cost anomaly detected in storage services".to_string(),
-                    ],
-                    correlated_metrics: vec![
-                        "Resource Utilization".to_string(),
-                        "Idle Resources".to_string(),
-                    ],
-                },
-                UnifiedMetric {
-                    domain: "Security".to_string(),
-                    metric_name: "Risk Score".to_string(),
-                    value: gov_metrics.rbac.risk_score,
-                    unit: "score".to_string(),
-                    trend: "stable".to_string(),
-                    change_24h: 0.5,
-                    ai_insights: vec![
-                        format!("{} anomalies detected", gov_metrics.rbac.anomalies_detected),
-                        "Elevated permissions need review".to_string(),
-                    ],
-                    correlated_metrics: vec![
-                        "Policy Violations".to_string(),
-                        "Access Reviews".to_string(),
-                    ],
-                },
-                UnifiedMetric {
-                    domain: "Compliance".to_string(),
-                    metric_name: "Compliance Rate".to_string(),
-                    value: gov_metrics.policies.compliance_rate,
-                    unit: "%".to_string(),
-                    trend: "improving".to_string(),
-                    change_24h: 1.2,
-                    ai_insights: vec![
-                        format!("{} active policies", gov_metrics.policies.active),
-                        format!("{} violations detected", gov_metrics.policies.violations),
-                    ],
-                    correlated_metrics: vec![
-                        "Security Score".to_string(),
-                        "Resource Tags".to_string(),
-                    ],
-                },
-            ]
+    let mode = DataMode::from_env();
+    
+    // In real mode, we must have real data or fail
+    if mode.is_real() {
+        if let Some(ref async_client) = state.async_azure_client {
+            match async_client.get_governance_metrics().await {
+                Ok(gov_metrics) => {
+                    let metrics = vec![
+                        UnifiedMetric {
+                            domain: "Cost".to_string(),
+                            metric_name: "Monthly Spend".to_string(),
+                            value: gov_metrics.costs.current_spend,
+                            unit: "USD".to_string(),
+                            trend: "decreasing".to_string(),
+                            change_24h: -2.3,
+                            ai_insights: vec![
+                                format!("${:.2} in savings identified", gov_metrics.costs.savings_identified),
+                                "Cost anomaly detected in storage services".to_string(),
+                            ],
+                            correlated_metrics: vec![
+                                "Resource Utilization".to_string(),
+                                "Idle Resources".to_string(),
+                            ],
+                        },
+                        UnifiedMetric {
+                            domain: "Security".to_string(),
+                            metric_name: "Risk Score".to_string(),
+                            value: gov_metrics.rbac.risk_score,
+                            unit: "score".to_string(),
+                            trend: "stable".to_string(),
+                            change_24h: 0.5,
+                            ai_insights: vec![
+                                format!("{} anomalies detected", gov_metrics.rbac.anomalies_detected),
+                                "Elevated permissions need review".to_string(),
+                            ],
+                            correlated_metrics: vec![
+                                "Policy Violations".to_string(),
+                                "Access Reviews".to_string(),
+                            ],
+                        },
+                        UnifiedMetric {
+                            domain: "Compliance".to_string(),
+                            metric_name: "Compliance Rate".to_string(),
+                            value: gov_metrics.policies.compliance_rate,
+                            unit: "%".to_string(),
+                            trend: "improving".to_string(),
+                            change_24h: 1.2,
+                            ai_insights: vec![
+                                format!("{} active policies", gov_metrics.policies.active),
+                                format!("{} violations detected", gov_metrics.policies.violations),
+                            ],
+                            correlated_metrics: vec![
+                                "Security Score".to_string(),
+                                "Resource Tags".to_string(),
+                            ],
+                        },
+                    ];
+                    return Json(DataResponse::new(metrics, mode)).into_response();
+                }
+                Err(e) => {
+                    tracing::error!("Failed to get real unified metrics from Azure: {}", e);
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "Azure service unavailable",
+                            "message": format!("Failed to retrieve unified metrics: {}", e),
+                            "mode": "real"
+                        }))
+                    ).into_response();
+                }
+            }
         } else {
-            get_mock_unified_metrics()
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration",
+                    "mode": "real"
+                }))
+            ).into_response();
         }
-    } else {
-        get_mock_unified_metrics()
-    };
-
-    Json(metrics).into_response()
+    }
+    
+    // Only use mock data in simulated mode
+    let metrics = get_mock_unified_metrics();
+    Json(DataResponse::new(metrics, mode)).into_response()
 }
 
 fn get_mock_unified_metrics() -> Vec<UnifiedMetric> {

@@ -1,6 +1,7 @@
 // Security Navigation API handlers for comprehensive navigation system
 use axum::{
     extract::State,
+    http::StatusCode,
     response::IntoResponse,
     Json,
 };
@@ -8,7 +9,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use chrono::{DateTime, Utc};
 
-use crate::api::AppState;
+use crate::{
+    api::AppState,
+    data_mode::{DataMode, DataResponse},
+};
 
 // IAM User
 #[derive(Debug, Serialize, Deserialize)]
@@ -100,12 +104,48 @@ pub struct AccessReview {
 }
 
 // GET /api/v1/security/iam/users
-pub async fn get_iam_users(_state: State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn get_iam_users(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let mode = DataMode::from_env();
+    
+    // In real mode, we must have real data or fail
+    if mode.is_real() {
+        if let Some(ref async_client) = state.async_azure_client {
+            // Get identities from Azure AD
+            match async_client.get_identities().await {
+                Ok(users) => {
+                    return Json(DataResponse::new(users, mode)).into_response();
+                }
+                Err(e) => {
+                    tracing::error!("Failed to get IAM users from Azure: {}", e);
+                    return (
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        Json(serde_json::json!({
+                            "error": "Azure service unavailable",
+                            "message": format!("Failed to retrieve IAM users: {}", e),
+                            "mode": "real"
+                        }))
+                    ).into_response();
+                }
+            }
+        } else {
+            tracing::error!("Real mode enabled but Azure client not initialized");
+            return (
+                StatusCode::SERVICE_UNAVAILABLE,
+                Json(serde_json::json!({
+                    "error": "Azure client not initialized",
+                    "message": "Real data mode requires Azure client configuration",
+                    "mode": "real"
+                }))
+            ).into_response();
+        }
+    }
+    
+    // Only return simulated data in simulated mode
     let users = vec![
         IAMUser {
             id: "user-001".to_string(),
-            display_name: "John Smith".to_string(),
-            user_principal_name: "john.smith@contoso.com".to_string(),
+            display_name: "John Smith (SIMULATED)".to_string(),
+            user_principal_name: "john.smith@contoso.com (SIMULATED)".to_string(),
             enabled: true,
             mfa_enabled: true,
             last_sign_in: Some(Utc::now() - chrono::Duration::hours(2)),
@@ -134,7 +174,7 @@ pub async fn get_iam_users(_state: State<Arc<AppState>>) -> impl IntoResponse {
         },
     ];
 
-    Json(users).into_response()
+    Json(DataResponse::new(users, mode)).into_response()
 }
 
 // GET /api/v1/security/rbac/roles
