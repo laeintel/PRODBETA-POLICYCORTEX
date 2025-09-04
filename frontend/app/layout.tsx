@@ -18,6 +18,9 @@ import { headers } from 'next/headers'
 import Script from 'next/script'
 import { PerformanceMonitor } from '../components/PerformanceMonitor'
 import { AccessibilityChecker } from '../components/AccessibilityChecker'
+import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration'
+import { SessionRefresher } from '../contexts/AuthContext'
+import DemoModeInitializer from '../components/DemoModeInitializer'
 
 const inter = Inter({ subsets: ['latin'] })
 const orbitron = Orbitron({ 
@@ -85,6 +88,9 @@ export default function RootLayout({
           Skip to main content
         </a>
         <Providers>
+          <DemoModeInitializer />
+          <ServiceWorkerRegistration />
+          <SessionRefresher />
           <GlobalOmnibar />
           <AppShell>{children}</AppShell>
         </Providers>

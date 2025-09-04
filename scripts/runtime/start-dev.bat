@@ -40,34 +40,29 @@ echo.
 echo Stopping any existing containers...
 docker-compose -f docker-compose.dev.yml down 2>nul
 
-REM Start Redis first (needed for caching)
+REM Start infrastructure services (PostgreSQL, Redis, EventStore)
 echo.
-echo Starting Redis cache...
-docker run -d --name policycortex-redis -p 6379:6379 redis:alpine 2>nul || docker start policycortex-redis
-
-REM Wait for Redis to be ready
-echo Waiting for Redis to be ready...
-timeout /t 3 /nobreak >nul
-
-REM Build and start the core service
-echo.
-echo Building and starting Core service...
-docker build -t policycortex-core ./core
+echo Starting infrastructure services...
+docker-compose -f docker-compose.dev.yml up -d postgres redis eventstore
 if %errorlevel% neq 0 (
-    echo ERROR: Failed to build Core service
+    echo ERROR: Failed to start infrastructure services
+    echo Try running: docker-compose -f docker-compose.dev.yml down -v
     exit /b 1
 )
 
-REM Start core with all required environment variables
-docker run -d --name policycortex-core -p 8080:8080 ^
-  -e AZURE_SUBSCRIPTION_ID=%AZURE_SUBSCRIPTION_ID% ^
-  -e AZURE_TENANT_ID=%AZURE_TENANT_ID% ^
-  -e AZURE_CLIENT_ID=%AZURE_CLIENT_ID% ^
-  -e REDIS_URL=redis://host.docker.internal:6379 ^
-  -e RUST_LOG=debug ^
-  -e ENABLE_REAL_AZURE_DATA=true ^
-  -e ENABLE_CACHE=true ^
-  policycortex-core 2>nul || docker restart policycortex-core
+REM Wait for services to be ready
+echo Waiting for infrastructure services to be ready...
+timeout /t 10 /nobreak >nul
+
+REM Start the core service locally with cargo
+echo.
+echo Starting Core service locally...
+start "PolicyCortex Core" cmd /k "cd core && cargo run"
+
+REM Start the GraphQL service locally
+echo.
+echo Starting GraphQL service locally...
+start "PolicyCortex GraphQL" cmd /k "cd graphql && npm install && npm run dev"
 
 REM Wait for core to be ready
 echo Waiting for Core service to be ready...
@@ -93,8 +88,11 @@ echo ===============================================
 echo.
 echo Services:
 echo   Core API:     http://localhost:8080
+echo   GraphQL:      http://localhost:4000/graphql
 echo   Frontend:     http://localhost:3000
+echo   PostgreSQL:   localhost:5432
 echo   Redis:        localhost:6379
+echo   EventStore:   http://localhost:2113
 echo.
 echo API Endpoints:
 echo   Health:       http://localhost:8080/health
@@ -107,10 +105,10 @@ echo   Subscription: %AZURE_SUBSCRIPTION_ID%
 echo   Tenant:       %AZURE_TENANT_ID%
 echo   Client ID:    %AZURE_CLIENT_ID%
 echo.
-echo To view logs:
-echo   docker logs policycortex-core -f
+echo To view Docker logs:
+echo   docker-compose -f docker-compose.dev.yml logs -f
 echo.
 echo To stop all services:
-echo   docker stop policycortex-core policycortex-redis
-echo   Close the Frontend window
+echo   docker-compose -f docker-compose.dev.yml down
+echo   Close all command windows (Core, GraphQL, Frontend)
 echo ===============================================

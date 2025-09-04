@@ -134,11 +134,16 @@ class PolicyCortexAPI {
       
       if (accounts.length > 0) {
         // Prefer core API scope if configured; fall back to Azure Management
-        const request = (coreApiRequest || azureManagementRequest) as any;
-        request.account = accounts[0];
-        const tokenResponse = await msalInstance.acquireTokenSilent(request);
-        const tenantId = (accounts[0] as any)?.idTokenClaims?.tid as string | undefined
-          || (typeof process !== 'undefined' ? (process as any).env?.NEXT_PUBLIC_AZURE_TENANT_ID : undefined)
+        const request = coreApiRequest || azureManagementRequest;
+        const tokenRequest = { ...request, account: accounts[0] };
+        const tokenResponse = await msalInstance.acquireTokenSilent(tokenRequest);
+        
+        // Extract tenant ID from token claims
+        const accountWithClaims = accounts[0] as {
+          idTokenClaims?: { tid?: string }
+        };
+        const tenantId = accountWithClaims?.idTokenClaims?.tid
+          || process.env?.NEXT_PUBLIC_AZURE_TENANT_ID
           || (typeof window !== 'undefined' ? window.localStorage.getItem('tenantId') || undefined : undefined);
         
         return {
@@ -156,27 +161,37 @@ class PolicyCortexAPI {
 
   // Patent 1: Unified AI Platform - Hot cached for real-time governance
   async getUnifiedMetrics(): Promise<GovernanceMetrics> {
-    const res = await performanceApi.get<any>('/api/v1/metrics', { cache: 'hot', ttl: 30000, headers: await this.getAuthHeaders() });
+    const res = await performanceApi.get<GovernanceMetrics | { data: GovernanceMetrics }>('/api/v1/metrics', { cache: 'hot', ttl: 30000, headers: await this.getAuthHeaders() });
     // Accept either flat object or { data: {...} }
-    return (res?.data ?? res) as GovernanceMetrics;
+    if (res && typeof res === 'object' && 'data' in res) {
+      return res.data as GovernanceMetrics;
+    }
+    return res as GovernanceMetrics;
   }
 
   // Patent 2: Predictive Compliance - Warm cached for frequent access
-  async getPredictions(): Promise<any[]> {
+  async getPredictions(): Promise<Array<{
+    resource_id: string;
+    prediction_type: string;
+    probability: number;
+    timeframe: string;
+    impact: string;
+    recommended_actions: string[];
+  }>> {
     return performanceApi.get('/api/v1/predictions', { cache: 'warm', ttl: 300000, headers: await this.getAuthHeaders() });
   }
 
   // Patent 3: Conversational Intelligence - No cache for real-time interaction
   async processConversation(request: ConversationRequest): Promise<ConversationResponse> {
     // Call backend conversation endpoint; fall back gracefully in dev
-    let base: any = {};
+    let base: { response?: string; confidence?: number; suggestions?: string[] } = {};
     try {
-      base = await performanceApi.post<any>('/api/v1/conversation', request, {
+      base = await performanceApi.post<{ response?: string; confidence?: number; suggestions?: string[] }>('/api/v1/conversation', request, {
         headers: await this.getAuthHeaders(),
         invalidateCache: ['conversation', 'recommendations']
       });
-    } catch (err: any) {
-      console.warn('Conversation API failed; using local fallback', err?.message || err);
+    } catch (err) {
+      console.warn('Conversation API failed; using local fallback', err instanceof Error ? err.message : err);
       base = { response: 'Demo response: conversation unavailable locally.', confidence: 0.7, suggestions: ['open_dashboard'] };
     }
 
@@ -195,7 +210,7 @@ class PolicyCortexAPI {
     // Opportunistically generate a sample policy if user asks for policy
     if (q.includes('policy')) {
       try {
-        const gen = await performanceApi.post<any>('/api/v1/policies/generate', {
+        const gen = await performanceApi.post<{ policy?: object }>('/api/v1/policies/generate', {
           requirement: request.query,
           provider: 'azure',
           framework: undefined,
@@ -218,8 +233,14 @@ class PolicyCortexAPI {
 
   // Proactive Recommendations - Hot cached for immediate actions
   async getRecommendations(): Promise<ProactiveRecommendation[]> {
-    const response = await performanceApi.get<any>('/api/v1/recommendations', { cache: 'hot', ttl: 60000, headers: await this.getAuthHeaders() });
-    return response?.recommendations || response || [];
+    const response = await performanceApi.get<ProactiveRecommendation[] | { recommendations: ProactiveRecommendation[] }>('/api/v1/recommendations', { cache: 'hot', ttl: 60000, headers: await this.getAuthHeaders() });
+    if (Array.isArray(response)) {
+      return response;
+    }
+    if (response && typeof response === 'object' && 'recommendations' in response) {
+      return response.recommendations;
+    }
+    return [];
   }
 
   // Health Check - No cache for real-time status
@@ -228,7 +249,13 @@ class PolicyCortexAPI {
   }
 
   // Legacy endpoints for compatibility - Warm cached
-  async getPolicies(): Promise<any[]> {
+  async getPolicies(): Promise<Array<{
+    id: string;
+    name: string;
+    type: string;
+    enabled: boolean;
+    scope: string[];
+  }>> {
     return performanceApi.get('/api/v1/policies', { 
       cache: 'warm', 
       ttl: 300000,
@@ -236,7 +263,13 @@ class PolicyCortexAPI {
     });
   }
 
-  async getResources(): Promise<any[]> {
+  async getResources(): Promise<Array<{
+    id: string;
+    name: string;
+    type: string;
+    location: string;
+    tags: Record<string, string>;
+  }>> {
     return performanceApi.get('/api/v1/resources', { 
       cache: 'warm', 
       ttl: 300000,
@@ -244,7 +277,13 @@ class PolicyCortexAPI {
     });
   }
 
-  async getCompliance(): Promise<any> {
+  async getCompliance(): Promise<{
+    overall_score: number;
+    framework: string;
+    controls_passed: number;
+    controls_failed: number;
+    controls_total: number;
+  }> {
     return performanceApi.get('/api/v1/compliance', { 
       cache: 'hot', 
       ttl: 60000,
@@ -257,7 +296,14 @@ class PolicyCortexAPI {
     metrics: GovernanceMetrics | null;
     recommendations: ProactiveRecommendation[];
     correlations: CrossDomainCorrelation[];
-    predictions: any[];
+    predictions: Array<{
+      resource_id: string;
+      prediction_type: string;
+      probability: number;
+      timeframe: string;
+      impact: string;
+      recommended_actions: string[];
+    }>;
   }> {
     const headers = await this.getAuthHeaders();
     const requests = [
@@ -286,10 +332,17 @@ class PolicyCortexAPI {
 
     const metricsPayload = results[0] instanceof Error ? defaultMetrics : results[0];
     return {
-      metrics: (metricsPayload as any)?.data ?? (metricsPayload as GovernanceMetrics),
-      recommendations: results[1] instanceof Error ? [] : ((results[1] as any)?.recommendations || results[1] || []),
+      metrics: (metricsPayload as { data?: GovernanceMetrics })?.data ?? (metricsPayload as GovernanceMetrics),
+      recommendations: results[1] instanceof Error ? [] : (Array.isArray(results[1]) ? results[1] : (results[1] as { recommendations?: ProactiveRecommendation[] })?.recommendations || []),
       correlations: results[2] instanceof Error ? [] : results[2] as CrossDomainCorrelation[],
-      predictions: results[3] instanceof Error ? [] : results[3] as any[]
+      predictions: results[3] instanceof Error ? [] : results[3] as Array<{
+        resource_id: string;
+        prediction_type: string;
+        probability: number;
+        timeframe: string;
+        impact: string;
+        recommended_actions: string[];
+      }>
     };
   }
 
@@ -313,7 +366,14 @@ export function useGovernanceData() {
     metrics: GovernanceMetrics | null;
     recommendations: ProactiveRecommendation[];
     correlations: CrossDomainCorrelation[];
-    predictions: any[];
+    predictions: Array<{
+      resource_id: string;
+      prediction_type: string;
+      probability: number;
+      timeframe: string;
+      impact: string;
+      recommended_actions: string[];
+    }>;
   }>({
     metrics: null,
     recommendations: [],

@@ -68,9 +68,10 @@ export function generateCSP(nonce: string, reportOnly: boolean = false): string 
     : `script-src 'nonce-${nonce}' 'strict-dynamic'`;
   
   // Style needs unsafe-inline in development for hot reload to work properly
+  // Also allow unsafe-inline for third-party libraries that inject styles
   const styleSrc = !isProd
     ? `style-src 'self' 'unsafe-inline'`
-    : `style-src 'self' 'nonce-${nonce}'`;
+    : `style-src 'self' 'unsafe-inline' 'nonce-${nonce}'`;
   
   const cspDirectives = [
     "default-src 'self'",

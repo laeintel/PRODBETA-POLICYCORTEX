@@ -1,0 +1,122 @@
+global:
+  resolve_timeout: 5m
+  smtp_from: 'alerts@policycortex.com'
+  smtp_smarthost: 'smtp.sendgrid.net:587'
+  smtp_auth_username: 'apikey'
+  smtp_auth_password: '${SENDGRID_API_KEY}'
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alert routing
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  
+  routes:
+    # Critical alerts with pager flag go to PagerDuty
+    - match:
+        pager: true
+      receiver: pagerduty
+      continue: true
+      
+    # Security alerts go to security team
+    - match:
+        category: security
+      receiver: security-team
+      continue: true
+      
+    # SLO breaches go to SRE team
+    - match_re:
+        alertname: .*SLO.*
+      receiver: sre-team
+      group_wait: 30s
+      
+    # DORA metrics to engineering management
+    - match:
+        dora_metric: .*
+      receiver: engineering-management
+      group_wait: 1h
+      repeat_interval: 24h
+
+# Receivers configuration
+receivers:
+  - name: 'default'
+    slack_configs:
+      - channel: '#alerts'
+        title: 'PolicyCortex Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}'
+        send_resolved: true
+        actions:
+          - type: button
+            text: 'Runbook'
+            url: '{{ .GroupLabels.runbook_url }}'
+          - type: button
+            text: 'Dashboard'
+            url: 'http://localhost:3030/d/{{ .GroupLabels.service }}'
+            
+  - name: 'pagerduty'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }} - {{ .GroupLabels.service }}'
+        details:
+          severity: '{{ .GroupLabels.severity }}'
+          service: '{{ .GroupLabels.service }}'
+          instance: '{{ .GroupLabels.instance }}'
+        client: 'PolicyCortex AlertManager'
+        client_url: 'http://localhost:9093'
+        
+  - name: 'security-team'
+    email_configs:
+      - to: 'security@policycortex.com'
+        headers:
+          Subject: '[SECURITY] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Security Alert</h2>
+          <p><b>Alert:</b> {{ .GroupLabels.alertname }}</p>
+          <p><b>Severity:</b> {{ .GroupLabels.severity }}</p>
+          <p><b>Description:</b> {{ .Annotations.description }}</p>
+          <p><b>Runbook:</b> <a href="{{ .Annotations.runbook_url }}">View Runbook</a></p>
+    slack_configs:
+      - channel: '#security'
+        title: 'Security Alert: {{ .GroupLabels.alertname }}'
+        color: 'danger'
+        
+  - name: 'sre-team'
+    slack_configs:
+      - channel: '#sre'
+        title: 'SLO Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          *Service:* {{ .GroupLabels.service }}
+          *SLO:* {{ .GroupLabels.slo }}
+          *Burn Rate:* {{ .GroupLabels.burn_rate }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+        color: '{{ if eq .GroupLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        
+  - name: 'engineering-management'
+    email_configs:
+      - to: 'engineering-leads@policycortex.com'
+        headers:
+          Subject: '[DORA Metrics] {{ .GroupLabels.dora_metric }}'
+        send_resolved: false
+
+# Inhibit rules to prevent alert storms
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+    
+  - source_match:
+      alertname: 'CoreAPIDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['service']

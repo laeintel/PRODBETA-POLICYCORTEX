@@ -12,8 +12,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { generateNonce, generateCSP } from '@/lib/security/nonce'
 
-// Check for demo mode from environment
-const BYPASS_ROUTE_AUTH = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+// Demo mode check happens at runtime
 
 // Protected routes that require authentication
 // Actually, we'll protect everything except login
@@ -51,24 +50,51 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
   
-  // Handle authentication bypass for demo mode
-  if (BYPASS_ROUTE_AUTH) {
+  // Check for demo mode from environment
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  
+  // In demo mode, bypass all authentication checks
+  if (isDemoMode) {
     const response = NextResponse.next({
       request: {
         headers: requestHeaders,
       },
     })
     
-    // Apply security headers even in demo mode
+    // Set authentication cookies for demo mode
+    // Set both auth-token and pcx-session to cover both old and new patterns
+    response.cookies.set('auth-token', 'demo-token', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/'
+    })
+    
+    response.cookies.set('pcx-session', 'demo-session', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/'
+    })
+    
+    response.cookies.set('demo-mode', 'true', {
+      httpOnly: false,
+      secure: false,
+      sameSite: 'lax',
+      path: '/'
+    })
+    
+    // Apply security headers (CSP disabled in demo mode)
     applySecurityHeaders(response, nonce)
     return response
   }
   
   const { pathname } = request.nextUrl
 
-  // Only trust server-issued auth token presence (httpOnly). Do NOT trust client-set flags.
+  // Check for both auth-token and pcx-session cookies
   const authToken = request.cookies.get('auth-token')
-  const isAuthenticated = !!authToken
+  const sessionToken = request.cookies.get('pcx-session')
+  const isAuthenticated = !!(authToken || sessionToken)
 
   // Only allow root (login) and auth endpoints without authentication
   if (pathname === '/' || pathname === '/login' || pathname.startsWith('/api/auth')) {

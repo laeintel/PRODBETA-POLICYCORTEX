@@ -189,16 +189,20 @@ class TestTokenValidation:
                 }]
             }
             
-            with patch('jose.jwt.decode') as mock_decode:
-                mock_decode.return_value = claims
+            # Mock get_unverified_header to return matching kid
+            with patch('jose.jwt.get_unverified_header') as mock_header:
+                mock_header.return_value = {"kid": "test-key", "alg": "RS256"}
                 
-                # Should not raise exception with proper config
-                with patch.dict(os.environ, {
-                    'AZURE_TENANT_ID': TEST_TENANT_ID,
-                    'API_AUDIENCE': TEST_AUDIENCE
-                }):
-                    result = await validate_token(token)
-                    assert result == claims
+                with patch('jose.jwt.decode') as mock_decode:
+                    mock_decode.return_value = claims
+                    
+                    # Should not raise exception with proper config
+                    with patch.dict(os.environ, {
+                        'AZURE_TENANT_ID': TEST_TENANT_ID,
+                        'API_AUDIENCE': TEST_AUDIENCE
+                    }):
+                        result = await validate_token(token)
+                        assert result == claims
     
     @pytest.mark.asyncio
     async def test_validate_token_expired(self):

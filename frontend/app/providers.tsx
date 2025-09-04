@@ -14,7 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ApolloProvider } from '@apollo/client'
 import { useState, useEffect } from 'react'
 import { client } from '@/lib/apollo-client'
-import { AuthProvider, AuthTokenRefresher } from '../contexts/AuthContext'
+import { AuthProvider } from '../contexts/AuthContext'
 import { DemoDataProvider } from '../contexts/DemoDataProvider'
 import { I18nProvider } from '../lib/i18n'
 import { AZURE_OPENAI } from '../lib/api-config'
@@ -41,7 +41,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <QueryClientProvider client={queryClient}>
             <ApolloProvider client={client}>
               <DemoDataProvider>
-                <AuthTokenRefresher />
                 <Toaster 
                   position="top-right"
                   toastOptions={{

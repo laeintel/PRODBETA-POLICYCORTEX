@@ -1,0 +1,92 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: core-api-canary-vs
+  namespace: policycortex
+spec:
+  hosts:
+  - core-api
+  http:
+  # Stage 1: Route to canary for specific users/testers
+  - match:
+    - headers:
+        x-user-group:
+          exact: "canary-testers"
+    route:
+    - destination:
+        host: core-api
+        subset: canary
+      weight: 100
+  # Stage 2: Route 10% of production traffic to canary
+  - match:
+    - uri:
+        prefix: "/api/v1"
+    route:
+    - destination:
+        host: core-api
+        subset: stable
+      weight: 90
+    - destination:
+        host: core-api
+        subset: canary
+      weight: 10
+    mirror:
+      host: core-api
+      subset: canary
+    mirrorPercentage:
+      value: 100.0 # Mirror all traffic to canary for analysis
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: progressive-rollout-vs
+  namespace: policycortex
+spec:
+  hosts:
+  - frontend
+  http:
+  # Progressive rollout based on cookie
+  - match:
+    - headers:
+        cookie:
+          regex: "^(.*?;)?(canary=true)(;.*)?$"
+    route:
+    - destination:
+        host: frontend
+        subset: canary
+  # A/B testing with percentage split
+  - match:
+    - headers:
+        x-ab-test:
+          exact: "variant-b"
+    route:
+    - destination:
+        host: frontend
+        subset: canary
+      weight: 100
+  # Default traffic distribution
+  - route:
+    - destination:
+        host: frontend
+        subset: stable
+      weight: 95
+    - destination:
+        host: frontend
+        subset: canary
+      weight: 5
+---
+# ServiceEntry for canary deployment monitoring
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: canary-metrics-external
+  namespace: policycortex
+spec:
+  hosts:
+  - metrics.policycortex.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS

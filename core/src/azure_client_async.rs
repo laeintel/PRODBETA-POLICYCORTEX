@@ -157,8 +157,7 @@ impl AsyncAzureClient {
         );
 
         // Initialize cache manager
-        let cache_config = crate::cache::CacheConfig::default();
-        let cache_manager = CacheManager::new(cache_config).await?;
+        let cache_manager = CacheManager::new();
         let cache = Arc::new(RwLock::new(cache_manager));
 
         // Initialize connection pool
@@ -221,12 +220,12 @@ impl AsyncAzureClient {
     pub async fn get_governance_metrics(
         &self,
     ) -> Result<GovernanceMetrics, Box<dyn std::error::Error + Send + Sync>> {
-        let cache_key = CacheKeys::governance_metrics(&self.config.tenant_id);
+        let cache_key = CacheKeys::governance_metrics();
 
         // Try cache first (hot data - 30 second TTL)
         if self.config.cache_enabled {
             let mut cache = self.cache.write().await;
-            if let Some(metrics) = cache.get_hot::<GovernanceMetrics>(&cache_key).await? {
+            if let Some(metrics) = cache.get_hot::<GovernanceMetrics>(&cache_key).await {
                 debug!("Governance metrics served from cache");
                 return Ok(metrics);
             }

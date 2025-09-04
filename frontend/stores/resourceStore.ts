@@ -13,6 +13,7 @@ import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import axios from 'axios'
 import { apiClient } from '@/lib/api-client'
+import { Resource as ApiResource, Correlation } from '@/types/api'
 
 interface Resource {
   id: string
@@ -128,7 +129,14 @@ interface ResourceState {
   resources: Resource[]
   summary: ResourceSummary | null
   correlations: ResourceCorrelation[]
-  insights: any[]
+  insights: Array<{
+    insight_type: string
+    title: string
+    description: string
+    impact: string
+    recommendation?: string
+    confidence: number
+  }>
   
   // UI State
   loading: boolean
@@ -201,7 +209,7 @@ export const useResourceStore = create<ResourceState>()(
           })
 
           try {
-            const payload: any = {}
+            const payload: Record<string, string | number | boolean> = {}
             if (filter?.categories?.length) payload.categories = filter.categories.join(',')
             if (filter?.resource_types?.length) payload.resource_types = filter.resource_types.join(',')
             if (filter?.locations?.length) payload.locations = filter.locations.join(',')
@@ -212,10 +220,90 @@ export const useResourceStore = create<ResourceState>()(
             if (filter?.cost_max_daily !== undefined) payload.cost_max_daily = filter.cost_max_daily
 
             const response = await apiClient.getResources()
-            const data = response.data as any
             set((state) => {
-              state.resources = data?.resources || data || []
-              state.summary = data?.summary || null
+              // Check if response has resources property (API returns object) or is array directly
+              if (Array.isArray(response)) {
+                // Map the API response to our internal Resource type
+                state.resources = response.map((r: ApiResource) => ({
+                  id: r.id || '',
+                  name: r.name || '',
+                  display_name: r.name || '',
+                  resource_type: r.type || 'Unknown',
+                  category: 'ComputeStorage' as const,
+                  location: r.location,
+                  tags: r.tags || {},
+                  status: { 
+                    state: r.status || 'Unknown',
+                    availability: r.status === 'Running' ? 100 : 0,
+                    performance_score: r.status === 'Running' ? 95 : 0
+                  },
+                  health: {
+                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
+                    issues: [],
+                    recommendations: []
+                  },
+                  cost_data: r.cost_per_month ? {
+                    daily_cost: r.cost_per_month / 30,
+                    monthly_cost: r.cost_per_month,
+                    yearly_projection: r.cost_per_month * 12,
+                    cost_trend: { type: 'Stable' as const },
+                    optimization_potential: 0,
+                    currency: 'USD'
+                  } : undefined,
+                  compliance_status: {
+                    is_compliant: r.compliance_status === 'Compliant',
+                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
+                    violations: [],
+                    last_assessment: new Date().toISOString()
+                  },
+                  quick_actions: [],
+                  insights: [],
+                  last_updated: r.updated_at || new Date().toISOString()
+                }))
+                state.summary = null
+              } else if (response && typeof response === 'object') {
+                const responseObj = response as { resources?: ApiResource[], summary?: ResourceSummary }
+                state.resources = (responseObj.resources || []).map((r: ApiResource) => ({
+                  id: r.id || '',
+                  name: r.name || '',
+                  display_name: r.name || '',
+                  resource_type: r.type || 'Unknown',
+                  category: 'ComputeStorage' as const,
+                  location: r.location,
+                  tags: r.tags || {},
+                  status: { 
+                    state: r.status || 'Unknown',
+                    availability: r.status === 'Running' ? 100 : 0,
+                    performance_score: r.status === 'Running' ? 95 : 0
+                  },
+                  health: {
+                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
+                    issues: [],
+                    recommendations: []
+                  },
+                  cost_data: r.cost_per_month ? {
+                    daily_cost: r.cost_per_month / 30,
+                    monthly_cost: r.cost_per_month,
+                    yearly_projection: r.cost_per_month * 12,
+                    cost_trend: { type: 'Stable' as const },
+                    optimization_potential: 0,
+                    currency: 'USD'
+                  } : undefined,
+                  compliance_status: {
+                    is_compliant: r.compliance_status === 'Compliant',
+                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
+                    violations: [],
+                    last_assessment: new Date().toISOString()
+                  },
+                  quick_actions: [],
+                  insights: [],
+                  last_updated: r.updated_at || new Date().toISOString()
+                }))
+                state.summary = responseObj.summary || null
+              } else {
+                state.resources = []
+                state.summary = null
+              }
               state.lastRefresh = new Date()
               state.loading = false
             })
@@ -249,10 +337,90 @@ export const useResourceStore = create<ResourceState>()(
 
           try {
             const response = await apiClient.getResources()
-            const data = response.data as any
             set((state) => {
-              state.resources = data?.resources || data || []
-              state.summary = data?.summary || null
+              // Check if response has resources property (API returns object) or is array directly
+              if (Array.isArray(response)) {
+                // Map the API response to our internal Resource type
+                state.resources = response.map((r: ApiResource) => ({
+                  id: r.id || '',
+                  name: r.name || '',
+                  display_name: r.name || '',
+                  resource_type: r.type || 'Unknown',
+                  category: 'ComputeStorage' as const,
+                  location: r.location,
+                  tags: r.tags || {},
+                  status: { 
+                    state: r.status || 'Unknown',
+                    availability: r.status === 'Running' ? 100 : 0,
+                    performance_score: r.status === 'Running' ? 95 : 0
+                  },
+                  health: {
+                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
+                    issues: [],
+                    recommendations: []
+                  },
+                  cost_data: r.cost_per_month ? {
+                    daily_cost: r.cost_per_month / 30,
+                    monthly_cost: r.cost_per_month,
+                    yearly_projection: r.cost_per_month * 12,
+                    cost_trend: { type: 'Stable' as const },
+                    optimization_potential: 0,
+                    currency: 'USD'
+                  } : undefined,
+                  compliance_status: {
+                    is_compliant: r.compliance_status === 'Compliant',
+                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
+                    violations: [],
+                    last_assessment: new Date().toISOString()
+                  },
+                  quick_actions: [],
+                  insights: [],
+                  last_updated: r.updated_at || new Date().toISOString()
+                }))
+                state.summary = null
+              } else if (response && typeof response === 'object') {
+                const responseObj = response as { resources?: ApiResource[], summary?: ResourceSummary }
+                state.resources = (responseObj.resources || []).map((r: ApiResource) => ({
+                  id: r.id || '',
+                  name: r.name || '',
+                  display_name: r.name || '',
+                  resource_type: r.type || 'Unknown',
+                  category: 'ComputeStorage' as const,
+                  location: r.location,
+                  tags: r.tags || {},
+                  status: { 
+                    state: r.status || 'Unknown',
+                    availability: r.status === 'Running' ? 100 : 0,
+                    performance_score: r.status === 'Running' ? 95 : 0
+                  },
+                  health: {
+                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
+                    issues: [],
+                    recommendations: []
+                  },
+                  cost_data: r.cost_per_month ? {
+                    daily_cost: r.cost_per_month / 30,
+                    monthly_cost: r.cost_per_month,
+                    yearly_projection: r.cost_per_month * 12,
+                    cost_trend: { type: 'Stable' as const },
+                    optimization_potential: 0,
+                    currency: 'USD'
+                  } : undefined,
+                  compliance_status: {
+                    is_compliant: r.compliance_status === 'Compliant',
+                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
+                    violations: [],
+                    last_assessment: new Date().toISOString()
+                  },
+                  quick_actions: [],
+                  insights: [],
+                  last_updated: r.updated_at || new Date().toISOString()
+                }))
+                state.summary = responseObj.summary || null
+              } else {
+                state.resources = []
+                state.summary = null
+              }
               state.lastRefresh = new Date()
               state.loading = false
             })
@@ -268,9 +436,29 @@ export const useResourceStore = create<ResourceState>()(
         fetchCorrelations: async () => {
           try {
             const resp = await apiClient.getCorrelations()
-            if (!resp.error) {
+            if (resp) {
               set((state) => {
-                state.correlations = (resp.data as any) || []
+                // Map Correlation to ResourceCorrelation
+                state.correlations = (resp || []).map((c: Correlation) => ({
+                  id: c.id,
+                  source_resource: c.entities?.[0]?.id || '',
+                  target_resource: c.entities?.[1]?.id || '',
+                  correlation_type: c.type,
+                  strength: c.strength,
+                  impact: c.insights?.[0] || '',
+                  insights: c.insights.map(i => ({
+                    title: i,
+                    description: i,
+                    evidence: [],
+                    confidence: c.confidence
+                  })),
+                  recommended_actions: c.recommendations.map((r, idx) => ({
+                    action: r,
+                    priority: idx + 1,
+                    expected_outcome: 'Improved correlation',
+                    effort_level: 'Medium'
+                  }))
+                }))
               })
             }
           } catch (error) {
@@ -309,7 +497,7 @@ export const useResourceStore = create<ResourceState>()(
             })
 
             // Mock action creation for now
-            const created: any = { data: { id: Date.now(), action_id: Date.now() }, status: 200 }
+            const created: { data: { id: number, action_id: number }, status: number } = { data: { id: Date.now(), action_id: Date.now() }, status: 200 }
             if ('error' in created || created.status >= 400) {
               await get().fetchResources()
               return

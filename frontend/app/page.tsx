@@ -12,15 +12,30 @@ export default function LoginPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for demo mode and auto-login
+    // Auto-redirect to dashboard in demo mode
     if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-      // Small delay to prevent race conditions with middleware
-      const timer = setTimeout(() => {
-        handleDemoLogin()
-      }, 100)
-      return () => clearTimeout(timer)
+      console.log('Demo mode detected, initializing demo session...')
+      // Initialize demo session then redirect
+      const initDemoAndRedirect = async () => {
+        try {
+          // Ensure demo session is created
+          const response = await fetch('/api/auth/demo', {
+            method: 'POST',
+            credentials: 'include'
+          })
+          if (response.ok) {
+            console.log('Demo session created, redirecting to dashboard...')
+            router.push('/dashboard')
+          }
+        } catch (error) {
+          console.error('Failed to initialize demo session:', error)
+          // Still redirect even if session creation fails
+          router.push('/dashboard')
+        }
+      }
+      initDemoAndRedirect()
     }
-  }, [])
+  }, [router])
   
   const handleDemoLogin = async () => {
     setLoading(true)
@@ -38,6 +53,15 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    
+    // In demo mode, just redirect immediately
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      console.log('Demo login clicked, redirecting to dashboard...')
+      router.push('/dashboard')
+      return
+    }
+    
+    // Normal login flow (for production)
     try {
       await login()
       router.push('/dashboard')

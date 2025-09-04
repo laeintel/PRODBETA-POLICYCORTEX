@@ -1,0 +1,264 @@
+# Test Container Configuration
+# Isolated testing environment with all dependencies
+
+version: '3.8'
+
+services:
+  # Test Database
+  test-postgres:
+    image: postgres:16-alpine
+    container_name: policycortex-test-db
+    environment:
+      POSTGRES_DB: policycortex_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - ./init-test-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d policycortex_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test Redis/DragonflyDB
+  test-cache:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: policycortex-test-cache
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    command: ["dragonfly", "--logtostderr"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test EventStore
+  test-eventstore:
+    image: eventstore/eventstore:latest
+    container_name: policycortex-test-eventstore
+    environment:
+      EVENTSTORE_INSECURE: "true"
+      EVENTSTORE_ENABLE_EXTERNAL_TCP: "true"
+      EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: "true"
+      EVENTSTORE_RUN_PROJECTIONS: All
+      EVENTSTORE_START_STANDARD_PROJECTIONS: "true"
+    ports:
+      - "2114:2113"  # Different port for UI
+      - "1114:1113"  # Different port for TCP
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:2113/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test LocalStack (AWS Services)
+  test-localstack:
+    image: localstack/localstack:latest
+    container_name: policycortex-test-localstack
+    environment:
+      SERVICES: s3,dynamodb,lambda,sqs,sns
+      DEFAULT_REGION: us-east-1
+      DOCKER_HOST: unix:///var/run/docker.sock
+      LAMBDA_EXECUTOR: docker
+    ports:
+      - "4567:4566"  # Different port
+      - "4511:4510"  # Different port
+    volumes:
+      - "./localstack-init:/docker-entrypoint-initaws.d"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test Mock Server
+  test-mock-server:
+    image: mockserver/mockserver:latest
+    container_name: policycortex-test-mockserver
+    environment:
+      MOCKSERVER_LOG_LEVEL: INFO
+      MOCKSERVER_SERVER_PORT: 1080
+    ports:
+      - "1081:1080"  # Different port
+    volumes:
+      - ./mock-expectations:/expectations
+    command: "-serverPort 1080 -logLevel INFO"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1080/status"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test SMTP Server
+  test-mailhog:
+    image: mailhog/mailhog:latest
+    container_name: policycortex-test-mailhog
+    ports:
+      - "1026:1025"  # SMTP - Different port
+      - "8026:8025"  # Web UI - Different port
+    networks:
+      - test-network
+
+  # Test Elasticsearch (for logging)
+  test-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: policycortex-test-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9201:9200"  # Different port
+      - "9301:9300"  # Different port
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # Test Kibana (for log visualization)
+  test-kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: policycortex-test-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://test-elasticsearch:9200
+      SERVER_PORT: 5601
+    ports:
+      - "5602:5601"  # Different port
+    depends_on:
+      test-elasticsearch:
+        condition: service_healthy
+    networks:
+      - test-network
+
+  # Test Prometheus (for metrics)
+  test-prometheus:
+    image: prom/prometheus:latest
+    container_name: policycortex-test-prometheus
+    volumes:
+      - ./prometheus-test.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    ports:
+      - "9091:9090"  # Different port
+    networks:
+      - test-network
+
+  # Test Grafana (for metrics visualization)
+  test-grafana:
+    image: grafana/grafana:latest
+    container_name: policycortex-test-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: test
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_HTTP_PORT: 3000
+    ports:
+      - "3001:3000"  # Different port
+    volumes:
+      - ./grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    depends_on:
+      - test-prometheus
+    networks:
+      - test-network
+
+  # Test Jaeger (for distributed tracing)
+  test-jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: policycortex-test-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16687:16686"  # UI - Different port
+      - "14269:14268"  # Collector - Different port
+      - "4318:4317"    # OTLP gRPC - Different port
+      - "4319:4318"    # OTLP HTTP - Different port
+    networks:
+      - test-network
+
+  # Test Runner Container
+  test-runner:
+    build:
+      context: ../..
+      dockerfile: tests/containers/Dockerfile.test
+    container_name: policycortex-test-runner
+    environment:
+      # Database
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/policycortex_test
+      # Cache
+      REDIS_URL: redis://test-cache:6379
+      # EventStore
+      EVENTSTORE_URL: tcp://test-eventstore:1113
+      # LocalStack
+      AWS_ENDPOINT_URL: http://test-localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      # Mock Server
+      MOCK_SERVER_URL: http://test-mock-server:1080
+      # Email
+      SMTP_HOST: test-mailhog
+      SMTP_PORT: 1025
+      # Elasticsearch
+      ELASTICSEARCH_URL: http://test-elasticsearch:9200
+      # Prometheus
+      PROMETHEUS_URL: http://test-prometheus:9090
+      # Jaeger
+      JAEGER_AGENT_HOST: test-jaeger
+      JAEGER_AGENT_PORT: 6831
+      # Test Configuration
+      NODE_ENV: test
+      TEST_MODE: integration
+      PARALLEL_TESTS: "true"
+      TEST_TIMEOUT: 30000
+    volumes:
+      - ../..:/app
+      - test-results:/app/test-results
+      - test-coverage:/app/coverage
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+      test-cache:
+        condition: service_healthy
+      test-eventstore:
+        condition: service_healthy
+      test-localstack:
+        condition: service_healthy
+      test-mock-server:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: ["npm", "run", "test:all"]
+
+networks:
+  test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  test-results:
+    driver: local
+  test-coverage:
+    driver: local

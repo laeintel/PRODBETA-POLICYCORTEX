@@ -113,6 +113,31 @@ use tar::Builder as TarBuilder;
 use tokio::sync::{broadcast, RwLock};
 use uuid::Uuid;
 
+// Update structures for CQRS commands
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PolicyUpdate {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub rules: Option<Vec<String>>,
+    pub resource_types: Option<Vec<String>>,
+    pub enforcement_mode: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ResourceUpdate {
+    pub name: Option<String>,
+    pub location: Option<String>,
+    pub tags: Option<std::collections::HashMap<String, String>>,
+    pub compliance_status: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ComplianceUpdate {
+    pub compliant: bool,
+    pub violations: Vec<String>,
+    pub last_checked: DateTime<Utc>,
+}
+
 // Patent 1: Unified AI Platform - Multi-service data aggregation
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GovernanceMetrics {
@@ -282,7 +307,11 @@ pub struct AppState {
     pub slo_manager: SLOManager,
     pub secrets: Option<SecretsManager>,
     pub prometheus: Option<PrometheusHandle>,
-    pub db_pool: Option<sqlx::Pool<sqlx::Postgres>>,
+    pub db_pool: Option<sqlx::Pool<sqlx::Postgres>>, // Legacy pool for compatibility
+    // New database pool with optimized configuration
+    pub optimized_db_pool: Option<crate::db::SharedDbPool>,
+    // CQRS system for command and query separation
+    pub cqrs_system: Option<Arc<crate::cqrs::CQRSSystem>>,
     // Remediation system components
     pub approval_manager: Option<Arc<crate::remediation::approval_manager::ApprovalManager>>,
     pub bulk_remediation_engine: Option<Arc<crate::remediation::bulk_remediation::BulkRemediationEngine>>,
@@ -388,7 +417,9 @@ impl AppState {
             slo_manager: SLOManager::new(),
             secrets: None,
             prometheus: None,
-            db_pool: None,
+            db_pool: None, // Legacy pool for compatibility
+            optimized_db_pool: None, // Will be initialized in main
+            cqrs_system: None, // Will be initialized in main
             // Remediation system components
             approval_manager: None,
             bulk_remediation_engine: None,

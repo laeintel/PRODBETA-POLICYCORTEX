@@ -44,6 +44,8 @@ mod collectors;
 mod compliance;
 mod config;
 mod correlation;
+mod cqrs; // CQRS pattern implementation
+mod db; // Database connection pool
 mod defender_streaming;
 mod data_mode;
 mod enforcement;
