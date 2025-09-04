@@ -492,6 +492,14 @@ logger.info(f"Multi-cloud provider initialized with: {multi_cloud_provider.get_e
 # FinOps ingestion service
 logger.info("FinOps ingestion service initialized")
 
+# Import and register ROI endpoints
+try:
+    from roi_endpoints import router as roi_router
+    app.include_router(roi_router)
+    logger.info("ROI endpoints registered")
+except ImportError as e:
+    logger.warning(f"ROI endpoints not available: {e}")
+
 # No mock datasets retained – service returns 503 if Azure is unavailable
 
 # ================== In-memory Action Orchestrator (Dev Stub) ==================

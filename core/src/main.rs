@@ -50,6 +50,7 @@ mod defender_streaming;
 mod data_mode;
 mod enforcement;
 mod events;
+mod evidence;
 mod evidence_pipeline;
 mod finops;
 mod governance;
@@ -531,6 +532,14 @@ async fn main() {
         .route("/api/v1/itsm/cmdb/relationships", get(api::itsm::get_cmdb_relationships))
         .route("/api/v1/itsm/cmdb/impact/:id", get(api::itsm::get_cmdb_impact))
         .route("/api/v1/itsm/cmdb/discover", post(api::itsm::trigger_discovery))
+        // Evidence Chain APIs (PROVE Pillar)
+        .route("/api/v1/evidence/collect", post(api::evidence::collect_evidence))
+        .route("/api/v1/evidence/verify/:hash", get(api::evidence::verify_evidence))
+        .route("/api/v1/evidence/report", post(api::evidence::generate_report))
+        .route("/api/v1/evidence/chain", get(api::evidence::get_chain_status))
+        .route("/api/v1/evidence/:id", get(api::evidence::get_evidence_by_id))
+        .route("/api/v1/evidence/block/:index", get(api::evidence::get_block))
+        .route("/api/v1/evidence/proof/:hash", get(api::evidence::get_merkle_proof))
         // Legacy endpoints for compatibility
         // Note: /api/v1/policies, /api/v1/resources and /api/v1/compliance are already registered above
         .layer(
