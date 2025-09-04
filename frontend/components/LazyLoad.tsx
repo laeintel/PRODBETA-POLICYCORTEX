@@ -77,70 +77,20 @@ export function withLazyLoad<T extends ComponentType<any>>(
   );
 }
 
-// Pre-configured lazy imports for heavy components
-export const LazyDashboard = withLazyLoad(
-  () => import('../app/dashboard/page').then(mod => ({ default: mod.default })),
-  'Loading dashboard...'
+// Pre-configured lazy imports for PCG components
+export const LazyPrevent = withLazyLoad(
+  () => import('../app/prevent/page').then(mod => ({ default: mod.default })),
+  'Loading Prevent...'
 );
 
-export const LazyAIChat = withLazyLoad(
-  () => import('../app/ai/chat/page').then(mod => ({ default: mod.default })),
-  'Loading AI assistant...'
+export const LazyProve = withLazyLoad(
+  () => import('../app/prove/page').then(mod => ({ default: mod.default })),
+  'Loading Prove...'
 );
 
-export const LazyCorrelations = withLazyLoad(
-  () => import('../app/ai/correlations/page').then(mod => ({ default: mod.default })),
-  'Loading correlation engine...'
-);
-
-export const LazyPredictive = withLazyLoad(
-  () => import('../app/ai/predictive/page').then(mod => ({ default: mod.default })),
-  'Loading predictive analytics...'
-);
-
-export const LazyGovernance = withLazyLoad(
-  () => import('../app/governance/page').then(mod => ({ default: mod.default })),
-  'Loading governance dashboard...'
-);
-
-export const LazyCompliance = withLazyLoad(
-  () => import('../app/governance/compliance/page').then(mod => ({ default: mod.default })),
-  'Loading compliance center...'
-);
-
-export const LazyITSM = withLazyLoad(
-  () => import('../app/(labs)/itsm/page').then(mod => ({ default: mod.default })),
-  'Loading ITSM portal...'
-);
-
-export const LazyIncidents = withLazyLoad(
-  () => import('../app/(labs)/itsm/incidents/page').then(mod => ({ default: mod.default })),
-  'Loading incident management...'
-);
-
-export const LazyChanges = withLazyLoad(
-  () => import('../app/(labs)/itsm/changes/page').then(mod => ({ default: mod.default })),
-  'Loading change management...'
-);
-
-export const LazyProblems = withLazyLoad(
-  () => import('../app/(labs)/itsm/problems/page').then(mod => ({ default: mod.default })),
-  'Loading problem management...'
-);
-
-export const LazySecurity = withLazyLoad(
-  () => import('../app/security/page').then(mod => ({ default: mod.default })),
-  'Loading security center...'
-);
-
-export const LazyDevOps = withLazyLoad(
-  () => import('../app/devops/page').then(mod => ({ default: mod.default })),
-  'Loading DevOps dashboard...'
-);
-
-export const LazyOperations = withLazyLoad(
-  () => import('../app/operations/page').then(mod => ({ default: mod.default })),
-  'Loading operations center...'
+export const LazyPayback = withLazyLoad(
+  () => import('../app/payback/page').then(mod => ({ default: mod.default })),
+  'Loading Payback...'
 );
 
 // Utility to preload components

@@ -3,9 +3,6 @@
 import React from 'react'
 import { usePathname } from 'next/navigation'
 import SimplifiedNavigation from './SimplifiedNavigation'
-import AuthGuard from './AuthGuard'
-import Breadcrumbs from './Breadcrumbs'
-import StatusBar from './StatusBar'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -14,9 +11,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Hide navigation on the public login root
   const isLogin = pathname === '/'
   
-  // Check if demo mode is enabled
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
-
+  // Simple demo mode - no complex auth
   if (isLogin) {
     return (
       <ThemeProvider>
@@ -25,58 +20,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // In demo mode, skip auth guard
-  if (isDemoMode) {
-    return (
-      <ThemeProvider>
-        <div className="min-h-screen flex flex-col">
-          <SimplifiedNavigation />
-          <main 
-            id="main-content"
-            className="
-            flex-1
-            pt-16 
-            lg:pl-64 xl:pl-72 2xl:pl-80
-            bg-gray-50 dark:bg-gray-900 
-            transition-all duration-300
-          ">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-              <Breadcrumbs />
-              {children}
-            </div>
-          </main>
-          <div className="lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300">
-            <StatusBar />
-          </div>
-        </div>
-      </ThemeProvider>
-    )
-  }
-
   return (
     <ThemeProvider>
-      <AuthGuard requireAuth={true}>
-        <div className="min-h-screen flex flex-col">
-          <SimplifiedNavigation />
-          <main 
-            id="main-content"
-            className="
-            flex-1
-            pt-16 
-            lg:pl-64 xl:pl-72 2xl:pl-80
-            bg-gray-50 dark:bg-gray-900 
-            transition-all duration-300
-          ">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-              <Breadcrumbs />
-              {children}
-            </div>
-          </main>
-          <div className="lg:pl-64 xl:pl-72 2xl:pl-80 transition-all duration-300">
-            <StatusBar />
+      <div className="min-h-screen flex flex-col">
+        <SimplifiedNavigation />
+        <main 
+          id="main-content"
+          className="
+          flex-1
+          pt-16 
+          lg:pl-64
+          bg-gray-50 dark:bg-gray-900 
+          transition-all duration-300
+        ">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {children}
           </div>
-        </div>
-      </AuthGuard>
+        </main>
+      </div>
     </ThemeProvider>
   )
 }
