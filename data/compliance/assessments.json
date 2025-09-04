@@ -27390,7 +27390,7 @@
       "Data"
     ],
     "description": "Defender for Cloud continuously scans AI models registered in Azure Machine Learning Registries for security risks, including serialization exploit vulnerabilities and malware. These assessments help identify models that may be misconfigured or contain malicious content. Addressing these findings is critical to maintaining a secure and trustworthy AI development lifecycle, reducing the risk of data breaches, and ensuring compliance with security best practices.",
-    "displayName": "Security findings should be resolved on models within Azure Machine Learning Registries",
+    "displayName": "[Preview] Security findings should be resolved on models within Azure Machine Learning Registries",
     "id": "/providers/Microsoft.Security/assessmentMetadata/377f8811-e598-43e1-b73a-df37acb74900",
     "implementationEffort": "Low",
     "name": "377f8811-e598-43e1-b73a-df37acb74900",
