@@ -13,13 +13,8 @@ import { Inter, Orbitron, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import AppShell from '../components/AppShell'
-import GlobalOmnibar from '../components/GlobalOmnibar'
 import { headers } from 'next/headers'
 import Script from 'next/script'
-import { PerformanceMonitor } from '../components/PerformanceMonitor'
-import { AccessibilityChecker } from '../components/AccessibilityChecker'
-import { ServiceWorkerRegistration } from '../components/ServiceWorkerRegistration'
-import { SessionRefresher } from '../contexts/AuthContext'
 import DemoModeInitializer from '../components/DemoModeInitializer'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -33,8 +28,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'PolicyCortex - AI-Powered Azure Governance',
-  description: 'Transform Azure governance with AI-powered insights and automation',
+  title: 'PolicyCortex - PCG Platform',
+  description: 'Prevent, Prove, Payback - AI-Powered Cloud Governance',
   manifest: '/manifest.json',
 }
 
@@ -89,18 +84,8 @@ export default function RootLayout({
         </a>
         <Providers>
           <DemoModeInitializer />
-          <ServiceWorkerRegistration />
-          <SessionRefresher />
-          <GlobalOmnibar />
           <AppShell>{children}</AppShell>
         </Providers>
-        {/* Development tools */}
-        {process.env.NODE_ENV === 'development' && (
-          <>
-            <PerformanceMonitor />
-            <AccessibilityChecker />
-          </>
-        )}
       </body>
     </html>
   )

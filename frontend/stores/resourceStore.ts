@@ -1,665 +1,204 @@
-/**
- * PATENT NOTICE: This code implements methods covered by:
- * - US Patent Application 17/123,456 - Cross-Domain Governance Correlation Engine
- * - US Patent Application 17/123,457 - Conversational Governance Intelligence System
- * - US Patent Application 17/123,458 - Unified AI-Driven Cloud Governance Platform
- * - US Patent Application 17/123,459 - Predictive Policy Compliance Engine
- * Unauthorized use, reproduction, or distribution may constitute patent infringement.
- * © 2024 PolicyCortex. All rights reserved.
- */
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { immer } from 'zustand/middleware/immer';
+import apiClient, { PredictionData, EvidenceItem, ROIMetrics } from '../lib/api-client';
 
-import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
-import axios from 'axios'
-import { apiClient } from '@/lib/api-client'
-import { Resource as ApiResource, Correlation } from '@/types/api'
+interface PCGStore {
+  // State
+  predictions: PredictionData[];
+  evidence: EvidenceItem[];
+  roiMetrics: ROIMetrics | null;
+  isLoading: boolean;
+  error: string | null;
 
-interface Resource {
-  id: string
-  name: string
-  display_name: string
-  resource_type: string
-  category: 'Policy' | 'CostManagement' | 'SecurityControls' | 'ComputeStorage' | 'NetworksFirewalls'
-  location?: string
-  tags: Record<string, string>
-  status: {
-    state: string
-    provisioning_state?: string
-    availability: number
-    performance_score: number
-  }
-  health: {
-    status: 'Healthy' | 'Degraded' | 'Unhealthy' | 'Unknown'
-    issues: Array<{
-      severity: 'Critical' | 'High' | 'Medium' | 'Low' | 'Info'
-      title: string
-      description: string
-      affected_components?: string[]
-      mitigation?: string
-    }>
-    recommendations: string[]
-  }
-  cost_data?: {
-    daily_cost: number
-    monthly_cost: number
-    yearly_projection: number
-    cost_trend: {
-      type: 'Increasing' | 'Decreasing' | 'Stable'
-      value?: number
+  // Actions - Predictions (Prevent)
+  fetchPredictions: () => Promise<void>;
+  addPrediction: (prediction: Partial<PredictionData>) => Promise<void>;
+  
+  // Actions - Evidence (Prove)
+  fetchEvidence: () => Promise<void>;
+  verifyEvidence: (id: string) => Promise<void>;
+  addEvidence: (evidence: Partial<EvidenceItem>) => Promise<void>;
+  
+  // Actions - ROI (Payback)
+  fetchROIMetrics: () => Promise<void>;
+  calculateROI: (startDate: string, endDate: string) => Promise<void>;
+  
+  // Utility Actions
+  clearError: () => void;
+  reset: () => void;
+}
+
+const initialState = {
+  predictions: [],
+  evidence: [],
+  roiMetrics: null,
+  isLoading: false,
+  error: null,
+};
+
+export const usePCGStore = create<PCGStore>()(
+  persist(
+    immer((set, get) => ({
+      ...initialState,
+
+      // Predictions (Prevent)
+      fetchPredictions: async () => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const predictions = await apiClient.getPredictions();
+          set((state) => {
+            state.predictions = predictions;
+            state.isLoading = false;
+          });
+        } catch (error) {
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to fetch predictions';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      addPrediction: async (prediction) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const newPrediction = await apiClient.createPrediction(prediction);
+          set((state) => {
+            state.predictions.push(newPrediction);
+            state.isLoading = false;
+          });
+        } catch (error) {
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to create prediction';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      // Evidence (Prove)
+      fetchEvidence: async () => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const evidence = await apiClient.getEvidence();
+          set((state) => {
+            state.evidence = evidence;
+            state.isLoading = false;
+          });
+        } catch (error) {
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to fetch evidence';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      verifyEvidence: async (id) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const verifiedEvidence = await apiClient.verifyEvidence(id);
+          set((state) => {
+            const index = state.evidence.findIndex(e => e.id === id);
+            if (index !== -1) {
+              state.evidence[index] = verifiedEvidence;
+            }
+            state.isLoading = false;
+          });
+        } catch (error) {
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to verify evidence';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      addEvidence: async (evidence) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const newEvidence = await apiClient.createEvidence(evidence);
+          set((state) => {
+            state.evidence.push(newEvidence);
+            state.isLoading = false;
+          });
+        } catch (error) {
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to create evidence';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      // ROI (Payback)
+      fetchROIMetrics: async () => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const metrics = await apiClient.getROIMetrics();
+          set((state) => {
+            state.roiMetrics = metrics;
+            state.isLoading = false;
+          });
+        } catch (error) {
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to fetch ROI metrics';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      calculateROI: async (startDate, endDate) => {
+        set((state) => {
+          state.isLoading = true;
+          state.error = null;
+        });
+        try {
+          const metrics = await apiClient.calculateROI({ startDate, endDate });
+          set((state) => {
+            state.roiMetrics = metrics;
+            state.isLoading = false;
+          });
+        } catch (error) {
+          set((state) => {
+            state.error = error instanceof Error ? error.message : 'Failed to calculate ROI';
+            state.isLoading = false;
+          });
+        }
+      },
+
+      // Utility
+      clearError: () => {
+        set((state) => {
+          state.error = null;
+        });
+      },
+
+      reset: () => {
+        set(initialState);
+      },
+    })),
+    {
+      name: 'pcg-store',
+      partialize: (state) => ({
+        predictions: state.predictions,
+        evidence: state.evidence,
+        roiMetrics: state.roiMetrics,
+      }),
     }
-    optimization_potential: number
-    currency: string
-  }
-  compliance_status: {
-    is_compliant: boolean
-    compliance_score: number
-    violations: Array<{
-      policy_id: string
-      policy_name: string
-      severity: 'Critical' | 'High' | 'Medium' | 'Low' | 'Info'
-      description: string
-      remediation?: string
-    }>
-    last_assessment: string
-  }
-  quick_actions: Array<{
-    id: string
-    label: string
-    icon: string
-    action_type: string
-    confirmation_required: boolean
-    estimated_impact?: string
-  }>
-  insights: Array<{
-    insight_type: string
-    title: string
-    description: string
-    impact: string
-    recommendation?: string
-    confidence: number
-  }>
-  last_updated: string
-}
-
-interface ResourceSummary {
-  total_resources: number
-  by_category: Record<string, number>
-  by_health: Record<string, number>
-  total_daily_cost: number
-  compliance_score: number
-  critical_issues: number
-  optimization_opportunities: number
-}
-
-interface ResourceCorrelation {
-  id: string
-  source_resource: string
-  target_resource: string
-  correlation_type: string
-  strength: number
-  impact: string
-  insights: Array<{
-    title: string
-    description: string
-    evidence: string[]
-    confidence: number
-  }>
-  recommended_actions: Array<{
-    action: string
-    priority: number
-    expected_outcome: string
-    effort_level: string
-  }>
-}
-
-interface ResourceFilter {
-  categories?: string[]
-  resource_types?: string[]
-  locations?: string[]
-  health_status?: string[]
-  compliance_only_violations?: boolean
-  compliance_min_score?: number
-  cost_min_daily?: number
-  cost_max_daily?: number
-}
-
-interface ResourceState {
-  // Data
-  resources: Resource[]
-  summary: ResourceSummary | null
-  correlations: ResourceCorrelation[]
-  insights: Array<{
-    insight_type: string
-    title: string
-    description: string
-    impact: string
-    recommendation?: string
-    confidence: number
-  }>
-  
-  // UI State
-  loading: boolean
-  error: string | null
-  selectedResource: Resource | null
-  filters: ResourceFilter
-  searchQuery: string
-  viewMode: 'grid' | 'list' | 'insights'
-  
-  // Real-time updates
-  lastRefresh: Date | null
-  autoRefreshEnabled: boolean
-  refreshInterval: number // milliseconds
-  
-  // Actions
-  fetchResources: (filter?: ResourceFilter) => Promise<void>
-  fetchResourceById: (id: string) => Promise<Resource | null>
-  fetchResourcesByCategory: (category: string) => Promise<void>
-  fetchCorrelations: () => Promise<void>
-  fetchInsights: () => Promise<void>
-  executeAction: (resourceId: string, actionId: string, confirmation: boolean) => Promise<void>
-  
-  // UI Actions
-  setSelectedResource: (resource: Resource | null) => void
-  setFilters: (filters: ResourceFilter) => void
-  setSearchQuery: (query: string) => void
-  setViewMode: (mode: 'grid' | 'list' | 'insights') => void
-  toggleAutoRefresh: () => void
-  clearError: () => void
-  
-  // Optimistic Updates
-  optimisticUpdateResource: (resourceId: string, updates: Partial<Resource>) => void
-  
-  // WebSocket connection for real-time updates
-  connectWebSocket: () => void
-  disconnectWebSocket: () => void
-  websocket: WebSocket | null
-}
-
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
-const API_V2_BASE = `${API_BASE_URL}/api/v2`
-
-// Create the store with persistence and devtools
-export const useResourceStore = create<ResourceState>()(
-  devtools(
-    persist(
-      immer((set, get) => ({
-        // Initial state
-        resources: [],
-        summary: null,
-        correlations: [],
-        insights: [],
-        loading: false,
-        error: null,
-        selectedResource: null,
-        filters: {},
-        searchQuery: '',
-        viewMode: 'grid',
-        lastRefresh: null,
-        autoRefreshEnabled: true,
-        refreshInterval: 30000, // 30 seconds
-        websocket: null,
-
-        // Fetch all resources with optional filtering
-        fetchResources: async (filter?: ResourceFilter) => {
-          set((state) => {
-            state.loading = true
-            state.error = null
-          })
-
-          try {
-            const payload: Record<string, string | number | boolean> = {}
-            if (filter?.categories?.length) payload.categories = filter.categories.join(',')
-            if (filter?.resource_types?.length) payload.resource_types = filter.resource_types.join(',')
-            if (filter?.locations?.length) payload.locations = filter.locations.join(',')
-            if (filter?.health_status?.length) payload.health_status = filter.health_status.join(',')
-            if (filter?.compliance_only_violations !== undefined) payload.compliance_only_violations = filter.compliance_only_violations
-            if (filter?.compliance_min_score !== undefined) payload.compliance_min_score = filter.compliance_min_score
-            if (filter?.cost_min_daily !== undefined) payload.cost_min_daily = filter.cost_min_daily
-            if (filter?.cost_max_daily !== undefined) payload.cost_max_daily = filter.cost_max_daily
-
-            const response = await apiClient.getResources()
-            set((state) => {
-              // Check if response has resources property (API returns object) or is array directly
-              if (Array.isArray(response)) {
-                // Map the API response to our internal Resource type
-                state.resources = response.map((r: ApiResource) => ({
-                  id: r.id || '',
-                  name: r.name || '',
-                  display_name: r.name || '',
-                  resource_type: r.type || 'Unknown',
-                  category: 'ComputeStorage' as const,
-                  location: r.location,
-                  tags: r.tags || {},
-                  status: { 
-                    state: r.status || 'Unknown',
-                    availability: r.status === 'Running' ? 100 : 0,
-                    performance_score: r.status === 'Running' ? 95 : 0
-                  },
-                  health: {
-                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
-                    issues: [],
-                    recommendations: []
-                  },
-                  cost_data: r.cost_per_month ? {
-                    daily_cost: r.cost_per_month / 30,
-                    monthly_cost: r.cost_per_month,
-                    yearly_projection: r.cost_per_month * 12,
-                    cost_trend: { type: 'Stable' as const },
-                    optimization_potential: 0,
-                    currency: 'USD'
-                  } : undefined,
-                  compliance_status: {
-                    is_compliant: r.compliance_status === 'Compliant',
-                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
-                    violations: [],
-                    last_assessment: new Date().toISOString()
-                  },
-                  quick_actions: [],
-                  insights: [],
-                  last_updated: r.updated_at || new Date().toISOString()
-                }))
-                state.summary = null
-              } else if (response && typeof response === 'object') {
-                const responseObj = response as { resources?: ApiResource[], summary?: ResourceSummary }
-                state.resources = (responseObj.resources || []).map((r: ApiResource) => ({
-                  id: r.id || '',
-                  name: r.name || '',
-                  display_name: r.name || '',
-                  resource_type: r.type || 'Unknown',
-                  category: 'ComputeStorage' as const,
-                  location: r.location,
-                  tags: r.tags || {},
-                  status: { 
-                    state: r.status || 'Unknown',
-                    availability: r.status === 'Running' ? 100 : 0,
-                    performance_score: r.status === 'Running' ? 95 : 0
-                  },
-                  health: {
-                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
-                    issues: [],
-                    recommendations: []
-                  },
-                  cost_data: r.cost_per_month ? {
-                    daily_cost: r.cost_per_month / 30,
-                    monthly_cost: r.cost_per_month,
-                    yearly_projection: r.cost_per_month * 12,
-                    cost_trend: { type: 'Stable' as const },
-                    optimization_potential: 0,
-                    currency: 'USD'
-                  } : undefined,
-                  compliance_status: {
-                    is_compliant: r.compliance_status === 'Compliant',
-                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
-                    violations: [],
-                    last_assessment: new Date().toISOString()
-                  },
-                  quick_actions: [],
-                  insights: [],
-                  last_updated: r.updated_at || new Date().toISOString()
-                }))
-                state.summary = responseObj.summary || null
-              } else {
-                state.resources = []
-                state.summary = null
-              }
-              state.lastRefresh = new Date()
-              state.loading = false
-            })
-          } catch (error) {
-            set((state) => {
-              state.error = error instanceof Error ? error.message : 'Failed to fetch resources'
-              state.loading = false
-            })
-          }
-        },
-
-        // Fetch single resource by ID
-        fetchResourceById: async (id: string) => {
-          try {
-            // For now, return the resource from state
-            const resource = get().resources.find(r => r.id === id)
-            if (!resource) throw new Error('Resource not found')
-            return resource
-          } catch (error) {
-            console.error('Failed to fetch resource:', error)
-            return null
-          }
-        },
-
-        // Fetch resources by category
-        fetchResourcesByCategory: async (category: string) => {
-          set((state) => {
-            state.loading = true
-            state.error = null
-          })
-
-          try {
-            const response = await apiClient.getResources()
-            set((state) => {
-              // Check if response has resources property (API returns object) or is array directly
-              if (Array.isArray(response)) {
-                // Map the API response to our internal Resource type
-                state.resources = response.map((r: ApiResource) => ({
-                  id: r.id || '',
-                  name: r.name || '',
-                  display_name: r.name || '',
-                  resource_type: r.type || 'Unknown',
-                  category: 'ComputeStorage' as const,
-                  location: r.location,
-                  tags: r.tags || {},
-                  status: { 
-                    state: r.status || 'Unknown',
-                    availability: r.status === 'Running' ? 100 : 0,
-                    performance_score: r.status === 'Running' ? 95 : 0
-                  },
-                  health: {
-                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
-                    issues: [],
-                    recommendations: []
-                  },
-                  cost_data: r.cost_per_month ? {
-                    daily_cost: r.cost_per_month / 30,
-                    monthly_cost: r.cost_per_month,
-                    yearly_projection: r.cost_per_month * 12,
-                    cost_trend: { type: 'Stable' as const },
-                    optimization_potential: 0,
-                    currency: 'USD'
-                  } : undefined,
-                  compliance_status: {
-                    is_compliant: r.compliance_status === 'Compliant',
-                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
-                    violations: [],
-                    last_assessment: new Date().toISOString()
-                  },
-                  quick_actions: [],
-                  insights: [],
-                  last_updated: r.updated_at || new Date().toISOString()
-                }))
-                state.summary = null
-              } else if (response && typeof response === 'object') {
-                const responseObj = response as { resources?: ApiResource[], summary?: ResourceSummary }
-                state.resources = (responseObj.resources || []).map((r: ApiResource) => ({
-                  id: r.id || '',
-                  name: r.name || '',
-                  display_name: r.name || '',
-                  resource_type: r.type || 'Unknown',
-                  category: 'ComputeStorage' as const,
-                  location: r.location,
-                  tags: r.tags || {},
-                  status: { 
-                    state: r.status || 'Unknown',
-                    availability: r.status === 'Running' ? 100 : 0,
-                    performance_score: r.status === 'Running' ? 95 : 0
-                  },
-                  health: {
-                    status: r.status === 'Running' ? 'Healthy' as const : r.status === 'Stopped' ? 'Degraded' as const : 'Unhealthy' as const,
-                    issues: [],
-                    recommendations: []
-                  },
-                  cost_data: r.cost_per_month ? {
-                    daily_cost: r.cost_per_month / 30,
-                    monthly_cost: r.cost_per_month,
-                    yearly_projection: r.cost_per_month * 12,
-                    cost_trend: { type: 'Stable' as const },
-                    optimization_potential: 0,
-                    currency: 'USD'
-                  } : undefined,
-                  compliance_status: {
-                    is_compliant: r.compliance_status === 'Compliant',
-                    compliance_score: r.compliance_status === 'Compliant' ? 100 : r.compliance_status === 'NonCompliant' ? 0 : 50,
-                    violations: [],
-                    last_assessment: new Date().toISOString()
-                  },
-                  quick_actions: [],
-                  insights: [],
-                  last_updated: r.updated_at || new Date().toISOString()
-                }))
-                state.summary = responseObj.summary || null
-              } else {
-                state.resources = []
-                state.summary = null
-              }
-              state.lastRefresh = new Date()
-              state.loading = false
-            })
-          } catch (error) {
-            set((state) => {
-              state.error = error instanceof Error ? error.message : 'Failed to fetch resources'
-              state.loading = false
-            })
-          }
-        },
-
-        // Fetch cross-domain correlations (unified API v1)
-        fetchCorrelations: async () => {
-          try {
-            const resp = await apiClient.getCorrelations()
-            if (resp) {
-              set((state) => {
-                // Map Correlation to ResourceCorrelation
-                state.correlations = (resp || []).map((c: Correlation) => ({
-                  id: c.id,
-                  source_resource: c.entities?.[0]?.id || '',
-                  target_resource: c.entities?.[1]?.id || '',
-                  correlation_type: c.type,
-                  strength: c.strength,
-                  impact: c.insights?.[0] || '',
-                  insights: c.insights.map(i => ({
-                    title: i,
-                    description: i,
-                    evidence: [],
-                    confidence: c.confidence
-                  })),
-                  recommended_actions: c.recommendations.map((r, idx) => ({
-                    action: r,
-                    priority: idx + 1,
-                    expected_outcome: 'Improved correlation',
-                    effort_level: 'Medium'
-                  }))
-                }))
-              })
-            }
-          } catch (error) {
-            console.error('Failed to fetch correlations:', error)
-          }
-        },
-
-        // Fetch AI insights
-        fetchInsights: async () => {
-          try {
-            const response = await axios.get(`${API_V2_BASE}/resources/insights`)
-            set((state) => {
-              state.insights = response.data
-            })
-          } catch (error) {
-            console.error('Failed to fetch insights:', error)
-          }
-        },
-
-        // Execute action on a resource (wired to /api/v1/actions with streaming)
-        executeAction: async (resourceId: string, actionId: string, confirmation: boolean) => {
-          try {
-            // Optimistic update
-            set((state) => {
-              const resource = state.resources.find(r => r.id === resourceId)
-              if (resource) {
-                // Update status based on action
-                if (actionId === 'stop') {
-                  resource.status.state = 'Stopping'
-                } else if (actionId === 'start') {
-                  resource.status.state = 'Starting'
-                } else if (actionId === 'restart') {
-                  resource.status.state = 'Restarting'
-                }
-              }
-            })
-
-            // Mock action creation for now
-            const created: { data: { id: number, action_id: number }, status: number } = { data: { id: Date.now(), action_id: Date.now() }, status: 200 }
-            if ('error' in created || created.status >= 400) {
-              await get().fetchResources()
-              return
-            }
-            const actionIdCreated = created.data?.action_id || created.data?.id
-            if (actionIdCreated) {
-              // Mock streaming for now
-              const stop = () => {}
-              // TODO: Implement streaming when API is ready
-              // const stop = api.streamActionEvents(String(actionIdCreated), async (msg) => {
-              //   // Optionally parse and react to progress events here
-              //   // console.log('[action-event]', actionIdCreated, msg)
-              // })
-              // Stop the stream after 60s; refresh resource once to reflect final state
-              setTimeout(async () => {
-                stop()
-                const updatedResource = await get().fetchResourceById(resourceId)
-                if (updatedResource) {
-                  set((state) => {
-                    const index = state.resources.findIndex(r => r.id === resourceId)
-                    if (index !== -1) {
-                      state.resources[index] = updatedResource
-                    }
-                  })
-                }
-              }, 60000)
-            }
-          } catch (error) {
-            console.error('Failed to execute action:', error)
-            // Revert optimistic update
-            await get().fetchResources()
-          }
-        },
-
-        // UI Actions
-        setSelectedResource: (resource) => set((state) => {
-          state.selectedResource = resource
-        }),
-
-        setFilters: (filters) => set((state) => {
-          state.filters = filters
-        }),
-
-        setSearchQuery: (query) => set((state) => {
-          state.searchQuery = query
-        }),
-
-        setViewMode: (mode) => set((state) => {
-          state.viewMode = mode
-        }),
-
-        toggleAutoRefresh: () => set((state) => {
-          state.autoRefreshEnabled = !state.autoRefreshEnabled
-        }),
-
-        clearError: () => set((state) => {
-          state.error = null
-        }),
-
-        // Optimistic update for immediate UI feedback
-        optimisticUpdateResource: (resourceId, updates) => set((state) => {
-          const resource = state.resources.find(r => r.id === resourceId)
-          if (resource) {
-            Object.assign(resource, updates)
-          }
-        }),
-
-        // WebSocket for real-time updates (disabled in demo by default)
-        connectWebSocket: () => {
-          if (typeof window !== 'undefined') {
-            const useWs = (process.env.NEXT_PUBLIC_USE_WS || '').toLowerCase() === 'true'
-            if (!useWs) {
-              // Skip WS in demo; rely on periodic refresh and SSE action streams
-              return
-            }
-          }
-
-          const ws = new WebSocket(`ws://localhost:8080/ws/resources`)
-          
-          ws.onopen = () => {
-            console.log('WebSocket connected for real-time resource updates')
-          }
-
-          ws.onmessage = (event) => {
-            const data = JSON.parse(event.data)
-            
-            if (data.type === 'resource_update') {
-              set((state) => {
-                const index = state.resources.findIndex(r => r.id === data.resource.id)
-                if (index !== -1) {
-                  state.resources[index] = data.resource
-                } else {
-                  state.resources.push(data.resource)
-                }
-              })
-            } else if (data.type === 'resource_deleted') {
-              set((state) => {
-                state.resources = state.resources.filter(r => r.id !== data.resource_id)
-              })
-            } else if (data.type === 'insight') {
-              set((state) => {
-                state.insights.unshift(data.insight)
-              })
-            }
-          }
-
-          ws.onerror = (error) => {
-            console.error('WebSocket error:', error)
-          }
-
-          ws.onclose = () => {
-            console.log('WebSocket disconnected')
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => {
-              if (get().autoRefreshEnabled) {
-                get().connectWebSocket()
-              }
-            }, 5000)
-          }
-
-          set((state) => {
-            state.websocket = ws
-          })
-        },
-
-        disconnectWebSocket: () => {
-          const ws = get().websocket
-          if (ws) {
-            ws.close()
-            set((state) => {
-              state.websocket = null
-            })
-          }
-        },
-      })),
-      {
-        name: 'resource-store',
-        partialize: (state) => ({
-          filters: state.filters,
-          viewMode: state.viewMode,
-          autoRefreshEnabled: state.autoRefreshEnabled,
-          refreshInterval: state.refreshInterval,
-        }),
-      }
-    )
   )
-)
-
-// Auto-refresh hook
-export const useAutoRefresh = () => {
-  const { fetchResources, autoRefreshEnabled, refreshInterval } = useResourceStore()
-
-  useEffect(() => {
-    if (!autoRefreshEnabled) return
-
-    const interval = setInterval(() => {
-      fetchResources()
-    }, refreshInterval)
-
-    return () => clearInterval(interval)
-  }, [autoRefreshEnabled, refreshInterval, fetchResources])
-}
-
-// Export for use in components
-import { useEffect } from 'react'
+);

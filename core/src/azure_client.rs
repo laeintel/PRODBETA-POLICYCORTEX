@@ -15,10 +15,7 @@ use std::sync::Arc;
 use tracing::{error, info, warn};
 
 use crate::utils::{retry_with_exponential_backoff, RetryConfig, should_retry_http_status};
-use crate::api::{
-    AIMetrics, CostMetrics, GovernanceMetrics, NetworkMetrics, PolicyMetrics, RbacMetrics,
-    ResourceMetrics,
-};
+// Removed unused metric imports - focusing on PCG pillars
 
 #[derive(Clone)]
 pub struct AzureClient {
@@ -100,7 +97,7 @@ impl AzureClient {
 
     pub async fn get_governance_metrics(
         &self,
-    ) -> Result<GovernanceMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching real Azure governance metrics...");
 
         let (
@@ -119,19 +116,19 @@ impl AzureClient {
             self.get_ai_metrics()
         )?;
 
-        Ok(GovernanceMetrics {
-            policies: policy_metrics,
-            rbac: rbac_metrics,
-            costs: cost_metrics,
-            network: network_metrics,
-            resources: resource_metrics,
-            ai: ai_metrics,
-        })
+        Ok(serde_json::json!({
+            "policies": policy_metrics,
+            "rbac": rbac_metrics,
+            "costs": cost_metrics,
+            "network": network_metrics,
+            "resources": resource_metrics,
+            "ai": ai_metrics
+        }))
     }
 
     async fn get_policy_metrics(
         &self,
-    ) -> Result<PolicyMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure Policy metrics...");
 
         let policy_assignments_url = format!(
@@ -239,31 +236,31 @@ impl AzureClient {
                 (0, 100.0)
             };
 
-            Ok(PolicyMetrics {
-                total,
-                active,
-                violations,
-                automated: (active as f64 * 0.85) as u32, // Assume 85% are automated
-                compliance_rate,
-                prediction_accuracy: 94.2, // AI prediction accuracy
-            })
+            Ok(serde_json::json!({
+                "total": total,
+                "active": active,
+                "violations": violations,
+                "automated": (active as f64 * 0.85) as u32, // Assume 85% are automated
+                "compliance_rate": compliance_rate,
+                "prediction_accuracy": 94.2 // AI prediction accuracy
+            }))
         } else {
             error!("Failed to fetch policy assignments: {}", response.status());
             // Return fallback data
-            Ok(PolicyMetrics {
-                total: 0,
-                active: 0,
-                violations: 0,
-                automated: 0,
-                compliance_rate: 0.0,
-                prediction_accuracy: 0.0,
-            })
+            Ok(serde_json::json!({
+                "total": 0,
+                "active": 0,
+                "violations": 0,
+                "automated": 0,
+                "compliance_rate": 0.0,
+                "prediction_accuracy": 0.0
+            }))
         }
     }
 
     async fn get_rbac_metrics(
         &self,
-    ) -> Result<RbacMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure RBAC metrics...");
 
         let role_assignments_url = format!(
@@ -332,28 +329,28 @@ impl AzureClient {
                 50 // Fallback
             };
 
-            Ok(RbacMetrics {
-                users,
-                roles,
-                violations: (users as f64 * 0.02) as u32, // Assume 2% violation rate
-                risk_score: if users > 1000 { 25.0 } else { 15.0 },
-                anomalies_detected: (users as f64 * 0.005) as u32, // 0.5% anomaly rate
-            })
+            Ok(serde_json::json!({
+                "users": users,
+                "roles": roles,
+                "violations": (users as f64 * 0.02) as u32, // Assume 2% violation rate
+                "risk_score": if users > 1000 { 25.0 } else { 15.0 },
+                "anomalies_detected": (users as f64 * 0.005) as u32 // 0.5% anomaly rate
+            }))
         } else {
             error!("Failed to fetch RBAC data: {}", response.status());
-            Ok(RbacMetrics {
-                users: 0,
-                roles: 0,
-                violations: 0,
-                risk_score: 0.0,
-                anomalies_detected: 0,
-            })
+            Ok(serde_json::json!({
+                "users": 0,
+                "roles": 0,
+                "violations": 0,
+                "risk_score": 0.0,
+                "anomalies_detected": 0
+            }))
         }
     }
 
     async fn get_cost_metrics(
         &self,
-    ) -> Result<CostMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure Cost Management metrics...");
 
         // Cost Management API requires specific date ranges
@@ -417,26 +414,26 @@ impl AzureClient {
             let predicted_spend = current_spend * 0.95; // Assume 5% optimization potential
             let savings_identified = current_spend - predicted_spend;
 
-            Ok(CostMetrics {
-                current_spend,
-                predicted_spend,
-                savings_identified,
-                optimization_rate: 85.0, // 85% of resources can be optimized
-            })
+            Ok(serde_json::json!({
+                "current_spend": current_spend,
+                "predicted_spend": predicted_spend,
+                "savings_identified": savings_identified,
+                "optimization_rate": 85.0 // 85% of resources can be optimized
+            }))
         } else {
             error!("Failed to fetch cost data: {}", response.status());
-            Ok(CostMetrics {
-                current_spend: 0.0,
-                predicted_spend: 0.0,
-                savings_identified: 0.0,
-                optimization_rate: 0.0,
-            })
+            Ok(serde_json::json!({
+                "current_spend": 0.0,
+                "predicted_spend": 0.0,
+                "savings_identified": 0.0,
+                "optimization_rate": 0.0
+            }))
         }
     }
 
     async fn get_network_metrics(
         &self,
-    ) -> Result<NetworkMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching network security metrics...");
 
         let resources_url = format!(
@@ -463,26 +460,26 @@ impl AzureClient {
 
             let endpoints = network_resources.len() as u32;
 
-            Ok(NetworkMetrics {
-                endpoints,
-                active_threats: (endpoints as f64 * 0.01) as u32, // 1% threat rate
-                blocked_attempts: endpoints * 5,                  // 5 blocked attempts per endpoint
-                latency_ms: 12.5,                                 // Average network latency
-            })
+            Ok(serde_json::json!({
+                "endpoints": endpoints,
+                "active_threats": (endpoints as f64 * 0.01) as u32, // 1% threat rate
+                "blocked_attempts": endpoints * 5,                  // 5 blocked attempts per endpoint
+                "latency_ms": 12.5                                 // Average network latency
+            }))
         } else {
             error!("Failed to fetch network data: {}", response.status());
-            Ok(NetworkMetrics {
-                endpoints: 0,
-                active_threats: 0,
-                blocked_attempts: 0,
-                latency_ms: 0.0,
-            })
+            Ok(serde_json::json!({
+                "endpoints": 0,
+                "active_threats": 0,
+                "blocked_attempts": 0,
+                "latency_ms": 0.0
+            }))
         }
     }
 
     async fn get_resource_metrics(
         &self,
-    ) -> Result<ResourceMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         info!("Fetching Azure resource metrics...");
 
         let resources_url = format!(
@@ -512,30 +509,30 @@ impl AzureClient {
             let idle = (total as f64 * 0.1) as u32; // 10% idle
             let overprovisioned = (total as f64 * 0.08) as u32; // 8% overprovisioned
 
-            Ok(ResourceMetrics {
-                total,
-                optimized,
-                idle,
-                overprovisioned,
-            })
+            Ok(serde_json::json!({
+                "total": total,
+                "optimized": optimized,
+                "idle": idle,
+                "overprovisioned": overprovisioned
+            }))
         } else {
             error!("Failed to fetch resource data: {}", response.status());
-            Ok(ResourceMetrics {
-                total: 0,
-                optimized: 0,
-                idle: 0,
-                overprovisioned: 0,
-            })
+            Ok(serde_json::json!({
+                "total": 0,
+                "optimized": 0,
+                "idle": 0,
+                "overprovisioned": 0
+            }))
         }
     }
 
-    async fn get_ai_metrics(&self) -> Result<AIMetrics, Box<dyn std::error::Error + Send + Sync>> {
+    async fn get_ai_metrics(&self) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
         // AI metrics are internal to PolicyCortex
-        Ok(AIMetrics {
-            accuracy: 97.8,
-            predictions_made: 25000,
-            automations_executed: 18500,
-            learning_progress: 100.0, // Complete
-        })
+        Ok(serde_json::json!({
+            "accuracy": 97.8,
+            "predictions_made": 25000,
+            "automations_executed": 18500,
+            "learning_progress": 100.0 // Complete
+        }))
     }
 }

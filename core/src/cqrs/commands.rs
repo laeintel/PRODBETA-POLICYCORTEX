@@ -1,7 +1,8 @@
 // CQRS Command implementations for PolicyCortex
 
 use super::*;
-use crate::api::{PolicyUpdate, ResourceUpdate, ComplianceUpdate};
+// Removed unused update types - will be replaced with PCG-focused types
+// use crate::api::{PolicyUpdate, ResourceUpdate, ComplianceUpdate};
 use crate::cqrs::aggregate::{PolicyAggregate, ResourceAggregate, ComplianceAggregate, RemediationAggregate};
 use crate::cqrs::events::{
     PolicyEvent, PolicyCreatedEvent, PolicyUpdatedEvent, PolicyDeletedEvent,
