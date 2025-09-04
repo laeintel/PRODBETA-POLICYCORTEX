@@ -1,0 +1,173 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: policycortex
+spec:
+  {} # Deny all traffic by default
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-frontend-ingress
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        ports: ["3000"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-core-api-access
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: core-api
+  action: ALLOW
+  rules:
+  # Allow frontend to access core API
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/frontend-sa"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/v1/*"]
+  # Allow GraphQL gateway to access core API
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/graphql-sa"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/api/v1/*"]
+  # Allow ingress gateway
+  - from:
+    - source:
+        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        paths: ["/api/v1/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-graphql-access
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: graphql-gateway
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/frontend-sa"]
+    - source:
+        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
+    to:
+    - operation:
+        methods: ["POST", "GET", "OPTIONS"]
+        paths: ["/graphql", "/graphql/*"]
+  - when:
+    - key: request.headers[authorization]
+      values: ["Bearer *"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ai-engine-access
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: ai-engine
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/core-api-sa"]
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/graphql-sa"]
+    to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/api/v1/conversation", "/api/v1/predictions"]
+  - when:
+    - key: request.headers[x-api-key]
+      values: ["*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-database-access
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: postgresql
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/core-api-sa"]
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/ai-engine-sa"]
+    to:
+    - operation:
+        ports: ["5432"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-cache-access
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: dragonfly
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/core-api-sa"]
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/graphql-sa"]
+    - source:
+        principals: ["cluster.local/ns/policycortex/sa/frontend-sa"]
+    to:
+    - operation:
+        ports: ["6379"]
+---
+# JWT validation for external access
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: jwt-auth-policy
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: core-api
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        requestPrincipals: ["*"]
+    when:
+    - key: request.auth.claims[iss]
+      values: ["https://policycortex.com"]
+    - key: request.auth.claims[aud]
+      values: ["policycortex-api"]

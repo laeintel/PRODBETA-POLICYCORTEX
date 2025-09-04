@@ -136,7 +136,14 @@ export default function UnifiedPlatformPatentPage() {
   )
 }
 
-function MetricCard({ title, value, trend, icon: Icon }: any) {
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  trend: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+function MetricCard({ title, value, trend, icon: Icon }: MetricCardProps) {
   return (
     <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
       <div className="flex items-start justify-between">
@@ -151,7 +158,12 @@ function MetricCard({ title, value, trend, icon: Icon }: any) {
   )
 }
 
-function ActionButton({ label, onClick }: any) {
+interface ActionButtonProps {
+  label: string;
+  onClick: () => void;
+}
+
+function ActionButton({ label, onClick }: ActionButtonProps) {
   return (
     <button type="button" 
       onClick={onClick}
@@ -162,7 +174,12 @@ function ActionButton({ label, onClick }: any) {
   )
 }
 
-function InfoCard({ title, items }: any) {
+interface InfoCardProps {
+  title: string;
+  items: string[];
+}
+
+function InfoCard({ title, items }: InfoCardProps) {
   return (
     <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-4">
       <h3 className="font-medium mb-3">{title}</h3>

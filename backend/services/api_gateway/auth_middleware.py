@@ -60,9 +60,9 @@ class AuthContext:
         self.tenant_id = claims.get("tid") or "default"
         self.email = claims.get("email") or claims.get("preferred_username") or ""
         self.name = claims.get("name") or ""
+        self.is_authenticated = bool(claims)  # Set this before extracting roles
         self.roles = self._extract_roles(claims)
         self.scopes = self._extract_scopes(claims)
-        self.is_authenticated = bool(claims)
         self.is_admin = self._check_admin()
         self.session_id = self._generate_session_id()
         
@@ -102,7 +102,7 @@ class AuthContext:
         
         # OAuth2 scopes
         scp = claims.get("scp", "")
-        if isinstance(scp, str):
+        if isinstance(scp, str) and scp:  # Only split if not empty
             scopes.update(scp.split(" "))
         
         # Application permissions
@@ -157,21 +157,23 @@ class AuthContext:
     
     def can_access_resource(self, resource: Dict[str, Any]) -> bool:
         """Check if user can access a specific resource"""
-        if not ENABLE_RESOURCE_AUTHZ:
+        # Check dynamically for testing
+        enable_resource_authz = os.getenv("ENABLE_RESOURCE_AUTHZ", "true").lower() == "true"
+        if not enable_resource_authz:
             return True
             
         if self.is_admin:
             return True
         
-        # Check tenant match
-        resource_tenant = resource.get("tenant_id") or resource.get("tenantId")
-        if resource_tenant and resource_tenant != self.tenant_id:
-            return False
-        
-        # Check owner
+        # Check owner first - owners can always access their resources
         resource_owner = resource.get("owner_id") or resource.get("created_by")
         if resource_owner == self.user_id:
             return True
+        
+        # Check tenant match - non-owners can only access resources in their tenant
+        resource_tenant = resource.get("tenant_id") or resource.get("tenantId")
+        if resource_tenant and resource_tenant != self.tenant_id:
+            return False
         
         # Check resource-specific permissions
         if "permissions" in resource:
@@ -232,18 +234,24 @@ def _get_rsa_key(token: str, jwks: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 async def validate_token(token: str) -> Dict[str, Any]:
     """Validate Azure AD JWT token"""
-    if not AZURE_TENANT_ID or not ALLOWED_AUDIENCES:
+    # Get configuration dynamically for testing
+    azure_tenant_id = os.getenv("AZURE_TENANT_ID") or os.getenv("NEXT_PUBLIC_AZURE_TENANT_ID")
+    azure_client_id = os.getenv("AZURE_CLIENT_ID") or os.getenv("NEXT_PUBLIC_AZURE_CLIENT_ID")
+    api_audience = os.getenv("API_AUDIENCE") or os.getenv("NEXT_PUBLIC_API_AUDIENCE")
+    allowed_audiences = [a for a in [api_audience, azure_client_id] if a]
+    
+    if not azure_tenant_id or not allowed_audiences:
         raise HTTPException(500, "Authentication not properly configured")
     
-    issuer = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/v2.0"
+    issuer = f"https://login.microsoftonline.com/{azure_tenant_id}/v2.0"
     
     # Get JWKS keys
-    jwks = await _get_jwks(AZURE_TENANT_ID)
+    jwks = await _get_jwks(azure_tenant_id)
     rsa_key = _get_rsa_key(token, jwks)
     
     if not rsa_key:
         # Refresh keys once and retry
-        jwks = await _get_jwks(AZURE_TENANT_ID)
+        jwks = await _get_jwks(azure_tenant_id)
         rsa_key = _get_rsa_key(token, jwks)
         if not rsa_key:
             raise HTTPException(401, "Unable to verify token signature")
@@ -254,7 +262,7 @@ async def validate_token(token: str) -> Dict[str, Any]:
             token,
             rsa_key,
             algorithms=["RS256"],
-            audience=ALLOWED_AUDIENCES if len(ALLOWED_AUDIENCES) > 1 else ALLOWED_AUDIENCES[0],
+            audience=allowed_audiences if len(allowed_audiences) > 1 else allowed_audiences[0],
             issuer=issuer,
             options={"verify_aud": True, "verify_signature": True, "verify_exp": True}
         )
@@ -274,8 +282,9 @@ async def get_auth_context(
 ) -> AuthContext:
     """Get authentication context from request"""
     
-    # Check if auth is required
-    if not REQUIRE_AUTH:
+    # Check if auth is required (dynamically check env var for testing)
+    require_auth = os.getenv("REQUIRE_AUTH", "true").lower() == "true"
+    if not require_auth:
         # Return anonymous context
         return AuthContext({})
     

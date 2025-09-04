@@ -22,7 +22,7 @@ interface NavigationCard {
   id: string;
   title: string;
   description: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   href: string;
   stats?: {
     label: string;
@@ -447,11 +447,11 @@ export default function TacticalOperationsPage() {
           <div className="space-y-3 mb-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-purple-100">Predictions Active</span>
-              <span className="font-bold">{predictions.filter((p: any) => p.confidence > 0.8).length}</span>
+              <span className="font-bold">{predictions.filter(p => p.confidence > 0.8).length}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-purple-100">ETA Soon</span>
-              <span className="font-bold">{predictions.filter((p: any) => p.timeframe === '24h').length}</span>
+              <span className="font-bold">{predictions.filter(p => p.timeframe === '24h').length}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-purple-100">Model Precision</span>
@@ -825,9 +825,8 @@ export default function TacticalOperationsPage() {
                   { month: 'Jun', cost: 42, budget: 50 }
                 ].map((item) => (
                   <div key={item.month} className="flex-1 flex flex-col items-center mx-1">
-                    <div className="w-full flex flex-col items-center">
-                      <div className="w-8 bg-blue-500 rounded-t" style={{ height: `${(item.cost / 50) * 200}px` }} />
-                      <div className="w-8 border-2 border-dashed border-gray-400 absolute" style={{ height: '200px', bottom: '24px' }} />
+                    <div className="w-full flex flex-col items-center relative">
+                      <div className="w-8 bg-blue-500 rounded-t relative z-10" style={{ height: `${Math.max((item.cost / 50) * 200, 10)}px` }} />
                     </div>
                     <span className="text-xs mt-1">{item.month}</span>
                   </div>

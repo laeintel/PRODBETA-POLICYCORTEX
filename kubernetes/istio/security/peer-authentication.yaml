@@ -1,0 +1,74 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: policycortex
+spec:
+  mtls:
+    mode: STRICT # Enforce mTLS for all traffic
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: frontend-mtls
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: core-api-mtls
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: core-api
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8080:
+      mode: STRICT
+    8443:
+      mode: STRICT
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: graphql-mtls
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: graphql-gateway
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: database-mtls
+  namespace: policycortex
+spec:
+  selector:
+    matchLabels:
+      app: postgresql
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    5432:
+      mode: STRICT
+---
+# Allow PERMISSIVE mode for migration phase
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: migration-permissive
+  namespace: policycortex-staging
+spec:
+  mtls:
+    mode: PERMISSIVE # Allow both mTLS and plain text during migration

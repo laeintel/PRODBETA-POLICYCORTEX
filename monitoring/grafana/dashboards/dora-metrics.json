@@ -1,0 +1,196 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "policycortex-dora",
+    "title": "PolicyCortex DORA Metrics",
+    "tags": ["dora", "devops", "policycortex"],
+    "timezone": "browser",
+    "schemaVersion": 30,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "type": "stat",
+        "title": "Deployment Frequency",
+        "targets": [
+          {
+            "expr": "increase(deployments_total[7d])",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 3},
+                {"color": "green", "value": 7}
+              ]
+            },
+            "mappings": [
+              {"type": "range", "options": {"from": 0, "to": 1, "result": {"text": "Low"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "type": "stat",
+        "title": "Lead Time for Changes",
+        "targets": [
+          {
+            "expr": "avg(lead_time_seconds)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "dtdurations",
+            "decimals": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 86400},
+                {"color": "red", "value": 604800}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "type": "stat",
+        "title": "Change Failure Rate",
+        "targets": [
+          {
+            "expr": "(increase(deployments_failed_total[30d]) / increase(deployments_total[30d]))",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "decimals": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.1},
+                {"color": "red", "value": 0.15}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "type": "stat",
+        "title": "Mean Time to Recovery",
+        "targets": [
+          {
+            "expr": "avg(incident_resolution_time_seconds)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "dtdurations",
+            "decimals": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 3600},
+                {"color": "red", "value": 14400}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "type": "graph",
+        "title": "Deployment Frequency Trend",
+        "targets": [
+          {
+            "expr": "sum(increase(deployments_total[1d]))",
+            "legendFormat": "Deployments per day",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "type": "graph",
+        "title": "Lead Time Distribution",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(lead_time_seconds_bucket[1d])) by (le))",
+            "legendFormat": "p50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.90, sum(rate(lead_time_seconds_bucket[1d])) by (le))",
+            "legendFormat": "p90",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(lead_time_seconds_bucket[1d])) by (le))",
+            "legendFormat": "p99",
+            "refId": "C"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "type": "graph",
+        "title": "Change Failure Rate Over Time",
+        "targets": [
+          {
+            "expr": "(increase(deployments_failed_total[1d]) / increase(deployments_total[1d]))",
+            "legendFormat": "Failure Rate",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "type": "graph",
+        "title": "MTTR Trend",
+        "targets": [
+          {
+            "expr": "avg(incident_resolution_time_seconds)",
+            "legendFormat": "Average MTTR",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 20},
+        "type": "table",
+        "title": "Recent Deployments",
+        "targets": [
+          {
+            "expr": "topk(10, deployment_info)",
+            "format": "table",
+            "refId": "A"
+          }
+        ]
+      }
+    ]
+  }
+}

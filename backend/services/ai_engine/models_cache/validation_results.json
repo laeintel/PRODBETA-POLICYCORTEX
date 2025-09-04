@@ -1,0 +1,35 @@
+{
+  "validation_started": "2025-09-03T14:06:00.179812",
+  "models": {
+    "compliance": {
+      "status": "passed",
+      "test_result": {
+        "resource_id": "test-001",
+        "status": "Compliant",
+        "confidence": 0.6446147186147186,
+        "risk_level": "Low",
+        "recommendations": [
+          "Continue regular compliance monitoring",
+          "Document current configuration as baseline"
+        ],
+        "predicted_at": "2025-09-03T14:06:00.223585",
+        "model_version": "2025-09-03T14:04:35.517051"
+      }
+    },
+    "anomaly": {
+      "status": "passed",
+      "test_result": {
+        "anomalies_detected": 5,
+        "total_points": 5
+      }
+    },
+    "cost": {
+      "status": "passed",
+      "test_result": {
+        "estimated_savings": 380.48830342164206,
+        "recommendations": 3
+      }
+    }
+  },
+  "validation_completed": "2025-09-03T14:06:00.227588"
+}

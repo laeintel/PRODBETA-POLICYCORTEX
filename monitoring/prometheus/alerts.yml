@@ -1,0 +1,299 @@
+groups:
+  # SLO-based alerts with error budgets
+  - name: slo_alerts
+    interval: 30s
+    rules:
+      # Availability SLO - 99.9% (3 9s)
+      - alert: AvailabilitySLOBurnRate25
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m])
+            / rate(http_requests_total[5m])
+          ) > 0.0025
+        for: 5m
+        labels:
+          severity: warning
+          slo: availability
+          burn_rate: "25%"
+        annotations:
+          summary: "Service {{ $labels.service }} burning 25% of error budget"
+          description: "{{ $labels.service }} has {{ $value | humanizePercentage }} error rate (5m), burning error budget at 25% rate"
+          runbook_url: "https://wiki.policycortex.com/runbooks/availability-slo"
+
+      - alert: AvailabilitySLOBurnRate50
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m])
+            / rate(http_requests_total[5m])
+          ) > 0.005
+        for: 3m
+        labels:
+          severity: warning
+          slo: availability
+          burn_rate: "50%"
+        annotations:
+          summary: "Service {{ $labels.service }} burning 50% of error budget"
+          description: "{{ $labels.service }} has {{ $value | humanizePercentage }} error rate (5m), burning error budget at 50% rate"
+          runbook_url: "https://wiki.policycortex.com/runbooks/availability-slo"
+
+      - alert: AvailabilitySLOBurnRate100
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[1m])
+            / rate(http_requests_total[1m])
+          ) > 0.01
+        for: 1m
+        labels:
+          severity: critical
+          slo: availability
+          burn_rate: "100%"
+          pager: true
+        annotations:
+          summary: "Service {{ $labels.service }} burning 100% of error budget"
+          description: "{{ $labels.service }} has {{ $value | humanizePercentage }} error rate (1m), burning entire error budget"
+          runbook_url: "https://wiki.policycortex.com/runbooks/availability-slo"
+
+      # Latency SLO - 95th percentile < 300ms
+      - alert: LatencySLOBreach
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (service, le)
+          ) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          slo: latency
+        annotations:
+          summary: "Service {{ $labels.service }} exceeding latency SLO"
+          description: "{{ $labels.service }} p95 latency is {{ $value | humanizeDuration }} (SLO: 300ms)"
+          runbook_url: "https://wiki.policycortex.com/runbooks/latency-slo"
+
+  # Golden signals alerts
+  - name: golden_signals
+    interval: 30s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+            / sum(rate(http_requests_total[5m])) by (service)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          signal: errors
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "{{ $labels.service }} has {{ $value | humanizePercentage }} error rate"
+          runbook_url: "https://wiki.policycortex.com/runbooks/high-error-rate"
+
+      # High latency
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (service, le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          signal: latency
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "{{ $labels.service }} p99 latency is {{ $value | humanizeDuration }}"
+          runbook_url: "https://wiki.policycortex.com/runbooks/high-latency"
+
+      # Traffic anomaly
+      - alert: TrafficAnomaly
+        expr: |
+          abs(
+            rate(http_requests_total[5m]) - 
+            rate(http_requests_total[5m] offset 1h)
+          ) / rate(http_requests_total[5m] offset 1h) > 2
+        for: 10m
+        labels:
+          severity: warning
+          signal: traffic
+        annotations:
+          summary: "Traffic anomaly detected on {{ $labels.service }}"
+          description: "{{ $labels.service }} traffic changed by {{ $value | humanizePercentage }} compared to 1 hour ago"
+          runbook_url: "https://wiki.policycortex.com/runbooks/traffic-anomaly"
+
+      # Saturation - High CPU
+      - alert: HighCPUSaturation
+        expr: |
+          (
+            100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 80
+        for: 10m
+        labels:
+          severity: warning
+          signal: saturation
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} CPU usage is {{ $value | humanize }}%"
+          runbook_url: "https://wiki.policycortex.com/runbooks/high-cpu"
+
+      # Saturation - High Memory
+      - alert: HighMemorySaturation
+        expr: |
+          (
+            1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+          ) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          signal: saturation
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} memory usage is {{ $value | humanize }}%"
+          runbook_url: "https://wiki.policycortex.com/runbooks/high-memory"
+
+  # Service-specific alerts
+  - name: service_alerts
+    interval: 30s
+    rules:
+      # Core API down
+      - alert: CoreAPIDown
+        expr: up{service="core-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: core-api
+        annotations:
+          summary: "PolicyCortex Core API is down"
+          description: "Core API instance {{ $labels.instance }} has been down for more than 1 minute"
+          runbook_url: "https://wiki.policycortex.com/runbooks/core-api-down"
+
+      # Frontend down
+      - alert: FrontendDown
+        expr: up{service="frontend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: frontend
+        annotations:
+          summary: "PolicyCortex Frontend is down"
+          description: "Frontend instance {{ $labels.instance }} has been down for more than 1 minute"
+          runbook_url: "https://wiki.policycortex.com/runbooks/frontend-down"
+
+      # Database connection pool exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (
+            pg_stat_database_numbackends{datname="policycortex"} 
+            / pg_settings_max_connections
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "PostgreSQL connection pool is {{ $value | humanizePercentage }} full"
+          runbook_url: "https://wiki.policycortex.com/runbooks/db-connections"
+
+      # Cache hit rate low
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            rate(redis_keyspace_hits_total[5m])
+            / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))
+          ) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Cache hit rate is low"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}, below threshold of 80%"
+          runbook_url: "https://wiki.policycortex.com/runbooks/cache-hit-rate"
+
+  # Security alerts
+  - name: security_alerts
+    interval: 30s
+    rules:
+      # High rate of authentication failures
+      - alert: HighAuthenticationFailureRate
+        expr: |
+          rate(authentication_failures_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High rate of authentication failures"
+          description: "Authentication failure rate is {{ $value }} per second"
+          runbook_url: "https://wiki.policycortex.com/runbooks/auth-failures"
+
+      # Suspicious API access pattern
+      - alert: SuspiciousAPIAccess
+        expr: |
+          rate(http_requests_total{status="403"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Suspicious API access pattern detected"
+          description: "High rate of 403 responses: {{ $value }} per second"
+          runbook_url: "https://wiki.policycortex.com/runbooks/suspicious-access"
+
+  # DORA metrics alerts
+  - name: dora_metrics
+    interval: 30s
+    rules:
+      # Deployment frequency below target
+      - alert: LowDeploymentFrequency
+        expr: |
+          increase(deployments_total[7d]) < 5
+        for: 1d
+        labels:
+          severity: info
+          dora_metric: deployment_frequency
+        annotations:
+          summary: "Deployment frequency below target"
+          description: "Only {{ $value }} deployments in the last 7 days (target: daily)"
+          runbook_url: "https://wiki.policycortex.com/runbooks/deployment-frequency"
+
+      # Lead time above target
+      - alert: HighLeadTime
+        expr: |
+          avg(lead_time_seconds) > 86400
+        for: 1h
+        labels:
+          severity: warning
+          dora_metric: lead_time
+        annotations:
+          summary: "Lead time for changes above target"
+          description: "Average lead time is {{ $value | humanizeDuration }} (target: 24 hours)"
+          runbook_url: "https://wiki.policycortex.com/runbooks/lead-time"
+
+      # Change failure rate above target
+      - alert: HighChangeFailureRate
+        expr: |
+          (
+            increase(deployments_failed_total[7d])
+            / increase(deployments_total[7d])
+          ) > 0.1
+        for: 1h
+        labels:
+          severity: warning
+          dora_metric: change_failure_rate
+        annotations:
+          summary: "Change failure rate above target"
+          description: "Change failure rate is {{ $value | humanizePercentage }} (target: <10%)"
+          runbook_url: "https://wiki.policycortex.com/runbooks/change-failure-rate"
+
+      # MTTR above target
+      - alert: HighMTTR
+        expr: |
+          avg(incident_resolution_time_seconds) > 14400
+        for: 1h
+        labels:
+          severity: warning
+          dora_metric: mttr
+        annotations:
+          summary: "Mean time to recovery above target"
+          description: "MTTR is {{ $value | humanizeDuration }} (target: 4 hours)"
+          runbook_url: "https://wiki.policycortex.com/runbooks/mttr"

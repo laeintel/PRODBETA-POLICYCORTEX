@@ -105,6 +105,21 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
   const [demoUser, setDemoUser] = useState<AccountInfo | null>(initialDemoUser)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Initialize demo session on mount if in demo mode
+  useEffect(() => {
+    if (demoMode && typeof window !== 'undefined') {
+      // Set demo session cookies via API
+      fetch('/api/auth/demo', {
+        method: 'POST',
+        credentials: 'include'
+      }).then(() => {
+        console.log('Demo session initialized')
+      }).catch(err => {
+        console.error('Failed to initialize demo session:', err)
+      })
+    }
+  }, [demoMode])
 
   const login = async () => {
     setLoading(true)
@@ -139,43 +154,42 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
       instance.setActiveAccount(loginResponse.account)
       console.log('Login successful via popup:', loginResponse)
       
-      // Proactively acquire an access token for backend/API calls and persist it for the shared api client
+      // Acquire access token for API calls
+      let accessToken = '';
       try {
-        const tokenResp = await instance.acquireTokenSilent(apiRequest)
-        if (tokenResp?.accessToken) {
-          localStorage.setItem('pcx_token', tokenResp.accessToken)
-        }
+        const tokenResp = await instance.acquireTokenSilent(apiRequest);
+        accessToken = tokenResp?.accessToken || '';
       } catch (e) {
         try {
-          const tokenResp = await instance.acquireTokenPopup(apiRequest)
-          if (tokenResp?.accessToken) {
-            localStorage.setItem('pcx_token', tokenResp.accessToken)
-          }
+          const tokenResp = await instance.acquireTokenPopup(apiRequest);
+          accessToken = tokenResp?.accessToken || '';
         } catch {
-          // No token available yet; api-client will retry via getAccessToken bridge if configured
+          console.warn('Could not acquire access token');
         }
       }
       
-      // Set authentication cookie for middleware
-      await fetch('/api/auth/set-cookie', {
+      // Create secure session with httpOnly cookies
+      const sessionResponse = await fetch('/api/auth/session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
-          token: loginResponse.idToken,
-          user: {
-            username: loginResponse.account.username,
-            name: loginResponse.account.name,
-            tenantId: loginResponse.tenantId
-          }
+          accessToken,
+          idToken: loginResponse.idToken,
+          user: loginResponse.account
         })
-      })
+      });
+      
+      if (!sessionResponse.ok) {
+        throw new Error('Failed to create session');
+      }
       
       // Don't redirect here - let the component handle navigation
-    } catch (err: any) {
+    } catch (err) {
       console.error('Login failed:', err)
-      const errorMessage = err.errorMessage || err.message || 'Login failed'
+      const errorMessage = (err as { errorMessage?: string; message?: string })?.errorMessage || (err as Error)?.message || 'Login failed'
       setError(errorMessage)
       
       // Only fallback to demo mode if explicitly enabled
@@ -204,13 +218,10 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
     setLoading(true)
     
     try {
-      // Clear client token cache used by the shared api client
-      if (typeof window !== 'undefined') {
-        try { localStorage.removeItem('pcx_token') } catch {}
-      }
-      // Clear authentication cookies
-      await fetch('/api/auth/set-cookie', {
-        method: 'DELETE'
+      // Destroy server session and clear cookies
+      await fetch('/api/auth/session', {
+        method: 'DELETE',
+        credentials: 'include'
       })
       
       if (demoMode) {
@@ -221,9 +232,9 @@ const AuthProviderInner: React.FC<AuthProviderInnerProps> = ({ children }) => {
           mainWindowRedirectUri: window.location.origin
         })
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Logout failed:', err)
-      setError(err.message || 'Logout failed')
+      setError((err as Error)?.message || 'Logout failed')
     } finally {
       setLoading(false)
     }
@@ -330,31 +341,33 @@ export const useAuthenticatedFetch = () => {
   return authenticatedFetch
 }
 
-// Bridge: keep localStorage token refreshed when auth state changes so the shared api client attaches Authorization automatically
-// This hook must live in a client component; AuthProviderInner already runs on client.
-// We co-locate here to avoid circular deps from api-client importing hooks.
-export const AuthTokenRefresher: React.FC = () => {
-  const { getAccessToken, user } = useAuth()
+// Session refresh hook - ensures tokens stay fresh
+export const SessionRefresher: React.FC = () => {
+  const { user } = useAuth();
+  
   useEffect(() => {
-    let cancelled = false
-    const sync = async () => {
+    if (!user || typeof window === 'undefined') return;
+    
+    // Check session status every 10 minutes
+    const interval = setInterval(async () => {
       try {
-        const token = await getAccessToken()
-        if (!cancelled && token) {
-          localStorage.setItem('pcx_token', token)
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (!data.authenticated && user) {
+          // Session expired, trigger re-authentication
+          console.warn('Session expired, please log in again');
+          // You might want to trigger a logout or show a notification here
         }
-      } catch {
-        // Best-effort; ignored
+      } catch (error) {
+        console.error('Failed to check session:', error);
       }
-    }
-    if (typeof window !== 'undefined') {
-      if (user) {
-        sync()
-      } else {
-        try { localStorage.removeItem('pcx_token') } catch {}
-      }
-    }
-    return () => { cancelled = true }
-  }, [getAccessToken, user])
-  return null
+    }, 10 * 60 * 1000); // 10 minutes
+    
+    return () => clearInterval(interval);
+  }, [user]);
+  
+  return null;
 }
