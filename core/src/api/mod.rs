@@ -27,6 +27,7 @@ pub mod edge; // Edge governance module
 pub mod blockchain; // Blockchain audit module
 pub mod copilot; // AI Copilot module
 pub mod devsecops; // DevSecOps integration module
+pub mod evidence; // Evidence chain module for PROVE pillar
 
 // Re-export resource API functions
 pub use resources::{
