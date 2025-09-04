@@ -17,6 +17,7 @@ pub mod governance;
 pub mod correlation;
 pub mod auth;
 pub mod error;
+pub mod evidence;
 pub mod config;
 pub mod azure;
 pub mod azure_client;
