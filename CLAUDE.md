@@ -1,6 +1,171 @@
-# CLAUDE.md
+# CLAUDE CODE — PROJECT INSTRUCTIONS (PolicyCortex, spec-first)
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Role
+You are a spec-driven builder for the PolicyCortex platform. Treat the file `.pcx/agent-baseline.yaml` as the single canonical specification for architecture, contracts, flows, tasks, and Definition of Done (DoD). Your job is to implement the spec with minimal, surgical changes and to produce reviewable diffs and runnable tests.
+
+## Operating Rules (non-negotiable)
+
+1. **Spec-first**: Read and follow `.pcx/agent-baseline.yaml` exactly. Do not invent flows or rename files/paths.
+
+2. **Output format**: Always return unified diffs or exact new file contents only (no whole-file rewrites unless a file is new). Include the git mv/add intent when renaming/creating.
+
+3. **Small batches**: Implement tasks in order `builder_tasks.ordered` (T01 → T12). Open/prepare one branch / PR per task: `pcx/<task-id>-<slug>`.
+
+4. **Determinism**: Add tests required by the spec; do not relax acceptance checks.
+
+5. **Security**: Never print secrets. Create/update `.env.example` only and read secrets from environment.
+
+6. **Real mode default**: Set `NEXT_PUBLIC_DEMO_MODE=false`, `USE_REAL_DATA=true`. Any mock/demo path must 404 in real mode.
+
+7. **No control-flow by LLM**: The DAGs in flows are authoritative. LLM steps only fill parameters for tools; do not alter edges.
+
+8. **Patent hooks**: Implement and preserve: predictive compliance, cross-domain correlation, conversational governance intelligence, tamper-evident audit (Merkle) exactly where the spec anchors them.
+
+## What to do first (once per session)
+
+1. Load `.pcx/agent-baseline.yaml` and cache these sections: `environments`, `runtime_topology`, `tools_contracts`, `flows`, `ui_contract`, `builder_tasks`, `acceptance_tests`, `definition_of_done`, `patent_enablement_map`.
+
+2. Verify repo layout matches `meta.repo_assumptions`. If a path is missing, create it with the exact names from the spec.
+
+## Task Loop (repeat for each task T01..T12)
+For each task:
+- **A) Plan (very brief)**: list files you will add/modify/delete and why (1–5 bullets).
+- **B) Diffs**: provide only git-applyable diffs (or full contents for new files).
+- **C) Post-steps**: list shell commands to run (e.g., install deps, run tests/migrations).
+- **D) Self-check**: cite the acceptance items from the spec that this task fulfills and how to verify them.
+
+## Branching & Commits
+
+- **Branch**: `pcx/<task-id>-<slug>` (e.g., `pcx/T05-evidence-merkle`).
+- **Conventional commit headers** (scope = service/path), e.g.:
+  - `feat(evidence): add SHA-256 Merkle tree and /verify endpoint (T05)`
+  - `test(reducer): determinism harness for reducers (T03)`
+
+## Exact Build Order (mirror builder_tasks.ordered)
+
+### T01_env_mode_switch
+- Default to real mode; wire `NEXT_PUBLIC_REAL_API_BASE`, `USE_REAL_DATA`
+- Ensure demo-only routes return 404 in real mode
+
+### T02_contracts_schemas
+- Create tool JSONSchemas exactly as in `tools_contracts` for: predict, verify_chain, export_evidence, create_fix_pr, pnl_forecast
+- Gateway must validate every tool call against these schemas
+
+### T03_types_reducers
+- Add discriminated unions for artifacts/events
+- Implement pure reducers
+- Include determinism tests (>99.9% pass)
+
+### T04_events_cqrs
+- Event store + replay so Executive can be reconstructed 1:1
+
+### T05_evidence_merkle
+- SHA-256 Merkle builder
+- `/api/v1/verify/{hash}`
+- Offline verifier script (Node or Rust)
+
+### T06_predictions_explain
+- Predictions page: render ETA, confidence, top-5 features
+- Create Fix PR link from payload (owner/repo, fixBranch)
+
+### T07_pnl_forecast_api_ui
+- `/api/v1/costs/pnl` + UI table (Policy | MTD | 90-day)
+
+### T08_auth_rbac
+- OIDC/JWT
+- Map groups→roles
+- Default-deny
+- Protect all non-auth routes
+
+### T09_perf_cache_rate_pool
+- Redis cache, sliding-window rate limit
+- DB/HTTP pooling
+- Meet 95p < 400ms target
+
+### T10_observability_slo
+- W3C tracing
+- Metrics (pcx_mttp_hours, pcx_prevention_rate, pcx_cost_savings_90d)
+- Alerts
+
+### T11_omnichannel_triggers
+- Slack/ITSM triggers that map to tool calls (no direct prompts)
+
+### T12_cicd_smoke
+- CI builds
+- Deploy demo env
+- Run smoke + acceptance tests green
+
+## File & Path Requirements (create if missing)
+
+- `contracts/tooling/*.schema.json` for all tools in `tools_contracts`
+- `packages/types/src/{artifacts,events}.ts` (discriminated unions)
+- `packages/reducer/src/reducer.ts` + `__tests__/determinism.spec.ts`
+- `services/evidence/src/merkle.{ts|rs}` and `api/evidence/{verify,export}.ts`
+- `graphs/{prevent,prove,payback}.dag.json` — match flows
+- `prompts/{predict,explain,merge_guard}.md` with parameter blocks `{{tenant}}`, `{{control_family}}`
+- `frontend/app/finops/pnl/page.tsx` per `ui_contract.pnl_page`
+- `frontend/app/ai/predictions/page.tsx` showing top-5 features + PR link
+- `tests/acceptance/flows.spec.ts` for the three acceptance scenarios
+
+## Frontend wiring (mandatory)
+
+- Create/use `frontend/lib/real.ts` fetch helper pointing at `NEXT_PUBLIC_REAL_API_BASE` (default `http://localhost:8084`) with `cache: 'no-store'`
+- Replace any page-level fetches with this helper on Executive, Predictions, Audit, PnL
+- UI contract must be met: Executive KPIs, Audit integrity+Merkle proof, Predictions PR link, PnL columns
+
+## Auth & RBAC
+
+- Enforce JWT at gateway, core_api, agents_azure; block unauthenticated
+- Map Azure AD groups to roles: admin, auditor, operator; default deny
+
+## Performance & Caching
+
+- Redis keys = `tenant:scope:query_hash`; default TTLs per spec
+- Apply sliding-window rate limiting (per user & per tenant)
+- Database and HTTP client pooling per `performance_hygiene`
+
+## Evidence / Patent Hooks (must not drift)
+
+- Every export includes `{contentHash, merkleRoot, signer, timestamp}`
+- Offline verifier must validate any artifact without calling the API
+- Record human approvals as artifacts (when risk >= HIGH)
+- Maintain event chain for "predict → simulate → PR → verify → P&L"
+
+## Omnichannel
+
+- Implement Slack slash commands → gateway tool calls (`/pcx predict …`, `/pcx verify …`, `/pcx pnl …`)
+- ITSM webhooks map to runs API with typed payloads
+
+## CI/CD & Tests
+
+- Add workflows to build/push gateway, core_api, agents_azure, ml_predict, ml_explain, frontend; then deploy a demo env and run smoke + acceptance tests
+- Required secrets are exactly those listed under `environments.secrets_required`. Never log them.
+
+## Definition of Done (checklist to run for each PR)
+
+- [ ] Tool calls validated against schema; unknown intent = 501
+- [ ] Auth enforced; no bypass routes
+- [ ] Real mode default; mock/demo paths 404 in real
+- [ ] Event replay reproduces Executive
+- [ ] Offline verification succeeds on any export
+- [ ] Smoke + acceptance tests green in CI
+- [ ] SLO dashboards green for 24h in demo env
+
+## Response format to user (every time)
+
+- **Plan**: bullets (max 5)
+- **Diffs**: unified diffs / new file contents only
+- **Run**: exact commands (install, build, test, migrate)
+- **Verify**: acceptance items satisfied & how to check
+
+If you are blocked by a missing secret or external credential, pause and output:
+- The exact secret name(s) from `environments.secrets_required`
+- A short reason you need them
+- A mock/local fallback only if it does not alter real-mode behavior
+
+---
+
+# Previous CLAUDE.md Content (for reference)
 
 ## Project Overview
 PolicyCortex is an enterprise-grade AI-powered Azure governance platform with four patented technologies and comprehensive Cloud ITSM capabilities:
@@ -212,3 +377,9 @@ docker-compose -f docker-compose.local.yml up -d
 - Use type hints for all functions
 - Async functions with FastAPI
 - pytest for all testing
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
