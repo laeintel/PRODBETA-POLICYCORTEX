@@ -1,0 +1,50 @@
+# PolicyCortex Robots.txt
+# This file controls search engine crawling behavior
+
+User-agent: *
+
+# Core pages - Allow indexing
+Allow: /
+Allow: /executive
+Allow: /prevent
+Allow: /prove
+Allow: /payback
+
+# API documentation - Allow for developers
+Allow: /api-docs
+
+# De-index Labs/experimental pages
+Disallow: /labs/
+Disallow: /experimental/
+Disallow: /test/
+Disallow: /demo/
+
+# De-index tactical/operational pages (not for public SEO)
+Disallow: /tactical/
+Disallow: /operations/
+
+# De-index sensitive or admin areas
+Disallow: /admin/
+Disallow: /config/
+Disallow: /settings/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# De-index authentication pages
+Disallow: /login
+Disallow: /logout
+Disallow: /auth/
+Disallow: /signin
+Disallow: /signup
+
+# Development and staging environments
+Disallow: /dev/
+Disallow: /staging/
+Disallow: /preview/
+
+# Sitemap location (when available)
+# Sitemap: https://policycortex.com/sitemap.xml
+
+# Crawl delay (be respectful to server resources)
+Crawl-delay: 1

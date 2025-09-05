@@ -47,7 +47,7 @@ function AppLayoutInner({ children }: AppLayoutProps) {
   // Build commands from consolidated IA
   const commands = useMemo(() => {
     return [
-      { id: 'nav-dashboard', title: 'Open Operations Center', category: 'navigation', action: () => router.push('/tactical') },
+      { id: 'nav-dashboard', title: 'Open Executive Dashboard', category: 'navigation', action: () => router.push('/executive') },
       { id: 'nav-observe', title: 'Go to Monitoring Overview', category: 'navigation', action: () => router.push('/tactical/monitoring-overview') },
       { id: 'nav-sec', title: 'Open Secure & Govern', category: 'navigation', action: () => router.push('/security/overview') },
       { id: 'nav-build', title: 'Open Build & Release', category: 'navigation', action: () => router.push('/tactical/pipelines') },
