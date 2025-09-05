@@ -104,7 +104,7 @@
     "@types/react-dom": "^18.2.18",
     "@types/react-sparklines": "^1.7.5",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@typescript-eslint/parser": "^8.42.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
