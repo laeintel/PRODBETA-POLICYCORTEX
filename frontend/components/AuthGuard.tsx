@@ -58,8 +58,8 @@ export default function AuthGuard({ children, requireAuth = true }: AuthGuardPro
     setLoginAttempted(true)
     try {
       await login()
-      // After successful login, redirect to stored URL or dashboard
-      const returnUrl = sessionStorage.getItem('returnUrl') || '/dashboard'
+      // After successful login, redirect to stored URL or executive page
+      const returnUrl = sessionStorage.getItem('returnUrl') || '/executive'
       sessionStorage.removeItem('returnUrl')
       router.push(returnUrl)
     } catch (error) {
