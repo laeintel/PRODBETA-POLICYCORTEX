@@ -111,8 +111,8 @@ policycortex.db
 *.old
 
 # Documentation and decks (exclude from repo)
-docs/
-/docs/
+# docs/  # Commented out to allow documentation
+# /docs/  # Commented out to allow documentation  
 docs/_build/
 docs/.doctrees/
 DECK/
