@@ -196,4 +196,4 @@ policycortex-backup-*.zip
 infrastructure/terraform/tfplan
 
 # Patent generation artifacts
-NON-PROVISIONAL/
+NON-PROVISIONAL/nul

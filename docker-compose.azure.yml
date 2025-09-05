@@ -1,0 +1,197 @@
+version: '3.8'
+
+services:
+  # Frontend Next.js Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_DEMO_MODE: "false"
+        USE_REAL_DATA: "true"
+        NEXT_PUBLIC_API_URL: ${FRONTEND_URL:-http://localhost:3000}
+        NEXT_PUBLIC_REAL_API_BASE: ${API_URL:-http://localhost:8084}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_DEMO_MODE=false
+      - USE_REAL_DATA=true
+      - NEXT_PUBLIC_AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - NEXT_PUBLIC_AZURE_TENANT_ID=${AZURE_TENANT_ID}
+    depends_on:
+      - api
+      - postgres
+      - redis
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+  # Azure Agents API Server (Real Data)
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.api
+    ports:
+      - "8084:8084"
+    environment:
+      - NODE_ENV=production
+      - PORT=8084
+      - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - DATABASE_URL=postgresql://pcadmin:${DB_PASSWORD}@postgres:5432/policycortex
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+  # Mock Server (Fallback)
+  mock:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=pcadmin
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-PolicyCortex2024!}
+      - POSTGRES_DB=policycortex
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./core/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - policycortex
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pcadmin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - policycortex
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Python ML Service
+  ml-service:
+    build:
+      context: ./backend/services/ai_engine
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - API_PORT=8082
+      - DATABASE_URL=postgresql://pcadmin:${DB_PASSWORD}@postgres:5432/policycortex
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./backend/services/ai_engine/models_cache:/app/models_cache
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - api
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+  # Database Admin UI (pgAdmin)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@policycortex.com
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - policycortex
+    restart: unless-stopped
+
+networks:
+  policycortex:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
