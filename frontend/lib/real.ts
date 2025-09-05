@@ -3,8 +3,8 @@ export const REAL_API_BASE = process.env.NEXT_PUBLIC_REAL_API_BASE || 'http://lo
 
 export async function real<T>(path: string, init: RequestInit = {}): Promise<T> {
   // Support test bearer token for CI/CD
-  const headers: HeadersInit = {
-    ...(init.headers || {})
+  const headers: Record<string, string> = {
+    ...(init.headers as Record<string, string> || {})
   };
   
   if (process.env.NEXT_PUBLIC_TEST_BEARER) {
