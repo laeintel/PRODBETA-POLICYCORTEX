@@ -67,11 +67,9 @@ export function generateCSP(nonce: string, reportOnly: boolean = false): string 
     ? `script-src 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' 'sha256-drs6v8sKWnmmrrD9KTCfeZyk9sh/EMNvzKJUm8rdVwo=' 'sha256-YoiTZbP35ftJSuqcXHIQKR0GkOgvwuSrIESq73qEh+4='`
     : `script-src 'nonce-${nonce}' 'strict-dynamic'`;
   
-  // Style needs unsafe-inline in development for hot reload to work properly
-  // Also allow unsafe-inline for third-party libraries that inject styles
-  const styleSrc = !isProd
-    ? `style-src 'self' 'unsafe-inline'`
-    : `style-src 'self' 'unsafe-inline' 'nonce-${nonce}'`;
+  // Style needs unsafe-inline for third-party libraries (charts, components, etc.)
+  // This is required for libraries like recharts, three.js, and other visualization tools
+  const styleSrc = `style-src 'self' 'unsafe-inline'`;
   
   const cspDirectives = [
     "default-src 'self'",
