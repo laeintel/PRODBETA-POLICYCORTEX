@@ -329,7 +329,9 @@ export default function ExecutiveDashboard() {
             <Card key={kpi.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <Icon className="h-5 w-5" style={{ color: kpi.color }} />
+                  <span style={{ color: kpi.color }}>
+                    <Icon className="h-5 w-5" />
+                  </span>
                   <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                     kpi.status === 'on-track' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
                     kpi.status === 'at-risk' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
@@ -415,9 +417,7 @@ export default function ExecutiveDashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <RadialBarChart cx="50%" cy="50%" innerRadius="10%" outerRadius="90%" data={complianceData}>
                 <RadialBar
-                  minAngle={15}
                   background
-                  clockWise
                   dataKey="score"
                   fill="#3B82F6"
                 />

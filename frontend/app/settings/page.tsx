@@ -35,13 +35,16 @@ export default function SettingsPage() {
   });
 
   const handleToggle = (category: string, setting: string) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category as keyof typeof prev],
-        [setting]: !prev[category as keyof typeof prev][setting as keyof typeof prev[category as keyof typeof prev]]
-      }
-    }));
+    setSettings(prev => {
+      const categorySettings = prev[category as keyof typeof prev] as any;
+      return {
+        ...prev,
+        [category]: {
+          ...categorySettings,
+          [setting]: !categorySettings[setting]
+        }
+      };
+    });
   };
 
   const handleSave = () => {

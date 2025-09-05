@@ -508,7 +508,9 @@ export default function ITSMCatalog() {
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
-              <Icon className="h-8 w-8 mx-auto mb-2" style={{ color: category.color }} />
+              <span style={{ color: category.color }}>
+                <Icon className="h-8 w-8 mx-auto mb-2" />
+              </span>
               <div className="font-medium text-sm">{category.name}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {category.itemCount} items
@@ -529,7 +531,9 @@ export default function ITSMCatalog() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      <Icon className="h-6 w-6" style={{ color: service.color }} />
+                      <span style={{ color: service.color }}>
+                        <Icon className="h-6 w-6" />
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
@@ -602,7 +606,9 @@ export default function ITSMCatalog() {
                     <tr key={service.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900/50">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <Icon className="h-5 w-5" style={{ color: service.color }} />
+                          <span style={{ color: service.color }}>
+                            <Icon className="h-5 w-5" />
+                          </span>
                           <div>
                             <div className="font-medium">{service.name}</div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
