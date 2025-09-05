@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policortex/contracts/tooling/export_evidence.schema.json",
+  "title": "export_evidence input/output",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "required": ["eventId"],
+      "properties": {
+        "eventId": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "required": ["artifactRef", "contentHash", "signer", "timestamp"],
+      "properties": {
+        "artifactRef": { "type": "string" },
+        "contentHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "signer": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["input", "output"],
+  "additionalProperties": false
+}

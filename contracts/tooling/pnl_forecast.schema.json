@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policortex/contracts/tooling/pnl_forecast.schema.json",
+  "title": "pnl_forecast input/output",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "required": ["policies"],
+      "properties": {
+        "policies": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["policy", "savingsMTD", "forecast90d"],
+            "properties": {
+              "policy": { "type": "string" },
+              "savingsMTD": { "type": "number" },
+              "forecast90d": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["input", "output"],
+  "additionalProperties": false
+}

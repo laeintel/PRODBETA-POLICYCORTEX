@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policortex/contracts/tooling/verify_chain.schema.json",
+  "title": "verify_chain input/output",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "required": ["docHash"],
+      "properties": {
+        "docHash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "required": ["verified", "merkleRoot", "proof"],
+      "properties": {
+        "verified": { "type": "boolean" },
+        "merkleRoot": { "type": "string" },
+        "proof": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["input", "output"],
+  "additionalProperties": false
+}
