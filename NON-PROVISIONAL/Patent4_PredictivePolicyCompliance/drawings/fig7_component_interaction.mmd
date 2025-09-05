@@ -1,0 +1,285 @@
+graph TB
+    subgraph "Data Input Layer"
+        CONFIG_INGESTER[Config Ingester<br/>Real-time Events]
+        POLICY_LOADER[Policy Loader<br/>Rule Definitions]
+        HISTORICAL_IMPORTER[Historical Importer<br/>Batch Processing]
+        FEEDBACK_COLLECTOR[Feedback Collector<br/>Human Input]
+        EXTERNAL_CONNECTOR[External Connector<br/>Threat Intelligence]
+    end
+
+    subgraph "Feature Engineering"
+        FEATURE_ORCHESTRATOR[Feature Orchestrator<br/>Pipeline Management]
+        TEMPORAL_PROCESSOR[Temporal Processor<br/>Time-series Features]
+        CONTEXTUAL_PROCESSOR[Contextual Processor<br/>Relationship Features]
+        FEATURE_TRANSFORMER[Feature Transformer<br/>Encoding/Scaling]
+        FEATURE_VALIDATOR[Feature Validator<br/>Quality Assurance]
+    end
+
+    subgraph "Feature Store"
+        FEATURE_MANAGER[Feature Manager<br/>Store Coordination]
+        FEATURE_REGISTRY[Feature Registry<br/>Schema Management]
+        FEATURE_CACHE[Feature Cache<br/>Fast Serving]
+        FEATURE_LINEAGE[Feature Lineage<br/>Dependency Tracking]
+        FEATURE_MONITOR[Feature Monitor<br/>Quality Metrics]
+    end
+
+    subgraph "Drift Detection System"
+        DRIFT_COORDINATOR[Drift Coordinator<br/>Detection Orchestration]
+        BASELINE_MANAGER[Baseline Manager<br/>Reference State]
+        CHANGE_ANALYZER[Change Analyzer<br/>Real-time Monitoring]
+        VAE_DETECTOR[VAE Detector<br/>Reconstruction Analysis]
+        SPC_MONITOR[SPC Monitor<br/>Statistical Control]
+    end
+
+    subgraph "ML Model Ensemble"
+        MODEL_ORCHESTRATOR[Model Orchestrator<br/>Ensemble Coordination]
+        LSTM_SERVICE[LSTM Service<br/>Temporal Modeling]
+        XGBOOST_SERVICE[XGBoost Service<br/>Tree Ensemble]
+        ANOMALY_DETECTOR[Anomaly Detector<br/>Outlier Detection]
+        ENSEMBLE_COMBINER[Ensemble Combiner<br/>Weighted Fusion]
+    end
+
+    subgraph "Prediction Engine"
+        PREDICTION_COORDINATOR[Prediction Coordinator<br/>Inference Management]
+        INFERENCE_ENGINE[Inference Engine<br/>Model Serving]
+        UNCERTAINTY_QUANTIFIER[Uncertainty Quantifier<br/>Confidence Estimation]
+        RISK_ASSESSOR[Risk Assessor<br/>Business Impact]
+        TIME_PREDICTOR[Time Predictor<br/>Violation Timing]
+    end
+
+    subgraph "Explainability Engine"
+        EXPLANATION_MANAGER[Explanation Manager<br/>XAI Coordination]
+        SHAP_ANALYZER[SHAP Analyzer<br/>Feature Attribution]
+        ATTENTION_VISUALIZER[Attention Visualizer<br/>Neural Attention]
+        COUNTERFACTUAL_GENERATOR[Counterfactual Generator<br/>What-if Analysis]
+        NARRATIVE_BUILDER[Narrative Builder<br/>Natural Language]
+    end
+
+    subgraph "Continuous Learning"
+        LEARNING_COORDINATOR[Learning Coordinator<br/>ML Lifecycle]
+        PERFORMANCE_MONITOR[Performance Monitor<br/>Model Metrics]
+        RETRAIN_SCHEDULER[Retrain Scheduler<br/>Update Triggers]
+        HYPERPARAMETER_TUNER[Hyperparameter Tuner<br/>Optimization]
+        MODEL_UPDATER[Model Updater<br/>Deployment Management]
+    end
+
+    subgraph "Model Management"
+        MODEL_REGISTRY[Model Registry<br/>Version Control]
+        MODEL_VALIDATOR[Model Validator<br/>Quality Gates]
+        MODEL_DEPLOYER[Model Deployer<br/>Production Release]
+        A_B_TESTER[A/B Tester<br/>Model Comparison]
+        MODEL_ARCHIVER[Model Archiver<br/>Lifecycle Management]
+    end
+
+    subgraph "Serving Infrastructure"
+        SERVING_COORDINATOR[Serving Coordinator<br/>Inference Orchestration]
+        REAL_TIME_API[Real-time API<br/>Low Latency]
+        BATCH_PROCESSOR[Batch Processor<br/>Bulk Processing]
+        EDGE_INFERENCE[Edge Inference<br/>Distributed Computing]
+        PREDICTION_CACHE[Prediction Cache<br/>Result Storage]
+    end
+
+    subgraph "Data Storage"
+        STORAGE_MANAGER[Storage Manager<br/>Data Coordination]
+        FEATURE_STORE_DB[Feature Store DB<br/>ML Features]
+        MODEL_STORE[Model Store<br/>Artifacts & Metadata]
+        PREDICTION_STORE[Prediction Store<br/>Results Archive]
+        TRAINING_DATA_STORE[Training Data Store<br/>Historical Datasets]
+    end
+
+    subgraph "Monitoring & Observability"
+        MONITORING_MANAGER[Monitoring Manager<br/>Observability Coordination]
+        METRICS_COLLECTOR[Metrics Collector<br/>Performance Data]
+        DRIFT_MONITOR[Drift Monitor<br/>Model/Data Drift]
+        ALERT_MANAGER[Alert Manager<br/>Anomaly Notifications]
+        DASHBOARD_UPDATER[Dashboard Updater<br/>Live Visualization]
+    end
+
+    subgraph "Security & Compliance"
+        SECURITY_MANAGER[Security Manager<br/>Access Control]
+        TENANT_ISOLATOR[Tenant Isolator<br/>Multi-tenancy]
+        PRIVACY_CONTROLLER[Privacy Controller<br/>Data Protection]
+        AUDIT_LOGGER[Audit Logger<br/>Compliance Trail]
+        ENCRYPTION_SERVICE[Encryption Service<br/>Data Security]
+    end
+
+    %% Data Input Interactions
+    CONFIG_INGESTER --> FEATURE_ORCHESTRATOR
+    POLICY_LOADER --> FEATURE_ORCHESTRATOR
+    HISTORICAL_IMPORTER --> FEATURE_ORCHESTRATOR
+    FEEDBACK_COLLECTOR --> LEARNING_COORDINATOR
+    EXTERNAL_CONNECTOR --> FEATURE_ORCHESTRATOR
+
+    %% Feature Engineering Interactions
+    FEATURE_ORCHESTRATOR <--> TEMPORAL_PROCESSOR
+    FEATURE_ORCHESTRATOR <--> CONTEXTUAL_PROCESSOR
+    FEATURE_ORCHESTRATOR <--> FEATURE_TRANSFORMER
+    FEATURE_ORCHESTRATOR <--> FEATURE_VALIDATOR
+    TEMPORAL_PROCESSOR <--> CONTEXTUAL_PROCESSOR
+    FEATURE_TRANSFORMER <--> FEATURE_VALIDATOR
+
+    %% Feature Store Interactions
+    FEATURE_VALIDATOR --> FEATURE_MANAGER
+    FEATURE_MANAGER <--> FEATURE_REGISTRY
+    FEATURE_MANAGER <--> FEATURE_CACHE
+    FEATURE_MANAGER <--> FEATURE_LINEAGE
+    FEATURE_MANAGER <--> FEATURE_MONITOR
+    FEATURE_REGISTRY <--> FEATURE_CACHE
+    FEATURE_LINEAGE <--> FEATURE_MONITOR
+
+    %% Drift Detection Interactions
+    CONFIG_INGESTER --> DRIFT_COORDINATOR
+    DRIFT_COORDINATOR <--> BASELINE_MANAGER
+    DRIFT_COORDINATOR <--> CHANGE_ANALYZER
+    DRIFT_COORDINATOR <--> VAE_DETECTOR
+    DRIFT_COORDINATOR <--> SPC_MONITOR
+    BASELINE_MANAGER <--> CHANGE_ANALYZER
+    CHANGE_ANALYZER <--> VAE_DETECTOR
+    CHANGE_ANALYZER <--> SPC_MONITOR
+
+    %% ML Model Ensemble Interactions
+    FEATURE_CACHE --> MODEL_ORCHESTRATOR
+    MODEL_ORCHESTRATOR <--> LSTM_SERVICE
+    MODEL_ORCHESTRATOR <--> XGBOOST_SERVICE
+    MODEL_ORCHESTRATOR <--> ANOMALY_DETECTOR
+    MODEL_ORCHESTRATOR <--> ENSEMBLE_COMBINER
+    LSTM_SERVICE <--> ENSEMBLE_COMBINER
+    XGBOOST_SERVICE <--> ENSEMBLE_COMBINER
+    ANOMALY_DETECTOR <--> ENSEMBLE_COMBINER
+
+    %% Prediction Engine Interactions
+    MODEL_ORCHESTRATOR --> PREDICTION_COORDINATOR
+    DRIFT_COORDINATOR --> PREDICTION_COORDINATOR
+    PREDICTION_COORDINATOR <--> INFERENCE_ENGINE
+    PREDICTION_COORDINATOR <--> UNCERTAINTY_QUANTIFIER
+    PREDICTION_COORDINATOR <--> RISK_ASSESSOR
+    PREDICTION_COORDINATOR <--> TIME_PREDICTOR
+    INFERENCE_ENGINE <--> UNCERTAINTY_QUANTIFIER
+    UNCERTAINTY_QUANTIFIER <--> RISK_ASSESSOR
+    RISK_ASSESSOR <--> TIME_PREDICTOR
+
+    %% Explainability Interactions
+    PREDICTION_COORDINATOR --> EXPLANATION_MANAGER
+    EXPLANATION_MANAGER <--> SHAP_ANALYZER
+    EXPLANATION_MANAGER <--> ATTENTION_VISUALIZER
+    EXPLANATION_MANAGER <--> COUNTERFACTUAL_GENERATOR
+    EXPLANATION_MANAGER <--> NARRATIVE_BUILDER
+    LSTM_SERVICE --> ATTENTION_VISUALIZER
+    XGBOOST_SERVICE --> SHAP_ANALYZER
+    ENSEMBLE_COMBINER --> COUNTERFACTUAL_GENERATOR
+
+    %% Continuous Learning Interactions
+    FEEDBACK_COLLECTOR --> LEARNING_COORDINATOR
+    PREDICTION_COORDINATOR --> LEARNING_COORDINATOR
+    LEARNING_COORDINATOR <--> PERFORMANCE_MONITOR
+    LEARNING_COORDINATOR <--> RETRAIN_SCHEDULER
+    LEARNING_COORDINATOR <--> HYPERPARAMETER_TUNER
+    LEARNING_COORDINATOR <--> MODEL_UPDATER
+    PERFORMANCE_MONITOR <--> RETRAIN_SCHEDULER
+    RETRAIN_SCHEDULER <--> HYPERPARAMETER_TUNER
+    HYPERPARAMETER_TUNER <--> MODEL_UPDATER
+
+    %% Model Management Interactions
+    MODEL_UPDATER --> MODEL_REGISTRY
+    MODEL_REGISTRY <--> MODEL_VALIDATOR
+    MODEL_REGISTRY <--> MODEL_DEPLOYER
+    MODEL_REGISTRY <--> A_B_TESTER
+    MODEL_REGISTRY <--> MODEL_ARCHIVER
+    MODEL_VALIDATOR <--> MODEL_DEPLOYER
+    MODEL_DEPLOYER <--> A_B_TESTER
+    A_B_TESTER <--> MODEL_ARCHIVER
+
+    %% Serving Infrastructure Interactions
+    MODEL_DEPLOYER --> SERVING_COORDINATOR
+    PREDICTION_COORDINATOR --> SERVING_COORDINATOR
+    SERVING_COORDINATOR <--> REAL_TIME_API
+    SERVING_COORDINATOR <--> BATCH_PROCESSOR
+    SERVING_COORDINATOR <--> EDGE_INFERENCE
+    SERVING_COORDINATOR <--> PREDICTION_CACHE
+    REAL_TIME_API <--> PREDICTION_CACHE
+    BATCH_PROCESSOR <--> PREDICTION_CACHE
+
+    %% Storage Interactions
+    FEATURE_MANAGER --> STORAGE_MANAGER
+    MODEL_REGISTRY --> STORAGE_MANAGER
+    PREDICTION_COORDINATOR --> STORAGE_MANAGER
+    STORAGE_MANAGER <--> FEATURE_STORE_DB
+    STORAGE_MANAGER <--> MODEL_STORE
+    STORAGE_MANAGER <--> PREDICTION_STORE
+    STORAGE_MANAGER <--> TRAINING_DATA_STORE
+
+    %% Monitoring Interactions
+    PREDICTION_COORDINATOR --> MONITORING_MANAGER
+    PERFORMANCE_MONITOR --> MONITORING_MANAGER
+    DRIFT_COORDINATOR --> MONITORING_MANAGER
+    MONITORING_MANAGER <--> METRICS_COLLECTOR
+    MONITORING_MANAGER <--> DRIFT_MONITOR
+    MONITORING_MANAGER <--> ALERT_MANAGER
+    MONITORING_MANAGER <--> DASHBOARD_UPDATER
+
+    %% Security Interactions
+    SERVING_COORDINATOR --> SECURITY_MANAGER
+    STORAGE_MANAGER --> SECURITY_MANAGER
+    SECURITY_MANAGER <--> TENANT_ISOLATOR
+    SECURITY_MANAGER <--> PRIVACY_CONTROLLER
+    SECURITY_MANAGER <--> AUDIT_LOGGER
+    SECURITY_MANAGER <--> ENCRYPTION_SERVICE
+    TENANT_ISOLATOR <--> PRIVACY_CONTROLLER
+    PRIVACY_CONTROLLER <--> ENCRYPTION_SERVICE
+
+    %% Cross-cutting Concerns
+    TENANT_ISOLATOR -.-> FEATURE_CACHE
+    TENANT_ISOLATOR -.-> MODEL_REGISTRY
+    TENANT_ISOLATOR -.-> PREDICTION_STORE
+    AUDIT_LOGGER -.-> PREDICTION_COORDINATOR
+    AUDIT_LOGGER -.-> MODEL_UPDATER
+    AUDIT_LOGGER -.-> SERVING_COORDINATOR
+
+    %% Performance Optimization
+    PREDICTION_CACHE <-.-> FEATURE_CACHE
+    EDGE_INFERENCE <-.-> PREDICTION_CACHE
+    REAL_TIME_API <-.-> FEATURE_CACHE
+
+    %% Quality Assurance
+    FEATURE_MONITOR -.-> ALERT_MANAGER
+    DRIFT_MONITOR -.-> RETRAIN_SCHEDULER
+    PERFORMANCE_MONITOR -.-> ALERT_MANAGER
+
+    %% Data Flow Optimization
+    FEATURE_STORE_DB <-.-> FEATURE_CACHE
+    MODEL_STORE <-.-> MODEL_REGISTRY
+    TRAINING_DATA_STORE <-.-> HYPERPARAMETER_TUNER
+
+    %% Feedback Loops
+    ALERT_MANAGER -.-> RETRAIN_SCHEDULER
+    DASHBOARD_UPDATER -.-> FEEDBACK_COLLECTOR
+    A_B_TESTER -.-> PERFORMANCE_MONITOR
+
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef features fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef featurestore fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef drift fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef models fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef prediction fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef explainability fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef learning fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef management fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef serving fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef storage fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef monitoring fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    classDef security fill:#f9fbe7,stroke:#827717,stroke-width:2px
+
+    class CONFIG_INGESTER,POLICY_LOADER,HISTORICAL_IMPORTER,FEEDBACK_COLLECTOR,EXTERNAL_CONNECTOR input
+    class FEATURE_ORCHESTRATOR,TEMPORAL_PROCESSOR,CONTEXTUAL_PROCESSOR,FEATURE_TRANSFORMER,FEATURE_VALIDATOR features
+    class FEATURE_MANAGER,FEATURE_REGISTRY,FEATURE_CACHE,FEATURE_LINEAGE,FEATURE_MONITOR featurestore
+    class DRIFT_COORDINATOR,BASELINE_MANAGER,CHANGE_ANALYZER,VAE_DETECTOR,SPC_MONITOR drift
+    class MODEL_ORCHESTRATOR,LSTM_SERVICE,XGBOOST_SERVICE,ANOMALY_DETECTOR,ENSEMBLE_COMBINER models
+    class PREDICTION_COORDINATOR,INFERENCE_ENGINE,UNCERTAINTY_QUANTIFIER,RISK_ASSESSOR,TIME_PREDICTOR prediction
+    class EXPLANATION_MANAGER,SHAP_ANALYZER,ATTENTION_VISUALIZER,COUNTERFACTUAL_GENERATOR,NARRATIVE_BUILDER explainability
+    class LEARNING_COORDINATOR,PERFORMANCE_MONITOR,RETRAIN_SCHEDULER,HYPERPARAMETER_TUNER,MODEL_UPDATER learning
+    class MODEL_REGISTRY,MODEL_VALIDATOR,MODEL_DEPLOYER,A_B_TESTER,MODEL_ARCHIVER management
+    class SERVING_COORDINATOR,REAL_TIME_API,BATCH_PROCESSOR,EDGE_INFERENCE,PREDICTION_CACHE serving
+    class STORAGE_MANAGER,FEATURE_STORE_DB,MODEL_STORE,PREDICTION_STORE,TRAINING_DATA_STORE storage
+    class MONITORING_MANAGER,METRICS_COLLECTOR,DRIFT_MONITOR,ALERT_MANAGER,DASHBOARD_UPDATER monitoring
+    class SECURITY_MANAGER,TENANT_ISOLATOR,PRIVACY_CONTROLLER,AUDIT_LOGGER,ENCRYPTION_SERVICE security

@@ -1,0 +1,177 @@
+graph TB
+    subgraph "Istio Control Plane"
+        PILOT[Pilot<br/>Service Discovery<br/>& Traffic Management]
+        CITADEL[Citadel<br/>Certificate Authority<br/>& mTLS Management]
+        GALLEY[Galley<br/>Configuration Validation<br/>& Distribution]
+        TELEMETRY_V2[Telemetry v2<br/>Metrics & Tracing]
+    end
+
+    subgraph "Ingress Gateway"
+        GATEWAY[Istio Gateway<br/>TLS Termination<br/>& Load Balancing]
+        CERT_MANAGER[Cert Manager<br/>Automatic TLS<br/>Certificate Rotation]
+    end
+
+    subgraph "Tenant A Namespace"
+        subgraph "Core API Service - Tenant A"
+            API_A[Core API Pod]
+            ENVOY_API_A[Envoy Sidecar<br/>mTLS + Circuit Breaker]
+        end
+        
+        subgraph "AI Service - Tenant A"
+            AI_A[AI Engine Pod]
+            ENVOY_AI_A[Envoy Sidecar<br/>mTLS + Rate Limiting]
+        end
+        
+        subgraph "GraphQL Service - Tenant A"
+            GQL_A[GraphQL Pod]
+            ENVOY_GQL_A[Envoy Sidecar<br/>mTLS + Load Balancing]
+        end
+    end
+
+    subgraph "Tenant B Namespace"
+        subgraph "Core API Service - Tenant B"
+            API_B[Core API Pod]
+            ENVOY_API_B[Envoy Sidecar<br/>mTLS + Circuit Breaker]
+        end
+        
+        subgraph "AI Service - Tenant B"
+            AI_B[AI Engine Pod]
+            ENVOY_AI_B[Envoy Sidecar<br/>mTLS + Rate Limiting]
+        end
+        
+        subgraph "GraphQL Service - Tenant B"
+            GQL_B[GraphQL Pod]
+            ENVOY_GQL_B[Envoy Sidecar<br/>mTLS + Load Balancing]
+        end
+    end
+
+    subgraph "Shared Services Namespace"
+        subgraph "Event Store Service"
+            EVENT_STORE[EventStore Pod]
+            ENVOY_ES[Envoy Sidecar<br/>mTLS + Retry]
+        end
+        
+        subgraph "Database Services"
+            POSTGRES[PostgreSQL Pod]
+            ENVOY_PG[Envoy Sidecar<br/>mTLS + Connection Pool]
+            
+            REDIS[Redis Pod]
+            ENVOY_REDIS[Envoy Sidecar<br/>mTLS + Health Check]
+        end
+    end
+
+    subgraph "Observability"
+        PROMETHEUS_MESH[Prometheus<br/>Service Mesh Metrics]
+        KIALI[Kiali<br/>Service Mesh Topology]
+        JAEGER_MESH[Jaeger<br/>Distributed Tracing]
+    end
+
+    subgraph "Traffic Policies"
+        DESTINATION_RULES[DestinationRule<br/>Load Balancing<br/>& Circuit Breaker]
+        VIRTUAL_SERVICES[VirtualService<br/>Traffic Routing<br/>& Fault Injection]
+        SECURITY_POLICIES[AuthorizationPolicy<br/>Service-to-Service<br/>Access Control]
+        PEER_AUTH[PeerAuthentication<br/>mTLS Configuration]
+    end
+
+    %% Control Plane Connections
+    PILOT --> ENVOY_API_A
+    PILOT --> ENVOY_API_B
+    PILOT --> ENVOY_AI_A
+    PILOT --> ENVOY_AI_B
+    PILOT --> ENVOY_GQL_A
+    PILOT --> ENVOY_GQL_B
+    PILOT --> ENVOY_ES
+    PILOT --> ENVOY_PG
+    PILOT --> ENVOY_REDIS
+
+    CITADEL --> ENVOY_API_A
+    CITADEL --> ENVOY_API_B
+    CITADEL --> ENVOY_AI_A
+    CITADEL --> ENVOY_AI_B
+    CITADEL --> ENVOY_GQL_A
+    CITADEL --> ENVOY_GQL_B
+    CITADEL --> ENVOY_ES
+    CITADEL --> ENVOY_PG
+    CITADEL --> ENVOY_REDIS
+
+    %% Gateway Connections
+    GATEWAY --> ENVOY_API_A
+    GATEWAY --> ENVOY_API_B
+    CERT_MANAGER --> GATEWAY
+
+    %% Service Communications with mTLS
+    ENVOY_API_A -.->|mTLS| ENVOY_AI_A
+    ENVOY_API_A -.->|mTLS| ENVOY_GQL_A
+    ENVOY_API_A -.->|mTLS| ENVOY_ES
+    ENVOY_API_A -.->|mTLS| ENVOY_PG
+    ENVOY_API_A -.->|mTLS| ENVOY_REDIS
+
+    ENVOY_API_B -.->|mTLS| ENVOY_AI_B
+    ENVOY_API_B -.->|mTLS| ENVOY_GQL_B
+    ENVOY_API_B -.->|mTLS| ENVOY_ES
+    ENVOY_API_B -.->|mTLS| ENVOY_PG
+    ENVOY_API_B -.->|mTLS| ENVOY_REDIS
+
+    ENVOY_AI_A -.->|mTLS| ENVOY_ES
+    ENVOY_AI_B -.->|mTLS| ENVOY_ES
+
+    ENVOY_GQL_A -.->|mTLS| ENVOY_API_A
+    ENVOY_GQL_B -.->|mTLS| ENVOY_API_B
+
+    %% Observability Connections
+    ENVOY_API_A --> PROMETHEUS_MESH
+    ENVOY_API_B --> PROMETHEUS_MESH
+    ENVOY_AI_A --> PROMETHEUS_MESH
+    ENVOY_AI_B --> PROMETHEUS_MESH
+    ENVOY_GQL_A --> PROMETHEUS_MESH
+    ENVOY_GQL_B --> PROMETHEUS_MESH
+
+    ENVOY_API_A --> JAEGER_MESH
+    ENVOY_API_B --> JAEGER_MESH
+    ENVOY_AI_A --> JAEGER_MESH
+    ENVOY_AI_B --> JAEGER_MESH
+    ENVOY_GQL_A --> JAEGER_MESH
+    ENVOY_GQL_B --> JAEGER_MESH
+
+    %% Traffic Policy Applications
+    PILOT --> DESTINATION_RULES
+    PILOT --> VIRTUAL_SERVICES
+    PILOT --> SECURITY_POLICIES
+    PILOT --> PEER_AUTH
+
+    DESTINATION_RULES -.-> ENVOY_API_A
+    DESTINATION_RULES -.-> ENVOY_API_B
+    VIRTUAL_SERVICES -.-> ENVOY_API_A
+    VIRTUAL_SERVICES -.-> ENVOY_API_B
+    SECURITY_POLICIES -.-> ENVOY_API_A
+    SECURITY_POLICIES -.-> ENVOY_API_B
+    PEER_AUTH -.-> ENVOY_API_A
+    PEER_AUTH -.-> ENVOY_API_B
+
+    %% Blue-Green Deployment Example
+    subgraph "Blue-Green Deployment"
+        BLUE_SERVICE[Blue Version<br/>Core API v1.0]
+        GREEN_SERVICE[Green Version<br/>Core API v1.1]
+        TRAFFIC_SPLIT[Traffic Split<br/>90% Blue / 10% Green]
+    end
+
+    VIRTUAL_SERVICES --> TRAFFIC_SPLIT
+    TRAFFIC_SPLIT --> BLUE_SERVICE
+    TRAFFIC_SPLIT --> GREEN_SERVICE
+
+    %% Styling
+    classDef controlPlane fill:#e3f2fd,stroke:#0277bd,stroke-width:2px
+    classDef tenantA fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef tenantB fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef shared fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef observability fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef policies fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    classDef deployment fill:#fff8e1,stroke:#ff8f00,stroke-width:2px
+
+    class PILOT,CITADEL,GALLEY,TELEMETRY_V2 controlPlane
+    class API_A,ENVOY_API_A,AI_A,ENVOY_AI_A,GQL_A,ENVOY_GQL_A tenantA
+    class API_B,ENVOY_API_B,AI_B,ENVOY_AI_B,GQL_B,ENVOY_GQL_B tenantB
+    class EVENT_STORE,ENVOY_ES,POSTGRES,ENVOY_PG,REDIS,ENVOY_REDIS shared
+    class PROMETHEUS_MESH,KIALI,JAEGER_MESH observability
+    class DESTINATION_RULES,VIRTUAL_SERVICES,SECURITY_POLICIES,PEER_AUTH policies
+    class BLUE_SERVICE,GREEN_SERVICE,TRAFFIC_SPLIT deployment

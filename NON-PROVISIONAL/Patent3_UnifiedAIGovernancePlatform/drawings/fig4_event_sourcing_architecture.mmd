@@ -1,0 +1,211 @@
+graph TB
+    subgraph "Command Sources"
+        API_COMMANDS[API Commands<br/>HTTP/GraphQL]
+        CLI_COMMANDS[CLI Commands<br/>Direct Actions]
+        AUTOMATED[Automated Systems<br/>Scheduled Tasks]
+        EXTERNAL_SYSTEMS[External Systems<br/>Webhooks/Events]
+    end
+
+    subgraph "Command Processing Layer"
+        COMMAND_HANDLER[Command Handler<br/>Validation & Authorization]
+        COMMAND_VALIDATOR[Command Validator<br/>Business Rules]
+        TENANT_VALIDATOR[Tenant Validator<br/>Isolation Checks]
+        IDEMPOTENCY[Idempotency Manager<br/>Duplicate Prevention]
+    end
+
+    subgraph "Event Store Core"
+        EVENT_STORE[EventStore Database<br/>Immutable Event Log]
+        STREAM_MANAGER[Stream Manager<br/>Event Organization]
+        VERSION_MANAGER[Version Manager<br/>Optimistic Concurrency]
+        SNAPSHOT_MANAGER[Snapshot Manager<br/>Performance Optimization]
+    end
+
+    subgraph "Event Types"
+        GOVERNANCE_EVENTS[Governance Events:
+        - PolicyCreated
+        - PolicyUpdated
+        - ResourceDiscovered
+        - ComplianceViolated]
+
+        ACTION_EVENTS[Action Events:
+        - ActionRequested
+        - ActionApproved
+        - ActionExecuted
+        - ActionRolledBack]
+
+        AUDIT_EVENTS[Audit Events:
+        - UserAuthenticated
+        - PermissionGranted
+        - DataAccessed
+        - ConfigurationChanged]
+
+        ML_EVENTS[ML Events:
+        - ModelTrained
+        - PredictionGenerated
+        - FeedbackReceived
+        - ModelDeployed]
+    end
+
+    subgraph "Event Processing"
+        EVENT_BUS[NATS/Kafka Event Bus<br/>Distributed Streaming]
+        EVENT_ROUTER[Event Router<br/>Topic Routing]
+        EVENT_ENRICHER[Event Enricher<br/>Context Addition]
+        EVENT_TRANSFORMER[Event Transformer<br/>Format Conversion]
+    end
+
+    subgraph "Event Subscribers"
+        PROJECTION_BUILDERS[Projection Builders<br/>Read Model Updates]
+        NOTIFICATION_SERVICE[Notification Service<br/>Real-time Alerts]
+        ANALYTICS_SERVICE[Analytics Service<br/>Metrics Calculation]
+        EXTERNAL_INTEGRATIONS[External Integrations<br/>Third-party Systems]
+        SSE_BROADCASTER[SSE Broadcaster<br/>Live Client Updates]
+    end
+
+    subgraph "Read Models (Projections)"
+        POLICY_PROJECTION[Policy Projection<br/>Current State View]
+        RESOURCE_PROJECTION[Resource Projection<br/>Current State View]
+        COMPLIANCE_PROJECTION[Compliance Projection<br/>Violation Summary]
+        AUDIT_PROJECTION[Audit Projection<br/>Trail Aggregation]
+        METRICS_PROJECTION[Metrics Projection<br/>Analytics Data]
+    end
+
+    subgraph "Event Replay & Recovery"
+        REPLAY_ENGINE[Replay Engine<br/>State Reconstruction]
+        RECOVERY_MANAGER[Recovery Manager<br/>Disaster Recovery]
+        TIME_TRAVEL[Time Travel<br/>Point-in-time Views]
+        DEBUG_REPLAY[Debug Replay<br/>Issue Investigation]
+    end
+
+    subgraph "Tenant Isolation"
+        TENANT_STREAMS[Tenant-Specific Streams<br/>Data Segregation]
+        TENANT_PROJECTIONS[Tenant Projections<br/>Isolated Read Models]
+        TENANT_SUBSCRIPTIONS[Tenant Subscriptions<br/>Filtered Events]
+        TENANT_SNAPSHOTS[Tenant Snapshots<br/>Isolated State]
+    end
+
+    subgraph "Performance & Scaling"
+        EVENT_CACHE[Event Cache<br/>Redis/Memory]
+        PROJECTION_CACHE[Projection Cache<br/>Fast Reads]
+        SHARDING[Event Sharding<br/>Horizontal Scaling]
+        PARTITIONING[Stream Partitioning<br/>Load Distribution]
+    end
+
+    subgraph "Monitoring & Observability"
+        EVENT_METRICS[Event Metrics<br/>Throughput/Latency]
+        STREAM_HEALTH[Stream Health<br/>Monitoring]
+        PROJECTION_LAG[Projection Lag<br/>Read Model Sync]
+        EVENT_TRACING[Event Tracing<br/>Distributed Correlation]
+    end
+
+    %% Command Flow
+    API_COMMANDS --> COMMAND_HANDLER
+    CLI_COMMANDS --> COMMAND_HANDLER
+    AUTOMATED --> COMMAND_HANDLER
+    EXTERNAL_SYSTEMS --> COMMAND_HANDLER
+
+    COMMAND_HANDLER --> COMMAND_VALIDATOR
+    COMMAND_HANDLER --> TENANT_VALIDATOR
+    COMMAND_HANDLER --> IDEMPOTENCY
+
+    %% Event Creation
+    COMMAND_HANDLER --> EVENT_STORE
+    EVENT_STORE --> STREAM_MANAGER
+    EVENT_STORE --> VERSION_MANAGER
+    EVENT_STORE --> SNAPSHOT_MANAGER
+
+    %% Event Types Generation
+    EVENT_STORE --> GOVERNANCE_EVENTS
+    EVENT_STORE --> ACTION_EVENTS
+    EVENT_STORE --> AUDIT_EVENTS
+    EVENT_STORE --> ML_EVENTS
+
+    %% Event Processing
+    EVENT_STORE --> EVENT_BUS
+    EVENT_BUS --> EVENT_ROUTER
+    EVENT_ROUTER --> EVENT_ENRICHER
+    EVENT_ENRICHER --> EVENT_TRANSFORMER
+
+    %% Event Distribution
+    EVENT_TRANSFORMER --> PROJECTION_BUILDERS
+    EVENT_TRANSFORMER --> NOTIFICATION_SERVICE
+    EVENT_TRANSFORMER --> ANALYTICS_SERVICE
+    EVENT_TRANSFORMER --> EXTERNAL_INTEGRATIONS
+    EVENT_TRANSFORMER --> SSE_BROADCASTER
+
+    %% Projection Updates
+    PROJECTION_BUILDERS --> POLICY_PROJECTION
+    PROJECTION_BUILDERS --> RESOURCE_PROJECTION
+    PROJECTION_BUILDERS --> COMPLIANCE_PROJECTION
+    PROJECTION_BUILDERS --> AUDIT_PROJECTION
+    PROJECTION_BUILDERS --> METRICS_PROJECTION
+
+    %% Replay & Recovery
+    EVENT_STORE --> REPLAY_ENGINE
+    REPLAY_ENGINE --> RECOVERY_MANAGER
+    REPLAY_ENGINE --> TIME_TRAVEL
+    REPLAY_ENGINE --> DEBUG_REPLAY
+
+    %% Tenant Isolation
+    EVENT_STORE --> TENANT_STREAMS
+    PROJECTION_BUILDERS --> TENANT_PROJECTIONS
+    EVENT_ROUTER --> TENANT_SUBSCRIPTIONS
+    SNAPSHOT_MANAGER --> TENANT_SNAPSHOTS
+
+    %% Performance Features
+    EVENT_STORE --> EVENT_CACHE
+    PROJECTION_BUILDERS --> PROJECTION_CACHE
+    EVENT_STORE --> SHARDING
+    STREAM_MANAGER --> PARTITIONING
+
+    %% Monitoring
+    EVENT_STORE --> EVENT_METRICS
+    STREAM_MANAGER --> STREAM_HEALTH
+    PROJECTION_BUILDERS --> PROJECTION_LAG
+    EVENT_BUS --> EVENT_TRACING
+
+    %% Example Event Flow
+    subgraph "Example: Policy Update Flow"
+        POLICY_UPDATE_CMD[Command:
+        UpdatePolicy]
+        
+        POLICY_UPDATED_EVENT[Event:
+        PolicyUpdated
+        - policyId
+        - changes
+        - timestamp
+        - userId]
+        
+        POLICY_PROJECTION_UPDATE[Projection Update:
+        Policy Read Model]
+        
+        COMPLIANCE_CHECK[Trigger:
+        Compliance Recheck]
+    end
+
+    COMMAND_HANDLER --> POLICY_UPDATE_CMD
+    POLICY_UPDATE_CMD --> POLICY_UPDATED_EVENT
+    POLICY_UPDATED_EVENT --> POLICY_PROJECTION_UPDATE
+    POLICY_UPDATED_EVENT --> COMPLIANCE_CHECK
+
+    %% Styling
+    classDef commands fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef processing fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef eventstore fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef events fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef subscribers fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef projections fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef replay fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef tenant fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef performance fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef monitoring fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+
+    class API_COMMANDS,CLI_COMMANDS,AUTOMATED,EXTERNAL_SYSTEMS commands
+    class COMMAND_HANDLER,COMMAND_VALIDATOR,TENANT_VALIDATOR,IDEMPOTENCY processing
+    class EVENT_STORE,STREAM_MANAGER,VERSION_MANAGER,SNAPSHOT_MANAGER eventstore
+    class GOVERNANCE_EVENTS,ACTION_EVENTS,AUDIT_EVENTS,ML_EVENTS events
+    class PROJECTION_BUILDERS,NOTIFICATION_SERVICE,ANALYTICS_SERVICE,EXTERNAL_INTEGRATIONS,SSE_BROADCASTER subscribers
+    class POLICY_PROJECTION,RESOURCE_PROJECTION,COMPLIANCE_PROJECTION,AUDIT_PROJECTION,METRICS_PROJECTION projections
+    class REPLAY_ENGINE,RECOVERY_MANAGER,TIME_TRAVEL,DEBUG_REPLAY replay
+    class TENANT_STREAMS,TENANT_PROJECTIONS,TENANT_SUBSCRIPTIONS,TENANT_SNAPSHOTS tenant
+    class EVENT_CACHE,PROJECTION_CACHE,SHARDING,PARTITIONING performance
+    class EVENT_METRICS,STREAM_HEALTH,PROJECTION_LAG,EVENT_TRACING monitoring

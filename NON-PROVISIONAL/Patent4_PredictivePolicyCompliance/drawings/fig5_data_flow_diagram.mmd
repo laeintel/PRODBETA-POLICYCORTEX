@@ -1,0 +1,276 @@
+graph TB
+    subgraph "Data Sources"
+        CONFIG_TELEMETRY[Configuration Telemetry<br/>Real-time Changes]
+        HISTORICAL_DATA[Historical Data<br/>Violation Records]
+        POLICY_DEFINITIONS[Policy Definitions<br/>Compliance Rules]
+        BUSINESS_METADATA[Business Metadata<br/>Context Information]
+        EXTERNAL_INTELLIGENCE[External Intelligence<br/>Threat Feeds]
+        FEEDBACK_DATA[Feedback Data<br/>Human Annotations]
+    end
+
+    subgraph "Data Ingestion Pipeline"
+        STREAM_PROCESSOR[Stream Processor<br/>Real-time Events]
+        BATCH_LOADER[Batch Loader<br/>Historical Import]
+        DATA_VALIDATOR[Data Validator<br/>Quality Checks]
+        SCHEMA_MAPPER[Schema Mapper<br/>Format Normalization]
+        TENANT_SEGREGATOR[Tenant Segregator<br/>Data Isolation]
+    end
+
+    subgraph "Feature Engineering Pipeline"
+        RAW_PROCESSOR[Raw Data Processor<br/>Cleansing & Validation]
+        TEMPORAL_EXTRACTOR[Temporal Extractor<br/>Time-series Features]
+        CONTEXTUAL_EXTRACTOR[Contextual Extractor<br/>Relationship Features]
+        FEATURE_TRANSFORMER[Feature Transformer<br/>Encoding & Scaling]
+        FEATURE_SELECTOR[Feature Selector<br/>Importance Filtering]
+    end
+
+    subgraph "Feature Store Layer"
+        FEATURE_REGISTRY[Feature Registry<br/>Schema Management]
+        FEATURE_CACHE[Feature Cache<br/>Low-latency Serving]
+        FEATURE_VERSIONS[Feature Versions<br/>Version Control]
+        FEATURE_LINEAGE[Feature Lineage<br/>Dependency Tracking]
+        FEATURE_QUALITY[Feature Quality<br/>Monitoring & Alerts]
+    end
+
+    subgraph "Training Data Pipeline"
+        TRAINING_SAMPLER[Training Sampler<br/>Data Selection]
+        LABEL_GENERATOR[Label Generator<br/>Target Creation]
+        DATA_SPLITTER[Data Splitter<br/>Train/Val/Test]
+        AUGMENTATION_ENGINE[Augmentation Engine<br/>Synthetic Data]
+        TRAINING_VALIDATOR[Training Validator<br/>Quality Assurance]
+    end
+
+    subgraph "Model Training Flow"
+        HYPERPARAMETER_TUNER[Hyperparameter Tuner<br/>Optimization]
+        ENSEMBLE_TRAINER[Ensemble Trainer<br/>Multi-model Training]
+        VALIDATION_ENGINE[Validation Engine<br/>Performance Assessment]
+        MODEL_SELECTOR[Model Selector<br/>Best Model Choice]
+        MODEL_REGISTRY[Model Registry<br/>Version Management]
+    end
+
+    subgraph "Drift Detection Pipeline"
+        BASELINE_MONITOR[Baseline Monitor<br/>Reference Tracking]
+        CHANGE_DETECTOR[Change Detector<br/>Anomaly Identification]
+        STATISTICAL_ANALYZER[Statistical Analyzer<br/>SPC Methods]
+        VAE_PROCESSOR[VAE Processor<br/>Reconstruction Analysis]
+        DRIFT_AGGREGATOR[Drift Aggregator<br/>Score Combination]
+    end
+
+    subgraph "Prediction Pipeline"
+        FEATURE_RETRIEVAL[Feature Retrieval<br/>Real-time Lookup]
+        MODEL_INFERENCE[Model Inference<br/>Ensemble Prediction]
+        UNCERTAINTY_QUANTIFIER[Uncertainty Quantifier<br/>Confidence Estimation]
+        RISK_CALCULATOR[Risk Calculator<br/>Business Impact]
+        PREDICTION_FORMATTER[Prediction Formatter<br/>Output Structuring]
+    end
+
+    subgraph "Explainability Pipeline"
+        SHAP_PROCESSOR[SHAP Processor<br/>Feature Attribution]
+        ATTENTION_EXTRACTOR[Attention Extractor<br/>Focus Analysis]
+        COUNTERFACTUAL_GENERATOR[Counterfactual Generator<br/>Alternative Scenarios]
+        EXPLANATION_AGGREGATOR[Explanation Aggregator<br/>Multi-method Fusion]
+        NARRATIVE_GENERATOR[Narrative Generator<br/>Human-readable Output]
+    end
+
+    subgraph "Continuous Learning Flow"
+        FEEDBACK_PROCESSOR[Feedback Processor<br/>Human Input]
+        OUTCOME_TRACKER[Outcome Tracker<br/>Prediction Validation]
+        PERFORMANCE_MONITOR[Performance Monitor<br/>Model Degradation]
+        RETRAIN_SCHEDULER[Retrain Scheduler<br/>Update Triggers]
+        INCREMENTAL_LEARNER[Incremental Learner<br/>Online Updates]
+    end
+
+    subgraph "Model Serving Infrastructure"
+        INFERENCE_CACHE[Inference Cache<br/>Prediction Storage]
+        BATCH_PREDICTOR[Batch Predictor<br/>Bulk Processing]
+        REAL_TIME_API[Real-time API<br/>Low-latency Serving]
+        EDGE_INFERENCE[Edge Inference<br/>Distributed Processing]
+        PREDICTION_LOGGER[Prediction Logger<br/>Audit Trail]
+    end
+
+    subgraph "Storage Systems"
+        TIME_SERIES_DB[Time-series DB<br/>Temporal Data]
+        FEATURE_STORE_DB[Feature Store DB<br/>ML Features]
+        MODEL_ARTIFACTS[Model Artifacts<br/>Binary Storage]
+        PREDICTION_STORE[Prediction Store<br/>Results Archive]
+        FEEDBACK_STORE[Feedback Store<br/>Human Input]
+    end
+
+    subgraph "Output Channels"
+        PREDICTION_API[Prediction API<br/>Synchronous Results]
+        STREAMING_OUTPUT[Streaming Output<br/>Real-time Feeds]
+        BATCH_REPORTS[Batch Reports<br/>Scheduled Analysis]
+        ALERT_SYSTEM[Alert System<br/>Proactive Notifications]
+        DASHBOARD_FEED[Dashboard Feed<br/>Visualization Data]
+    end
+
+    %% Data Ingestion Flow
+    CONFIG_TELEMETRY --> STREAM_PROCESSOR
+    HISTORICAL_DATA --> BATCH_LOADER
+    POLICY_DEFINITIONS --> BATCH_LOADER
+    BUSINESS_METADATA --> BATCH_LOADER
+    EXTERNAL_INTELLIGENCE --> STREAM_PROCESSOR
+    FEEDBACK_DATA --> STREAM_PROCESSOR
+
+    STREAM_PROCESSOR --> DATA_VALIDATOR
+    BATCH_LOADER --> DATA_VALIDATOR
+    DATA_VALIDATOR --> SCHEMA_MAPPER
+    SCHEMA_MAPPER --> TENANT_SEGREGATOR
+
+    %% Feature Engineering Flow
+    TENANT_SEGREGATOR --> RAW_PROCESSOR
+    RAW_PROCESSOR --> TEMPORAL_EXTRACTOR
+    RAW_PROCESSOR --> CONTEXTUAL_EXTRACTOR
+    TEMPORAL_EXTRACTOR --> FEATURE_TRANSFORMER
+    CONTEXTUAL_EXTRACTOR --> FEATURE_TRANSFORMER
+    FEATURE_TRANSFORMER --> FEATURE_SELECTOR
+
+    %% Feature Store Operations
+    FEATURE_SELECTOR --> FEATURE_REGISTRY
+    FEATURE_REGISTRY --> FEATURE_CACHE
+    FEATURE_REGISTRY --> FEATURE_VERSIONS
+    FEATURE_VERSIONS --> FEATURE_LINEAGE
+    FEATURE_LINEAGE --> FEATURE_QUALITY
+
+    %% Training Data Preparation
+    FEATURE_CACHE --> TRAINING_SAMPLER
+    TRAINING_SAMPLER --> LABEL_GENERATOR
+    LABEL_GENERATOR --> DATA_SPLITTER
+    DATA_SPLITTER --> AUGMENTATION_ENGINE
+    AUGMENTATION_ENGINE --> TRAINING_VALIDATOR
+
+    %% Model Training Flow
+    TRAINING_VALIDATOR --> HYPERPARAMETER_TUNER
+    HYPERPARAMETER_TUNER --> ENSEMBLE_TRAINER
+    ENSEMBLE_TRAINER --> VALIDATION_ENGINE
+    VALIDATION_ENGINE --> MODEL_SELECTOR
+    MODEL_SELECTOR --> MODEL_REGISTRY
+
+    %% Drift Detection Flow
+    RAW_PROCESSOR --> BASELINE_MONITOR
+    BASELINE_MONITOR --> CHANGE_DETECTOR
+    CHANGE_DETECTOR --> STATISTICAL_ANALYZER
+    CHANGE_DETECTOR --> VAE_PROCESSOR
+    STATISTICAL_ANALYZER --> DRIFT_AGGREGATOR
+    VAE_PROCESSOR --> DRIFT_AGGREGATOR
+
+    %% Prediction Flow
+    FEATURE_CACHE --> FEATURE_RETRIEVAL
+    FEATURE_RETRIEVAL --> MODEL_INFERENCE
+    MODEL_REGISTRY --> MODEL_INFERENCE
+    MODEL_INFERENCE --> UNCERTAINTY_QUANTIFIER
+    UNCERTAINTY_QUANTIFIER --> RISK_CALCULATOR
+    RISK_CALCULATOR --> PREDICTION_FORMATTER
+
+    %% Explainability Flow
+    MODEL_INFERENCE --> SHAP_PROCESSOR
+    MODEL_INFERENCE --> ATTENTION_EXTRACTOR
+    PREDICTION_FORMATTER --> COUNTERFACTUAL_GENERATOR
+    SHAP_PROCESSOR --> EXPLANATION_AGGREGATOR
+    ATTENTION_EXTRACTOR --> EXPLANATION_AGGREGATOR
+    COUNTERFACTUAL_GENERATOR --> EXPLANATION_AGGREGATOR
+    EXPLANATION_AGGREGATOR --> NARRATIVE_GENERATOR
+
+    %% Continuous Learning Flow
+    FEEDBACK_DATA --> FEEDBACK_PROCESSOR
+    PREDICTION_FORMATTER --> OUTCOME_TRACKER
+    MODEL_INFERENCE --> PERFORMANCE_MONITOR
+    PERFORMANCE_MONITOR --> RETRAIN_SCHEDULER
+    RETRAIN_SCHEDULER --> INCREMENTAL_LEARNER
+    INCREMENTAL_LEARNER --> MODEL_REGISTRY
+
+    %% Model Serving Flow
+    PREDICTION_FORMATTER --> INFERENCE_CACHE
+    MODEL_INFERENCE --> BATCH_PREDICTOR
+    MODEL_INFERENCE --> REAL_TIME_API
+    MODEL_INFERENCE --> EDGE_INFERENCE
+    PREDICTION_FORMATTER --> PREDICTION_LOGGER
+
+    %% Storage Operations
+    TEMPORAL_EXTRACTOR --> TIME_SERIES_DB
+    FEATURE_CACHE --> FEATURE_STORE_DB
+    MODEL_REGISTRY --> MODEL_ARTIFACTS
+    PREDICTION_LOGGER --> PREDICTION_STORE
+    FEEDBACK_PROCESSOR --> FEEDBACK_STORE
+
+    %% Output Generation
+    REAL_TIME_API --> PREDICTION_API
+    DRIFT_AGGREGATOR --> STREAMING_OUTPUT
+    BATCH_PREDICTOR --> BATCH_REPORTS
+    RISK_CALCULATOR --> ALERT_SYSTEM
+    PREDICTION_FORMATTER --> DASHBOARD_FEED
+
+    %% Feedback Loops
+    OUTCOME_TRACKER -.->|Validation| TRAINING_SAMPLER
+    FEATURE_QUALITY -.->|Quality Alerts| RAW_PROCESSOR
+    PERFORMANCE_MONITOR -.->|Degradation| RETRAIN_SCHEDULER
+    DRIFT_AGGREGATOR -.->|Drift Alert| RETRAIN_SCHEDULER
+    PREDICTION_LOGGER -.->|Audit| OUTCOME_TRACKER
+
+    %% Read Operations
+    PREDICTION_API -.->|Query| INFERENCE_CACHE
+    BATCH_REPORTS -.->|Historical| PREDICTION_STORE
+    ALERT_SYSTEM -.->|Context| TIME_SERIES_DB
+    DASHBOARD_FEED -.->|Metrics| FEATURE_STORE_DB
+
+    %% Example Prediction Flow
+    subgraph "Example: Storage Account Violation Prediction"
+        CONFIG_CHANGE[Config Change:
+        encryption.status = disabled]
+        
+        FEATURE_EXTRACTION[Feature Extraction:
+        Temporal + contextual features]
+        
+        ENSEMBLE_PREDICTION[Ensemble Prediction:
+        LSTM + XGBoost + Anomaly]
+        
+        RISK_ASSESSMENT[Risk Assessment:
+        87% violation probability
+        18h time-to-violation]
+        
+        SHAP_EXPLANATION[SHAP Explanation:
+        encryption.status: +0.45 impact
+        publicAccess: +0.32 impact]
+        
+        PROACTIVE_ALERT[Proactive Alert:
+        High-risk violation predicted
+        with remediation suggestions]
+    end
+
+    STREAM_PROCESSOR --> CONFIG_CHANGE
+    CONFIG_CHANGE --> FEATURE_EXTRACTION
+    FEATURE_EXTRACTION --> ENSEMBLE_PREDICTION
+    ENSEMBLE_PREDICTION --> RISK_ASSESSMENT
+    RISK_ASSESSMENT --> SHAP_EXPLANATION
+    SHAP_EXPLANATION --> PROACTIVE_ALERT
+
+    %% Styling
+    classDef sources fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef ingestion fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef features fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef featurestore fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef training fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef modeltraining fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef drift fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef prediction fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef explainability fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef learning fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef serving fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef storage fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    classDef output fill:#f9fbe7,stroke:#827717,stroke-width:2px
+    classDef example fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+
+    class CONFIG_TELEMETRY,HISTORICAL_DATA,POLICY_DEFINITIONS,BUSINESS_METADATA,EXTERNAL_INTELLIGENCE,FEEDBACK_DATA sources
+    class STREAM_PROCESSOR,BATCH_LOADER,DATA_VALIDATOR,SCHEMA_MAPPER,TENANT_SEGREGATOR ingestion
+    class RAW_PROCESSOR,TEMPORAL_EXTRACTOR,CONTEXTUAL_EXTRACTOR,FEATURE_TRANSFORMER,FEATURE_SELECTOR features
+    class FEATURE_REGISTRY,FEATURE_CACHE,FEATURE_VERSIONS,FEATURE_LINEAGE,FEATURE_QUALITY featurestore
+    class TRAINING_SAMPLER,LABEL_GENERATOR,DATA_SPLITTER,AUGMENTATION_ENGINE,TRAINING_VALIDATOR training
+    class HYPERPARAMETER_TUNER,ENSEMBLE_TRAINER,VALIDATION_ENGINE,MODEL_SELECTOR,MODEL_REGISTRY modeltraining
+    class BASELINE_MONITOR,CHANGE_DETECTOR,STATISTICAL_ANALYZER,VAE_PROCESSOR,DRIFT_AGGREGATOR drift
+    class FEATURE_RETRIEVAL,MODEL_INFERENCE,UNCERTAINTY_QUANTIFIER,RISK_CALCULATOR,PREDICTION_FORMATTER prediction
+    class SHAP_PROCESSOR,ATTENTION_EXTRACTOR,COUNTERFACTUAL_GENERATOR,EXPLANATION_AGGREGATOR,NARRATIVE_GENERATOR explainability
+    class FEEDBACK_PROCESSOR,OUTCOME_TRACKER,PERFORMANCE_MONITOR,RETRAIN_SCHEDULER,INCREMENTAL_LEARNER learning
+    class INFERENCE_CACHE,BATCH_PREDICTOR,REAL_TIME_API,EDGE_INFERENCE,PREDICTION_LOGGER serving
+    class TIME_SERIES_DB,FEATURE_STORE_DB,MODEL_ARTIFACTS,PREDICTION_STORE,FEEDBACK_STORE storage
+    class PREDICTION_API,STREAMING_OUTPUT,BATCH_REPORTS,ALERT_SYSTEM,DASHBOARD_FEED output
+    class CONFIG_CHANGE,FEATURE_EXTRACTION,ENSEMBLE_PREDICTION,RISK_ASSESSMENT,SHAP_EXPLANATION,PROACTIVE_ALERT example

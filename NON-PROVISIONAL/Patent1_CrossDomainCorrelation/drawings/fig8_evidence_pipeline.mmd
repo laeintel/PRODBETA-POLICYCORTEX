@@ -1,0 +1,5 @@
+flowchart LR
+  Q[Correlation Result] --> E1[Serialize Subgraph]
+  E1 --> E2[Sign + Store]
+  E2 --> EV[(Evidence Store)]
+  EV --> IDX[Index for Audit]

@@ -1,0 +1,203 @@
+graph TB
+    subgraph "Client Applications"
+        WEB_CLIENT[Web Dashboard<br/>React/Apollo Client]
+        MOBILE_CLIENT[Mobile App<br/>GraphQL Client]
+        CLI_CLIENT[CLI Tools<br/>GraphQL Queries]
+        EXTERNAL_API[External Systems<br/>GraphQL Integration]
+    end
+
+    subgraph "Apollo Federation Gateway"
+        GATEWAY_ROUTER[Apollo Router<br/>Query Planning & Execution]
+        SCHEMA_REGISTRY[Schema Registry<br/>Federated Schema Composition]
+        QUERY_PLANNER[Query Planner<br/>Execution Strategy]
+        RESULT_COMPOSER[Result Composer<br/>Response Aggregation]
+        SUBSCRIPTION_MANAGER[Subscription Manager<br/>WebSocket Connections]
+    end
+
+    subgraph "Subgraph Services"
+        subgraph "Governance Subgraph"
+            GOVERNANCE_SERVICE[Governance Service<br/>Policies & Resources]
+            GOVERNANCE_SCHEMA[Schema:
+            - Policy
+            - Resource  
+            - Compliance
+            - Violation]
+        end
+
+        subgraph "Security Subgraph"
+            SECURITY_SERVICE[Security Service<br/>Findings & Incidents]
+            SECURITY_SCHEMA[Schema:
+            - SecurityFinding
+            - Incident
+            - ThreatIntel
+            - Vulnerability]
+        end
+
+        subgraph "Cost Subgraph"
+            COST_SERVICE[FinOps Service<br/>Cost Analysis]
+            COST_SCHEMA[Schema:
+            - CostData
+            - Optimization
+            - Budget
+            - Forecast]
+        end
+
+        subgraph "AI/ML Subgraph"
+            ML_SERVICE[ML Service<br/>Predictions & Models]
+            ML_SCHEMA[Schema:
+            - Prediction
+            - Model
+            - Feature
+            - Training]
+        end
+
+        subgraph "Correlation Subgraph"
+            CORRELATION_SERVICE[Correlation Service<br/>Cross-Domain Analysis]
+            CORRELATION_SCHEMA[Schema:
+            - Correlation
+            - Impact
+            - Pattern
+            - Graph]
+        end
+
+        subgraph "Audit Subgraph"
+            AUDIT_SERVICE[Audit Service<br/>Evidence & Trails]
+            AUDIT_SCHEMA[Schema:
+            - AuditLog
+            - Evidence
+            - Action
+            - Timeline]
+        end
+    end
+
+    subgraph "Shared Data Layer"
+        POSTGRES_MAIN[PostgreSQL<br/>Main Database]
+        REDIS_CACHE[Redis Cache<br/>Query Results]
+        EVENT_STORE_GQL[EventStore<br/>Audit Events]
+        OBJECT_STORAGE[Object Storage<br/>Evidence Files]
+    end
+
+    subgraph "Federation Features"
+        subgraph "Entity Resolution"
+            ENTITY_REF[Entity References<br/>@key directives]
+            ENTITY_RESOLVER[Entity Resolvers<br/>Cross-service queries]
+            ENTITY_CACHE[Entity Caching<br/>Performance optimization]
+        end
+
+        subgraph "Schema Composition"
+            TYPE_FEDERATION[Type Federation<br/>Shared entities]
+            FIELD_FEDERATION[Field Federation<br/>Distributed ownership]
+            SCHEMA_VALIDATION[Schema Validation<br/>Composition rules]
+        end
+
+        subgraph "Query Optimization"
+            QUERY_BATCHING[Query Batching<br/>DataLoader pattern]
+            QUERY_CACHING[Query Caching<br/>Redis integration]
+            QUERY_DEDUPLICATION[Query Deduplication<br/>Avoid redundant calls]
+        end
+    end
+
+    subgraph "Real-Time Features"
+        SUBSCRIPTION_HANDLER[Subscription Handler<br/>Live Updates]
+        WEBSOCKET_MANAGER[WebSocket Manager<br/>Connection Management]
+        EVENT_PUBLISHER[Event Publisher<br/>Real-time notifications]
+        LIVE_QUERIES[Live Queries<br/>Reactive updates]
+    end
+
+    %% Client to Gateway
+    WEB_CLIENT --> GATEWAY_ROUTER
+    MOBILE_CLIENT --> GATEWAY_ROUTER
+    CLI_CLIENT --> GATEWAY_ROUTER
+    EXTERNAL_API --> GATEWAY_ROUTER
+
+    %% Gateway Components
+    GATEWAY_ROUTER --> SCHEMA_REGISTRY
+    GATEWAY_ROUTER --> QUERY_PLANNER
+    QUERY_PLANNER --> RESULT_COMPOSER
+    GATEWAY_ROUTER --> SUBSCRIPTION_MANAGER
+
+    %% Gateway to Subgraphs
+    QUERY_PLANNER --> GOVERNANCE_SERVICE
+    QUERY_PLANNER --> SECURITY_SERVICE
+    QUERY_PLANNER --> COST_SERVICE
+    QUERY_PLANNER --> ML_SERVICE
+    QUERY_PLANNER --> CORRELATION_SERVICE
+    QUERY_PLANNER --> AUDIT_SERVICE
+
+    %% Subgraph Schemas
+    GOVERNANCE_SERVICE --> GOVERNANCE_SCHEMA
+    SECURITY_SERVICE --> SECURITY_SCHEMA
+    COST_SERVICE --> COST_SCHEMA
+    ML_SERVICE --> ML_SCHEMA
+    CORRELATION_SERVICE --> CORRELATION_SCHEMA
+    AUDIT_SERVICE --> AUDIT_SCHEMA
+
+    %% Schema Composition
+    GOVERNANCE_SCHEMA --> SCHEMA_REGISTRY
+    SECURITY_SCHEMA --> SCHEMA_REGISTRY
+    COST_SCHEMA --> SCHEMA_REGISTRY
+    ML_SCHEMA --> SCHEMA_REGISTRY
+    CORRELATION_SCHEMA --> SCHEMA_REGISTRY
+    AUDIT_SCHEMA --> SCHEMA_REGISTRY
+
+    %% Data Layer Connections
+    GOVERNANCE_SERVICE --> POSTGRES_MAIN
+    SECURITY_SERVICE --> POSTGRES_MAIN
+    COST_SERVICE --> POSTGRES_MAIN
+    ML_SERVICE --> POSTGRES_MAIN
+    CORRELATION_SERVICE --> POSTGRES_MAIN
+    AUDIT_SERVICE --> EVENT_STORE_GQL
+
+    GATEWAY_ROUTER --> REDIS_CACHE
+    AUDIT_SERVICE --> OBJECT_STORAGE
+
+    %% Entity Resolution
+    QUERY_PLANNER --> ENTITY_REF
+    ENTITY_REF --> ENTITY_RESOLVER
+    ENTITY_RESOLVER --> ENTITY_CACHE
+
+    %% Schema Features
+    SCHEMA_REGISTRY --> TYPE_FEDERATION
+    SCHEMA_REGISTRY --> FIELD_FEDERATION
+    SCHEMA_REGISTRY --> SCHEMA_VALIDATION
+
+    %% Query Optimization
+    QUERY_PLANNER --> QUERY_BATCHING
+    QUERY_PLANNER --> QUERY_CACHING
+    QUERY_PLANNER --> QUERY_DEDUPLICATION
+
+    QUERY_CACHING --> REDIS_CACHE
+
+    %% Real-Time Features
+    SUBSCRIPTION_MANAGER --> SUBSCRIPTION_HANDLER
+    SUBSCRIPTION_HANDLER --> WEBSOCKET_MANAGER
+    SUBSCRIPTION_HANDLER --> EVENT_PUBLISHER
+    EVENT_PUBLISHER --> LIVE_QUERIES
+
+    %% Example Federation Query Flow
+    subgraph "Example: Policy with Predictions"
+        QUERY_EXAMPLE[Query: policy with predictions]
+        EXECUTION_PLAN[Execution Plan:<br/>1. Fetch policy from Governance<br/>2. Fetch predictions from ML<br/>3. Compose result]
+    end
+
+    QUERY_PLANNER --> QUERY_EXAMPLE
+    QUERY_EXAMPLE --> EXECUTION_PLAN
+    EXECUTION_PLAN --> GOVERNANCE_SERVICE
+    EXECUTION_PLAN --> ML_SERVICE
+
+    %% Styling
+    classDef client fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef gateway fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef subgraphServices fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef data fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef features fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef realtime fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef example fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+
+    class WEB_CLIENT,MOBILE_CLIENT,CLI_CLIENT,EXTERNAL_API client
+    class GATEWAY_ROUTER,SCHEMA_REGISTRY,QUERY_PLANNER,RESULT_COMPOSER,SUBSCRIPTION_MANAGER gateway
+    class GOVERNANCE_SERVICE,SECURITY_SERVICE,COST_SERVICE,ML_SERVICE,CORRELATION_SERVICE,AUDIT_SERVICE subgraphServices
+    class POSTGRES_MAIN,REDIS_CACHE,EVENT_STORE_GQL,OBJECT_STORAGE data
+    class ENTITY_REF,ENTITY_RESOLVER,TYPE_FEDERATION,FIELD_FEDERATION,QUERY_BATCHING,QUERY_CACHING features
+    class SUBSCRIPTION_HANDLER,WEBSOCKET_MANAGER,EVENT_PUBLISHER,LIVE_QUERIES realtime
+    class QUERY_EXAMPLE,EXECUTION_PLAN example

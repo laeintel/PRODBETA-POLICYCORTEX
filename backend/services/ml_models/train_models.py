@@ -638,8 +638,8 @@ class ModelTrainingPipeline:
 async def main():
     """Main training entry point"""
     # Configuration
-    subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID', '205b477d-17e7-4b3b-92c1-32cf02626b78')
-    tenant_id = os.getenv('AZURE_TENANT_ID', '9ef5b184-d371-462a-bc75-5024ce8baff7')
+    subscription_id = os.getenv('AZURE_SUBSCRIPTION_ID', '6dc7cfa2-0332-4740-98b6-bac9f1a23de9')
+    tenant_id = os.getenv('AZURE_TENANT_ID', 'e1f3e196-aa55-4709-9c55-0e334c0b444f')
     database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/policycortex')
     
     # Setup logging

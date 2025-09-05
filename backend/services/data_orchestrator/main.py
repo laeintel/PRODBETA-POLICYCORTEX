@@ -33,9 +33,9 @@ logger = logging.getLogger(__name__)
 # Environment configuration
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/policycortex")
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-AZURE_SUBSCRIPTION_ID = os.getenv("AZURE_SUBSCRIPTION_ID", "205b477d-17e7-4b3b-92c1-32cf02626b78")
-AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID", "9ef5b184-d371-462a-bc75-5024ce8baff7")
-AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID", "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c")
+AZURE_SUBSCRIPTION_ID = os.getenv("AZURE_SUBSCRIPTION_ID", "6dc7cfa2-0332-4740-98b6-bac9f1a23de9")
+AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID", "e1f3e196-aa55-4709-9c55-0e334c0b444f")
+AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID", "232c44f7-d0cf-4825-a9b5-beba9f587ffb")
 
 # Global connections
 db_pool: Optional[asyncpg.Pool] = None

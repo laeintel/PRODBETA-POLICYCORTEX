@@ -481,7 +481,7 @@ impl TenantContext {
         // For now, we'll fetch all subscriptions the user has access to
         // In a real implementation, you'd use Azure Management API
         let subscription_ids = vec![
-            "205b477d-17e7-4b3b-92c1-32cf02626b78".to_string(), // Your subscription
+            "6dc7cfa2-0332-4740-98b6-bac9f1a23de9".to_string(), // Your subscription
         ];
 
         Ok(TenantContext {

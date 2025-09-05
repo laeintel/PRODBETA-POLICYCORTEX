@@ -1,0 +1,246 @@
+graph TB
+    subgraph "Model Outputs"
+        LSTM_PREDICTION[LSTM Prediction<br/>Violation Probability]
+        XGB_PREDICTION[XGBoost Prediction<br/>Tree-based Score]
+        ENSEMBLE_PREDICTION[Ensemble Prediction<br/>Final Probability]
+        ATTENTION_WEIGHTS[Attention Weights<br/>Focus Patterns]
+        FEATURE_IMPORTANCE[Feature Importance<br/>Input Contributions]
+    end
+
+    subgraph "SHAP Analysis"
+        SHAP_EXPLAINER[SHAP Explainer<br/>Shapley Values]
+        LOCAL_SHAP[Local SHAP<br/>Individual Predictions]
+        GLOBAL_SHAP[Global SHAP<br/>Model-wide Patterns]
+        INTERACTION_SHAP[Interaction SHAP<br/>Feature Correlations]
+        SHAP_VALUES[SHAP Values<br/>Attribution Scores]
+    end
+
+    subgraph "Attention Visualization"
+        ATTENTION_EXTRACTOR[Attention Extractor<br/>Weight Matrices]
+        TEMPORAL_ATTENTION[Temporal Attention<br/>Time Step Focus]
+        POLICY_ATTENTION[Policy Attention<br/>Rule Relevance]
+        RESOURCE_ATTENTION[Resource Attention<br/>Property Focus]
+        ATTENTION_HEATMAP[Attention Heatmap<br/>Visual Patterns]
+    end
+
+    subgraph "Tree-Based Explanations"
+        TREE_EXTRACTOR[Tree Extractor<br/>Decision Paths]
+        PATH_ANALYZER[Path Analyzer<br/>Rule Sequences]
+        SPLIT_IMPORTANCE[Split Importance<br/>Decision Points]
+        LEAF_ANALYZER[Leaf Analyzer<br/>Outcome Groups]
+        DECISION_RULES[Decision Rules<br/>Human-readable]
+    end
+
+    subgraph "LIME Analysis"
+        LIME_SAMPLER[LIME Sampler<br/>Local Perturbations]
+        NEIGHBORHOOD_GENERATOR[Neighborhood Generator<br/>Similar Instances]
+        LOCAL_MODEL[Local Model<br/>Linear Approximation]
+        PERTURBATION_ANALYZER[Perturbation Analyzer<br/>Input Sensitivity]
+        LOCAL_EXPLANATION[Local Explanation<br/>Feature Impact]
+    end
+
+    subgraph "Feature Attribution"
+        GRADIENT_CALCULATOR[Gradient Calculator<br/>Input Gradients]
+        INTEGRATED_GRADIENTS[Integrated Gradients<br/>Path Attribution]
+        DEEPLIFT_ANALYZER[DeepLIFT Analyzer<br/>Contribution Scores]
+        FEATURE_ABLATION[Feature Ablation<br/>Removal Impact]
+        ATTRIBUTION_SCORES[Attribution Scores<br/>Unified Metrics]
+    end
+
+    subgraph "Counterfactual Analysis"
+        COUNTERFACTUAL_GENERATOR[Counterfactual Generator<br/>Alternative Scenarios]
+        MINIMAL_CHANGES[Minimal Changes<br/>Feature Modifications]
+        FEASIBILITY_CHECKER[Feasibility Checker<br/>Realistic Alternatives]
+        ACTIONABLE_INSIGHTS[Actionable Insights<br/>Change Recommendations]
+        WHAT_IF_SCENARIOS[What-if Scenarios<br/>Outcome Exploration]
+    end
+
+    subgraph "Uncertainty Explanation"
+        UNCERTAINTY_DECOMPOSITION[Uncertainty Decomposition<br/>Source Analysis]
+        EPISTEMIC_UNCERTAINTY[Epistemic Uncertainty<br/>Model Knowledge]
+        ALEATORIC_UNCERTAINTY[Aleatoric Uncertainty<br/>Data Noise]
+        CONFIDENCE_BOUNDS[Confidence Bounds<br/>Prediction Intervals]
+        UNCERTAINTY_VISUALIZATION[Uncertainty Visualization<br/>Error Bars]
+    end
+
+    subgraph "Visual Explanations"
+        WATERFALL_CHART[Waterfall Chart<br/>Feature Contributions]
+        FORCE_PLOT[Force Plot<br/>Push/Pull Visualization]
+        PARTIAL_DEPENDENCE[Partial Dependence<br/>Feature Effects]
+        FEATURE_INTERACTION[Feature Interaction<br/>2D Heatmaps]
+        SUMMARY_PLOT[Summary Plot<br/>Global Importance]
+    end
+
+    subgraph "Natural Language Explanations"
+        TEMPLATE_ENGINE[Template Engine<br/>Text Generation]
+        RULE_TRANSLATOR[Rule Translator<br/>Plain English]
+        SEVERITY_EXPLAINER[Severity Explainer<br/>Risk Description]
+        RECOMMENDATION_GENERATOR[Recommendation Generator<br/>Action Explanations]
+        NARRATIVE_BUILDER[Narrative Builder<br/>Coherent Stories]
+    end
+
+    subgraph "Regulatory Compliance"
+        GDPR_EXPLAINER[GDPR Explainer<br/>Right to Explanation]
+        AUDIT_DOCUMENTATION[Audit Documentation<br/>Decision Records]
+        COMPLIANCE_REPORTER[Compliance Reporter<br/>Regulatory Format]
+        TRANSPARENCY_VALIDATOR[Transparency Validator<br/>Completeness Check]
+        REGULATORY_EXPORT[Regulatory Export<br/>Formatted Reports]
+    end
+
+    subgraph "Interactive Exploration"
+        EXPLANATION_DASHBOARD[Explanation Dashboard<br/>Interactive UI]
+        DRILL_DOWN_ANALYZER[Drill-down Analyzer<br/>Detailed Views]
+        COMPARISON_TOOL[Comparison Tool<br/>Prediction Differences]
+        SENSITIVITY_EXPLORER[Sensitivity Explorer<br/>Parameter Changes]
+        INTERACTIVE_PLOTS[Interactive Plots<br/>Dynamic Visualizations]
+    end
+
+    subgraph "Explanation Validation"
+        FIDELITY_CHECKER[Fidelity Checker<br/>Explanation Accuracy]
+        CONSISTENCY_VALIDATOR[Consistency Validator<br/>Cross-method Agreement]
+        PLAUSIBILITY_ASSESSOR[Plausibility Assessor<br/>Domain Knowledge]
+        EXPLANATION_QUALITY[Explanation Quality<br/>Metrics & Scores]
+        HUMAN_EVALUATION[Human Evaluation<br/>Expert Assessment]
+    end
+
+    %% Model Output Processing
+    LSTM_PREDICTION --> SHAP_EXPLAINER
+    XGB_PREDICTION --> TREE_EXTRACTOR
+    ENSEMBLE_PREDICTION --> LIME_SAMPLER
+    ATTENTION_WEIGHTS --> ATTENTION_EXTRACTOR
+    FEATURE_IMPORTANCE --> GRADIENT_CALCULATOR
+
+    %% SHAP Analysis Flow
+    SHAP_EXPLAINER --> LOCAL_SHAP
+    SHAP_EXPLAINER --> GLOBAL_SHAP
+    SHAP_EXPLAINER --> INTERACTION_SHAP
+    LOCAL_SHAP --> SHAP_VALUES
+    GLOBAL_SHAP --> SHAP_VALUES
+    INTERACTION_SHAP --> SHAP_VALUES
+
+    %% Attention Analysis
+    ATTENTION_EXTRACTOR --> TEMPORAL_ATTENTION
+    ATTENTION_EXTRACTOR --> POLICY_ATTENTION
+    ATTENTION_EXTRACTOR --> RESOURCE_ATTENTION
+    TEMPORAL_ATTENTION --> ATTENTION_HEATMAP
+    POLICY_ATTENTION --> ATTENTION_HEATMAP
+    RESOURCE_ATTENTION --> ATTENTION_HEATMAP
+
+    %% Tree Explanations
+    TREE_EXTRACTOR --> PATH_ANALYZER
+    PATH_ANALYZER --> SPLIT_IMPORTANCE
+    SPLIT_IMPORTANCE --> LEAF_ANALYZER
+    LEAF_ANALYZER --> DECISION_RULES
+
+    %% LIME Processing
+    LIME_SAMPLER --> NEIGHBORHOOD_GENERATOR
+    NEIGHBORHOOD_GENERATOR --> LOCAL_MODEL
+    LOCAL_MODEL --> PERTURBATION_ANALYZER
+    PERTURBATION_ANALYZER --> LOCAL_EXPLANATION
+
+    %% Feature Attribution
+    GRADIENT_CALCULATOR --> INTEGRATED_GRADIENTS
+    INTEGRATED_GRADIENTS --> DEEPLIFT_ANALYZER
+    DEEPLIFT_ANALYZER --> FEATURE_ABLATION
+    FEATURE_ABLATION --> ATTRIBUTION_SCORES
+
+    %% Counterfactual Analysis
+    LOCAL_EXPLANATION --> COUNTERFACTUAL_GENERATOR
+    COUNTERFACTUAL_GENERATOR --> MINIMAL_CHANGES
+    MINIMAL_CHANGES --> FEASIBILITY_CHECKER
+    FEASIBILITY_CHECKER --> ACTIONABLE_INSIGHTS
+    ACTIONABLE_INSIGHTS --> WHAT_IF_SCENARIOS
+
+    %% Uncertainty Explanation
+    ENSEMBLE_PREDICTION --> UNCERTAINTY_DECOMPOSITION
+    UNCERTAINTY_DECOMPOSITION --> EPISTEMIC_UNCERTAINTY
+    UNCERTAINTY_DECOMPOSITION --> ALEATORIC_UNCERTAINTY
+    EPISTEMIC_UNCERTAINTY --> CONFIDENCE_BOUNDS
+    ALEATORIC_UNCERTAINTY --> CONFIDENCE_BOUNDS
+    CONFIDENCE_BOUNDS --> UNCERTAINTY_VISUALIZATION
+
+    %% Visual Explanations
+    SHAP_VALUES --> WATERFALL_CHART
+    SHAP_VALUES --> FORCE_PLOT
+    ATTRIBUTION_SCORES --> PARTIAL_DEPENDENCE
+    INTERACTION_SHAP --> FEATURE_INTERACTION
+    GLOBAL_SHAP --> SUMMARY_PLOT
+
+    %% Natural Language Generation
+    DECISION_RULES --> TEMPLATE_ENGINE
+    TEMPLATE_ENGINE --> RULE_TRANSLATOR
+    RULE_TRANSLATOR --> SEVERITY_EXPLAINER
+    SEVERITY_EXPLAINER --> RECOMMENDATION_GENERATOR
+    RECOMMENDATION_GENERATOR --> NARRATIVE_BUILDER
+
+    %% Regulatory Compliance
+    NARRATIVE_BUILDER --> GDPR_EXPLAINER
+    GDPR_EXPLAINER --> AUDIT_DOCUMENTATION
+    AUDIT_DOCUMENTATION --> COMPLIANCE_REPORTER
+    COMPLIANCE_REPORTER --> TRANSPARENCY_VALIDATOR
+    TRANSPARENCY_VALIDATOR --> REGULATORY_EXPORT
+
+    %% Interactive Features
+    WATERFALL_CHART --> EXPLANATION_DASHBOARD
+    FORCE_PLOT --> EXPLANATION_DASHBOARD
+    EXPLANATION_DASHBOARD --> DRILL_DOWN_ANALYZER
+    DRILL_DOWN_ANALYZER --> COMPARISON_TOOL
+    COMPARISON_TOOL --> SENSITIVITY_EXPLORER
+    SENSITIVITY_EXPLORER --> INTERACTIVE_PLOTS
+
+    %% Validation
+    NARRATIVE_BUILDER --> FIDELITY_CHECKER
+    SHAP_VALUES --> CONSISTENCY_VALIDATOR
+    ATTRIBUTION_SCORES --> CONSISTENCY_VALIDATOR
+    CONSISTENCY_VALIDATOR --> PLAUSIBILITY_ASSESSOR
+    PLAUSIBILITY_ASSESSOR --> EXPLANATION_QUALITY
+    EXPLANATION_QUALITY --> HUMAN_EVALUATION
+
+    %% Example Explanation Flow
+    subgraph "Example: Encryption Violation Explanation"
+        PREDICTION_INPUT[Prediction Input:
+        Storage Account Config
+        Violation Prob: 87%]
+        
+        SHAP_BREAKDOWN[SHAP Breakdown:<br/>encryption.status: +0.45<br/>publicNetworkAccess: +0.32<br/>minimumTlsVersion: +0.10]
+        
+        NATURAL_EXPLANATION[Natural Language:<br/>High violation risk due to<br/>disabled encryption and<br/>public network access]
+        
+        REMEDIATION_EXPLANATION[Remediation Explanation:<br/>1. Enable encryption<br/>2. Disable public access<br/>3. Update TLS version]
+    end
+
+    ENSEMBLE_PREDICTION --> PREDICTION_INPUT
+    PREDICTION_INPUT --> SHAP_BREAKDOWN
+    SHAP_BREAKDOWN --> NATURAL_EXPLANATION
+    NATURAL_EXPLANATION --> REMEDIATION_EXPLANATION
+
+    %% Styling
+    classDef models fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef shap fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef attention fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef trees fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef lime fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef attribution fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef counterfactual fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef uncertainty fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef visual fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef nlp fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef regulatory fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef interactive fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    classDef validation fill:#f9fbe7,stroke:#827717,stroke-width:2px
+    classDef example fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+
+    class LSTM_PREDICTION,XGB_PREDICTION,ENSEMBLE_PREDICTION,ATTENTION_WEIGHTS,FEATURE_IMPORTANCE models
+    class SHAP_EXPLAINER,LOCAL_SHAP,GLOBAL_SHAP,INTERACTION_SHAP,SHAP_VALUES shap
+    class ATTENTION_EXTRACTOR,TEMPORAL_ATTENTION,POLICY_ATTENTION,RESOURCE_ATTENTION,ATTENTION_HEATMAP attention
+    class TREE_EXTRACTOR,PATH_ANALYZER,SPLIT_IMPORTANCE,LEAF_ANALYZER,DECISION_RULES trees
+    class LIME_SAMPLER,NEIGHBORHOOD_GENERATOR,LOCAL_MODEL,PERTURBATION_ANALYZER,LOCAL_EXPLANATION lime
+    class GRADIENT_CALCULATOR,INTEGRATED_GRADIENTS,DEEPLIFT_ANALYZER,FEATURE_ABLATION,ATTRIBUTION_SCORES attribution
+    class COUNTERFACTUAL_GENERATOR,MINIMAL_CHANGES,FEASIBILITY_CHECKER,ACTIONABLE_INSIGHTS,WHAT_IF_SCENARIOS counterfactual
+    class UNCERTAINTY_DECOMPOSITION,EPISTEMIC_UNCERTAINTY,ALEATORIC_UNCERTAINTY,CONFIDENCE_BOUNDS,UNCERTAINTY_VISUALIZATION uncertainty
+    class WATERFALL_CHART,FORCE_PLOT,PARTIAL_DEPENDENCE,FEATURE_INTERACTION,SUMMARY_PLOT visual
+    class TEMPLATE_ENGINE,RULE_TRANSLATOR,SEVERITY_EXPLAINER,RECOMMENDATION_GENERATOR,NARRATIVE_BUILDER nlp
+    class GDPR_EXPLAINER,AUDIT_DOCUMENTATION,COMPLIANCE_REPORTER,TRANSPARENCY_VALIDATOR,REGULATORY_EXPORT regulatory
+    class EXPLANATION_DASHBOARD,DRILL_DOWN_ANALYZER,COMPARISON_TOOL,SENSITIVITY_EXPLORER,INTERACTIVE_PLOTS interactive
+    class FIDELITY_CHECKER,CONSISTENCY_VALIDATOR,PLAUSIBILITY_ASSESSOR,EXPLANATION_QUALITY,HUMAN_EVALUATION validation
+    class PREDICTION_INPUT,SHAP_BREAKDOWN,NATURAL_EXPLANATION,REMEDIATION_EXPLANATION example

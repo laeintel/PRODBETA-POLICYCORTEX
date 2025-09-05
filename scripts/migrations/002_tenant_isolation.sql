@@ -4,27 +4,27 @@
 
 -- Add tenant_id to policies table if not exists
 ALTER TABLE IF EXISTS policies 
-ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT '9ef5b184-d371-462a-bc75-5024ce8baff7';
+ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT 'e1f3e196-aa55-4709-9c55-0e334c0b444f';
 
 -- Add tenant_id to resources table if not exists
 ALTER TABLE IF EXISTS resources 
-ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT '9ef5b184-d371-462a-bc75-5024ce8baff7';
+ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT 'e1f3e196-aa55-4709-9c55-0e334c0b444f';
 
 -- Add tenant_id to actions table if not exists
 ALTER TABLE IF EXISTS actions 
-ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT '9ef5b184-d371-462a-bc75-5024ce8baff7';
+ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT 'e1f3e196-aa55-4709-9c55-0e334c0b444f';
 
 -- Add tenant_id to audit_logs table if not exists
 ALTER TABLE IF EXISTS audit_logs 
-ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT '9ef5b184-d371-462a-bc75-5024ce8baff7';
+ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT 'e1f3e196-aa55-4709-9c55-0e334c0b444f';
 
 -- Add tenant_id to approvals table if not exists
 ALTER TABLE IF EXISTS approvals 
-ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT '9ef5b184-d371-462a-bc75-5024ce8baff7';
+ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT 'e1f3e196-aa55-4709-9c55-0e334c0b444f';
 
 -- Add tenant_id to exceptions table if not exists
 ALTER TABLE IF EXISTS exceptions 
-ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT '9ef5b184-d371-462a-bc75-5024ce8baff7';
+ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(255) NOT NULL DEFAULT 'e1f3e196-aa55-4709-9c55-0e334c0b444f';
 
 -- Create indexes for tenant_id on all tables for performance
 CREATE INDEX IF NOT EXISTS idx_policies_tenant_id ON policies(tenant_id);
@@ -165,10 +165,10 @@ CREATE TABLE IF NOT EXISTS tenants (
 -- Insert default tenant
 INSERT INTO tenants (id, name, azure_tenant_id, subscription_ids)
 VALUES (
-    '9ef5b184-d371-462a-bc75-5024ce8baff7',
+    'e1f3e196-aa55-4709-9c55-0e334c0b444f',
     'Default Tenant',
-    '9ef5b184-d371-462a-bc75-5024ce8baff7',
-    ARRAY['205b477d-17e7-4b3b-92c1-32cf02626b78']
+    'e1f3e196-aa55-4709-9c55-0e334c0b444f',
+    ARRAY['6dc7cfa2-0332-4740-98b6-bac9f1a23de9']
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Create function to validate tenant access

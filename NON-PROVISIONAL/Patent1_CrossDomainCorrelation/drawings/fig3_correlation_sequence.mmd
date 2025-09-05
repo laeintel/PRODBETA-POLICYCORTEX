@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant U as User/FE
+  participant C as Core API (Rust)
+  participant G as Graph Engine
+  participant X as Explainability
+  participant E as Evidence Store
+  U->>C: GET /api/v1/correlations?query=exposure+rbac
+  C->>G: build graph + run correlation
+  G-->>C: results (nodes, edges, paths, scores)
+  C->>X: generate explanations (attribution, path ranks)
+  X-->>C: explanation bundle
+  C->>E: persist evidence artifacts
+  C-->>U: correlation insights + links
+

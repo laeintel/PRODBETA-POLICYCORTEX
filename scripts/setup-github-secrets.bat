@@ -7,13 +7,13 @@ echo.
 
 REM Common secrets (same for both environments)
 echo Setting common secrets...
-gh secret set AZURE_TENANT_ID --body "9ef5b184-d371-462a-bc75-5024ce8baff7" -R laeintel/policycortex
+gh secret set AZURE_TENANT_ID --body "e1f3e196-aa55-4709-9c55-0e334c0b444f" -R laeintel/policycortex
 
 REM Dev Environment Secrets
 echo.
 echo Setting DEV environment secrets...
-gh secret set AZURE_CLIENT_ID_DEV --body "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c" -R laeintel/policycortex
-gh secret set AZURE_SUBSCRIPTION_ID_DEV --body "205b477d-17e7-4b3b-92c1-32cf02626b78" -R laeintel/policycortex
+gh secret set AZURE_CLIENT_ID_DEV --body "232c44f7-d0cf-4825-a9b5-beba9f587ffb" -R laeintel/policycortex
+gh secret set AZURE_SUBSCRIPTION_ID_DEV --body "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" -R laeintel/policycortex
 
 REM Prod Environment Secrets  
 echo.

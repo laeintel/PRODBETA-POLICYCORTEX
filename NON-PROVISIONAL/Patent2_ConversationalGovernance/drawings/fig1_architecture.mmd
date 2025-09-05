@@ -1,0 +1,21 @@
+flowchart LR
+  FE[Frontend Chat UI]
+  API[Rust/Axum Conversation API]
+  NL[NL Engine]
+  PT[Policy Translator]
+  RL[RLHF Trainer]
+  KB[Governance Knowledge Base]
+  EV[(Evidence Store)]
+  PG[(PostgreSQL + RLS)]
+  MESH[[Istio Service Mesh]]
+
+  FE -- HTTPS --> API
+  API -- mTLS --> NL
+  NL -- translate --> PT
+  NL -- consult --> KB
+  API -- feedback --> RL
+  API -- audit --> EV
+  API -- SQL --> PG
+  MESH --- API
+  MESH --- NL
+  MESH --- PT

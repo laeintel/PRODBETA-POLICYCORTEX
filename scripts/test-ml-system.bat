@@ -12,8 +12,8 @@ REM Set environment variables
 set PYTHONPATH=%cd%
 set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/policycortex
 set REDIS_URL=redis://localhost:6379
-set AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
-set AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
+set AZURE_TENANT_ID=e1f3e196-aa55-4709-9c55-0e334c0b444f
+set AZURE_CLIENT_ID=232c44f7-d0cf-4825-a9b5-beba9f587ffb
 set ML_TEST_MODE=true
 
 echo [1/8] Checking prerequisites...

@@ -6,8 +6,8 @@ echo.
 
 REM Set Azure credentials - UPDATED TO CORRECT SUBSCRIPTION
 set AZURE_SUBSCRIPTION_ID=632a3b06-2a6c-4b07-8f4f-6bf4c6184095
-set AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
-set AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
+set AZURE_TENANT_ID=e1f3e196-aa55-4709-9c55-0e334c0b444f
+set AZURE_CLIENT_ID=232c44f7-d0cf-4825-a9b5-beba9f587ffb
 
 REM CRITICAL: Enable Azure integration and disable ALL mock data
 set USE_AZURE_DATA=true

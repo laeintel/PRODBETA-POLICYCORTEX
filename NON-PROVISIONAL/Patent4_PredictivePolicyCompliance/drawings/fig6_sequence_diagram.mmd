@@ -1,0 +1,204 @@
+sequenceDiagram
+    participant User as User/System
+    participant API as Prediction API
+    participant FeatureStore as Feature Store
+    participant DriftDetector as Drift Detector
+    participant LSTM as LSTM Model
+    participant XGBoost as XGBoost Model
+    participant Ensemble as Ensemble Engine
+    participant SHAP as SHAP Explainer
+    participant Cache as Prediction Cache
+    participant Feedback as Feedback System
+    participant Retrainer as Model Retrainer
+
+    Note over User,Retrainer: Predictive Policy Compliance ML Pipeline
+
+    %% Real-time Configuration Change
+    User->>+API: Configuration change event
+    API->>API: Extract tenant context
+    API->>API: Validate input schema
+    
+    %% Feature Engineering
+    Note over API,FeatureStore: Multi-modal Feature Engineering
+    API->>+FeatureStore: Request feature extraction
+    FeatureStore->>FeatureStore: Process configuration data
+    FeatureStore->>FeatureStore: Extract temporal features
+    FeatureStore->>FeatureStore: Extract contextual features
+    FeatureStore->>FeatureStore: Normalize and scale features
+    FeatureStore-->>-API: Feature vector (256 dimensions)
+    
+    %% Drift Detection Analysis
+    Note over API,DriftDetector: Configuration Drift Detection
+    API->>+DriftDetector: Analyze configuration drift
+    DriftDetector->>DriftDetector: Compare with baseline
+    DriftDetector->>DriftDetector: Calculate property-level drift
+    DriftDetector->>DriftDetector: Apply VAE reconstruction analysis
+    DriftDetector->>DriftDetector: Statistical Process Control
+    DriftDetector->>DriftDetector: Compute drift velocity
+    DriftDetector-->>-API: Drift analysis (score: 0.78, velocity: 0.15/day)
+    
+    %% Ensemble Model Prediction
+    Note over API,Ensemble: Ensemble ML Prediction Pipeline
+    
+    par Parallel Model Inference
+        API->>+LSTM: LSTM prediction request
+        LSTM->>LSTM: Sequence processing (100 time steps)
+        LSTM->>LSTM: Multi-head attention (8 heads)
+        LSTM->>LSTM: Policy-resource correlation
+        LSTM-->>-API: LSTM prediction (prob: 0.85, conf: 0.92)
+    and
+        API->>+XGBoost: XGBoost prediction request
+        XGBoost->>XGBoost: Tree ensemble inference
+        XGBoost->>XGBoost: Feature importance calculation
+        XGBoost-->>-API: XGBoost prediction (prob: 0.83, importance)
+    end
+    
+    %% Ensemble Fusion
+    API->>+Ensemble: Combine model predictions
+    Ensemble->>Ensemble: Weighted ensemble (LSTM: 0.6, XGB: 0.4)
+    Ensemble->>Ensemble: Uncertainty quantification
+    Ensemble->>Ensemble: Confidence calibration
+    Ensemble-->>-API: Final prediction (prob: 0.84, conf: 0.90)
+    
+    %% Time-to-Violation Prediction
+    API->>API: Calculate time-to-violation
+    API->>API: Extrapolate drift trajectory
+    API->>API: Account for business context
+    
+    %% Risk Assessment
+    API->>API: Assess business impact
+    API->>API: Calculate financial risk
+    API->>API: Determine urgency level
+    
+    %% Explainability Analysis
+    Note over API,SHAP: SHAP-based Explainability
+    API->>+SHAP: Generate explanation
+    SHAP->>SHAP: Calculate Shapley values
+    SHAP->>SHAP: Local feature attribution
+    SHAP->>SHAP: Interaction effects analysis
+    SHAP->>SHAP: Generate natural language explanation
+    SHAP-->>-API: Explanation (encryption: +0.45, publicAccess: +0.32)
+    
+    %% Prediction Caching
+    Note over API,Cache: High-Performance Caching
+    API->>+Cache: Cache prediction result
+    Cache->>Cache: Store with TTL (5 minutes)
+    Cache->>Cache: Tag with resource ID and tenant
+    Cache-->>-API: Cached successfully
+    
+    %% Response Generation
+    API->>API: Format prediction response
+    API->>API: Include remediation suggestions
+    API->>API: Add confidence intervals
+    API-->>-User: Prediction response (87% violation risk, 18h time-to-violation)
+    
+    %% Continuous Learning - Feedback Collection
+    Note over User,Feedback: Human-in-the-Loop Feedback
+    
+    rect rgb(240, 255, 240)
+        User->>+Feedback: Submit prediction feedback
+        Feedback->>Feedback: Validate feedback quality
+        Feedback->>Feedback: Store with prediction ID
+        Feedback->>Feedback: Update feedback metrics
+        Feedback-->>-User: Feedback recorded
+    end
+    
+    %% Model Performance Monitoring
+    Note over API,Retrainer: Performance Monitoring & Retraining
+    
+    rect rgb(255, 250, 240)
+        API->>+Retrainer: Monitor prediction accuracy
+        Retrainer->>Retrainer: Track performance metrics
+        Retrainer->>Retrainer: Detect concept drift
+        
+        alt Performance Degradation Detected
+            Retrainer->>Retrainer: Trigger retraining workflow
+            Retrainer->>+FeatureStore: Fetch updated training data
+            FeatureStore-->>-Retrainer: Training dataset
+            
+            Retrainer->>+LSTM: Retrain LSTM model
+            LSTM->>LSTM: Incremental learning update
+            LSTM-->>-Retrainer: Updated model
+            
+            Retrainer->>+XGBoost: Retrain XGBoost model
+            XGBoost->>XGBoost: Boosting update
+            XGBoost-->>-Retrainer: Updated model
+            
+            Retrainer->>Retrainer: Validate new models
+            Retrainer->>Retrainer: Deploy if performance improved
+        end
+        
+        Retrainer-->>-API: Monitoring complete
+    end
+    
+    %% Batch Prediction Workflow (Alternative Flow)
+    Note over User,Cache: Batch Prediction for Multiple Resources
+    
+    rect rgb(240, 240, 255)
+        User->>+API: Batch prediction request (1000 resources)
+        API->>API: Split into mini-batches (50 each)
+        
+        loop For each mini-batch
+            API->>+FeatureStore: Batch feature extraction
+            FeatureStore-->>-API: Batch features
+            
+            par Parallel Batch Inference
+                API->>+LSTM: Batch LSTM inference
+                LSTM-->>-API: Batch LSTM predictions
+            and
+                API->>+XGBoost: Batch XGBoost inference
+                XGBoost-->>-API: Batch XGBoost predictions
+            end
+            
+            API->>+Ensemble: Batch ensemble fusion
+            Ensemble-->>-API: Batch final predictions
+        end
+        
+        API->>API: Aggregate all batch results
+        API->>+Cache: Cache batch predictions
+        Cache-->>-API: Batch cached
+        API-->>-User: Batch prediction results
+    end
+    
+    %% Edge Inference (Alternative Flow)
+    Note over User,Cache: Edge Inference for Low Latency
+    
+    rect rgb(255, 240, 255)
+        User->>+API: Request edge inference
+        API->>API: Route to nearest edge node
+        API->>API: Load quantized models (INT8)
+        API->>API: Local feature extraction
+        API->>API: Edge model inference (<10ms)
+        API->>API: Basic explainability
+        API-->>-User: Fast prediction (sub-50ms total)
+        
+        Note over API: Edge limitations: Reduced model complexity, Basic explanations
+    end
+    
+    %% Error Handling and Fallback
+    Note over API,Ensemble: Error Handling with Graceful Degradation
+    
+    rect rgb(255, 240, 240)
+        Note over LSTM: If LSTM model fails
+        API->>+LSTM: Prediction request
+        LSTM-->>-API: Model error/timeout
+        
+        API->>API: Fall back to XGBoost only
+        API->>+XGBoost: Fallback prediction
+        XGBoost-->>-API: Fallback result
+        
+        API->>API: Adjust confidence score (-10%)
+        API->>API: Log degraded service event
+        API-->>User: Prediction with degraded confidence
+    end
+    
+    %% Performance Metrics
+    Note over API,Cache: Performance Characteristics
+    Note right of API: Inference Latency: <100ms
+    Note right of FeatureStore: Feature Extraction: <30ms
+    Note right of LSTM: LSTM Inference: <50ms
+    Note right of XGBoost: XGBoost Inference: <20ms
+    Note right of SHAP: SHAP Explanation: <200ms
+    Note right of Cache: Cache Hit Ratio: >90%
+    Note right of Ensemble: Model Accuracy: 99.2%
+    Note right of DriftDetector: Drift Detection: <15ms

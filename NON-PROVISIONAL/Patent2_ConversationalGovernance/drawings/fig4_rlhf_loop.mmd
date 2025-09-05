@@ -1,0 +1,5 @@
+flowchart TD
+  RESP[Generated Response] --> FDBK[Human Feedback]
+  FDBK --> RM[Reward Model]
+  RM --> PPO[PPO Policy Update]
+  PPO --> RESP

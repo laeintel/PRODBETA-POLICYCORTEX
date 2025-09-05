@@ -60,7 +60,7 @@ jobs:
       - name: Set Azure Subscription
         run: |
           echo "Setting Azure subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription"
 
       - name: Login to Container Registry
         run: |
@@ -102,7 +102,7 @@ jobs:
       - name: Set Azure Subscription
         run: |
           echo "Setting Azure subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription"
 
       - name: Login to Container Registry
         run: |
@@ -144,7 +144,7 @@ jobs:
       - name: Set Azure Subscription
         run: |
           echo "Setting Azure subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription"
 
       - name: Login to Container Registry
         run: |
@@ -183,10 +183,10 @@ jobs:
         run: |
           echo "Setting Azure subscription"
           if [[ "${{ env.TARGET_ENV }}" == "dev" ]]; then
-            az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78"
+            az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9"
           else
             # For prod, use prod subscription ID if different
-            az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78"
+            az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9"
           fi
 
       - name: Check Container Apps Existence

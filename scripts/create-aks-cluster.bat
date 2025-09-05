@@ -7,7 +7,7 @@ echo ======================================
 echo.
 
 REM Set variables
-set SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78
+set SUBSCRIPTION_ID=6dc7cfa2-0332-4740-98b6-bac9f1a23de9
 set RESOURCE_GROUP=rg-cortex-dev
 set AKS_NAME=cortex-dev-aks
 set ACR_NAME=crcortexdev3p0bata

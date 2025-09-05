@@ -1,0 +1,11 @@
+erDiagram
+  RESOURCE ||--o{ POLICY : "inherits_policy"
+  IDENTITY ||--o{ ROLE : "has_role"
+  ROLE ||--o{ PERMISSION : "grants"
+  IDENTITY ||--o{ RESOURCE : "manages_access"
+  RESOURCE ||--o{ ENDPOINT : "exposes"
+  RESOURCE ||--o{ DATASTORE : "stores"
+  RESOURCE ||--o{ RESOURCE : "depends_on"
+  RESOURCE ||--o{ COSTENTITY : "cost_allocation"
+  RESOURCE ||--o{ COMPLIANCE : "compliance_scope"
+

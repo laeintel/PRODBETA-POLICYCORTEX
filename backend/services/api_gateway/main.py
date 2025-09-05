@@ -169,7 +169,7 @@ class PolicyRequest(BaseModel):
     framework: Optional[str] = None
 
 class ResourcesRequest(BaseModel):
-    subscription_id: Optional[str] = "205b477d-17e7-4b3b-92c1-32cf02626b78"
+    subscription_id: Optional[str] = "6dc7cfa2-0332-4740-98b6-bac9f1a23de9"
     resource_type: Optional[str] = None
 
 # -------------------- Auth (Azure AD JWT) --------------------

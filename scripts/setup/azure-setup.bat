@@ -12,9 +12,9 @@ echo =============================================================
 echo.
 
 REM Set variables
-set SUBSCRIPTION_ID_DEV=205b477d-17e7-4b3b-92c1-32cf02626b78
+set SUBSCRIPTION_ID_DEV=6dc7cfa2-0332-4740-98b6-bac9f1a23de9
 set SUBSCRIPTION_ID_PROD=9f16cc88-89ce-49ba-a96d-308ed3169595
-set TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+set TENANT_ID=e1f3e196-aa55-4709-9c55-0e334c0b444f
 set LOCATION=eastus
 set ERRORS_OCCURRED=0
 
@@ -23,7 +23,7 @@ set RG_DEV=pcx42178531-rg
 set ACR_DEV=crpcxdev
 set AKS_DEV=pcx42178531-aks
 set APP_DEV=PolicyCortex-Dev
-set CLIENT_ID_DEV=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
+set CLIENT_ID_DEV=232c44f7-d0cf-4825-a9b5-beba9f587ffb
 
 REM Production resource names (will be created)
 set RG_PROD=policycortex-prod-rg

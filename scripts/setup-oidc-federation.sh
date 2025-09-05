@@ -8,11 +8,11 @@ echo ""
 # Configuration
 GITHUB_ORG="laeintel"
 GITHUB_REPO="policycortex"
-TENANT_ID="9ef5b184-d371-462a-bc75-5024ce8baff7"
+TENANT_ID="e1f3e196-aa55-4709-9c55-0e334c0b444f"
 
 # Dev Environment
-DEV_CLIENT_ID="1ecc95d1-e5bb-43e2-9324-30a17cb6b01c"
-DEV_SUBSCRIPTION_ID="205b477d-17e7-4b3b-92c1-32cf02626b78"
+DEV_CLIENT_ID="232c44f7-d0cf-4825-a9b5-beba9f587ffb"
+DEV_SUBSCRIPTION_ID="6dc7cfa2-0332-4740-98b6-bac9f1a23de9"
 
 # Prod Environment  
 PROD_CLIENT_ID="8f0208b4-82b1-47cd-b02a-75e2f7afddb5"

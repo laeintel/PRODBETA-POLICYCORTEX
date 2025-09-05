@@ -1,0 +1,253 @@
+graph TB
+    subgraph "Client Access Layer"
+        TENANT_A_CLIENT[Tenant A Clients<br/>Web/Mobile/API]
+        TENANT_B_CLIENT[Tenant B Clients<br/>Web/Mobile/API]
+        TENANT_C_CLIENT[Tenant C Clients<br/>Web/Mobile/API]
+    end
+
+    subgraph "Authentication & Authorization"
+        AAD_A[Azure AD Tenant A<br/>JWT Issuer]
+        AAD_B[Azure AD Tenant B<br/>JWT Issuer]
+        AAD_C[Azure AD Tenant C<br/>JWT Issuer]
+        
+        JWT_VALIDATOR[JWT Token Validator<br/>Multi-tenant Support]
+        TENANT_EXTRACTOR[Tenant Context<br/>Extractor]
+        RBAC_ENGINE[RBAC Engine<br/>Per-tenant Policies]
+    end
+
+    subgraph "API Gateway Layer"
+        GATEWAY_ROUTER[API Gateway<br/>Tenant Routing]
+        RATE_LIMITER[Rate Limiter<br/>Per-tenant Quotas]
+        TENANT_MIDDLEWARE[Tenant Middleware<br/>Context Injection]
+    end
+
+    subgraph "Kubernetes Namespace Isolation"
+        NS_TENANT_A[Namespace: tenant-a<br/>Network Policies]
+        NS_TENANT_B[Namespace: tenant-b<br/>Network Policies]
+        NS_TENANT_C[Namespace: tenant-c<br/>Network Policies]
+        NS_SHARED[Namespace: shared<br/>Common Services]
+    end
+
+    subgraph "Service Mesh Isolation"
+        ISTIO_TENANT_A[Istio VirtualService<br/>Tenant A Routing]
+        ISTIO_TENANT_B[Istio VirtualService<br/>Tenant B Routing]
+        ISTIO_TENANT_C[Istio VirtualService<br/>Tenant C Routing]
+        
+        AUTHZ_POLICY_A[AuthorizationPolicy<br/>Tenant A Services]
+        AUTHZ_POLICY_B[AuthorizationPolicy<br/>Tenant B Services]
+        AUTHZ_POLICY_C[AuthorizationPolicy<br/>Tenant C Services]
+    end
+
+    subgraph "Application Layer Isolation"
+        subgraph "Tenant A Services"
+            API_A[Core API A]
+            AI_A[AI Service A]
+            WORKER_A[Background Workers A]
+        end
+        
+        subgraph "Tenant B Services"
+            API_B[Core API B]
+            AI_B[AI Service B]
+            WORKER_B[Background Workers B]
+        end
+        
+        subgraph "Tenant C Services"
+            API_C[Core API C]
+            AI_C[AI Service C]
+            WORKER_C[Background Workers C]
+        end
+        
+        subgraph "Shared Services"
+            SHARED_EVENTSTORE[EventStore<br/>Multi-tenant]
+            SHARED_METRICS[Metrics Service<br/>Tenant-tagged]
+            SHARED_LOGGING[Logging Service<br/>Tenant Context]
+        end
+    end
+
+    subgraph "Database Layer Isolation"
+        subgraph "PostgreSQL with Row-Level Security"
+            PG_POLICIES[RLS Policies<br/>tenant_id filter]
+            PG_TENANT_A[Tenant A Data<br/>tenant_id = 'tenant-a']
+            PG_TENANT_B[Tenant B Data<br/>tenant_id = 'tenant-b']
+            PG_TENANT_C[Tenant C Data<br/>tenant_id = 'tenant-c']
+        end
+        
+        subgraph "Redis Tenant Isolation"
+            REDIS_TENANT_A[Redis Keys<br/>tenant-a:*]
+            REDIS_TENANT_B[Redis Keys<br/>tenant-b:*]
+            REDIS_TENANT_C[Redis Keys<br/>tenant-c:*]
+        end
+    end
+
+    subgraph "Object Storage Isolation"
+        BLOB_TENANT_A[Blob Container<br/>tenant-a-evidence]
+        BLOB_TENANT_B[Blob Container<br/>tenant-b-evidence]
+        BLOB_TENANT_C[Blob Container<br/>tenant-c-evidence]
+        
+        SAS_TOKENS[SAS Tokens<br/>Tenant-scoped Access]
+    end
+
+    subgraph "Event Stream Isolation"
+        KAFKA_TENANT_A[Kafka Topics<br/>tenant-a.*]
+        KAFKA_TENANT_B[Kafka Topics<br/>tenant-b.*]
+        KAFKA_TENANT_C[Kafka Topics<br/>tenant-c.*]
+        
+        CONSUMER_GROUPS[Consumer Groups<br/>Tenant-specific]
+    end
+
+    subgraph "Monitoring & Observability Isolation"
+        METRICS_TENANT_A[Metrics<br/>tenant=tenant-a label]
+        METRICS_TENANT_B[Metrics<br/>tenant=tenant-b label]
+        METRICS_TENANT_C[Metrics<br/>tenant=tenant-c label]
+        
+        LOGS_TENANT_A[Logs<br/>tenant_id field]
+        LOGS_TENANT_B[Logs<br/>tenant_id field]
+        LOGS_TENANT_C[Logs<br/>tenant_id field]
+        
+        TRACES_TENANT_A[Traces<br/>tenant span tags]
+        TRACES_TENANT_B[Traces<br/>tenant span tags]
+        TRACES_TENANT_C[Traces<br/>tenant span tags]
+    end
+
+    subgraph "Security & Compliance"
+        ENCRYPTION_KEYS[Tenant-specific<br/>Encryption Keys]
+        AUDIT_SEPARATION[Audit Log<br/>Tenant Separation]
+        COMPLIANCE_REPORTS[Compliance Reports<br/>Per-tenant Views]
+        DATA_RETENTION[Data Retention<br/>Tenant Policies]
+    end
+
+    %% Client Authentication
+    TENANT_A_CLIENT --> AAD_A
+    TENANT_B_CLIENT --> AAD_B
+    TENANT_C_CLIENT --> AAD_C
+
+    AAD_A --> JWT_VALIDATOR
+    AAD_B --> JWT_VALIDATOR
+    AAD_C --> JWT_VALIDATOR
+
+    JWT_VALIDATOR --> TENANT_EXTRACTOR
+    TENANT_EXTRACTOR --> RBAC_ENGINE
+
+    %% Gateway Routing
+    TENANT_A_CLIENT --> GATEWAY_ROUTER
+    TENANT_B_CLIENT --> GATEWAY_ROUTER
+    TENANT_C_CLIENT --> GATEWAY_ROUTER
+
+    GATEWAY_ROUTER --> RATE_LIMITER
+    RATE_LIMITER --> TENANT_MIDDLEWARE
+
+    %% Namespace Routing
+    TENANT_MIDDLEWARE --> NS_TENANT_A
+    TENANT_MIDDLEWARE --> NS_TENANT_B
+    TENANT_MIDDLEWARE --> NS_TENANT_C
+
+    %% Service Mesh Routing
+    NS_TENANT_A --> ISTIO_TENANT_A
+    NS_TENANT_B --> ISTIO_TENANT_B
+    NS_TENANT_C --> ISTIO_TENANT_C
+
+    ISTIO_TENANT_A --> AUTHZ_POLICY_A
+    ISTIO_TENANT_B --> AUTHZ_POLICY_B
+    ISTIO_TENANT_C --> AUTHZ_POLICY_C
+
+    %% Service Layer
+    AUTHZ_POLICY_A --> API_A
+    AUTHZ_POLICY_B --> API_B
+    AUTHZ_POLICY_C --> API_C
+
+    API_A --> AI_A
+    API_B --> AI_B
+    API_C --> AI_C
+
+    API_A --> WORKER_A
+    API_B --> WORKER_B
+    API_C --> WORKER_C
+
+    %% Shared Services
+    API_A --> SHARED_EVENTSTORE
+    API_B --> SHARED_EVENTSTORE
+    API_C --> SHARED_EVENTSTORE
+
+    API_A --> SHARED_METRICS
+    API_B --> SHARED_METRICS
+    API_C --> SHARED_METRICS
+
+    %% Database Isolation
+    API_A --> PG_POLICIES
+    API_B --> PG_POLICIES
+    API_C --> PG_POLICIES
+
+    PG_POLICIES --> PG_TENANT_A
+    PG_POLICIES --> PG_TENANT_B
+    PG_POLICIES --> PG_TENANT_C
+
+    API_A --> REDIS_TENANT_A
+    API_B --> REDIS_TENANT_B
+    API_C --> REDIS_TENANT_C
+
+    %% Object Storage
+    API_A --> BLOB_TENANT_A
+    API_B --> BLOB_TENANT_B
+    API_C --> BLOB_TENANT_C
+
+    BLOB_TENANT_A --> SAS_TOKENS
+    BLOB_TENANT_B --> SAS_TOKENS
+    BLOB_TENANT_C --> SAS_TOKENS
+
+    %% Event Streams
+    API_A --> KAFKA_TENANT_A
+    API_B --> KAFKA_TENANT_B
+    API_C --> KAFKA_TENANT_C
+
+    KAFKA_TENANT_A --> CONSUMER_GROUPS
+    KAFKA_TENANT_B --> CONSUMER_GROUPS
+    KAFKA_TENANT_C --> CONSUMER_GROUPS
+
+    %% Monitoring
+    API_A --> METRICS_TENANT_A
+    API_B --> METRICS_TENANT_B
+    API_C --> METRICS_TENANT_C
+
+    API_A --> LOGS_TENANT_A
+    API_B --> LOGS_TENANT_B
+    API_C --> LOGS_TENANT_C
+
+    API_A --> TRACES_TENANT_A
+    API_B --> TRACES_TENANT_B
+    API_C --> TRACES_TENANT_C
+
+    %% Security
+    API_A --> ENCRYPTION_KEYS
+    API_B --> ENCRYPTION_KEYS
+    API_C --> ENCRYPTION_KEYS
+
+    SHARED_EVENTSTORE --> AUDIT_SEPARATION
+    AUDIT_SEPARATION --> COMPLIANCE_REPORTS
+    COMPLIANCE_REPORTS --> DATA_RETENTION
+
+    %% Row-Level Security Example
+    subgraph "RLS Example"
+        RLS_POLICY[Row-Level Security Policy:<br/>tenant_id isolation]
+        SET_TENANT_CONTEXT[Tenant Context Function:<br/>set_tenant_context]
+    end
+
+    PG_POLICIES --> RLS_POLICY
+    TENANT_EXTRACTOR --> SET_TENANT_CONTEXT
+    SET_TENANT_CONTEXT --> RLS_POLICY
+
+    %% Styling
+    classDef tenantA fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef tenantB fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef tenantC fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef shared fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef auth fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    classDef security fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef database fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+
+    class TENANT_A_CLIENT,AAD_A,NS_TENANT_A,ISTIO_TENANT_A,AUTHZ_POLICY_A,API_A,AI_A,WORKER_A,PG_TENANT_A,REDIS_TENANT_A,BLOB_TENANT_A,KAFKA_TENANT_A,METRICS_TENANT_A,LOGS_TENANT_A,TRACES_TENANT_A tenantA
+    class TENANT_B_CLIENT,AAD_B,NS_TENANT_B,ISTIO_TENANT_B,AUTHZ_POLICY_B,API_B,AI_B,WORKER_B,PG_TENANT_B,REDIS_TENANT_B,BLOB_TENANT_B,KAFKA_TENANT_B,METRICS_TENANT_B,LOGS_TENANT_B,TRACES_TENANT_B tenantB
+    class TENANT_C_CLIENT,AAD_C,NS_TENANT_C,ISTIO_TENANT_C,AUTHZ_POLICY_C,API_C,AI_C,WORKER_C,PG_TENANT_C,REDIS_TENANT_C,BLOB_TENANT_C,KAFKA_TENANT_C,METRICS_TENANT_C,LOGS_TENANT_C,TRACES_TENANT_C tenantC
+    class SHARED_EVENTSTORE,SHARED_METRICS,SHARED_LOGGING,NS_SHARED,CONSUMER_GROUPS shared
+    class JWT_VALIDATOR,TENANT_EXTRACTOR,RBAC_ENGINE,GATEWAY_ROUTER,RATE_LIMITER,TENANT_MIDDLEWARE auth
+    class ENCRYPTION_KEYS,AUDIT_SEPARATION,COMPLIANCE_REPORTS,DATA_RETENTION,SAS_TOKENS security
+    class PG_POLICIES,RLS_POLICY,SET_TENANT_CONTEXT database

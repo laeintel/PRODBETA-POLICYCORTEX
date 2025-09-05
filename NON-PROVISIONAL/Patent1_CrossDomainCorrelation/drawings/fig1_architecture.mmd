@@ -1,0 +1,21 @@
+flowchart LR
+  FE[Next.js Frontend]
+  CORE[Rust/Axum Core API]
+  AI[Python AI Services]
+  PG[(PostgreSQL + RLS)]
+  CACHE[(Redis/Dragonfly)]
+  BUS[(NATS/Kafka)]
+  OBJ[(Evidence Store)]
+  MESH[[Istio Service Mesh]]
+
+  FE -- HTTPS --> CORE
+  CORE -- gRPC/HTTP --> AI
+  CORE -- SQL --> PG
+  CORE -- Cache/Queues --> CACHE
+  CORE -- Produce/Consume --> BUS
+  CORE -- S3 API --> OBJ
+  FE -- SSE --> CORE
+  MESH --- FE
+  MESH --- CORE
+  MESH --- AI
+

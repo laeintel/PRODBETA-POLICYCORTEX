@@ -1,0 +1,255 @@
+graph TB
+    subgraph "Input Data Streams"
+        HISTORICAL_VIOLATIONS[Historical Violations<br/>Time-series Data]
+        CONFIG_TELEMETRY[Configuration Telemetry<br/>Real-time Changes]
+        POLICY_RULES[Policy Rules<br/>Compliance Definitions]
+        RESOURCE_METADATA[Resource Metadata<br/>Context Information]
+        BUSINESS_CONTEXT[Business Context<br/>Criticality & Impact]
+    end
+
+    subgraph "Feature Engineering"
+        TEMPORAL_EXTRACTOR[Temporal Feature Extractor<br/>Time-based Patterns]
+        SEQUENCE_BUILDER[Sequence Builder<br/>100-step Windows]
+        FEATURE_NORMALIZER[Feature Normalizer<br/>Standardization]
+        CATEGORICAL_ENCODER[Categorical Encoder<br/>One-hot/Embedding]
+        FEATURE_SELECTOR[Feature Selector<br/>Importance-based]
+    end
+
+    subgraph "LSTM-Attention Network"
+        subgraph "Input Processing"
+            EMBEDDING_LAYER[Embedding Layer<br/>256 dimensions]
+            POSITIONAL_ENCODING[Positional Encoding<br/>Temporal Awareness]
+            INPUT_NORMALIZATION[Input Normalization<br/>Layer Norm]
+        end
+
+        subgraph "LSTM Layers"
+            LSTM_LAYER_1[LSTM Layer 1<br/>512 hidden units]
+            DROPOUT_1[Dropout 1<br/>0.2 rate]
+            LSTM_LAYER_2[LSTM Layer 2<br/>512 hidden units]
+            DROPOUT_2[Dropout 2<br/>0.2 rate]
+            LSTM_LAYER_3[LSTM Layer 3<br/>512 hidden units]
+            DROPOUT_3[Dropout 3<br/>0.2 rate]
+        end
+
+        subgraph "Attention Mechanism"
+            MULTI_HEAD_ATTENTION[Multi-head Attention<br/>8 heads]
+            POLICY_ATTENTION[Policy Attention<br/>Rule Correlation]
+            RESOURCE_ATTENTION[Resource Attention<br/>Context Focus]
+            ATTENTION_WEIGHTS[Attention Weights<br/>Interpretability]
+        end
+
+        subgraph "Output Layers"
+            DENSE_LAYER_1[Dense Layer 1<br/>256 units]
+            DENSE_LAYER_2[Dense Layer 2<br/>128 units]
+            VIOLATION_OUTPUT[Violation Output<br/>Binary Classification]
+            CONFIDENCE_OUTPUT[Confidence Output<br/>Uncertainty Score]
+        end
+    end
+
+    subgraph "Ensemble Components"
+        subgraph "Gradient Boosting"
+            XGB_FEATURES[XGBoost Features<br/>Structured Data]
+            XGB_TREES[Gradient Boosted Trees<br/>Pattern Learning]
+            XGB_IMPORTANCE[Feature Importance<br/>Tree-based]
+            XGB_PREDICTION[XGB Prediction<br/>Probability Score]
+        end
+
+        subgraph "Time Series Models"
+            ARIMA_DECOMPOSITION[ARIMA Decomposition<br/>Trend + Seasonality]
+            ARIMA_FORECAST[ARIMA Forecast<br/>Linear Trends]
+            PROPHET_SEASONALITY[Prophet Seasonality<br/>Holiday Effects]
+            PROPHET_FORECAST[Prophet Forecast<br/>Non-linear Trends]
+        end
+
+        subgraph "Isolation Forest"
+            IF_SAMPLING[Isolation Sampling<br/>Random Subspaces]
+            IF_TREES[Isolation Trees<br/>Anomaly Detection]
+            IF_PATH_LENGTH[Path Length<br/>Anomaly Scoring]
+            IF_ANOMALY_SCORE[Anomaly Score<br/>Outlier Detection]
+        end
+    end
+
+    subgraph "Ensemble Fusion"
+        WEIGHT_LEARNER[Weight Learner<br/>Dynamic Weighting]
+        ENSEMBLE_COMBINER[Ensemble Combiner<br/>Weighted Average]
+        METACLASSIFIER[Meta-classifier<br/>Stacking Layer]
+        CALIBRATION[Probability Calibration<br/>Platt Scaling]
+        FINAL_PREDICTION[Final Prediction<br/>Calibrated Probability]
+    end
+
+    subgraph "Uncertainty Quantification"
+        MONTE_CARLO_DROPOUT[Monte Carlo Dropout<br/>Uncertainty Sampling]
+        BAYESIAN_INFERENCE[Bayesian Inference<br/>Posterior Distribution]
+        CONFORMAL_PREDICTION[Conformal Prediction<br/>Prediction Intervals]
+        UNCERTAINTY_AGGREGATION[Uncertainty Aggregation<br/>Combined Bounds]
+        CONFIDENCE_SCORE[Confidence Score<br/>Final Uncertainty]
+    end
+
+    subgraph "Time-to-Violation Prediction"
+        HAZARD_FUNCTION[Hazard Function<br/>Survival Analysis]
+        COX_REGRESSION[Cox Regression<br/>Risk Modeling]
+        KAPLAN_MEIER[Kaplan-Meier<br/>Survival Curves]
+        TIME_EXTRAPOLATION[Time Extrapolation<br/>Trend Projection]
+        VIOLATION_TIME[Violation Time<br/>Expected Hours]
+    end
+
+    subgraph "Risk Assessment"
+        IMPACT_CALCULATOR[Impact Calculator<br/>Business Cost]
+        SEVERITY_CLASSIFIER[Severity Classifier<br/>Risk Levels]
+        PRIORITY_RANKER[Priority Ranker<br/>Action Urgency]
+        RESOURCE_CRITICALITY[Resource Criticality<br/>Business Importance]
+        RISK_SCORE[Risk Score<br/>Composite Metric]
+    end
+
+    subgraph "Remediation Planning"
+        ACTION_RECOMMENDER[Action Recommender<br/>Fix Suggestions]
+        SUCCESS_PREDICTOR[Success Predictor<br/>Fix Probability]
+        COST_ESTIMATOR[Cost Estimator<br/>Implementation Cost]
+        ROLLBACK_PLANNER[Rollback Planner<br/>Recovery Strategy]
+        REMEDIATION_PLAN[Remediation Plan<br/>Action Sequence]
+    end
+
+    subgraph "Model Performance"
+        ACCURACY_TRACKER[Accuracy Tracker<br/>99.2% Target]
+        PRECISION_RECALL[Precision/Recall<br/>Balance Optimization]
+        FALSE_POSITIVE_RATE[False Positive Rate<br/><2% Target]
+        LATENCY_MONITOR[Latency Monitor<br/><100ms Target]
+        PERFORMANCE_METRICS[Performance Metrics<br/>Comprehensive Stats]
+    end
+
+    %% Data Flow - Input Processing
+    HISTORICAL_VIOLATIONS --> TEMPORAL_EXTRACTOR
+    CONFIG_TELEMETRY --> TEMPORAL_EXTRACTOR
+    POLICY_RULES --> CATEGORICAL_ENCODER
+    RESOURCE_METADATA --> CATEGORICAL_ENCODER
+    BUSINESS_CONTEXT --> FEATURE_NORMALIZER
+
+    TEMPORAL_EXTRACTOR --> SEQUENCE_BUILDER
+    SEQUENCE_BUILDER --> FEATURE_NORMALIZER
+    CATEGORICAL_ENCODER --> FEATURE_NORMALIZER
+    FEATURE_NORMALIZER --> FEATURE_SELECTOR
+
+    %% LSTM Network Flow
+    FEATURE_SELECTOR --> EMBEDDING_LAYER
+    EMBEDDING_LAYER --> POSITIONAL_ENCODING
+    POSITIONAL_ENCODING --> INPUT_NORMALIZATION
+
+    INPUT_NORMALIZATION --> LSTM_LAYER_1
+    LSTM_LAYER_1 --> DROPOUT_1
+    DROPOUT_1 --> LSTM_LAYER_2
+    LSTM_LAYER_2 --> DROPOUT_2
+    DROPOUT_2 --> LSTM_LAYER_3
+    LSTM_LAYER_3 --> DROPOUT_3
+
+    DROPOUT_3 --> MULTI_HEAD_ATTENTION
+    MULTI_HEAD_ATTENTION --> POLICY_ATTENTION
+    MULTI_HEAD_ATTENTION --> RESOURCE_ATTENTION
+    POLICY_ATTENTION --> ATTENTION_WEIGHTS
+    RESOURCE_ATTENTION --> ATTENTION_WEIGHTS
+
+    ATTENTION_WEIGHTS --> DENSE_LAYER_1
+    DENSE_LAYER_1 --> DENSE_LAYER_2
+    DENSE_LAYER_2 --> VIOLATION_OUTPUT
+    DENSE_LAYER_2 --> CONFIDENCE_OUTPUT
+
+    %% Ensemble Component Processing
+    FEATURE_SELECTOR --> XGB_FEATURES
+    XGB_FEATURES --> XGB_TREES
+    XGB_TREES --> XGB_IMPORTANCE
+    XGB_TREES --> XGB_PREDICTION
+
+    FEATURE_SELECTOR --> ARIMA_DECOMPOSITION
+    ARIMA_DECOMPOSITION --> ARIMA_FORECAST
+    FEATURE_SELECTOR --> PROPHET_SEASONALITY
+    PROPHET_SEASONALITY --> PROPHET_FORECAST
+
+    FEATURE_SELECTOR --> IF_SAMPLING
+    IF_SAMPLING --> IF_TREES
+    IF_TREES --> IF_PATH_LENGTH
+    IF_PATH_LENGTH --> IF_ANOMALY_SCORE
+
+    %% Ensemble Fusion
+    VIOLATION_OUTPUT --> WEIGHT_LEARNER
+    XGB_PREDICTION --> WEIGHT_LEARNER
+    ARIMA_FORECAST --> WEIGHT_LEARNER
+    PROPHET_FORECAST --> WEIGHT_LEARNER
+    IF_ANOMALY_SCORE --> WEIGHT_LEARNER
+
+    WEIGHT_LEARNER --> ENSEMBLE_COMBINER
+    ENSEMBLE_COMBINER --> METACLASSIFIER
+    METACLASSIFIER --> CALIBRATION
+    CALIBRATION --> FINAL_PREDICTION
+
+    %% Uncertainty Quantification
+    CONFIDENCE_OUTPUT --> MONTE_CARLO_DROPOUT
+    FINAL_PREDICTION --> BAYESIAN_INFERENCE
+    BAYESIAN_INFERENCE --> CONFORMAL_PREDICTION
+    MONTE_CARLO_DROPOUT --> UNCERTAINTY_AGGREGATION
+    CONFORMAL_PREDICTION --> UNCERTAINTY_AGGREGATION
+    UNCERTAINTY_AGGREGATION --> CONFIDENCE_SCORE
+
+    %% Time-to-Violation
+    FINAL_PREDICTION --> HAZARD_FUNCTION
+    HAZARD_FUNCTION --> COX_REGRESSION
+    COX_REGRESSION --> KAPLAN_MEIER
+    KAPLAN_MEIER --> TIME_EXTRAPOLATION
+    TIME_EXTRAPOLATION --> VIOLATION_TIME
+
+    %% Risk Assessment
+    FINAL_PREDICTION --> IMPACT_CALCULATOR
+    IMPACT_CALCULATOR --> SEVERITY_CLASSIFIER
+    SEVERITY_CLASSIFIER --> PRIORITY_RANKER
+    RESOURCE_CRITICALITY --> PRIORITY_RANKER
+    PRIORITY_RANKER --> RISK_SCORE
+
+    %% Remediation Planning
+    RISK_SCORE --> ACTION_RECOMMENDER
+    ACTION_RECOMMENDER --> SUCCESS_PREDICTOR
+    SUCCESS_PREDICTOR --> COST_ESTIMATOR
+    COST_ESTIMATOR --> ROLLBACK_PLANNER
+    ROLLBACK_PLANNER --> REMEDIATION_PLAN
+
+    %% Performance Monitoring
+    FINAL_PREDICTION --> ACCURACY_TRACKER
+    ACCURACY_TRACKER --> PRECISION_RECALL
+    PRECISION_RECALL --> FALSE_POSITIVE_RATE
+    FALSE_POSITIVE_RATE --> LATENCY_MONITOR
+    LATENCY_MONITOR --> PERFORMANCE_METRICS
+
+    %% Example Prediction Flow
+    subgraph "Example: Storage Account Violation"
+        STORAGE_CONFIG[Storage Account Config:<br/>publicNetworkAccess: Enabled<br/>encryption.status: Disabled<br/>minimumTlsVersion: TLS1_0]
+        
+        PREDICTION_RESULT[Prediction Result:<br/>Violation Probability: 87%<br/>Time to Violation: 18h<br/>Risk Level: High<br/>Confidence: 92%]
+        
+        REMEDIATION_ACTIONS[Remediation Actions:<br/>Disable public access<br/>Enable encryption<br/>Update TLS version]
+    end
+
+    FEATURE_SELECTOR --> STORAGE_CONFIG
+    STORAGE_CONFIG --> PREDICTION_RESULT
+    PREDICTION_RESULT --> REMEDIATION_ACTIONS
+
+    %% Styling
+    classDef input fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef features fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef lstm fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef ensemble fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef fusion fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef uncertainty fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef timeviolation fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef risk fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef remediation fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef performance fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef example fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+
+    class HISTORICAL_VIOLATIONS,CONFIG_TELEMETRY,POLICY_RULES,RESOURCE_METADATA,BUSINESS_CONTEXT input
+    class TEMPORAL_EXTRACTOR,SEQUENCE_BUILDER,FEATURE_NORMALIZER,CATEGORICAL_ENCODER,FEATURE_SELECTOR features
+    class EMBEDDING_LAYER,POSITIONAL_ENCODING,LSTM_LAYER_1,LSTM_LAYER_2,LSTM_LAYER_3,MULTI_HEAD_ATTENTION,POLICY_ATTENTION,RESOURCE_ATTENTION,DENSE_LAYER_1,DENSE_LAYER_2,VIOLATION_OUTPUT,CONFIDENCE_OUTPUT lstm
+    class XGB_FEATURES,XGB_TREES,XGB_PREDICTION,ARIMA_DECOMPOSITION,ARIMA_FORECAST,PROPHET_SEASONALITY,PROPHET_FORECAST,IF_SAMPLING,IF_TREES,IF_ANOMALY_SCORE ensemble
+    class WEIGHT_LEARNER,ENSEMBLE_COMBINER,METACLASSIFIER,CALIBRATION,FINAL_PREDICTION fusion
+    class MONTE_CARLO_DROPOUT,BAYESIAN_INFERENCE,CONFORMAL_PREDICTION,UNCERTAINTY_AGGREGATION,CONFIDENCE_SCORE uncertainty
+    class HAZARD_FUNCTION,COX_REGRESSION,KAPLAN_MEIER,TIME_EXTRAPOLATION,VIOLATION_TIME timeviolation
+    class IMPACT_CALCULATOR,SEVERITY_CLASSIFIER,PRIORITY_RANKER,RESOURCE_CRITICALITY,RISK_SCORE risk
+    class ACTION_RECOMMENDER,SUCCESS_PREDICTOR,COST_ESTIMATOR,ROLLBACK_PLANNER,REMEDIATION_PLAN remediation
+    class ACCURACY_TRACKER,PRECISION_RECALL,FALSE_POSITIVE_RATE,LATENCY_MONITOR,PERFORMANCE_METRICS performance
+    class STORAGE_CONFIG,PREDICTION_RESULT,REMEDIATION_ACTIONS example

@@ -4,7 +4,7 @@
 
 ### 1. Azure Connection Established
 - **Status**: ✅ CONNECTED TO AZURE
-- **Subscription**: 205b477d-17e7-4b3b-92c1-32cf02626b78
+- **Subscription**: 6dc7cfa2-0332-4740-98b6-bac9f1a23de9
 - **Resources Found**: 38 real Azure resources from your subscription
 - **Server Location**: `backend/azure-agents-server.js`
 
@@ -44,7 +44,7 @@
 
 ```json
 {
-  "id": "/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78/resourceGroups/rg-datafactory-demo/providers/Microsoft.Storage/storageAccounts/datalakeaeolitech",
+  "id": "/subscriptions/6dc7cfa2-0332-4740-98b6-bac9f1a23de9/resourceGroups/rg-datafactory-demo/providers/Microsoft.Storage/storageAccounts/datalakeaeolitech",
   "name": "datalakeaeolitech",
   "type": "Microsoft.Storage/storageAccounts",
   "location": "eastus",

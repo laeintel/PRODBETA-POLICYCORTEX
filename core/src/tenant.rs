@@ -40,8 +40,8 @@ impl TenantContext {
     pub fn default() -> Self {
         TenantContext {
             tenant_id: "default".to_string(),
-            azure_tenant_id: Some("9ef5b184-d371-462a-bc75-5024ce8baff7".to_string()),
-            subscription_ids: vec!["205b477d-17e7-4b3b-92c1-32cf02626b78".to_string()],
+            azure_tenant_id: Some("e1f3e196-aa55-4709-9c55-0e334c0b444f".to_string()),
+            subscription_ids: vec!["6dc7cfa2-0332-4740-98b6-bac9f1a23de9".to_string()],
             is_active: true,
         }
     }

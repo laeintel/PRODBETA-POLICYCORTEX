@@ -604,8 +604,8 @@ INSERT INTO tenants (name, domain, subscription_id, tenant_id, settings) VALUES
 (
     'PolicyCortex Development',
     'dev.policycortex.com',
-    '205b477d-17e7-4b3b-92c1-32cf02626b78',
-    '9ef5b184-d371-462a-bc75-5024ce8baff7',
+    '6dc7cfa2-0332-4740-98b6-bac9f1a23de9',
+    'e1f3e196-aa55-4709-9c55-0e334c0b444f',
     '{"theme": "dark", "notifications": true, "auto_remediation": false}'
 );
 

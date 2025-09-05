@@ -1,0 +1,237 @@
+graph TB
+    subgraph "Data Ingestion Layer"
+        CONFIG_STREAM[Configuration Stream<br/>Real-time Changes]
+        POLICY_FEED[Policy Feed<br/>Rule Definitions]
+        COMPLIANCE_EVENTS[Compliance Events<br/>Violation History]
+        CONTEXT_DATA[Context Data<br/>Business Metadata]
+        EXTERNAL_FEEDS[External Feeds<br/>Threat Intelligence]
+    end
+
+    subgraph "Feature Engineering Pipeline"
+        RAW_PROCESSOR[Raw Data Processor<br/>Validation & Cleansing]
+        FEATURE_EXTRACTOR[Feature Extractor<br/>Multi-modal Processing]
+        TEMPORAL_FEATURES[Temporal Features<br/>Time-series Analysis]
+        CONTEXTUAL_FEATURES[Contextual Features<br/>Relationships & Dependencies]
+        FEATURE_STORE[Feature Store<br/>Versioned Features]
+    end
+
+    subgraph "Ensemble ML Engine"
+        subgraph "LSTM Network"
+            LSTM_INPUT[Input Layer<br/>Sequence Processing]
+            LSTM_HIDDEN[Hidden Layers<br/>512 dims x 3 layers]
+            ATTENTION[Multi-head Attention<br/>8 heads, Policy-Resource]
+            LSTM_OUTPUT[Output Layer<br/>Compliance Prediction]
+        end
+
+        subgraph "Gradient Boosting"
+            XGB_FEATURES[Feature Input<br/>Structured Data]
+            XGB_TREES[Boosted Trees<br/>Pattern Recognition]
+            XGB_PREDICTION[Tree Prediction<br/>Confidence Scoring]
+        end
+
+        subgraph "Time Series Models"
+            ARIMA_MODEL[ARIMA Model<br/>Linear Trends]
+            PROPHET_MODEL[Prophet Model<br/>Seasonality Detection]
+            ENSEMBLE_WEIGHTS[Ensemble Weights<br/>Dynamic Combination]
+        end
+
+        subgraph "Anomaly Detection"
+            ISOLATION_FOREST[Isolation Forest<br/>40% weight]
+            VAE_DETECTOR[VAE Detector<br/>30% weight]
+            LSTM_ANOMALY[LSTM Anomaly<br/>30% weight]
+            ANOMALY_SCORES[Anomaly Scores<br/>Ensemble Output]
+        end
+    end
+
+    subgraph "Drift Detection System"
+        BASELINE_MANAGER[Baseline Manager<br/>Configuration Snapshots]
+        DRIFT_CALCULATOR[Drift Calculator<br/>Change Analysis]
+        SPC_MONITOR[SPC Monitor<br/>Control Limits]
+        VAE_RECONSTRUCTION[VAE Reconstruction<br/>Error Analysis]
+        DRIFT_SCORES[Drift Scores<br/>Multi-dimensional]
+    end
+
+    subgraph "Prediction Engine"
+        VIOLATION_PREDICTOR[Violation Predictor<br/>24-72h Lookahead]
+        RISK_SCORER[Risk Scorer<br/>Business Impact]
+        CONFIDENCE_ESTIMATOR[Confidence Estimator<br/>Uncertainty Quantification]
+        TIME_TO_VIOLATION[Time to Violation<br/>Extrapolation]
+        PREDICTION_AGGREGATOR[Prediction Aggregator<br/>Final Results]
+    end
+
+    subgraph "Explainability Engine"
+        SHAP_ANALYZER[SHAP Analyzer<br/>Feature Attribution]
+        ATTENTION_VISUALIZER[Attention Visualizer<br/>Focus Patterns]
+        TREE_EXPLAINER[Tree Explainer<br/>Decision Paths]
+        LIME_PROCESSOR[LIME Processor<br/>Local Explanations]
+        EXPLANATION_GENERATOR[Explanation Generator<br/>Human-readable Output]
+    end
+
+    subgraph "Continuous Learning Pipeline"
+        FEEDBACK_COLLECTOR[Feedback Collector<br/>Human Annotations]
+        OUTCOME_TRACKER[Outcome Tracker<br/>Violation Confirmation]
+        PERFORMANCE_MONITOR[Performance Monitor<br/>Accuracy Tracking]
+        RETRAIN_TRIGGER[Retrain Trigger<br/>Degradation Detection]
+        MODEL_UPDATER[Model Updater<br/>Incremental Learning]
+    end
+
+    subgraph "Model Serving Infrastructure"
+        MODEL_REGISTRY[Model Registry<br/>Version Management]
+        INFERENCE_ENGINE[Inference Engine<br/>TensorRT/ONNX]
+        BATCH_PROCESSOR[Batch Processor<br/>Bulk Predictions]
+        REAL_TIME_API[Real-time API<br/>Sub-100ms Latency]
+        PREDICTION_CACHE[Prediction Cache<br/>Redis/Memory]
+    end
+
+    subgraph "Tenant Isolation & Security"
+        TENANT_MODELS[Tenant-specific Models<br/>Isolated Training]
+        DIFFERENTIAL_PRIVACY[Differential Privacy<br/>Epsilon-delta Guarantees]
+        ENCRYPTED_PARAMETERS[Encrypted Parameters<br/>AES-256-GCM]
+        SECURE_AGGREGATION[Secure Aggregation<br/>Federated Learning]
+        ACCESS_CONTROL[Access Control<br/>RBAC + Audit]
+    end
+
+    subgraph "Performance Optimization"
+        GPU_ACCELERATION[GPU Acceleration<br/>CUDA/ROCm]
+        MODEL_QUANTIZATION[Model Quantization<br/>INT8/FP16]
+        BATCH_OPTIMIZATION[Batch Optimization<br/>Throughput Tuning]
+        CACHE_STRATEGIES[Cache Strategies<br/>Layer-wise Caching]
+        DISTRIBUTED_TRAINING[Distributed Training<br/>Multi-node/GPU]
+    end
+
+    subgraph "Monitoring & Observability"
+        MODEL_METRICS[Model Metrics<br/>Accuracy/Latency]
+        FEATURE_MONITORING[Feature Monitoring<br/>Data Quality]
+        DRIFT_MONITORING[Drift Monitoring<br/>Distribution Shift]
+        PREDICTION_TRACKING[Prediction Tracking<br/>Outcome Validation]
+        ALERT_SYSTEM[Alert System<br/>Performance Degradation]
+    end
+
+    %% Data Flow - Ingestion to Features
+    CONFIG_STREAM --> RAW_PROCESSOR
+    POLICY_FEED --> RAW_PROCESSOR
+    COMPLIANCE_EVENTS --> RAW_PROCESSOR
+    CONTEXT_DATA --> RAW_PROCESSOR
+    EXTERNAL_FEEDS --> RAW_PROCESSOR
+
+    RAW_PROCESSOR --> FEATURE_EXTRACTOR
+    FEATURE_EXTRACTOR --> TEMPORAL_FEATURES
+    FEATURE_EXTRACTOR --> CONTEXTUAL_FEATURES
+    TEMPORAL_FEATURES --> FEATURE_STORE
+    CONTEXTUAL_FEATURES --> FEATURE_STORE
+
+    %% Feature Store to ML Models
+    FEATURE_STORE --> LSTM_INPUT
+    FEATURE_STORE --> XGB_FEATURES
+    FEATURE_STORE --> ARIMA_MODEL
+    FEATURE_STORE --> PROPHET_MODEL
+
+    %% LSTM Pipeline
+    LSTM_INPUT --> LSTM_HIDDEN
+    LSTM_HIDDEN --> ATTENTION
+    ATTENTION --> LSTM_OUTPUT
+
+    %% Gradient Boosting Pipeline
+    XGB_FEATURES --> XGB_TREES
+    XGB_TREES --> XGB_PREDICTION
+
+    %% Ensemble Combination
+    LSTM_OUTPUT --> ENSEMBLE_WEIGHTS
+    XGB_PREDICTION --> ENSEMBLE_WEIGHTS
+    ARIMA_MODEL --> ENSEMBLE_WEIGHTS
+    PROPHET_MODEL --> ENSEMBLE_WEIGHTS
+
+    %% Anomaly Detection Pipeline
+    FEATURE_STORE --> ISOLATION_FOREST
+    FEATURE_STORE --> VAE_DETECTOR
+    FEATURE_STORE --> LSTM_ANOMALY
+    ISOLATION_FOREST --> ANOMALY_SCORES
+    VAE_DETECTOR --> ANOMALY_SCORES
+    LSTM_ANOMALY --> ANOMALY_SCORES
+
+    %% Drift Detection
+    CONFIG_STREAM --> BASELINE_MANAGER
+    BASELINE_MANAGER --> DRIFT_CALCULATOR
+    DRIFT_CALCULATOR --> SPC_MONITOR
+    DRIFT_CALCULATOR --> VAE_RECONSTRUCTION
+    SPC_MONITOR --> DRIFT_SCORES
+    VAE_RECONSTRUCTION --> DRIFT_SCORES
+
+    %% Prediction Generation
+    ENSEMBLE_WEIGHTS --> VIOLATION_PREDICTOR
+    ANOMALY_SCORES --> VIOLATION_PREDICTOR
+    DRIFT_SCORES --> VIOLATION_PREDICTOR
+    VIOLATION_PREDICTOR --> RISK_SCORER
+    RISK_SCORER --> CONFIDENCE_ESTIMATOR
+    CONFIDENCE_ESTIMATOR --> TIME_TO_VIOLATION
+    TIME_TO_VIOLATION --> PREDICTION_AGGREGATOR
+
+    %% Explainability
+    ENSEMBLE_WEIGHTS --> SHAP_ANALYZER
+    ATTENTION --> ATTENTION_VISUALIZER
+    XGB_TREES --> TREE_EXPLAINER
+    PREDICTION_AGGREGATOR --> LIME_PROCESSOR
+    SHAP_ANALYZER --> EXPLANATION_GENERATOR
+    ATTENTION_VISUALIZER --> EXPLANATION_GENERATOR
+    TREE_EXPLAINER --> EXPLANATION_GENERATOR
+    LIME_PROCESSOR --> EXPLANATION_GENERATOR
+
+    %% Continuous Learning
+    PREDICTION_AGGREGATOR --> FEEDBACK_COLLECTOR
+    FEEDBACK_COLLECTOR --> OUTCOME_TRACKER
+    OUTCOME_TRACKER --> PERFORMANCE_MONITOR
+    PERFORMANCE_MONITOR --> RETRAIN_TRIGGER
+    RETRAIN_TRIGGER --> MODEL_UPDATER
+    MODEL_UPDATER --> MODEL_REGISTRY
+
+    %% Model Serving
+    MODEL_REGISTRY --> INFERENCE_ENGINE
+    INFERENCE_ENGINE --> BATCH_PROCESSOR
+    INFERENCE_ENGINE --> REAL_TIME_API
+    REAL_TIME_API --> PREDICTION_CACHE
+
+    %% Tenant Isolation
+    MODEL_REGISTRY --> TENANT_MODELS
+    FEATURE_STORE --> DIFFERENTIAL_PRIVACY
+    MODEL_REGISTRY --> ENCRYPTED_PARAMETERS
+    DISTRIBUTED_TRAINING --> SECURE_AGGREGATION
+    INFERENCE_ENGINE --> ACCESS_CONTROL
+
+    %% Performance Optimization
+    INFERENCE_ENGINE --> GPU_ACCELERATION
+    MODEL_REGISTRY --> MODEL_QUANTIZATION
+    REAL_TIME_API --> BATCH_OPTIMIZATION
+    PREDICTION_CACHE --> CACHE_STRATEGIES
+    MODEL_UPDATER --> DISTRIBUTED_TRAINING
+
+    %% Monitoring
+    INFERENCE_ENGINE --> MODEL_METRICS
+    FEATURE_STORE --> FEATURE_MONITORING
+    DRIFT_SCORES --> DRIFT_MONITORING
+    PREDICTION_AGGREGATOR --> PREDICTION_TRACKING
+    PERFORMANCE_MONITOR --> ALERT_SYSTEM
+
+    %% Styling
+    classDef ingestion fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef features fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef ml fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef drift fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef prediction fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef explainability fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef learning fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef serving fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef security fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef performance fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef monitoring fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+
+    class CONFIG_STREAM,POLICY_FEED,COMPLIANCE_EVENTS,CONTEXT_DATA,EXTERNAL_FEEDS ingestion
+    class RAW_PROCESSOR,FEATURE_EXTRACTOR,TEMPORAL_FEATURES,CONTEXTUAL_FEATURES,FEATURE_STORE features
+    class LSTM_INPUT,LSTM_HIDDEN,ATTENTION,LSTM_OUTPUT,XGB_FEATURES,XGB_TREES,XGB_PREDICTION,ARIMA_MODEL,PROPHET_MODEL,ENSEMBLE_WEIGHTS,ISOLATION_FOREST,VAE_DETECTOR,LSTM_ANOMALY,ANOMALY_SCORES ml
+    class BASELINE_MANAGER,DRIFT_CALCULATOR,SPC_MONITOR,VAE_RECONSTRUCTION,DRIFT_SCORES drift
+    class VIOLATION_PREDICTOR,RISK_SCORER,CONFIDENCE_ESTIMATOR,TIME_TO_VIOLATION,PREDICTION_AGGREGATOR prediction
+    class SHAP_ANALYZER,ATTENTION_VISUALIZER,TREE_EXPLAINER,LIME_PROCESSOR,EXPLANATION_GENERATOR explainability
+    class FEEDBACK_COLLECTOR,OUTCOME_TRACKER,PERFORMANCE_MONITOR,RETRAIN_TRIGGER,MODEL_UPDATER learning
+    class MODEL_REGISTRY,INFERENCE_ENGINE,BATCH_PROCESSOR,REAL_TIME_API,PREDICTION_CACHE serving
+    class TENANT_MODELS,DIFFERENTIAL_PRIVACY,ENCRYPTED_PARAMETERS,SECURE_AGGREGATION,ACCESS_CONTROL security
+    class GPU_ACCELERATION,MODEL_QUANTIZATION,BATCH_OPTIMIZATION,CACHE_STRATEGIES,DISTRIBUTED_TRAINING performance
+    class MODEL_METRICS,FEATURE_MONITORING,DRIFT_MONITORING,PREDICTION_TRACKING,ALERT_SYSTEM monitoring

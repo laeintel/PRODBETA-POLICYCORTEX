@@ -19,7 +19,7 @@ Open a terminal and run:
 az login
 
 # 2. Set your subscription
-az account set --subscription 205b477d-17e7-4b3b-92c1-32cf02626b78
+az account set --subscription 6dc7cfa2-0332-4740-98b6-bac9f1a23de9
 
 # 3. Restart the Azure server
 cd backend
@@ -30,7 +30,7 @@ node azure-real-server.js
 
 1. Create service principal:
 ```bash
-az ad sp create-for-rbac --name "PolicyCortex-Dev" --role "Reader" --scopes "/subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78"
+az ad sp create-for-rbac --name "PolicyCortex-Dev" --role "Reader" --scopes "/subscriptions/6dc7cfa2-0332-4740-98b6-bac9f1a23de9"
 ```
 
 2. Copy the output and add to `backend/.env`:
@@ -97,7 +97,7 @@ http://localhost:3000
 ```bash
 # Copy-paste these commands:
 az login
-az account set --subscription 205b477d-17e7-4b3b-92c1-32cf02626b78
+az account set --subscription 6dc7cfa2-0332-4740-98b6-bac9f1a23de9
 cd backend && node azure-real-server.js
 ```
 

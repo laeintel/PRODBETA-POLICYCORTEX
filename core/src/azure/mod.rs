@@ -43,9 +43,9 @@ impl AzureConfig {
     pub fn from_env() -> Result<Self> {
         Ok(Self {
             subscription_id: std::env::var("AZURE_SUBSCRIPTION_ID")
-                .unwrap_or_else(|_| "205b477d-17e7-4b3b-92c1-32cf02626b78".to_string()),
+                .unwrap_or_else(|_| "6dc7cfa2-0332-4740-98b6-bac9f1a23de9".to_string()),
             tenant_id: std::env::var("AZURE_TENANT_ID")
-                .unwrap_or_else(|_| "9ef5b184-d371-462a-bc75-5024ce8baff7".to_string()),
+                .unwrap_or_else(|_| "e1f3e196-aa55-4709-9c55-0e334c0b444f".to_string()),
             client_id: std::env::var("AZURE_CLIENT_ID").ok(),
             client_secret: std::env::var("AZURE_CLIENT_SECRET").ok(),
             resource_graph_endpoint: "https://management.azure.com".to_string(),

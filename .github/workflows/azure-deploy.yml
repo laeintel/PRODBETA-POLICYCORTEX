@@ -213,7 +213,7 @@ jobs:
               },
               {
                 "name": "AZURE_SUBSCRIPTION_ID",
-                "value": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+                "value": "6dc7cfa2-0332-4740-98b6-bac9f1a23de9",
                 "slotSetting": false
               },
               {

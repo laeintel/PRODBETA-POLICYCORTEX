@@ -407,7 +407,7 @@ jobs:
           echo "Logging into Azure Container Registry"
           # Ensure we're using the correct subscription for dev ACR
           echo "Setting subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crcortexdev3p0bata
 
@@ -494,7 +494,7 @@ jobs:
           echo "Logging into Azure Container Registry"
           # Ensure we're using the correct subscription for dev ACR
           echo "Setting subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crcortexdev3p0bata
 
@@ -581,7 +581,7 @@ jobs:
           echo "Logging into Azure Container Registry"
           # Ensure we're using the correct subscription for dev ACR
           echo "Setting subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing with current"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription, continuing with current"
           # Use dev registry for now, can be made conditional based on environment
           az acr login --name crcortexdev3p0bata
 
@@ -718,7 +718,7 @@ jobs:
       - name: Set Azure Subscription
         run: |
           echo "Setting Azure subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription, continuing"
           echo "Current subscription:"
           az account show --query "[name, id]" -o tsv
 
@@ -911,7 +911,7 @@ jobs:
       - name: Set Azure Subscription
         run: |
           echo "Setting Azure subscription to PolicyCortex Dev"
-          az account set --subscription "205b477d-17e7-4b3b-92c1-32cf02626b78" || echo "Failed to set subscription, continuing"
+          az account set --subscription "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" || echo "Failed to set subscription, continuing"
           echo "Current subscription:"
           az account show --query "[name, id]" -o tsv
 

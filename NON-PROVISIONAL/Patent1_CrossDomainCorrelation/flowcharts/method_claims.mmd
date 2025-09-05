@@ -1,0 +1,10 @@
+flowchart TD
+  A[Ingest multi-domain data] --> B[Construct typed governance graph]
+  B --> C[Compute embeddings via message passing]
+  C --> D[Run correlation algorithms]
+  D --> E[Generate explainable results]
+  E --> F[Persist tenant-scoped evidence]
+  F --> G[Expose via API / insights]
+  G --> H[What-if simulate and validate]
+  H --> I[Orchestrate safe remediation]
+

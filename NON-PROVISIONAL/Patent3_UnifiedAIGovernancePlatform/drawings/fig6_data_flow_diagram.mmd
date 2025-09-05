@@ -1,0 +1,245 @@
+graph TB
+    subgraph "Data Sources"
+        AZURE_RESOURCES[Azure Resources<br/>ARM API]
+        AWS_RESOURCES[AWS Resources<br/>CloudFormation API]
+        GCP_RESOURCES[GCP Resources<br/>Cloud Resource Manager]
+        POLICY_STORE[Policy Store<br/>Governance Rules]
+        USER_REQUESTS[User Requests<br/>API/UI Commands]
+        EXTERNAL_EVENTS[External Events<br/>Webhooks/Integrations]
+    end
+
+    subgraph "Data Ingestion Layer"
+        API_GATEWAY[API Gateway<br/>Request Routing]
+        EVENT_COLLECTOR[Event Collector<br/>Real-time Streaming]
+        BATCH_INGESTION[Batch Ingestion<br/>Scheduled Polling]
+        WEBHOOK_HANDLER[Webhook Handler<br/>External Events]
+        DATA_VALIDATOR[Data Validator<br/>Schema Validation]
+    end
+
+    subgraph "Tenant Context Processing"
+        TENANT_EXTRACTOR[Tenant Extractor<br/>JWT Processing]
+        CONTEXT_ENRICHER[Context Enricher<br/>Metadata Addition]
+        TENANT_ROUTER[Tenant Router<br/>Data Segregation]
+        PERMISSION_FILTER[Permission Filter<br/>Access Control]
+        TENANT_CONTEXT[Tenant Context<br/>Isolated Pipeline]
+    end
+
+    subgraph "Data Transformation Pipeline"
+        NORMALIZER[Data Normalizer<br/>Format Standardization]
+        ENRICHER[Data Enricher<br/>Context Addition]
+        CLASSIFIER[Data Classifier<br/>Type Detection]
+        CORRELATION_MAPPER[Correlation Mapper<br/>Relationship Building]
+        FEATURE_EXTRACTOR[Feature Extractor<br/>ML Preparation]
+    end
+
+    subgraph "Event Sourcing Layer"
+        COMMAND_PROCESSOR[Command Processor<br/>Action Validation]
+        EVENT_GENERATOR[Event Generator<br/>Immutable Records]
+        EVENT_STORE[EventStore<br/>Append-only Log]
+        EVENT_STREAM[Event Stream<br/>Real-time Flow]
+        SNAPSHOT_MANAGER[Snapshot Manager<br/>State Optimization]
+    end
+
+    subgraph "AI Processing Engine"
+        ML_FEATURE_PREP[ML Feature Prep<br/>Model Input]
+        AI_INFERENCE[AI Inference<br/>Predictions/Recommendations]
+        CORRELATION_ANALYSIS[Correlation Analysis<br/>Cross-domain Patterns]
+        RISK_ASSESSMENT[Risk Assessment<br/>Impact Scoring]
+        RECOMMENDATION_ENGINE[Recommendation Engine<br/>Action Suggestions]
+    end
+
+    subgraph "Cross-Domain Correlation"
+        GRAPH_BUILDER[Graph Builder<br/>Relationship Mapping]
+        PATTERN_DETECTOR[Pattern Detector<br/>Anomaly Identification]
+        IMPACT_ANALYZER[Impact Analyzer<br/>Blast Radius Calculation]
+        DEPENDENCY_TRACKER[Dependency Tracker<br/>Resource Relationships]
+        CORRELATION_STORE[Correlation Store<br/>Pattern Cache]
+    end
+
+    subgraph "Action Orchestration"
+        DRY_RUN_PROCESSOR[Dry-run Processor<br/>Simulation Engine]
+        APPROVAL_WORKFLOW[Approval Workflow<br/>Multi-stage Authorization]
+        ACTION_EXECUTOR[Action Executor<br/>Safe Automation]
+        ROLLBACK_MANAGER[Rollback Manager<br/>Recovery Orchestration]
+        EVIDENCE_GENERATOR[Evidence Generator<br/>Audit Trail Creation]
+    end
+
+    subgraph "Storage Layer"
+        POSTGRES_STORE[PostgreSQL<br/>Transactional Data]
+        REDIS_CACHE[Redis Cache<br/>High-speed Access]
+        CLICKHOUSE_ANALYTICS[ClickHouse<br/>Time-series Analytics]
+        OBJECT_STORAGE[Object Storage<br/>Evidence & Artifacts]
+        GRAPH_DATABASE[Graph Database<br/>Relationships]
+    end
+
+    subgraph "Real-time Streaming"
+        SSE_BROADCASTER[SSE Broadcaster<br/>Live Updates]
+        WEBSOCKET_MANAGER[WebSocket Manager<br/>Bi-directional Comms]
+        NOTIFICATION_SERVICE[Notification Service<br/>Alert Distribution]
+        METRICS_COLLECTOR[Metrics Collector<br/>Real-time KPIs]
+        DASHBOARD_UPDATER[Dashboard Updater<br/>Live Visualizations]
+    end
+
+    subgraph "Output Channels"
+        REST_API[REST API<br/>Synchronous Responses]
+        GRAPHQL_API[GraphQL API<br/>Flexible Queries]
+        SSE_STREAMS[SSE Streams<br/>Live Updates]
+        WEBHOOK_DELIVERY[Webhook Delivery<br/>External Notifications]
+        AUDIT_REPORTS[Audit Reports<br/>Compliance Evidence]
+    end
+
+    subgraph "Edge Processing"
+        EDGE_CACHE[Edge Cache<br/>Distributed Data]
+        EDGE_INFERENCE[Edge Inference<br/>Local Processing]
+        EDGE_SYNC[Edge Sync<br/>Data Consistency]
+        EDGE_METRICS[Edge Metrics<br/>Performance Data]
+        EDGE_AGGREGATION[Edge Aggregation<br/>Result Combination]
+    end
+
+    %% Data Ingestion Flow
+    AZURE_RESOURCES --> EVENT_COLLECTOR
+    AWS_RESOURCES --> BATCH_INGESTION
+    GCP_RESOURCES --> BATCH_INGESTION
+    POLICY_STORE --> API_GATEWAY
+    USER_REQUESTS --> API_GATEWAY
+    EXTERNAL_EVENTS --> WEBHOOK_HANDLER
+
+    API_GATEWAY --> DATA_VALIDATOR
+    EVENT_COLLECTOR --> DATA_VALIDATOR
+    BATCH_INGESTION --> DATA_VALIDATOR
+    WEBHOOK_HANDLER --> DATA_VALIDATOR
+
+    %% Tenant Processing
+    DATA_VALIDATOR --> TENANT_EXTRACTOR
+    TENANT_EXTRACTOR --> CONTEXT_ENRICHER
+    CONTEXT_ENRICHER --> TENANT_ROUTER
+    TENANT_ROUTER --> PERMISSION_FILTER
+    PERMISSION_FILTER --> TENANT_CONTEXT
+
+    %% Data Transformation
+    TENANT_CONTEXT --> NORMALIZER
+    NORMALIZER --> ENRICHER
+    ENRICHER --> CLASSIFIER
+    CLASSIFIER --> CORRELATION_MAPPER
+    CORRELATION_MAPPER --> FEATURE_EXTRACTOR
+
+    %% Event Sourcing
+    TENANT_CONTEXT --> COMMAND_PROCESSOR
+    COMMAND_PROCESSOR --> EVENT_GENERATOR
+    EVENT_GENERATOR --> EVENT_STORE
+    EVENT_STORE --> EVENT_STREAM
+    EVENT_STORE --> SNAPSHOT_MANAGER
+
+    %% AI Processing
+    FEATURE_EXTRACTOR --> ML_FEATURE_PREP
+    ML_FEATURE_PREP --> AI_INFERENCE
+    AI_INFERENCE --> CORRELATION_ANALYSIS
+    CORRELATION_ANALYSIS --> RISK_ASSESSMENT
+    RISK_ASSESSMENT --> RECOMMENDATION_ENGINE
+
+    %% Cross-Domain Correlation
+    CORRELATION_MAPPER --> GRAPH_BUILDER
+    GRAPH_BUILDER --> PATTERN_DETECTOR
+    PATTERN_DETECTOR --> IMPACT_ANALYZER
+    IMPACT_ANALYZER --> DEPENDENCY_TRACKER
+    DEPENDENCY_TRACKER --> CORRELATION_STORE
+
+    %% Action Orchestration
+    RECOMMENDATION_ENGINE --> DRY_RUN_PROCESSOR
+    DRY_RUN_PROCESSOR --> APPROVAL_WORKFLOW
+    APPROVAL_WORKFLOW --> ACTION_EXECUTOR
+    ACTION_EXECUTOR --> ROLLBACK_MANAGER
+    ROLLBACK_MANAGER --> EVIDENCE_GENERATOR
+
+    %% Storage Operations
+    ENRICHER --> POSTGRES_STORE
+    AI_INFERENCE --> REDIS_CACHE
+    METRICS_COLLECTOR --> CLICKHOUSE_ANALYTICS
+    EVIDENCE_GENERATOR --> OBJECT_STORAGE
+    CORRELATION_STORE --> GRAPH_DATABASE
+
+    %% Real-time Streaming
+    EVENT_STREAM --> SSE_BROADCASTER
+    EVENT_STREAM --> WEBSOCKET_MANAGER
+    RISK_ASSESSMENT --> NOTIFICATION_SERVICE
+    AI_INFERENCE --> METRICS_COLLECTOR
+    METRICS_COLLECTOR --> DASHBOARD_UPDATER
+
+    %% Output Generation
+    POSTGRES_STORE --> REST_API
+    CORRELATION_STORE --> GRAPHQL_API
+    SSE_BROADCASTER --> SSE_STREAMS
+    NOTIFICATION_SERVICE --> WEBHOOK_DELIVERY
+    EVIDENCE_GENERATOR --> AUDIT_REPORTS
+
+    %% Edge Processing
+    REDIS_CACHE --> EDGE_CACHE
+    AI_INFERENCE --> EDGE_INFERENCE
+    EDGE_INFERENCE --> EDGE_SYNC
+    EDGE_SYNC --> EDGE_METRICS
+    EDGE_METRICS --> EDGE_AGGREGATION
+
+    %% Read Operations (Queries)
+    REST_API -.->|Query| POSTGRES_STORE
+    GRAPHQL_API -.->|Query| CORRELATION_STORE
+    REST_API -.->|Cache Hit| REDIS_CACHE
+    GRAPHQL_API -.->|Analytics| CLICKHOUSE_ANALYTICS
+
+    %% Feedback Loops
+    ACTION_EXECUTOR -.->|Results| EVENT_GENERATOR
+    ROLLBACK_MANAGER -.->|Status| EVENT_GENERATOR
+    EDGE_AGGREGATION -.->|Sync| REDIS_CACHE
+    AUDIT_REPORTS -.->|Feedback| AI_INFERENCE
+
+    %% Example Data Flow: Policy Violation Detection
+    subgraph "Example: Policy Violation Flow"
+        RESOURCE_CHANGE[Resource Change:
+        Storage Account Config]
+        
+        TENANT_ISOLATION[Tenant Isolation:
+        Extract tenant context]
+        
+        CORRELATION_CHECK[Correlation:
+        Check policy compliance]
+        
+        AI_PREDICTION[AI Prediction:
+        Violation probability]
+        
+        LIVE_ALERT[Live Alert:
+        Real-time notification]
+    end
+
+    EVENT_COLLECTOR --> RESOURCE_CHANGE
+    RESOURCE_CHANGE --> TENANT_ISOLATION
+    TENANT_ISOLATION --> CORRELATION_CHECK
+    CORRELATION_CHECK --> AI_PREDICTION
+    AI_PREDICTION --> LIVE_ALERT
+
+    %% Styling
+    classDef sources fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef ingestion fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef tenant fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef transformation fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef eventsourcing fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef ai fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef correlation fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef orchestration fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef storage fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef streaming fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef output fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef edge fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    classDef example fill:#f9fbe7,stroke:#827717,stroke-width:2px
+
+    class AZURE_RESOURCES,AWS_RESOURCES,GCP_RESOURCES,POLICY_STORE,USER_REQUESTS,EXTERNAL_EVENTS sources
+    class API_GATEWAY,EVENT_COLLECTOR,BATCH_INGESTION,WEBHOOK_HANDLER,DATA_VALIDATOR ingestion
+    class TENANT_EXTRACTOR,CONTEXT_ENRICHER,TENANT_ROUTER,PERMISSION_FILTER,TENANT_CONTEXT tenant
+    class NORMALIZER,ENRICHER,CLASSIFIER,CORRELATION_MAPPER,FEATURE_EXTRACTOR transformation
+    class COMMAND_PROCESSOR,EVENT_GENERATOR,EVENT_STORE,EVENT_STREAM,SNAPSHOT_MANAGER eventsourcing
+    class ML_FEATURE_PREP,AI_INFERENCE,CORRELATION_ANALYSIS,RISK_ASSESSMENT,RECOMMENDATION_ENGINE ai
+    class GRAPH_BUILDER,PATTERN_DETECTOR,IMPACT_ANALYZER,DEPENDENCY_TRACKER,CORRELATION_STORE correlation
+    class DRY_RUN_PROCESSOR,APPROVAL_WORKFLOW,ACTION_EXECUTOR,ROLLBACK_MANAGER,EVIDENCE_GENERATOR orchestration
+    class POSTGRES_STORE,REDIS_CACHE,CLICKHOUSE_ANALYTICS,OBJECT_STORAGE,GRAPH_DATABASE storage
+    class SSE_BROADCASTER,WEBSOCKET_MANAGER,NOTIFICATION_SERVICE,METRICS_COLLECTOR,DASHBOARD_UPDATER streaming
+    class REST_API,GRAPHQL_API,SSE_STREAMS,WEBHOOK_DELIVERY,AUDIT_REPORTS output
+    class EDGE_CACHE,EDGE_INFERENCE,EDGE_SYNC,EDGE_METRICS,EDGE_AGGREGATION edge
+    class RESOURCE_CHANGE,TENANT_ISOLATION,CORRELATION_CHECK,AI_PREDICTION,LIVE_ALERT example

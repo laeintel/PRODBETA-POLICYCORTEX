@@ -91,10 +91,10 @@ call :log_info "Setting up repository secrets..."
 
 REM Azure Authentication - Base Configuration
 call :log_info "Setting Azure authentication secrets..."
-gh secret set AZURE_TENANT_ID --body "9ef5b184-d371-462a-bc75-5024ce8baff7" --repo %REPO%
-gh secret set AZURE_CLIENT_ID_DEV --body "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c" --repo %REPO%
+gh secret set AZURE_TENANT_ID --body "e1f3e196-aa55-4709-9c55-0e334c0b444f" --repo %REPO%
+gh secret set AZURE_CLIENT_ID_DEV --body "232c44f7-d0cf-4825-a9b5-beba9f587ffb" --repo %REPO%
 gh secret set AZURE_CLIENT_ID_PROD --body "8f0208b4-82b1-47cd-b02a-75e2f7afddb5" --repo %REPO%
-gh secret set AZURE_SUBSCRIPTION_ID_DEV --body "205b477d-17e7-4b3b-92c1-32cf02626b78" --repo %REPO%
+gh secret set AZURE_SUBSCRIPTION_ID_DEV --body "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" --repo %REPO%
 gh secret set AZURE_SUBSCRIPTION_ID_PROD --body "9f16cc88-89ce-49ba-a96d-308ed3169595" --repo %REPO%
 
 REM Container Registry & AKS
@@ -146,8 +146,8 @@ call :log_info "Setting up environment-specific secrets..."
 
 REM Development environment secrets
 call :log_info "Setting development environment secrets..."
-gh secret set AZURE_CLIENT_ID --body "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c" --env development --repo %REPO%
-gh secret set AZURE_SUBSCRIPTION_ID --body "205b477d-17e7-4b3b-92c1-32cf02626b78" --env development --repo %REPO%
+gh secret set AZURE_CLIENT_ID --body "232c44f7-d0cf-4825-a9b5-beba9f587ffb" --env development --repo %REPO%
+gh secret set AZURE_SUBSCRIPTION_ID --body "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" --env development --repo %REPO%
 gh secret set ACR_NAME --body "crpcxdev" --env development --repo %REPO%
 gh secret set AKS_CLUSTER_NAME --body "pcx42178531-aks" --env development --repo %REPO%
 gh secret set AKS_RESOURCE_GROUP --body "pcx42178531-rg" --env development --repo %REPO%
@@ -166,8 +166,8 @@ gh secret set DATABASE_PASSWORD --body "!DB_PASSWORD_PROD!" --env production --r
 
 REM Staging environment secrets
 call :log_info "Setting staging environment secrets..."
-gh secret set AZURE_CLIENT_ID --body "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c" --env staging --repo %REPO%
-gh secret set AZURE_SUBSCRIPTION_ID --body "205b477d-17e7-4b3b-92c1-32cf02626b78" --env staging --repo %REPO%
+gh secret set AZURE_CLIENT_ID --body "232c44f7-d0cf-4825-a9b5-beba9f587ffb" --env staging --repo %REPO%
+gh secret set AZURE_SUBSCRIPTION_ID --body "6dc7cfa2-0332-4740-98b6-bac9f1a23de9" --env staging --repo %REPO%
 gh secret set ACR_NAME --body "crpcxdev" --env staging --repo %REPO%
 gh secret set AKS_CLUSTER_NAME --body "pcx42178531-aks" --env staging --repo %REPO%
 gh secret set AKS_RESOURCE_GROUP --body "pcx42178531-rg" --env staging --repo %REPO%

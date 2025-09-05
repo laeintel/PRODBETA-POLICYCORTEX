@@ -262,8 +262,8 @@ Create `frontend/.env.local`:
 ```env
 NEXT_PUBLIC_DEMO_MODE=true  # Bypass authentication for development
 NEXT_PUBLIC_API_URL=http://localhost:8080
-NEXT_PUBLIC_AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c
-NEXT_PUBLIC_AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7
+NEXT_PUBLIC_AZURE_CLIENT_ID=232c44f7-d0cf-4825-a9b5-beba9f587ffb
+NEXT_PUBLIC_AZURE_TENANT_ID=e1f3e196-aa55-4709-9c55-0e334c0b444f
 ```
 
 ## Current Status & Known Issues

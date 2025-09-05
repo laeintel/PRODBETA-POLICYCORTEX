@@ -1,0 +1,240 @@
+graph TB
+    subgraph "Configuration Sources"
+        AZURE_CONFIG[Azure Resource<br/>Configuration]
+        AWS_CONFIG[AWS Resource<br/>Configuration]
+        GCP_CONFIG[GCP Resource<br/>Configuration]
+        POLICY_CONFIG[Policy<br/>Definitions]
+        COMPLIANCE_STATE[Compliance<br/>State History]
+    end
+
+    subgraph "Baseline Establishment"
+        CONFIG_COLLECTOR[Configuration<br/>Collector]
+        BASELINE_ANALYZER[Baseline Analyzer<br/>Critical Properties]
+        COMPLIANCE_EVALUATOR[Compliance<br/>Evaluator]
+        BASELINE_STORE[Baseline Store<br/>Reference Configs]
+        PROPERTY_CLASSIFIER[Property Classifier<br/>Criticality Scoring]
+    end
+
+    subgraph "Real-time Drift Detection"
+        CHANGE_DETECTOR[Change Detector<br/>Real-time Monitoring]
+        DRIFT_CALCULATOR[Drift Calculator<br/>Mathematical Analysis]
+        PROPERTY_ANALYZER[Property Analyzer<br/>Individual Changes]
+        VELOCITY_CALCULATOR[Velocity Calculator<br/>Rate of Change]
+        IMPACT_ASSESSOR[Impact Assessor<br/>Business Context]
+    end
+
+    subgraph "Statistical Process Control"
+        CONTROL_CHARTS[Control Charts<br/>X-bar, R-charts]
+        MOVING_AVERAGE[Moving Average<br/>Trend Smoothing]
+        EXPONENTIAL_SMOOTHING[Exponential Smoothing<br/>Weighted History]
+        CONTROL_LIMITS[Control Limits<br/>3-sigma Rules]
+        RUN_RULES[Run Rules<br/>Pattern Detection]
+    end
+
+    subgraph "Variational Autoencoder"
+        VAE_ENCODER[VAE Encoder<br/>Configuration → Latent]
+        LATENT_SPACE[Latent Space<br/>128-dimensional]
+        VAE_DECODER[VAE Decoder<br/>Latent → Configuration]
+        RECONSTRUCTION_ERROR[Reconstruction Error<br/>Anomaly Scoring]
+        UNCERTAINTY_ESTIMATION[Uncertainty Estimation<br/>Bayesian Inference]
+    end
+
+    subgraph "Drift Scoring Engine"
+        WEIGHTED_SCORER[Weighted Scorer<br/>Property Importance]
+        TEMPORAL_SCORER[Temporal Scorer<br/>Time-based Patterns]
+        ENSEMBLE_SCORER[Ensemble Scorer<br/>Multiple Methods]
+        THRESHOLD_MANAGER[Threshold Manager<br/>Dynamic Limits]
+        CONFIDENCE_CALCULATOR[Confidence Calculator<br/>Score Reliability]
+    end
+
+    subgraph "Drift Classification"
+        CRITICALITY_ASSESSOR[Criticality Assessor<br/>Impact Classification]
+        DRIFT_CATEGORIZER[Drift Categorizer<br/>Type Classification]
+        BUSINESS_IMPACT[Business Impact<br/>Calculator]
+        URGENCY_SCORER[Urgency Scorer<br/>Priority Assignment]
+        RECOMMENDATION_ENGINE[Recommendation Engine<br/>Action Suggestions]
+    end
+
+    subgraph "Time-to-Violation Prediction"
+        EXTRAPOLATION_ENGINE[Extrapolation Engine<br/>Linear/Exponential]
+        TREND_ANALYZER[Trend Analyzer<br/>Pattern Recognition]
+        VELOCITY_PREDICTOR[Velocity Predictor<br/>Acceleration Analysis]
+        THRESHOLD_PREDICTOR[Threshold Predictor<br/>Breach Timing]
+        CONFIDENCE_BOUNDS[Confidence Bounds<br/>Prediction Intervals]
+    end
+
+    subgraph "Pattern Learning"
+        HISTORICAL_ANALYZER[Historical Analyzer<br/>Past Drift Patterns]
+        PATTERN_LIBRARY[Pattern Library<br/>Known Drift Types]
+        SIMILARITY_MATCHER[Similarity Matcher<br/>Pattern Recognition]
+        LEARNING_ENGINE[Learning Engine<br/>Pattern Updates]
+        PREDICTION_REFINER[Prediction Refiner<br/>Accuracy Improvement]
+    end
+
+    subgraph "Multi-dimensional Analysis"
+        CORRELATION_DETECTOR[Correlation Detector<br/>Property Relationships]
+        DEPENDENCY_MAPPER[Dependency Mapper<br/>Resource Dependencies]
+        CASCADE_ANALYZER[Cascade Analyzer<br/>Propagation Effects]
+        CLUSTER_DETECTOR[Cluster Detector<br/>Grouped Changes]
+        ROOT_CAUSE_ANALYZER[Root Cause Analyzer<br/>Origin Detection]
+    end
+
+    subgraph "Alerting & Notifications"
+        ALERT_GENERATOR[Alert Generator<br/>Threshold Breaches]
+        NOTIFICATION_ROUTER[Notification Router<br/>Channel Selection]
+        ESCALATION_MANAGER[Escalation Manager<br/>Severity-based Routing]
+        ALERT_DEDUPLICATION[Alert Deduplication<br/>Noise Reduction]
+        ALERT_CORRELATION[Alert Correlation<br/>Related Events]
+    end
+
+    subgraph "Remediation Suggestions"
+        ACTION_GENERATOR[Action Generator<br/>Fix Recommendations]
+        TEMPLATE_MATCHER[Template Matcher<br/>Solution Patterns]
+        SUCCESS_PREDICTOR[Success Predictor<br/>Fix Probability]
+        RISK_ASSESSOR[Risk Assessor<br/>Change Impact]
+        AUTOMATION_SCORER[Automation Scorer<br/>Safety Assessment]
+    end
+
+    %% Configuration Ingestion
+    AZURE_CONFIG --> CONFIG_COLLECTOR
+    AWS_CONFIG --> CONFIG_COLLECTOR
+    GCP_CONFIG --> CONFIG_COLLECTOR
+    POLICY_CONFIG --> CONFIG_COLLECTOR
+    COMPLIANCE_STATE --> CONFIG_COLLECTOR
+
+    %% Baseline Establishment
+    CONFIG_COLLECTOR --> BASELINE_ANALYZER
+    BASELINE_ANALYZER --> COMPLIANCE_EVALUATOR
+    COMPLIANCE_EVALUATOR --> BASELINE_STORE
+    BASELINE_ANALYZER --> PROPERTY_CLASSIFIER
+    PROPERTY_CLASSIFIER --> BASELINE_STORE
+
+    %% Real-time Detection
+    CONFIG_COLLECTOR --> CHANGE_DETECTOR
+    CHANGE_DETECTOR --> DRIFT_CALCULATOR
+    DRIFT_CALCULATOR --> PROPERTY_ANALYZER
+    PROPERTY_ANALYZER --> VELOCITY_CALCULATOR
+    VELOCITY_CALCULATOR --> IMPACT_ASSESSOR
+
+    BASELINE_STORE --> DRIFT_CALCULATOR
+
+    %% Statistical Process Control
+    PROPERTY_ANALYZER --> CONTROL_CHARTS
+    CONTROL_CHARTS --> MOVING_AVERAGE
+    MOVING_AVERAGE --> EXPONENTIAL_SMOOTHING
+    EXPONENTIAL_SMOOTHING --> CONTROL_LIMITS
+    CONTROL_LIMITS --> RUN_RULES
+
+    %% VAE Processing
+    CONFIG_COLLECTOR --> VAE_ENCODER
+    VAE_ENCODER --> LATENT_SPACE
+    LATENT_SPACE --> VAE_DECODER
+    VAE_DECODER --> RECONSTRUCTION_ERROR
+    RECONSTRUCTION_ERROR --> UNCERTAINTY_ESTIMATION
+
+    %% Drift Scoring
+    PROPERTY_ANALYZER --> WEIGHTED_SCORER
+    VELOCITY_CALCULATOR --> TEMPORAL_SCORER
+    RUN_RULES --> ENSEMBLE_SCORER
+    RECONSTRUCTION_ERROR --> ENSEMBLE_SCORER
+    WEIGHTED_SCORER --> ENSEMBLE_SCORER
+    TEMPORAL_SCORER --> ENSEMBLE_SCORER
+    ENSEMBLE_SCORER --> THRESHOLD_MANAGER
+    THRESHOLD_MANAGER --> CONFIDENCE_CALCULATOR
+
+    %% Drift Classification
+    ENSEMBLE_SCORER --> CRITICALITY_ASSESSOR
+    CRITICALITY_ASSESSOR --> DRIFT_CATEGORIZER
+    DRIFT_CATEGORIZER --> BUSINESS_IMPACT
+    BUSINESS_IMPACT --> URGENCY_SCORER
+    URGENCY_SCORER --> RECOMMENDATION_ENGINE
+
+    %% Time-to-Violation Prediction
+    VELOCITY_CALCULATOR --> EXTRAPOLATION_ENGINE
+    EXTRAPOLATION_ENGINE --> TREND_ANALYZER
+    TREND_ANALYZER --> VELOCITY_PREDICTOR
+    VELOCITY_PREDICTOR --> THRESHOLD_PREDICTOR
+    THRESHOLD_PREDICTOR --> CONFIDENCE_BOUNDS
+
+    %% Pattern Learning
+    DRIFT_CATEGORIZER --> HISTORICAL_ANALYZER
+    HISTORICAL_ANALYZER --> PATTERN_LIBRARY
+    PATTERN_LIBRARY --> SIMILARITY_MATCHER
+    SIMILARITY_MATCHER --> LEARNING_ENGINE
+    LEARNING_ENGINE --> PREDICTION_REFINER
+    PREDICTION_REFINER --> THRESHOLD_PREDICTOR
+
+    %% Multi-dimensional Analysis
+    PROPERTY_ANALYZER --> CORRELATION_DETECTOR
+    CORRELATION_DETECTOR --> DEPENDENCY_MAPPER
+    DEPENDENCY_MAPPER --> CASCADE_ANALYZER
+    CASCADE_ANALYZER --> CLUSTER_DETECTOR
+    CLUSTER_DETECTOR --> ROOT_CAUSE_ANALYZER
+
+    %% Alerting
+    URGENCY_SCORER --> ALERT_GENERATOR
+    ALERT_GENERATOR --> NOTIFICATION_ROUTER
+    NOTIFICATION_ROUTER --> ESCALATION_MANAGER
+    ESCALATION_MANAGER --> ALERT_DEDUPLICATION
+    ALERT_DEDUPLICATION --> ALERT_CORRELATION
+
+    %% Remediation
+    RECOMMENDATION_ENGINE --> ACTION_GENERATOR
+    ACTION_GENERATOR --> TEMPLATE_MATCHER
+    TEMPLATE_MATCHER --> SUCCESS_PREDICTOR
+    SUCCESS_PREDICTOR --> RISK_ASSESSOR
+    RISK_ASSESSOR --> AUTOMATION_SCORER
+
+    %% Example Drift Detection Flow
+    subgraph "Example: Encryption Drift"
+        ENCRYPTION_CHANGE[Configuration Change:
+        encryption.status: 
+        Enabled → Disabled]
+        
+        DRIFT_SCORE_CALC[Drift Score:
+        Property Weight: 0.9
+        Change Impact: 1.0
+        Final Score: 0.9]
+        
+        CRITICAL_ALERT[Critical Alert:
+        Security Risk
+        Time to Violation: 2h]
+        
+        AUTO_REMEDIATION[Remediation:
+        ARM Template
+        Success Prob: 98%]
+    end
+
+    CHANGE_DETECTOR --> ENCRYPTION_CHANGE
+    ENCRYPTION_CHANGE --> DRIFT_SCORE_CALC
+    DRIFT_SCORE_CALC --> CRITICAL_ALERT
+    CRITICAL_ALERT --> AUTO_REMEDIATION
+
+    %% Styling
+    classDef sources fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef baseline fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef detection fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef spc fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef vae fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef scoring fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef classification fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef prediction fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef learning fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef multidim fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef alerting fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef remediation fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    classDef example fill:#f9fbe7,stroke:#827717,stroke-width:2px
+
+    class AZURE_CONFIG,AWS_CONFIG,GCP_CONFIG,POLICY_CONFIG,COMPLIANCE_STATE sources
+    class CONFIG_COLLECTOR,BASELINE_ANALYZER,COMPLIANCE_EVALUATOR,BASELINE_STORE,PROPERTY_CLASSIFIER baseline
+    class CHANGE_DETECTOR,DRIFT_CALCULATOR,PROPERTY_ANALYZER,VELOCITY_CALCULATOR,IMPACT_ASSESSOR detection
+    class CONTROL_CHARTS,MOVING_AVERAGE,EXPONENTIAL_SMOOTHING,CONTROL_LIMITS,RUN_RULES spc
+    class VAE_ENCODER,LATENT_SPACE,VAE_DECODER,RECONSTRUCTION_ERROR,UNCERTAINTY_ESTIMATION vae
+    class WEIGHTED_SCORER,TEMPORAL_SCORER,ENSEMBLE_SCORER,THRESHOLD_MANAGER,CONFIDENCE_CALCULATOR scoring
+    class CRITICALITY_ASSESSOR,DRIFT_CATEGORIZER,BUSINESS_IMPACT,URGENCY_SCORER,RECOMMENDATION_ENGINE classification
+    class EXTRAPOLATION_ENGINE,TREND_ANALYZER,VELOCITY_PREDICTOR,THRESHOLD_PREDICTOR,CONFIDENCE_BOUNDS prediction
+    class HISTORICAL_ANALYZER,PATTERN_LIBRARY,SIMILARITY_MATCHER,LEARNING_ENGINE,PREDICTION_REFINER learning
+    class CORRELATION_DETECTOR,DEPENDENCY_MAPPER,CASCADE_ANALYZER,CLUSTER_DETECTOR,ROOT_CAUSE_ANALYZER multidim
+    class ALERT_GENERATOR,NOTIFICATION_ROUTER,ESCALATION_MANAGER,ALERT_DEDUPLICATION,ALERT_CORRELATION alerting
+    class ACTION_GENERATOR,TEMPLATE_MATCHER,SUCCESS_PREDICTOR,RISK_ASSESSOR,AUTOMATION_SCORER remediation
+    class ENCRYPTION_CHANGE,DRIFT_SCORE_CALC,CRITICAL_ALERT,AUTO_REMEDIATION example

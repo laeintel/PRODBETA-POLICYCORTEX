@@ -1,0 +1,9 @@
+flowchart LR
+  SM[[Istio Mesh]]
+  SVC1[Core API]
+  SVC2[AI Service]
+  DB[(PostgreSQL RLS)]
+  SM --- SVC1
+  SM --- SVC2
+  SVC1 -- tenant_ctx --> DB
+  SVC2 -- tenant_ctx --> DB

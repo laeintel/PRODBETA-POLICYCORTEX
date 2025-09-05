@@ -39,7 +39,7 @@ class AzureRealDataCollector:
             # fallback to CLI
             self.credential = AzureCliCredential()
         # Subscription from env or fallback to hardcoded id (avoid hardcoding in production)
-        self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID", "205b477d-17e7-4b3b-92c1-32cf02626b78")
+        self.subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID", "6dc7cfa2-0332-4740-98b6-bac9f1a23de9")
         
         # Initialize Azure clients
         self.resource_client = ResourceManagementClient(self.credential, self.subscription_id)

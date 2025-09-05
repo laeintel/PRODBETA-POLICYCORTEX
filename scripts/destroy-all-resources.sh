@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 ENVIRONMENT="${1:-dev}"
-SUBSCRIPTION_ID="${2:-205b477d-17e7-4b3b-92c1-32cf02626b78}"
+SUBSCRIPTION_ID="${2:-6dc7cfa2-0332-4740-98b6-bac9f1a23de9}"
 
 echo -e "${RED}========================================${NC}"
 echo -e "${RED}⚠️  COMPLETE RESOURCE DESTRUCTION  ⚠️${NC}"

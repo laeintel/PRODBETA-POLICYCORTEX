@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant U as User
+  participant API as Conversation API
+  participant NL as NL Engine
+  participant PT as Policy Translator
+  U->>API: POST /api/v1/conversation
+  API->>NL: classify intent, extract entities
+  NL-->>API: intent, entities, context
+  API->>PT: translate to policy (if requested)
+  PT-->>API: policy JSON + simulation plan
+  API-->>U: response + suggested actions

@@ -1,0 +1,514 @@
+# PolicyCortex • Agent Baseline Spec (12-Factor, Context-Engineered)
+# File: .pcx/agent-baseline.yaml
+# Version: 1.0.0
+# Owner: Leo (PolicyCortex)
+# Purpose: One-file blueprint for a continuous builder agent to implement PolicyCortex end-to-end.
+# Moats: PREVENT (predict→auto-fix), PROVE (tamper-evident evidence), PAYBACK (Governance P&L)
+# Design doctrine: Spec-first • Tools as typed contracts • Explicit control-flow • Subagents for isolation
+
+meta:
+  project: PolicyCortex
+  pillars: [PREVENT, PROVE, PAYBACK]
+  date: 2025-09-05
+  license: "© PolicyCortex. All rights reserved."
+  repo_assumptions:
+    frontend: "frontend/"
+    services: "services/"
+    packages: "packages/"
+    tests: "tests/"
+    graphs: "graphs/"
+    prompts: "prompts/"
+    contracts: "contracts/"
+  coding_standards:
+    lang_frontend: "Next.js/TypeScript"
+    lang_backend: "Rust (core), TypeScript (gateway), Python (ML)"
+    style: "deterministic reducers, typed contracts, fail-fast errors"
+  non_goals:
+    - "No silent mocks in real mode"
+    - "No LLM-controlled control-flow; LLM fills parameters only"
+
+environments:
+  default_mode: "real"
+  modes:
+    real:
+      NEXT_PUBLIC_DEMO_MODE: "false"
+      USE_REAL_DATA: "true"
+    demo:
+      NEXT_PUBLIC_DEMO_MODE: "true"
+      USE_REAL_DATA: "false"
+  secrets_required:
+    - AZURE_TENANT_ID
+    - AZURE_SUBSCRIPTION_ID
+    - AZURE_CLIENT_ID
+    - AZURE_CLIENT_SECRET
+    - DATABASE_URL
+    - REDIS_URL
+    - GITHUB_APP_ID
+    - GITHUB_INSTALLATION_ID
+    - GITHUB_PRIVATE_KEY # PEM
+    - JWT_ISSUER
+    - JWT_AUDIENCE
+    - JWT_JWKS_URL
+  public_env:
+    NEXT_PUBLIC_REAL_API_BASE: "http://localhost:8084"
+    NEXT_PUBLIC_APP_NAME: "PolicyCortex"
+    NEXT_PUBLIC_SHORT_CODE: "PCX"
+
+runtime_topology:
+  ports:
+    gateway: 8000
+    core_api: 8081
+    ml_predict: 8001
+    ml_explain: 8002
+    agents_azure: 8084
+    postgres: 5432
+    redis: 6379
+  health:
+    paths:
+      - "/health"
+      - "/healthz"
+    subchecks: [db_ok, cache_ok, provider_ok]
+  services:
+    gateway:
+      path: "services/gateway"
+      responsibilities: ["authz", "rate-limit", "routing", "tool-contract enforcement"]
+    core_api:
+      path: "services/core"
+      responsibilities: ["CQRS", "events", "evidence", "pnl aggregation"]
+    agents_azure:
+      path: "services/agents/azure"
+      responsibilities: ["ResourceGraph", "PolicyInsights", "CostManagement", "Predictions API surface"]
+    ml_predict:
+      path: "services/ml/predict"
+      responsibilities: ["inference: risk/compliance/cost predictions"]
+    ml_explain:
+      path: "services/ml/explain"
+      responsibilities: ["explanations: SHAP/top-features"]
+  data_stores:
+    postgres:
+      schemas: ["events", "policies", "runs", "artifacts", "pnl"]
+      durability: "RPO<=5m, RTO<=15m"
+    redis:
+      uses: ["azure_api_cache", "sessions", "rate_limiter"]
+      ttl_defaults:
+        azure_read_cache_sec: 600
+        session_sec: 3600
+        ratelimit_window_sec: 60
+
+security:
+  authn:
+    provider: "Azure AD (Entra ID)"
+    flow: "OIDC/JWT"
+    enforce_on: ["gateway", "core_api", "agents_azure"]
+  authz:
+    model: "RBAC"
+    roles:
+      - name: "admin"
+        groups_hint: ["PCX-Admins"]
+      - name: "auditor"
+        groups_hint: ["PCX-Auditors"]
+      - name: "operator"
+        groups_hint: ["PCX-Operators"]
+    default_deny: true
+  api_security:
+    csp: "default-src 'self'; connect-src 'self' https:;"
+    input_validation: "JSONSchema at gateway"
+    secrets_management: "Env + KeyVault (CI/CD pulls via OIDC workload identity)"
+  crypto:
+    at_rest: "AES-256 (PG, Blob)"; in_transit: "TLS 1.2+"
+    evidence_hash: "SHA-256"
+    merkle_tree: "binary Merkle; root rotated daily (UTC)"
+
+observability:
+  tracing: "W3C traceparent via gateway → all services"
+  metrics:
+    - name: "pcx_mttp_hours"     # mean-time-to-prevention
+      target: "<=24"
+    - name: "pcx_prevention_rate"
+      target: ">=0.35"
+    - name: "pcx_cost_savings_90d"
+      target: ">=0.08_of_cloud_spend"
+  logging:
+    level: "info"
+    pii_redaction: true
+  alerting:
+    channels: ["Email", "Teams/Slack"]
+    critical_conditions:
+      - "auth_fail_rate > 0.05"
+      - "db_error_rate > 0.02"
+      - "azure_api_quota_near_limit"
+
+performance_hygiene:
+  caching:
+    layer: "Redis"
+    keys: "tenant:scope:query_hash"
+  rate_limiting:
+    type: "sliding_window"
+    limits:
+      user_per_min: 120
+      tenant_per_min: 1200
+  pooling:
+    db_pool_size: 20
+    http_pooling: true
+
+context_engineering:
+  principles: ["write", "select", "compress", "isolate"]
+  scratchpads: "persisted in postgres (runs.scratchpad_ref)"
+  retrieval:
+    selectors:
+      - name: "policy_slice"
+        source: "db:policies"
+      - name: "resource_graph"
+        source: "cloud:resource-graph"
+      - name: "cost_slice"
+        source: "azure:cost-management"
+  compaction:
+    token_threshold_ratio: 0.8
+    techniques: ["summarize", "collapse-logs", "prune-old"]
+    retention_window_msgs: 8
+  subagents:
+    - name: "correlation"
+      allowed_tools: ["get_resources", "get_policies"]
+      output: "distilled graph deltas"
+    - name: "cost_diff"
+      allowed_tools: ["get_costs"]
+      output: "policy-level $ deltas"
+    - name: "diagnostics"
+      allowed_tools: ["get_logs"]
+      output: "≤2KB root-cause brief"
+    - name: "evidence"
+      allowed_tools: ["put_artifact", "verify_chain"]
+      output: "ArtifactRef + proof"
+    - name: "scm_pr"
+      allowed_tools: ["open_pr"]
+      output: "prUrl"
+
+twelve_factors:
+  - id: 1
+    name: "Natural language → tool calls"
+    rule: "All intents compile to typed tool calls (no free-form RPC)."
+    design: "Gateway enforces JSONSchema; unknown intents → 501."
+    patent_hooks: ["Conversational governance intelligence"]
+    acceptance:
+      - "100% tool calls validate against schema"
+      - "Audit logs include schema hash"
+
+  - id: 2
+    name: "Own your prompts"
+    rule: "Prompts versioned in repo; parameterized per tenant/control family."
+    design: "prompts/{predict,explain,merge_guard}.md with {{vars}}"
+    patent_hooks: ["Predictive compliance prompt packs"]
+    acceptance: ["Every LLM call logs prompt file path + git hash"]
+
+  - id: 3
+    name: "Own your context window"
+    rule: "Apply write/select/compress/isolate rigor; subagents handle noisy work."
+    design: "Sidecars for logs, cost, correlation; compaction at 80% tokens."
+    patent_hooks: ["Cross-cloud correlation subagent"]
+    acceptance: ["Main thread token share ≤25% on long runs"]
+
+  - id: 4
+    name: "Tools = structured outputs"
+    rule: "Each tool returns typed delta + artifact refs."
+    design: "Discriminated unions in packages/types; artifact immutability."
+    patent_hooks: ["Tamper-evident evidence"]
+    acceptance: ["Offline verification of any export succeeds"]
+
+  - id: 5
+    name: "Unify execution & business state"
+    rule: "Agent events are the business events."
+    design: "CQRS stream: PolicyEvaluated→PredictionIssued→FixPrOpened→ChainVerified→PnlForecasted"
+    acceptance: ["Event replay rebuilds Executive 1:1"]
+
+  - id: 6
+    name: "Launch/Pause/Resume"
+    rule: "Simple lifecycle APIs; idempotent resume."
+    design: "runs table; checkpoints; dedupe on PRs/artifacts."
+    acceptance: ["Kill/resume without duplicate side-effects"]
+
+  - id: 7
+    name: "Contact humans via tools"
+    rule: "Human approvals return ApprovalToken used in flow."
+    design: "Teams/Slack/email adapters return signed tokens"
+    acceptance: ["High-risk policies require ApprovalToken"]
+
+  - id: 8
+    name: "Own your control flow"
+    rule: "Explicit DAGs; LLM provides parameters only."
+    design: "graphs/{prevent,prove,payback}.dag.json"
+    patent_hooks: ["What-if simulator in PREVENT"]
+    acceptance: ["Same intent → same path deterministically"]
+
+  - id: 9
+    name: "Compact errors into context"
+    rule: "Summarize to ≤2KB diagnostics; raw logs off-thread."
+    acceptance: ["Every failure yields structured diagnosis"]
+
+  - id: 10
+    name: "Small, focused agents"
+    rule: "Isolate AzurePolicy, Cost/P&L, Correlation, Evidence, PR/SCM."
+    acceptance: ["Parallel reads; single-writer on PRs/evidence"]
+
+  - id: 11
+    name: "Trigger from anywhere"
+    rule: "CLI/UI/Webhook/ITSM/Slack map to same tool contracts."
+    acceptance: ["Zero prompt variance across channels"]
+
+  - id: 12
+    name: "Stateless reducer"
+    rule: "LLM steps are pure functions: (intent, selected_context) → delta"
+    acceptance: ["Determinism tests >99.9% for non-generative steps"]
+
+tools_contracts:
+  # JSONSchemas in YAML form to keep single-file
+  - name: "predict"
+    version: "1.0"
+    input_schema:
+      type: object
+      required: [tenantId, scope, horizonDays]
+      properties:
+        tenantId: { type: string }
+        scope: { type: string, description: "subscription|rg|tags:..." }
+        horizonDays: { type: integer, minimum: 1, maximum: 180 }
+    output_schema:
+      type: object
+      required: [predictions, explanations]
+      properties:
+        predictions:
+          type: array
+          items:
+            type: object
+            required: [ruleId, etaDays, confidence, repo, fixBranch]
+            properties:
+              ruleId: { type: string }
+              etaDays: { type: number }
+              confidence: { type: number }
+              repo: { type: string }
+              fixBranch: { type: string }
+        explanations:
+          type: object
+          properties:
+            top:
+              type: array
+              items:
+                type: array
+                items: [{type: string}, {type: number}]
+  - name: "verify_chain"
+    version: "1.0"
+    input_schema:
+      type: object
+      required: [docHash]
+      properties:
+        docHash: { type: string, pattern: "^[a-f0-9]{64}$" }
+    output_schema:
+      type: object
+      required: [verified, merkleRoot, proof]
+      properties:
+        verified: { type: boolean }
+        merkleRoot: { type: string }
+        proof: { type: array, items: { type: string } }
+  - name: "export_evidence"
+    version: "1.0"
+    input_schema:
+      type: object
+      required: [eventId]
+      properties:
+        eventId: { type: string }
+    output_schema:
+      type: object
+      required: [artifactRef, contentHash, signer]
+      properties:
+        artifactRef: { type: string }
+        contentHash: { type: string, pattern: "^[a-f0-9]{64}$" }
+        signer: { type: string }
+  - name: "create_fix_pr"
+    version: "1.0"
+    input_schema:
+      type: object
+      required: [repo, base, head, title, patchRef]
+      properties:
+        repo: { type: string, description: "owner/name" }
+        base: { type: string }
+        head: { type: string }
+        title: { type: string }
+        patchRef: { type: string }
+    output_schema:
+      type: object
+      required: [prUrl]
+      properties:
+        prUrl: { type: string, format: uri }
+  - name: "pnl_forecast"
+    version: "1.0"
+    input_schema:
+      type: object
+      required: [policies]
+      properties:
+        policies:
+          type: array
+          items: { type: string }
+    output_schema:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [policy, savingsMTD, forecast90d]
+            properties:
+              policy: { type: string }
+              savingsMTD: { type: number }
+              forecast90d: { type: number }
+
+flows:
+  prevent:
+    nodes: [discover, predict, simulate, propose_fix, open_pr, verify, pnl_update]
+    edges:
+      - [discover, predict]
+      - [predict, simulate]
+      - [simulate, propose_fix]
+      - [propose_fix, open_pr]
+      - [open_pr, verify]
+      - [verify, pnl_update]
+    simulator:
+      outputs: ["incident_reduction_pct", "cost_delta_usd"]
+      gate: "human_approval if riskClass>=HIGH"
+  prove:
+    nodes: [collect, hash, merkle, export, verify]
+    edges:
+      - [collect, hash]
+      - [hash, merkle]
+      - [merkle, export]
+      - [export, verify]
+    export_fields: [contentHash, merkleRoot, signer, timestamp]
+  payback:
+    nodes: [ingest_costs, attribute_policies, forecast_90d, publish_pnl]
+    edges:
+      - [ingest_costs, attribute_policies]
+      - [attribute_policies, forecast_90d]
+      - [forecast_90d, publish_pnl]
+
+ui_contract:
+  executive:
+    kpis: ["pcx_prevention_rate", "pcx_mttp_hours", "pcx_cost_savings_90d"]
+    primary_actions: ["Verify Chain", "Create Fix PR", "Export Evidence", "Governance P&L"]
+  predictions_page:
+    must_show: ["ETA", "confidence", "top_features(≤5)", "Create Fix PR"]
+  audit_page:
+    must_show: ["integrity chip", "View Merkle proof", "Verify on chain", "Export Evidence"]
+  pnl_page:
+    columns: ["Policy", "Savings MTD", "90-day Forecast"]
+
+omnichannel:
+  triggers:
+    slack:
+      slash_commands:
+        - "/pcx predict {scope} {horizon}"
+        - "/pcx verify {hash}"
+        - "/pcx pnl {policy}"
+      mapping: "commands → tool calls; no direct prompts"
+    itsm_webhook:
+      events: ["incident_created", "change_requested"]
+      mapping: "events → runs API with typed payloads"
+  runs_api:
+    endpoints:
+      - "POST /runs"
+      - "POST /runs/:id/pause"
+      - "POST /runs/:id/resume"
+
+evidence:
+  artifact_store: "blob://pcx-artifacts"
+  immutability: true
+  verify_endpoint: "/api/v1/verify/{hash}"
+  offline_verifier:
+    language: "Node or Rust"
+    input: "artifact.json + merkleRoot"
+    output: "{verified:boolean}"
+
+ci_cd:
+  workflows:
+    - name: "build_and_push"
+      builds: ["gateway", "core_api", "agents_azure", "ml_predict", "ml_explain", "frontend"]
+      registry: "ACR"
+    - name: "deploy_demo_env"
+      requires: ["build_and_push"]
+      steps: ["infra_apply", "secrets_sync", "rolling_deploy", "smoke_tests"]
+  required_secrets_ref: "*environments.secrets_required"
+  smoke_tests:
+    - "Executive redirect present; no horizontal scroll"
+    - "Audit shows Chain integrity + proof viewer"
+    - "Predictions show top features + PR link"
+    - "PnL returns policy $ deltas"
+
+acceptance_tests:
+  playwright:
+    files:
+      - "tests/acceptance/flows.spec.ts"
+    scenarios:
+      - "NL→predict→PR URL opens"
+      - "export_evidence is verifiable offline"
+      - "PnL table shows MTD & 90-day forecast"
+
+definition_of_done:
+  - "All tools behind gateway schemas; unknown intent=501"
+  - "Auth enforced end-to-end (no bypass routes)"
+  - "Real mode default; mocks disabled"
+  - "Event replay reproduces Executive"
+  - "Offline verification succeeds on any export"
+  - "Smoke + acceptance tests pass in CI"
+  - "SLO dashboards green for 24h"
+
+builder_tasks:
+  ordered:
+    - id: T01_env_mode_switch
+      desc: "Default to real mode; wire NEXT_PUBLIC_REAL_API_BASE and USE_REAL_DATA"
+      acceptance: ["frontend & services read vars; demo routes return 404 in real"]
+    - id: T02_contracts_schemas
+      desc: "Create tool JSONSchemas (predict, verify_chain, export_evidence, create_fix_pr, pnl_forecast)"
+      acceptance: ["Gateway validates 100%"]
+    - id: T03_types_reducers
+      desc: "Add discriminated unions (artifacts/events) + deterministic reducers"
+      acceptance: ["Determinism test >99.9%"]
+    - id: T04_events_cqrs
+      desc: "Implement event store & replay"
+      acceptance: ["Executive rebuilds via replay"]
+    - id: T05_evidence_merkle
+      desc: "Implement SHA-256 Merkle and /verify"
+      acceptance: ["Offline verifier green"]
+    - id: T06_predictions_explain
+      desc: "Render top-5 features; PR link from payload"
+      acceptance: ["Clickable compare URL"]
+    - id: T07_pnl_forecast_api_ui
+      desc: "Per-policy MTD + 90-day forecast"
+      acceptance: ["PnL table on UI"]
+    - id: T08_auth_rbac
+      desc: "OIDC/JWT, group→role mapping, default deny"
+      acceptance: ["Unauthorized blocked; roles enforced"]
+    - id: T09_perf_cache_rate_pool
+      desc: "Redis cache, rate-limiter, DB & HTTP pools"
+      acceptance: ["95p latency < 400ms"]
+    - id: T10_observability_slo
+      desc: "Tracing, metrics, alerts"
+      acceptance: ["Dashboards + alerts wired"]
+    - id: T11_omnichannel_triggers
+      desc: "Slack/ITSM → tool calls"
+      acceptance: ["Zero prompt variance"]
+    - id: T12_cicd_smoke
+      desc: "Build/push/deploy + smoke"
+      acceptance: ["Green pipeline; demo env live"]
+
+patent_enablement_map:
+  predictive_compliance_engine:
+    anchors: ["predict tool", "simulate node", "PR guard prompts"]
+  cross_domain_governance_correlation:
+    anchors: ["correlation subagent", "resource_graph selector"]
+  conversational_governance_intelligence:
+    anchors: ["omnichannel triggers", "typed tools", "prompt packs"]
+  tamper_evident_audit:
+    anchors: ["merkle tree", "export_evidence", "offline verifier"]
+
+notes_for_humans:
+  - "Do NOT let the LLM choose graph paths; it supplies parameters only."
+  - "If Azure quotas approach limits, throttle at gateway and extend cache TTL."
+  - "When in doubt: favor evidence production and replayability over UI polish."
+

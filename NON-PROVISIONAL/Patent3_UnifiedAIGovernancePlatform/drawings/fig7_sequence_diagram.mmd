@@ -1,0 +1,174 @@
+sequenceDiagram
+    participant User as User/External System
+    participant Gateway as API Gateway
+    participant Auth as Authentication
+    participant API as Core API (Rust)
+    participant AI as AI Engine (Python)
+    participant Correlator as Correlation Engine
+    participant Orchestrator as Action Orchestrator
+    participant EventStore as EventStore
+    participant Cache as Redis Cache
+    participant DB as PostgreSQL
+    participant SSE as SSE Broadcaster
+    participant Mesh as Service Mesh
+
+    Note over User,Mesh: Unified AI-Driven Governance Action Sequence
+
+    %% Authentication and Request Processing
+    User->>+Gateway: POST /api/v1/actions (governance action)
+    Gateway->>+Auth: Validate JWT token
+    Auth->>Auth: Extract tenant context
+    Auth-->>-Gateway: Tenant + user context
+    Gateway->>+API: Forward request with tenant context
+    
+    %% Tenant Isolation and Validation
+    API->>API: Set tenant context (RLS)
+    API->>+DB: Query tenant permissions
+    DB-->>-API: Authorization result
+    API->>API: Validate action against policies
+    
+    %% Dry-Run Phase
+    Note over API,EventStore: Safety-First Dry-Run Processing
+    API->>+Orchestrator: Initiate dry-run
+    Orchestrator->>+AI: Analyze action impact
+    AI->>AI: Risk assessment & ML prediction
+    AI-->>-Orchestrator: Risk score + recommendations
+    
+    Orchestrator->>+Correlator: Cross-domain impact analysis
+    Correlator->>+DB: Query resource dependencies
+    DB-->>-Correlator: Dependency graph
+    Correlator->>Correlator: Calculate blast radius
+    Correlator-->>-Orchestrator: Impact analysis
+    
+    Orchestrator->>+EventStore: Create dry-run events
+    EventStore->>EventStore: Append immutable events
+    EventStore-->>-Orchestrator: Event IDs
+    
+    Orchestrator->>Orchestrator: Generate execution plan
+    Orchestrator-->>-API: Dry-run results
+    
+    %% Real-time Updates
+    API->>+SSE: Broadcast dry-run completion
+    SSE->>User: Server-sent event (dry-run results)
+    SSE-->>-API: Acknowledgment
+    
+    %% Approval Workflow
+    Note over API,EventStore: Multi-Stage Approval Process
+    API->>+Orchestrator: Request approval workflow
+    Orchestrator->>Orchestrator: Evaluate approval requirements
+    
+    alt High-Risk Action Requires Manual Approval
+        Orchestrator->>+EventStore: Log approval request
+        EventStore-->>-Orchestrator: Request logged
+        Orchestrator-->>API: Approval required
+        API-->>-Gateway: 202 Accepted (pending approval)
+        Gateway-->>-User: Approval required response
+        
+        Note over User: User provides approval through UI/API
+        User->>+Gateway: POST /api/v1/actions/{id}/approve
+        Gateway->>+API: Approval granted
+        API->>+Orchestrator: Execute approved action
+        
+    else Low-Risk Action Auto-Approved
+        Orchestrator->>+EventStore: Log auto-approval
+        EventStore-->>-Orchestrator: Approval logged
+        Orchestrator->>Orchestrator: Proceed to execution
+    end
+    
+    %% Action Execution Phase
+    Note over Orchestrator,Mesh: Service Mesh Secured Execution
+    Orchestrator->>+Mesh: Secure service-to-service call
+    Mesh->>Mesh: mTLS authentication
+    Mesh->>+AI: Execute governance action
+    AI->>AI: Apply configuration changes
+    AI-->>-Mesh: Execution result
+    Mesh-->>-Orchestrator: Secure response
+    
+    %% State Management and Caching
+    Orchestrator->>+Cache: Update action status cache
+    Cache-->>-Orchestrator: Cache updated
+    
+    Orchestrator->>+EventStore: Log execution events
+    EventStore->>EventStore: Append execution events
+    EventStore-->>-Orchestrator: Events persisted
+    
+    %% Cross-Domain Correlation Update
+    Orchestrator->>+Correlator: Update correlation graph
+    Correlator->>+DB: Update resource relationships
+    DB-->>-Correlator: Relationships updated
+    Correlator-->>-Orchestrator: Graph updated
+    
+    %% Evidence Generation
+    Note over Orchestrator,EventStore: Immutable Evidence Creation
+    Orchestrator->>+EventStore: Generate compliance evidence
+    EventStore->>EventStore: Create evidence events
+    EventStore-->>-Orchestrator: Evidence generated
+    
+    %% Real-time Progress Updates
+    Orchestrator->>+SSE: Broadcast execution progress
+    SSE->>User: Live execution updates
+    SSE-->>-Orchestrator: Updates delivered
+    
+    %% Completion and Response
+    Orchestrator-->>-API: Action completed successfully
+    API->>+DB: Update final state (tenant-scoped)
+    DB-->>-API: State updated
+    
+    API->>+Cache: Cache final results
+    Cache-->>-API: Results cached
+    
+    API-->>-Gateway: 200 OK (action completed)
+    Gateway-->>-User: Success response with evidence
+    
+    %% Final Event Broadcast
+    API->>+SSE: Broadcast completion event
+    SSE->>User: Final completion notification
+    SSE-->>-API: Notification delivered
+    
+    %% Error Handling and Rollback (Alternative Flow)
+    Note over API,EventStore: Error Handling with Automatic Rollback
+    
+    rect rgb(255, 240, 240)
+        Note over Orchestrator: If execution fails
+        Orchestrator->>+EventStore: Log execution failure
+        EventStore-->>-Orchestrator: Failure logged
+        
+        Orchestrator->>+AI: Initiate rollback sequence
+        AI->>AI: Restore previous state
+        AI-->>-Orchestrator: Rollback completed
+        
+        Orchestrator->>+EventStore: Log rollback events
+        EventStore-->>-Orchestrator: Rollback evidence
+        
+        Orchestrator->>+SSE: Broadcast rollback completion
+        SSE->>User: Rollback notification
+        SSE-->>-Orchestrator: Notification sent
+    end
+    
+    %% GraphQL Federation Query (Parallel Flow)
+    Note over User,DB: GraphQL Federation Query Example
+    
+    rect rgb(240, 255, 240)
+        User->>+Gateway: GraphQL query (policies + predictions)
+        Gateway->>+API: Route to GraphQL gateway
+        API->>+AI: Fetch ML predictions
+        API->>+DB: Fetch policy data (tenant-scoped)
+        
+        par Parallel Data Fetching
+            AI-->>API: Predictions data
+        and
+            DB-->>API: Policy data
+        end
+        
+        API->>API: Compose federated response
+        API-->>-Gateway: Unified GraphQL response
+        Gateway-->>-User: Combined data response
+    end
+    
+    %% Performance Metrics
+    Note over Gateway,Cache: Performance Characteristics
+    Note right of Gateway: API Response: <300ms p99
+    Note right of EventStore: Event Persistence: <50ms
+    Note right of Cache: Cache Hit Ratio: >95%
+    Note right of SSE: Real-time Latency: <200ms
+    Note right of Mesh: mTLS Overhead: <10ms

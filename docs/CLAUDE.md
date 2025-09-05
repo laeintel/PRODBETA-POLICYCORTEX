@@ -129,9 +129,9 @@ redis-cli -h localhost -p 6379
 
 ## Azure Integration
 The platform requires Azure credentials configured via environment variables:
-- `AZURE_SUBSCRIPTION_ID=205b477d-17e7-4b3b-92c1-32cf02626b78`
-- `AZURE_TENANT_ID=9ef5b184-d371-462a-bc75-5024ce8baff7`
-- `AZURE_CLIENT_ID=1ecc95d1-e5bb-43e2-9324-30a17cb6b01c`
+- `AZURE_SUBSCRIPTION_ID=6dc7cfa2-0332-4740-98b6-bac9f1a23de9`
+- `AZURE_TENANT_ID=e1f3e196-aa55-4709-9c55-0e334c0b444f`
+- `AZURE_CLIENT_ID=232c44f7-d0cf-4825-a9b5-beba9f587ffb`
 
 Use managed identity authentication in production. The system includes both sync (azure_client.rs) and async (azure_client_async.rs) Azure clients for optimal performance.
 

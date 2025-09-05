@@ -1,0 +1,183 @@
+graph TB
+    subgraph "Client Layer"
+        WEB[Web Dashboard<br/>Next.js/React]
+        CLI[CLI Tools]
+        API_CLIENT[External APIs]
+        MOBILE[Mobile Apps]
+    end
+
+    subgraph "API Gateway & Load Balancer"
+        ALB[Azure App Gateway<br/>+ WAF]
+        ISTIO_GW[Istio Gateway<br/>mTLS Termination]
+    end
+
+    subgraph "Unified API Layer - Rust/Axum"
+        CORE_API[Core API Server<br/>Sub-millisecond Response]
+        AUTH[Authentication<br/>JWT/OIDC]
+        AUTHZ[Authorization<br/>RBAC + ABAC]
+        RATE_LIMIT[Rate Limiting<br/>& Throttling]
+        TENANT_CTX[Tenant Context<br/>Extraction]
+    end
+
+    subgraph "Service Mesh - Istio"
+        MESH_CTRL[Istio Control Plane<br/>Pilot + Citadel]
+        ENVOY[Envoy Sidecars<br/>mTLS + Circuit Breaker]
+        TELEMETRY[Telemetry Collection<br/>Metrics + Traces]
+    end
+
+    subgraph "GraphQL Federation Gateway"
+        APOLLO_GW[Apollo Federation<br/>Gateway]
+        SCHEMA_REGISTRY[Schema Registry<br/>& Composition]
+        QUERY_PLANNER[Query Planner<br/>& Optimizer]
+        SUBSCRIPTION[WebSocket<br/>Subscriptions]
+    end
+
+    subgraph "AI Recommendation Engine"
+        DOMAIN_AI[Domain Expert AI<br/>Python/FastAPI]
+        ML_MODELS[ML Models<br/>Rust Inference]
+        EXPLAINABLE[Explainable AI<br/>SHAP Analysis]
+        CONTINUOUS[Continuous Learning<br/>Feedback Loop]
+    end
+
+    subgraph "Cross-Domain Correlation Engine"
+        GRAPH_ENGINE[Resource Graph<br/>Neo4j/PostgreSQL]
+        PATTERN_DETECT[Pattern Detection<br/>ML Algorithms]
+        IMPACT_ANALYSIS[Impact Analysis<br/>Blast Radius Calc]
+        RISK_PROPAGATION[Risk Propagation<br/>Model]
+    end
+
+    subgraph "Safety-First Action Orchestrator"
+        DRY_RUN[Dry-Run Engine<br/>Simulation]
+        APPROVAL[Approval Workflow<br/>Multi-Stage]
+        BLAST_RADIUS[Blast Radius<br/>Calculator]
+        ROLLBACK[Rollback Manager<br/>Automated Recovery]
+        EVIDENCE_GEN[Evidence Generator<br/>Audit Trail]
+    end
+
+    subgraph "Event Sourcing & Streaming"
+        EVENT_STORE[EventStore<br/>Immutable Events]
+        EVENT_BUS[NATS/Kafka<br/>Message Streaming]
+        SSE[Server-Sent Events<br/>Real-time Updates]
+        EVENT_REPLAY[Event Replay<br/>State Reconstruction]
+    end
+
+    subgraph "Multi-Tenant Storage Layer"
+        POSTGRES[PostgreSQL<br/>Row-Level Security]
+        REDIS[Redis/DragonflyDB<br/>High-Performance Cache]
+        CLICKHOUSE[ClickHouse<br/>Time-Series Analytics]
+        OBJECT_STORE[Object Storage<br/>Evidence & Artifacts]
+        FEATURE_STORE[Feature Store<br/>ML Features]
+    end
+
+    subgraph "Edge Computing - WASM"
+        EDGE_FUNCTIONS[Edge Functions<br/>Cloudflare Workers]
+        POLICY_EVAL[Policy Evaluation<br/>Sub-ms Latency]
+        COMPLIANCE_CHECK[Compliance Check<br/>Edge Inference]
+        ANOMALY_DETECT[Anomaly Detection<br/>Local Processing]
+    end
+
+    subgraph "Container Orchestration"
+        AKS[Azure Kubernetes<br/>Service]
+        OPERATORS[Custom Operators<br/>Governance CRDs]
+        HPA[Horizontal Pod<br/>Autoscaler]
+        NETWORK_POLICY[Network Policies<br/>Tenant Isolation]
+    end
+
+    subgraph "Observability & Monitoring"
+        PROMETHEUS[Prometheus<br/>Metrics Collection]
+        GRAFANA[Grafana<br/>Visualization]
+        JAEGER[Jaeger<br/>Distributed Tracing]
+        ELK[ELK Stack<br/>Log Aggregation]
+        ALERTS[AlertManager<br/>Intelligent Alerting]
+    end
+
+    %% Client to Gateway
+    WEB --> ALB
+    CLI --> ALB
+    API_CLIENT --> ALB
+    MOBILE --> ALB
+
+    %% Gateway to API
+    ALB --> ISTIO_GW
+    ISTIO_GW --> CORE_API
+
+    %% API Layer Components
+    CORE_API --> AUTH
+    CORE_API --> AUTHZ
+    CORE_API --> RATE_LIMIT
+    CORE_API --> TENANT_CTX
+
+    %% Service Mesh Integration
+    CORE_API -.-> ENVOY
+    MESH_CTRL --> ENVOY
+    ENVOY --> TELEMETRY
+
+    %% GraphQL Federation
+    CORE_API --> APOLLO_GW
+    APOLLO_GW --> SCHEMA_REGISTRY
+    APOLLO_GW --> QUERY_PLANNER
+    APOLLO_GW --> SUBSCRIPTION
+
+    %% AI Engine Integration
+    CORE_API --> DOMAIN_AI
+    DOMAIN_AI --> ML_MODELS
+    ML_MODELS --> EXPLAINABLE
+    EXPLAINABLE --> CONTINUOUS
+
+    %% Correlation Engine
+    CORE_API --> GRAPH_ENGINE
+    GRAPH_ENGINE --> PATTERN_DETECT
+    PATTERN_DETECT --> IMPACT_ANALYSIS
+    IMPACT_ANALYSIS --> RISK_PROPAGATION
+
+    %% Action Orchestrator
+    CORE_API --> DRY_RUN
+    DRY_RUN --> APPROVAL
+    APPROVAL --> BLAST_RADIUS
+    BLAST_RADIUS --> ROLLBACK
+    ROLLBACK --> EVIDENCE_GEN
+
+    %% Event Sourcing
+    CORE_API --> EVENT_STORE
+    EVENT_STORE --> EVENT_BUS
+    EVENT_BUS --> SSE
+    EVENT_STORE --> EVENT_REPLAY
+
+    %% Storage Layer
+    CORE_API --> POSTGRES
+    CORE_API --> REDIS
+    CORE_API --> CLICKHOUSE
+    EVIDENCE_GEN --> OBJECT_STORE
+    ML_MODELS --> FEATURE_STORE
+
+    %% Edge Computing
+    CORE_API -.-> EDGE_FUNCTIONS
+    EDGE_FUNCTIONS --> POLICY_EVAL
+    EDGE_FUNCTIONS --> COMPLIANCE_CHECK
+    EDGE_FUNCTIONS --> ANOMALY_DETECT
+
+    %% Container Orchestration
+    CORE_API -.-> AKS
+    AKS --> OPERATORS
+    AKS --> HPA
+    AKS --> NETWORK_POLICY
+
+    %% Observability
+    CORE_API --> PROMETHEUS
+    PROMETHEUS --> GRAFANA
+    TELEMETRY --> JAEGER
+    CORE_API --> ELK
+    PROMETHEUS --> ALERTS
+
+    %% Styling
+    classDef apiLayer fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef aiEngine fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef storage fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef edge fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef orchestration fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+
+    class CORE_API,AUTH,AUTHZ,RATE_LIMIT,TENANT_CTX apiLayer
+    class DOMAIN_AI,ML_MODELS,EXPLAINABLE,CONTINUOUS aiEngine
+    class POSTGRES,REDIS,CLICKHOUSE,OBJECT_STORE,FEATURE_STORE storage
+    class EDGE_FUNCTIONS,POLICY_EVAL,COMPLIANCE_CHECK,ANOMALY_DETECT edge
+    class DRY_RUN,APPROVAL,BLAST_RADIUS,ROLLBACK,EVIDENCE_GEN orchestration

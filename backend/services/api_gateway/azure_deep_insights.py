@@ -29,7 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AzureDeepInsights:
-    def __init__(self, subscription_id: str = "205b477d-17e7-4b3b-92c1-32cf02626b78"):
+    def __init__(self, subscription_id: str = "6dc7cfa2-0332-4740-98b6-bac9f1a23de9"):
         """Initialize Azure clients for deep insights"""
         try:
             self.credential = AzureCliCredential()

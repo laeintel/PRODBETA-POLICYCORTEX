@@ -30,7 +30,7 @@ $requiredSecrets = @{
     }
     "AZURE_SUBSCRIPTION_ID_DEV" = @{
         Description = "Azure Subscription ID for Dev environment"
-        Example = "205b477d-17e7-4b3b-92c1-32cf02626b78"
+        Example = "6dc7cfa2-0332-4740-98b6-bac9f1a23de9"
         Required = $true
     }
     
@@ -54,7 +54,7 @@ $requiredSecrets = @{
     # Common Azure Settings
     "AZURE_TENANT_ID" = @{
         Description = "Azure Tenant ID (same for all environments)"
-        Example = "9ef5b184-d371-462a-bc75-5024ce8baff7"
+        Example = "e1f3e196-aa55-4709-9c55-0e334c0b444f"
         Required = $true
     }
     
@@ -128,7 +128,7 @@ Write-Host ""
 
 Write-Host "STEP 2: Create Azure Service Principal (if not exists)" -ForegroundColor Yellow
 Write-Host "  Run these Azure CLI commands:" -ForegroundColor White
-Write-Host '  az ad sp create-for-rbac --name "PolicyCortex-GitHub-Dev" --role contributor --scopes /subscriptions/205b477d-17e7-4b3b-92c1-32cf02626b78' -ForegroundColor Cyan
+Write-Host '  az ad sp create-for-rbac --name "PolicyCortex-GitHub-Dev" --role contributor --scopes /subscriptions/6dc7cfa2-0332-4740-98b6-bac9f1a23de9' -ForegroundColor Cyan
 Write-Host '  az ad sp create-for-rbac --name "PolicyCortex-GitHub-Prod" --role contributor --scopes /subscriptions/[PROD-SUB-ID]' -ForegroundColor Cyan
 Write-Host ""
 

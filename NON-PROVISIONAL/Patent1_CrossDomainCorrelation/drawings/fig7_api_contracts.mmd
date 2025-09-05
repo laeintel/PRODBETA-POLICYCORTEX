@@ -1,0 +1,5 @@
+flowchart TB
+  A[Client] -->|GET /api/v1/correlations| C[Core API]
+  C -->|200 JSON: nodes, edges, paths| A
+  A -->|POST /api/v1/correlations/what-if| C
+  C -->|Report + Evidence IDs| A

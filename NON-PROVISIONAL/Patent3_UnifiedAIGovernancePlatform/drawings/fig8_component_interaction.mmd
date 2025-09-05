@@ -1,0 +1,264 @@
+graph TB
+    subgraph "External Interactions"
+        USERS[Users<br/>Dashboard/CLI/API]
+        EXTERNAL_SYSTEMS[External Systems<br/>Webhooks/Integrations]
+        CLOUD_PROVIDERS[Cloud Providers<br/>Azure/AWS/GCP APIs]
+    end
+
+    subgraph "API Gateway Layer"
+        LOAD_BALANCER[Load Balancer<br/>Azure App Gateway]
+        API_GATEWAY[API Gateway<br/>Request Routing]
+        RATE_LIMITER[Rate Limiter<br/>Tenant Quotas]
+        AUTH_MIDDLEWARE[Auth Middleware<br/>JWT Validation]
+    end
+
+    subgraph "Core API Layer"
+        CORE_API[Core API Server<br/>Rust/Axum]
+        TENANT_MANAGER[Tenant Manager<br/>Context Isolation]
+        REQUEST_VALIDATOR[Request Validator<br/>Schema/Business Rules]
+        RESPONSE_FORMATTER[Response Formatter<br/>Output Standardization]
+    end
+
+    subgraph "Service Mesh Layer"
+        ISTIO_PROXY[Istio Proxy<br/>mTLS/Circuit Breaker]
+        SERVICE_DISCOVERY[Service Discovery<br/>Consul/K8s DNS]
+        LOAD_BALANCING[Load Balancing<br/>Round Robin/Weighted]
+        TRAFFIC_POLICY[Traffic Policy<br/>Blue-Green/Canary]
+    end
+
+    subgraph "AI and ML Services"
+        AI_ORCHESTRATOR[AI Orchestrator<br/>Service Coordination]
+        DOMAIN_EXPERT_AI[Domain Expert AI<br/>Python/FastAPI]
+        ML_INFERENCE[ML Inference<br/>Rust/ONNX]
+        EXPLAINABLE_AI[Explainable AI<br/>SHAP/LIME]
+        CONTINUOUS_LEARNER[Continuous Learner<br/>Model Updates]
+    end
+
+    subgraph "Cross-Domain Correlation"
+        CORRELATION_MANAGER[Correlation Manager<br/>Pattern Orchestration]
+        GRAPH_ENGINE[Graph Engine<br/>Neo4j/PostgreSQL]
+        PATTERN_ANALYZER[Pattern Analyzer<br/>ML Algorithms]
+        IMPACT_CALCULATOR[Impact Calculator<br/>Blast Radius]
+        DEPENDENCY_MAPPER[Dependency Mapper<br/>Resource Relationships]
+    end
+
+    subgraph "Action Orchestration"
+        ORCHESTRATION_ENGINE[Orchestration Engine<br/>Workflow Management]
+        DRY_RUN_SIMULATOR[Dry-run Simulator<br/>Safety Validation]
+        APPROVAL_MANAGER[Approval Manager<br/>Multi-stage Workflow]
+        EXECUTION_ENGINE[Execution Engine<br/>Safe Automation]
+        ROLLBACK_COORDINATOR[Rollback Coordinator<br/>Recovery Management]
+    end
+
+    subgraph "Event Sourcing"
+        EVENT_COORDINATOR[Event Coordinator<br/>Event Management]
+        EVENT_STORE_CLIENT[EventStore Client<br/>Immutable Persistence]
+        EVENT_PROCESSOR[Event Processor<br/>Stream Processing]
+        SNAPSHOT_MANAGER[Snapshot Manager<br/>State Optimization]
+        REPLAY_ENGINE[Replay Engine<br/>Time Travel]
+    end
+
+    subgraph "GraphQL Federation"
+        FEDERATION_GATEWAY[Federation Gateway<br/>Apollo Router]
+        SCHEMA_COMPOSER[Schema Composer<br/>Type Federation]
+        QUERY_PLANNER[Query Planner<br/>Execution Strategy]
+        SUBSCRIPTION_MANAGER[Subscription Manager<br/>Real-time Updates]
+        RESULT_MERGER[Result Merger<br/>Response Combination]
+    end
+
+    subgraph "Storage Layer"
+        STORAGE_MANAGER[Storage Manager<br/>Polyglot Coordination]
+        POSTGRES_CLIENT[PostgreSQL Client<br/>Transactional Data]
+        REDIS_CLIENT[Redis Client<br/>Cache/Sessions]
+        CLICKHOUSE_CLIENT[ClickHouse Client<br/>Analytics Data]
+        OBJECT_STORE_CLIENT[Object Store Client<br/>Evidence/Artifacts]
+    end
+
+    subgraph "Real-time Streaming"
+        STREAMING_COORDINATOR[Streaming Coordinator<br/>Live Updates]
+        SSE_BROADCASTER[SSE Broadcaster<br/>Server-Sent Events]
+        WEBSOCKET_MANAGER[WebSocket Manager<br/>Bi-directional Comms]
+        NOTIFICATION_SERVICE[Notification Service<br/>Alert Distribution]
+        METRICS_STREAMER[Metrics Streamer<br/>Live KPIs]
+    end
+
+    subgraph "Edge Computing"
+        EDGE_COORDINATOR[Edge Coordinator<br/>Distributed Management]
+        WASM_RUNTIME[WASM Runtime<br/>Edge Functions]
+        EDGE_CACHE_MANAGER[Edge Cache Manager<br/>Distributed Caching]
+        EDGE_SYNC_SERVICE[Edge Sync Service<br/>Data Consistency]
+        EDGE_METRICS_COLLECTOR[Edge Metrics Collector<br/>Performance Data]
+    end
+
+    subgraph "Monitoring & Observability"
+        OBSERVABILITY_MANAGER[Observability Manager<br/>Metrics Coordination]
+        PROMETHEUS_CLIENT[Prometheus Client<br/>Metrics Collection]
+        JAEGER_CLIENT[Jaeger Client<br/>Distributed Tracing]
+        LOG_AGGREGATOR[Log Aggregator<br/>Centralized Logging]
+        HEALTH_CHECKER[Health Checker<br/>Service Status]
+    end
+
+    %% External to Gateway
+    USERS --> LOAD_BALANCER
+    EXTERNAL_SYSTEMS --> LOAD_BALANCER
+    CLOUD_PROVIDERS --> API_GATEWAY
+
+    %% Gateway Layer Interactions
+    LOAD_BALANCER --> API_GATEWAY
+    API_GATEWAY --> RATE_LIMITER
+    RATE_LIMITER --> AUTH_MIDDLEWARE
+    AUTH_MIDDLEWARE --> CORE_API
+
+    %% Core API Internal Interactions
+    CORE_API --> TENANT_MANAGER
+    CORE_API --> REQUEST_VALIDATOR
+    CORE_API --> RESPONSE_FORMATTER
+    TENANT_MANAGER <--> REQUEST_VALIDATOR
+    REQUEST_VALIDATOR <--> RESPONSE_FORMATTER
+
+    %% Service Mesh Interactions
+    CORE_API <--> ISTIO_PROXY
+    ISTIO_PROXY <--> SERVICE_DISCOVERY
+    ISTIO_PROXY <--> LOAD_BALANCING
+    ISTIO_PROXY <--> TRAFFIC_POLICY
+    SERVICE_DISCOVERY <--> LOAD_BALANCING
+
+    %% AI Services Interactions
+    CORE_API --> AI_ORCHESTRATOR
+    AI_ORCHESTRATOR <--> DOMAIN_EXPERT_AI
+    AI_ORCHESTRATOR <--> ML_INFERENCE
+    AI_ORCHESTRATOR <--> EXPLAINABLE_AI
+    AI_ORCHESTRATOR <--> CONTINUOUS_LEARNER
+    DOMAIN_EXPERT_AI <--> ML_INFERENCE
+    ML_INFERENCE <--> EXPLAINABLE_AI
+
+    %% Correlation Engine Interactions
+    CORE_API --> CORRELATION_MANAGER
+    CORRELATION_MANAGER <--> GRAPH_ENGINE
+    CORRELATION_MANAGER <--> PATTERN_ANALYZER
+    CORRELATION_MANAGER <--> IMPACT_CALCULATOR
+    CORRELATION_MANAGER <--> DEPENDENCY_MAPPER
+    GRAPH_ENGINE <--> PATTERN_ANALYZER
+    PATTERN_ANALYZER <--> IMPACT_CALCULATOR
+    IMPACT_CALCULATOR <--> DEPENDENCY_MAPPER
+
+    %% Action Orchestration Interactions
+    CORE_API --> ORCHESTRATION_ENGINE
+    ORCHESTRATION_ENGINE <--> DRY_RUN_SIMULATOR
+    ORCHESTRATION_ENGINE <--> APPROVAL_MANAGER
+    ORCHESTRATION_ENGINE <--> EXECUTION_ENGINE
+    ORCHESTRATION_ENGINE <--> ROLLBACK_COORDINATOR
+    DRY_RUN_SIMULATOR --> APPROVAL_MANAGER
+    APPROVAL_MANAGER --> EXECUTION_ENGINE
+    EXECUTION_ENGINE <--> ROLLBACK_COORDINATOR
+
+    %% Event Sourcing Interactions
+    CORE_API --> EVENT_COORDINATOR
+    EVENT_COORDINATOR <--> EVENT_STORE_CLIENT
+    EVENT_COORDINATOR <--> EVENT_PROCESSOR
+    EVENT_COORDINATOR <--> SNAPSHOT_MANAGER
+    EVENT_COORDINATOR <--> REPLAY_ENGINE
+    EVENT_STORE_CLIENT <--> EVENT_PROCESSOR
+    EVENT_PROCESSOR <--> SNAPSHOT_MANAGER
+
+    %% GraphQL Federation Interactions
+    CORE_API <--> FEDERATION_GATEWAY
+    FEDERATION_GATEWAY <--> SCHEMA_COMPOSER
+    FEDERATION_GATEWAY <--> QUERY_PLANNER
+    FEDERATION_GATEWAY <--> SUBSCRIPTION_MANAGER
+    FEDERATION_GATEWAY <--> RESULT_MERGER
+    QUERY_PLANNER <--> RESULT_MERGER
+    SUBSCRIPTION_MANAGER <--> RESULT_MERGER
+
+    %% Storage Layer Interactions
+    CORE_API --> STORAGE_MANAGER
+    STORAGE_MANAGER <--> POSTGRES_CLIENT
+    STORAGE_MANAGER <--> REDIS_CLIENT
+    STORAGE_MANAGER <--> CLICKHOUSE_CLIENT
+    STORAGE_MANAGER <--> OBJECT_STORE_CLIENT
+    TENANT_MANAGER <--> POSTGRES_CLIENT
+    RESPONSE_FORMATTER <--> REDIS_CLIENT
+
+    %% Real-time Streaming Interactions
+    CORE_API --> STREAMING_COORDINATOR
+    STREAMING_COORDINATOR <--> SSE_BROADCASTER
+    STREAMING_COORDINATOR <--> WEBSOCKET_MANAGER
+    STREAMING_COORDINATOR <--> NOTIFICATION_SERVICE
+    STREAMING_COORDINATOR <--> METRICS_STREAMER
+    EVENT_PROCESSOR --> SSE_BROADCASTER
+    AI_ORCHESTRATOR --> NOTIFICATION_SERVICE
+
+    %% Edge Computing Interactions
+    CORE_API --> EDGE_COORDINATOR
+    EDGE_COORDINATOR <--> WASM_RUNTIME
+    EDGE_COORDINATOR <--> EDGE_CACHE_MANAGER
+    EDGE_COORDINATOR <--> EDGE_SYNC_SERVICE
+    EDGE_COORDINATOR <--> EDGE_METRICS_COLLECTOR
+    REDIS_CLIENT <--> EDGE_CACHE_MANAGER
+    METRICS_STREAMER <--> EDGE_METRICS_COLLECTOR
+
+    %% Monitoring Interactions
+    CORE_API --> OBSERVABILITY_MANAGER
+    OBSERVABILITY_MANAGER <--> PROMETHEUS_CLIENT
+    OBSERVABILITY_MANAGER <--> JAEGER_CLIENT
+    OBSERVABILITY_MANAGER <--> LOG_AGGREGATOR
+    OBSERVABILITY_MANAGER <--> HEALTH_CHECKER
+    
+    %% Cross-cutting Monitoring
+    AI_ORCHESTRATOR -.-> PROMETHEUS_CLIENT
+    CORRELATION_MANAGER -.-> JAEGER_CLIENT
+    ORCHESTRATION_ENGINE -.-> LOG_AGGREGATOR
+    STREAMING_COORDINATOR -.-> HEALTH_CHECKER
+
+    %% Cross-Service Dependencies
+    AI_ORCHESTRATOR <--> CORRELATION_MANAGER
+    CORRELATION_MANAGER <--> ORCHESTRATION_ENGINE
+    ORCHESTRATION_ENGINE <--> EVENT_COORDINATOR
+    EVENT_COORDINATOR <--> STREAMING_COORDINATOR
+    FEDERATION_GATEWAY <--> AI_ORCHESTRATOR
+    EDGE_COORDINATOR <--> AI_ORCHESTRATOR
+
+    %% Tenant Isolation Enforcement
+    TENANT_MANAGER -.-> POSTGRES_CLIENT
+    TENANT_MANAGER -.-> REDIS_CLIENT
+    TENANT_MANAGER -.-> OBJECT_STORE_CLIENT
+    TENANT_MANAGER -.-> EVENT_STORE_CLIENT
+
+    %% Security Integration
+    AUTH_MIDDLEWARE -.-> TENANT_MANAGER
+    ISTIO_PROXY -.-> AUTH_MIDDLEWARE
+    SERVICE_DISCOVERY -.-> AUTH_MIDDLEWARE
+
+    %% Performance Optimization
+    REDIS_CLIENT <-.-> POSTGRES_CLIENT
+    EDGE_CACHE_MANAGER <-.-> REDIS_CLIENT
+    CLICKHOUSE_CLIENT <-.-> POSTGRES_CLIENT
+
+    %% Styling
+    classDef external fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef gateway fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    classDef core fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef mesh fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef ai fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    classDef correlation fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef orchestration fill:#fff8e1,stroke:#fbc02d,stroke-width:2px
+    classDef events fill:#f1f8e9,stroke:#558b2f,stroke-width:2px
+    classDef graphql fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef storage fill:#fdf7ff,stroke:#9c27b0,stroke-width:2px
+    classDef streaming fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    classDef edge fill:#e0f7fa,stroke:#00838f,stroke-width:2px
+    classDef monitoring fill:#f9fbe7,stroke:#827717,stroke-width:2px
+
+    class USERS,EXTERNAL_SYSTEMS,CLOUD_PROVIDERS external
+    class LOAD_BALANCER,API_GATEWAY,RATE_LIMITER,AUTH_MIDDLEWARE gateway
+    class CORE_API,TENANT_MANAGER,REQUEST_VALIDATOR,RESPONSE_FORMATTER core
+    class ISTIO_PROXY,SERVICE_DISCOVERY,LOAD_BALANCING,TRAFFIC_POLICY mesh
+    class AI_ORCHESTRATOR,DOMAIN_EXPERT_AI,ML_INFERENCE,EXPLAINABLE_AI,CONTINUOUS_LEARNER ai
+    class CORRELATION_MANAGER,GRAPH_ENGINE,PATTERN_ANALYZER,IMPACT_CALCULATOR,DEPENDENCY_MAPPER correlation
+    class ORCHESTRATION_ENGINE,DRY_RUN_SIMULATOR,APPROVAL_MANAGER,EXECUTION_ENGINE,ROLLBACK_COORDINATOR orchestration
+    class EVENT_COORDINATOR,EVENT_STORE_CLIENT,EVENT_PROCESSOR,SNAPSHOT_MANAGER,REPLAY_ENGINE events
+    class FEDERATION_GATEWAY,SCHEMA_COMPOSER,QUERY_PLANNER,SUBSCRIPTION_MANAGER,RESULT_MERGER graphql
+    class STORAGE_MANAGER,POSTGRES_CLIENT,REDIS_CLIENT,CLICKHOUSE_CLIENT,OBJECT_STORE_CLIENT storage
+    class STREAMING_COORDINATOR,SSE_BROADCASTER,WEBSOCKET_MANAGER,NOTIFICATION_SERVICE,METRICS_STREAMER streaming
+    class EDGE_COORDINATOR,WASM_RUNTIME,EDGE_CACHE_MANAGER,EDGE_SYNC_SERVICE,EDGE_METRICS_COLLECTOR edge
+    class OBSERVABILITY_MANAGER,PROMETHEUS_CLIENT,JAEGER_CLIENT,LOG_AGGREGATOR,HEALTH_CHECKER monitoring

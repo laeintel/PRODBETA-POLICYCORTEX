@@ -70,9 +70,9 @@ function Add-TestResult {
 function Set-AzureEnvironmentVariables {
     Write-Header "Setting Azure Environment Variables"
     
-    $env:AZURE_SUBSCRIPTION_ID = "205b477d-17e7-4b3b-92c1-32cf02626b78"
-    $env:AZURE_TENANT_ID = "9ef5b184-d371-462a-bc75-5024ce8baff7"
-    $env:AZURE_CLIENT_ID = "1ecc95d1-e5bb-43e2-9324-30a17cb6b01c"
+    $env:AZURE_SUBSCRIPTION_ID = "6dc7cfa2-0332-4740-98b6-bac9f1a23de9"
+    $env:AZURE_TENANT_ID = "e1f3e196-aa55-4709-9c55-0e334c0b444f"
+    $env:AZURE_CLIENT_ID = "232c44f7-d0cf-4825-a9b5-beba9f587ffb"
     $env:USE_REAL_DATA = "true"
     $env:REQUIRE_REAL_DATA = "true"
     $env:FAIL_FAST_MODE = "true"

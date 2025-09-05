@@ -173,5 +173,5 @@ $$ LANGUAGE plpgsql;
 
 -- Create default tenant for development
 INSERT INTO public.tenants (tenant_id, name, azure_tenant_id)
-VALUES ('default', 'Default Tenant', '9ef5b184-d371-462a-bc75-5024ce8baff7')
+VALUES ('default', 'Default Tenant', 'e1f3e196-aa55-4709-9c55-0e334c0b444f')
 ON CONFLICT (tenant_id) DO NOTHING;
