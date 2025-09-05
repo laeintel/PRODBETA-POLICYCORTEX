@@ -1,0 +1,19 @@
+{
+  "name": "pcx-offline-verify",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Offline Merkle verifier for PolicyCortex evidence exports",
+  "scripts": {
+    "verify": "node verify.mjs"
+  },
+  "keywords": [
+    "merkle",
+    "verification",
+    "evidence",
+    "policycortex"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
