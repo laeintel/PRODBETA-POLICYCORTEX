@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: pcx
+      POSTGRES_PASSWORD: pcx
+      POSTGRES_DB: pcx
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pcx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ml-mock:
+    build:
+      context: ./services/ml-mock
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+      - "8002:8002"
+    environment:
+      ML_PREDICT_PORT: 8001
+      ML_EXPLAIN_PORT: 8002
+
+  core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile.demo
+    ports:
+      - "8081:8081"
+    environment:
+      DATABASE_URL: postgres://pcx:pcx@postgres:5432/pcx
+      REDIS_URL: redis://redis:6379
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_JWKS_URL: ${JWT_JWKS_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  agents:
+    build:
+      context: ./services/agents
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      AZURE_SUBSCRIPTION_ID: ${AZURE_SUBSCRIPTION_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET}
+      REDIS_URL: redis://redis:6379
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_JWKS_URL: ${JWT_JWKS_URL}
+    depends_on:
+      - redis
+
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      GATEWAY_PORT: 8000
+      CORE_URL: http://core:8081
+      AZURE_AGENTS_URL: http://agents:8084
+      ML_PREDICT_URL: http://ml-mock:8001/predict
+      ML_EXPLAIN_URL: http://ml-mock:8002/explain
+      REDIS_URL: redis://redis:6379
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_JWKS_URL: ${JWT_JWKS_URL}
+      ADMIN_GROUP_IDS: ${ADMIN_GROUP_IDS}
+      AUDITOR_GROUP_IDS: ${AUDITOR_GROUP_IDS}
+      OPERATOR_GROUP_IDS: ${OPERATOR_GROUP_IDS}
+      RATE_LIMIT_USER_PER_MIN: 120
+      RATE_LIMIT_TENANT_PER_MIN: 1200
+      RATELIMIT_WINDOW_SEC: 60
+    depends_on:
+      - core
+      - agents
+      - ml-mock
+      - redis
+
+  slack:
+    build:
+      context: ./services/integrations/slack
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      SLACK_PORT: 8090
+      GATEWAY_BASE: http://gateway:8000
+      SERVICE_BEARER_TOKEN: ${SERVICE_BEARER_TOKEN}
+      SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET}
+      SLACK_SKIP_VERIFY: ${SLACK_SKIP_VERIFY:-false}
+    depends_on:
+      - gateway
+
+  itsm:
+    build:
+      context: ./services/integrations/itsm
+      dockerfile: Dockerfile
+    ports:
+      - "8091:8091"
+    environment:
+      ITSM_PORT: 8091
+      GATEWAY_BASE: http://gateway:8000
+      SERVICE_BEARER_TOKEN: ${SERVICE_BEARER_TOKEN}
+      ITSM_SHARED_SECRET: ${ITSM_SHARED_SECRET}
+    depends_on:
+      - gateway
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_DEMO_MODE: "false"
+      NEXT_PUBLIC_REAL_API_BASE: http://gateway:8000
+      NEXT_PUBLIC_TEST_BEARER: ${NEXT_PUBLIC_TEST_BEARER}
+    depends_on:
+      - gateway
+
+volumes:
+  postgres_data:

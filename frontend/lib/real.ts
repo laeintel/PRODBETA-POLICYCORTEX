@@ -2,9 +2,19 @@
 export const REAL_API_BASE = process.env.NEXT_PUBLIC_REAL_API_BASE || 'http://localhost:8084';
 
 export async function real<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // Support test bearer token for CI/CD
+  const headers: HeadersInit = {
+    ...(init.headers || {})
+  };
+  
+  if (process.env.NEXT_PUBLIC_TEST_BEARER) {
+    headers['Authorization'] = `Bearer ${process.env.NEXT_PUBLIC_TEST_BEARER}`;
+  }
+  
   const res = await fetch(`${REAL_API_BASE}${path}`, { 
     cache: 'no-store', 
-    ...init 
+    ...init,
+    headers
   });
   
   if (!res.ok) {

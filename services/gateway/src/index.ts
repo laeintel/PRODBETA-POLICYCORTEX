@@ -201,6 +201,18 @@ app.get(
   })
 );
 
+// Evidence export (download JSON artifact)
+app.get(
+  '/api/v1/evidence/export',
+  requireRole(['auditor', 'admin', 'operator']), rateLimit,
+  createProxyMiddleware({ target: CORE_URL, changeOrigin: true, xfwd: true,
+    onProxyReq: (proxyReq, req) => {
+      const tp = req.get('traceparent');
+      if (tp) proxyReq.setHeader('traceparent', tp);
+    }
+  })
+);
+
 // Azure Agents (predictions + P&L): all roles can read
 app.get(
   '/api/v1/predictions',
