@@ -41,7 +41,7 @@ pub enum ApiError {
     
     // Rate Limiting & Capacity
     TooManyRequests(String),
-    ServiceUnavailable(String),
+    ServiceUnavailable { service: String, hint: String },
 }
 
 impl fmt::Display for ApiError {
@@ -62,7 +62,7 @@ impl fmt::Display for ApiError {
             ApiError::ConfigurationError(msg) => write!(f, "Configuration error: {}", msg),
             ApiError::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
             ApiError::TooManyRequests(msg) => write!(f, "Too many requests: {}", msg),
-            ApiError::ServiceUnavailable(msg) => write!(f, "Service unavailable: {}", msg),
+            ApiError::ServiceUnavailable { service, hint } => write!(f, "Service {} unavailable: {}", service, hint),
         }
     }
 }
@@ -92,7 +92,10 @@ impl IntoResponse for ApiError {
             ApiError::SerializationError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "serialization_error", "Data serialization error".to_string()),
             
             ApiError::TooManyRequests(_) => (StatusCode::TOO_MANY_REQUESTS, "too_many_requests", self.to_string()),
-            ApiError::ServiceUnavailable(_) => (StatusCode::SERVICE_UNAVAILABLE, "service_unavailable", self.to_string()),
+            ApiError::ServiceUnavailable { service, hint } => {
+                let message = format!("Service '{}' unavailable. {}", service, hint);
+                (StatusCode::SERVICE_UNAVAILABLE, "service_unavailable", message)
+            }
         };
 
         // Log internal errors for debugging but don't expose details to clients
