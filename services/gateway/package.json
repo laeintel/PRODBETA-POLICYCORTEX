@@ -1,0 +1,27 @@
+{
+  "name": "pcx-gateway",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "PolicyCortex Gateway: JWT/RBAC, routing, and schema enforcement entrypoint",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "node --enable-source-maps dist/index.js",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
+    "http-proxy-middleware": "^3.0.3",
+    "jose": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "tslib": "^2.6.3",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  }
+}
