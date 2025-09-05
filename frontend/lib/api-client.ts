@@ -63,7 +63,26 @@ class PCGApiClient {
   // Prevent - Predictive Compliance APIs
   async getPredictions(): Promise<PredictionData[]> {
     const response = await this.fetchWithRetry(`${this.baseUrl}/api/v1/predictions`);
-    return response.json();
+    const data = await response.json();
+    
+    // Handle PCG server response format which has predictions array inside
+    if (data.predictions && Array.isArray(data.predictions)) {
+      // Transform PCG format to frontend format
+      return data.predictions.map((p: any) => ({
+        id: p.id,
+        type: p.violation_type === 'data_encryption' || p.violation_type === 'excessive_permissions' ? 'compliance' : 
+              p.violation_type === 'unpatched_system' ? 'risk' : 'cost',
+        score: Math.round(p.probability * 100),
+        confidence: Math.round(p.probability * 100),
+        prediction: `${p.resource_name}: ${p.recommended_action}`,
+        recommendations: [p.recommended_action],
+        impact: p.severity.toLowerCase() as 'low' | 'medium' | 'high',
+        timestamp: p.prediction_date
+      }));
+    }
+    
+    // Fallback for direct array response
+    return Array.isArray(data) ? data : [];
   }
 
   async getPredictionById(id: string): Promise<PredictionData> {
@@ -82,7 +101,24 @@ class PCGApiClient {
   // Prove - Evidence Chain APIs
   async getEvidence(): Promise<EvidenceItem[]> {
     const response = await this.fetchWithRetry(`${this.baseUrl}/api/v1/evidence`);
-    return response.json();
+    const data = await response.json();
+    
+    // Handle PCG server response format which has evidence_items array inside
+    if (data.evidence_items && Array.isArray(data.evidence_items)) {
+      // Transform PCG format to frontend format
+      return data.evidence_items.map((e: any) => ({
+        id: e.id,
+        type: e.control || 'compliance',
+        description: e.details || `Control ${e.control} - ${e.status}`,
+        timestamp: e.timestamp,
+        verifiedBy: e.verified ? 'system' : 'pending',
+        hash: e.hash,
+        status: e.verified ? 'verified' : 'pending'
+      }));
+    }
+    
+    // Fallback for direct array response
+    return Array.isArray(data) ? data : [];
   }
 
   async getEvidenceById(id: string): Promise<EvidenceItem> {
@@ -108,7 +144,23 @@ class PCGApiClient {
   // Payback - ROI APIs
   async getROIMetrics(): Promise<ROIMetrics> {
     const response = await this.fetchWithRetry(`${this.baseUrl}/api/v1/roi/metrics`);
-    return response.json();
+    const data = await response.json();
+    
+    // Handle PCG server response format
+    if (data.summary) {
+      // Transform PCG format to frontend format
+      return {
+        totalSavings: data.summary.total_savings || 0,
+        preventedIncidents: data.breakdown?.prevented_incidents?.count || 0,
+        complianceScore: Math.round((data.summary.roi_percentage || 0) / 4), // Convert ROI to score
+        riskReduction: Math.round(data.summary.cloud_cost_reduction * 100) || 0,
+        automationHours: data.breakdown?.automated_remediation?.hours_saved || 0,
+        costAvoidance: data.breakdown?.compliance_penalties_avoided?.value || 0
+      };
+    }
+    
+    // Fallback for direct response
+    return data;
   }
 
   async calculateROI(params: { startDate: string; endDate: string }): Promise<ROIMetrics> {
