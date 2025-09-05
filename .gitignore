@@ -18,7 +18,6 @@ ENV/
 # Mock servers (only for dev, not committed)
 scripts/mock-ml-server.py
 scripts/mock-backend.js
-**/mock-server.*
 **/mock-data/
 
 # Environment variables
