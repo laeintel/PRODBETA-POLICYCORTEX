@@ -1,19 +1,32 @@
 {
   "name": "pcx-offline-verify",
   "private": true,
-  "type": "module",
-  "version": "0.1.0",
-  "description": "Offline Merkle verifier for PolicyCortex evidence exports",
+  "version": "1.0.0",
+  "description": "Offline Merkle tree verifier for PolicyCortex evidence exports",
+  "main": "verify.js",
+  "bin": {
+    "pcx-verify": "./verify.js"
+  },
   "scripts": {
-    "verify": "node verify.mjs"
+    "start": "node verify.js",
+    "verify": "node verify.js",
+    "test": "node verify.js --help"
+  },
+  "dependencies": {
+    "commander": "^11.0.0"
   },
   "keywords": [
     "merkle",
     "verification",
     "evidence",
-    "policycortex"
+    "policycortex",
+    "blockchain",
+    "cryptography",
+    "integrity"
   ],
   "engines": {
     "node": ">=14.0.0"
-  }
+  },
+  "author": "PolicyCortex",
+  "license": "MIT"
 }

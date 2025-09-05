@@ -1,0 +1,109 @@
+{
+  "id": "prove", 
+  "version": "1.0.0",
+  "description": "Evidence/proof flow: collect -> hash -> merkle -> export -> verify",
+  "metadata": {
+    "patent_hooks": ["Tamper-evident audit", "SHA-256 Merkle tree"],
+    "acceptance_criteria": ["Offline verification succeeds on any export"],
+    "export_fields": ["contentHash", "merkleRoot", "signer", "timestamp"]
+  },
+  "nodes": [
+    {
+      "id": "collect",
+      "type": "tool",
+      "tool": "get_artifacts",
+      "description": "Collect artifacts and events for evidence",
+      "inputs": ["eventId", "artifactRefs"],
+      "outputs": ["artifacts", "events"],
+      "dependencies": []
+    },
+    {
+      "id": "hash",
+      "type": "tool",
+      "tool": "compute_hash",
+      "description": "Compute SHA-256 hash of collected content",
+      "inputs": ["artifacts", "events"],
+      "outputs": ["contentHash"],
+      "dependencies": ["collect"],
+      "hash_algorithm": "SHA-256"
+    },
+    {
+      "id": "merkle",
+      "type": "tool", 
+      "tool": "build_merkle_tree",
+      "description": "Build binary Merkle tree from hashes",
+      "inputs": ["contentHash", "previousHashes"],
+      "outputs": ["merkleRoot", "merkleProof", "leafIndex"],
+      "dependencies": ["hash"],
+      "tree_type": "binary",
+      "rotation": "daily_utc"
+    },
+    {
+      "id": "export",
+      "type": "tool",
+      "tool": "export_evidence",
+      "description": "Export evidence with tamper-proof metadata",
+      "inputs": ["eventId", "contentHash", "merkleRoot", "merkleProof"],
+      "outputs": ["artifactRef", "contentHash", "signer", "timestamp"],
+      "dependencies": ["merkle"],
+      "signing": {
+        "algorithm": "RSA-PSS",
+        "key_source": "env:EVIDENCE_SIGNING_KEY"
+      }
+    },
+    {
+      "id": "verify",
+      "type": "tool",
+      "tool": "verify_chain",
+      "description": "Verify the complete evidence chain",
+      "inputs": ["docHash", "merkleRoot", "merkleProof"],
+      "outputs": ["verified", "merkleRoot", "proof"],
+      "dependencies": ["export"],
+      "verification": {
+        "offline_capable": true,
+        "endpoint": "/api/v1/verify/{hash}"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "collect",
+      "to": "hash",
+      "condition": "artifacts.length > 0 || events.length > 0"
+    },
+    {
+      "from": "hash",
+      "to": "merkle", 
+      "condition": "contentHash != null && contentHash.length === 64"
+    },
+    {
+      "from": "merkle",
+      "to": "export",
+      "condition": "merkleRoot != null && merkleProof.length > 0"
+    },
+    {
+      "from": "export", 
+      "to": "verify",
+      "condition": "artifactRef != null && signer != null"
+    }
+  ],
+  "integrity_checks": {
+    "hash_validation": {
+      "algorithm": "SHA-256",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "merkle_validation": {
+      "binary_tree": true,
+      "proof_verification": "offline_capable"
+    },
+    "signature_validation": {
+      "algorithm": "RSA-PSS",
+      "key_rotation": "quarterly"
+    }
+  },
+  "storage": {
+    "artifact_store": "blob://pcx-artifacts",
+    "immutability": true,
+    "retention": "7_years"
+  }
+}

@@ -1,12 +1,207 @@
+# Prometheus Configuration for PolicyCortex Platform
+# Multi-service monitoring with custom metrics for governance and compliance
+
 global:
-  scrape_interval: 15s
+  # Global scrape settings
+  scrape_interval: 15s           # Set the scrape interval to every 15 seconds
+  evaluation_interval: 15s       # Evaluate rules every 15 seconds
+  scrape_timeout: 10s            # Timeout after 10 seconds
+  
+  # Global labels to attach to any time series or alerts
+  external_labels:
+    cluster: 'policycortex-prod'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+      scheme: http
+      timeout: 10s
+      path_prefix: /
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'
+rule_files:
+  - "alerts/pcx_rules.yml"
+  - "alerts/*.yml"
+
+# Remote write configuration for long-term storage
+remote_write:
+  - url: "http://prometheus-remote-storage:9201/write"
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 200
+      capacity: 2500
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'pcx_.*'
+        target_label: __tmp_policyctx_metric
+        replacement: 'true'
+
+# Remote read configuration for long-term storage queries
+remote_read:
+  - url: "http://prometheus-remote-storage:9201/read"
+    read_recent: true
+
+# A scrape configuration containing exactly one endpoint to scrape
 scrape_configs:
-  - job_name: 'gateway'
-    static_configs: [{ targets: ['host.docker.internal:8000', 'localhost:8000'] }]
+  # PolicyCortex API Gateway Service
+  - job_name: 'pcx-gateway'
+    static_configs:
+      - targets: ['host.docker.internal:8080', 'localhost:8080']
     metrics_path: /metrics
-  - job_name: 'core'
-    static_configs: [{ targets: ['host.docker.internal:8081', 'localhost:8081'] }]
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    scheme: http
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+        regex: (.+)
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '^pcx_.*'
+        target_label: service
+        replacement: 'gateway'
+
+  # PolicyCortex Core API Service (Rust)
+  - job_name: 'pcx-core'
+    static_configs:
+      - targets: ['host.docker.internal:8081', 'localhost:8081']
     metrics_path: /metrics
-  - job_name: 'agents'
-    static_configs: [{ targets: ['host.docker.internal:8084', 'localhost:8084'] }]
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    scheme: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '^pcx_.*'
+        target_label: service
+        replacement: 'core'
+
+  # ML Prediction Service
+  - job_name: 'pcx-ml-predict'
+    static_configs:
+      - targets: ['host.docker.internal:8082', 'localhost:8082']
     metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    scheme: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '^pcx_.*'
+        target_label: service
+        replacement: 'ml_predict'
+
+  # ML Explanation Service
+  - job_name: 'pcx-ml-explain'
+    static_configs:
+      - targets: ['host.docker.internal:8083', 'localhost:8083']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    scheme: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '^pcx_.*'
+        target_label: service
+        replacement: 'ml_explain'
+
+  # Azure Agents Service
+  - job_name: 'pcx-agents'
+    static_configs:
+      - targets: ['host.docker.internal:8084', 'localhost:8084']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    scheme: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '^pcx_.*'
+        target_label: service
+        replacement: 'agents'
+
+  # Frontend Application (Next.js)
+  - job_name: 'pcx-frontend'
+    static_configs:
+      - targets: ['host.docker.internal:3000', 'localhost:3000']
+    metrics_path: /api/metrics
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: true
+    scheme: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '^next_.*|^pcx_.*'
+        target_label: service
+        replacement: 'frontend'
+
+  # Evidence Service
+  - job_name: 'pcx-evidence'
+    static_configs:
+      - targets: ['host.docker.internal:8085', 'localhost:8085']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    scheme: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '^pcx_.*'
+        target_label: service
+        replacement: 'evidence'
+
+  # System metrics (node_exporter)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9100', 'localhost:9100']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # PostgreSQL metrics
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9187', 'localhost:9187']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Redis metrics
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9121', 'localhost:9121']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    scrape_timeout: 10s

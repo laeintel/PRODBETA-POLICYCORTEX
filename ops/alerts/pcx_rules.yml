@@ -1,21 +1,362 @@
+# PolicyCortex Alert Rules
+# Comprehensive monitoring for governance platform metrics, SLOs, and business KPIs
+
 groups:
-- name: pcx
-  rules:
-  - alert: PCXAuthFailuresHigh
-    expr: rate(pcx_auth_fail_total[5m]) > 0.05
-    for: 10m
-    labels: { severity: warning }
-    annotations:
-      summary: "Auth failures exceed 5% over 10m"
-  - alert: PCXRateLimitedSpike
-    expr: rate(pcx_rate_limited_total[5m]) > 5
-    for: 5m
-    labels: { severity: info }
-    annotations:
-      summary: "Clients hitting rate limits frequently"
-  - alert: PCXSlowRequests95p
-    expr: histogram_quantile(0.95, sum(rate(pcx_http_request_duration_seconds_bucket[5m])) by (le)) > 0.4
-    for: 10m
-    labels: { severity: warning }
-    annotations:
-      summary: "95th percentile request latency > 400ms"
+  # === Core PolicyCortex Business Metrics ===
+  - name: pcx_business_metrics
+    interval: 30s
+    rules:
+      # Mean Time To Prevention (MTTP) - Critical business metric
+      - alert: PCXMTTPTooHigh
+        expr: pcx_mttp_hours{tenant_id!=""} > 72
+        for: 15m
+        labels:
+          severity: critical
+          category: business_kpi
+          patent: "predictive_compliance"
+        annotations:
+          summary: "Mean Time To Prevention exceeds 72 hours for tenant {{ $labels.tenant_id }}"
+          description: "MTTP is {{ $value }}h for tenant {{ $labels.tenant_id }}, exceeding the 72-hour SLA threshold. This indicates delayed policy violation prevention."
+          runbook_url: "https://wiki.policycortex.com/runbooks/mttp-high"
+          dashboard: "https://grafana.policycortex.com/d/business-kpis"
+
+      # Prevention Rate - Core patent metric
+      - alert: PCXPreventionRateLow
+        expr: pcx_prevention_rate{tenant_id!=""} < 0.90
+        for: 10m
+        labels:
+          severity: critical
+          category: business_kpi
+          patent: "predictive_compliance"
+        annotations:
+          summary: "Prevention rate below 90% for tenant {{ $labels.tenant_id }}"
+          description: "Prevention rate is {{ $value | humanizePercentage }} for tenant {{ $labels.tenant_id }}, below the 90% SLA threshold."
+          runbook_url: "https://wiki.policycortex.com/runbooks/prevention-rate-low"
+          dashboard: "https://grafana.policycortex.com/d/business-kpis"
+
+      # Cost Savings Forecast - Business impact metric
+      - alert: PCXCostSavingsDropping
+        expr: (pcx_cost_savings_90d{tenant_id!=""} - pcx_cost_savings_90d{tenant_id!=""} offset 24h) / pcx_cost_savings_90d{tenant_id!=""} offset 24h < -0.20
+        for: 30m
+        labels:
+          severity: warning
+          category: business_kpi
+          patent: "cost_optimization"
+        annotations:
+          summary: "90-day cost savings forecast dropped by >20% for tenant {{ $labels.tenant_id }}"
+          description: "Cost savings forecast decreased by {{ $value | humanizePercentage }} in 24h for tenant {{ $labels.tenant_id }}."
+          runbook_url: "https://wiki.policycortex.com/runbooks/cost-savings-drop"
+          dashboard: "https://grafana.policycortex.com/d/financial-impact"
+
+      # Compliance Score Degradation
+      - alert: PCXComplianceScoreDeclining
+        expr: pcx_compliance_score{tenant_id!=""} < 0.85
+        for: 15m
+        labels:
+          severity: warning
+          category: compliance
+          patent: "cross_domain_correlation"
+        annotations:
+          summary: "Compliance score below 85% for tenant {{ $labels.tenant_id }}"
+          description: "Compliance score is {{ $value | humanizePercentage }} for tenant {{ $labels.tenant_id }}."
+
+  # === Service Health and Availability ===
+  - name: pcx_service_health
+    interval: 15s
+    rules:
+      # Service Up/Down monitoring
+      - alert: PCXServiceDown
+        expr: up{job=~"pcx-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "PolicyCortex service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} on instance {{ $labels.instance }} has been down for more than 1 minute."
+          runbook_url: "https://wiki.policycortex.com/runbooks/service-down"
+
+      # Critical service availability (gateway and core must be up)
+      - alert: PCXCriticalServiceDown
+        expr: up{job=~"pcx-gateway|pcx-core"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          category: availability
+          pager: "true"
+        annotations:
+          summary: "CRITICAL: {{ $labels.job }} service is down"
+          description: "Critical service {{ $labels.job }} is down. This will impact all tenant operations."
+          runbook_url: "https://wiki.policycortex.com/runbooks/critical-service-down"
+
+  # === Performance and Latency ===
+  - name: pcx_performance
+    interval: 30s
+    rules:
+      # API Request Latency - 95th percentile SLA
+      - alert: PCXHighLatency95p
+        expr: histogram_quantile(0.95, sum(rate(pcx_http_request_duration_seconds_bucket{tenant_id!=""}[5m])) by (le, service, tenant_id)) > 0.4
+        for: 10m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "95th percentile request latency > 400ms for {{ $labels.service }}"
+          description: "95th percentile latency is {{ $value }}s for service {{ $labels.service }} tenant {{ $labels.tenant_id }}."
+          runbook_url: "https://wiki.policycortex.com/runbooks/high-latency"
+          dashboard: "https://grafana.policycortex.com/d/performance"
+
+      # API Request Latency - 99th percentile critical
+      - alert: PCXCriticalLatency99p
+        expr: histogram_quantile(0.99, sum(rate(pcx_http_request_duration_seconds_bucket{tenant_id!=""}[5m])) by (le, service, tenant_id)) > 1.0
+        for: 5m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "99th percentile request latency > 1s for {{ $labels.service }}"
+          description: "99th percentile latency is {{ $value }}s for service {{ $labels.service }} tenant {{ $labels.tenant_id }}."
+
+      # ML Model Inference Latency (Patent requirement: <100ms)
+      - alert: PCXMLInferenceLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(pcx_ml_inference_duration_seconds_bucket[5m])) by (le, model, tenant_id)) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          category: performance
+          patent: "predictive_compliance"
+        annotations:
+          summary: "ML inference latency > 100ms (patent requirement violation)"
+          description: "Model {{ $labels.model }} inference latency is {{ $value }}s, violating patent requirement of <100ms."
+
+  # === Error Rates and Quality ===
+  - name: pcx_errors
+    interval: 30s
+    rules:
+      # HTTP Error Rate
+      - alert: PCXHighErrorRate
+        expr: sum(rate(pcx_http_requests_total{status=~"5.."}[5m])) by (service, tenant_id) / sum(rate(pcx_http_requests_total[5m])) by (service, tenant_id) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          category: quality
+        annotations:
+          summary: "Error rate > 1% for {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} for service {{ $labels.service }} tenant {{ $labels.tenant_id }}."
+          runbook_url: "https://wiki.policycortex.com/runbooks/high-error-rate"
+
+      # Critical Error Rate
+      - alert: PCXCriticalErrorRate
+        expr: sum(rate(pcx_http_requests_total{status=~"5.."}[5m])) by (service, tenant_id) / sum(rate(pcx_http_requests_total[5m])) by (service, tenant_id) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          category: quality
+          pager: "true"
+        annotations:
+          summary: "Critical error rate > 5% for {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} for service {{ $labels.service }} tenant {{ $labels.tenant_id }}."
+
+      # Authentication Failures
+      - alert: PCXAuthFailuresHigh
+        expr: rate(pcx_auth_failures_total[5m]) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Authentication failures exceed 5% over 10 minutes"
+          description: "Auth failure rate is {{ $value | humanizePercentage }}."
+          runbook_url: "https://wiki.policycortex.com/runbooks/auth-failures"
+
+  # === Security and Access Control ===
+  - name: pcx_security
+    interval: 30s
+    rules:
+      # Rate Limiting Triggered
+      - alert: PCXRateLimitingTriggered
+        expr: rate(pcx_rate_limited_requests_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: info
+          category: security
+        annotations:
+          summary: "Rate limiting frequently triggered"
+          description: "Rate limiting triggered {{ $value }} times per second on average."
+
+      # Unauthorized Access Attempts
+      - alert: PCXUnauthorizedAccessAttempts
+        expr: rate(pcx_unauthorized_requests_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High rate of unauthorized access attempts"
+          description: "{{ $value }} unauthorized access attempts per second."
+          runbook_url: "https://wiki.policycortex.com/runbooks/security-incidents"
+
+      # JWT Token Validation Failures
+      - alert: PCXJWTValidationFailures
+        expr: rate(pcx_jwt_validation_failures_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "JWT validation failures detected"
+          description: "{{ $value }} JWT validation failures per second."
+
+  # === Resource Utilization ===
+  - name: pcx_resources
+    interval: 60s
+    rules:
+      # High CPU Usage
+      - alert: PCXHighCPUUsage
+        expr: (100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 15m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on instance {{ $labels.instance }}."
+
+      # High Memory Usage
+      - alert: PCXHighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 15m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}% on instance {{ $labels.instance }}."
+
+      # Database Connection Pool Exhaustion
+      - alert: PCXDatabasePoolExhaustion
+        expr: pcx_db_connections_active / pcx_db_connections_max > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          category: resources
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Database connection pool is {{ $value | humanizePercentage }} utilized."
+
+  # === Business Logic and Patent-Specific Metrics ===
+  - name: pcx_patent_metrics
+    interval: 60s
+    rules:
+      # Cross-Domain Correlation Quality (Patent 1)
+      - alert: PCXCorrelationQualityLow
+        expr: pcx_correlation_quality_score{tenant_id!=""} < 0.8
+        for: 15m
+        labels:
+          severity: warning
+          category: patent_quality
+          patent: "cross_domain_correlation"
+        annotations:
+          summary: "Cross-domain correlation quality below 80%"
+          description: "Correlation quality is {{ $value | humanizePercentage }} for tenant {{ $labels.tenant_id }}."
+
+      # Conversational Intelligence Accuracy (Patent 2)
+      - alert: PCXConversationalAccuracyLow
+        expr: pcx_conversational_accuracy{tenant_id!=""} < 0.95
+        for: 10m
+        labels:
+          severity: warning
+          category: patent_quality
+          patent: "conversational_intelligence"
+        annotations:
+          summary: "Conversational intelligence accuracy below 95%"
+          description: "Accuracy is {{ $value | humanizePercentage }} for tenant {{ $labels.tenant_id }}."
+
+      # Predictive Model Drift Detection
+      - alert: PCXModelDriftDetected
+        expr: pcx_model_drift_score > 0.3
+        for: 30m
+        labels:
+          severity: warning
+          category: ml_quality
+          patent: "predictive_compliance"
+        annotations:
+          summary: "Model drift detected for {{ $labels.model }}"
+          description: "Drift score is {{ $value }} for model {{ $labels.model }}."
+
+  # === Data Quality and Evidence Chain ===
+  - name: pcx_data_quality
+    interval: 60s
+    rules:
+      # Evidence Chain Integrity
+      - alert: PCXEvidenceChainBroken
+        expr: pcx_evidence_chain_integrity{tenant_id!=""} != 1
+        for: 1m
+        labels:
+          severity: critical
+          category: data_integrity
+          patent: "tamper_evident_audit"
+        annotations:
+          summary: "Evidence chain integrity compromised for tenant {{ $labels.tenant_id }}"
+          description: "Evidence chain shows integrity issues for tenant {{ $labels.tenant_id }}."
+          runbook_url: "https://wiki.policycortex.com/runbooks/evidence-chain"
+
+      # Merkle Tree Verification Failures
+      - alert: PCXMerkleVerificationFailure
+        expr: rate(pcx_merkle_verification_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: data_integrity
+        annotations:
+          summary: "Merkle tree verification failures detected"
+          description: "{{ $value }} Merkle verification failures per second."
+
+      # Data Freshness Issues
+      - alert: PCXDataStale
+        expr: time() - pcx_last_data_update_timestamp{tenant_id!=""} > 3600
+        for: 5m
+        labels:
+          severity: warning
+          category: data_quality
+        annotations:
+          summary: "Data is stale for tenant {{ $labels.tenant_id }}"
+          description: "Last data update was {{ $value | humanizeDuration }} ago."
+
+  # === External Dependencies ===
+  - name: pcx_dependencies
+    interval: 30s
+    rules:
+      # Azure API Connectivity
+      - alert: PCXAzureAPIDown
+        expr: pcx_azure_api_up != 1
+        for: 2m
+        labels:
+          severity: critical
+          category: external_dependency
+        annotations:
+          summary: "Azure API connectivity lost"
+          description: "Unable to connect to Azure APIs for tenant operations."
+          runbook_url: "https://wiki.policycortex.com/runbooks/azure-connectivity"
+
+      # Redis Cache Connectivity
+      - alert: PCXRedisDown
+        expr: redis_up != 1
+        for: 1m
+        labels:
+          severity: critical
+          category: external_dependency
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis cache connectivity lost, affecting performance."
+
+      # PostgreSQL Connectivity
+      - alert: PCXPostgreSQLDown
+        expr: pg_up != 1
+        for: 1m
+        labels:
+          severity: critical
+          category: external_dependency
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL database connectivity lost."
