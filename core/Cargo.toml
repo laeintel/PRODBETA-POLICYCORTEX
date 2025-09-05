@@ -92,7 +92,7 @@ neo4rs = "0.7"
 gremlin-client = "0.8"
 
 # Performance monitoring
-metrics = "0.21"
+metrics = "0.24"
 metrics-exporter-prometheus = "0.12"
 
 # OpenTelemetry for distributed tracing

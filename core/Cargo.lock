@@ -2960,6 +2960,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "metrics"
+version = "0.24.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25dea7ac8057892855ec285c440160265225438c3c45072613c25a4b26e98ef5"
+dependencies = [
+ "ahash",
+ "portable-atomic",
+]
+
+[[package]]
 name = "metrics-exporter-prometheus"
 version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2969,7 +2979,7 @@ dependencies = [
  "hyper 0.14.32",
  "indexmap 1.9.3",
  "ipnet",
- "metrics",
+ "metrics 0.21.1",
  "metrics-util",
  "quanta 0.11.1",
  "thiserror 1.0.69",
@@ -2997,7 +3007,7 @@ dependencies = [
  "crossbeam-epoch",
  "crossbeam-utils",
  "hashbrown 0.13.1",
- "metrics",
+ "metrics 0.21.1",
  "num_cpus",
  "quanta 0.11.1",
  "sketches-ddsketch",
@@ -3664,7 +3674,7 @@ dependencies = [
 
 [[package]]
 name = "policycortex-core"
-version = "2.27.0"
+version = "2.27.7"
 dependencies = [
  "anyhow",
  "async-nats",
@@ -3697,7 +3707,7 @@ dependencies = [
  "hyper 1.6.0",
  "jsonwebtoken",
  "lazy_static",
- "metrics",
+ "metrics 0.24.2",
  "metrics-exporter-prometheus",
  "neo4rs",
  "openssl",
