@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   ChevronLeft,
   ChevronRight,
@@ -146,6 +146,7 @@ const navItems: NavItem[] = [
 
 export default function PersistentSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -246,9 +247,8 @@ export default function PersistentSidebar() {
               <li key={item.label}>
                 {/* Main navigation item */}
                 <div className="relative">
-                  <Link
-                    href={item.href}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group ${
+                  <div
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group cursor-pointer ${
                       isActive(item.href)
                         ? 'bg-blue-600 text-white'
                         : item.children?.some(child => isActive(child.href))
@@ -258,7 +258,14 @@ export default function PersistentSidebar() {
                     onClick={(e) => {
                       if (item.children && !isCollapsed) {
                         e.preventDefault();
-                        toggleExpanded(item.label);
+                        // Only toggle if we're not already in this section's context
+                        const isInContext = item.children.some(child => isActive(child.href));
+                        if (!isInContext || !expandedItems.includes(item.label)) {
+                          toggleExpanded(item.label);
+                        }
+                        // If no children, navigate to the parent href
+                      } else if (!item.children) {
+                        router.push(item.href);
                       }
                     }}
                   >
@@ -290,7 +297,7 @@ export default function PersistentSidebar() {
                         )}
                       </>
                     )}
-                  </Link>
+                  </div>
                   
                   {/* Tooltip for collapsed state */}
                   {isCollapsed && (
