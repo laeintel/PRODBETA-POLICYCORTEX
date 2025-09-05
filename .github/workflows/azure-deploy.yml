@@ -131,8 +131,23 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Check if resources exist
+      - name: Check Azure Resources
+        id: check-resources
+        continue-on-error: true
+        run: |
+          # Check if frontend web app exists
+          az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group policycortex-rg &>/dev/null
+          if [ $? -ne 0 ]; then
+            echo "::warning::Azure Web App '${{ env.AZURE_WEBAPP_NAME }}' does not exist. Please run scripts/create-azure-resources.sh first."
+            echo "resources_exist=false" >> $GITHUB_OUTPUT
+          else
+            echo "resources_exist=true" >> $GITHUB_OUTPUT
+          fi
+
       # Deploy Frontend App Service
       - name: Deploy Frontend to Azure Web App
+        if: steps.check-resources.outputs.resources_exist == 'true'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
@@ -141,6 +156,7 @@ jobs:
 
       # Deploy Backend API App Service
       - name: Deploy Backend API to Azure Web App
+        if: steps.check-resources.outputs.resources_exist == 'true'
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}-api
@@ -149,6 +165,7 @@ jobs:
 
       # Configure App Settings
       - name: Configure Azure App Service Settings
+        if: steps.check-resources.outputs.resources_exist == 'true'
         uses: azure/appservice-settings@v1
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
