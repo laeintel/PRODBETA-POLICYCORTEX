@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policortex/contracts/tooling/create_fix_pr.schema.json",
+  "title": "create_fix_pr input/output",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "required": ["repo", "base", "head", "title", "patchRef"],
+      "properties": {
+        "repo": { "type": "string", "description": "owner/name" },
+        "base": { "type": "string" },
+        "head": { "type": "string" },
+        "title": { "type": "string" },
+        "patchRef": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "required": ["prUrl"],
+      "properties": {
+        "prUrl": { "type": "string", "format": "uri" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["input", "output"],
+  "additionalProperties": false
+}

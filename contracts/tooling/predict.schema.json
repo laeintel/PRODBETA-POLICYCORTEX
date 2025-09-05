@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://policortex/contracts/tooling/predict.schema.json",
+  "title": "predict input/output",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "required": ["tenantId", "scope", "horizonDays"],
+      "properties": {
+        "tenantId": { "type": "string" },
+        "scope": { "type": "string", "description": "subscription|rg|tags:..." },
+        "horizonDays": { "type": "integer", "minimum": 1, "maximum": 180 }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "required": ["predictions", "explanations"],
+      "properties": {
+        "predictions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ruleId", "etaDays", "confidence", "repo", "fixBranch"],
+            "properties": {
+              "ruleId": { "type": "string" },
+              "etaDays": { "type": "number" },
+              "confidence": { "type": "number" },
+              "repo": { "type": "string" },
+              "fixBranch": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "explanations": {
+          "type": "object",
+          "properties": {
+            "top": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "prefixItems": [{ "type": "string" }, { "type": "number" }],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["input", "output"],
+  "additionalProperties": false
+}

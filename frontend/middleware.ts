@@ -52,6 +52,12 @@ export function middleware(request: NextRequest) {
   
   // Check for demo mode from environment
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  const { pathname } = request.nextUrl
+  
+  // Block demo/labs routes in REAL mode (NEXT_PUBLIC_DEMO_MODE=false)
+  if (!isDemoMode && (pathname.startsWith('/demo') || pathname.startsWith('/labs'))) {
+    return new NextResponse('Not Found', { status: 404 })
+  }
   
   // In demo mode, bypass all authentication checks
   if (isDemoMode) {
