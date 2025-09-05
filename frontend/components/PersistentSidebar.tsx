@@ -131,7 +131,11 @@ const navItems: NavItem[] = [
     label: 'RBAC',
     href: '/rbac',
     icon: <Users className="h-5 w-5" />
-  },
+  }
+];
+
+// Separate Settings and Help items for the footer
+const footerItems: NavItem[] = [
   {
     label: 'Settings',
     href: '/settings',
@@ -344,24 +348,56 @@ export default function PersistentSidebar() {
           </ul>
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-gray-800 p-4">
-          {!isCollapsed ? (
-            <div className="text-xs text-gray-500">
-              <div className="flex items-center justify-between mb-1">
-                <span>Real Data</span>
-                <span className="flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
-                  Connected
+        {/* Footer with Settings and Help */}
+        <div className="border-t border-gray-800">
+          {/* Settings and Help Navigation */}
+          <div className="p-2">
+            {footerItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center px-3 py-2 mb-1 rounded-lg transition-all duration-200 group ${
+                  isActive(item.href)
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                <span className={`${isActive(item.href) ? 'text-white' : 'text-gray-400'}`}>
+                  {item.icon}
                 </span>
+                {!isCollapsed && (
+                  <span className="ml-3 font-medium">{item.label}</span>
+                )}
+                
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                    {item.label}
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          {/* Connection Status */}
+          <div className="border-t border-gray-800 p-4">
+            {!isCollapsed ? (
+              <div className="text-xs text-gray-500">
+                <div className="flex items-center justify-between mb-1">
+                  <span>Real Data</span>
+                  <span className="flex items-center">
+                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+                    Connected
+                  </span>
+                </div>
+                <div className="text-gray-600">Port 8084</div>
               </div>
-              <div className="text-gray-600">Port 8084</div>
-            </div>
-          ) : (
-            <div className="flex justify-center">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            </div>
-          )}
+            ) : (
+              <div className="flex justify-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
   );

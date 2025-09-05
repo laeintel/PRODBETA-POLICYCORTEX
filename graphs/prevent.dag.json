@@ -1,0 +1,121 @@
+{
+  "id": "prevent",
+  "version": "1.0.0",
+  "description": "Prevention flow: predict -> simulate -> create fix PR -> verify",
+  "metadata": {
+    "patent_hooks": ["Predictive Policy Compliance Engine", "What-if simulator"],
+    "acceptance_criteria": ["Same intent → same path deterministically"]
+  },
+  "nodes": [
+    {
+      "id": "discover",
+      "type": "tool",
+      "tool": "get_resources",
+      "description": "Discover Azure resources in scope",
+      "inputs": ["tenantId", "scope"],
+      "outputs": ["resources", "policies"],
+      "dependencies": []
+    },
+    {
+      "id": "predict",
+      "type": "tool", 
+      "tool": "predict",
+      "description": "Generate compliance predictions with ML models",
+      "inputs": ["tenantId", "scope", "horizonDays", "resources"],
+      "outputs": ["predictions", "explanations"],
+      "dependencies": ["discover"]
+    },
+    {
+      "id": "simulate",
+      "type": "llm",
+      "prompt": "simulate_impact",
+      "description": "Simulate impact of predicted violations",
+      "inputs": ["predictions", "resources"],
+      "outputs": ["incident_reduction_pct", "cost_delta_usd", "riskClass"],
+      "dependencies": ["predict"]
+    },
+    {
+      "id": "propose_fix",
+      "type": "llm",
+      "prompt": "propose_remediation",
+      "description": "Generate remediation proposals",
+      "inputs": ["predictions", "explanations", "simulation_results"],
+      "outputs": ["patchRef", "fixBranch", "title"],
+      "dependencies": ["simulate"],
+      "human_gate": {
+        "condition": "riskClass >= HIGH",
+        "approval_type": "ApprovalToken"
+      }
+    },
+    {
+      "id": "open_pr",
+      "type": "tool",
+      "tool": "create_fix_pr", 
+      "description": "Create GitHub pull request with fix",
+      "inputs": ["repo", "base", "head", "title", "patchRef"],
+      "outputs": ["prUrl"],
+      "dependencies": ["propose_fix"]
+    },
+    {
+      "id": "verify",
+      "type": "tool",
+      "tool": "verify_chain",
+      "description": "Verify evidence chain integrity",
+      "inputs": ["docHash"],
+      "outputs": ["verified", "merkleRoot", "proof"],
+      "dependencies": ["open_pr"]
+    },
+    {
+      "id": "pnl_update",
+      "type": "tool",
+      "tool": "pnl_forecast",
+      "description": "Update P&L forecasts",
+      "inputs": ["policies", "cost_delta_usd"],
+      "outputs": ["pnl_items"],
+      "dependencies": ["verify"]
+    }
+  ],
+  "edges": [
+    {
+      "from": "discover",
+      "to": "predict",
+      "condition": "resources.length > 0"
+    },
+    {
+      "from": "predict", 
+      "to": "simulate",
+      "condition": "predictions.length > 0"
+    },
+    {
+      "from": "simulate",
+      "to": "propose_fix",
+      "condition": "cost_delta_usd != 0 || incident_reduction_pct > 0"
+    },
+    {
+      "from": "propose_fix",
+      "to": "open_pr",
+      "condition": "patchRef != null"
+    },
+    {
+      "from": "open_pr",
+      "to": "verify",
+      "condition": "prUrl != null"
+    },
+    {
+      "from": "verify",
+      "to": "pnl_update",
+      "condition": "verified === true"
+    }
+  ],
+  "error_handling": {
+    "retry_policy": {
+      "max_retries": 3,
+      "backoff": "exponential"
+    },
+    "fallback_nodes": {
+      "predict": "discover",
+      "simulate": "predict",
+      "propose_fix": "simulate"
+    }
+  }
+}

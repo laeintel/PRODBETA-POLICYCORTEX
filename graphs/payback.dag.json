@@ -1,0 +1,111 @@
+{
+  "id": "payback",
+  "version": "1.0.0", 
+  "description": "Cost recovery flow: ingest costs -> attribute policies -> forecast -> publish P&L",
+  "metadata": {
+    "patent_hooks": ["Governance P&L", "Cost attribution engine"],
+    "acceptance_criteria": ["PnL table shows MTD & 90-day forecast"],
+    "slo_targets": {
+      "pcx_cost_savings_90d": ">=0.08_of_cloud_spend"
+    }
+  },
+  "nodes": [
+    {
+      "id": "ingest_costs",
+      "type": "tool",
+      "tool": "get_costs",
+      "description": "Ingest cost data from Azure Cost Management API",
+      "inputs": ["tenantId", "subscriptionId", "timeframe", "granularity"],
+      "outputs": ["cost_data", "resource_usage", "billing_period"],
+      "dependencies": [],
+      "api_source": "azure:cost-management"
+    },
+    {
+      "id": "attribute_policies", 
+      "type": "tool",
+      "tool": "correlate_costs_policies",
+      "description": "Attribute costs to specific governance policies",
+      "inputs": ["cost_data", "policies", "resources"],
+      "outputs": ["policy_cost_map", "attributions"],
+      "dependencies": ["ingest_costs"],
+      "correlation": {
+        "method": "resource_tagging_and_rules",
+        "confidence_threshold": 0.85
+      }
+    },
+    {
+      "id": "forecast_90d",
+      "type": "tool",
+      "tool": "pnl_forecast", 
+      "description": "Generate 90-day P&L forecast using ML models",
+      "inputs": ["policies", "policy_cost_map", "historical_data"],
+      "outputs": ["pnl_items", "forecast_confidence", "trend_analysis"],
+      "dependencies": ["attribute_policies"],
+      "models": {
+        "cost_model": "linear_regression_ensemble",
+        "savings_model": "time_series_arima"
+      }
+    },
+    {
+      "id": "publish_pnl",
+      "type": "tool",
+      "tool": "update_pnl_dashboard",
+      "description": "Publish P&L data to dashboard and reports",
+      "inputs": ["pnl_items", "billing_period", "forecast_confidence"],
+      "outputs": ["dashboard_url", "report_refs", "notification_sent"],
+      "dependencies": ["forecast_90d"],
+      "outputs_format": {
+        "columns": ["Policy", "Savings MTD", "90-day Forecast"],
+        "currency": "USD",
+        "precision": 2
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "ingest_costs",
+      "to": "attribute_policies",
+      "condition": "cost_data.length > 0 && billing_period != null"
+    },
+    {
+      "from": "attribute_policies",
+      "to": "forecast_90d", 
+      "condition": "policy_cost_map.size > 0"
+    },
+    {
+      "from": "forecast_90d",
+      "to": "publish_pnl",
+      "condition": "pnl_items.length > 0 && forecast_confidence >= 0.7"
+    }
+  ],
+  "cost_attribution": {
+    "methods": ["resource_tags", "policy_rules", "historical_correlation"],
+    "fallback": "proportional_allocation",
+    "validation": {
+      "total_variance_threshold": 0.05,
+      "unattributed_cost_limit": 0.1
+    }
+  },
+  "forecasting": {
+    "horizon_days": 90,
+    "confidence_intervals": [0.8, 0.9, 0.95],
+    "update_frequency": "daily",
+    "models": {
+      "primary": "ensemble_regression",
+      "fallback": "historical_average"
+    }
+  },
+  "performance": {
+    "max_processing_time_minutes": 15,
+    "cache_ttl_hours": 4,
+    "batch_size": 1000
+  },
+  "notifications": {
+    "channels": ["dashboard", "email", "teams"],
+    "triggers": {
+      "significant_variance": ">20% from forecast",
+      "cost_spike": ">2 std dev from baseline",
+      "savings_opportunity": ">$10k potential"
+    }
+  }
+}
