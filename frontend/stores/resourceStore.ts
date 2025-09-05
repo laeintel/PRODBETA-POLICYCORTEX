@@ -51,12 +51,13 @@ export const usePCGStore = create<PCGStore>()(
         try {
           const predictions = await apiClient.getPredictions();
           set((state) => {
-            state.predictions = predictions;
+            state.predictions = Array.isArray(predictions) ? predictions : [];
             state.isLoading = false;
           });
         } catch (error) {
           set((state) => {
             state.error = error instanceof Error ? error.message : 'Failed to fetch predictions';
+            state.predictions = [];
             state.isLoading = false;
           });
         }
@@ -90,12 +91,13 @@ export const usePCGStore = create<PCGStore>()(
         try {
           const evidence = await apiClient.getEvidence();
           set((state) => {
-            state.evidence = evidence;
+            state.evidence = Array.isArray(evidence) ? evidence : [];
             state.isLoading = false;
           });
         } catch (error) {
           set((state) => {
             state.error = error instanceof Error ? error.message : 'Failed to fetch evidence';
+            state.evidence = [];
             state.isLoading = false;
           });
         }

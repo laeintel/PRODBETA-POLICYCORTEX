@@ -27,10 +27,12 @@ export default function PreventPage() {
     );
   }
 
-  const highRiskCount = predictions.filter(p => p.impact === 'high').length;
-  const compliancePredictions = predictions.filter(p => p.type === 'compliance');
-  const avgConfidence = predictions.length > 0 
-    ? Math.round(predictions.reduce((acc, p) => acc + p.confidence, 0) / predictions.length)
+  // Ensure predictions is always an array
+  const safePredictions = Array.isArray(predictions) ? predictions : [];
+  const highRiskCount = safePredictions.filter(p => p.impact === 'high').length;
+  const compliancePredictions = safePredictions.filter(p => p.type === 'compliance');
+  const avgConfidence = safePredictions.length > 0 
+    ? Math.round(safePredictions.reduce((acc, p) => acc + p.confidence, 0) / safePredictions.length)
     : 0;
 
   return (
@@ -50,7 +52,7 @@ export default function PreventPage() {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Active Predictions</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {predictions.length}
+                {safePredictions.length}
               </p>
             </div>
             <TrendingUp className="w-8 h-8 text-blue-500" />
@@ -100,7 +102,7 @@ export default function PreventPage() {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Predictions</h2>
         </div>
         <div className="divide-y divide-gray-200 dark:divide-gray-700">
-          {predictions.slice(0, 5).map((prediction) => (
+          {safePredictions.slice(0, 5).map((prediction) => (
             <div key={prediction.id} className="px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -128,7 +130,7 @@ export default function PreventPage() {
             </div>
           ))}
         </div>
-        {predictions.length === 0 && (
+        {safePredictions.length === 0 && (
           <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
             No predictions available
           </div>
