@@ -91,7 +91,7 @@
     "three": "^0.160.1",
     "uuid": "^11.1.0",
     "zod": "^4.0.17",
-    "zustand": "^4.4.7"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.2",
