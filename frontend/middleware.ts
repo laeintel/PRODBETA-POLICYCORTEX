@@ -94,8 +94,6 @@ export function middleware(request: NextRequest) {
     applySecurityHeaders(response, nonce)
     return response
   }
-  
-  const { pathname } = request.nextUrl
 
   // Check for both auth-token and pcx-session cookies
   const authToken = request.cookies.get('auth-token')
