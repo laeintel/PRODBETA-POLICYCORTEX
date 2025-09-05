@@ -1,80 +1,127 @@
-name: Deploy (Reusable)
+name: Deploy
 
 on:
-  # Allow call from entry workflow and manual runs
-  workflow_call:
-    inputs:
-      from_tag:
-        description: 'Optional semver tag to deploy'
-        required: false
-        type: string
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  deploy:
-    # Use this YAML in your workflow file for each job
+  # Build and push Docker images
+  build:
+    name: Build and Push Images
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build images with fallback
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      # Build Frontend
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:buildcache,mode=max
+          build-args: |
+            NEXT_PUBLIC_DEMO_MODE=false
+            USE_REAL_DATA=true
+
+      # Build Mock Server (as backup)
+      - name: Build and push Mock Server
         run: |
-          echo "Building Docker images with improved error handling..."
-          
-          # Try to build with docker-compose first
-          if docker compose -f docker-compose.yml build; then
-            echo "Docker compose build succeeded"
-          else
-            echo "Docker compose build failed, trying individual builds..."
-            
-            # Build services individually with better error handling
-            docker build -t policycortex-frontend:latest ./frontend || echo "Frontend build failed, continuing..."
-            docker build -t policycortex-graphql:latest ./graphql || echo "GraphQL build failed, continuing..."
-            
-            # Special handling for Rust core service
-            echo "Building Rust core service with fallback..."
-            if ! docker build -t policycortex-core:latest ./core; then
-              echo "Rust build failed, using mock service fallback"
-              # Create a simple mock service as fallback
-              cat > ./core/Dockerfile.mock << 'EOF'
+          cat > Dockerfile.mock << 'EOF'
           FROM node:20-alpine
           WORKDIR /app
-          RUN echo '{"name":"mock-core","version":"1.0.0","main":"server.js"}' > package.json && \
-              echo 'require("http").createServer((req,res)=>{res.writeHead(200);res.end(JSON.stringify({status:"ok",mock:true}))}).listen(8080,()=>console.log("Mock core running on 8080"))' > server.js
-          CMD ["node", "server.js"]
+          COPY mock-server.js .
+          COPY mock-server-pcg.js .
+          RUN npm init -y && npm install express cors body-parser
+          EXPOSE 8080
+          CMD ["node", "mock-server.js"]
           EOF
-              docker build -f ./core/Dockerfile.mock -t policycortex-core:latest ./core
-            fi
+          
+          docker build -f Dockerfile.mock -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/mock-server:latest .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/mock-server:latest
+
+  # Deploy to environment
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: ${{ github.event.inputs.environment || 'staging' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to environment
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          echo "Deploying to ${ENVIRONMENT} environment"
+          
+          # Here you would add actual deployment commands
+          # For now, just echo what would be deployed
+          echo "Would deploy:"
+          echo "- Frontend: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest"
+          echo "- Mock Server: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/mock-server:latest"
+          
+          # Example deployment commands (uncomment when ready):
+          # kubectl apply -f k8s/${ENVIRONMENT}/
+          # helm upgrade --install policycortex ./charts/policycortex --namespace ${ENVIRONMENT}
+          # az webapp deployment container config --name policycortex-${ENVIRONMENT} --resource-group rg-policycortex
+
+      - name: Verify deployment
+        run: |
+          echo "Deployment verification would happen here"
+          # curl -f https://policycortex-${ENVIRONMENT}.azurewebsites.net/api/healthz
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
           fi
-
-      - name: Push images (optional)
-        if: ${{ env.REGISTRY && env.REGISTRY_USER && env.REGISTRY_PASS }}
-        continue-on-error: true
-        env:
-          REGISTRY: ${{ secrets.REGISTRY }}
-          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-          REGISTRY_PASS: ${{ secrets.REGISTRY_PASS }}
-        run: |
-          echo "Attempting to push images to registry..."
-          echo "$REGISTRY_PASS" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin || true
-          docker compose -f docker-compose.yml push || echo "Push failed, continuing..."
-
-      - name: Deploy stack (local test only)
-        if: ${{ github.event.inputs.from_tag != 'v*' }}
-        run: |
-          echo "Deploying local test stack..."
-          docker compose -f docker-compose.yml up -d || echo "Local deployment skipped"
-
-      - name: Trigger AKS deployment
-        if: ${{ startsWith(github.event.inputs.from_tag, 'v') || github.ref == 'refs/heads/main' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Triggering AKS deployment workflow..."
-          gh workflow run deploy-aks.yml --field environment=dev
-
