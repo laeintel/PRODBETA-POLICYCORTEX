@@ -6,6 +6,31 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Check if we should use fail-fast mode for real data
+const USE_REAL_DATA = process.env.USE_REAL_DATA === 'true';
+const FAIL_FAST = process.env.FAIL_FAST_MODE === 'true' || USE_REAL_DATA;
+
+// Middleware to enforce fail-fast in real mode
+const failFastMiddleware = (serviceName) => (req, res, next) => {
+  if (FAIL_FAST && USE_REAL_DATA) {
+    return res.status(503).json({
+      error: 'service_unavailable',
+      message: `Service '${serviceName}' unavailable in real mode`,
+      hint: `Real mode requires actual Azure connections. Configure:
+- AZURE_SUBSCRIPTION_ID
+- AZURE_TENANT_ID  
+- AZURE_CLIENT_ID
+- AZURE_CLIENT_SECRET
+- PREDICTIONS_URL (for ML service)
+- DATABASE_URL (for persistence)
+
+See docs/REVAMP/REAL_MODE_SETUP.md for details.`,
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+};
+
 // === PREVENT PILLAR: Predictive Compliance ===
 app.get('/api/v1/predictions', (req, res) => {
   res.json({
@@ -135,7 +160,7 @@ app.get('/api/v1/evidence/chain', (req, res) => {
 });
 
 // === PAYBACK PILLAR: ROI Metrics ===
-app.get('/api/v1/roi/metrics', (req, res) => {
+app.get('/api/v1/roi/metrics', failFastMiddleware('ROI Calculator'), (req, res) => {
   res.json({
     summary: {
       total_savings: 485000,

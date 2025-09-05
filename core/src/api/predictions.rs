@@ -85,11 +85,12 @@ pub async fn get_violation_predictions(
 ) -> impl IntoResponse {
     let lookahead_hours = query.lookahead_hours.unwrap_or(24);
     
-    // Check data mode
-    let data_mode = crate::data_mode::DataMode::from_env();
-    
-    // In real mode, try to get predictions from ML service
-    if data_mode.is_real() {
+    // Use fail-fast pattern for real mode
+    if state.use_real_data {
+        // Check for real mode requirements
+        if let Err(e) = state.require_real_mode("Predictive Compliance Engine") {
+            return e.into_response();
+        }
         // Check if ML predictions URL is configured
         if let Ok(ml_url) = std::env::var("PREDICTIONS_URL") {
             // Try to fetch from ML service
