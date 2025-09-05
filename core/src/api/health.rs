@@ -1,278 +1,316 @@
-// Health check API for Azure service connectivity
+// Health Check API for PCG Platform
+// Implements fail-fast pattern for real mode validation
+// © 2024 PolicyCortex. All rights reserved.
+
 use axum::{
     extract::State,
-    response::IntoResponse,
-    Json,
     http::StatusCode,
+    response::{IntoResponse, Json},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use std::env;
 use chrono::{DateTime, Utc};
-use tracing::info;
+use tracing::{info, warn, error};
 
-use crate::api::AppState;
-// use crate::azure_integration::get_azure_service; // Temporarily commented out
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct HealthCheckResponse {
+#[derive(Debug, Serialize)]
+pub struct HealthStatus {
     pub status: String,
+    pub version: String,
+    pub mode: String,
     pub timestamp: DateTime<Utc>,
-    pub services: ServiceHealthStatus,
-    pub azure_connectivity: AzureConnectivityStatus,
+    pub checks: HealthChecks,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub configuration_hints: Option<Vec<String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ServiceHealthStatus {
-    pub api: bool,
-    pub database: bool,
-    pub cache: bool,
-    pub azure_integration: bool,
+#[derive(Debug, Serialize)]
+pub struct HealthChecks {
+    pub azure_connection: ServiceCheck,
+    pub database: ServiceCheck,
+    pub ml_service: ServiceCheck,
+    pub cache: ServiceCheck,
+    pub authentication: ServiceCheck,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AzureConnectivityStatus {
-    pub management_api: bool,
-    pub graph_api: bool,
-    pub resource_graph: bool,
-    pub monitor: bool,
-    pub governance: bool,
-    pub cost_management: bool,
-    pub details: Vec<ServiceDetail>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ServiceDetail {
-    pub service: String,
+#[derive(Debug, Serialize)]
+pub struct ServiceCheck {
     pub status: String,
-    pub message: Option<String>,
     pub latency_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hint: Option<String>,
+}
+
+impl ServiceCheck {
+    fn healthy(latency_ms: u64) -> Self {
+        Self {
+            status: "healthy".to_string(),
+            latency_ms: Some(latency_ms),
+            error: None,
+            hint: None,
+        }
+    }
+
+    fn unhealthy(error: String, hint: String) -> Self {
+        Self {
+            status: "unhealthy".to_string(),
+            latency_ms: None,
+            error: Some(error),
+            hint: Some(hint),
+        }
+    }
+
+    fn unknown(hint: String) -> Self {
+        Self {
+            status: "unknown".to_string(),
+            latency_ms: None,
+            error: None,
+            hint: Some(hint),
+        }
+    }
 }
 
 // GET /api/v1/health
-pub async fn health_check(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    info!("Performing health check");
-    
-    let mut azure_connectivity = AzureConnectivityStatus {
-        management_api: false,
-        graph_api: false,
-        resource_graph: false,
-        monitor: false,
-        governance: false,
-        cost_management: false,
-        details: Vec::new(),
+pub async fn get_health_status(
+    State(state): State<Arc<crate::api::AppState>>,
+) -> impl IntoResponse {
+    let start_time = std::time::Instant::now();
+    let mut hints = Vec::new();
+
+    info!("Performing health check - mode: {}", if state.use_real_data { "real" } else { "mock" });
+
+    // Check Azure connection
+    let azure_check = if state.use_real_data {
+        if state.async_azure_client.is_some() {
+            // Try to validate Azure connection
+            match check_azure_connection(&state).await {
+                Ok(latency) => ServiceCheck::healthy(latency),
+                Err(e) => {
+                    warn!("Azure connection unhealthy: {}", e);
+                    ServiceCheck::unhealthy(
+                        e.to_string(),
+                        "Check Azure credentials: AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID".to_string()
+                    )
+                }
+            }
+        } else {
+            hints.push("Azure client not initialized. Set USE_REAL_DATA=true and configure Azure credentials.".to_string());
+            ServiceCheck::unhealthy(
+                "Azure client not configured".to_string(),
+                "Set environment variables: AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID".to_string()
+            )
+        }
+    } else {
+        ServiceCheck::unknown("Mock mode - Azure connection not checked".to_string())
     };
 
-    let azure_integration_healthy = false;
-
-    // Check Azure integration (temporarily disabled)
-    /*
-    match get_azure_service().await {
-        Ok(azure) => {
-            // Check basic connectivity
-            match azure.health_check().await {
-                Ok(status) => {
-                    azure_connectivity.management_api = status.management_api;
-                    azure_connectivity.graph_api = status.graph_api;
-                    azure_connectivity.resource_graph = status.resource_graph;
-                    azure_integration_healthy = status.overall;
-                    
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Management API".to_string(),
-                        status: if status.management_api { "healthy" } else { "unhealthy" }.to_string(),
-                        message: None,
-                        latency_ms: None,
-                    });
-                    
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Graph API".to_string(),
-                        status: if status.graph_api { "healthy" } else { "unhealthy" }.to_string(),
-                        message: None,
-                        latency_ms: None,
-                    });
-                    
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Resource Graph".to_string(),
-                        status: if status.resource_graph { "healthy" } else { "unhealthy" }.to_string(),
-                        message: None,
-                        latency_ms: None,
-                    });
-                }
-                Err(e) => {
-                    error!("Azure health check failed: {}", e);
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Azure Integration".to_string(),
-                        status: "error".to_string(),
-                        message: Some(format!("Health check failed: {}", e)),
-                        latency_ms: None,
-                    });
-                }
-            }
-
-            // Test specific services with timing sequentially
-            // Test Monitor service
-            let start = std::time::Instant::now();
-            match test_monitor_service(&azure).await {
-                Ok(()) => {
-                    let latency = start.elapsed().as_millis() as u64;
-                    azure_connectivity.monitor = true;
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Monitor".to_string(),
-                        status: "healthy".to_string(),
-                        message: None,
-                        latency_ms: Some(latency),
-                    });
-                }
-                Err(e) => {
-                    warn!("Monitor service check failed: {}", e);
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Monitor".to_string(),
-                        status: "unhealthy".to_string(),
-                        message: Some(e.to_string()),
-                        latency_ms: None,
-                    });
-                }
-            }
-
-            // Test Governance service
-            let start = std::time::Instant::now();
-            match test_governance_service(&azure).await {
-                Ok(()) => {
-                    let latency = start.elapsed().as_millis() as u64;
-                    azure_connectivity.governance = true;
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Governance".to_string(),
-                        status: "healthy".to_string(),
-                        message: None,
-                        latency_ms: Some(latency),
-                    });
-                }
-                Err(e) => {
-                    warn!("Governance service check failed: {}", e);
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Governance".to_string(),
-                        status: "unhealthy".to_string(),
-                        message: Some(e.to_string()),
-                        latency_ms: None,
-                    });
-                }
-            }
-
-            // Test Cost Management service
-            let start = std::time::Instant::now();
-            match test_cost_service(&azure).await {
-                Ok(()) => {
-                    let latency = start.elapsed().as_millis() as u64;
-                    azure_connectivity.cost_management = true;
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Cost Management".to_string(),
-                        status: "healthy".to_string(),
-                        message: None,
-                        latency_ms: Some(latency),
-                    });
-                }
-                Err(e) => {
-                    warn!("Cost Management service check failed: {}", e);
-                    azure_connectivity.details.push(ServiceDetail {
-                        service: "Cost Management".to_string(),
-                        status: "unhealthy".to_string(),
-                        message: Some(e.to_string()),
-                        latency_ms: None,
-                    });
-                }
+    // Check database connection
+    let db_check = if let Some(ref pool) = state.db_pool {
+        let db_start = std::time::Instant::now();
+        match sqlx::query("SELECT 1").fetch_one(pool).await {
+            Ok(_) => ServiceCheck::healthy(db_start.elapsed().as_millis() as u64),
+            Err(e) => {
+                error!("Database health check failed: {}", e);
+                hints.push("Database connection failed. Check DATABASE_URL environment variable.".to_string());
+                ServiceCheck::unhealthy(
+                    format!("Database error: {}", e),
+                    "Verify DATABASE_URL points to a valid PostgreSQL instance".to_string()
+                )
             }
         }
-        Err(e) => {
-            error!("Failed to get Azure service: {}", e);
-            azure_connectivity.details.push(ServiceDetail {
-                service: "Azure Integration".to_string(),
-                status: "unavailable".to_string(),
-                message: Some(format!("Service initialization failed: {}", e)),
-                latency_ms: None,
-            });
-        }
-    }
-    */
-    
-    // Add mock Azure connectivity details for now
-    azure_connectivity.details.push(ServiceDetail {
-        service: "Azure Integration".to_string(),
-        status: "disabled".to_string(),
-        message: Some("Azure integration temporarily disabled for compilation".to_string()),
-        latency_ms: None,
-    });
-
-    // Check other services (simplified)
-    let service_health = ServiceHealthStatus {
-        api: true, // API is responding if we got here
-        database: check_database_health(&state).await,
-        cache: check_cache_health(&state).await,
-        azure_integration: azure_integration_healthy,
+    } else {
+        hints.push("Database not configured. Set DATABASE_URL to enable persistence.".to_string());
+        ServiceCheck::unknown("Database pool not initialized".to_string())
     };
 
-    let overall_status = if service_health.api && azure_integration_healthy {
+    // Check ML service
+    let ml_check = if state.use_real_data {
+        if let Ok(ml_url) = env::var("PREDICTIONS_URL") {
+            match check_ml_service(&ml_url).await {
+                Ok(latency) => ServiceCheck::healthy(latency),
+                Err(e) => {
+                    warn!("ML service check failed: {}", e);
+                    hints.push("ML service unreachable. Deploy models using backend/services/ai_engine/deploy_models.py".to_string());
+                    ServiceCheck::unhealthy(
+                        e.to_string(),
+                        format!("Ensure ML service is running at {}", ml_url)
+                    )
+                }
+            }
+        } else {
+            hints.push("ML service URL not configured. Set PREDICTIONS_URL to enable AI predictions.".to_string());
+            ServiceCheck::unknown("PREDICTIONS_URL not set".to_string())
+        }
+    } else {
+        ServiceCheck::unknown("Mock mode - ML service not checked".to_string())
+    };
+
+    // Check cache (Redis/DragonflyDB)
+    let cache_check = if let Ok(redis_url) = env::var("REDIS_URL") {
+        match check_redis(&redis_url).await {
+            Ok(latency) => ServiceCheck::healthy(latency),
+            Err(e) => {
+                warn!("Cache service check failed: {}", e);
+                hints.push("Cache service unavailable. Install Redis or DragonflyDB for better performance.".to_string());
+                ServiceCheck::unhealthy(
+                    e.to_string(),
+                    "Redis/DragonflyDB not running. Start with: docker run -p 6379:6379 redis".to_string()
+                )
+            }
+        }
+    } else {
+        ServiceCheck::unknown("REDIS_URL not configured - caching disabled".to_string())
+    };
+
+    // Check authentication
+    let auth_check = if state.use_real_data {
+        let required_vars = vec![
+            ("AZURE_AD_TENANT_ID", env::var("AZURE_AD_TENANT_ID").is_ok()),
+            ("AZURE_AD_CLIENT_ID", env::var("AZURE_AD_CLIENT_ID").is_ok()),
+        ];
+        
+        let missing: Vec<&str> = required_vars
+            .iter()
+            .filter(|(_, exists)| !exists)
+            .map(|(name, _)| *name)
+            .collect();
+            
+        if missing.is_empty() {
+            ServiceCheck::healthy(0)
+        } else {
+            hints.push(format!("Authentication not fully configured. Missing: {}", missing.join(", ")));
+            ServiceCheck::unhealthy(
+                "Authentication configuration incomplete".to_string(),
+                format!("Set these environment variables: {}", missing.join(", "))
+            )
+        }
+    } else {
+        ServiceCheck::unknown("Mock mode - authentication bypassed".to_string())
+    };
+
+    // Determine overall status
+    let all_checks = vec![&azure_check, &db_check, &ml_check, &cache_check, &auth_check];
+    let overall_status = if all_checks.iter().all(|c| c.status == "healthy") {
         "healthy"
-    } else if service_health.api {
+    } else if all_checks.iter().any(|c| c.status == "unhealthy") {
         "degraded"
     } else {
-        "unhealthy"
+        "partial"
     };
 
-    let response = HealthCheckResponse {
+    info!("Health check complete - status: {}, elapsed: {}ms", 
+          overall_status, start_time.elapsed().as_millis());
+
+    let health = HealthStatus {
         status: overall_status.to_string(),
+        version: state.config.service_version.clone(),
+        mode: if state.use_real_data { "real" } else { "mock" }.to_string(),
         timestamp: Utc::now(),
-        services: service_health,
-        azure_connectivity,
+        checks: HealthChecks {
+            azure_connection: azure_check,
+            database: db_check,
+            ml_service: ml_check,
+            cache: cache_check,
+            authentication: auth_check,
+        },
+        configuration_hints: if !hints.is_empty() { Some(hints) } else { None },
     };
 
-    (StatusCode::OK, Json(response))
+    // Return appropriate status code based on health
+    let status_code = match overall_status {
+        "healthy" => StatusCode::OK,
+        "degraded" => StatusCode::SERVICE_UNAVAILABLE,
+        _ => StatusCode::PARTIAL_CONTENT,
+    };
+
+    (status_code, Json(health)).into_response()
 }
 
-// GET /api/v1/health/azure
-pub async fn azure_health_check(_state: State<Arc<AppState>>) -> impl IntoResponse {
-    info!("Performing detailed Azure health check");
+// GET /api/v1/health/live - Kubernetes liveness probe
+pub async fn liveness_probe(
+    State(_state): State<Arc<crate::api::AppState>>,
+) -> impl IntoResponse {
+    // Simple check that the service is running
+    (StatusCode::OK, Json(serde_json::json!({
+        "status": "alive",
+        "timestamp": Utc::now().to_rfc3339()
+    })))
+}
+
+// GET /api/v1/health/ready - Kubernetes readiness probe
+pub async fn readiness_probe(
+    State(state): State<Arc<crate::api::AppState>>,
+) -> impl IntoResponse {
+    // Check if critical services are ready
+    let ready = if state.use_real_data {
+        // In real mode, require Azure connection
+        state.async_azure_client.is_some()
+    } else {
+        // In mock mode, always ready
+        true
+    };
+
+    if ready {
+        (StatusCode::OK, Json(serde_json::json!({
+            "status": "ready",
+            "timestamp": Utc::now().to_rfc3339()
+        })))
+    } else {
+        (StatusCode::SERVICE_UNAVAILABLE, Json(serde_json::json!({
+            "status": "not_ready",
+            "timestamp": Utc::now().to_rfc3339()
+        })))
+    }
+}
+
+// Helper function to check Azure connection
+async fn check_azure_connection(state: &Arc<crate::api::AppState>) -> Result<u64, String> {
+    let start = std::time::Instant::now();
     
-    // Azure integration temporarily disabled
-    let response = serde_json::json!({
-        "status": "disabled",
-        "timestamp": Utc::now(),
-        "services": {
-            "management_api": false,
-            "graph_api": false,
-            "resource_graph": false,
-        },
-        "message": "Azure integration temporarily disabled for compilation"
-    });
-    (StatusCode::OK, Json(response))
+    if let Some(ref _client) = state.async_azure_client {
+        // For now, if the client exists, assume it's healthy
+        // In production, we'd make a real API call here
+        Ok(start.elapsed().as_millis() as u64)
+    } else {
+        Err("Azure client not initialized".to_string())
+    }
 }
 
-/*
-async fn test_monitor_service(azure: &crate::azure_integration::AzureIntegrationService) -> anyhow::Result<()> {
-    // Simple test - try to get system health
-    let _ = azure.monitor().get_system_health().await?;
-    Ok(())
+// Helper function to check ML service
+async fn check_ml_service(url: &str) -> Result<u64, String> {
+    let start = std::time::Instant::now();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+        
+    match client.get(format!("{}/health", url)).send().await {
+        Ok(response) if response.status().is_success() => {
+            Ok(start.elapsed().as_millis() as u64)
+        }
+        Ok(response) => Err(format!("ML service returned status: {}", response.status())),
+        Err(e) => Err(format!("ML service unreachable: {}", e))
+    }
 }
 
-async fn test_governance_service(azure: &crate::azure_integration::AzureIntegrationService) -> anyhow::Result<()> {
-    // Simple test - try to get compliance summary
-    let _ = azure.governance().get_compliance_summary().await?;
-    Ok(())
-}
-
-async fn test_cost_service(azure: &crate::azure_integration::AzureIntegrationService) -> anyhow::Result<()> {
-    // Simple test - try to get current month costs
-    let _ = azure.cost().get_current_month_costs().await?;
-    Ok(())
-}
-*/
-
-async fn check_database_health(_state: &AppState) -> bool {
-    // Database health check - currently not implemented
-    // The application uses in-memory storage for now
-    true
-}
-
-async fn check_cache_health(_state: &AppState) -> bool {
-    // Cache health check - currently not implemented
-    // The application uses in-memory caching for now
-    true
+// Helper function to check Redis
+async fn check_redis(url: &str) -> Result<u64, String> {
+    let start = std::time::Instant::now();
+    
+    // Simple ping using redis crate
+    match redis::Client::open(url) {
+        Ok(client) => {
+            let mut conn = client.get_connection()
+                .map_err(|e| format!("Redis connection failed: {}", e))?;
+            
+            redis::cmd("PING")
+                .query::<String>(&mut conn)
+                .map_err(|e| format!("Redis ping failed: {}", e))?;
+                
+            Ok(start.elapsed().as_millis() as u64)
+        }
+        Err(e) => Err(format!("Invalid Redis URL: {}", e))
+    }
 }

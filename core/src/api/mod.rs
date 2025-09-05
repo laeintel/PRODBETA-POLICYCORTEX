@@ -52,6 +52,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
+use std::env;
 use tokio::sync::RwLock;
 use tracing::{error, info, warn, debug};
 use uuid::Uuid;
@@ -66,10 +67,21 @@ pub struct AppState {
     pub tenant_cache: RwLock<HashMap<String, TenantContext>>,
     pub token_validator: TokenValidator,
     pub validator: Validator,
+    pub use_real_data: bool,
 }
 
 impl AppState {
     pub fn new() -> Self {
+        let use_real_data = env::var("USE_REAL_DATA")
+            .map(|v| v.to_lowercase() == "true")
+            .unwrap_or(false);
+            
+        if use_real_data {
+            info!("Real mode enabled - will connect to live Azure services");
+        } else {
+            info!("Mock mode enabled - using simulated data");
+        }
+        
         Self {
             config: crate::config::AppConfig::load(),
             async_azure_client: None,
@@ -79,7 +91,34 @@ impl AppState {
             tenant_cache: RwLock::new(HashMap::new()),
             token_validator: TokenValidator::new(),
             validator: Validator::new(),
+            use_real_data,
         }
+    }
+    
+    // Helper method to check real mode and return fail-fast error
+    pub fn require_real_mode(&self, service_name: &str) -> Result<(), ApiError> {
+        if !self.use_real_data {
+            return Err(ApiError::ServiceUnavailable {
+                service: service_name.to_string(),
+                hint: format!(
+                    "Real mode is disabled. Set USE_REAL_DATA=true and configure: \n\
+                    - AZURE_SUBSCRIPTION_ID\n\
+                    - AZURE_TENANT_ID\n\
+                    - AZURE_CLIENT_ID\n\
+                    - AZURE_CLIENT_SECRET\n\
+                    See docs/REVAMP/REAL_MODE_SETUP.md for configuration details."
+                ),
+            });
+        }
+        
+        if self.async_azure_client.is_none() {
+            return Err(ApiError::ServiceUnavailable {
+                service: service_name.to_string(),
+                hint: "Azure client not initialized. Check Azure credentials and connectivity.".to_string(),
+            });
+        }
+        
+        Ok(())
     }
 }
 
